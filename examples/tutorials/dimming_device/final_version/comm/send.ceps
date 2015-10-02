@@ -1,0 +1,22 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ * Tutorial 'Dimming Device'.
+ *
+ *
+ * Send Logic for tutorial 'Dimming Device'
+ *
+ * 
+ */
+
+sender{
+  when{TargetLuminanceChanged;};
+  emit{dimm_request_out;};
+  transport{generic_tcp_out{port{"4000";};ip{"127.0.0.1";};};};    
+};
+
+

@@ -1,0 +1,58 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ *
+ * 
+ */
+
+kind Event;
+kind Systemstate;
+
+Event Send_Counter,Request_Counter,E,D,EXIT;
+Systemstate s1;
+
+
+Statemachine
+{
+ 
+ id{DimmerControl;};
+ States{
+    Initial;
+    A;B;
+    Final;   
+ };
+ Actions{
+  action{
+    //print("E(",argv(1),") received.\n");
+    s1 = argv(1);
+    D(s1+1);
+  };  
+  settimer{
+    start_timer(10.0*s,EXIT);
+  };
+ }; 
+ 
+ Transition{Initial;A;settimer;};
+ Transition{A;B;E;action;};
+ Transition{B;B;E;action;};
+ 
+};
+
+/**
+ * @section DESCRIPTION
+ * */
+Simulation
+{
+ s1 = 0;
+ //Start{DimmerControl;};
+ //ASSERT_EVENTUALLY_VISIT_STATES{DimmerControl.B;};
+ D(10);
+};

@@ -1,0 +1,51 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of threads.
+ *
+ * Threads are essentially sub state machines and differ only in their 
+ * special treatment in the case the containing machine is entered: 
+ * all threads of a state machine S are entered in the case S is entered.
+ * 
+ * Nomenclature: A state machine containing at least one thread is called 'multithreaded'
+ * 
+ */
+
+kind Event;
+
+Event E,F,G,H;
+
+
+Statemachine{
+  id{S1;};
+  States{Initial;a;b;c;d;e;f;g;h;};
+  Transition{Initial;a;};
+  Transition{a;b;};
+  Transition{b;c;};
+  Transition{b;f;};
+  Transition{c;d;};
+  Transition{f;g;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Base scenario 1: Moving along epsilon-transitions.
+ * 
+ * */
+Simulation
+{
+  TestCase{State_machine_with_epsilon_transitions;};Test{Starting_in_Initial_takes_all_epsilon_transitions_before_fetching_the_next_event;};
+  ASSERT_EVENTUALLY_VISIT_STATES{S1.Initial;S1.a;S1.b;S1.c;S1.d;};
+  ASSERT_NEVER_VISIT_STATES{S1.h;};
+  Start{S1;};  
+  ASSERT_CURRENT_STATES_CONTAINS{S1.d;S1.g;};  
+};

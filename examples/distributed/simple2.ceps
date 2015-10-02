@@ -1,0 +1,3 @@
+Simulation{
+ print("Hello World!\n");
+};

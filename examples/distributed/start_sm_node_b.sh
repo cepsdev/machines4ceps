@@ -1,0 +1,1 @@
+../../eclipse/Debug/statemachines sm_node_b.ceps --server --port2001 --rip127.0.0.1 --rport2003 --quiet

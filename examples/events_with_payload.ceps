@@ -1,0 +1,67 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of periodic timers.
+ *
+ * 
+ */
+
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+
+Systemstate s1;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    procedure{
+      
+    };
+    a1{print("S1::a1:\n");};
+    a2{
+       print("S1::a2:\n");
+       print("argc = ",argc(),"\n");
+       print("argv(1) = ",argv(1),"\n");
+       print("argv(2) = ",argv(2),"\n");
+       print("argv(3) = ",argv(3),"\n");
+       for( i : 1,2,3 )
+       {
+	 print(argv(i),"\n");
+       };      
+    };
+    a3{print("S1::a3:\n");};    
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;a;E;a2;};
+ Transition{a;a;F;a3;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Demonstrates usage of periodic timers. 
+ *
+ * */
+Simulation
+{
+ s1 = 3;
+ 
+ Start{S1;};
+ E(1,2,3,4);
+ //E;
+};
+
+
+

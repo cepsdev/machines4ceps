@@ -1,0 +1,68 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of distributed computation.
+ *  
+ * NODE A
+ *
+ * 
+ */
+
+kind Event;
+kind Systemstate;
+
+Event E,F;
+
+Systemstate counter;
+
+
+
+Statemachine
+{
+ id{S1;};
+ States{
+    Initial;
+    Final;
+    wait_for_e;
+    received_e;
+    log_e_event;
+ };
+ Actions{
+    a1{
+       start_timer(0.001*s,F);      
+    };
+    msg_if_e_received {
+      print(counter, " E received.\n");
+      flush();
+      inc(counter);      
+    };
+  }; 
+ //Transitions
+ Transition{Initial;wait_for_e;};
+ Transition{Initial;log_e_event;};
+ Transition{log_e_event;log_e_event;E;msg_if_e_received;};
+ 
+ Transition{wait_for_e;received_e;E;a1;};
+ Transition{received_e;wait_for_e;};
+};
+
+
+/**
+ * @section DESCRIPTION
+ * 
+ *
+ * */
+Simulation
+{
+ counter = 0;
+ Start{S1;};
+ E;
+};

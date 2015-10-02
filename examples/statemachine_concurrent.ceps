@@ -1,0 +1,82 @@
+/**
+
+ A simple example for a state machine (www.boost.org/doc/libs/1_46_1/libs/msm/doc/HTML/ch03s02.html )
+ visualize using plantuml.
+
+*/
+
+/*
+
+SM Active{
+ States s1,s2,s3;
+ Events e1,e2;
+ Actions a1,a2;
+ Guards g1,g2,g3;
+
+ g1 = a && b || c  ;
+
+ s1 -> A.B.s2 ;
+ s1 -> s2 e1,a1,g1;
+ s3 -> s4;
+
+}
+
+
+
+*/
+kind Guardexpression;
+Guardexpression g;
+
+g =  b && c || d;
+
+Statemachine
+{
+ id{Active;};
+};
+
+
+Statemachine
+{
+ id{main;};
+ Transition{Initial;Active;};
+};
+
+Statemachine
+{
+ id{Active;};
+ 
+ States{ NumLockOff; NumLockOn;CapsLockOff;CapsLockOn; ScrollLockOff; ScrollLockOn;};
+ Events{EvCapsLockPressed;EvNumLockPressed;};
+ Actions{a1;a2;a3;};
+ 
+ a1 {signal(1+1);};
+ on_exit{a1;};
+ on_enter{a2;};
+ 
+thread{
+ Transition{Initial;NumLockOff;};
+ Transition{NumLockOff;NumLockOn;EvNumLockPressed;g;a1;};
+ Transition{NumLockOn;NumLockOff;EvNumLockPressed;};
+};
+
+thread{
+ Transition{Initial;CapsLockOff;};
+ Transition{CapsLockOff;CapsLockOn;EvCapsLockPressed;};
+ Transition{CapsLockOn;CapsLockOff;EvCapsLockPressed;};
+};
+
+thread{
+ Transition{Initial;ScrollLockOff;};
+ Transition{ScrollLockOff;ScrollLockOn;EvCapsLockPressed;};
+ Transition{ScrollLockOn;ScrollLockOff;EvCapsLockPressed;};
+};
+
+};
+
+
+
+
+
+main{main;};
+
+

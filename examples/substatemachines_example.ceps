@@ -1,0 +1,51 @@
+kind Systemstate;
+kind Guard;
+kind Event;
+
+
+Guard g1,g2,g3,g4;
+Systemstate v1,v2,v3;
+Event e;
+
+
+Statemachine
+{
+ id{UU1;};
+ States{Initial;Final;uu1_s1;uu1_s2;uu1_s3;};
+ Transition{Initial;uu1_s1;e;};
+ Transition{uu1_s1;uu1_s2;e;};
+};
+
+Statemachine
+{
+ id{U1;};
+ import{UU1;};
+ 
+ States{Initial;Final;u1_s1;u1_s2;u1_s3;};
+ Transition{Initial;u1_s1;e;};
+ Transition{u1_s1;UU1;e;};
+};
+
+
+Statemachine
+{
+ id{S1;};
+ import{U1;};//import{U2;};
+ States{Initial;Final;};
+ Transition{Initial;U1;};
+};
+
+Simulation
+{
+ Start{S1;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{S1.U1.u1_s1;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{S1.U1.UU1.Initial;};
+};
+
+
+
+
+
+

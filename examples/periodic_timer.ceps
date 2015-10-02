@@ -1,0 +1,54 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of periodic timers.
+ *
+ * 
+ */
+
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+
+Systemstate duration_timer_1,duration_timer_2,s1;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    a1{start_periodic_timer(duration_timer_1,E);start_periodic_timer(duration_timer_2,F(s1));};
+    a2{print("action a2(triggered by E)\n","Incrementing s1 (old value = ",s1,")\n");s1=s1+1;};
+    a3{print("action a3(triggered by F)\n");print("s1 = ",s1,"\n");};    
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;a;E;a2;};
+ Transition{a;a;F;a3;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Demonstrates usage of periodic timers. 
+ *
+ * */
+Simulation
+{
+ s1 = 1;
+ duration_timer_1 = 0.25*s;
+ duration_timer_2 = 5*duration_timer_1;
+ Start{S1;};
+ 
+};
+
+
+

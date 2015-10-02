@@ -1,0 +1,94 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of guards and systemstates.
+ *
+ 
+ */
+
+
+kind Systemstate;
+kind Guard;
+kind Event;
+
+
+Guard g1,g2,g3,g4;
+Systemstate v1,v2,v3,current_position;
+Event e;
+
+typedef{
+ position_t
+ {
+  x{0.0*s;};
+  y{0.0*s;};
+  z{0.0*s;};
+ };
+};
+
+
+Globals{
+ current_position = position_t;
+ g1 = 1;
+ g2 = 1;
+ g3 = g1 || g2;
+ //current_position.x = 2.0*s;
+};
+
+Statemachine
+{
+ id{Sm_1;};
+ States{Initial;Final;s1;s2;s3;};
+ Transition{Initial;s1;e;g3;};
+};
+
+Statemachine
+{
+ id{Sm_2;};
+ States{Initial;Final;s1;s2;s3;};
+ Transition{Initial;s1;e;g2;};
+};
+
+Simulation
+{
+ 1 && 2 || 3;
+ v2 = 1;
+ v1 = 1;
+ g4 = 1;
+ g3 = v2 && g4;
+ g2 = g3 || v2;
+ g1 = v1 && g2 && 1 < 2;
+ Start{Sm_1;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{Sm_1.s1;};
+};
+
+
+Simulation
+{
+ v1 = 1;
+ g2 = 0;
+ Start{Sm_2;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{Sm_2.Initial;};
+};
+
+Simulation
+{
+ v1 = 1;
+ g2 = current_position.y >= 0.0*s;
+ Start{Sm_2;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{Sm_2.s1;};
+};
+
+
+
+

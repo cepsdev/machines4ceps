@@ -1,0 +1,31 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ * Tutorial 'Dimming Device'.
+ *
+ *
+ * Basic simuation scenario for tutorial 'Dimming Device'
+ *
+ * 
+ */
+Statemachine{
+  id{S1;};
+  States{Initial;A;};
+  Actions{
+    print_sysstates{
+      TargetLuminance = argv(1);
+      print("TargetLuminance=",TargetLuminance,"\n");
+    };
+  };
+  
+  Transition{Initial;A;TargetLuminanceChanged;print_sysstates;};
+};
+Simulation{
+  TargetLuminance=0;
+  CurrentLuminance=0;
+  Start{S1;};
+};

@@ -1,0 +1,57 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of multiple start definitions in simulations.
+ *
+ * 
+ */
+
+kind Event;
+
+Event E,F,G,H;
+
+
+Statemachine{
+  id{S1;};
+  States{Initial;a;b;c;d;e;f;g;h;};
+  Transition{Initial;a;};
+  Transition{a;b;};
+};
+
+Statemachine{
+  id{S2;};
+  States{Initial;a;b;c;d;e;f;g;h;};
+  Transition{Initial;a;in_state(S1.b);};
+  Transition{a;b;};
+};
+
+Statemachine{
+  id{S3;};
+  States{Initial;a;b;c;d;e;f;g;h;};
+  Transition{Initial;a;in_state(S1.b) && in_state(S2.b);};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * 
+ * 
+ * */
+Simulation
+{
+  TestCase{TC1;};Test{T1;};
+//   ASSERT_EVENTUALLY_VISIT_STATES{S1.Initial;S1.a;S1.b;S1.c;S1.d;};
+//   ASSERT_NEVER_VISIT_STATES{S1.h;};
+  Start{S1;};
+  Start{S2;};
+  Start{S3;};
+//   ASSERT_CURRENT_STATES_CONTAINS{S1.d;S1.g;};  
+};

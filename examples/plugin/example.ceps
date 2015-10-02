@@ -1,0 +1,25 @@
+kind Event;
+kind Systemstate;
+
+Event E;
+Systemstate v1,v2;
+
+
+Statemachine{
+   id{S1;};
+   States{Initial;};
+   Actions{
+    A{
+      v2 = double_value(v1);
+      print(v2,"\n");
+    };  
+   };
+   Transition{Initial;Initial;E;A;};
+};
+
+Simulation{
+  v1 = 2;
+  TestCase{Plugins;};Test{double_value_function;};
+  Start{S1;};
+  //E;
+};

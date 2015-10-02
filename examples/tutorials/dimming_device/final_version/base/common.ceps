@@ -1,0 +1,10 @@
+kind Systemstate;
+kind Event;
+kind Guard;
+
+
+Systemstate TargetLuminance,CurrentLuminance;
+Event TargetLuminanceChanged;
+Event CurrentLuminanceChanged;
+Event E;
+

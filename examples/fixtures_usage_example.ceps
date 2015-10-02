@@ -1,0 +1,60 @@
+kind Systemstate;
+kind Guard;
+kind Event;
+
+
+Guard g1,g2,g3,g4;
+Systemstate v1,v2,v3;
+Event e;
+
+Statemachine
+{
+ id{Sm_1;};
+ States{Initial;Final;s1;s2;s3;};
+ Transition{Initial;s1;e;g1;};
+};
+
+Statemachine
+{
+ id{Sm_2;};
+ States{Initial;Final;s1;s2;s3;};
+ Transition{Initial;s1;e;v1 && g2;};
+};
+
+TC1 {
+ 1 && 2 || 3;
+ v2 = 1;
+ v1 = 1;
+ g4 = 1;
+};
+
+TC1 {
+ g3 = v2 && g4;
+ g2 = g3 || v2;
+ g1 = v1 && g2;
+};
+
+
+Simulation
+{
+ TestCase{TC1;};Test{T1;}; 
+ Start{Sm_1;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{Sm_1.s1;};
+};
+
+
+Simulation
+{
+ v1 = 1;
+ g2 = 0;
+ Start{Sm_2;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{Sm_2.Initial;};
+};
+
+
+
+
+
+

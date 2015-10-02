@@ -1,0 +1,49 @@
+
+val VERSION = "SDIS Simulation @ sm4ceps. ceps (c) 2015 ceps developers, all rights reserved.";
+Systemstate mast_status;
+Systemstate radar_working_enabled;
+
+val mast_status_is_locked_navigation_mode = 1;
+val mast_status_is_moving_antenna_deployment = 2;
+val mast_status_is_unlocked_observation_mode = 3;
+
+
+
+message{id{TrgsBagMastToiVeNet;};payload{
+    xml{
+      val timestamp = c_get_time();
+      TrgsBagMastToiVeNet{
+	ApplicationHeartbeat{
+	 TimeSource{
+	   if (time_source == "utc")
+	     "UTC_Time";
+	   else if (time_source == "gps")
+	     "GPS_Time";
+	   else
+	     "BIOS_Time";
+	};
+	Year{get_year(timestamp);};
+	Month{get_month(timestamp);};
+	Day{get_day(timestamp);};
+	Hour{get_hour(timestamp);};
+	Minute{get_minute(timestamp);};
+	Second{get_second(timestamp);};
+	AppVersion{VERSION;};
+	};
+	StatusMast{
+	  xml_attr{"IsValid";"true;"};
+	  MastStatus{
+	    if (mast_status == mast_status_is_locked_navigation_mode)
+	      "IsLocked_NavigationMode";
+	    else if (mast_status == mast_status_is_moving_antenna_deployment)
+	      "IsMoving_AntennaDeployment";
+	    else "IsUnlocked_ObservationMode";
+	  };
+	};//StatusMast
+	StatusRadarEnabled{
+	   xml_attr{"IsValid";"true;"};
+	   IsRadarWorkingEnabled{if(radar_working_enabled) "true"; else "false";};
+	  
+	};
+      };      
+};};};

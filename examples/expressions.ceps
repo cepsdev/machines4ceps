@@ -1,0 +1,106 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage of expressions.
+ *
+ * 
+ */
+
+kind Event;
+kind Guard;
+
+Event E,F,G,H;
+
+kind Systemstate;
+Guard g,g_kampfschalter_is_active,g_y_drive_is_in_arbeitsbereich,g_z_drive_is_in_index_position,g_system_pressure_is_sufficient;
+Systemstate s1,s2,s3,s4,SENSOR_HR1O,SENSOR_HR1V,SENSOR_HR2O,SENSOR_HR2V,SENSOR_VZ2V,SENSOR_VZ2O;
+
+Globals{
+  s4 = 1;
+};
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Transition{Initial;a;abs(s1) == 1.0;};
+ Transition{a;b;g;};
+};
+
+Statemachine
+{
+ id{S2;};
+ States{Initial;Final;a;b;c;d;e;};
+ Transition{Initial;a;cos(s1) == 1.0;};
+};
+
+Statemachine
+{
+ id{S3;};
+ States{Initial;Final;a;b;c;d;e;};
+ Transition{Initial;a;sin(s1*s2) == 0;};
+};
+
+
+Globals{
+   g_y_drive_is_in_arbeitsbereich = 0;
+   g_z_drive_is_in_index_position = 0;
+   g_system_pressure_is_sufficient = 0;
+   g_kampfschalter_is_active = 0;
+   SENSOR_HR1O = 0;SENSOR_HR1V = 0;SENSOR_HR2O = 1;SENSOR_HR2V=1;SENSOR_VZ2V=1;SENSOR_VZ2O=1;
+   
+   g = g_kampfschalter_is_active || 
+  (
+    ((g_y_drive_is_in_arbeitsbereich && g_z_drive_is_in_index_position) ) &&
+    (g_system_pressure_is_sufficient && SENSOR_HR1O && ! SENSOR_HR1V && SENSOR_HR2O && !SENSOR_HR2V && SENSOR_VZ2V && !SENSOR_VZ2O)
+  );
+};
+
+ /**
+ * @section DESCRIPTION
+ * 
+ * abs
+ * 
+ * */
+Simulation
+{
+ TestCase{State_machine_with_guards;};Test{which_contain_abs;};
+ s1=-1;
+ Start{S1;};
+ ASSERT_CURRENT_STATES_CONTAINS{S1.b;};
+};
+ /**
+ * @section DESCRIPTION
+ * 
+ * cos
+ * 
+ * */
+Simulation
+{
+ TestCase{State_machine_with_guards;};Test{which_contain_cos;};
+ s1 = 0;
+ Start{S2;};
+ ASSERT_CURRENT_STATES_CONTAINS{S2.a;};
+};
+ /**
+ * @section DESCRIPTION
+ * 
+ * sin
+ * 
+ * */
+Simulation
+{
+ s1 = 0;s2=2;
+ TestCase{State_machine_with_guards;};Test{which_contain_sin;};
+ 
+ Start{S3;};
+ ASSERT_CURRENT_STATES_CONTAINS{S3.a;};
+};

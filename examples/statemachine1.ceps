@@ -1,0 +1,49 @@
+/**
+
+ A simple example for a state machine (www.boost.org/doc/libs/1_46_1/libs/msm/doc/HTML/ch03s02.html )
+ visualize using plantuml.
+
+*/
+
+Statemachine
+{
+ id{Playing;};
+ description{"Substatemachine example";};
+ States{Song1;Song2;Song3;};
+ Events{NextSong;PreviousSong;};
+ Actions{start_next_song;start_prev_song;};
+ Transition{Initial;Song1;};
+ Transition{Song1;Song2;NextSong;start_next_song;};
+ Transition{Song2;Song3;NextSong;start_next_song;};
+ Transition{Song3;Song2;PreviousSong;start_prev_song;};
+ Transition{Song2;Song1;PreviousSong;start_prev_song;};
+};
+
+Statemachine
+{
+	id{Player;};
+	States{ Empty; Open;Stopped;Paused;};
+	Events{open_close;cd_detected;stop;play;end_pause;pause;};
+	Actions{
+			close_drawer;open_drawer;store_cd_info;
+			stopped_again;stop_and_open;stop_playback;pause_playback;start_playback;
+			resume_playback;
+	};
+	Transition{Paused;Playing;end_pause;resume;};
+	Transition{Playing;Paused;pause;pause_playback;};
+	Transition{Paused;Stopped;stop;stop_playback;};
+	Transition{Paused;Open;open_close;stop_and_open;};
+	Transition{Playing;Open;open_close;stop_and_open;};
+	Transition{Playing;Paused;pause;pause_playback;};
+	Transition{Playing;Stopped;stop;stop_playback;};
+	Transition{Stopped;Playing;play;start_playback;};
+	Transition{Open;Empty;open_close;close_drawer;};
+	Transition{Empty;Open;open_close;open_drawer;};
+	Transition{Empty;Stopped;cd_detected;store_cd_info;};
+	Transition{Stopped;Stopped;stopped_again;};
+	Transition{Open;Stopped;open_close;open_drawer;};	
+};
+
+main{Player;};
+
+

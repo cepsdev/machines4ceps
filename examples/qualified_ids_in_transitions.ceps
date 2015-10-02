@@ -1,0 +1,127 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of so called qualified state-ids used in the source/destination 
+ * part of transitions. A qualified state-id is a sequence of identifiers separated by a dot,
+ * examples are 
+ *   S1
+ *   my_state_machine.sub_machine_a.sub_machine_b. 
+ * 
+ * 
+ * Qualified state-ids allow for references of nested states by listing the compound states (state machines) 
+ * which lie on the path from the state machine lexically containing the qualified state-id to the desired state/state machine.
+ *
+ * 
+ */
+
+kind Systemstate;
+kind Guard;
+kind Event;
+
+
+Guard g1,g2,g3,g4;
+Systemstate v1,v2,v3;
+Event e,f,g,h;
+
+
+Statemachine
+{
+ id{U1;}; 
+ Statemachine
+ {
+  id {U3;};
+  States{Initial;Final;};
+ };
+ States{Initial;Final;u1_s1;u1_s2;u1_s3;};
+ Transition{Initial;u1_s1;e;};
+};
+
+Statemachine
+{
+ id{U2;}; 
+ import{U1;}; 
+ States{Initial;Final;u2_s1;u2_s2;u2_s3;};
+ Transition{Initial;u2_s1;e;};
+};
+
+
+Statemachine
+{
+ id{S2;};
+ States{Initial;s2_s1;};
+ Transition{Initial;s2_s1;};
+};
+
+Statemachine
+{
+ id{S1;};
+ import{U2;};
+ States{Initial;Final;s1_s1;s1_s2;exception_state;};
+ Transition{Initial;s1_s1;};
+ Transition{s1_s1;U2.U1.u1_s1;e;}; //Jump directly to a nested state 
+ Transition{s1_s1;U2.U1.U3;f;}; //Jump directly to a nested state
+ Transition{s1_s1;S2;g;}; //Jump directly to a different top level state machine
+ Transition{S2.s2_s1;exception_state;h;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Demonstrates a direct jump from a top level state machine into a pure state contained 
+ * in a nested state machine.
+ * */
+Simulation
+{
+ Start{S1;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{S1.U2.Initial; S1.U2.U1.u1_s1;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Demonstrates a direct jump from a top level state machine into a compound state contained 
+ * in a nested state machine.
+ * */
+Simulation
+{
+ Start{S1;};
+ f;
+ ASSERT_CURRENT_STATES_CONTAINS{S1.U2.Initial; S1.U2.U1.Initial; S1.U2.U1.U3.Initial;};
+};
+
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Demonstrates a direct jump from a top level state machine into a compound state contained 
+ * in a top level state machine.
+ * */
+Simulation
+{
+ Start{S1;};
+ g;
+ ASSERT_CURRENT_STATES_CONTAINS{S2;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Demonstrates a jump from a top level state machine different from the state machine containing 
+ * the transition declaration.
+ * */
+Simulation
+{
+ Start{S2;};
+ h;
+ ASSERT_CURRENT_STATES_CONTAINS{S1.exception_state;};
+};
+
