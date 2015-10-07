@@ -148,11 +148,12 @@ private:
 	};
 
 	Log std_log_;
+public:
 	using type_definitions_t = std::map<std::string, ceps::ast::Struct_ptr>;
 	type_definitions_t type_definitions_;
 	type_definitions_t const & type_definitions() const {return type_definitions_;}
 	type_definitions_t & type_definitions() {return type_definitions_;}
-
+private:
 
 
 
@@ -171,9 +172,6 @@ private:
 	state_rep_t resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
 	event_rep_t resolve_event_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
 	void process_simulation(ceps::ast::Nodeset& sim,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
-	bool is_assignment_op(ceps::ast::Nodebase_ptr n);
-	bool is_assignment_to_guard(ceps::ast::Binary_operator & node);
-	bool is_assignment_to_state(ceps::ast::Binary_operator & node,std::string& lhs_id);
 	void eval_guard_assign(ceps::ast::Binary_operator & root);
 	void eval_state_assign(ceps::ast::Binary_operator & root,std::string const &);
 	void add(states_t& states, state_rep_t s);
@@ -192,6 +190,9 @@ private:
 													 std::map<state_rep_t,std::vector<State_machine::Transition::Action> >& associated_actions);
 
 public:
+	bool is_assignment_op(ceps::ast::Nodebase_ptr n);
+	bool is_assignment_to_guard(ceps::ast::Binary_operator & node);
+	bool is_assignment_to_state(ceps::ast::Binary_operator & node,std::string& lhs_id);
 
 	Log& log(){return std_log_;}
 

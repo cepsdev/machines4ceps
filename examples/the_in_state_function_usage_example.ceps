@@ -1,3 +1,33 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of in_state().
+ * 
+ * SYNOPSIS:
+ * 
+ * in_state(state-id_1,state-id_2,...,state-id_n)
+ * 
+ * Returns true (i.e. an integer unequal 0) if for some 1 <= j <= n state_j is element of the set of current states - a data 
+ * structure maintained by the sm4ceps core runtime. Otherwise returns false (i.e. 0).
+ * 
+ * state_id can be :
+ * - the full-qualified identifier of a state or 
+ * - the name of a local state, i.e. a state with the same sm-minimal scope. A lexical scope S is sm-minimal with respect to a given 
+ *   lexical entity E if and only if S is the **minimally** chosen scope which satisfies the following conditions:
+ *   - S contains E.
+ *   - S is identical to a state machine definition.
+ 
+ */
+
+
 kind Systemstate;
 kind Guard;
 kind Event;
@@ -7,73 +37,47 @@ Guard g1,g2,g3,g4;
 Systemstate v1,v2,v3;
 Event e,f,g,h,i;
 
-Statemachine
-{
- id{Sm_1;};
- States{Initial;Final;s1;s2;s3;};
- Actions{a1{e;f;};a2;a3{g;h;};};
- Transition{Initial;s1;e;g1;a1;a2;a3;};
+Statemachine{id{A;};
+ States{Initial;Final;};
+ Actions{
+  a{
+    expect(in_state(Initial));
+  };  
+ };
+ Transition{Initial;Final;e;a;};
 };
 
-Statemachine
-{
- id{Sm_2;};
- States{Initial;Final;s1;s2;s3;};
- Transition{Initial;s1;i;in_state(Sm_1.s1,Sm_1.s1);};
-};
-
-
-Statemachine{
-   id{A;};
-   States{Initial;a;b;c;};
-   Transition{Initial;a;e;};
-   Transition{Initial;b;e;};
-};
-Statemachine{
-   id{B;};
-   States{Initial;};
-   Actions{
-   a{
-       print("Action B.a.\n");
-       if (in_state(A.a, A.b)) print("A.a and A.b are active.\n");
-    };
-   };
-   Transition{Initial;Initial;f;a;};
-};
-
-TC1 {
- 1 && 2 || 3;
- v2 = 1;
- v1 = 1;
- g4 = 1;
-};
-
-TC1 {
- g3 = v2 && g4;
- g2 = g3 || v2;
- g1 = v1 && g2;
+Statemachine{id{B;};
+  
 };
 
 
 Simulation
-{
- TestCase{TC1;};Test{T1;}; 
- Start{Sm_1;Sm_2;};
- e;
- ASSERT_CURRENT_STATES_CONTAINS{Sm_1.s1;};
- ASSERT_CURRENT_STATES_CONTAINS_NOT{Sm_2.s1;};
- i;
- ASSERT_CURRENT_STATES_CONTAINS{Sm_2.s1;};
- ASSERT_CURRENT_STATES_CONTAINS{Sm_1.s1;}; 
+{ 
+  TestCase{If_the_in_state_function;};Test{gets_called_with_the_name_of_an_active_global_state_machine_the_returned_value_is_true;};
+  Start{A;};  
+  expect(in_state(A),"Expected A to be an active state.");
+  expect(!in_state(B),"Expected B to be an inactive state.");
 };
 
 Simulation
 { 
-  TestCase{The_in_state_function;};Test{takes_a_variable_parameter_list_of_states_and_returns_true_iff_each_state_in_the_list_is_active;};
-  Start{A;B;};e;f;
+  TestCase{If_the_in_state_function;};Test{gets_called_inside_an_action_you_can_identify_local_states_with_their_names;};
+  Start{A;};
+  expect(in_state(A),"Expected A to be an active state.");
+  expect(!in_state(B),"Expected B to be an inactive state.");
+  e; 
 };
 
-
+Simulation
+{ 
+  TestCase{The_in_state_function;};Test{accepts_any_number_of_state_ids_which_can_be_fullqualified;};
+  Start{A;};
+  expect(in_state(A),"Expected A to be an active state.");
+  expect(!in_state(B),"Expected B to be an inactive state.");
+  e; 
+  expect(in_state(A.Final,A.Initial), "Expected to be in at least in one of the states: A.Final,A.Initial." );
+};
 
 
 

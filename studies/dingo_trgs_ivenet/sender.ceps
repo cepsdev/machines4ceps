@@ -1,0 +1,18 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Sender definition for ivenet communication.
+ * 
+ */
+
+
+
+
+sender{
+  when{IVeNetHeartbeat;};
+  emit{TrgsBagMastToiVeNet;};
+  transport{generic_tcp_out{port{"4000";};ip{"127.0.0.1";};eof{"\n";};};};    
+};

@@ -26,10 +26,11 @@
 								<option id="gnu.cpp.compiler.option.dialect.std.1092503036" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++11" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.449327819" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/opt/ros/groovy/include"/>
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/statemachines"/>
+									<listOptionValue builtIn="false" value="../../pugixml-1.6/src"/>
 									<listOptionValue builtIn="false" value="/home/tprerovs/projects/ceps/core/include"/>
 									<listOptionValue builtIn="false" value="/home/tprerovs/projects/ceps/core/include/include_gen"/>
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/statemachines/include"/>
+									<listOptionValue builtIn="false" value="/home/tprerovs/projects/sm4ceps"/>
+									<listOptionValue builtIn="false" value="/home/tprerovs/projects/sm4ceps/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1091782327" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -127,6 +128,13 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/statemachines"/>
+		</configuration>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/statemachines"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

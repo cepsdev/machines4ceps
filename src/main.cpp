@@ -615,7 +615,7 @@ int main(int argc,char ** argv)
 	State_machine_simulation_core sm_core;
 	sm_core.set_fatal_error_handler(fatal);
 	sm_core.set_non_fatal_error_handler(warn);
-	sm_core.set_log_stream(&std::cerr);
+	sm_core.set_log_stream(&std::cout);
 
 
 

@@ -1,4 +1,5 @@
 #include "core/include/state_machine_simulation_core.hpp"
+#include <time.h>
 //#include "core/include/state_machine.hpp"
 
 #ifdef __GNUC__
@@ -180,7 +181,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 																				std::string const & id,
 																				ceps::ast::Call_parameters* params)
 {
-
 	std::vector<ceps::ast::Nodebase_ptr> args;
 	if (params != nullptr && params->children().size()) flatten_args(this,params->children()[0], args, ',');
 
@@ -198,11 +198,32 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	{
 		return new ceps::ast::Int( current_event().payload_.size(), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 	}
+	else if (id == "expect")
+	{
+		if (!(args.size() >= 1 && args[0]->kind() == ceps::ast::Ast_node_kind::int_literal && 0!=ceps::ast::value(ceps::ast::as_int_ref(args[0])) ))
+		{
+			std::cerr << "***EXPECTATION NOT SATISFIED";
+			if (args.size() > 1) std::cerr << ":\n\t";
+			for(int i = 1; i < args.size() ;++i){
+				std::cerr << to_string(this,args[i]);
+			}
+			std::cerr << "\n";
+			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		}
+		return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	}
 	else 	if(id == "in_state")
 	{
 	  if(params->children().size() == 0) fatal_(-1,"Function '"+id+"' expects at least one argument");
 	  bool found = false;
 	  //auto const & args =  params->children();
+
+	  /*log() << "[ACTIVE_STATES]";
+	  for(auto s:current_states())
+	  {
+		  log() << get_fullqualified_id(s) <<";";
+	  }
+	  log() << "\n\n";*/
 	  for(auto p : args)
 		 {
 	  	   if ( !(p->kind() == ceps::ast::Ast_node_kind::identifier) && !(p->kind() == ceps::ast::Ast_node_kind::binary_operator)){
@@ -210,7 +231,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			 ss << *p;
 			 fatal_(-1,"Function '"+id+"': illformed argument, expected a qualified id, got: "+ss.str());
 			}
-			auto state = resolve_state_qualified_id(p,nullptr);
+			auto state = resolve_state_qualified_id(p,active_smp);
 			if(!state.valid())
 			{
 			 std::stringstream ss;
@@ -223,6 +244,48 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			}
 			if(found) break;
 		} return new ceps::ast::Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+	 } else if (id == "c_lib_localtime_year"){
+		 time_t rawtime;
+		 struct tm* timeinfo;
+		 time(&rawtime);
+		 timeinfo = localtime(&rawtime);
+		 return new ceps::ast::Int(timeinfo->tm_year+1900,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+
+	 }else if (id == "c_lib_localtime_month"){
+		 time_t rawtime;
+		 struct tm* timeinfo;
+		 time(&rawtime);
+		 timeinfo = localtime(&rawtime);
+		 return new ceps::ast::Int(timeinfo->tm_mon+1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+
+	 }else if (id == "c_lib_localtime_day"){
+		 time_t rawtime;
+		 struct tm* timeinfo;
+		 time(&rawtime);
+		 timeinfo = localtime(&rawtime);
+		 return new ceps::ast::Int(timeinfo->tm_mday,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+
+	 } else if (id == "c_lib_localtime_hour"){
+		 time_t rawtime;
+		 struct tm* timeinfo;
+		 time(&rawtime);
+		 timeinfo = localtime(&rawtime);
+		 return new ceps::ast::Int(timeinfo->tm_hour,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+
+	 } else if (id == "c_lib_localtime_minute"){
+		 time_t rawtime;
+		 struct tm* timeinfo;
+		 time(&rawtime);
+		 timeinfo = localtime(&rawtime);
+		 return new ceps::ast::Int(timeinfo->tm_min,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+
+	 } else if (id == "c_lib_localtime_second"){
+		 time_t rawtime;
+		 struct tm* timeinfo;
+		 time(&rawtime);
+		 timeinfo = localtime(&rawtime);
+		 return new ceps::ast::Int(timeinfo->tm_sec,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+
 	 }
 
 	auto it = name_to_smcore_plugin_fn.find(id);
@@ -272,7 +335,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		}
 	}
 
-	//fatal_(-1,"Undefined function '"+id+"' called.");
+	fatal_(-1,"Undefined function '"+id+"' called.");
 	return nullptr;
 }
 
@@ -320,23 +383,49 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	return nullptr;
 }
 
+inline ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+										 State_machine* containing_smp,
+										 ceps::ast::Nodebase_ptr node,
+										 ceps::ast::Nodebase_ptr root_node)
+{
+	ceps_interface_eval_func_callback_ctxt_t ctxt;
+	ctxt.active_smp = containing_smp;
+	ctxt.smc  = smc;
+	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+
+	smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->get_global_states();
+	smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
+	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
+	auto r = ceps::interpreter::evaluate(node,
+			smc->ceps_env_current().get_global_symboltable(),
+			smc->ceps_env_current().interpreter_env(),root_node	);
+	smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
+	smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
+	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
+
+}
+
 extern void define_a_struct(State_machine_simulation_core*,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix);
-ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(State_machine* containing_smp,ceps::ast::Nodebase_ptr ac_seq)
+
+ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
+		State_machine* containing_smp,
+		ceps::ast::Nodebase_ptr ac_seq)
 {
 	using namespace std;
 	using namespace std::chrono;
 	DEBUG_FUNC_PROLOGUE
+	const auto verbose_log = false;
 
 	if (ac_seq == nullptr) return nullptr;
 	if (ac_seq->kind() != ceps::ast::Ast_node_kind::structdef && ac_seq->kind() != ceps::ast::Ast_node_kind::scope) return nullptr;
 	auto actions = ceps::ast::nlf_ptr(ac_seq);
-	log() << "[EXECUTE STATEMENTS][START]\n";
+	if (verbose_log) log() << "[EXECUTE STATEMENTS][START]\n";
 	ceps_interface_eval_func_callback_ctxt_t ctxt;
 	ctxt.active_smp = containing_smp;
 	ctxt.smc  = this;
 	for(auto & n : actions->children())
 	{
-		log() << "[EXECUTE STATEMENT]" << *n << "\n";
+		if (verbose_log)log() << "[EXECUTE STATEMENT]" << *n << "\n";
 
 		if (n->kind() == ceps::ast::Ast_node_kind::ret)
 		{
@@ -574,9 +663,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(State_
 					}
 					main_event_queue().data() = event_queue_temp;
 				}
+			} else{
+				auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
 			}
 		}
 	}
-	log() << "[EXECUTE STATEMENTS][END]\n";
+	if (verbose_log) log() << "[EXECUTE STATEMENTS][END]\n";
 	return nullptr;
 }

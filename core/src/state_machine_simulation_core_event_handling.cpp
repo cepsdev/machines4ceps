@@ -249,8 +249,19 @@ do{
 		if (!cev.valid() || cev.sid_.length() == 0) {
 			ceps::ast::Scope scope(node_raw);
 			execute_action_seq(nullptr,&scope);
-			pending_timed_event = true;
-			continue;
+			//REMARK:Last call could have triggered an event, so we need to examine the queue first.
+			++pos;
+			return fetch_event( ev,
+					sim,
+					pos,
+					states,
+					states_updated,
+					ignore_handler,
+					ignore_ev_queue,
+					exit_if_start_found);
+
+			/*pending_timed_event = true;
+			continue;*/
 		}
 		ev = cev;
 		if (running_as_node()) {

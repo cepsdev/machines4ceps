@@ -3,6 +3,7 @@
 #include "core/include/sm_ev_comm_layer.hpp"
 #include "core/include/serialization.hpp"
 #include "core/include/sm_raw_frame.hpp"
+#include "pugixml.hpp"
 #ifdef __gnu_linux__
 
 #include <arpa/inet.h>
@@ -584,6 +585,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 	auto statemachines = ns[all{"Statemachine"}];
 	auto globalfunctions = ns["global_functions"];
 	auto pdoframes = ns[all{"raw_frame"}];
+	auto xmlframes = ns[all{"xml_frame"}];
 	auto all_sender = ns[all{"sender"}];
 	auto all_receiver = ns[all{"receiver"}];
 
@@ -778,22 +780,39 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		DEBUG << "[PROCESSING PDO_RAW_FRAME_SPEC][FINISHED]\n";
 	}
 
+	for(auto xmlframe_ : xmlframes)
+	{
+		auto xmlframe = xmlframe_["xml_frame"];
+		auto gen = new Xmlframe_generator;
+		if (xmlframe["id"].size() != 1)
+			fatal_(-1,"xml_frame definition: missing id.");
+		if (xmlframe["id"].nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
+			fatal_(-1,"xml_frame definition: id must be an unbound identifier.");
+
+		std::string id = ceps::ast::name(ceps::ast::as_id_ref(xmlframe["id"].nodes()[0]));
+		DEBUG << "[PROCESSING XML_FRAME_SPEC("<< id <<")][START]\n";
+		gen->readfrom_spec(xmlframe);
+		frame_generators()[id] = gen;
+		DEBUG << "[PROCESSING XML_FRAME_SPEC][FINISHED]\n";
+	}
+
 	//Handle CALL sender
 	for(auto sender_ : all_sender)
 	{
-		DEBUG << "[PROCESSING SENDER][START]\n";
+		DEBUG << "[PROCESSING SENDER]\n";
 		auto sender = sender_["sender"];
 		auto when = sender["when"];
 		auto emit = sender["emit"];
 		auto transport  = sender["transport"];
 
 		//std::cout << when << std::endl;
+		bool not_supported = false;
 		if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::symbol || "Event" != ceps::ast::kind(ceps::ast::as_symbol_ref( when.nodes()[0])) )
-			continue;
-		if (emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-			continue;
-		if (transport["generic_tcp_out"].empty()) continue;
-
+			not_supported=true;
+		if (!not_supported && (emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier))
+			not_supported=true;
+		if (transport["generic_tcp_out"].empty()) not_supported=true;
+		if(not_supported) {warn(-1,"Unsupported sender declaration");continue;}
 
 		std::string port = transport["generic_tcp_out"]["port"].as_str();
 		std::string ip = transport["generic_tcp_out"]["ip"].as_str();

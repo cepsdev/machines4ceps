@@ -1,0 +1,48 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Common declarations.
+ * 
+ */
+
+val VERSION = "IVeNet <-> SDIS Simulation @ sm4ceps Version 10-06-2015 written by tomas.prerovsky@gmail.com. ceps is open source (MIT License) (c) 2015 ceps developers, all rights reserved.";
+
+kind Systemstate;
+kind Event;
+kind Guard;
+
+
+
+Event IVeNetHeartbeat;
+
+Systemstate app_beat_counter;
+Systemstate time_source;
+Systemstate mast_status;
+Systemstate radar_working_enabled;
+Systemstate platform_status,ivenet_comm_pending_req;
+Systemstate xml_field_radarparkpositionrequest_valid;
+Systemstate xml_status_platform_valid;
+
+val mast_status_is_locked_navigation_mode = 1;
+val mast_status_is_moving_antenna_deployment = 2;
+val mast_status_is_unlocked_observation_mode = 3;
+
+val platform_status_not_aligned = 0;
+val platform_alignment_in_progress = 1;
+val platform_status_aligned = 2;
+val platform_status_not_aligned_due_to_vehicle_movement = 3;
+val platform_status_not_aligned_due_to_mast_movement = 4;
+val platform_status_general_malfunction = 5;
+
+Globals{
+  mast_status = mast_status_is_locked_navigation_mode;
+  radar_working_enabled = 0;
+  ivenet_comm_pending_req = 1;
+  xml_field_radarparkpositionrequest_valid = 0;
+  xml_status_platform_valid = 1;
+  platform_status = platform_alignment_in_progress;
+};
+

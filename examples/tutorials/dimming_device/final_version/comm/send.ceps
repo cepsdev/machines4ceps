@@ -14,9 +14,9 @@
  */
 
 sender{
-  when{TargetLuminanceChanged;};
-  emit{dimm_request_out;};
-  transport{generic_tcp_out{port{"4000";};ip{"127.0.0.1";};};};    
+  when{IVeNetHeartbeat;};
+  emit{TrgsBagMastToiVeNet;};
+  transport{generic_tcp_out{port{"4000";};ip{"127.0.0.1";};eof{"\n";};};};    
 };
 
 

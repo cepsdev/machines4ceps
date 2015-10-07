@@ -46,6 +46,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>include/pugixml.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/pugixml-1.6/src/pugixml.hpp</locationURI>
+		</link>
+		<link>
 			<name>include/serialization.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/serialization.hpp</locationURI>
@@ -81,6 +86,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/cmdline_utils.cpp</locationURI>
 		</link>
 		<link>
+			<name>src/pugiconfig.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/pugixml-1.6/src/pugiconfig.hpp</locationURI>
+		</link>
+		<link>
+			<name>src/pugixml.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/pugixml-1.6/src/pugixml.cpp</locationURI>
+		</link>
+		<link>
 			<name>src/serialization.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/serialization.cpp</locationURI>
@@ -88,7 +103,7 @@
 		<link>
 			<name>src/sm_comm_naive_msg_prot.cpp</name>
 			<type>1</type>
-			<locationURI>PARENT-1-ECLIPSE_HOME/projects/statemachines/core/src/sm_comm_naive_msg_prot.cpp</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/sm_comm_naive_msg_prot.cpp</locationURI>
 		</link>
 		<link>
 			<name>src/sm_raw_frame.cpp</name>
@@ -108,12 +123,12 @@
 		<link>
 			<name>src/state_machine_simulation_core.cpp</name>
 			<type>1</type>
-			<locationURI>PARENT-1-ECLIPSE_HOME/projects/statemachines/core/src/state_machine_simulation_core.cpp</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machine_simulation_core.cpp</locationURI>
 		</link>
 		<link>
 			<name>src/state_machine_simulation_core_action_handling.cpp</name>
 			<type>1</type>
-			<locationURI>PARENT-1-ECLIPSE_HOME/projects/statemachines/core/src/state_machine_simulation_core_action_handling.cpp</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machine_simulation_core_action_handling.cpp</locationURI>
 		</link>
 		<link>
 			<name>src/state_machine_simulation_core_event_handling.cpp</name>
