@@ -113,16 +113,26 @@ bool is_second(ceps::ast::Unit_rep unit)
 
 void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool periodic_timer)
 {
+
 	if (args.size() >= 2 &&
 		( args[1]->kind() == ceps::ast::Ast_node_kind::symbol &&
-		kind(ceps::ast::as_symbol_ref(args[1])) == "Event")
+		kind(ceps::ast::as_symbol_ref(args[1])) == "Event"
 		|| args[1]->kind() == ceps::ast::Ast_node_kind::func_call
+	    || args[1]->kind() == ceps::ast::Ast_node_kind::identifier
+		)
 		)
 	{
+		bool public_event = true;
 		std::string ev_id;
 		std::vector<ceps::ast::Nodebase_ptr> fargs;
 
 		if (args[1]->kind() == ceps::ast::Ast_node_kind::symbol) ev_id = name(ceps::ast::as_symbol_ref(args[1]));
+		else if (args[1]->kind() == ceps::ast::Ast_node_kind::identifier)
+		{
+			ev_id = "@@queued_action";
+			fargs.push_back(args[1]);
+			public_event = false;
+		}
 		else {
 			std::string  func_name;
 			if (!read_func_call_values(this,args[1], func_name,fargs))
@@ -168,6 +178,7 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 						clock_type::duration((long int) ((clock_type::duration::period::den*delta)/clock_type::duration::period::num)),
 						timer_id,
 						periodic_timer);
+			ev_to_send.already_sent_to_out_queues_ = !public_event;
 			if (fargs.size())
 				ev_to_send.payload_ = fargs;
 
@@ -335,7 +346,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		}
 	}
 
-	fatal_(-1,"Undefined function '"+id+"' called.");
+	//fatal_(-1,"Undefined function '"+id+"' called.");
 	return nullptr;
 }
 
@@ -487,6 +498,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 					continue;
 				}
 			}
+
+			auto it = global_funcs().find(name(ceps::ast::as_id_ref(n)));
+			if (it != global_funcs().end()){
+				auto body = it->second;
+				execute_action_seq(nullptr,body);continue;
+			}
 			std::stringstream ss;ss << *n;
 			fatal_(-1,"Invalid statement:"+ss.str());
 		} else if (n->kind() == ceps::ast::Ast_node_kind::ifelse) {
@@ -558,18 +575,22 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			else if (func_name == "timer" || func_name == "start_timer" || func_name == "start_periodic_timer")
 			{
 
+
 				{
 					std::lock_guard<std::recursive_mutex>g(states_mutex_);
 					ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
 					ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
 					ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);
 					for(size_t i = 0; i != args.size(); ++i)
-					 args[i] = ceps::interpreter::evaluate(args[i],
+					 {args[i] = ceps::interpreter::evaluate(args[i],
 																		ceps_env_current().get_global_symboltable(),
 																		ceps_env_current().interpreter_env(),n	);
+
+					 }
 					ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
 					ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
 				}
+
 
 				exec_action_timer(args,func_name == "start_periodic_timer");
 			}

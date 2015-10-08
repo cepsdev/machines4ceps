@@ -69,16 +69,39 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		if (!taking_epsilon_transitions)
 		{
 		 if (step_handler_) quit = step_handler_();
-		 if (!fetch_event(ev,sim,pos,states,fetch_made_states_update)) {
+		 std::vector<State_machine*> on_enter_seq;
+		 if (!fetch_event(ev,sim,pos,states,fetch_made_states_update,on_enter_seq)) {
 			 if (fetch_made_states_update)
 			 {
+			  if (on_enter_seq.size())
+				{
+				 for(auto const & sm : on_enter_seq){
+				 	 //Handle on_enter
+					 log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
+					 auto it = sm->actions_.find(State_machine::Transition::Action("on_enter"));
+					 if (it == sm->actions_.end()) continue;
+					 if (it->body_ == nullptr) continue;
+					 execute_action_seq(sm,it->body());
+				 }//for
+			   }
+
 			   taking_epsilon_transitions = true;
 			   continue;
 			 } else {
 			  log()<< "[NO EVENT FOUND => COMPUTATION COMPLETE]\n";
 			  break;
 			 }
-		 } else ev_read = true;
+		 } else {
+			 if (ev.sid_ == "@@queued_action")
+			 {
+				 ceps::ast::Scope scope;
+				 scope.children() = ev.payload_;
+				 execute_action_seq(nullptr,&scope);
+				 scope.children().clear();
+				 continue;
+			 }
+			 ev_read = true;
+		 }
 		 current_event() = ev;
 		 log()<< "[FETCHED_EVENT][" << ev.sid_ << "]\n";
 		}

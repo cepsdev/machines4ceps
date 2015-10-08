@@ -45,6 +45,7 @@ bool State_machine_simulation_core::fetch_event(event_rep_t& ev,
 												int& pos,
 												states_t& states,
 												bool& states_updated,
+												std::vector<State_machine*>& on_enter_seq,
 												bool ignore_handler,
 												bool ignore_ev_queue,
 												bool exit_if_start_found)
@@ -124,6 +125,7 @@ do{
 		  {
 			  DEBUG << "[START_FOUND]\n";
 			  states_t new_states;
+			  std::set<State_machine*> new_sms;
 			  for(auto const& n: ceps::ast::as_struct_ref(node_raw).children())
 			  	{
 				    DEBUG << "[START_FOUND][INSERT_STATE]\n";
@@ -133,7 +135,9 @@ do{
 			  		std::stringstream ss; ss << ceps::ast::Nodeset(n);
 			  		if (!state.valid()) fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
 			  		new_states.push_back(state);
+			  		new_sms.insert(state.smp_);
 			  	}//for
+			  on_enter_seq.insert(on_enter_seq.end(),new_sms.begin(),new_sms.end());
 			  ++pos;
 			  states_updated = true;
 			  states_t new_states_hull;
@@ -256,6 +260,7 @@ do{
 					pos,
 					states,
 					states_updated,
+					on_enter_seq,
 					ignore_handler,
 					ignore_ev_queue,
 					exit_if_start_found);

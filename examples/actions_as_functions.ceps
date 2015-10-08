@@ -81,6 +81,10 @@ global_functions{
     params{x;y;};
     return x+y;
   };
+  a_global_action{
+    print("a_global_action called!\n");
+    start_timer(1.0*s,E);
+  };
 };
 
 Statemachine{
@@ -132,6 +136,22 @@ Statemachine{
   Transition{Initial;A;E;action1;g;};
 };
 
+
+Statemachine{
+  id{S3;};
+  States{Initial;};
+  on_enter{
+    print("***Entering S3***\n");
+    start_timer(1.0*s,a_global_action);
+   };
+   Actions{
+    on_e{
+      print("on_e:Event E handled.\n");
+    };  
+   };
+   Transition{Initial;Initial;E;on_e;};
+};
+
 /**
  * @section DESCRIPTION
  * 
@@ -146,4 +166,8 @@ Simulation
   E;
   F;
   //ASSERT_CURRENT_STATES_CONTAINS{S1.d;S1.g;};  
+};
+
+Simulation{
+  Start{S3;};  
 };

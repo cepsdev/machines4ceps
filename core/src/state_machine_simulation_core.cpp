@@ -1381,7 +1381,8 @@ void State_machine_simulation_core::start_processing_init_script(ceps::ast::Node
 	using namespace ceps::ast;
 	event_rep_t ev;
 	bool dummy;
-	bool r = fetch_event(ev,sim,pos,states,dummy,true,true,true);
+	std::vector<State_machine*> on_enter_seq;
+	bool r = fetch_event(ev,sim,pos,states,dummy,on_enter_seq,true,true,true);
 	if(r)--pos;
 }
 

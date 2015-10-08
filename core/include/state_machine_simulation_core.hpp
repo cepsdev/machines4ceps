@@ -353,7 +353,7 @@ public:
 					states_t const& current_states);
 	ceps::ast::Nodebase_ptr execute_action_seq(State_machine* containing_smp,ceps::ast::Nodebase_ptr ac_seq);
 	bool fetch_event(event_rep_t& ev,ceps::ast::Nodeset& sim,int& pos,states_t& states,
-			bool& states_updated, bool ignore_handler = true, bool ignore_ev_queue =  false,bool exit_if_start_found = false);
+			bool& states_updated, std::vector<State_machine*>& on_enter_seq,bool ignore_handler = true, bool ignore_ev_queue =  false,bool exit_if_start_found = false);
 	void simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 
 	bool print_debug_info(bool b) {bool t = print_debug_info_; print_debug_info_ = b;return t;}
