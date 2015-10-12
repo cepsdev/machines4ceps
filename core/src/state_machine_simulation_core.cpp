@@ -812,7 +812,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		if (!not_supported && (emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier))
 			not_supported=true;
 		if (transport["generic_tcp_out"].empty()) not_supported=true;
-		if(not_supported) {warn(-1,"Unsupported sender declaration");continue;}
+        if(not_supported) {warn_(-1,"Unsupported sender declaration");continue;}
 
 		std::string port = transport["generic_tcp_out"]["port"].as_str();
 		std::string ip = transport["generic_tcp_out"]["ip"].as_str();
