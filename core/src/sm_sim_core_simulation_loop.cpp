@@ -45,6 +45,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 	{
 		sim.nodes().insert(sim.nodes().begin(),globals.nodes().begin(),globals.nodes().end());
 	}
+	globals = universe["globals"];
+	if (!globals.empty())
+	{
+		sim.nodes().insert(sim.nodes().begin(),globals.nodes().begin(),globals.nodes().end());
+	}
 
 
 	log()<< "[SIMULATION STARTED]\n";	log()<<"[START STATES] " ;	print_info(states);

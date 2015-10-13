@@ -12,7 +12,7 @@ cepslibs := ../ceps/core/bin
 pugisrc = pugixml-1.6/src
 
 
-all: x86/sm2plantuml x86/sm
+all: x86/sm2plantuml x86/sm x86/sm4cepssim
 
 x86/sm2plantuml:x86/serialization.o  x86/main.o x86/state_machines.o x86/sm_sim_core_asserts.o x86/state_machine_simulation_core.o \
 x86/sm_sim_core_simulation_loop.o x86/state_machine_simulation_core_action_handling.o x86/state_machine_simulation_core_event_handling.o \

@@ -1036,20 +1036,25 @@ bool State_machine_simulation_core::is_assignment_to_guard(ceps::ast::Binary_ope
 }
 bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_operator & node, std::string& lhs_id)
 {
+
 	using namespace ceps::ast;
 	if ( node.left()->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(node.left())) == "Systemstate")
 	 {lhs_id = name(as_symbol_ref(node.left())); return true ;}
-	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(node.left()))) return false;
+	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
+		return false;
 	std::vector<std::string> ids;
-
 	auto p = node.left();
 	for(;p->kind() == Ast_node_kind::binary_operator && '.' == op(as_binop_ref(p));)
 	{
 		auto pp = as_binop_ptr(p);
 		if (pp->right()->kind() == Ast_node_kind::identifier)
 			ids.push_back(name(as_id_ref(pp->right())));
+		else if (pp->right()->kind() == Ast_node_kind::symbol)
+			ids.push_back(name(as_symbol_ref(pp->right())));
+		else fatal_(-1,"Illformed quailified id (ERRSSSHNMNTSTT1055).\n");
 		p = pp->left();
 	}
+
 	if (p->kind()!=ceps::ast::Ast_node_kind::symbol) return false;
 	lhs_id = name(as_symbol_ref(p));
 	if (ids.size())for(int j = ids.size()-1;j >=0;--j) lhs_id.append(".").append(ids[j]);
@@ -1062,8 +1067,12 @@ void State_machine_simulation_core::eval_guard_assign(ceps::ast::Binary_operator
 	global_guards[name(as_symbol_ref(root.left()))] = root.right();
 }
 
-void define_a_struct(State_machine_simulation_core* smc,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix)
+void define_a_struct(State_machine_simulation_core* smc,
+		ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix)
 {
+	auto THIS = smc;
+	DEBUG_FUNC_PROLOGUE2
+
 	if (sp->children().size() == 0){
 		auto it = vars.find(prefix);
 		if (it == vars.end())
@@ -1109,10 +1118,14 @@ void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator
 		auto it = type_definitions().find(id);
 		if (it == type_definitions().end())
 			fatal_(-1,id+" is not a type.\n");
-		define_a_struct(this,ceps::ast::as_struct_ptr(it->second),global_states,name(as_symbol_ref(root.left())) );
+
+		define_a_struct(this,ceps::ast::as_struct_ptr(it->second),global_states,lhs_id );
 		return;
+	} else {
+		DEBUG << "[STATE_ASSIGNMENT][COMPOUND_RHS_NOT_ID]\n";
 	}
 	global_states[lhs_id] = root.right();
+	DEBUG << "[STATE_ASSIGNMENT_DONE][LHS=" << lhs_id << "]\n";
 }
 
 void State_machine_simulation_core::add(states_t& states, state_rep_t s)
