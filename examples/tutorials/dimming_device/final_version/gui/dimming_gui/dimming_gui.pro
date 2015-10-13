@@ -8,17 +8,21 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+UTILS = $$_PRO_FILE_PWD_/../../../../../../..
+
 TARGET = dimming_gui
 TEMPLATE = app
 
 QMAKE_CXXFLAGS += -std=c++11
 QMAKE_CXXFLAGS += -Wall
 
-INCLUDEPATH += ../../../../../../../ceps/core/include\
-               ./../../../../../..\
-               ./../../../../../../statemachines
+INCLUDEPATH += $$UTILS/ceps/core/include \
+               $$UTILS \
+               $$UTILS/statemachines \
+               $$UTILS/statemachines/pugixml-1.6/src
 
 LIBS += -L../../../../../../../ceps/core/bin -lcepscore
+LIBS += -ldl -fPIC
 
 SOURCES += main.cpp\
         mainwindow.cpp \
