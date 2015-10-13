@@ -1038,6 +1038,7 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 {
 
 	using namespace ceps::ast;
+	std::cout << "********* " << node << std::endl;
 	if ( node.left()->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(node.left())) == "Systemstate")
 	 {lhs_id = name(as_symbol_ref(node.left())); return true ;}
 	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
@@ -1047,11 +1048,13 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 	for(;p->kind() == Ast_node_kind::binary_operator && '.' == op(as_binop_ref(p));)
 	{
 		auto pp = as_binop_ptr(p);
+		std::cout << *pp << std::endl;
+		std::cout << (*pp->right()) << std::endl;
 		if (pp->right()->kind() == Ast_node_kind::identifier)
 			ids.push_back(name(as_id_ref(pp->right())));
 		else if (pp->right()->kind() == Ast_node_kind::symbol)
 			ids.push_back(name(as_symbol_ref(pp->right())));
-		else fatal_(-1,"Illformed quailified id (ERRSSSHNMNTSTT1055).\n");
+		else fatal_(-1,"Illformed qualified id (ERRSSSHNMNTSTT1055).\n");
 		p = pp->left();
 	}
 

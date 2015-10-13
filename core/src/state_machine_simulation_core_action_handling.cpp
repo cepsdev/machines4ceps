@@ -429,6 +429,7 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	    lhs->kind() == ceps::ast::Ast_node_kind::symbol &&
 	    "Systemstate" == ceps::ast::kind(ceps::ast::as_symbol_ref(lhs)))
 	{
+
 		std::string id_rhs;
 		if (rhs->kind() == ceps::ast::Ast_node_kind::identifier) id_rhs = ceps::ast::name(ceps::ast::as_id_ref(rhs));
 		if (rhs->kind() == ceps::ast::Ast_node_kind::symbol) id_rhs = ceps::ast::name(ceps::ast::as_symbol_ref(rhs));
@@ -516,7 +517,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				eval_guard_assign(node);
 			} else if (is_assignment_to_state(node,state_id))
 			{
-				ceps::ast::Nodebase_ptr rhs = nullptr;
+				auto rhs = eval_locked_ceps_expr(this,containing_smp,node.right(),n);
+				/*ceps::ast::Nodebase_ptr rhs = nullptr;
 				{
 				 std::lock_guard<std::recursive_mutex>g(states_mutex_);
 				 ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
@@ -524,7 +526,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				 rhs = ceps::interpreter::evaluate(node.right(),ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env(),n	);
 				 ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
 
-				}
+				}*/
 				if (rhs == nullptr) continue;
 
 				if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
