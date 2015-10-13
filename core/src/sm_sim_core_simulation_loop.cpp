@@ -258,6 +258,13 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			if (p.event_id_ != current_event().id_) continue;
 			size_t data_size;
 			char* data = (char*)p.frame_gen_->gen_msg(this,data_size);
+
+			/*std::cout << "*******************\n";
+			std::cout << data_size <<"\n";
+			std::cout << data <<"\n";
+
+			std::cout << "*******************\n";*/
+
 			DEBUG << "[State_machine_simulation_core::simulate][PUSH_FRAME_TO_SENDER_QUEUE]\n";
 			if (data != nullptr) p.frame_queue_->push(std::make_pair(data,data_size));
 		}

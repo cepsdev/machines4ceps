@@ -282,281 +282,15 @@ bool Podframe_generator::read_msg(char* data,size_t size,
 	return true;
 }
 
-//XML FRAME
 
 
-bool Xmlframe_generator::readfrom_spec(ceps::ast::Nodeset const & spec)
-{
- spec_ = spec;
- return true;
-}
-
-size_t Xmlframe_generator::compute_size_of_msg(State_machine_simulation_core* smc,
-		                                       std::vector<std::string> params,bool& failed)
-{
-	return 0;
-}
-
-std::string escape_string_xml(std::string const & s)
-{
-	std::string result;
-	for (size_t i = 0; i < s.length(); ++i)
-	{
-		if (s[i] == '<')
-			result += "&lt;";
-		else if (s[i] == '&')
-			result += "&amp;";
-		else
-			result += s[i];
-	}
-	return result;
-}
-
-std::string escape_string_xml_attr(std::string const & s)
-{
-	std::string result;
-	for (size_t i = 0; i < s.length(); ++i)
-	{
-		if (s[i] == '"')
-			result += "\\\"";
-		else
-			result += s[i];
-	}
-	return result;
-}
-
-void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr data,bool inside_attr=false);
-
-inline void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,ceps::ast::String& data,bool inside_attr=false)
-{
-	if (!inside_attr) ss << escape_string_xml(ceps::ast::value(data));
-	else ss << escape_string_xml_attr(ceps::ast::value(data));
-}
-
-inline void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,ceps::ast::Int& data)
-{
-	ss << ceps::ast::value(data);
-}
-
-inline void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,ceps::ast::Double& data)
-{
-	ss << ceps::ast::value(data);
-}
-
-void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,ceps::ast::Struct& data)
-{
-	ss << "<"<<name(data);
-	bool children = false;
-	for(auto elem:data.children()){
-		if (elem->kind() != ceps::ast::Ast_node_kind::structdef) { children=true;continue;}
-		if (ceps::ast::name(ceps::ast::as_struct_ref(elem)) != "xml_attr") {children=true;continue;}
-		auto& xml_attr = ceps::ast::as_struct_ref(elem);
-		if (xml_attr.children().size() < 2) continue;
-		if (xml_attr.children()[0]->kind() != ceps::ast::Ast_node_kind::string_literal) continue;
-		ss << " " << ceps::ast::value(ceps::ast::as_string_ref(xml_attr.children()[0]))<< " = \"";
-		make_xml_fragment(ss,smc,xml_attr.children()[1],true);
-		ss << "\" ";
-	}
-	if (children) {
-		ss << ">";
-		for(auto elem:data.children()){
-			if (elem->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(elem)) == "xml_attr") continue;
-			make_xml_fragment(ss,smc,elem);
-		}
-		ss << "</"<<name(data)<<">";
-	}
-	else ss << "/>";
-}
-extern void define_a_struct(State_machine_simulation_core*,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix);
-void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,std::vector<ceps::ast::Nodebase_ptr> data);
-
-void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr data,bool inside_attr)
-{
-	auto THIS = smc;
-	DEBUG_FUNC_PROLOGUE2
-	if (data == nullptr) return;
-	if (data->kind() == ceps::ast::Ast_node_kind::string_literal)
-		    make_xml_fragment(ss,smc,ceps::ast::as_string_ref(data),inside_attr);
-	else if (data->kind() == ceps::ast::Ast_node_kind::int_literal)
-			make_xml_fragment(ss,smc,ceps::ast::as_int_ref(data));
-	else if (data->kind() == ceps::ast::Ast_node_kind::float_literal)
-			make_xml_fragment(ss,smc,ceps::ast::as_double_ref(data));
-	else if (data->kind() == ceps::ast::Ast_node_kind::structdef)
-			make_xml_fragment(ss,smc,ceps::ast::as_struct_ref(data));
-	else if (data->kind() == ceps::ast::Ast_node_kind::ifelse)
-	{
-		auto n = data;
-		auto ifelse = ceps::ast::as_ifelse_ptr(n);
-		ceps::ast::Nodebase_ptr cond = nullptr;
-		ceps_interface_eval_func_callback_ctxt_t ctxt;
-		ctxt.active_smp = nullptr;
-		ctxt.smc  = smc;
-		{
-			std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-
-			smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->get_global_states();
-			smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-			smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
-			cond = ceps::interpreter::evaluate(ifelse->children()[0],
-					smc->ceps_env_current().get_global_symboltable(),
-					smc->ceps_env_current().interpreter_env(),n	);
-			smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-			smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-		}
-
-		if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
-			std::stringstream ss; ss << *cond;
-			ERRORLOG << "Expression in conditional should evaluate to int or double. Read:" << ss.str();
-			return;
-		}
-		bool take_left_branch = true;
-		if (cond->kind() == ceps::ast::Ast_node_kind::int_literal) take_left_branch = ceps::ast::value(ceps::ast::as_int_ref(cond)) != 0;
-		else if (cond->kind() == ceps::ast::Ast_node_kind::float_literal) take_left_branch = ceps::ast::value(ceps::ast::as_double_ref(cond)) != 0;
-		ceps::ast::Nodebase_ptr branch_to_take = nullptr;
-		if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
-		else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
-		if (branch_to_take == nullptr) return;
-		if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope)
-		 make_xml_fragment(ss,smc,branch_to_take);
-		else make_xml_fragment(ss,smc,ceps::ast::nlf_ptr(branch_to_take)->children());
-	}
-	else if ( smc->is_assignment_op(data) )
-	{
-		auto & node = ceps::ast::as_binop_ref(data);
-		std::string state_id;
-
-
-		if (smc->is_assignment_to_state(node,state_id))
-		{
-			ceps::ast::Nodebase_ptr rhs = nullptr;
-			ceps_interface_eval_func_callback_ctxt_t ctxt;
-			ctxt.active_smp = nullptr;
-			ctxt.smc  = smc;
-			{
-			 std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-			 smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->global_systemstates();
-			 smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-			 smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
-			 rhs = ceps::interpreter::evaluate(node.right(),smc->ceps_env_current().get_global_symboltable(),smc->ceps_env_current().interpreter_env(),data);
-			 smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-			 smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-			 smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
-			}
-			if (rhs == nullptr) return;
-
-			if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
-			{
-				std::string id = ceps::ast::name(ceps::ast::as_id_ref(node.right()));
-				auto sym = smc->ceps_env_current().get_global_symboltable().lookup(id);
-				if (sym != nullptr) {
-				  if (sym->payload) {
-					  std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-					  smc->get_global_states()[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;
-				  }
-				} else {
-				 auto it = smc->type_definitions().find(id);
-				 if (it == smc->type_definitions().end())
-						smc->fatal_(-1,id+" is not a type.\n");
-				 define_a_struct(smc,ceps::ast::as_struct_ptr(it->second),smc->get_global_states(),name(as_symbol_ref(node.left())) );
-				}
-			} else 	{ std::lock_guard<std::recursive_mutex>g(smc->states_mutex());smc->get_global_states()[state_id] = rhs;}
-		}
-
-	} else if (data->kind() == ceps::ast::Ast_node_kind::func_call) {
-		ceps_interface_eval_func_callback_ctxt_t ctxt;
-		ctxt.active_smp = nullptr;
-		ctxt.smc  = smc;
-
-		ceps::ast::Nodebase_ptr r = nullptr;
-		{
-
-		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-
-
-		smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->global_systemstates();
-		smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
-
-		r = ceps::interpreter::evaluate(data,
-				smc->ceps_env_current().get_global_symboltable(),
-				smc->ceps_env_current().interpreter_env(),nullptr	);
-
-		smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-		smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
-		}
-
-		if (r != nullptr)
-			make_xml_fragment(ss,smc,r);
-
-	}
-}
-
-void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,std::vector<ceps::ast::Nodebase_ptr> data)
-{
-	for(auto e : data)
-		make_xml_fragment(ss,smc,e);
-}
-
-void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size){
-
-
-	if (smc == nullptr) return nullptr;
-	auto THIS = smc;
-	DEBUG_FUNC_PROLOGUE2;
-	auto data_format = spec_["data"];
-	if (data_format.nodes().empty()) return nullptr;
-
-	ceps_interface_eval_func_callback_ctxt_t ctxt;
-	ctxt.active_smp = nullptr;
-	ctxt.smc  = smc;
-
-	ceps::ast::Nodebase_ptr frame_pattern = nullptr;
-	//ceps::ast::Scope scope;
-	//scope.children() = data_format.nodes();
-	//DEBUG << "[" << __funcname__ << "]" << "[EVAL_DATA(1)]\n";
-	//DEBUG << "[" << __funcname__ << "]" << scope << "\n";
-
-	std::stringstream ss;
-	ss << "<?xml version=\"1.0\" encoding=\"UTF-8\">";
-	make_xml_fragment(ss,smc,data_format.nodes());
-	/*{
-		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-
-
-		smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->global_systemstates();
-		smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);
-
-		frame_pattern = ceps::interpreter::evaluate(&scope,
-				smc->ceps_env_current().get_global_symboltable(),
-				smc->ceps_env_current().interpreter_env(),nullptr	);
-		smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-	}*/
-	//DEBUG << "[" << __funcname__ << "]" << "[EVAL_DATA(2)]\n";
-	//DEBUG << "[" << __funcname__ << "]" << *frame_pattern << "\n";
-
-	//scope.children().clear();
-	DEBUG << ss.str() << "\n";
-	if (frame_pattern == nullptr) return nullptr;
-	char* data = nullptr;//new char[chunk_size];
-	return data;
-}
-
-bool Xmlframe_generator::read_msg(char* data,size_t size,
-		                          State_machine_simulation_core* smc,
-		                          std::vector<std::string> params,
-		                          std::vector<ceps::ast::Nodebase_ptr>& payload)
-{
-	return false;
-}
 
 
 void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
-			     std::string port)
+			     std::string port,
+			     std::string eof)
 {
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
@@ -619,6 +353,10 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 		auto len = frame_size;
 		int wr = 0;
 
+		//std::cout << "-++---------------------------\n";
+		//std::cout << eof << std::endl;
+
+
 		if (len && frame) if ( (wr = write(cfd, frame,len )) != len)
 		{
 			close(cfd);
@@ -626,6 +364,14 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
 			continue;
 		}
+		if (eof.size())
+			if ( (wr = write(cfd, eof.c_str(),eof.length() )) != eof.length())
+			{
+				close(cfd);
+				conn_established=false;
+				DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
+				continue;
+			}
 		DEBUG << "[comm_sender_generic_tcp_out_thread][FRAME_WRITTEN][("<< frame_size<< " bytes)]\n";
 		if (frame != nullptr) {delete[] frame;frame=nullptr;}
 		pop_frame = true;
@@ -640,7 +386,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 		 std::string ev_id,
 		 std::vector<std::string> params,
 		 State_machine_simulation_core* smc,
-		 sockaddr_storage claddr,int sck)
+		 sockaddr_storage claddr,int sck,std::string eof)
 {
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
@@ -657,14 +403,78 @@ void comm_generic_tcp_in_thread_fn(int id,
 
 
 	size_t frame_size = 0;
-	bool failed_size_computation = true;
-	for(;failed_size_computation;)
-	{
+	if (eof.length() == 0){
+	 bool failed_size_computation = true;
+	 for(;failed_size_computation;)
+	 {
 		frame_size = gen->compute_size_of_msg(smc,params,failed_size_computation);
 		if (failed_size_computation) std::this_thread::sleep_for(std::chrono::microseconds(1));
-	}
+	 }
 
-	DEBUG << "[comm_generic_tcp_in_thread_fn][FRAME_SIZE_AVAILABLE]" << addrstr << "\n";
+	 DEBUG << "[comm_generic_tcp_in_thread_fn][FRAME_SIZE_AVAILABLE]" << addrstr << "\n";
+	} else DEBUG << "[comm_generic_tcp_in_thread_fn][EOF_MODE_DETECTED]\n";
+
+
+	if (eof.length())
+	{
+		std::string last_suffix;
+		for(;!smc->shutdown();){
+			char buffer_[4096];
+			std::stringstream* buffer = new std::stringstream;
+			auto n = 0;
+			DEBUG << "[comm_generic_tcp_in_thread_fn][READ...]\n";
+			for(; (n = recv(sck,buffer_,4095,0)) > 0;)
+			{
+				DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_RECEIVED][SIZE="<<n <<"]\n";
+				buffer_[n] = 0;
+
+				//DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_RECEIVED][VALUE='"<<buffer_ <<"']\n";
+
+				std::string temp(buffer_);
+				if (temp == eof) {
+
+				}
+				std::string::size_type r=0;
+				bool buffer_processed = false;
+				do{
+					auto new_r = temp.find(eof,r);
+					//std::cout << new_r << std::endl;
+					buffer_processed = new_r == std::string::npos;
+					*buffer << temp.substr(r,new_r-r );
+					if (new_r != std::string::npos){
+
+						DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_CHUNK_READ][SIZE="<<buffer->str().length() <<"]\n";
+						r = new_r+eof.length();
+
+					    bool decode_result = false;
+					    std::vector<ceps::ast::Nodebase_ptr> payload;
+					    {
+					    	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+					    	decode_result = gen->read_msg((char*)buffer->str().c_str(),
+					    								  buffer->str().length(),
+					    								  smc,
+					    								  params,payload);
+					    	if (decode_result) DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_SUCCESSFULLY_DECODED]\n";
+					    	else DEBUG << "[comm_generic_tcp_in_thread_fn][FAILED_TO_DECODE_DATA]\n";
+					    }
+
+					    if (decode_result){
+					    	State_machine_simulation_core::event_t ev(ev_id);
+					    	ev.already_sent_to_out_queues_ = true;
+					    	if (payload.size())
+					    		ev.payload_ = payload;
+					    	smc->main_event_queue().push(ev);
+					    }
+
+						delete buffer;
+						buffer =  new std::stringstream;
+					}
+				} while (!buffer_processed && r < temp.length());
+			}
+			delete buffer;
+			if (n<=0) break;
+		}
+	} else
 
 	for(;!smc->shutdown() && frame_size;)
 	{
@@ -717,8 +527,8 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 				 std::vector<std::string> params,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
-			     std::string port,
-			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int))
+			     std::string port,std::string eof,
+			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string))
 {
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
@@ -766,7 +576,7 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 			DEBUG << "[ERROR_COMM_DISPATCHER][ACCEPT_FAILED]\n";continue;
 		}
 		if (handler_fn)
-			client_handler_threads.push_back(new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd));
+			client_handler_threads.push_back(new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,eof));
 		else close(cfd);
 	}
 	for(auto tp: client_handler_threads) tp->join();

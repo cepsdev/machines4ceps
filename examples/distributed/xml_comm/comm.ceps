@@ -1,0 +1,22 @@
+
+
+
+xml_frame{
+    id{position_msg_out;};
+    data{
+        veh_pos_coord_latitude = veh_pos_coord_latitude + 1;
+        OwnVehiclePosition{ Latitude{veh_pos_coord_latitude;}; Longitude{veh_pos_coord_longitude;};Altitude{veh_pos_coord_altitude;}; };
+    };//data
+};
+
+
+xml_frame{
+  id{position_msg_in;};
+  query{
+   
+    veh_pos_coord_latitude = as_string(xpath("OwnVehiclePosition/Latitude"));
+    veh_pos_coord_altitude = as_string(xpath("OwnVehiclePosition/Altitude"));
+    veh_pos_coord_longitude = as_string(xpath("OwnVehiclePosition/Longitude"));   
+  };
+};
+

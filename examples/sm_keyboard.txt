@@ -1,0 +1,4 @@
+/*! \page Statemachine_keyboard
+* \section smkeyboard State machine keyboard
+* \image html sm_keyboard.png
+*/

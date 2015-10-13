@@ -70,8 +70,8 @@ static inline int close(SOCKET s) { return closesocket(s); }
 #include "main.hpp"
 
 
-#define VERSION_TST2DB_MAJOR "0"
-#define VERSION_TST2DB_MINOR "5.1"
+#define VERSION_SM4CEPS_MAJOR "0"
+#define VERSION_SM4CEPS_MINOR "7.1"
 
 vector < string > generated_sql_file_names;
 
@@ -560,7 +560,7 @@ int main(int argc,char ** argv)
 	{
 			#ifdef __GNUC__
 			 		std::cout << "\n"
-							  << "VERSION " VERSION_TST2DB_MAJOR << "."<<  VERSION_TST2DB_MINOR   <<" (" __DATE__ << ") BUILT WITH GCC "<< "" __VERSION__ ""<< " on GNU/LINUX "
+							  << "VERSION " VERSION_SM4CEPS_MAJOR << "."<<  VERSION_SM4CEPS_MINOR   <<" (" __DATE__ << ") BUILT WITH GCC "<< "" __VERSION__ ""<< " on GNU/LINUX "
 			 #ifdef __LP64__
 							  << "64BIT"
 			 #else
@@ -570,7 +570,7 @@ int main(int argc,char ** argv)
 			#else
 				#ifdef _MSC_FULL_VER
 					std::cout << "\n"
-						<< "VERSION " VERSION_TST2DB_MAJOR << "." << VERSION_TST2DB_MINOR << " (" __DATE__ << ") BUILT WITH MS VISUAL C++ " <<  _MSC_FULL_VER  << " on Windows "
+						<< "VERSION " VERSION_SM4CEPS_MAJOR << "." << VERSION_SM4CEPS_MINOR << " (" __DATE__ << ") BUILT WITH MS VISUAL C++ " <<  _MSC_FULL_VER  << " on Windows "
 					#ifdef _WIN64
 						<< "64BIT"
 					#else

@@ -376,10 +376,11 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 		 ceps::ast::Unit_rep::sc_t u;
 		 data_size += 7* ceps::serialize_value(u,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		} else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
-		 std::string d;
+		 std::string d = ceps::ast::value(ceps::ast::as_string_ref(p));
 		 data_size += ceps::serialize_value(d,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		}
 	}
+
 	buffer_size = data_size + /*payload signatures*/in.size()*sizeof(int)+ /*nmp header*/ 2*sizeof(int)+ /*event name*/sizeof(int)+ev.id_.length();
 	*data = new char[buffer_size];
 	if (*data == nullptr) {buffer_size=0;return;}
@@ -417,7 +418,7 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 		 offs += written;
 		} else if (p->kind() == ceps::ast::Ast_node_kind::float_literal){
 		 double d = ceps::ast::value(ceps::ast::as_double_ref(p));
-		 * ((int*)*data+offs) = htonl(NMP_PAYLOAD_DOUBLE);
+		 * ((uint32_t*) (*data+offs)) = htonl(NMP_PAYLOAD_DOUBLE);
 		 offs += sizeof(int);
 		 auto written = ceps::serialize_value(d,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
@@ -437,13 +438,13 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 		 written = ceps::serialize_value(unit.candela,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
 		} else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
-		 *((int*)*data+offs) = htonl(NMP_PAYLOAD_STRING);
+		 * ((uint32_t*) (*data+offs)) = htonl(NMP_PAYLOAD_STRING);
 		 offs += sizeof(int);
-		 std::string d = ceps::ast::value(ceps::ast::as_string_ref(p));;
+		 std::string d = ceps::ast::value(ceps::ast::as_string_ref(p));
 		 auto written = ceps::serialize_value(d,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
 		} else {
-
+			smc->fatal_(-1,"Not Implemented.\n");
 		}
 	}
 	((nmp_header*) (*data))->id = htonl(NMP_EVENT_FLAT_PAYLOAD);
@@ -508,7 +509,7 @@ void comm_sender_thread(int id,
 			 if (result != nullptr) freeaddrinfo(result);
 			 if (rp == nullptr) {
 				 DEBUG << "[comm_sender_thread][FAILED_TO_CONNECT:rp == nullptr (B)]"<<" " << ip << ":" <<port <<"\n";
-				 std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
+				 std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
 			 }
 			}
 			conn_established = true;
@@ -566,7 +567,7 @@ void comm_sender_thread(int id,
 				}
 				delete[] data;
 			} else {
-
+				smc->fatal_(-1,"Not Implemented.\n");
 			}
 		}
 		DEBUG << "[comm_sender_thread][EVENT_WRITTEN]['"<< ev.id_ << "']\n";

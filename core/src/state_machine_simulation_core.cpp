@@ -3,6 +3,7 @@
 #include "core/include/sm_ev_comm_layer.hpp"
 #include "core/include/serialization.hpp"
 #include "core/include/sm_raw_frame.hpp"
+#include "core/include/sm_xml_frame.hpp"
 #include "pugixml.hpp"
 #ifdef __gnu_linux__
 
@@ -46,7 +47,7 @@ extern void define_a_struct(State_machine_simulation_core* smc,ceps::ast::Struct
 void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
-			     std::string port);
+			     std::string port,std::string eof);
 
 void comm_generic_tcp_in_dispatcher_thread(int id,
 				 Rawframe_generator* gen,
@@ -54,15 +55,15 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 				 std::vector<std::string> params,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
-			     std::string port,
-			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int));
+			     std::string port,std::string eof,
+			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string));
 
 void comm_generic_tcp_in_thread_fn(int id,
 		 Rawframe_generator* gen,
 		 std::string ev_id,
 		 std::vector<std::string> params,
 		 State_machine_simulation_core* smc,
-		 sockaddr_storage claddr,int sck);
+		 sockaddr_storage claddr,int sck,std::string eof);
 
 void State_machine_simulation_core::process_files(	std::vector<std::string> const & file_names,
 						std::string& last_file_processed)
@@ -805,6 +806,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		auto emit = sender["emit"];
 		auto transport  = sender["transport"];
 
+
 		//std::cout << when << std::endl;
 		bool not_supported = false;
 		if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::symbol || "Event" != ceps::ast::kind(ceps::ast::as_symbol_ref( when.nodes()[0])) )
@@ -818,7 +820,23 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		std::string ip = transport["generic_tcp_out"]["ip"].as_str();
 		std::string ev_id = ceps::ast::name(ceps::ast::as_symbol_ref( when.nodes()[0]));
 		std::string frame_id = ceps::ast::name(ceps::ast::as_id_ref( emit.nodes()[0]));
-		DEBUG << "[PROCESSING EVENT_TRIGGERED_SENDER][ev_id="<< ev_id << "]"<<"[frame_id="<< frame_id <<"]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"]" <<"\n";
+		std::string eof="";
+
+		if (transport["generic_tcp_out"]["eof"].size()){
+			auto  v = transport["generic_tcp_out"]["eof"].nodes();
+			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
+			for(auto  e : v)
+			{
+				if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
+					eof.append(ceps::ast::value(ceps::ast::as_string_ref(e)));
+				else if (e->kind() == ceps::ast::Ast_node_kind::int_literal && ceps::ast::value(ceps::ast::as_int_ref(e)) != 0)
+					{eof.append(" "); eof[eof.length()-1] =  ceps::ast::value(ceps::ast::as_int_ref(e));}
+			}
+			//std::cout << eof << std::endl;
+		}
+
+
+		DEBUG << "[PROCESSING EVENT_TRIGGERED_SENDER][ev_id="<< ev_id << "]"<<"[frame_id="<< frame_id <<"]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"][eof='"<<eof<<"']" <<"\n";
 
 		auto it = frame_generators().find(frame_id);
 
@@ -832,7 +850,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		descr.frame_id_ = frame_id;
 		descr.frame_queue_ = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
 
-		comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port });
+		comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,eof });
 		running_as_node() = true;
 
 		event_triggered_sender().push_back(descr);
@@ -856,6 +874,20 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 		std::string port = transport["generic_tcp_in"]["port"].as_str();
 		std::string ip = transport["generic_tcp_in"]["ip"].as_str();
+		std::string eof="";
+		if (transport["generic_tcp_in"]["eof"].size()) {
+			//eof = transport["generic_tcp_in"]["eof"].as_str();
+			auto  v = transport["generic_tcp_in"]["eof"].nodes();
+			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
+			for(auto  e : v)
+			{
+				if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
+					eof.append(ceps::ast::value(ceps::ast::as_string_ref(e)));
+				else if (e->kind() == ceps::ast::Ast_node_kind::int_literal && ceps::ast::value(ceps::ast::as_int_ref(e)) != 0)
+					{eof.append(" "); eof[eof.length()-1] =  ceps::ast::value(ceps::ast::as_int_ref(e));}
+			}
+			//std::cout << eof << std::endl;
+		}
 		std::string ev_id;
 		std::vector<std::string> ev_params;
 
@@ -883,22 +915,9 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 		auto gen = it->second;
 
-
-
-
-
-		comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,0,gen,ev_id,ev_params,this,ip,port,comm_generic_tcp_in_thread_fn });
-		running_as_node() = true;
-		/*event_triggered_sender_t descr;
-		descr.event_id_ = ev_id;
-		descr.frame_gen_ = gen;
-		descr.frame_id_ = frame_id;
-		descr.frame_queue_ = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
-
-		comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port });
+		comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,0,gen,ev_id,ev_params,this,ip,port,eof,comm_generic_tcp_in_thread_fn });
 		running_as_node() = true;
 
-		event_triggered_sender().push_back(descr);*/
 	}
 
 	auto simulations = ns[all{"Simulation"}];

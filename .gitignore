@@ -1,3 +1,7 @@
 *~
-*.o
-eclipse/Debug/src/*
+*.[oad]
+eclipse/Debug/
+eclipse/Release/
+bugs/
+x86/
+*.plantuml

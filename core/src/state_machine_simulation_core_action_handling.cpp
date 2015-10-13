@@ -1,4 +1,6 @@
 #include "core/include/state_machine_simulation_core.hpp"
+#include "core/include/base_defs.hpp"
+#include "pugixml.hpp"
 #include <time.h>
 //#include "core/include/state_machine.hpp"
 
@@ -67,6 +69,12 @@ std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr
 		ceps::ast::Int v = *dynamic_cast<ceps::ast::Int*>(p);
 		auto vv = ceps::ast::value(v);
 		return std::to_string(vv);
+	}
+	if(p->kind() == ceps::ast::Ast_node_kind::float_literal)
+	{
+			ceps::ast::Double v = *dynamic_cast<ceps::ast::Double*>(p);
+			auto vv = ceps::ast::value(v);
+			return std::to_string(vv);
 	}
 	if (p->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(p)) == "Systemstate")
 	{
@@ -297,8 +305,57 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 timeinfo = localtime(&rawtime);
 		 return new ceps::ast::Int(timeinfo->tm_sec,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 
-	 }
-
+	 } else if (id == "xpath"){
+		 auto xmldoc = this->ceps_env_current().get_global_symboltable().lookup_global("@@current_xml_doc",false);
+		 if (xmldoc == nullptr) fatal_(-1,"xpath: @@current_xml_doc not set.\n");
+		 if (args.size() == 0) fatal_(-1,"xpath: missing parameter (xpath expression).\n");
+		 if (args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) fatal_(-1,"xpath: illformed parameter, expected a string.\n");
+		 pugi::xml_document* xml_doc = (pugi::xml_document*)xmldoc->payload;
+		 std::string xpath_expr = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
+		 pugi::xpath_node_set r;
+		 try{
+		  r = xml_doc->select_nodes(xpath_expr.c_str());
+		 } catch(pugi::xpath_exception const & e){
+			 fatal_(-1,e.what());
+		 }
+		 pugi::xpath_node_set* ns = new pugi::xpath_node_set(r);
+		 return new ceps::ast::User_defined(CEPS_REP_PUGI_XML_NODE_SET,ns,nullptr,nullptr,nullptr);
+	 } else if (id == "as_double"){
+		if (args.size() == 0) return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+			if (ns->size() == 0)
+				fatal_(-1,"as_double: node set is empty.\n");
+			return new ceps::ast::Double(ns->first().node().text().as_double(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		}
+		return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	 } else if (id == "as_int"){
+			if (args.size() == 0) return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+			if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+					CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+				auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+				pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+				if (ns->size() == 0)
+					fatal_(-1,"as_double: node set is empty.\n");
+				return new ceps::ast::Int(ns->first().node().text().as_int(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+			}
+			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	} else if (id == "as_string"){
+	 		if (args.size() == 0) return new ceps::ast::String("",nullptr,nullptr,nullptr);
+	 		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+	 				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+	 			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+	 			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+	 			if (ns->size() == 0)
+	 				fatal_(-1,"as_double: node set is empty.\n");
+	 			return new ceps::ast::String(ns->first().node().text().get(),nullptr,nullptr,nullptr);
+	 		}
+	 		return new ceps::ast::String("",nullptr,nullptr,nullptr);
+	} else if (id == "sleep"){
+		if(args.size() == 0) sleep(1);
+	}
 	auto it = name_to_smcore_plugin_fn.find(id);
 	if (it != name_to_smcore_plugin_fn.end())
 		return it->second(params);
@@ -394,7 +451,7 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	return nullptr;
 }
 
-inline ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
 										 State_machine* containing_smp,
 										 ceps::ast::Nodebase_ptr node,
 										 ceps::ast::Nodebase_ptr root_node)
@@ -414,6 +471,7 @@ inline ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_co
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
 	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
 
+	return r;
 }
 
 extern void define_a_struct(State_machine_simulation_core*,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix);
@@ -507,41 +565,30 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			std::stringstream ss;ss << *n;
 			fatal_(-1,"Invalid statement:"+ss.str());
 		} else if (n->kind() == ceps::ast::Ast_node_kind::ifelse) {
+			auto ifelse = ceps::ast::as_ifelse_ptr(n);
+			ceps::ast::Nodebase_ptr cond = eval_locked_ceps_expr(this,containing_smp,ifelse->children()[0],n);
 
-				auto ifelse = ceps::ast::as_ifelse_ptr(n);
-				ceps::ast::Nodebase_ptr cond = nullptr;
-				{
-					std::lock_guard<std::recursive_mutex>g(states_mutex_);
+			if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
+				std::stringstream ss; ss << *cond;
+				fatal_(-1,"Expression in conditional should evaluate to int or double. Read:"+ ss.str());
+			}
+			bool take_left_branch = true;
 
-					ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-					ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-					ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);
-					cond = ceps::interpreter::evaluate(ifelse->children()[0],
-														ceps_env_current().get_global_symboltable(),
-														ceps_env_current().interpreter_env(),n	);
-					ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-					ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-				}
+			if (cond->kind() == ceps::ast::Ast_node_kind::int_literal) take_left_branch = ceps::ast::value(ceps::ast::as_int_ref(cond)) != 0;
+			else if (cond->kind() == ceps::ast::Ast_node_kind::float_literal) take_left_branch = ceps::ast::value(ceps::ast::as_double_ref(cond)) != 0;
 
-				if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
-					std::stringstream ss; ss << *cond;
-					fatal_(-1,"Expression in conditional should evaluate to int or double. Read:"+ ss.str());
-				}
-				bool take_left_branch = true;
-				if (cond->kind() == ceps::ast::Ast_node_kind::int_literal) take_left_branch = ceps::ast::value(ceps::ast::as_int_ref(cond)) != 0;
-				else if (cond->kind() == ceps::ast::Ast_node_kind::float_literal) take_left_branch = ceps::ast::value(ceps::ast::as_double_ref(cond)) != 0;
-				ceps::ast::Nodebase_ptr branch_to_take = nullptr;
-				if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
-				else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
-				if (branch_to_take == nullptr) continue;
-				if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope)
-				{
-					ceps::ast::Scope scope(branch_to_take);
-					execute_action_seq(containing_smp,&scope);
+			ceps::ast::Nodebase_ptr branch_to_take = nullptr;
 
-				} else { execute_action_seq(containing_smp,branch_to_take);}
+			if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
+			else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
+			if (branch_to_take == nullptr) continue;
 
-
+			if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope)
+			{
+				ceps::ast::Scope scope(branch_to_take);
+				execute_action_seq(containing_smp,&scope);
+				scope.children().clear();
+			} else { execute_action_seq(containing_smp,branch_to_take);}
 		} else if (n->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "Event")
 		{
 			log() << "[QUEUEING EVENT][" << ceps::ast::name(ceps::ast::as_symbol_ref(n)) <<"]" << "\n";

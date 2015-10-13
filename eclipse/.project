@@ -46,6 +46,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>include/base_defs.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/include/base_defs.hpp</locationURI>
+		</link>
+		<link>
 			<name>include/pugixml.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/pugixml-1.6/src/pugixml.hpp</locationURI>
@@ -69,6 +74,11 @@
 			<name>include/sm_raw_frame.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/sm_raw_frame.hpp</locationURI>
+		</link>
+		<link>
+			<name>include/sm_xml_frame.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/include/sm_xml_frame.hpp</locationURI>
 		</link>
 		<link>
 			<name>include/state_machine.hpp</name>
@@ -119,6 +129,11 @@
 			<name>src/sm_sim_core_simulation_loop.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/sm_sim_core_simulation_loop.cpp</locationURI>
+		</link>
+		<link>
+			<name>src/sm_xml_frame.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/sm_xml_frame.cpp</locationURI>
 		</link>
 		<link>
 			<name>src/state_machine_simulation_core.cpp</name>

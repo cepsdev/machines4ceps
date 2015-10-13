@@ -16,7 +16,7 @@ kind Guard;
 
 
 
-Event IVeNetHeartbeat;
+Event IVeNetHeartbeat,PositionChanged;
 
 Systemstate app_beat_counter;
 Systemstate time_source;

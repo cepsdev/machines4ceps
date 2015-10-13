@@ -14,6 +14,6 @@ Statemachine{
 Simulation{
   Start{keyboard;};
   A_Gedrueckt;
-  ASSERT_CURRENT_STATES_CONTAINS{keyboard.A_taste;};
+  ASSERT_CURRENT_STATES_CONTAINS{keyboard.B_taste;};
 };
 

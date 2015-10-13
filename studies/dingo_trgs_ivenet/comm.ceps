@@ -71,9 +71,9 @@ xml_frame{
 
 xml_frame{id{iVeNetToTrgsBagMast;};
   query{
-    coord_latitude = xpath("OwnVehiclePosition/Latitude");
-    coord_longitude = xpath("OwnVehiclePosition/Longitude");
-    coord_altitude = xpath("OwnVehiclePosition/Altitude");
+    veh_pos_coord_latitude = scalar_with_double_precision(xpath("OwnVehiclePosition/Latitude"));
+    veh_pos_coord_longitude = scalar_with_double_precision(xpath("OwnVehiclePosition/Longitude"));
+    veh_pos_coord_altitude = scalar_with_double_precision(xpath("OwnVehiclePosition/Altitude"));
   };
 };
 

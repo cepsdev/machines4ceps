@@ -13,6 +13,6 @@
 
 sender{
   when{IVeNetHeartbeat;};
-  emit{TrgsBagMastToiVeNet;};
-  transport{generic_tcp_out{port{"4005";};ip{"127.0.0.1";};eof{"\n";};};};    
+  emit{position_msg_out;};
+  transport{generic_tcp_out{port{"4005";};ip{"127.0.0.1";};eof{3;};};};    
 };
