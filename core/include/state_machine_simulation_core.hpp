@@ -257,29 +257,6 @@ public:
 	bool print_debug_info_ = false;
 	static int SM_COUNTER;
 
-	struct Debuglogger{
-		std::string toprint_;
-		State_machine_simulation_core* inst_;
-		bool p_;
-
-		Debuglogger(std::string const & s,State_machine_simulation_core* inst,bool p):toprint_(s),inst_(inst),p_(p)
-		{
-			if(p_) inst_->log() << "[DEBUG][ENTER]["<< toprint_<< "]\n";
-		}
-
-		~Debuglogger()
-		{
-			if(p_) inst_->log() << "[DEBUG][LEAVE]["<< toprint_<< "]\n";
-		}
-
-		template<typename T> Debuglogger& operator <<(T const & v)
-		{
-			if (inst_ == nullptr || !inst_->print_debug_info_) return *this;
-			*(inst_->std_log_.os_p) << v;
-			return *this;
-		}
-	};
-
 	main_event_queue_t& main_event_queue() {return main_event_queue_;}
 
 	out_event_queue_t* out_event_queue(int idx) {

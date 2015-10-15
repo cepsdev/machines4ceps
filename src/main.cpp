@@ -39,26 +39,7 @@ Execution model
 #include <sys/types.h>
 #include <limits>
 #include <cstring>
-#ifdef __gnu_linux__
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#else
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#pragma comment(lib, "Ws2_32.lib")
-static inline int write(SOCKET s, const void* buf, int len, int flags=0) { return send(s, (char*) buf, len, flags); }
-static inline int close(SOCKET s) { return closesocket(s); }
-
-#endif
-#endif
+#include "core/include/base_defs.hpp"
 
 
 
@@ -632,6 +613,7 @@ int main(int argc,char ** argv)
 
 		Result_process_cmd_line result_cmd_line;
 		init_state_machine_simulation(argc,argv,&sm_core,result_cmd_line);
+		PRINT_DEBUG_INFO = sm_core.print_debug_info_;
 
 		if (result_cmd_line.run_as_monitor) {
 			std::cout << "Running as monitor." << std::endl;

@@ -1,12 +1,6 @@
 #include "core/include/state_machine_simulation_core.hpp"
 
-#ifdef __GNUC__
-#define __funcname__ __PRETTY_FUNCTION__
-#else
-#define __funcname__ __FUNCSIG__
-#endif
-#define DEBUG_FUNC_PROLOGUE 	Debuglogger debuglog(__funcname__,this,this->print_debug_info_);
-#define DEBUG (debuglog << "[DEBUG]", debuglog)
+#include "core/include/base_defs.hpp"
 
 
 void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe)

@@ -5,46 +5,7 @@
 #include <cstring>
 
 
-#ifdef __gnu_linux__
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <endian.h>
-#else
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#pragma comment(lib, "Ws2_32.lib")
-static inline int write(SOCKET s, const void* buf, int len, int flags = 0) { return send(s, (char*)buf, len, flags); }
-static inline int close(SOCKET s) { return closesocket(s); }
-typedef std::int64_t ssize_t;
-#include <intrin.h>
-
-
-static inline std::uint64_t be64toh(std::uint64_t i) { return _byteswap_uint64(i); }
-static inline std::uint64_t htobe64(std::uint64_t i) { return _byteswap_uint64(i); }
-static inline std::uint32_t htobe32(std::uint32_t i) { return htonl(i); }
-static inline  void bzero(void *s, size_t n) { memset(s, 0, n); }
-
-#endif
-#endif
-
-#ifdef __GNUC__
-#define __funcname__ __PRETTY_FUNCTION__
-#else
-#define __funcname__ __FUNCSIG__
-#endif
-#define DEBUG_FUNC_PROLOGUE 	Debuglogger debuglog(__funcname__,this,this->print_debug_info_);
-#define DEBUG (debuglog << "[DEBUG]", debuglog)
-#define ERRORLOG (debuglog << "[ERROR]", debuglog)
-#define DEBUG_FUNC_PROLOGUE2 	State_machine_simulation_core::Debuglogger debuglog(__funcname__,THIS,THIS->print_debug_info_);
-
+#include "core/include/base_defs.hpp"
 
 
 ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string const & id, ceps::ast::Call_parameters* params, void* context);
@@ -315,7 +276,7 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 		DEBUG << "[comm_sender_generic_tcp_out_thread][FETCHED_FRAME]\n";
 		if (!conn_established)
 		{
-			DEBUG << "[comm_sender_generic_tcp_out_thread][CONNECTING]\n";
+			DEBUG << "[comm_sender_generic_tcp_out_thread][CONNECTING@"<< ip << ":" << port << "]\n";
 			for(;rp == nullptr;)
 			{
 
@@ -328,8 +289,8 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			hints.ai_socktype = SOCK_STREAM;
 			hints.ai_flags = AI_NUMERICSERV;
 			if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &result) != 0){
-				//DEBUG << "[comm_sender_generic_tcp_out_thread][FAILED_TO_CONNECT]\n";
-				std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
+				DEBUG << "[comm_sender_generic_tcp_out_thread][FAILED_TO_CONNECT@"<< ip << ":" << port << "]\n";
+				std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
 			}
 
 			 for (rp = result; rp != NULL; rp = rp->ai_next) {
@@ -340,14 +301,14 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			 }
 			 if (result != nullptr) freeaddrinfo(result);
 			 if (rp == nullptr) {
-				 //DEBUG << "[comm_sender_generic_tcp_out_thread][FAILED_TO_CONNECT]\n";
-				 std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
+				 DEBUG << "[comm_sender_generic_tcp_out_thread][FAILED_TO_CONNECT@"<< ip << ":" << port << "]\n";
+				 std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
 			 }
 			}
 			conn_established = true;
 		}
 
-		DEBUG << "[comm_sender_generic_tcp_out_thread][SEND_FRAME]\n";
+		DEBUG << "[comm_sender_generic_tcp_out_thread][SENDING_FRAME@"<< ip << ":" << port << "]\n";
 
 
 		auto len = frame_size;
@@ -417,6 +378,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 
 	if (eof.length())
 	{
+		;
 		std::string last_suffix;
 		for(;!smc->shutdown();){
 			char buffer_[4096];

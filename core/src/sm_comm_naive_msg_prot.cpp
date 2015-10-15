@@ -1,40 +1,11 @@
 #include "core/include/sm_comm_naive_msg_prot.hpp"
-#ifdef __GNUC__
-#define __funcname__ __PRETTY_FUNCTION__
-#else
-#define __funcname__ __FUNCSIG__
-#endif
-#define DEBUG_FUNC_PROLOGUE 	State_machine_simulation_core::Debuglogger debuglog(__funcname__,smc,smc->print_debug_info_);
-#define DEBUG (debuglog << "[DEBUG]", debuglog)
-#define INFO (debuglog << "[INFO]", debuglog)
-#define DEBUG_FUNC_PROLOGUE2 	State_machine_simulation_core::Debuglogger debuglog(__funcname__,THIS,THIS->print_debug_info_);
-
-
 
 #include <sys/types.h>
 #include <limits>
 #include <cstring>
 
 #include "core/include/state_machine_simulation_core.hpp"
-
-#ifdef __gnu_linux__
-
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-
-static inline int closesocket(int s) {return close(s); }
-
-#else
-
-static inline int write(SOCKET s, const char* buf, int len, int flags=0) { return send(s,buf,len,flags); }
-static inline int close(SOCKET s) { return closesocket(s); }
-
-#endif
-
-#undef max
-
+#include "core/include/base_defs.hpp"
 
 static  auto comm_dispatcher_thread_started_flag = false;
 static std::map<uint32_t, void (State_machine_simulation_core::*)(nmp_header,char*) > recv_handler;

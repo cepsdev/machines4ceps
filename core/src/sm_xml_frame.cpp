@@ -5,47 +5,7 @@
 #include <cstring>
 #include "pugixml.hpp"
 
-
-#ifdef __gnu_linux__
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <endian.h>
-#else
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#pragma comment(lib, "Ws2_32.lib")
-static inline int write(SOCKET s, const void* buf, int len, int flags = 0) { return send(s, (char*)buf, len, flags); }
-static inline int close(SOCKET s) { return closesocket(s); }
-typedef std::int64_t ssize_t;
-#include <intrin.h>
-
-
-static inline std::uint64_t be64toh(std::uint64_t i) { return _byteswap_uint64(i); }
-static inline std::uint64_t htobe64(std::uint64_t i) { return _byteswap_uint64(i); }
-static inline std::uint32_t htobe32(std::uint32_t i) { return htonl(i); }
-static inline  void bzero(void *s, size_t n) { memset(s, 0, n); }
-
-#endif
-#endif
-
-#ifdef __GNUC__
-#define __funcname__ __PRETTY_FUNCTION__
-#else
-#define __funcname__ __FUNCSIG__
-#endif
-#define DEBUG_FUNC_PROLOGUE 	Debuglogger debuglog(__funcname__,this,this->print_debug_info_);
-#define DEBUG (debuglog << "[DEBUG]", debuglog)
-#define ERRORLOG (debuglog << "[ERROR]", debuglog)
-#define DEBUG_FUNC_PROLOGUE2 	State_machine_simulation_core::Debuglogger debuglog(__funcname__,THIS,THIS->print_debug_info_);
-
+#include "core/include/base_defs.hpp"
 
 
 ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string const & id, ceps::ast::Call_parameters* params, void* context);
@@ -269,7 +229,16 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 			make_xml_fragment(ss,smc,r);
 	} else {
 		auto r = eval_locked_ceps_expr(smc,nullptr,data,nullptr);
-		if (r != nullptr) make_xml_fragment(ss,smc,r,inside_attr);
+		if (r != nullptr) {
+			if (r->kind() != ceps::ast::Ast_node_kind::int_literal &&
+					r->kind() != ceps::ast::Ast_node_kind::string_literal &&
+					r->kind() != ceps::ast::Ast_node_kind::float_literal &&
+					r->kind() != ceps::ast::Ast_node_kind::ifelse &&
+					r->kind() != ceps::ast::Ast_node_kind::binary_operator &&
+					r->kind() != ceps::ast::Ast_node_kind::func_call
+					) {std::stringstream ss; ss << *r; smc->fatal_(-1,"Illformed xml-data section:"+ss.str()+"\n");}
+			make_xml_fragment(ss,smc,r,inside_attr);
+		}
 	}
 }
 
@@ -304,39 +273,9 @@ void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& dat
 	return data;
 }
 
-bool Xmlframe_generator::read_msg(char* xml_data,size_t size,
-		                          State_machine_simulation_core* smc,
-		                          std::vector<std::string> params,
-		                          std::vector<ceps::ast::Nodebase_ptr>& payload)
-{
-	//Read xml_data, store in symbol table
-	{
-		pugi::xml_document* xml_doc = new pugi::xml_document();
-		auto r = xml_doc->load_buffer(xml_data,size);
+static bool eval_query(std::vector<ceps::ast::Nodebase_ptr>& nodes,State_machine_simulation_core* smc){
 
-		if (!r){
-			//std::cout << "\n\n" << xml_data << "\n\n";
-			State_machine_simulation_core::event_t ev("runtime_xml_exception");
-			ev.already_sent_to_out_queues_ = true;
-			ev.payload_.push_back(new ceps::ast::String(r.description(),nullptr,nullptr,nullptr));
-			smc->main_event_queue().push(ev);
-			return false;
-		}
-		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-		auto & symtab = smc->ceps_env_current().get_global_symboltable();
-		auto sym = symtab.lookup_global("@@current_xml_doc",false);
-		if (sym != nullptr) delete (pugi::xml_document*)sym->payload;
-		else sym = symtab.lookup_global("@@current_xml_doc",true);
-		if(sym == nullptr) smc->fatal_(-1,"Internal Error #330\n");
-		sym->payload = xml_doc;
-	}
-
-
-
-
-	auto query = spec_["query"];
-
-	for(auto p : query.nodes()){
+	for(auto p : nodes){
 		using namespace ceps::ast;
 		if (p == nullptr) return false;
 
@@ -348,8 +287,8 @@ bool Xmlframe_generator::read_msg(char* xml_data,size_t size,
 			auto cond =  eval_locked_ceps_expr(smc,nullptr,ifelse->children()[0],ifelse);
 
 			if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
-				//std::stringstream ss; ss << *cond;
-				//ERRORLOG << "Expression in conditional should evaluate to int or double. Read:" << ss.str();
+				std::stringstream ss; ss << *cond;
+				smc->fatal_(-1,"Expression in conditional should evaluate to int or double. Read:" + ss.str());
 				return false;
 			}
 			bool take_left_branch = true;
@@ -360,12 +299,11 @@ bool Xmlframe_generator::read_msg(char* xml_data,size_t size,
 			ceps::ast::Nodebase_ptr branch_to_take = nullptr;
 			if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
 			else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
-			if (branch_to_take == nullptr) return false;
-			/*if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope)
-			 read_msg(xml_data,size,smc,branch_to_take);
-			else read_msg(xml_data,size,smc,ceps::ast::nlf_ptr(branch_to_take)->children());*/
-
-
+			if (branch_to_take == nullptr) continue;
+			if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope){
+				std::vector<ceps::ast::Nodebase_ptr> v = {branch_to_take};
+				eval_query(v,smc);
+			} else eval_query(ceps::ast::nlf_ptr(branch_to_take)->children(),smc);
 		}
 		else if ( smc->is_assignment_op(p ) )
 		{
@@ -398,6 +336,43 @@ bool Xmlframe_generator::read_msg(char* xml_data,size_t size,
 		 auto r = eval_locked_ceps_expr(smc,nullptr,p,nullptr);
 		}
 	}
-
 	return true;
+}
+
+bool Xmlframe_generator::read_msg(char* xml_data,size_t size,
+		                          State_machine_simulation_core* smc,
+		                          std::vector<std::string> params,
+		                          std::vector<ceps::ast::Nodebase_ptr>& payload)
+{
+	//std::cout << xml_data << std::endl;
+	//Read xml_data, store in symbol table
+	{
+		pugi::xml_document* xml_doc = new pugi::xml_document();
+		auto r = xml_doc->load_buffer(xml_data,size);
+
+		if (!r){
+			State_machine_simulation_core::event_t ev("runtime_xml_exception");
+			ev.already_sent_to_out_queues_ = true;
+			ev.payload_.push_back(new ceps::ast::String(r.description(),nullptr,nullptr,nullptr));
+			smc->main_event_queue().push(ev);
+			return false;
+		}
+		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+		auto & symtab = smc->ceps_env_current().get_global_symboltable();
+		auto sym = symtab.lookup_global("@@current_xml_doc",false);
+		if (sym != nullptr) delete (pugi::xml_document*)sym->payload;
+		else sym = symtab.lookup_global("@@current_xml_doc",true);
+		if(sym == nullptr) smc->fatal_(-1,"Internal Error #330\n");
+		sym->payload = xml_doc;
+	}
+
+
+
+
+	auto query = spec_["query"];
+	if (query.size() == 0){
+		std::cout << spec_ <<std::endl;
+		smc->warn_(-1,"No Query defined (tcp_generic_in)");
+	}
+	return eval_query(query.nodes(),smc);
 }

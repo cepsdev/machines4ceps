@@ -2,15 +2,7 @@
 #include "core/include/base_defs.hpp"
 #include "pugixml.hpp"
 #include <time.h>
-//#include "core/include/state_machine.hpp"
-
-#ifdef __GNUC__
-#define __funcname__ __PRETTY_FUNCTION__
-#else
-#define __funcname__ __FUNCSIG__
-#endif
-#define DEBUG_FUNC_PROLOGUE 	Debuglogger debuglog(__funcname__,this,this->print_debug_info_);
-#define DEBUG (debuglog << "[DEBUG]", debuglog)
+#include "core/include/base_defs.hpp"
 
 bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
 							std::string & func_name,
@@ -320,7 +312,16 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 }
 		 pugi::xpath_node_set* ns = new pugi::xpath_node_set(r);
 		 return new ceps::ast::User_defined(CEPS_REP_PUGI_XML_NODE_SET,ns,nullptr,nullptr,nullptr);
-	 } else if (id == "as_double"){
+	 } else if (id == "empty"){
+		 if (args.size() == 0) return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		 if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+		 				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+			 auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+			 pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+			 if (ns->size() == 0) return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		 }
+		 return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	 }	 else if (id == "as_double"){
 		if (args.size() == 0) return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
 				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
@@ -355,7 +356,20 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	 		return new ceps::ast::String("",nullptr,nullptr,nullptr);
 	} else if (id == "sleep"){
 		if(args.size() == 0) sleep(1);
+	}else if (id == "print"){
+		for(auto& n : args)
+		{
+			if (n->kind() == ceps::ast::Ast_node_kind::int_literal ||
+			    n->kind() == ceps::ast::Ast_node_kind::float_literal ||
+			    n->kind() == ceps::ast::Ast_node_kind::string_literal
+			    )
+
+				std::cout << to_string(this,n);
+
+		}
+
 	}
+
 	auto it = name_to_smcore_plugin_fn.find(id);
 	if (it != name_to_smcore_plugin_fn.end())
 		return it->second(params);
@@ -422,6 +436,7 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	 	 	 	  	  	  	  	  	  	  	  	  	  	  	  ceps::ast::Nodebase_ptr rhs,
 	 	 	 	  	  	  	  	  	  	  	  	  	  	  	  void* cxt,ceps::ast::Nodebase_ptr parent_node)
 {
+
 	if (cxt == nullptr) return nullptr;
 
 	auto smc = (State_machine_simulation_core*)cxt;
@@ -437,17 +452,22 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 			if (parent_node->kind() == ceps::ast::Ast_node_kind::binary_operator && ceps::ast::op(ceps::ast::as_binop_ref(parent_node)) =='.' )
 				return new ceps::ast::Symbol(ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs,"Systemstate",nullptr,nullptr,nullptr);
 			else{
-				if (parent_node->kind() == ceps::ast::Ast_node_kind::binary_operator && ceps::ast::op(ceps::ast::as_binop_ref(parent_node)) =='=')
-				{
+				//if (parent_node->kind() == ceps::ast::Ast_node_kind::binary_operator && ceps::ast::op(ceps::ast::as_binop_ref(parent_node)) =='=')
+				//{
 
-				} else {
+				//}  else {
 					auto it = smc->get_global_states().find(ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs);
 					if (it == smc->get_global_states().end())
 						smc->fatal_(-1, "Systemstate '"+ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs+"' not defined.");
 					return it->second;
-				}
+				//}
 			}
-		} else return new ceps::ast::Symbol(ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs,"Systemstate",nullptr,nullptr,nullptr);
+		} else {
+			auto r =
+			new ceps::ast::Symbol(ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs,"Systemstate",nullptr,nullptr,nullptr);
+
+			return r;
+		}
 	}
 	return nullptr;
 }
@@ -517,16 +537,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				eval_guard_assign(node);
 			} else if (is_assignment_to_state(node,state_id))
 			{
-				auto rhs = eval_locked_ceps_expr(this,containing_smp,node.right(),n);
-				/*ceps::ast::Nodebase_ptr rhs = nullptr;
-				{
-				 std::lock_guard<std::recursive_mutex>g(states_mutex_);
-				 ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-				 ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-				 rhs = ceps::interpreter::evaluate(node.right(),ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env(),n	);
-				 ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
 
-				}*/
+
+				auto rhs = eval_locked_ceps_expr(this,containing_smp,node.right(),n);
+
 				if (rhs == nullptr) continue;
 
 				if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
@@ -568,11 +582,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			fatal_(-1,"Invalid statement:"+ss.str());
 		} else if (n->kind() == ceps::ast::Ast_node_kind::ifelse) {
 			auto ifelse = ceps::ast::as_ifelse_ptr(n);
+			//std::cout << "///// " << *ifelse->children()[0] << std::endl;
 			ceps::ast::Nodebase_ptr cond = eval_locked_ceps_expr(this,containing_smp,ifelse->children()[0],n);
 
 			if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
 				std::stringstream ss; ss << *cond;
-				fatal_(-1,"Expression in conditional should evaluate to int or double. Read:"+ ss.str());
+				fatal_(-1,"Expression in conditional should evaluate to integral type (int or double). Read:"+ ss.str());
 			}
 			bool take_left_branch = true;
 

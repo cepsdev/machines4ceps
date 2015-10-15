@@ -1,11 +1,5 @@
 #include "core/include/state_machine_simulation_core.hpp"
-#ifdef __GNUC__
-#define __funcname__ __PRETTY_FUNCTION__
-#else
-#define __funcname__ __FUNCSIG__
-#endif
-#define DEBUG_FUNC_PROLOGUE 	Debuglogger debuglog(__funcname__,this,this->print_debug_info_);
-#define DEBUG (debuglog << "[DEBUG]", debuglog)
+#include "core/include/base_defs.hpp"
 
 extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',');
 
@@ -162,9 +156,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::unfold(ceps::ast::Nodebas
 				if (i + 1 < v.size()) s+= ".";
 			}
 			DEBUG << "[UNFOLD][EVAL_STATE]" << s << "\n";
+
 			auto it = this->states().find(s);
 			if (it == states().end())
 				fatal_(-1,s + " has no value.");
+
 			return it->second;
 		}
 		else nlf_base = new Binary_operator(ceps::ast::op(ceps::ast::as_binop_ref(expr)), nullptr, nullptr, nullptr);
@@ -246,6 +242,7 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 		std::set<std::string> eval_path {guard_name};
 		auto guard_unfolded = unfold(guard_expr,guard_to_interpretation,eval_path,states);
 		DEBUG << "[CALL][ceps::interpreter::evaluate][A]\n";
+		//std::cout << "UNFOLDED:" << *guard_unfolded << std::endl;
 		result  = ceps::interpreter::evaluate(guard_unfolded,
 															ceps_env.get_global_symboltable(),
 															ceps_env.interpreter_env(),nullptr	);
@@ -262,11 +259,13 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 				DEBUG << t.first << " = " << *t.second << "\n";
 			}
 		}
+		//std::cout << "NOTUNFOLDED:" << *guard_expr << std::endl;
 		result  = ceps::interpreter::evaluate(guard_expr,
 										ceps_env.get_global_symboltable(),
 										ceps_env.interpreter_env(),nullptr	);
 		DEBUG << "[RET_FROM_CALL][ceps::interpreter::evaluate][B]\n";
 	}
+	//std::cout << "UNFOLDED/EVALUATED " << *result << std::endl;
 	if(result != nullptr)
 		bool_result = eval_to_bool(result);
 	else bool_result = false;

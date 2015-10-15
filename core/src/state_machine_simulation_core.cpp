@@ -20,20 +20,12 @@
 #include <limits>
 #include <cstring>
 
-#ifdef __GNUC__
-#define __funcname__ __PRETTY_FUNCTION__
-#else
-#define __funcname__ __FUNCSIG__
-#endif
-
-#undef min
-#undef max
-
-#define DEBUG_FUNC_PROLOGUE 	State_machine_simulation_core::Debuglogger debuglog(__funcname__,this,this->print_debug_info_);
-#define DEBUG_FUNC_PROLOGUE2 	State_machine_simulation_core::Debuglogger debuglog(__funcname__,THIS,THIS->print_debug_info_);
-#define DEBUG (debuglog << "[DEBUG]", debuglog)
-
+#include "core/include/base_defs.hpp"
 int State_machine_simulation_core::SM_COUNTER = 0;
+
+
+std::recursive_mutex Debuglogger::mtx_;
+bool PRINT_DEBUG_INFO = false;
 
 std::vector<std::thread*> comm_threads;
 
@@ -1038,7 +1030,6 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 {
 
 	using namespace ceps::ast;
-	std::cout << "********* " << node << std::endl;
 	if ( node.left()->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(node.left())) == "Systemstate")
 	 {lhs_id = name(as_symbol_ref(node.left())); return true ;}
 	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
@@ -1048,8 +1039,7 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 	for(;p->kind() == Ast_node_kind::binary_operator && '.' == op(as_binop_ref(p));)
 	{
 		auto pp = as_binop_ptr(p);
-		std::cout << *pp << std::endl;
-		std::cout << (*pp->right()) << std::endl;
+
 		if (pp->right()->kind() == Ast_node_kind::identifier)
 			ids.push_back(name(as_id_ref(pp->right())));
 		else if (pp->right()->kind() == Ast_node_kind::symbol)
@@ -1110,6 +1100,10 @@ void define_a_struct(State_machine_simulation_core* smc,
 		}
 	}
 }
+extern ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+		 State_machine* containing_smp,
+		 ceps::ast::Nodebase_ptr node,
+		 ceps::ast::Nodebase_ptr root_node);
 
 void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator & root,std::string const & lhs_id)
 {
@@ -1124,10 +1118,10 @@ void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator
 
 		define_a_struct(this,ceps::ast::as_struct_ptr(it->second),global_states,lhs_id );
 		return;
-	} else {
-		DEBUG << "[STATE_ASSIGNMENT][COMPOUND_RHS_NOT_ID]\n";
 	}
-	global_states[lhs_id] = root.right();
+	auto rhs = eval_locked_ceps_expr(this,nullptr,root.right(),&root);
+
+	global_states[lhs_id] = rhs;
 	DEBUG << "[STATE_ASSIGNMENT_DONE][LHS=" << lhs_id << "]\n";
 }
 
@@ -1335,7 +1329,12 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			pred[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = s_from;
 
 			for(auto & temp: t.actions()) temp.associated_sm_ = containing_smp;
-			if (t.actions().size()) associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = t.actions();
+			//if (t.actions().size()) associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = t.actions();
+			if (t.actions().size()){
+				auto & v = associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)];
+				v.insert(v.end(),t.actions().begin(), t.actions().end());
+
+			}
 		}
 		if(!trans_found) {states_without_transition.push_back(s_from);}
 	}
