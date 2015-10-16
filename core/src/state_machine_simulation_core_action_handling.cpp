@@ -178,11 +178,11 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 						clock_type::duration((long int) ((clock_type::duration::period::den*delta)/clock_type::duration::period::num)),
 						timer_id,
 						periodic_timer);
-			ev_to_send.already_sent_to_out_queues_ = !public_event;
+			//ev_to_send.already_sent_to_out_queues_ = !public_event;
 			if (fargs.size())
 				ev_to_send.payload_ = fargs;
 
-			enqueue_event(ev_to_send);
+			enqueue_event(ev_to_send,public_event);
 		}
 
 }

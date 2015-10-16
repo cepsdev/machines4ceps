@@ -442,7 +442,9 @@ void comm_sender_thread(int id,
 		rp = nullptr;result = nullptr;
 
 		DEBUG << "[comm_sender_thread][WAIT_FOR_EVENT][pop_ev="<<pop_ev <<"]\n";
-		if (pop_ev) q->wait_and_pop(ev);pop_ev = false;
+		if (pop_ev) q->wait_and_pop(ev);
+		if (ev.id_.length() >= 1 && ev.id_[0] == '@') continue;
+		pop_ev = false;
 
 
 
