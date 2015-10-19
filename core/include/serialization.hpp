@@ -72,6 +72,10 @@ namespace ceps {
 		return serialize_value(v.value_, buffer, max_buffer_size, write_data);
 	}
 
+	/*Specialization for doubles*/
+
+	size_t serialize_value(const double & v, char * buffer, size_t max_buffer_size, bool write_data, nothrow_exception_policy);
+
 	/*Specialization for strings*/
 	size_t serialize_value(const std::string & v, char * buffer, size_t max_buffer_size, bool write_data, throw_exception_policy);
 	size_t serialize_value(const std::string & v, char * buffer, size_t max_buffer_size, bool write_data, nothrow_exception_policy);
@@ -129,6 +133,9 @@ namespace ceps {
 	/*Deserialization: Specialization for strings*/
 	
 	size_t deserialize_value(std::string & v, char * buffer, size_t max_buffer_size);
+	/*Deserialization: Specialization for doubles*/
+
+	size_t deserialize_value(double & v, char * buffer, size_t max_buffer_size);
 	/*Specialization for vectors*/
 
 	template<typename T>

@@ -1677,6 +1677,7 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 				ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
 				auto r = ceps::deserialize_value(v, data+offs, h.len-offs);offs+=r;
 				v = ntohl(v);DEBUG << "[State_machine_simulation_core::process_event_from_remote][READ_INT]["<< v <<"]\n" ;
+				//std::cout << v << std::endl;
 				r = ceps::deserialize_value(m, data+offs, h.len-offs);m = ntohl(m);offs+=r;
 				r = ceps::deserialize_value(kg, data+offs, h.len-offs);kg = ntohl(kg);offs+=r;
 				r = ceps::deserialize_value(s, data+offs, h.len-offs);s = ntohl(s);offs+=r;

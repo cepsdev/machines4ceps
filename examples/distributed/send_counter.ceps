@@ -33,9 +33,9 @@ Statemachine
  };
  Actions{
     action{
-       inc(counter);
-       Send_Counter(counter);   
-    };
+       counter=counter+1.1;
+       Send_Counter(counter);
+     };
   }; 
  
  Transition{Initial;A;};

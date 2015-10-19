@@ -329,6 +329,7 @@ void comm_dispatcher_thread(int id,
 
 void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_simulation_core::event_t const & ev, std::vector<ceps::ast::Nodebase_ptr> const& in, char** data, size_t& buffer_size)
 {
+
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	size_t data_size = 0;
@@ -352,7 +353,10 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 		}
 	}
 
-	buffer_size = data_size + /*payload signatures*/in.size()*sizeof(int)+ /*nmp header*/ 2*sizeof(int)+ /*event name*/sizeof(int)+ev.id_.length();
+	buffer_size = data_size + /*payload signatures*/in.size()*sizeof(int)+
+			                  /*nmp header*/ 2*sizeof(int)+
+			                  /*event name*/sizeof(int)+ev.id_.length();
+
 	*data = new char[buffer_size];
 	if (*data == nullptr) {buffer_size=0;return;}
 
@@ -392,10 +396,12 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 		 * ((uint32_t*) (*data+offs)) = htonl(NMP_PAYLOAD_DOUBLE);
 		 offs += sizeof(int);
 		 auto written = ceps::serialize_value(d,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+
 		 offs += written;
-		 auto unit = ceps::ast::unit(ceps::ast::as_int_ref(p));
+		 auto unit = ceps::ast::unit(ceps::ast::as_double_ref(p));
 		 written = ceps::serialize_value(unit.m,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
+
 		 written = ceps::serialize_value(unit.kg,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
 		 written = ceps::serialize_value(unit.s,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
@@ -406,6 +412,7 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 		 offs += written;
 		 written = ceps::serialize_value(unit.mol,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
+
 		 written = ceps::serialize_value(unit.candela,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
 		} else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
@@ -418,8 +425,10 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 			smc->fatal_(-1,"Not Implemented.\n");
 		}
 	}
+
 	((nmp_header*) (*data))->id = htonl(NMP_EVENT_FLAT_PAYLOAD);
 	((nmp_header*) (*data))->len = htonl(buffer_size-/*nmp header*/ 2*sizeof(int));
+
 }
 
 
@@ -529,7 +538,9 @@ void comm_sender_thread(int id,
 				int wr = 0;
 				size_t buffer_size;
 				char* data;
+
 				serialize_flat_payload(smc,ev,ev.payload_, &data,buffer_size);
+
 				DEBUG << "[comm_sender_thread][FLAT_PAYLOAD_SIZE="<< buffer_size <<"]\n";
 				if ( ( wr = write(cfd, data,buffer_size )) !=	 buffer_size )
 				{

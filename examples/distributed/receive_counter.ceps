@@ -31,10 +31,10 @@ Statemachine
     Initial;
     Final;   
  };
- on_enter{start_timer(2.0*s,TIMEOUT,timeout_id);};
+ //on_enter{start_timer(2.0*s,TIMEOUT,timeout_id);};
  Actions{
   action{
-    kill_timer(timeout_id);
+    //kill_timer(timeout_id);
     if(argv(0)=="TIMEOUT") {
       print("Timeout.\n");      
     } else {    
@@ -46,13 +46,13 @@ Statemachine
      //if (argc() > 3)     print ("argv(3)=",argv(3),"\n");
     }
     Request_Counter;
-    start_timer(2.0*s,TIMEOUT,timeout_id);
+    //start_timer(2.0*s,TIMEOUT,timeout_id);
   };
   
   
  }; 
  Transition{Initial;Initial;Send_Counter;action;};
- Transition{Initial;Initial;TIMEOUT;action;};
+ //Transition{Initial;Initial;TIMEOUT;action;};
 };
 
 
