@@ -343,7 +343,7 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 		 data_size += 7* ceps::serialize_value(u,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 
 		} else if (p->kind() == ceps::ast::Ast_node_kind::float_literal){
-		 double d;
+		 double d = ceps::ast::value(ceps::ast::as_double_ref(p));
 		 data_size += ceps::serialize_value(d,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		 ceps::ast::Unit_rep::sc_t u;
 		 data_size += 7* ceps::serialize_value(u,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());

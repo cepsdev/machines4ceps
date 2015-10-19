@@ -23,6 +23,10 @@ Event Send_Counter,Request_Counter;
 
 Systemstate counter,weight,height;
 
+typedef{
+  counter_t {a;b;c;};
+};
+
 Statemachine
 {
  id{Sender;};
@@ -33,8 +37,8 @@ Statemachine
  };
  Actions{
     action{
-       counter=counter+1.1;
-       Send_Counter(counter);
+       counter.a=counter.a+1.1;
+       Send_Counter(counter.a);
      };
   }; 
  
@@ -48,6 +52,7 @@ Statemachine
  * */
 Simulation
 {
- counter = 1;weight = 10*kg;height=100*m;
+ counter = counter_t;weight = 10*kg;height=100*m;
+ counter.a = 1.0;counter.b = counter.a;counter.c=counter.a+counter.b;
  Start{Sender;};
 };

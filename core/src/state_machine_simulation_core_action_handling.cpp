@@ -625,11 +625,16 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				{
 					std::lock_guard<std::recursive_mutex>g(states_mutex_);
 					ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
+					ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
+					ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);
+
 					for(size_t i = 0; i != args.size(); ++i)
 					{
-
 						args[i]  = ceps::interpreter::evaluate(args[i],ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env(),n	);
 					}
+					ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
+					ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
+					ceps_env_current().interpreter_env().symbol_mapping().clear();
 				}
 				event_t ev(func_name,args);
 				ev.already_sent_to_out_queues_ = false;
