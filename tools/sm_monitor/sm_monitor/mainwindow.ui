@@ -11,14 +11,26 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Statemachine Monitor</string>
+   <string>sm4ceps Monitoring Tool</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QLineEdit" name="lineEdit"/>
+       <widget class="QComboBox" name="lineEdit">
+        <property name="editable">
+         <bool>true</bool>
+        </property>
+        <property name="maxVisibleItems">
+         <number>100</number>
+        </property>
+        <item>
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+       </widget>
       </item>
       <item>
        <widget class="QTableWidget" name="tableWidget"/>

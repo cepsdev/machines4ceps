@@ -38,7 +38,7 @@ Statemachine
  Actions{
     action{
        counter.a=counter.a+1.1;
-       Send_Counter(counter.a);
+       Send_Counter(1.1);
      };
   }; 
  

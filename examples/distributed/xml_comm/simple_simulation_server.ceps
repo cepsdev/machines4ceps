@@ -4,8 +4,9 @@ Statemachine{id{Main;};
  States{Initial;IveNetHeartbeatStarted;};
  Actions{
    print_info{
-     print("veh_pos_coord_latitude:",veh_pos_coord_latitude,"\n");
-     print("veh_pos_coord_altitude:",veh_pos_coord_altitude,"\n");
+     veh_pos_coord_altitude = veh_pos_coord_altitude +2;
+     print("veh_pos_coord_latitude (<==):",veh_pos_coord_latitude,"\n");
+     print("veh_pos_coord_altitude:(==>)",veh_pos_coord_altitude,"\n");
      print("veh_pos_coord_longitude:",veh_pos_coord_longitude,"\n");};
    
  };

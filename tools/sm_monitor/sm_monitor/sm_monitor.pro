@@ -16,8 +16,8 @@ QMAKE_CXXFLAGS += -Wall
 
 INCLUDEPATH += ../../../../ceps/core/include\
                ../../../..\
-               ../../../../statemachines
-SOURCES += ../../../../statemachines/core/src/serialization.cpp \
+               ../../../../sm4ceps
+SOURCES += ../../../../sm4ceps/core/src/serialization.cpp \
     simcoreconnectdlg.cpp
 
 LIBS += -L../../../../ceps/core/bin -lcepscore

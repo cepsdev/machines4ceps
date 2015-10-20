@@ -250,6 +250,22 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 				closesocket(sck);delete[] data;return;
 			}
 			delete[] data;
+		} else if (header.id == NMP_EVAL_CEPS_EXPRESSION) {
+			DEBUG << "[MONITORING_THREAD][NMP_EVAL_CEPS_EXPRESSION]\n";
+
+
+
+
+			char * data;
+			size_t buffer_size;
+			serialize_system_state_block(smc,&data,buffer_size);
+			DEBUG << "[MONITORING_THREAD][PAYLOAD_SIZE="<< buffer_size <<"]\n";
+			int wr;
+			if ( ( wr = write(sck, data,buffer_size )) !=	 buffer_size )
+			{
+				closesocket(sck);delete[] data;return;
+			}
+			delete[] data;
 		} else {
 			header.id = ntohl(NMP_ERR);
 			header.len = ntohl(0);

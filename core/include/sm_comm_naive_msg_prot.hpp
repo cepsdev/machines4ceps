@@ -52,6 +52,7 @@ const uint32_t NMP_USER_DEFINED = 9999;
 
 const uint32_t NMP_REQ_SYSTEMSTATES = 100;
 const uint32_t NMP_SYSTEMSTATES = 101;
+const uint32_t NMP_EVAL_CEPS_EXPRESSION = 102;
 const uint32_t NMP_ACK = 0;
 const uint32_t NMP_ERR = 1;
 

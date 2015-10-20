@@ -17,7 +17,7 @@
 
 #include "ceps_all.hh"
 
-#include "statemachines/core/include/sm_ev_comm_layer.hpp"
+#include "sm4ceps/core/include/sm_ev_comm_layer.hpp"
 
 
 extern void fatal(int,std::string);
@@ -41,6 +41,10 @@ extern const int COMM_STATUS_ERR_GETADDRINFO_FAILED = -2;
 extern const int COMM_STATUS_ERR_WRITE_FAILED = -3;
 extern const int COMM_STATUS_ERR_READ_FAILED = -4;
 extern const int COMM_STATUS_ERR_INVALID_PROTOCOL = -5;
+
+
+extern std::string send_command;
+extern std::mutex send_command_mtx;
 
 void run_as_monitor(int id,std::string ip, std::string port){
 
@@ -91,14 +95,35 @@ void run_as_monitor(int id,std::string ip, std::string port){
    }
 
     nmp_header header;
+    std::string command;
+
+    {
+      std::lock_guard<std::mutex> g(send_command_mtx);
+      command=send_command;
+      send_command.clear();
+    }
+    if (command.length()){
+     header.id = htonl(NMP_EVAL_CEPS_EXPRESSION);
+     header.len = htonl(command.length());
+    } else {
     header.id = htonl(NMP_REQ_SYSTEMSTATES);
     header.len = htonl(0);
+    }
 
     if (write(cfd, &header,sizeof(header) ) !=	 sizeof(nmp_header)){
     close(cfd);
     std::lock_guard<std::mutex> g(comm_threads_m);
     comm_threads_status[id] = COMM_STATUS_ERR_WRITE_FAILED;
     return;
+    }
+
+    if (command.length()){
+      if (write(cfd, command.c_str(),command.length() ) !=command.length()){
+       close(cfd);
+       std::lock_guard<std::mutex> g(comm_threads_m);
+       comm_threads_status[id] = COMM_STATUS_ERR_WRITE_FAILED;
+       return;
+      }
     }
 
     auto r = recv(cfd,&header,sizeof(nmp_header),0);

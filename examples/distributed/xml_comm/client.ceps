@@ -1,0 +1,25 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Sender definition for ivenet communication.
+ * 
+ */
+
+
+
+
+sender{
+  id{send1;};
+  when{IVeNetHeartbeat;};
+  emit{position_msg_out;};
+  transport{generic_tcp_out{port{"4005";};ip{"127.0.0.1";};};som{2;};eom{3;};};    
+};
+
+receiver{
+  when{position_msg_client_in;};
+  emit{PositionChanged;};
+  transport{use{send1;};som{2;};eom{3;};};    
+};

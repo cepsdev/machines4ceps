@@ -346,6 +346,13 @@ public:
 	event_t& current_event() {return current_event_;}
 
 	friend void run_state_machine_simulation(State_machine_simulation_core* smc,Result_process_cmd_line const& result_cmd_line);
+private:
+	std::map<std::string,int> registered_sockets_;
+	std::recursive_mutex registered_sockets_mtx_;
+public:
+	std::recursive_mutex& get_reg_sock_mtx(){return registered_sockets_mtx_;}
+	std::map<std::string,int>& get_reg_socks(){return registered_sockets_;}
+
 };
 
 struct ceps_interface_eval_func_callback_ctxt_t{

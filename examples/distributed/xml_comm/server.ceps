@@ -16,8 +16,14 @@
 
 
 receiver{
-  when{position_msg_in;};
+  id{recv1;};
+  when{position_msg_server_in;};
   emit{PositionChanged;};
-  transport{generic_tcp_in{port{"4005";};ip{"127.0.0.1";};eof{3;};};};    
+  transport{generic_tcp_in{port{"4005";};ip{"127.0.0.1";};};som{2;};eom{3;};};    
 };
 
+sender{
+  when{PositionChanged;};
+  emit{position_msg_out;};
+  transport{use{recv1;};som{2;};eom{3;};};    
+};

@@ -39,7 +39,11 @@ extern void define_a_struct(State_machine_simulation_core* smc,ceps::ast::Struct
 void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
-			     std::string port,std::string eof);
+			     std::string port,
+			     std::string som,
+			     std::string eof,
+			     std::string sock_name,
+			     bool reuse_socket, bool reg_socket);
 
 void comm_generic_tcp_in_dispatcher_thread(int id,
 				 Rawframe_generator* gen,
@@ -47,15 +51,15 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 				 std::vector<std::string> params,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
-			     std::string port,std::string eof,
-			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string));
+			     std::string port,std::string som,std::string eof,std::string sock_name,bool reg_sock,bool reuse_sock,
+			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string,std::string));
 
 void comm_generic_tcp_in_thread_fn(int id,
 		 Rawframe_generator* gen,
 		 std::string ev_id,
 		 std::vector<std::string> params,
 		 State_machine_simulation_core* smc,
-		 sockaddr_storage claddr,int sck,std::string eof);
+		 sockaddr_storage claddr,int sck,std::string som,std::string eof);
 
 void State_machine_simulation_core::process_files(	std::vector<std::string> const & file_names,
 						std::string& last_file_processed)
@@ -798,6 +802,11 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		auto emit = sender["emit"];
 		auto transport  = sender["transport"];
 
+		std::string sock_name;
+		std::string port;
+		std::string ip;
+		bool reuse_sock = false;
+		bool reg_socket = false;
 
 		//std::cout << when << std::endl;
 		bool not_supported = false;
@@ -806,16 +815,34 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		if (!not_supported && (emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier))
 			not_supported=true;
 		if (transport["generic_tcp_out"].empty()) not_supported=true;
+		if (not_supported && transport["use"].size() )
+		{
+			if (transport["use"].nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier){
+				not_supported = false;
+				reuse_sock = true;
+				sock_name = ceps::ast::name(ceps::ast::as_id_ref(transport["use"].nodes()[0]));
+			}
+		} else {
+			port = transport["generic_tcp_out"]["port"].as_str();
+			ip = transport["generic_tcp_out"]["ip"].as_str();
+		}
         if(not_supported) {warn_(-1,"Unsupported sender declaration");continue;}
 
-		std::string port = transport["generic_tcp_out"]["port"].as_str();
-		std::string ip = transport["generic_tcp_out"]["ip"].as_str();
+        if (sender["id"].size()) {
+        	auto p = sender["id"].nodes()[0];
+        	if (p->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Id field in sender definition should contain a single id");
+        	sock_name = ceps::ast::name(ceps::ast::as_id_ref(p));
+        	reg_socket = true;
+        }
+
+
 		std::string ev_id = ceps::ast::name(ceps::ast::as_symbol_ref( when.nodes()[0]));
 		std::string frame_id = ceps::ast::name(ceps::ast::as_id_ref( emit.nodes()[0]));
 		std::string eof="";
+		std::string som="";
 
-		if (transport["generic_tcp_out"]["eof"].size()){
-			auto  v = transport["generic_tcp_out"]["eof"].nodes();
+		if (transport["eom"].size()){
+			auto  v = transport["eom"].nodes();
 			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
 			for(auto  e : v)
 			{
@@ -824,8 +851,20 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 				else if (e->kind() == ceps::ast::Ast_node_kind::int_literal && ceps::ast::value(ceps::ast::as_int_ref(e)) != 0)
 					{eof.append(" "); eof[eof.length()-1] =  ceps::ast::value(ceps::ast::as_int_ref(e));}
 			}
-			//std::cout << eof << std::endl;
 		}
+		if (transport["som"].size()){
+			auto  v = transport["som"].nodes();
+			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
+			for(auto  e : v)
+			{
+				if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
+					som.append(ceps::ast::value(ceps::ast::as_string_ref(e)));
+				else if (e->kind() == ceps::ast::Ast_node_kind::int_literal && ceps::ast::value(ceps::ast::as_int_ref(e)) != 0)
+					{som.append(" "); som[som.length()-1] =  ceps::ast::value(ceps::ast::as_int_ref(e));}
+			}
+		}
+
+
 
 
 		DEBUG << "[PROCESSING EVENT_TRIGGERED_SENDER][ev_id="<< ev_id << "]"<<"[frame_id="<< frame_id <<"]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"][eof='"<<eof<<"']" <<"\n";
@@ -842,7 +881,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		descr.frame_id_ = frame_id;
 		descr.frame_queue_ = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
 
-		comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,eof });
+		comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
 		running_as_node() = true;
 
 		event_triggered_sender().push_back(descr);
@@ -855,21 +894,45 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		auto when = receiver["when"];
 		auto emit = receiver["emit"];
 		auto transport  = receiver["transport"];
+		std::string port;
+		std::string ip;
+		bool reuse_sock=false;
+		bool reg_sock = false;
+
+		std::string sock_name;
+
 
 		//std::cout << when << std::endl;
 		//if (emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::symbol || "Event" != ceps::ast::kind(ceps::ast::as_symbol_ref( emit.nodes()[0])) )
 		//	continue;
 		if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
 			continue;
-		if (transport["generic_tcp_in"].empty()) continue;
+		if (transport["generic_tcp_in"].empty() && transport["use"].empty()) continue;
+		if (!transport["use"].empty()){
+			if (transport["use"].nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier){
+					reuse_sock = true;
+					sock_name = ceps::ast::name(ceps::ast::as_id_ref(transport["use"].nodes()[0]));
+			} else fatal_(-1,"Receiver definition illformed");
+		} else
+		{
+			port = transport["generic_tcp_in"]["port"].as_str();
+			ip = transport["generic_tcp_in"]["ip"].as_str();
+		}
 
 
-		std::string port = transport["generic_tcp_in"]["port"].as_str();
-		std::string ip = transport["generic_tcp_in"]["ip"].as_str();
-		std::string eof="";
-		if (transport["generic_tcp_in"]["eof"].size()) {
+
+		std::string eof;
+		std::string som;
+
+		if (receiver["id"].size()) {
+			auto p = receiver["id"].nodes()[0];
+			if (p->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Id field in receiver definition should contain a single id");
+			if (!reuse_sock){ sock_name = ceps::ast::name(ceps::ast::as_id_ref(p)); reg_sock = true; }
+		}
+
+		if (transport["eom"].size()) {
 			//eof = transport["generic_tcp_in"]["eof"].as_str();
-			auto  v = transport["generic_tcp_in"]["eof"].nodes();
+			auto  v = transport["eom"].nodes();
 			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
 			for(auto  e : v)
 			{
@@ -878,8 +941,19 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 				else if (e->kind() == ceps::ast::Ast_node_kind::int_literal && ceps::ast::value(ceps::ast::as_int_ref(e)) != 0)
 					{eof.append(" "); eof[eof.length()-1] =  ceps::ast::value(ceps::ast::as_int_ref(e));}
 			}
-			//std::cout << eof << std::endl;
 		}
+		if (transport["som"].size()){
+			auto  v = transport["som"].nodes();
+			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
+			for(auto  e : v)
+			{
+				if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
+					som.append(ceps::ast::value(ceps::ast::as_string_ref(e)));
+				else if (e->kind() == ceps::ast::Ast_node_kind::int_literal && ceps::ast::value(ceps::ast::as_int_ref(e)) != 0)
+					{som.append(" "); som[som.length()-1] =  ceps::ast::value(ceps::ast::as_int_ref(e));}
+			}
+		}
+
 		std::string ev_id;
 		std::vector<std::string> ev_params;
 
@@ -907,7 +981,18 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 		auto gen = it->second;
 
-		comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,0,gen,ev_id,ev_params,this,ip,port,eof,comm_generic_tcp_in_thread_fn });
+		comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
+			                                   0,
+			                                   gen,
+			                                   ev_id,
+			                                   ev_params,
+			                                   this,
+			                                   ip,
+			                                   port,
+			                                   som,
+			                                   eof,
+			                                   sock_name,reg_sock,reuse_sock,
+			                                   comm_generic_tcp_in_thread_fn });
 		running_as_node() = true;
 
 	}

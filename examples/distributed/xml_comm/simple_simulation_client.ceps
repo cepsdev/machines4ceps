@@ -1,8 +1,15 @@
+Systemstate counter;
+
 Statemachine{id{Main;};
  States{Initial;IveNetHeartbeatStarted;};
  Actions{
   StartIVeNetHeartbeat{app_beat_counter=0;time_source="utc";start_periodic_timer(1.0*s,IVeNetHeartbeat);};  
-  print_info{print(veh_pos_coord_latitude,"\n");};
+  print_info{
+     veh_pos_coord_latitude = veh_pos_coord_latitude + 1;
+     print("veh_pos_coord_latitude: (==>)",veh_pos_coord_latitude,"\n");
+     print("veh_pos_coord_altitude  (<==):",veh_pos_coord_altitude,"\n");
+     print("veh_pos_coord_longitude:",veh_pos_coord_longitude,"\n");
+  };
  };
  Transition{Initial;IveNetHeartbeatStarted;StartIVeNetHeartbeat;};
  Transition{IveNetHeartbeatStarted;IveNetHeartbeatStarted;IVeNetHeartbeat;print_info;};
@@ -10,5 +17,6 @@ Statemachine{id{Main;};
 
 
 Simulation{
+  counter = 0;
   Start{Main;};
 };

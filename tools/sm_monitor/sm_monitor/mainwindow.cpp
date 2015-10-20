@@ -35,9 +35,15 @@ std::vector<std::pair<QTableWidgetItem*,QTableWidgetItem*>> table_entries;
 std::string current_ip,current_port,current_node_name;
 
 bool update_data = true;
+bool cmd_changed = false;
 
 
 QStringList table_header{"Systemstate","(Type Value [SI Unit])"};
+
+
+std::string current_filter;
+std::string send_command;
+std::mutex send_command_mtx;
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
@@ -45,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
   QTimer *timer = new QTimer(this);
   connect(timer,SIGNAL(timeout()),this,SLOT(check_comm_thread()));
+
   timer->start(100);
   ui->setupUi(this);
   this->ui->tableWidget->setRowCount(1);
@@ -52,6 +59,10 @@ MainWindow::MainWindow(QWidget *parent) :
   this->ui->tableWidget->setHorizontalHeaderLabels(table_header);
   this->ui->tableWidget->setColumnWidth(0,this->width()*0.92*1.0/4.0);
   this->ui->tableWidget->setColumnWidth(1,this->width()*0.92*3.0/4.0);
+  connect(this->ui->lineEdit, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated),
+    [=](int index){ cmd_changed=true;});
+  connect(this->ui->lineEdit, static_cast<void(QComboBox::*)(const QString &)>(&QComboBox::activated),
+    [=](const QString &text){ current_filter = text.toStdString(); });
 }
 
 MainWindow::~MainWindow()
@@ -75,14 +86,14 @@ void MainWindow::check_comm_thread()
  {
   running_thread_id = -1;
   this->ui->actionConnect->setIcon(QIcon(":/disconnect_btn.jpg"));
-  this->setWindowTitle("Statemachine Monitor (disconnected)");
+  this->setWindowTitle("sm4ceps Monitoring Tool (disconnected)");
   this->ui->actionStop_update->setEnabled(false);
   this->ui->actionStart_update->setEnabled(false);
   return;
  }
  this->ui->actionStop_update->setEnabled(update_data);
  this->ui->actionStart_update->setEnabled(!update_data);
- std::string t = "Statemachine Monitor ("+current_ip+"@"+current_port+")";
+ std::string t = "sm4ceps Monitoring Tool ("+current_ip+"@"+current_port+")";
  this->setWindowTitle(t.c_str());
 
  this->ui->actionConnect->setIcon(QIcon(":/connect_btn.jpg"));
@@ -95,14 +106,28 @@ void MainWindow::check_comm_thread()
  this->ui->tableWidget->setRowCount(sysstates_table.size());
  for(auto & e : table_entries) {delete e.first; delete e.second;}
  table_entries.clear();
- std::string filter = this->ui->lineEdit->text().toStdString();
+ std::string filter =  current_filter;
  std::regex pattern;
+ bool is_assignment;
 
  if (filter.length())
  {
-  pattern = std::regex(filter);
+  auto n = filter.find_first_of("=");
+  is_assignment = (n != std::string::npos && cmd_changed);
+  auto t = filter.substr(0,n);
+  n = t.find_first_not_of(' ');
+  t= t.substr(n);
+  n = t.find_first_of(' ');
+  t = t.substr(0,n);
+
+  pattern = std::regex(t);
  }
 
+ if (is_assignment) {
+  std::lock_guard<std::mutex> g(send_command_mtx);
+  cmd_changed = false;
+  send_command=filter;
+}
 
 
 

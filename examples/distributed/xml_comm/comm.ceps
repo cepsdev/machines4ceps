@@ -4,19 +4,32 @@
 xml_frame{
     id{position_msg_out;};
     data{
-        veh_pos_coord_latitude = veh_pos_coord_latitude + 1;
         OwnVehiclePosition{ Latitude{veh_pos_coord_latitude;}; Longitude{veh_pos_coord_longitude;};Altitude{veh_pos_coord_altitude;}; };
     };//data
 };
 
+xml_frame{
+    id{position_msg2_out;};
+    data{
+          OwnVehiclePosition{ Latitude{veh_pos_coord_latitude;}; Longitude{veh_pos_coord_latitude;};Altitude{veh_pos_coord_altitude;}; };
+    };//data
+};
 
 xml_frame{
-  id{position_msg_in;};
+  id{position_msg_client_in;};
   query{
-   
-    veh_pos_coord_latitude = as_string(xpath("OwnVehiclePosition/Latitude"));
-    veh_pos_coord_altitude = as_string(xpath("OwnVehiclePosition/Altitude"));
-    veh_pos_coord_longitude = as_string(xpath("OwnVehiclePosition/Longitude"));   
+    veh_pos_coord_altitude = as_int(xpath("OwnVehiclePosition/Altitude"));
+    veh_pos_coord_longitude = as_int(xpath("OwnVehiclePosition/Longitude"));   
   };
 };
+
+xml_frame{
+  id{position_msg_server_in;};
+  query{
+    veh_pos_coord_latitude = as_int(xpath("OwnVehiclePosition/Latitude"));
+    veh_pos_coord_longitude = as_int(xpath("OwnVehiclePosition/Longitude"));   
+  };
+};
+
+
 

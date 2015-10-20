@@ -251,7 +251,11 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,
-			     std::string eof)
+			     std::string som,
+			     std::string eof,
+			     std::string sock_name,
+			     bool reuse_socket,
+			     bool reg_socket)
 {
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
@@ -276,7 +280,22 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 		DEBUG << "[comm_sender_generic_tcp_out_thread][FETCHED_FRAME]\n";
 		if (!conn_established)
 		{
-			DEBUG << "[comm_sender_generic_tcp_out_thread][CONNECTING@"<< ip << ":" << port << "]\n";
+			if (reuse_socket){
+				DEBUG << "[comm_sender_generic_tcp_out_thread][REUSE_SOCK("<< sock_name <<")]\n";
+				for(;;){
+					{
+						std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+						auto it = smc->get_reg_socks().find(sock_name);
+						if (it != smc->get_reg_socks().end()){
+							cfd = it->second;
+							conn_established = true;
+							break;
+						}
+					}
+					std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
+				}
+			}
+			else { DEBUG << "[comm_sender_generic_tcp_out_thread][CONNECTING@"<< ip << ":" << port << "]\n";
 			for(;rp == nullptr;)
 			{
 
@@ -306,9 +325,16 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			 }
 			}
 			conn_established = true;
+			}
 		}
 
-		DEBUG << "[comm_sender_generic_tcp_out_thread][SENDING_FRAME@"<< ip << ":" << port << "]\n";
+		if (!reuse_socket)DEBUG << "[comm_sender_generic_tcp_out_thread][SENDING_FRAME@"<< ip << ":" << port << "]\n";
+		else DEBUG << "[comm_sender_generic_tcp_out_thread][SENDING_FRAME@"<< sock_name << "]\n";
+
+		if(reg_socket){
+			std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+			smc->get_reg_socks()[sock_name] = cfd;
+		}
 
 
 		auto len = frame_size;
@@ -317,7 +343,14 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 		//std::cout << "-++---------------------------\n";
 		//std::cout << eof << std::endl;
 
-
+		if (som.size())
+		 if ( (wr = write(cfd, som.c_str(),eof.length() )) != som.length())
+		 {
+			close(cfd);
+			conn_established=false;
+			DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
+			continue;
+		}
 		if (len && frame) if ( (wr = write(cfd, frame,len )) != len)
 		{
 			close(cfd);
@@ -347,7 +380,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 		 std::string ev_id,
 		 std::vector<std::string> params,
 		 State_machine_simulation_core* smc,
-		 sockaddr_storage claddr,int sck,std::string eof)
+		 sockaddr_storage claddr,int sck,std::string som,std::string eof)
 {
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
@@ -412,8 +445,8 @@ void comm_generic_tcp_in_thread_fn(int id,
 					    std::vector<ceps::ast::Nodebase_ptr> payload;
 					    {
 					    	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-					    	decode_result = gen->read_msg((char*)buffer->str().c_str(),
-					    								  buffer->str().length(),
+					    	decode_result = gen->read_msg((char*)buffer->str().c_str() +som.length(),
+					    								  buffer->str().length()-som.length(),
 					    								  smc,
 					    								  params,payload);
 					    	if (decode_result) DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_SUCCESSFULLY_DECODED]\n";
@@ -489,12 +522,32 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 				 std::vector<std::string> params,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
-			     std::string port,std::string eof,
-			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string))
+			     std::string port,std::string som,std::string eof,std::string sock_name,bool reg_sock,bool reuse_sock,
+			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string,std::string))
 {
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	std::vector<std::thread*> client_handler_threads;
+
+	socklen_t addrlen = sizeof(struct sockaddr_storage);
+	struct sockaddr_storage claddr = {0};
+	int cfd = -1;
+
+	if (reuse_sock){
+		DEBUG << "[comm_generic_tcp_in_dispatcher_thread][REUSE_SOCK("<< sock_name <<")]\n";
+		for(;;){
+			{
+				std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+				auto it = smc->get_reg_socks().find(sock_name);
+				if (it != smc->get_reg_socks().end()){
+					cfd = it->second;
+					new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,som,eof);
+					return;
+				}
+			}
+			std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
+		}
+	}
 
 
 	struct addrinfo hints;
@@ -530,15 +583,17 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 
 	for(;!smc->shutdown();)
 	{
-
-		socklen_t addrlen = sizeof(struct sockaddr_storage);
-		struct sockaddr_storage claddr;
-		int cfd = accept(lfd, (struct sockaddr*) &claddr, &addrlen);
+		cfd = accept(lfd, (struct sockaddr*) &claddr, &addrlen);
+		if (reg_sock){
+			std::lock_guard<std::recursive_mutex> g(smc->get_reg_sock_mtx());
+			smc->get_reg_socks()[sock_name] = cfd;
+			DEBUG << "[SOCKET_REGISTERED ("<< sock_name <<")]\n";
+		}
 		if (cfd == -1){
 			DEBUG << "[ERROR_COMM_DISPATCHER][ACCEPT_FAILED]\n";continue;
 		}
 		if (handler_fn)
-			client_handler_threads.push_back(new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,eof));
+			client_handler_threads.push_back(new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,som,eof));
 		else close(cfd);
 	}
 	for(auto tp: client_handler_threads) tp->join();
