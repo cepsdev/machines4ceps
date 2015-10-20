@@ -37,8 +37,8 @@ Statemachine
  };
  Actions{
     action{
-       counter.a=counter.a+1.1;
-       Send_Counter(1.1);
+       counter.a=counter.a+0.1;
+       Send_Counter(counter.a);
      };
   }; 
  
@@ -53,6 +53,6 @@ Statemachine
 Simulation
 {
  counter = counter_t;weight = 10*kg;height=100*m;
- counter.a = 1.0;counter.b = counter.a;counter.c=counter.a+counter.b;
+ counter.a = 0.0;counter.b = counter.a;counter.c=counter.a+counter.b;
  Start{Sender;};
 };
