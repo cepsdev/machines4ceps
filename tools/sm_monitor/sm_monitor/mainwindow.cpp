@@ -1,3 +1,28 @@
+/**
+ The MIT License (MIT)
+
+Copyright (c) 2015 The authors of ceps
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ **/
+
+
 #include <chrono>
 #include <thread>
 #include <mutex>
@@ -45,10 +70,14 @@ std::string current_filter;
 std::string send_command;
 std::mutex send_command_mtx;
 
+
+MainWindow* wnd_inst = nullptr;
+
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::MainWindow)
 {
+ wnd_inst = this;
   QTimer *timer = new QTimer(this);
   connect(timer,SIGNAL(timeout()),this,SLOT(check_comm_thread()));
 
@@ -57,12 +86,19 @@ MainWindow::MainWindow(QWidget *parent) :
   this->ui->tableWidget->setRowCount(1);
   this->ui->tableWidget->setColumnCount(2);
   this->ui->tableWidget->setHorizontalHeaderLabels(table_header);
-  this->ui->tableWidget->setColumnWidth(0,this->width()*0.92*1.0/4.0);
-  this->ui->tableWidget->setColumnWidth(1,this->width()*0.92*3.0/4.0);
+  this->ui->tableWidget->setColumnWidth(0,this->width()*0.92*3.0/4.0);
+  this->ui->tableWidget->setColumnWidth(1,this->width()*0.92*1.0/4.0);
   connect(this->ui->lineEdit, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated),
-    [=](int index){ cmd_changed=true;});
+    [=](int index){ cmd_changed=true;ui->label_2->setText("");});
   connect(this->ui->lineEdit, static_cast<void(QComboBox::*)(const QString &)>(&QComboBox::activated),
-    [=](const QString &text){ current_filter = text.toStdString(); });
+    [=](const QString &text){
+     current_filter = text.toStdString();
+      if (current_filter.length()) {
+       std::lock_guard<std::mutex> g(send_command_mtx);
+       cmd_changed = false;
+       send_command=text.toStdString();
+      }
+     });
 }
 
 MainWindow::~MainWindow()
@@ -70,6 +106,11 @@ MainWindow::~MainWindow()
 
   delete ui;
 }
+
+void MainWindow::process_error_from_remote(QString errtext){
+ ui->label_2->setText(errtext);
+ std::cout << errtext.toStdString() << std::endl;
+ }
 
 void MainWindow::check_comm_thread()
 {
@@ -103,14 +144,16 @@ void MainWindow::check_comm_thread()
 
  std::lock_guard<std::mutex> g(sysstates_table_m);
 
- this->ui->tableWidget->setRowCount(sysstates_table.size());
+
  for(auto & e : table_entries) {delete e.first; delete e.second;}
  table_entries.clear();
+ this->ui->tableWidget->setRowCount(sysstates_table.size());
+
  std::string filter =  current_filter;
  std::regex pattern;
  bool is_assignment;
 
- if (filter.length())
+ /*if (filter.length())
  {
   auto n = filter.find_first_of("=");
   is_assignment = (n != std::string::npos && cmd_changed);
@@ -121,13 +164,9 @@ void MainWindow::check_comm_thread()
   t = t.substr(0,n);
 
   pattern = std::regex(t);
- }
+ }*/
 
- if (is_assignment) {
-  std::lock_guard<std::mutex> g(send_command_mtx);
-  cmd_changed = false;
-  send_command=filter;
-}
+ /*if (is_assignment)*/
 
 
 
@@ -135,12 +174,10 @@ void MainWindow::check_comm_thread()
     std::stringstream ss;
     ss << *e.second;
 
-    if (filter.length()){
+    /*if (filter.length()){
        std::smatch m;
        if (!std::regex_search (e.first,m,pattern) && !std::regex_search (ss.str(),m,pattern) ) continue;
-    }
-
-
+    }*/
     table_entries.push_back(std::make_pair(new QTableWidgetItem(QString(e.first.c_str())),new QTableWidgetItem( QString( ss.str().c_str()) )));
  }
 

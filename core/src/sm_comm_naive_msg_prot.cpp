@@ -100,9 +100,11 @@ void serialize_system_state_block(State_machine_simulation_core* smc,
 	size_t states_to_write = 0;
 
 	/*Compute necessary space*/
+	DEBUG << "[serialize_flat_payload][COMPUTE_PAYLOAD_SIZE]\n";
 	for(auto elem:states)
 	{
 		auto p = elem.second;
+		if (p == nullptr) continue;
 		if (p->kind() != ceps::ast::Ast_node_kind::int_literal && 
 			p->kind() != ceps::ast::Ast_node_kind::float_literal  && 
 			p->kind() != ceps::ast::Ast_node_kind::string_literal)
@@ -120,19 +122,20 @@ void serialize_system_state_block(State_machine_simulation_core* smc,
 		 auto w = ceps::serialize_value(d,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		 data_size += w;
 		 ceps::ast::Unit_rep::sc_t u;
-		 data_size += 7* ceps::serialize_value(u,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
+		 data_size += 7* ceps::serialize_value(htons(u),nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 
 		} else if (p->kind() == ceps::ast::Ast_node_kind::float_literal){
-		 double d;
+		 double d=ceps::ast::value(ceps::ast::as_double_ref(p));;
 		 data_size += ceps::serialize_value(d,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		 ceps::ast::Unit_rep::sc_t u;
-		 data_size += 7* ceps::serialize_value(u,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
+		 data_size += 7* ceps::serialize_value(htons(u),nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		} else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
-		 std::string d;
+		 std::string d = ceps::ast::value(ceps::ast::as_string_ref(p));;
 		 data_size += ceps::serialize_value(d,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		}
 	}
 	buffer_size = data_size + /*payload signatures*/states_to_write*sizeof(int)*2 + /*nmp header*/ 2*sizeof(int);
+	DEBUG << "[serialize_flat_payload][PAYLOAD_SIZE="<<buffer_size<<"][STATES_TO_WRITE="<<states_to_write<<"]\n";
 
 	*data = new char[buffer_size];
 	if (*data == nullptr) {buffer_size=0;return;}
@@ -140,71 +143,82 @@ void serialize_system_state_block(State_machine_simulation_core* smc,
 	((nmp_header*) (*data))->len = htonl(buffer_size-/*nmp header*/ 2*sizeof(int));
 
 	size_t offs = sizeof(nmp_header);
+	int states_counter=0;
 
 	if (states_to_write) for(auto elem:states)
 	{
 		auto p = elem.second;
-		if (p->kind() != ceps::ast::Ast_node_kind::int_literal && p->kind() != ceps::ast::Ast_node_kind::float_literal  && p->kind() != ceps::ast::Ast_node_kind::string_literal)
+		if (p == nullptr) continue;
+		if (p->kind() != ceps::ast::Ast_node_kind::int_literal &&
+		    p->kind() != ceps::ast::Ast_node_kind::float_literal  &&
+		    p->kind() != ceps::ast::Ast_node_kind::string_literal)
 			continue;
+		++states_counter;
+		DEBUG << "[serialize_flat_payload][WRITE_TAG_FOR_STATE (at offset "<< offs <<")][STATE_IDX="<<states_counter<<"]\n";
 
-		*((uint32_t*) (*data+offs))= htonl(NMP_PAYLOAD_SYSTEMSTATE);offs+=sizeof(uint32_t);
+		*((uint32_t*) (*data+offs))= htonl(NMP_PAYLOAD_SYSTEMSTATE);
+		offs+=sizeof(uint32_t);
 		offs+=ceps::serialize_value(elem.first,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());;
 
 		//strncpy(*data,elem.first.c_str(),elem.first.length());offs+=elem.first.length();
 
 		if (p->kind() == ceps::ast::Ast_node_kind::int_literal){
-		 DEBUG << "[serialize_flat_payload][SERIALIZE_INT]["<< ceps::ast::value(ceps::ast::as_int_ref(p)) <<"]\n";
+		 DEBUG << "[serialize_flat_payload][SERIALIZE_INT (at offset "<<offs<<")]["<< ceps::ast::value(ceps::ast::as_int_ref(p)) <<"]\n";
 		 int d = htonl(ceps::ast::value(ceps::ast::as_int_ref(p)));
 		 * ((uint32_t*) (*data+offs)) = htonl(NMP_PAYLOAD_INT);
+
 		 offs += sizeof(int);
 		 auto written = ceps::serialize_value(d,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 DEBUG << "[serialize_flat_payload][SERIALIZE_INT][PAYLOAD = "<< written<<"]\n";
 		 offs += written;
 		 auto unit = ceps::ast::unit(ceps::ast::as_int_ref(p));
-		 written = ceps::serialize_value(unit.m,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.m),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.kg,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.kg),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.s,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.s),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.ampere,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.ampere),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.kelvin,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.kelvin),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.mol,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.mol),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.candela,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.candela),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
 		} else if (p->kind() == ceps::ast::Ast_node_kind::float_literal){
 		 double d = ceps::ast::value(ceps::ast::as_double_ref(p));
-		 * ((int*)*data+offs) = htonl(NMP_PAYLOAD_DOUBLE);
+		 DEBUG << "[serialize_flat_payload][SERIALIZE_DOUBLE (at offset "<<offs<<")]["<< ceps::ast::value(ceps::ast::as_double_ref(p)) <<"]\n";
+		 * ((uint32_t*)(*data+offs)) = htonl(NMP_PAYLOAD_DOUBLE);
 		 offs += sizeof(int);
 		 auto written = ceps::serialize_value(d,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 DEBUG << "[serialize_flat_payload][SERIALIZE_DOUBLE][PAYLOAD="<< written <<"]\n";
 		 offs += written;
-		 auto unit = ceps::ast::unit(ceps::ast::as_int_ref(p));
-		 written = ceps::serialize_value(unit.m,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 auto unit = ceps::ast::unit(ceps::ast::as_double_ref(p));
+		 written = ceps::serialize_value(htons(unit.m),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.kg,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.kg),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.s,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.s),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.ampere,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.ampere),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.kelvin,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.kelvin),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.mol,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.mol),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		 written = ceps::serialize_value(unit.candela,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
+		 written = ceps::serialize_value(htons(unit.candela),*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
 		} else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
-		 *((int*)*data+offs) = htonl(NMP_PAYLOAD_STRING);
+		  DEBUG << "[serialize_flat_payload][SERIALIZE_STRING (at offset "<<offs<<")]['"<< ceps::ast::value(ceps::ast::as_string_ref(p)) <<"']\n";
+		 *((uint32_t*)(*data+offs)) = htonl(NMP_PAYLOAD_STRING);
 		 offs += sizeof(int);
 		 std::string d = ceps::ast::value(ceps::ast::as_string_ref(p));;
 		 auto written = ceps::serialize_value(d,*data+offs,std::numeric_limits<size_t>::max(),true,ceps::nothrow_exception_policy());
 		 offs += written;
-		} else {
-
 		}
 	}
+	DEBUG << "[serialize_flat_payload][FINISHED at offset"<<offs<<"]\n";
 
 
 	smc->unlock_global_states();
@@ -252,9 +266,72 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 			delete[] data;
 		} else if (header.id == NMP_EVAL_CEPS_EXPRESSION) {
 			DEBUG << "[MONITORING_THREAD][NMP_EVAL_CEPS_EXPRESSION]\n";
+			char * cmd = new char[header.len+1];
+			r = recv(sck,cmd,header.len,0);
+			if (r < header.len)
+			{
+				delete[] cmd;
+				DEBUG << "[MONITORING_THREAD][READ_FAILED=>TERMINATE]\n";closesocket(sck);return;
+			}
+			cmd[header.len] = 0;
+			//std::cout << cmd << std::endl;
+			DEBUG << "[MONITORING_THREAD][CMD='"<< cmd <<"']\n";
 
+			{
+				std::stringstream ss;
+				std::string err_text;
+				ss << cmd;
+				std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+				Ceps_parser_driver driver{smc->ceps_env_current().get_global_symboltable(),ss};
+				ceps::Cepsparser parser{driver};
 
+				try{
+				if (parser.parse() != 0 || driver.errors_occured()){
 
+					std::stringstream ss;
+					auto v = driver.err_log();
+					for(auto& e: v	){
+					 ss << "Error at line "<< e.loc.begin.line	<< ", column " << e.loc.begin.column<< ": "<<e.msg<<"\n";
+					}
+				  throw std::runtime_error(ss.str());
+				}
+
+				std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
+				ceps::interpreter::evaluate(smc->current_universe(),
+											driver.parsetree().get_root(),
+											smc->ceps_env_current().get_global_symboltable(),
+											smc->ceps_env_current().interpreter_env(),
+											&generated_nodes
+											);
+
+				ceps::ast::Scope scope;
+				scope.children() = generated_nodes;
+				smc->execute_action_seq(
+						nullptr,
+						&scope);
+				scope.children().clear();
+				for(auto p:generated_nodes) delete p;
+				}
+
+				catch (std::runtime_error & re){
+						err_text=re.what();}
+				catch (ceps::interpreter::semantic_exception & se){
+					err_text = se.what();}
+
+				if (err_text.length()){
+					std::cout << "*** " << err_text << std::endl;
+					delete[] cmd;
+					header.id = ntohl(NMP_ERR);
+					header.len = ntohl(err_text.length());
+					if ( write(sck, (char*)&header,sizeof(header) ) !=	 sizeof(header) ){
+							closesocket(sck);return;
+					}
+					if ( write(sck, err_text.c_str(),err_text.length() ) !=	err_text.length() ){
+							closesocket(sck);return;
+					}
+					continue;
+				}
+			}
 
 			char * data;
 			size_t buffer_size;
@@ -265,6 +342,7 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 			{
 				closesocket(sck);delete[] data;return;
 			}
+			delete[] cmd;
 			delete[] data;
 		} else {
 			header.id = ntohl(NMP_ERR);

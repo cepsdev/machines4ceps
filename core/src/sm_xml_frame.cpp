@@ -228,7 +228,9 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 		if (r != nullptr)
 			make_xml_fragment(ss,smc,r);
 	} else {
+		//std::cout << "IN:" << *data << std::endl;
 		auto r = eval_locked_ceps_expr(smc,nullptr,data,nullptr);
+		//std::cout << "OUT:" << *r << std::endl;
 		if (r != nullptr) {
 			if (r->kind() != ceps::ast::Ast_node_kind::int_literal &&
 					r->kind() != ceps::ast::Ast_node_kind::string_literal &&

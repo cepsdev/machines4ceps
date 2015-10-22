@@ -45,11 +45,13 @@ Globals{
   veh_pos_coord_longitude = 0;
   veh_pos_coord_latitude  = 0;
   
-  mast_status = mast_status_is_locked_navigation_mode;
+  mast_status = "mast_status_is_locked_navigation_mode";
+  platform_status = 1.2;
+  
   radar_working_enabled = 0;
   ivenet_comm_pending_req = 1;
   xml_field_radarparkpositionrequest_valid = 0;
   xml_status_platform_valid = 1;
-  platform_status = platform_alignment_in_progress;
+  //platform_status = platform_alignment_in_progress;
 };
 

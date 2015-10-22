@@ -1,3 +1,29 @@
+/**
+ The MIT License (MIT)
+
+Copyright (c) 2015 The authors of ceps
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ **/
+
+
+
 #include <vector>
 #include <signal.h>
 #include <arpa/inet.h>
@@ -20,10 +46,16 @@
 #include "sm4ceps/core/include/sm_ev_comm_layer.hpp"
 
 
+#include <qmetaobject.h>
+#include <qstring.h>
+#include "mainwindow.h"
+
+
 extern void fatal(int,std::string);
 extern void warn(int,std::string);
 extern int controlled_thread_id = -1;
 extern int running_thread_id = -1;
+extern MainWindow* wnd_inst;
 
 std::mutex sysstates_table_m;
 std::vector<std::pair<std::string,ceps::ast::Nodebase_ptr>> sysstates_table;
@@ -136,7 +168,17 @@ void run_as_monitor(int id,std::string ip, std::string port){
     header.id = htonl(header.id);
     header.len = htonl(header.len);
 
-    if (header.id == NMP_SYSTEMSTATES){
+    if (header.id == NMP_ERR && header.len > 0){
+      char* buffer = new char[header.len+1];
+      r = recv(cfd,buffer,header.len,0);
+      buffer[header.len] = 0;
+      QString errtext;
+      errtext = errtext.fromStdString(std::string(buffer));
+      QMetaObject::invokeMethod(wnd_inst, "process_error_from_remote", Qt::QueuedConnection,Q_ARG(QString,errtext));
+
+      delete[] buffer;
+    }
+    else if (header.id == NMP_SYSTEMSTATES){
       auto data = new char[header.len];
       if (data == nullptr){fatal(-1,"[ERROR_CLIENT_HANDLER_THREAD][ALLOC_FAILED].");close(cfd);return;}
       ssize_t already_read = 0;
@@ -147,26 +189,29 @@ void run_as_monitor(int id,std::string ip, std::string port){
 
       std::lock_guard<std::mutex> g(sysstates_table_m);sysstates_table.clear();
 
+
       for(;offs < header.len;)
       {
-        int id = ntohl(*((int*)(data+offs)));offs+=sizeof(int);
+        int id = ntohl(*((std::uint32_t*)(data+offs)));offs+=sizeof(int);
         if (id == NMP_PAYLOAD_SYSTEMSTATE){
           std::string name;
           offs+=ceps::deserialize_value(name, data+offs, header.len-offs);
-          int nmp_payload_id = ntohl(*(int*)(data+offs));
+          int nmp_payload_id = ntohl(*(std::uint32_t*)(data+offs));
+
           if (nmp_payload_id == NMP_PAYLOAD_INT)	{
             offs+=sizeof(int);
             int v;
-            ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
+            std::uint16_t m,kg,s,ampere,kelvin,mol,candela;
             auto r = ceps::deserialize_value(v, data+offs, header.len-offs);offs+=r;
             v = ntohl(v);
-            r = ceps::deserialize_value(m, data+offs, header.len-offs);m = ntohl(m);offs+=r;
-            r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = ntohl(kg);offs+=r;
-            r = ceps::deserialize_value(s, data+offs, header.len-offs);s = ntohl(s);offs+=r;
-            r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = ntohl(ampere);offs+=r;
-            r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = ntohl(kelvin);offs+=r;
-            r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = ntohl(mol);offs+=r;
-            r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = ntohl(candela);offs+=r;
+
+            r = ceps::deserialize_value(m, data+offs, header.len-offs);m = ntohs(m);offs+=r;
+            r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = ntohs(kg);offs+=r;
+            r = ceps::deserialize_value(s, data+offs, header.len-offs);s = ntohs(s);offs+=r;
+            r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = ntohs(ampere);offs+=r;
+            r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = ntohs(kelvin);offs+=r;
+            r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = ntohs(mol);offs+=r;
+            r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = ntohs(candela);offs+=r;
             sysstates_table.push_back(
                                         std::make_pair(
                                                 name,
@@ -176,23 +221,25 @@ void run_as_monitor(int id,std::string ip, std::string port){
           } else if (nmp_payload_id == NMP_PAYLOAD_DOUBLE)	{
             offs+=sizeof(int);
             double v;
-            ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
+            std::uint16_t m,kg,s,ampere,kelvin,mol,candela;
             auto r = ceps::deserialize_value(v, data+offs, header.len-offs);offs+=r;
-            r = ceps::deserialize_value(m, data+offs, header.len-offs);m = ntohl(m);offs+=r;
-            r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = ntohl(kg);offs+=r;
-            r = ceps::deserialize_value(s, data+offs, header.len-offs);s = ntohl(s);offs+=r;
-            r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = ntohl(ampere);offs+=r;
-            r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = ntohl(kelvin);offs+=r;
-            r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = ntohl(mol);offs+=r;
-            r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = ntohl(candela);offs+=r;
+            r = ceps::deserialize_value(m, data+offs, header.len-offs);m = ntohs(m);offs+=r;
+            r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = ntohs(kg);offs+=r;
+            r = ceps::deserialize_value(s, data+offs, header.len-offs);s = ntohs(s);offs+=r;
+            r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = ntohs(ampere);offs+=r;
+            r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = ntohs(kelvin);offs+=r;
+            r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = ntohs(mol);offs+=r;
+            r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = ntohs(candela);offs+=r;
             sysstates_table.push_back(
                                         std::make_pair(name,
                                         new ceps::ast::Double( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr))
                                 );
           } else if (nmp_payload_id == NMP_PAYLOAD_STRING)	{
+
             offs+=sizeof(int);
             std::string v;
             auto r = ceps::deserialize_value(v, data+offs, header.len-offs);offs+=r;
+
             sysstates_table.push_back(
                                         std::make_pair(name,
                                                 new ceps::ast::String( v, nullptr, nullptr, nullptr)
