@@ -78,6 +78,27 @@ std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr
 			auto v = smc->guards()[ceps::ast::name(ceps::ast::as_symbol_ref(p))];
 			return to_string(smc,v);
 	}
+	if (p->kind() == ceps::ast::Ast_node_kind::identifier)
+	{
+			auto id = ceps::ast::name(ceps::ast::as_id_ref(p));
+			auto it_frame_gen = smc->frame_generators().find(id);
+			if (it_frame_gen != smc->frame_generators().end())
+			{
+				size_t size;
+				unsigned char* msg_block = (unsigned char*) it_frame_gen->second->gen_msg(smc,size);
+				if (msg_block == nullptr) return "(undef)";
+				else{
+					std::string t;
+					for(int i = 0; i < size;++i)
+					{
+						t+="byte #"+std::to_string(i)+" =\t"+std::to_string(msg_block[i])+"\n";
+					}
+					return t;
+				}
+			}
+			return "(ID "+ceps::ast::name(ceps::ast::as_id_ref(p))+")";
+	}
+
 	else{
 		std::stringstream ss;
 		ss << "(CEPS-EXPRESSION: " << *p << ")";
@@ -255,7 +276,19 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			}
 			if(found) break;
 		} return new ceps::ast::Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-	 } else if (id == "c_lib_localtime_year"){
+	} else if (id == "send") {
+		if(args.size() == 1 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier) {
+			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+			auto it_frame_gen = frame_generators().find(id);
+			if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a frame id.");
+			size_t ds;
+			char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
+			if (ds > 0 && msg_block != nullptr){
+				return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+			}
+		}
+		return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	} else if (id == "c_lib_localtime_year"){
 		 time_t rawtime;
 		 struct tm* timeinfo;
 		 time(&rawtime);
@@ -368,6 +401,44 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 
 		}
 
+	} else if (id == "size") {
+		if (args.size() == 0) return  new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		else if (args[0]->kind() == ceps::ast::Ast_node_kind::identifier)
+		{
+			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+			auto it_frame_gen = frame_generators().find(id);
+			if (it_frame_gen != frame_generators().end())
+			{
+				size_t ds;
+				char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
+				delete[] msg_block;
+				return new ceps::ast::Int(ds,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+			}
+		}
+	} else if (id == "raw_frame_starts_with") {
+		if (args[0]->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Expected frame id.");
+		auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+		auto it_frame_gen = frame_generators().find(id);
+		if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a raw frame id.");
+		size_t ds;
+		char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
+		bool r = ds >= args.size()-1;
+		if(r)for(int i = 1; i < args.size();++i){
+			if (args[i]->kind() != ceps::ast::Ast_node_kind::int_literal) continue;
+			unsigned char u = (unsigned char) ceps::ast::value(ceps::ast::as_int_ref(args[i]));
+			if (u != (unsigned char)msg_block[i-1]){r = false;break;}
+		}
+		delete[] msg_block;
+		return new ceps::ast::Int( (r?1:0) ,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	} else if (id == "assert") {
+		if (args.size() == 0 || args[0]->kind() != ceps::ast::Ast_node_kind::int_literal) fatal_(-1,"assert:first argument bust be an integer.");
+		if (ceps::ast::value(ceps::ast::as_int_ref(args[0])) == 0){
+         std::string msg;
+         if (args.size() > 1 && args[1]->kind() == ceps::ast::Ast_node_kind::string_literal) msg = ceps::ast::value(ceps::ast::as_string_ref(args[1]));
+         if (msg.length() == 0) fatal_(-1,"Assert failed.");
+         else fatal_(-1,"Assert failed:'"+msg+"'");
+		}
+		return new ceps::ast::Int( 1 ,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	}
 
 	auto it = name_to_smcore_plugin_fn.find(id);
@@ -477,13 +548,21 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 
 	smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->get_global_states();
+	ceps::interpreter::Environment::func_callback_t old_callback;
+	void * old_func_callback_context_data;
+	ceps::interpreter::Environment::func_binop_resolver_t old_binop_res;
+	void * old_cxt;
+
+	smc->ceps_env_current().interpreter_env().get_func_callback(old_callback,old_func_callback_context_data);
+	smc->ceps_env_current().interpreter_env().get_binop_resolver(old_binop_res,old_cxt);
+
 	smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
 	auto r = ceps::interpreter::evaluate(node,
 			smc->ceps_env_current().get_global_symboltable(),
 			smc->ceps_env_current().interpreter_env(),root_node	);
-	smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-	smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
+	smc->ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
+	smc->ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
 	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
 
 	return r;
@@ -596,7 +675,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 
 			if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope)
 			{
-				ceps::ast::Scope scope(branch_to_take);
+				ceps::ast::Scope scope(branch_to_take);scope.owns_children() = false;
 				execute_action_seq(containing_smp,&scope);
 				scope.children().clear();
 			} else { execute_action_seq(containing_smp,branch_to_take);}
@@ -680,7 +759,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				{
 					if (n->kind() == ceps::ast::Ast_node_kind::int_literal ||
 					    n->kind() == ceps::ast::Ast_node_kind::float_literal ||
-					    n->kind() == ceps::ast::Ast_node_kind::string_literal
+					    n->kind() == ceps::ast::Ast_node_kind::string_literal ||
+					    n->kind() == ceps::ast::Ast_node_kind::identifier
 					    )
 					{
 						std::cout << to_string(this,n);

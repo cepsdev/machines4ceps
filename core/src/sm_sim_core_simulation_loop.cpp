@@ -94,7 +94,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			 if (ev.sid_ == "@@queued_action")
 			 {
 				 ceps::ast::Scope scope;
-				 scope.children() = ev.payload_;
+				 scope.children() = ev.payload_;scope.owns_children() = false;
 				 execute_action_seq(nullptr,&scope);
 				 scope.children().clear();
 				 continue;

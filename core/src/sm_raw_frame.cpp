@@ -24,135 +24,265 @@ bool Podframe_generator::readfrom_spec(ceps::ast::Nodeset const & spec)
  return true;
 }
 
-size_t compute_size(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p,std::vector<std::string> const & params){
- using namespace ceps::ast;
- if (p == nullptr) return 0;
- if (p->kind() == ceps::ast::Ast_node_kind::int_literal) return sizeof(std::int64_t);
- if (p->kind() == ceps::ast::Ast_node_kind::float_literal) return sizeof(double);
- if (p->kind() == ceps::ast::Ast_node_kind::string_literal)
-	 return ceps::ast::value(ceps::ast::as_string_ref(p)).length();
- if (p->kind() == ceps::ast::Ast_node_kind::symbol){
-	 ceps::ast::Symbol& sym = ceps::ast::as_symbol_ref(p);
-	 if (ceps::ast::kind(sym) == "Systemstate")
-	 {
-		 //std::cerr << "!!!!!!!!!!" << std::endl;
-		 std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-		 auto it = smc->global_systemstates().find( ceps::ast::name(sym));
-		 if (it == smc->global_systemstates().end()) return 0;
-		 if (it->second->kind() == ceps::ast::Ast_node_kind::int_literal)
-			 return sizeof(std::int64_t);
-		 else return 0;
-	 }
- }
- if (p->kind() == ceps::ast::Ast_node_kind::identifier){
-	 ceps::ast::Identifier& id = ceps::ast::as_id_ref(p);
-	 std::string id_name = ceps::ast::name(id);
-	 for(auto x:params) if (x==id_name) return sizeof(std::int64_t);
-	 return 0;
- }
- if (p->kind() == ceps::ast::Ast_node_kind::func_call)
- {
-	 std::string func_name;	std::vector<ceps::ast::Nodebase_ptr> args;
-	 read_func_call_values(smc,p,func_name,args);
-	 if (func_name == "uint" || func_name == "int")
-	 {
-		 if (args.size() == 0 || args.size() > 2)
-			 smc->fatal_(-1, "uint: uint takes one or two arguments: uint(VALUE) or uint(1-64,VALUE)");
-		 if (args.size() == 1) return sizeof(std::int32_t);
 
-		 if (args[0]->kind() != ceps::ast::Ast_node_kind::int_literal)
-			 smc->fatal_(-1, "uint: expected an integral scalar as first argument.");
-		 return(value(as_int_ref(args[0])) / 8);
-	 }
- }
- return 0;
+
+size_t fill_raw_chunk(State_machine_simulation_core* smc,
+		            std::vector<ceps::ast::Nodebase_ptr> pattern,
+		            size_t data_size,
+		            char* data,
+		            size_t bit_offs,
+		            size_t bit_width=sizeof(std::int64_t)*8,
+		            bool signed_value = true,
+		            bool write_data = true,
+		            bool host_byte_order = true
+		            );
+
+size_t fill_raw_chunk( State_machine_simulation_core* smc,
+		               ceps::ast::Nodebase_ptr p,
+		               size_t data_size,
+		               char* data,
+		               size_t bit_offs,
+		               size_t bit_width=sizeof(std::int64_t)*8,
+		               bool signed_value = true,
+		               bool write_data = true,
+		               bool host_byte_order = true) {
+	using namespace ceps::ast;
+	if (p == nullptr) return 0;
+	//if (write_data) std::cout << "*** bit_width=" << bit_width << std::endl;
+	if (p->kind() == ceps::ast::Ast_node_kind::structdef){
+		auto& st = ceps::ast::as_struct_ref(p);
+		auto& nm = ceps::ast::name(st);
+		if (nm == "byte" || nm == "int8"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,8,true,write_data,host_byte_order);
+		} else if (nm == "ubyte" || nm == "uint8"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,8,false,write_data,host_byte_order);
+		} else if (nm == "ushort" || nm == "uint16"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,16,false,write_data,host_byte_order);
+		} else if (nm == "short" || nm == "int16"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,16,true,write_data,host_byte_order);
+		} else if (nm == "uint" || nm == "uint32"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,32,false,write_data,host_byte_order);
+		} else if (nm == "int" || nm == "int32") {
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,32,true,write_data,host_byte_order);
+		} else if (nm == "ulonglong" || nm == "uint64") {
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,64,false,write_data,host_byte_order);
+		} else if (nm == "longlong" || nm == "int64") {
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,64,true,write_data,host_byte_order);
+		} else if (nm == "uint24"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,24,false,write_data,host_byte_order);
+		} else if (nm == "int24"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,24,true,write_data,host_byte_order);
+		}else if (nm == "uint23"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,23,false,write_data,host_byte_order);
+		} else if (nm == "int23"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,23,true,write_data,host_byte_order);
+		}else if (nm == "uint22"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,22,false,write_data,host_byte_order);
+		} else if (nm == "int22"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,22,true,write_data,host_byte_order);
+		}else if (nm == "uint21"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,21,false,write_data,host_byte_order);
+		} else if (nm == "int21"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,21,true,write_data,host_byte_order);
+		}else if (nm == "uint20"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,20,false,write_data,host_byte_order);
+		} else if (nm == "int20"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,20,true,write_data,host_byte_order);
+		}else if (nm == "uint19"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,19,false,write_data,host_byte_order);
+		} else if (nm == "int19"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,19,true,write_data,host_byte_order);
+		}else if (nm == "uint18"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,18,false,write_data,host_byte_order);
+		} else if (nm == "int18"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,18,true,write_data,host_byte_order);
+		}else if (nm == "uint17"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,17,false,write_data,host_byte_order);
+		} else if (nm == "int17"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,17,true,write_data,host_byte_order);
+		}else if (nm == "uint15"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,15,false,write_data,host_byte_order);
+		} else if (nm == "int15"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,15,true,write_data,host_byte_order);
+		} else if (nm == "uint14"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,14,false,write_data,host_byte_order);
+		} else if (nm == "int14"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,14,true,write_data,host_byte_order);
+		}else if (nm == "uint13"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,13,false,write_data,host_byte_order);
+		} else if (nm == "int13"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,13,true,write_data,host_byte_order);
+		}else if (nm == "uint12"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,12,false,write_data,host_byte_order);
+		} else if (nm == "int12"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,12,true,write_data,host_byte_order);
+		}else if (nm == "uint11"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,11,false,write_data,host_byte_order);
+		} else if (nm == "int11"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,11,true,write_data,host_byte_order);
+		} else if (nm == "uint10"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,10,false,write_data,host_byte_order);
+		} else if (nm == "int10"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,10,true,write_data,host_byte_order);
+		}else if (nm == "uint9"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,9,false,write_data,host_byte_order);
+		} else if (nm == "int9"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,9,true,write_data,host_byte_order);
+		}else if (nm == "uint7"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,7,false,write_data,host_byte_order);
+		} else if (nm == "int7"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,7,true,write_data,host_byte_order);
+		} else if (nm == "uint6"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,6,false,write_data,host_byte_order);
+		} else if (nm == "int6"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,6,true,write_data,host_byte_order);
+		} else if (nm == "uint5"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,5,false,write_data,host_byte_order);
+		} else if (nm == "int5"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,8,true,write_data,host_byte_order);
+		} else if (nm == "uint4"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,4,false,write_data,host_byte_order);
+		} else if (nm == "int4"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,4,true,write_data,host_byte_order);
+		} else if (nm == "uint3"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,3,false,write_data,host_byte_order);
+		} else if (nm == "int3"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,3,true,write_data,host_byte_order);
+		} else if (nm == "uint2"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,2,false,write_data,host_byte_order);
+		} else if (nm == "int2"){
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,2,true,write_data,host_byte_order);
+		} else if (nm == "bit"){ //std::cout << "------\n";
+			return fill_raw_chunk(smc,st.children(),data_size,data,bit_offs,1,true,write_data,host_byte_order);
+		} else {
+			return fill_raw_chunk(smc,st.children(), data_size,data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
+		}
+	}
+	else if (p->kind() == ceps::ast::Ast_node_kind::identifier){
+		auto& ident = ceps::ast::as_id_ref(p);
+		if (ceps::ast::name(ident) == "any") return bit_width;
+		else if (ceps::ast::name(ident) == "__current_frame_size") {
+			auto temp_node = ceps::ast::Int(data_size,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			return fill_raw_chunk(smc,&temp_node,data_size, data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
+		} else smc->fatal_(-1,std::string("Raw frame:  Unknown identifier '")+ceps::ast::name(ident)+"'");
+	}else if (p->kind() == ceps::ast::Ast_node_kind::int_literal){
+		if (write_data){
+			std::uint64_t v = (std::uint64_t)value(as_int_ref(p));
+			if (bit_width < 64){
+			   if (bit_width == 1){ v =  (v ? 1 : 0) ;  }
+			   else if (bit_width == 4) v &= 0xFLL;
+			   else if (bit_width == 8) v &= 0xFFLL;
+			   else if (bit_width == 12) v &= 0xFFFLL;
+			   else if (bit_width == 16) v &= 0xFFFFLL;
+			   else if (bit_width == 20) v &= 0xFFFFFLL;
+			   else if (bit_width == 24) v &= 0xFFFFFFLL;
+			   else if (bit_width == 28) v &= 0xFFFFFFFLL;
+			   else if (bit_width == 32) v &= 0xFFFFFFFFLL;
+			   else{
+				   std:uint64_t w=1;
+				   for(size_t i = 0; i < bit_width;++i) w |= (w << 1);
+				   v &= w;
+			   }
+			}
+			int bits_written = 0;
+			if (bit_offs % 8) {
+				unsigned short o = bit_offs % 8;
+				unsigned short d = 8 - o ; // d is the number of bits left in the byte to write
+				unsigned char w = *(data + bit_offs/8);
+				if (d > bit_width) d = bit_width;
+				unsigned char c1=1;for(int i = 0; i < d;++i)c1 |= (c1 << 1);
+				unsigned char c2=1;for(int i = 0; i < o-1;++i)c2 |= (c2 << 1);
+
+				w = (w & c2) | ( ((unsigned char)v & c1) << o );
+				*( (unsigned char*)( data + bit_offs/8)) = w;
+				bits_written = d;bit_offs+=d;
+			}
+			v = v >> bits_written;
+
+			//INVARIANT: bit_offs points to a byte address
+			if (bits_written < bit_width){
+				for(int i = 0; i < (bit_width-bits_written)/8;++i,bit_offs+=8,bits_written+=8){
+					*(data+bit_offs/8) = ((unsigned char)v & 0xFF);
+				    v = v >> 8;
+				}
+			}
+			//INVARIANT: bit_offs points to a byte address
+			//INVARIANT: bit_width - bits_written < 8
+			if (bits_written < bit_width){
+				if (bit_width-bits_written  == 1){
+					unsigned char & target = *( (unsigned char*)(data+ bit_offs/8) );
+					if (v & 1)  target |= 1;
+					else target &= 0xFE;
+				} else
+				{
+					unsigned char & target = *( (unsigned char*)(data+ bit_offs/8) );
+					unsigned char c = 1;
+					for(int i = 0; i < bit_width-bits_written-1; ++i ) c |= c << 1;
+					target = c & v;
+				}
+			}
+		}
+		return bit_width;
+	}
+	else if (p->kind() == ceps::ast::Ast_node_kind::float_literal) {
+		 smc->fatal_(-1,"Floating point numbers not supported in raw frames.");
+	}
+	else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
+		 std::string s = ceps::ast::value(ceps::ast::as_string_ref(p));
+		 int corr = 0;
+		 if (bit_offs % 8) corr = 8 - (bit_offs % 8);
+		 bit_offs += corr;
+		 if (write_data) memcpy((data+bit_offs/8),s.c_str(),s.length());
+		 return s.length()*8+corr;
+	}
+	else {std::stringstream ss; ss << *p; smc->fatal_(-1,"Serialization of raw frame: Illformed expression:"+ss.str());}
+	return 0;
+}
+
+size_t fill_raw_chunk(State_machine_simulation_core* smc,
+		            std::vector<ceps::ast::Nodebase_ptr> pattern,
+		            size_t data_size,
+		            char* data,
+		            size_t bit_offs,
+		            size_t bit_width,
+		            bool signed_value,
+		            bool write_data,
+		            bool host_byte_order
+		            ){
+	size_t r=0;
+	for(auto p : pattern){
+		auto rr = fill_raw_chunk(smc,p,data_size,data,bit_offs,bit_width,signed_value,write_data,host_byte_order);
+		r+=rr;
+		bit_offs += rr;
+	}
+	return r;
 }
 
 size_t compute_size(State_machine_simulation_core* smc,std::vector<ceps::ast::Nodebase_ptr> pattern) {
-	size_t acc = 0;
-	std::vector<std::string> dummy;
-	for(auto p : pattern){
-
-		acc += compute_size(smc,p,dummy);
-	}
-	return acc;
-}
-
-size_t fill_raw_chunk(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p,char* data,bool host_byte_order = false) {
-	using namespace ceps::ast;
-	if (p == nullptr) return 0;
-	if (p->kind() == ceps::ast::Ast_node_kind::int_literal){
-		if (!host_byte_order ) *((std::int64_t*)data) = htobe64(value(as_int_ref(p)));
-		else  *((std::int64_t*)data) = value(as_int_ref(p));
-		return sizeof(std::int64_t);
-	}
-	 if (p->kind() == ceps::ast::Ast_node_kind::float_literal) {
-		 if (!host_byte_order ) *((double*)data) = htobe64((std::uint64_t)value(as_double_ref(p)));
-		 else *((double*)data) = (std::uint64_t)value(as_double_ref(p));
-		 return sizeof(double);
-	 }
-	 if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
-		 std::string s = ceps::ast::value(ceps::ast::as_string_ref(p));
-		 memcpy(data,s.c_str(),s.length());
-		 return s.length();
-	 }
-	 if (p->kind() == ceps::ast::Ast_node_kind::func_call)
-	 {
-		 std::string func_name;	std::vector<ceps::ast::Nodebase_ptr> args;
-		 read_func_call_values(smc,p,func_name,args);
-		 if (func_name == "uint" || func_name == "int")
-		 {
-			 if (args.size() == 0 || args.size() > 2)
-				 smc->fatal_(-1, "uint: uint takes one or two arguments: uint(VALUE) or uint(1-64,VALUE)");
-			 if (args.size() == 1) return sizeof(std::int32_t);
-
-			 if (args[0]->kind() != ceps::ast::Ast_node_kind::int_literal)
-				 smc->fatal_(-1, "uint: expected an integral scalar as first argument.");
-			 if (args[1]->kind() != ceps::ast::Ast_node_kind::int_literal)
-				 smc->fatal_(-1, "uint: expected an integral value as second argument.");
-
-			 auto v = value(as_int_ref(args[1]));
-			 size_t l = value(as_int_ref(args[0])) / 8;
-			 if (l == 8) memcpy(data, (char*)&v,1);
-			 else if (l == 16) memcpy(data, (char*)&v,2);
-			 else if (l == 24) memcpy(data, (char*)&v,3);
-			 else if (l == 32) {auto vv = htobe32(v); memcpy(data, (char*)&vv,4);}
-			 else if (l == 40) memcpy(data, (char*)&v,5);
-			 else if (l == 48) memcpy(data, (char*)&v,6);
-			 else if (l == 56) memcpy(data, (char*)&v,7);
-			 else memcpy(data, (char*)&v,6);
-
-			 return l;
-		 }
-	 }
-	 return 0;
-}
-
-void fill_raw_chunk(State_machine_simulation_core* smc,std::vector<ceps::ast::Nodebase_ptr> pattern,char* data) {
-	size_t offs = 0;
-	for(auto p : pattern){
-		offs += fill_raw_chunk(smc,p,data+offs);
-	}
+	size_t bits = fill_raw_chunk(smc,
+            pattern,
+            0,
+            nullptr,
+            0,
+            0,true,false,true);
+	return bits / 8 + ( (bits % 8) ? 1 : 0);
 }
 
 size_t Podframe_generator::compute_size_of_msg(State_machine_simulation_core* smc,
 		                                       std::vector<std::string> params,bool& failed)
 {
-	size_t acc = 0;
-	failed = true;
-	auto data_format = spec_["data"];
 
-	for(auto p : data_format.nodes()){
-		//std::cerr << *p << std::endl;
-		auto t =  compute_size(smc,p,params);
-		if (t == 0) return 0;
-		acc += t;
-	}
+	auto data_format = spec_["data"];
 
 	failed = false;
 
-	return acc;
+	return compute_size(smc, data_format.nodes() );
 }
+
+extern ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+		 State_machine* containing_smp,
+		 ceps::ast::Nodebase_ptr node,
+		 ceps::ast::Nodebase_ptr root_node);
 
 void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size){
 
@@ -160,7 +290,13 @@ void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& dat
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2;
 	auto data_format = spec_["data"];
-	if (data_format.nodes().empty()) return nullptr;
+	if (data_format.nodes().empty()) {
+		std::string id;
+		auto t = spec_["id"];
+		if (t.nodes().size() != 0 && t.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier)
+			id = ceps::ast::name(ceps::ast::as_id_ref(t.nodes()[0]));
+		smc->fatal_(-1,"Frame '"+id+"' doesn't contain a data section.");
+	}
 
 	ceps_interface_eval_func_callback_ctxt_t ctxt;
 	ctxt.active_smp = nullptr;
@@ -168,30 +304,21 @@ void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& dat
 
 	ceps::ast::Nodebase_ptr frame_pattern = nullptr;
 	ceps::ast::Scope scope;
-	scope.children() = data_format.nodes();
-	{
-		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-
-
-		smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->global_systemstates();
-		smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);
-		frame_pattern = ceps::interpreter::evaluate(&scope,
-				smc->ceps_env_current().get_global_symboltable(),
-				smc->ceps_env_current().interpreter_env(),nullptr	);
-		smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-	}
+	scope.children() = data_format.nodes();scope.owns_children() = false;
+	frame_pattern = eval_locked_ceps_expr(smc,nullptr,&scope,nullptr);
+	scope.children().clear();
 
 	if (frame_pattern == nullptr) return nullptr;
+	DEBUG << "[Podframe_generator::gen_msg][pattern]" << *frame_pattern << "\n\n";
 	auto chunk_size = compute_size(smc,ceps::ast::nlf_ptr(frame_pattern)->children());
+	data_size = chunk_size;
 	DEBUG << "[Podframe_generator::gen_msg][CHUNK_SIZE="<<chunk_size<<"]\n";
 	char* data = new char[chunk_size];
 	bzero(data,chunk_size);
-	fill_raw_chunk( smc,ceps::ast::nlf_ptr(frame_pattern)->children(), data);
+	fill_raw_chunk( smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0);
 	for(size_t offs = 0; offs < chunk_size;++offs)
 		DEBUG <<"[Podframe_generator::gen_msg][CHUNK_BYTE_"<< offs << "="<< ((std::uint32_t) *( (unsigned char*)data+offs)) << "]\n";
-	data_size = chunk_size;
+
 	return data;
 }
 
@@ -340,9 +467,12 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 		auto len = frame_size;
 		int wr = 0;
 
-		//std::cout << "-++---------------------------\n";
-		//std::cout << eof << std::endl;
-
+		if (som.size() == 0 && eof.size() == 0){
+			auto l = htonl(len);
+			if ( write(cfd, &l,sizeof(l)) != len){
+				close(cfd);	conn_established=false;DEBUG << "[comm_sender_generic_tcp_out_thread][write of data length failed]\n";continue;
+			}
+		}
 		if (som.size())
 		 if ( (wr = write(cfd, som.c_str(),eof.length() )) != som.length())
 		 {
@@ -411,7 +541,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 
 	if (eof.length())
 	{
-		;
+
 		std::string last_suffix;
 		for(;!smc->shutdown();){
 			char buffer_[4096];

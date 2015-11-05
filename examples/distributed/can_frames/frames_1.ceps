@@ -1,0 +1,66 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of raw frames.
+ * Part of regression test base.
+ *
+ * 
+ */
+
+Systemstate PRINT;
+
+globals{
+  PRINT = 1;
+};
+Simulation{
+ coord_x = 257;
+ coord_y = 2;
+ coord_z = 33;
+ ZS_Heckverteiler_1_radar_power_bite_out=0;
+ ZS_Heckverteiler_1_radaranlage_power_warnung_out=0;
+ ZS_Heckverteiler_1_reserve=0;
+ ZS_Heckverteiler_1_reserve_1=0;
+ ZS_Heckverteiler_1_reserve_io_in_1=0;
+ ZS_Heckverteiler_1_reserve_io_in_2=0;
+ ZS_Heckverteiler_1_reserve_io_in_3=0;
+ ZS_Heckverteiler_1_reserve_io_in_4=0;
+ 
+ if(PRINT)print("Content of frm_string_three_bytes_9_bits_byte =\n", frm_string_three_bytes_9_bits_byte,"\n");
+ assert(raw_frame_starts_with(frm_string_three_bytes_9_bits_byte,
+			       65,66,67,68,69,70,1,coord_y*2,coord_z,254,255,1),"frame1 contains wrong data.");
+ 
+  if(PRINT)print("\nfrm_uint4_uint2_uint6_1_1_1:\n",frm_uint4_uint2_uint6_1_1_1,"\n"); 
+  assert(raw_frame_starts_with(frm_uint4_uint2_uint6_1_1_1,
+			        81,0),"frm_uint4_uint2_uint6_1_1_1 contains wrong data.");
+  
+  if(PRINT)print("\nfrm_uint4_uint2_uint6_16_4_16:\n",frm_uint4_uint2_uint6_16_4_16,"\n");
+  assert(raw_frame_starts_with(frm_uint4_uint2_uint6_16_4_16,
+			        0,0),"frm_uint4_uint2_uint6_16_4_16 contains wrong data.");
+  
+  if(PRINT)print("\nfrm_uint4_uint2_uint6_17_5_17:\n",frm_uint4_uint2_uint6_17_5_17,"\n");
+  assert(raw_frame_starts_with(frm_uint4_uint2_uint6_17_5_17,
+			        81,0),"frm_uint4_uint2_uint6_17_5_17 contains wrong data.");  
+  
+  if(PRINT)print("\nfrm_bit_uint2_uint3_uint4_1_1_1_1:\n",frm_bit_uint2_uint3_uint4_1_1_1_1,"\n");
+  assert(raw_frame_starts_with(frm_bit_uint2_uint3_uint4_1_1_1_1,
+			        75,0),"frm_bit_uint2_uint3_uint4_1_1_1_1 contains wrong data."); 
+  
+  if(PRINT)print("\nfrm_uint8_minus_1:\n",frm_uint8_minus_1,"\n");
+  assert(raw_frame_starts_with(frm_uint8_minus_1,
+			        255),"frm_uint8_minus_1 contains wrong data."); 
+  if(PRINT)print("\nfrm_uint4_minus_1:\n",frm_uint4_minus_1,"\n");
+  assert(raw_frame_starts_with(frm_uint4_minus_1,
+			        15),"frm_uint4_minus_1 contains wrong data."); 
+  
+  if(PRINT)print("\nzustand_heckverteiler_1:\n",zustand_heckverteiler_1,"\n");
+//   assert(raw_frame_starts_with(zustand_heckverteiler_1,
+// 			        15),"zustand_heckverteiler_1 contains wrong data.");   
+//   
+  
+};

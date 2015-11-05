@@ -27,8 +27,7 @@ SOURCES += main.cpp\
     comm.cpp
 
 HEADERS  += mainwindow.h \
-    ../build-sm_monitor-Desktop_Qt_5_2_1_GCC_64bit-Debug/ui_connect.h \
-    simcoreconnectdlg.h
+      simcoreconnectdlg.h
 
 FORMS    += mainwindow.ui \
     simcoreconnectdlg.ui

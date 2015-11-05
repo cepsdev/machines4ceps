@@ -632,12 +632,12 @@ int main(int argc,char ** argv)
 	}
 	catch (ceps::interpreter::semantic_exception & se)
 	{
-		std::cerr << "***Error while evaluating file '" + last_file_processed + "':"<< se.what() << std::endl;
+		std::cerr << "***Fatal Error: "<< se.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 	catch (std::runtime_error & re)
 	{
-		std::cerr << "***Error while evaluating file '" + last_file_processed + "':" << re.what() << std::endl;
+		std::cerr << "***Fatal Error: " << re.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 

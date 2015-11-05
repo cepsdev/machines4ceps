@@ -1,0 +1,132 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of raw frames.
+ * Part of regression test base.
+ *
+ * 
+ */
+
+
+kind Systemstate;
+
+Systemstate coord_x,coord_y,coord_z;
+
+
+frame{
+ id{frm_string_three_bytes_9_bits_byte;};
+ data{
+  header{"ABCDEF";};
+  coord{
+  byte{
+    x{coord_x;};
+    y{2*coord_y;};
+    z{coord_z;};
+  };};
+  bit{    
+    any;2;1;1;1;1;1;1;1;
+  };
+  byte{255;};
+ };
+};
+
+
+frame{
+  id{frm_uint4_uint2_uint6_1_1_1;};
+  data{
+   uint4{1;};
+   uint2{1;};
+   uint4{1;}; 
+   // byte #1 = 1 + 16 + 64 = 81
+   // byte #2 = 0;
+  };
+};
+
+frame{
+  id{frm_uint4_uint2_uint6_16_4_16;};
+  data{
+   uint4{16;};
+   uint2{4;};
+   uint4{16;}; 
+  };
+};
+
+frame{
+  id{frm_uint4_uint2_uint6_17_5_17;};
+  data{
+   uint4{17;};
+   uint2{5;};
+   uint4{17;}; 
+  };
+};
+
+frame{
+  id{frm_bit_uint2_uint3_uint4_1_1_1_1;};
+  data{
+   bit{1;};   
+   uint2{1;};  
+   uint3{1;}; 
+   uint4{1;}; 
+  };
+};
+
+frame{
+  id{frm_uint8_minus_1;};
+  data{
+   uint8{-1;};
+  };
+};
+
+frame{
+  id{frm_uint4_minus_1;};
+  data{
+   uint4{-1;};
+  };
+};
+
+Systemstate ZS_Heckverteiler_1_radar_power_bite_out;
+Systemstate ZS_Heckverteiler_1_radaranlage_power_warnung_out;
+Systemstate ZS_Heckverteiler_1_reserve;
+Systemstate ZS_Heckverteiler_1_reserve_1;
+Systemstate ZS_Heckverteiler_1_reserve_io_in_1;
+Systemstate ZS_Heckverteiler_1_reserve_io_in_2;
+Systemstate ZS_Heckverteiler_1_reserve_io_in_3;
+Systemstate ZS_Heckverteiler_1_reserve_io_in_4;
+
+
+frame{
+  id{zustand_heckverteiler_1;};
+  data{
+    header{
+     cob_id{uint11{0;};};
+     rtr{bit{0;};};
+     data_length{uint4{__current_frame_size;};};
+    };
+    payload{
+      cs0{
+	bit{
+	  ZS_Heckverteiler_1_radar_power_bite_out;
+	  ZS_Heckverteiler_1_radaranlage_power_warnung_out;
+	  ZS_Heckverteiler_1_reserve;
+	  ZS_Heckverteiler_1_reserve_1;
+	  ZS_Heckverteiler_1_reserve_io_in_1;
+	  ZS_Heckverteiler_1_reserve_io_in_2;
+	  ZS_Heckverteiler_1_reserve_io_in_3;
+	  ZS_Heckverteiler_1_reserve_io_in_4;
+	};
+      };
+    };    
+  };
+};
+
+
+
+

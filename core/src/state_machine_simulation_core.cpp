@@ -581,10 +581,14 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 	auto statemachines = ns[all{"Statemachine"}];
 	auto globalfunctions = ns["global_functions"];
-	auto pdoframes = ns[all{"raw_frame"}];
+	auto frames = ns[all{"raw_frame"}];
 	auto xmlframes = ns[all{"xml_frame"}];
 	auto all_sender = ns[all{"sender"}];
 	auto all_receiver = ns[all{"receiver"}];
+
+	auto can_frames = ns[all{"frame"}];
+	frames.nodes().insert(frames.nodes().end(),can_frames.nodes().begin(),can_frames.nodes().end());
+
 
 	for(auto p:globalfunctions.nodes())
 	{
@@ -761,9 +765,11 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 	//Handle CALL frames
 
-	for(auto rawframe_ : pdoframes)
+	for(auto rawframe_ : frames)
 	{
 		auto rawframe = rawframe_["raw_frame"];
+		if(!rawframe.size()) rawframe = rawframe_["frame"];
+
 		auto gen = new Podframe_generator;
 		if (rawframe["id"].size() != 1)
 			fatal_(-1,"raw_frame definition: missing id.");
@@ -771,10 +777,10 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 			fatal_(-1,"raw_frame definition: id must be an unbound identifier.");
 
 		std::string id = ceps::ast::name(ceps::ast::as_id_ref(rawframe["id"].nodes()[0]));
-		DEBUG << "[PROCESSING PDO_RAW_FRAME_SPEC("<< id <<")][START]\n";
+		DEBUG << "[PROCESSING RAW_FRAME_SPEC("<< id <<")][START]\n";
 		gen->readfrom_spec(rawframe);
 		frame_generators()[id] = gen;
-		DEBUG << "[PROCESSING PDO_RAW_FRAME_SPEC][FINISHED]\n";
+		DEBUG << "[PROCESSING RAW_FRAME_SPEC][FINISHED]\n";
 	}
 
 	for(auto xmlframe_ : xmlframes)
@@ -1682,11 +1688,11 @@ void run_state_machine_simulation(State_machine_simulation_core* smc,Result_proc
 
 		} catch (ceps::interpreter::semantic_exception & se)
 			{
-				std::cerr << "***Error while evaluating file '" + last_file_processed + "':"<< se.what() << std::endl;
+				std::cerr << "***Fatal error: "<< se.what() << std::endl;
 			}
 			catch (std::runtime_error & re)
 			{
-				std::cerr << "***Error while evaluating file '" + last_file_processed + "':" << re.what() << std::endl;
+				std::cerr << "***Fatal error: " << re.what() << std::endl;
 			}
 	}//for
 

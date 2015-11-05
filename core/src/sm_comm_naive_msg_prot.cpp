@@ -305,6 +305,7 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 											);
 
 				ceps::ast::Scope scope;
+				scope.owns_children() = false;
 				scope.children() = generated_nodes;
 				smc->execute_action_seq(
 						nullptr,
