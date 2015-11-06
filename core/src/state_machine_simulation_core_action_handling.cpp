@@ -430,7 +430,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		}
 		delete[] msg_block;
 		return new ceps::ast::Int( (r?1:0) ,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-	} else if (id == "assert") {
+	} else if (id == "assert" || id == "ASSERT") {
 		if (args.size() == 0 || args[0]->kind() != ceps::ast::Ast_node_kind::int_literal) fatal_(-1,"assert:first argument bust be an integer.");
 		if (ceps::ast::value(ceps::ast::as_int_ref(args[0])) == 0){
          std::string msg;

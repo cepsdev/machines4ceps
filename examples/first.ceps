@@ -1,6 +1,4 @@
 kind Event;
-
-
 Event A_Gedrueckt,B_Gedrueckt;
 
 
