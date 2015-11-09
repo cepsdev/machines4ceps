@@ -270,14 +270,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	{
 	  if(params->children().size() == 0) fatal_(-1,"Function '"+id+"' expects at least one argument");
 	  bool found = false;
-	  //auto const & args =  params->children();
-
-	  /*log() << "[ACTIVE_STATES]";
-	  for(auto s:current_states())
-	  {
-		  log() << get_fullqualified_id(s) <<";";
-	  }
-	  log() << "\n\n";*/
 	  for(auto p : args)
 		 {
 	  	   if ( !(p->kind() == ceps::ast::Ast_node_kind::identifier) && !(p->kind() == ceps::ast::Ast_node_kind::binary_operator)){
@@ -467,10 +459,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	if (it != name_to_smcore_plugin_fn.end())
 		return it->second(params);
 
-	if(active_smp){
+	{
 
 		ceps::ast::Nodebase_ptr body = nullptr;
-		{
+		if(active_smp){
 		 auto it = active_smp->actions().find(State_machine::Transition::Action(id));
 		 if (it != active_smp->actions().end() && it->body_ != nullptr) body = it->body_;
 		}
@@ -615,12 +607,14 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 		if (n->kind() == ceps::ast::Ast_node_kind::ret)
 		{
 			auto & node = as_return_ref(n);
-			std::lock_guard<std::recursive_mutex>g(states_mutex_);
+			return eval_locked_ceps_expr(this,containing_smp,node.children()[0],n);
+
+			/*std::lock_guard<std::recursive_mutex>g(states_mutex_);
 			ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
 			ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
 			auto result = ceps::interpreter::evaluate(node.children()[0],ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env(),n	);
 			ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-			return result;
+			return result;*/
 		} else	if ( is_assignment_op(n) )
 		{
 			auto & node = as_binop_ref(n);

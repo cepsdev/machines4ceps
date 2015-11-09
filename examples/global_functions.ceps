@@ -1,0 +1,51 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ * Demonstrates usage and semantics of global functions.
+ *
+ * 
+ */
+
+
+kind Guard;
+kind Event;
+kind Systemstate;
+Systemstate t;
+Systemstate counter;
+
+Event E;
+
+global_functions{
+  add{
+    params{x;y;};
+    return x+y;
+  };
+};
+
+Statemachine{
+  id{S;};
+  States{Initial;};
+  Actions{
+    a1{ counter = add(counter,1);};
+  };
+  Transition{Initial;Initial;E;a1;};
+};
+
+
+Simulation{
+  counter = 0;
+  t = add(1,1);
+  assert(add(1,1)==2);
+  assert(t==2);
+  Start{S;};
+  assert(counter==0,"Counter should retain its initial value immediatley after starting S.");
+  E;
+  assert(counter==1,"The first triggered E event should increase the counter by one.");
+  E;
+  assert(counter==2,"The first triggered E event should increase the counter by one.");
+};
