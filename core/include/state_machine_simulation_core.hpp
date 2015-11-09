@@ -374,6 +374,8 @@ public:
 private:
 	std::map<std::string,int> registered_sockets_;
 	std::recursive_mutex registered_sockets_mtx_;
+	std::set<state_rep_t> assert_not_in_end_states_;
+	std::set<state_rep_t> assert_in_end_states_;
 public:
 	std::recursive_mutex& get_reg_sock_mtx(){return registered_sockets_mtx_;}
 	std::map<std::string,int>& get_reg_socks(){return registered_sockets_;}

@@ -53,4 +53,6 @@ Simulation{
   stop(S1.Child_of_S1);
   E; // stopping a state machine is a queued operation
   ASSERT_CURRENT_STATES_CONTAINS_NOT{S1.Child_of_S1;};
+  ASSERT_END_STATES_CONTAINS{S1.Initial;};
+  ASSERT_END_STATES_CONTAINS_NOT{S1.Final;};
 };

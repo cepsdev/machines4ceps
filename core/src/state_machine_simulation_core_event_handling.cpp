@@ -184,7 +184,45 @@ do{
 				DEBUG << "[ASSERT_EVENTUALLY_VISIT_STATES]["<<get_fullqualified_id(state)<<"\n" ;
 			}
 			active_asserts_.push_back(ass);
-		} else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS")
+		} else if (node_raw->kind() ==
+				ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_END_STATES_CONTAINS")
+		{
+			ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
+
+				for(auto const& n: assert->children())
+					{
+						if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
+						if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
+						auto state = resolve_state_qualified_id(n,nullptr);
+
+						if (!state.valid()){ std::stringstream ss; ss << ceps::ast::Nodeset(n);
+						                     fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+						}
+						assert_in_end_states_.insert(state);
+
+					}//for
+
+		}
+	      else if (node_raw->kind() ==
+				ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_END_STATES_CONTAINS_NOT")
+		{
+				ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
+
+					for(auto const& n: assert->children())
+						{
+							if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
+							if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
+							auto state = resolve_state_qualified_id(n,nullptr);
+
+							if (!state.valid()){ std::stringstream ss; ss << ceps::ast::Nodeset(n);
+							                     fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+							}
+							assert_not_in_end_states_.insert(state);
+
+						}//for
+
+		}
+		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS")
 		{
 			ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
 

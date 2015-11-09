@@ -325,6 +325,33 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 								fatal_(-1,"\nASSERTION(S) not satisfied (ASSERT_EVENTUALLY_VISIT_STATES): "+ss.str());
 	}
 
+	if (!assert_in_end_states_.empty()){
+		for(auto const & st : assert_in_end_states_){
+			bool bfound = false;
+			for(auto const & st2 : states)
+			{
+				if (st2 == st){bfound=true;break;}
+			}
+			if (!bfound){
+				std::stringstream ss;ss << "\nExpected to be finally in state:  ";ss  << get_fullqualified_id(st);
+				fatal_(-1,"\nASSERTION(S) not satisfied (ASSERT_END_STATES_CONTAINS): "+ss.str());
+			}
+		}
+	}
+
+	if (!assert_not_in_end_states_.empty()){
+			for(auto const & st : assert_not_in_end_states_){
+				bool bfound = false;
+				for(auto const & st2 : states)
+				{
+					if (st2 == st){bfound=true;break;}
+				}
+				if (bfound){
+					std::stringstream ss;ss << "\nExpected NOT to be finally in state:  ";ss  << get_fullqualified_id(st);
+					fatal_(-1,"\nASSERTION(S) not satisfied (ASSERT_END_STATES_CONTAINS_NOT): "+ss.str());
+				}
+			}
+		}
 	log()<< "[SIMULATION TERMINATED]\n\n";
 	step_handler_ = nullptr;
 
