@@ -1,0 +1,52 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of named timers.
+ *
+ * 
+ */
+
+
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+
+Systemstate duration_timer_1,duration_timer_2,s1;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    a1{start_timer(duration_timer_1,E,timer_1);
+       start_periodic_timer(duration_timer_2,F,timer_2);      
+    };
+    a2{assert(0,"Event E was generated.");};
+    a3{start_timer(duration_timer_1,E,timer_1);};    
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;a;E;a2;};
+ Transition{a;a;F;a3;};
+};
+
+/**
+ * @section DESCRIPTION
+ *
+ * */
+Simulation
+{
+ s1 = 1;
+ duration_timer_1 = 2.0*s;
+ duration_timer_2 = duration_timer_1*0.25;
+ Start{S1;};
+ 
+};

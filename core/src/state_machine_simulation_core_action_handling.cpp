@@ -132,6 +132,26 @@ bool is_second(ceps::ast::Unit_rep unit)
 }
 
 
+bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
+	DEBUG_FUNC_PROLOGUE
+	DEBUG << "[KILLING NAMED TIMERS][TIMER_ID="<< timer_id <<"]\n";
+	bool r = false;
+	std::priority_queue<event_t> event_queue_temp;
+	std::lock_guard<std::mutex> lk(main_event_queue().data_mutex());
+	for(;main_event_queue().data().size();)
+	{
+		auto top = main_event_queue().data().top();
+		if (top.timer_id_ == timer_id)
+			{ main_event_queue().data().pop();r=true;}
+		else {
+			event_queue_temp.push(top);
+			main_event_queue().data().pop();
+		}
+	}
+	main_event_queue().data() = event_queue_temp;
+	return r;
+}
+
 void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool periodic_timer)
 {
 
@@ -173,6 +193,7 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 			if (args[2]->kind() != ceps::ast::Ast_node_kind::identifier)
 			fatal_(-1,"start_timer: third argument (the timer id) has to be an unbound identifier.\n");
 			timer_id = ceps::ast::name(ceps::ast::as_id_ref(args[2]));
+			kill_named_timer(timer_id);
 		}
 		double delta;
 		ceps::ast::Unit_rep u;
@@ -193,17 +214,18 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 
 		if ( ! is_second(u) )
 			fatal_(-1,"Timer function expects first argument to be a duration (SI unit seconds).");
-			log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
 
-			event_t ev_to_send(ev_id,
+		log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
+
+		event_t ev_to_send(ev_id,
 						clock_type::duration((long int) ((clock_type::duration::period::den*delta)/clock_type::duration::period::num)),
 						timer_id,
 						periodic_timer);
-			//ev_to_send.already_sent_to_out_queues_ = !public_event;
+		ev_to_send.already_sent_to_out_queues_ = false;
 			if (fargs.size())
 				ev_to_send.payload_ = fargs;
 
-			enqueue_event(ev_to_send,public_event);
+			enqueue_event(ev_to_send,/*public_event*/false);
 		}
 
 }
