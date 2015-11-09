@@ -15,7 +15,7 @@
 kind Guard;
 kind Event;
 kind Systemstate;
-Systemstate t;
+Systemstate t,tt;
 Systemstate counter;
 
 Event E;
