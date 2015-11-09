@@ -586,6 +586,8 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 	auto all_sender = ns[all{"sender"}];
 	auto all_receiver = ns[all{"receiver"}];
 
+	post_event_processing() = ns["post_event_processing"];
+
 	auto can_frames = ns[all{"frame"}];
 	frames.nodes().insert(frames.nodes().end(),can_frames.nodes().begin(),can_frames.nodes().end());
 
@@ -811,39 +813,43 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		std::string sock_name;
 		std::string port;
 		std::string ip;
+		std::string channel_id;
 		bool reuse_sock = false;
 		bool reg_socket = false;
 
 		//std::cout << when << std::endl;
-		bool not_supported = false;
+		bool condition_defined = true;
+		bool emit_defined = true;
+
 		if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::symbol || "Event" != ceps::ast::kind(ceps::ast::as_symbol_ref( when.nodes()[0])) )
-			not_supported=true;
-		if (!not_supported && (emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier))
-			not_supported=true;
-		if (transport["generic_tcp_out"].empty()) not_supported=true;
-		if (not_supported && transport["use"].size() )
+			condition_defined=false;
+		if ( emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
+			emit_defined=false;
+
+		if (transport["use"].size() )
 		{
 			if (transport["use"].nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier){
-				not_supported = false;
 				reuse_sock = true;
 				sock_name = ceps::ast::name(ceps::ast::as_id_ref(transport["use"].nodes()[0]));
 			}
 		} else {
-			port = transport["generic_tcp_out"]["port"].as_str();
-			ip = transport["generic_tcp_out"]["ip"].as_str();
+			if (!transport["generic_tcp_out"]["port"].empty()) port = transport["generic_tcp_out"]["port"].as_str();
+			if (!transport["generic_tcp_out"]["ip"].empty()) ip = transport["generic_tcp_out"]["ip"].as_str();
 		}
-        if(not_supported) {warn_(-1,"Unsupported sender declaration");continue;}
+
 
         if (sender["id"].size()) {
         	auto p = sender["id"].nodes()[0];
         	if (p->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Id field in sender definition should contain a single id");
-        	sock_name = ceps::ast::name(ceps::ast::as_id_ref(p));
+        	channel_id = sock_name = ceps::ast::name(ceps::ast::as_id_ref(p));
         	reg_socket = true;
         }
 
 
-		std::string ev_id = ceps::ast::name(ceps::ast::as_symbol_ref( when.nodes()[0]));
-		std::string frame_id = ceps::ast::name(ceps::ast::as_id_ref( emit.nodes()[0]));
+		std::string ev_id;
+		if (condition_defined) ev_id = ceps::ast::name(ceps::ast::as_symbol_ref( when.nodes()[0]));
+		std::string frame_id;
+		if (emit_defined) frame_id = ceps::ast::name(ceps::ast::as_id_ref( emit.nodes()[0]));
 		std::string eof="";
 		std::string som="";
 
@@ -872,25 +878,55 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 
 
+		if (condition_defined && emit_defined){
+		 DEBUG << "[PROCESSING_EVENT_TRIGGERED_SENDER][ev_id="
+			   << ev_id << "]"
+			   <<"[frame_id="
+			   << frame_id
+			   <<"]"
+			   <<"[ip="
+			   << ip
+			   << "]"
+			   <<  "[port="
+			   << port
+			   <<"][eom='"<<eof<<"']"
+			   <<"][som='"<<som<<"']"
+			   <<"\n";
 
-		DEBUG << "[PROCESSING EVENT_TRIGGERED_SENDER][ev_id="<< ev_id << "]"<<"[frame_id="<< frame_id <<"]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"][eof='"<<eof<<"']" <<"\n";
+		 auto it = frame_generators().find(frame_id);
+		 if (it == frame_generators().end()) fatal_(-1,"sender declaration: Unknown frame with id '"+frame_id+"'");
+		 auto gen = it->second;
+		 event_triggered_sender_t descr;
+		 descr.event_id_ = ev_id;
+		 descr.frame_gen_ = gen;
+		 descr.frame_id_ = frame_id;
+		 descr.frame_queue_ = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
 
-		auto it = frame_generators().find(frame_id);
+		 comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
+		 running_as_node() = true;
 
-		if (it == frame_generators().end()) fatal_(-1,"sender declaration: Unknown frame with id '"+frame_id+"'");
+		 event_triggered_sender().push_back(descr);
+		} else if (!condition_defined && !emit_defined && channel_id.length()){
+			 DEBUG << "[PROCESSING_UNCONDITIONED_SENDER]"
+				   <<"\n";
+			 auto channel = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
+			 this->set_out_channel(channel_id,channel);
+			 running_as_node() = true;
+			 comm_threads.push_back(
+					 new std::thread{comm_sender_generic_tcp_out_thread,
+				                     channel,
+				                     this,
+				                     ip,
+				                     port,
+				                     som,
+				                     eof,
+				                     sock_name,
+				                     reuse_sock,
+				                     reg_socket });
+		} else {
+			warn(-1,"Sender definition incomplete, will be ignored.");
+		}
 
-		auto gen = it->second;
-
-		event_triggered_sender_t descr;
-		descr.event_id_ = ev_id;
-		descr.frame_gen_ = gen;
-		descr.frame_id_ = frame_id;
-		descr.frame_queue_ = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
-
-		comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
-		running_as_node() = true;
-
-		event_triggered_sender().push_back(descr);
 	}
 	//Handle CALL receiver
 	for(auto receiver_ : all_receiver)
@@ -1212,7 +1248,12 @@ void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator
 	}
 	auto rhs = eval_locked_ceps_expr(this,nullptr,root.right(),&root);
 
+
+	auto pp = global_states[lhs_id];
+	if (pp) global_states_prev_[lhs_id] = pp;
 	global_states[lhs_id] = rhs;
+	if(!pp) global_states_prev_[lhs_id] = rhs;
+
 	DEBUG << "[STATE_ASSIGNMENT_DONE][LHS=" << lhs_id << "]\n";
 }
 
@@ -1333,7 +1374,9 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 												 ceps::Ceps_Environment& ceps_env,
 												 ceps::ast::Nodeset universe,
 												 std::map<state_rep_t,
-												 std::vector<State_machine::Transition::Action> >& associated_actions)
+												 std::vector<State_machine::Transition::Action> >& associated_actions,
+												 std::set<state_rep_t> & remove_states,
+												 std::set<state_rep_t> & removed_states)
 {
 	using namespace ceps::ast;
 	DEBUG_FUNC_PROLOGUE
@@ -1362,8 +1405,29 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 
 	bool transition_taken = false;
 
+	/*std::cout << "*******************\n";
+
+	if (!remove_states.empty()){
+		for(auto & st : remove_states) {
+
+			std::cout << st.is_sm_ << "/" << st.sid_ << "/" << (void*) st.smp_ << std::endl;
+		}
+	}
+	std::cout << "*******************\n";*/
+
 	for(auto const & s_from : states_from)
 	{
+		//std::cout << remove_states.size() << std::endl;
+		//std::cout <<"s_from: " << s_from.is_sm_ << "/" << s_from.sid_ << "/" << (void*) s_from.smp_ << std::endl;
+		//std::cout << "Found: " << (remove_states.find(s_from) != remove_states.end()) << std::endl;
+		if (remove_states.find(s_from) != remove_states.end()) { removed_states.insert(s_from); continue;}
+		if (!s_from.is_sm_) {
+		 state_rep_t srep(true,true,s_from.containing_sm(),s_from.smp_->id_ );
+		 bool ff = remove_states.find(srep) != remove_states.end();
+		 //std::cout << "Found: " << ff << std::endl;
+
+		 if (ff) {removed_states.insert(s_from);continue;}
+		}
 		bool trans_found = false;
 		State_machine* containing_smp = s_from.smp_;
 		assert(s_from.smp_ != nullptr);

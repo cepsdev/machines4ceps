@@ -53,6 +53,8 @@ class State_machine_simulation_core
 	ceps::Ceps_Environment * ceps_env_current_ = nullptr;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_guards;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states;
+	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_prev_;
+
 	using states_t = std::vector<state_rep_t>;
 	bool quiet_mode_= false;
 	bool shutdown_threads_ = false;
@@ -62,13 +64,22 @@ class State_machine_simulation_core
 	std::map<std::string,ceps::ast::Nodebase_ptr> global_funcs_;
 	std::map<std::string,Rawframe_generator*> frame_generators_;
 
+	ceps::ast::Nodeset	post_event_processing_;
+
+	std::set<state_rep_t> remove_states_;
+
 public:
+
+	ceps::ast::Nodeset&	post_event_processing(){return post_event_processing_;}
+
 
 	size_t timeout_ = 0;
 
 
 
 	std::map<std::string, ceps::ast::Nodebase_ptr>& global_systemstates(){return global_states;}
+	std::map<std::string, ceps::ast::Nodebase_ptr>& global_systemstates_prev(){return global_states_prev_;}
+
 
 	std::map<std::string,ceps::ast::Nodebase_ptr>& global_funcs() {return global_funcs_;}
 	std::map<std::string,ceps::ast::Nodebase_ptr> const & global_funcs() const {return global_funcs_;}
@@ -148,7 +159,19 @@ private:
 	};
 
 	Log std_log_;
+
+	std::map<std::string,threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* > id_to_out_chan_;
+
 public:
+
+	threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* get_out_channel(std::string const & s){
+		return id_to_out_chan_[s];
+	}
+
+	void set_out_channel(std::string const & s, threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* ch){
+		id_to_out_chan_[s] = ch;
+	}
+
 	using type_definitions_t = std::map<std::string, ceps::ast::Struct_ptr>;
 	type_definitions_t type_definitions_;
 	type_definitions_t const & type_definitions() const {return type_definitions_;}
@@ -187,7 +210,9 @@ private:
 													 states_t& states_without_transition,
 													 ceps::Ceps_Environment& ceps_env,
 													 ceps::ast::Nodeset universe,
-													 std::map<state_rep_t,std::vector<State_machine::Transition::Action> >& associated_actions);
+													 std::map<state_rep_t,std::vector<State_machine::Transition::Action> >& associated_actions,
+													 std::set<state_rep_t> & remove_states,
+													 std::set<state_rep_t>& removed_states);
 
 public:
 	bool is_assignment_op(ceps::ast::Nodebase_ptr n);

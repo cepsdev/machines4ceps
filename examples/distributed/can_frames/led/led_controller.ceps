@@ -11,17 +11,25 @@
  * 
  */
 
-Event ev_user_request_brightness_up,ev_user_request_brightness_down ;
+Event ev_user_request_brightness_up,ev_user_request_brightness_down;
+val DEBUG = 1;
+
+post_event_processing{
+  if(DEBUG) print("post_event_processing\n","Event = ",argv(0),"\n");
+  if (changed("luminance_request_target_value")){
+     print("Value of 'luminance_request_target_value' changed","\n");
+     send(luminance_request,out_channel);
+   }  
+};
+
 Statemachine{
   id{LedController;};
   States{Initial;Final;Operational;};
-  Actions{
-    
-    action_make_led_brighter{ 
+  Actions{    
+    action_make_led_brighter{
+      if(DEBUG) print("action_make_led_brighter\n");
       luminance_request_target_value = luminance_request_target_value +1; 
-      send(luminance_request);       
-    };
-    
+    };    
   };
   Transition{Initial;Operational;};
   Transition{Operational;Operational;ev_user_request_brightness_up;action_make_led_brighter;};

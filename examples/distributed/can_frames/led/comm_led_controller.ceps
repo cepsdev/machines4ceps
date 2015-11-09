@@ -1,0 +1,24 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Part of the LED sample.
+ * 
+ */
+
+
+/*receiver{
+  id{messages_in_channel;};
+  transport{generic_tcp_in{port{"4005";};ip{"127.0.0.1";};};};    
+};*/
+
+sender{
+  id{out_channel;};
+  //transport{use{messages_in_channel;};}; 
+  transport{generic_tcp_out{port{"4006";};ip{"127.0.0.1";};};}; 
+};

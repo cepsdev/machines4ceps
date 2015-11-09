@@ -290,18 +290,85 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			}
 			if(found) break;
 		} return new ceps::ast::Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+	} else if (id == "stop") {
+		for(auto p : args)
+		{
+		   if ( !(p->kind() == ceps::ast::Ast_node_kind::identifier) && !(p->kind() == ceps::ast::Ast_node_kind::binary_operator)){
+				 std::stringstream ss;
+				 ss << *p;
+				 fatal_(-1,"Function '"+id+"': illformed argument, expected a qualified id, got: "+ss.str());
+			}
+
+		   auto state = resolve_state_qualified_id(p,active_smp);
+		   if(!state.valid())
+		   {
+				 std::stringstream ss;
+				 ss << *p;
+				 fatal_(-1,"Function '"+id+"': illformed argument, unknown state: "+ss.str());
+			}
+		   remove_states_.insert(state);
+		}
+		return new ceps::ast::Int( 1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+
 	} else if (id == "send") {
-		if(args.size() == 1 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier) {
+		if(args.size() == 2 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
 			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+			auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
 			auto it_frame_gen = frame_generators().find(id);
 			if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a frame id.");
+			auto channel = get_out_channel(ch_id);
+			if (channel == nullptr) fatal_(-1,ch_id+" is not an output channel.");
 			size_t ds;
 			char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
 			if (ds > 0 && msg_block != nullptr){
+				channel->push(std::make_pair(msg_block,ds));
 				return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 			}
 		}
 		return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	} else if (id == "changed"){
+	 if(args.size() == 1 && args[0]->kind() == ceps::ast::Ast_node_kind::string_literal){
+       auto state_id = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
+       {
+    	   std::lock_guard<std::recursive_mutex>g(states_mutex());
+           auto it_cur = global_systemstates().find(state_id);
+           if (it_cur == global_systemstates().end()) fatal(-1,"Unknown Systemstate '"+state_id+"'");
+
+           auto it_prev = global_systemstates_prev().find(state_id);
+           if (it_prev == global_systemstates_prev().end()) fatal(-1,"Internal error: no history for Systemstate '"+state_id+"'");
+           if (it_cur->second == it_prev->second)  return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+
+           if (it_cur->second->kind() != it_prev->second->kind()){
+        	   it_prev->second = it_cur->second;
+        	   return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+           }
+
+           if (it_cur->second->kind() == ceps::ast::Ast_node_kind::int_literal){
+        	   bool r = ceps::ast::value(ceps::ast::as_int_ref(it_cur->second)) != ceps::ast::value(ceps::ast::as_int_ref(it_prev->second))
+        	           || ceps::ast::unit(ceps::ast::as_int_ref(it_cur->second)) != ceps::ast::unit(ceps::ast::as_int_ref(it_prev->second));
+        	   it_prev->second = it_cur->second;
+        	   return new ceps::ast::Int(r,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+           }
+           else if (it_cur->second->kind() == ceps::ast::Ast_node_kind::float_literal){
+        	   bool r = ceps::ast::value(ceps::ast::as_double_ref(it_cur->second)) != ceps::ast::value(ceps::ast::as_double_ref(it_prev->second))
+        	            || ceps::ast::unit(ceps::ast::as_double_ref(it_cur->second)) != ceps::ast::unit(ceps::ast::as_double_ref(it_prev->second));
+        	   it_prev->second = it_cur->second;
+           	   return new ceps::ast::Int(r,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+           } else if (it_cur->second->kind() == ceps::ast::Ast_node_kind::string_literal){
+        	   bool r = ceps::ast::value(ceps::ast::as_string_ref(it_cur->second)) != ceps::ast::value(ceps::ast::as_string_ref(it_prev->second));
+        	   it_prev->second = it_cur->second;
+           	   return new ceps::ast::Int(r,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+           } else {
+        	   std::stringstream s1,s2;
+        	   s1 << *it_cur->second;
+        	   s2 << *it_prev->second;
+        	   bool r = s1.str() != s2.str();
+        	   it_prev->second = it_cur->second;
+           	   return new ceps::ast::Int(r,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+           }
+       }
+	 }
+	 return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	} else if (id == "c_lib_localtime_year"){
 		 time_t rawtime;
 		 struct tm* timeinfo;

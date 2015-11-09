@@ -1,0 +1,56 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage of the stop command.
+ * 
+ */
+
+kind Event;
+Event E,F;
+
+Statemachine{
+  id{S1;};
+  States{Initial;Final;A;B;C;};
+  Statemachine{
+    id{Child_of_S1;};
+    on_exit{print("S1::Child_of_S1::on_exit()\n");};
+    States{Initial;};
+  };
+  on_enter{print("S1::on_enter()\n");};
+  on_exit{print("S1::on_exit()\n");};
+  
+  Transition{Initial;Child_of_S1;F;};
+  Transition{Initial;Initial;F;};
+};
+
+Statemachine{
+  id{S2;};
+  States{Initial;Final;A;B;C;};
+  on_enter{print("S2::on_enter()\n");};
+  on_exit{print("S2::on_exit()\n");};
+};
+
+Simulation{
+  Start{S1;S2;};
+  stop(S2);
+  E; // stopping a state machine is a queued operation
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{S2;};
+};
+
+
+Simulation{
+  Start{S1;S2;};
+  F;
+  ASSERT_CURRENT_STATES_CONTAINS{S1.Child_of_S1;};
+  stop(S1.Child_of_S1);
+  E; // stopping a state machine is a queued operation
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{S1.Child_of_S1;};
+};
