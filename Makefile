@@ -4,11 +4,12 @@
 
 includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src"
 cflags := -O0 -g3 -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread
-OBJDIR := bin
+TARGET :=
+OBJDIR := bin$(TARGET)
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
-CEPSLIB := ../ceps/core/bin/libcepscore.a
+CEPSLIB := ../ceps/core/bin/$(TARGET)libcepscore.a
 tutorial_dir := tutorial
-cepslibs := ../ceps/core/bin
+cepslibs := ../ceps/core/$(OBJDIR)
 pugisrc = pugixml-1.6/src
 
 
