@@ -1,0 +1,13 @@
+
+Statemachine {
+  id {CannotBeBrightEnough;};
+  States{Initial;Operational;};
+  Actions{
+    brighter{start_periodic_timer(1.0*s, ev_user_request_brightness_up(1,2,"Hallo"));};
+  };
+  Transition{Initial;Operational;brighter;};
+};
+
+Simulation {
+  Start{LedController;CannotBeBrightEnough;LedDevice;};
+};

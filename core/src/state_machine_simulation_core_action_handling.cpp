@@ -311,7 +311,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		return new ceps::ast::Int( 1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 
 	} else if (id == "send") {
-		if(args.size() == 2 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
+		if(args.size() == 2
+				&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
+				&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
 			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
 			auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
 			auto it_frame_gen = frame_generators().find(id);
@@ -326,6 +328,26 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			}
 		}
 		return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	} else if (id == "write_read_frm"){
+		if (args.size() == 2
+				&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
+				&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier){
+			auto out_frame_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+			auto in_frame_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
+			auto it_out_frame_gen = frame_generators().find(out_frame_id);
+			if (it_out_frame_gen == frame_generators().end()) fatal_(-1,"'"+out_frame_id+"' is not a frame id.");
+			auto it_in_frame_gen = frame_generators().find(in_frame_id);
+			if (it_in_frame_gen == frame_generators().end()) fatal_(-1,"'"+in_frame_id+"' is not a frame id.");
+			size_t ds;
+			char* msg_block = (char*) it_out_frame_gen->second->gen_msg(this,ds);
+			if (ds == 0 || msg_block == nullptr) fatal_(-1,"Frame-Pattern'"+out_frame_id+"' couldn't create a valid frame.");
+			std::vector<std::string> v1;
+			std::vector<ceps::ast::Nodebase_ptr> v2;
+			bool r = it_in_frame_gen->second->read_msg(msg_block,ds,this,v1,v2);
+			delete[] msg_block;
+			if (r) return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		}
 	} else if (id == "changed"){
 	 if(args.size() == 1 && args[0]->kind() == ceps::ast::Ast_node_kind::string_literal){
        auto state_id = ceps::ast::value(ceps::ast::as_string_ref(args[0]));

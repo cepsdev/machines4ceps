@@ -28,7 +28,7 @@ Statemachine{
   Actions{    
     action_make_led_brighter{
       if(DEBUG) print("action_make_led_brighter\n");
-      luminance_request_target_value = luminance_request_target_value +1; 
+      luminance_request_target_value = luminance_request_target_value + 1; 
     };    
   };
   Transition{Initial;Operational;};

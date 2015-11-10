@@ -127,6 +127,25 @@ frame{
   };
 };
 
+Systemstate luminance_request_target_value,luminance_request_target_value_in;
 
+globals{
+  luminance_request_target_value = 11;
+  luminance_request_target_value_in = 0;
+};
+
+frame{
+  id{luminance_request;};
+  data{
+    header{
+      cob_id{uint11{1234;};};
+      rtr{bit{1;};};
+      data_length{uint4{__current_frame_size;};};
+    };
+    payload{
+      luminance{out{luminance_request_target_value;};in{luminance_request_target_value_in;};};
+    };
+  };
+};
 
 

@@ -18,6 +18,10 @@ Systemstate PRINT;
 globals{
   PRINT = 1;
 };
+
+kind Event;
+Event EXIT;
+
 Simulation{
  coord_x = 257;
  coord_y = 2;
@@ -30,6 +34,24 @@ Simulation{
  ZS_Heckverteiler_1_reserve_io_in_2=0;
  ZS_Heckverteiler_1_reserve_io_in_3=0;
  ZS_Heckverteiler_1_reserve_io_in_4=0;
+ 
+ luminance_request_target_value = 1;
+ write_read_frm(luminance_request,luminance_request);
+ print("luminance_request_target_value_in=",luminance_request_target_value_in,"\n");
+ assert(luminance_request_target_value==luminance_request_target_value_in);
+ 
+ luminance_request_target_value = 2;
+ write_read_frm(luminance_request,luminance_request);
+ print("luminance_request_target_value_in=",luminance_request_target_value_in,"\n");
+ assert(luminance_request_target_value==luminance_request_target_value_in);
+ 
+ luminance_request_target_value = 111;
+ write_read_frm(luminance_request,luminance_request);
+ print("luminance_request_target_value_in=",luminance_request_target_value_in,"\n");
+ assert(luminance_request_target_value==luminance_request_target_value_in);
+ 
+ 
+ EXIT;
  
  if(PRINT)print("Content of frm_string_three_bytes_9_bits_byte =\n", frm_string_three_bytes_9_bits_byte,"\n");
  assert(raw_frame_starts_with(frm_string_three_bytes_9_bits_byte,

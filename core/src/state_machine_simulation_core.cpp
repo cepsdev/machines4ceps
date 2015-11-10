@@ -942,14 +942,16 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		bool reg_sock = false;
 
 		std::string sock_name;
+		bool no_when_emit = false;
 
 
-		//std::cout << when << std::endl;
-		//if (emit.size() != 1 || emit.nodes()[0]->kind() != ceps::ast::Ast_node_kind::symbol || "Event" != ceps::ast::kind(ceps::ast::as_symbol_ref( emit.nodes()[0])) )
-		//	continue;
-		if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-			continue;
-		if (transport["generic_tcp_in"].empty() && transport["use"].empty()) continue;
+		if (when.empty() && emit.empty()) no_when_emit = true;
+		else if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
+			{warn(-1,"Illformed receiver definition."); continue;}
+
+		if (transport["generic_tcp_in"].empty() && transport["use"].empty())
+		    {warn(-1,"Illformed receiver definition."); continue;}
+
 		if (!transport["use"].empty()){
 			if (transport["use"].nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier){
 					reuse_sock = true;
@@ -957,20 +959,20 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 			} else fatal_(-1,"Receiver definition illformed");
 		} else
 		{
-			port = transport["generic_tcp_in"]["port"].as_str();
-			ip = transport["generic_tcp_in"]["ip"].as_str();
+			if (!transport["generic_tcp_in"]["port"].empty()) port = transport["generic_tcp_in"]["port"].as_str();
+			if (!transport["generic_tcp_in"]["ip"].empty()) ip = transport["generic_tcp_in"]["ip"].as_str();
 		}
-
-
 
 		std::string eof;
 		std::string som;
+
 
 		if (receiver["id"].size()) {
 			auto p = receiver["id"].nodes()[0];
 			if (p->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Id field in receiver definition should contain a single id");
 			if (!reuse_sock){ sock_name = ceps::ast::name(ceps::ast::as_id_ref(p)); reg_sock = true; }
 		}
+
 
 		if (transport["eom"].size()) {
 			//eof = transport["generic_tcp_in"]["eof"].as_str();
@@ -1011,32 +1013,75 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 					ev_params.push_back(ceps::ast::name(ceps::ast::as_id_ref(p)));
 				}
 			}
+		}
 
+		std::string frame_id;
+		if (!when.nodes().empty()) frame_id = ceps::ast::name(ceps::ast::as_id_ref( when.nodes()[0]));
+		if (!no_when_emit){
+			DEBUG << "[PROCESSING EVENT_TRIGGERING_RECEIVER][ev_id="<< ev_id << "]"<<"[frame_id="<< frame_id <<"]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"]" <<"\n";
 
-		} else continue;
-		std::string frame_id = ceps::ast::name(ceps::ast::as_id_ref( when.nodes()[0]));
-		DEBUG << "[PROCESSING EVENT_TRIGGERING_RECEIVER][ev_id="<< ev_id << "]"<<"[frame_id="<< frame_id <<"]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"]" <<"\n";
+			auto it = frame_generators().find(frame_id);
 
-		auto it = frame_generators().find(frame_id);
+			if (it == frame_generators().end()) fatal_(-1,"receiver declaration: Unknown frame with id '"+frame_id+"'");
 
-		if (it == frame_generators().end()) fatal_(-1,"receiver declaration: Unknown frame with id '"+frame_id+"'");
+			auto gen = it->second;
 
-		auto gen = it->second;
+			comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
+												   -1,
+												   gen,
+												   ev_id,
+												   ev_params,
+												   this,
+												   ip,
+												   port,
+												   som,
+												   eof,
+												   sock_name,reg_sock,reuse_sock,
+												   comm_generic_tcp_in_thread_fn });
+			running_as_node() = true;
+		} else {
+			DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"]" <<"\n";
+			auto handlers = receiver[all{"on_msg"}];
+			if (handlers.empty()) fatal_(-1,"on_msg required in receiver definition.");
 
-		comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
-			                                   0,
-			                                   gen,
-			                                   ev_id,
-			                                   ev_params,
-			                                   this,
-			                                   ip,
-			                                   port,
-			                                   som,
-			                                   eof,
-			                                   sock_name,reg_sock,reuse_sock,
-			                                   comm_generic_tcp_in_thread_fn });
-		running_as_node() = true;
+			int dispatcher_id=-1;
+			auto& ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
+			DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER]" <<"[dispatcher_id="<< dispatcher_id << "]\n";
 
+			for(auto const & handler_ : handlers){
+				auto const & handler = handler_["on_msg"];
+				auto frame_id_ = handler["frame_id"];
+				auto handler_func_ = handler["handler"];
+
+				if (frame_id_.size() != 1 || frame_id_.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
+					fatal_(-1,"Receiver definition illformed: frame_id not an identifier / wrong number of arguments.");
+				if (handler_func_.size() != 1 || handler_func_.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
+					fatal_(-1,"Receiver definition illformed: handler not an identifier / wrong number of arguments.");
+
+				auto frame_id = ceps::ast::name(ceps::ast::as_id_ref(frame_id_.nodes()[0]));
+				auto handler_id = ceps::ast::name(ceps::ast::as_id_ref(handler_func_.nodes()[0]));
+				auto it_frame = frame_generators().find(frame_id);
+				if (it_frame == frame_generators().end()) fatal_(-1,"Receiver definition: on_msg : frame_id unknown.");
+				auto it_func = global_funcs().find(handler_id);
+				if (it_func == global_funcs().end()) fatal_(-1,"Receiver definition: on_msg : function unknown.");
+				ctxt.handler.push_back(std::make_pair(it_frame->second,it_func->second));
+			}
+
+			comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
+												   dispatcher_id,
+												   nullptr,
+												   "",
+												   ev_params,
+												   this,
+												   ip,
+												   port,
+												   som,
+												   eof,
+												   sock_name,reg_sock,reuse_sock,
+												   comm_generic_tcp_in_thread_fn });
+			running_as_node() = true;
+
+		}
 	}
 
 	auto simulations = ns[all{"Simulation"}];

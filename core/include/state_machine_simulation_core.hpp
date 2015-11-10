@@ -371,15 +371,24 @@ public:
 	event_t& current_event() {return current_event_;}
 
 	friend void run_state_machine_simulation(State_machine_simulation_core* smc,Result_process_cmd_line const& result_cmd_line);
+
+	struct dispatcher_thread_ctxt_t{
+		 std::vector<std::pair<Rawframe_generator*,ceps::ast::Nodebase_ptr>> handler;
+	};
 private:
 	std::map<std::string,int> registered_sockets_;
 	std::recursive_mutex registered_sockets_mtx_;
 	std::set<state_rep_t> assert_not_in_end_states_;
 	std::set<state_rep_t> assert_in_end_states_;
+	std::vector<dispatcher_thread_ctxt_t> dispatcher_thread_ctxt_;
 public:
 	std::recursive_mutex& get_reg_sock_mtx(){return registered_sockets_mtx_;}
 	std::map<std::string,int>& get_reg_socks(){return registered_sockets_;}
-
+	dispatcher_thread_ctxt_t& allocate_dispatcher_thread_ctxt(int & i) {
+		i = dispatcher_thread_ctxt_.size();dispatcher_thread_ctxt_.push_back(dispatcher_thread_ctxt_t());
+		return dispatcher_thread_ctxt_[dispatcher_thread_ctxt_.size()-1];
+	}
+	dispatcher_thread_ctxt_t get_dispatcher_thread_ctxt(int i) {return dispatcher_thread_ctxt_[i];}
 };
 
 struct ceps_interface_eval_func_callback_ctxt_t{

@@ -11,23 +11,29 @@
  * 
  */
 
-Systemstate luminance_request_target_value;
+Systemstate luminance_request_target_value,luminance_request_target_value_in;
 
 globals{
   luminance_request_target_value = 0;
+  luminance_request_target_value_in = 0;
 };
+
+val luminance_cob_id = 1;
 
 frame{
   id{luminance_request;};
   data{
     header{
-      cob_id{uint11{1;};};
+      cob_id{uint11{luminance_cob_id;};};
       rtr{bit{0;};};
       data_length{uint4{__current_frame_size;};};
     };
     payload{
-      magic_id{"retep klaf si obmuloc.";};
-      luminance{luminance_request_target_value;};
+      luminance{uint8{
+	out{luminance_request_target_value;};
+	in{luminance_request_target_value_in;};
+      };
+      };
     };
   };
 };

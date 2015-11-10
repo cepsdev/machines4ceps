@@ -1,0 +1,32 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Part of the LED sample.
+ * 
+ */
+
+
+Event luminance_target_value_changed;
+
+
+Statemachine{
+  id{LedDevice;};
+  States{Initial;Final;Preoperational;Operational;};
+  Actions{
+    adapt_luminance{
+      print("LedDevice::adapt_luminance: target value for luminance is = ", argv(1), "\n");
+    };
+    reached_operational_state{
+      print("LedDevice::reached_operational_state\n");
+    };
+  };
+  Transition{Initial;Preoperational;};
+  Transition{Preoperational;Operational;reached_operational_state;};
+  Transition{Operational;Operational;luminance_target_value_changed;adapt_luminance;};
+};

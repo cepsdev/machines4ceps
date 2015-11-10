@@ -12,10 +12,7 @@
  */
 
 
-/*receiver{
-  id{messages_in_channel;};
-  transport{generic_tcp_in{port{"4005";};ip{"127.0.0.1";};};};    
-};*/
+
 
 sender{
   id{out_channel;};
