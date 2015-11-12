@@ -7,7 +7,7 @@ cflags := -O0 -g3 -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ld
 TARGET :=
 OBJDIR := bin$(TARGET)
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
-CEPSLIB := ../ceps/core/bin/$(TARGET)libcepscore.a
+CEPSLIB := ../ceps/core/bin$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
 cepslibs := ../ceps/core/$(OBJDIR)
 pugisrc = pugixml-1.6/src
