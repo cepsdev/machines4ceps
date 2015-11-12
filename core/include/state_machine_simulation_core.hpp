@@ -67,8 +67,11 @@ class State_machine_simulation_core
 	ceps::ast::Nodeset	post_event_processing_;
 
 	std::set<state_rep_t> remove_states_;
+	bool conf_ignore_unresolved_state_id_in_directives_ = false;
 
 public:
+
+	bool& conf_ignore_unresolved_state_id_in_directives() {return conf_ignore_unresolved_state_id_in_directives_;}
 
 	ceps::ast::Nodeset&	post_event_processing(){return post_event_processing_;}
 

@@ -114,7 +114,8 @@ do{
 			}
 			continue;
 		}
-		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "Start"){
+		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef
+				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "Start"){
 		  if (exit_if_start_found){++pos; return false;}
 		  else
 		  {
@@ -128,7 +129,13 @@ do{
 			  		if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 			  		auto state = resolve_state_qualified_id(n,nullptr);
 			  		std::stringstream ss; ss << ceps::ast::Nodeset(n);
-			  		if (!state.valid()) fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+			  		if (!state.valid())
+			  			{
+			  			  if (conf_ignore_unresolved_state_id_in_directives())
+			  				  log() << "***Warning: Start-directive: Expression doesn't evaluate to an existing state: " << ss.str();
+			  			  else fatal_(-1,"Start-directive: Expression doesn't evaluate to an existing state: "+ss.str());
+			  			  continue;
+			  			}
 			  		new_states.push_back(state);
 			  		new_sms.insert(state.smp_);
 			  	}//for
@@ -159,6 +166,13 @@ do{
 				if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 				DEBUG <<"[PRE][resolve_state_qualified_id]\n";
 				auto state = resolve_state_qualified_id(n,nullptr);
+				if (!state.valid()) {
+					std::stringstream ss; ss << ceps::ast::Nodeset(n);
+					if (conf_ignore_unresolved_state_id_in_directives())
+						log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
+					else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+					continue;
+				}
 				DEBUG <<"[POST][resolve_state_qualified_id]\n";
 				ass.states_.push_back(state);
 				DEBUG << "[ASSERT_EVENTUALLY_VISIT_STATES]["<<get_fullqualified_id(state)<<"\n" ;
@@ -179,13 +193,21 @@ do{
 				if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 				DEBUG <<"[PRE][resolve_state_qualified_id]\n";
 				auto state = resolve_state_qualified_id(n,nullptr);
+				if (!state.valid()) {
+					std::stringstream ss; ss << ceps::ast::Nodeset(n);
+					if (conf_ignore_unresolved_state_id_in_directives())
+						log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
+					else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+					continue;
+				}
 				DEBUG <<"[POST][resolve_state_qualified_id]\n";
 				ass.states_.push_back(state);
 				DEBUG << "[ASSERT_EVENTUALLY_VISIT_STATES]["<<get_fullqualified_id(state)<<"\n" ;
 			}
 			active_asserts_.push_back(ass);
 		} else if (node_raw->kind() ==
-				ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_END_STATES_CONTAINS")
+				ceps::ast::Ast_node_kind::structdef
+				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_END_STATES_CONTAINS")
 		{
 			ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
 
@@ -195,8 +217,12 @@ do{
 						if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 						auto state = resolve_state_qualified_id(n,nullptr);
 
-						if (!state.valid()){ std::stringstream ss; ss << ceps::ast::Nodeset(n);
-						                     fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+						if (!state.valid()) {
+							std::stringstream ss; ss << ceps::ast::Nodeset(n);
+							if (conf_ignore_unresolved_state_id_in_directives())
+								log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
+							else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+							continue;
 						}
 						assert_in_end_states_.insert(state);
 
@@ -204,7 +230,8 @@ do{
 
 		}
 	      else if (node_raw->kind() ==
-				ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_END_STATES_CONTAINS_NOT")
+				ceps::ast::Ast_node_kind::structdef
+				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_END_STATES_CONTAINS_NOT")
 		{
 				ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
 
@@ -214,15 +241,20 @@ do{
 							if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 							auto state = resolve_state_qualified_id(n,nullptr);
 
-							if (!state.valid()){ std::stringstream ss; ss << ceps::ast::Nodeset(n);
-							                     fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+							if (!state.valid()) {
+								std::stringstream ss; ss << ceps::ast::Nodeset(n);
+								if (conf_ignore_unresolved_state_id_in_directives())
+									log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
+								else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+								continue;
 							}
 							assert_not_in_end_states_.insert(state);
 
 						}//for
 
 		}
-		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS")
+		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef
+				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS")
 		{
 			ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
 
@@ -231,8 +263,13 @@ do{
 					if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 					if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 					auto state = resolve_state_qualified_id(n,nullptr);
-					std::stringstream ss; ss << ceps::ast::Nodeset(n);
-					if (!state.valid()) fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+					if (!state.valid()) {
+						std::stringstream ss; ss << ceps::ast::Nodeset(n);
+						if (conf_ignore_unresolved_state_id_in_directives())
+							log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
+						else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+						continue;
+					}
 					bool found = false;
 					for(auto const & s : states)
 					{
@@ -251,7 +288,8 @@ do{
 					//states.push_back(state);
 				}//for
 
-		} else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS_NOT")
+		} else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef
+				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS_NOT")
 		{
 
 			ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
@@ -261,8 +299,13 @@ do{
 					if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 					if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 					auto state = resolve_state_qualified_id(n,nullptr);
-					std::stringstream ss; ss << ceps::ast::Nodeset(n);
-					if (!state.valid()) fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+					if (!state.valid()) {
+						std::stringstream ss; ss << ceps::ast::Nodeset(n);
+						if (conf_ignore_unresolved_state_id_in_directives())
+							log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
+						else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+						continue;
+					}
 					bool found = false;
 					for(auto const & s : states)
 					{

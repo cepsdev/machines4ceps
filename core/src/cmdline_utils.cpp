@@ -234,6 +234,8 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv)
 			else if (arg.substr(0,9) == "--monitor") {r.monitor = arg.substr(9); continue;}
 			else if (arg.substr(0,8) == "--plugin") {r.plugins.push_back(arg.substr(8)); continue;}
 			else if (arg.substr(0,9) == "--timeout") {r.timeout = arg.substr(9); continue;}
+			else if (arg == "--ignore_unresolved_state_id_in_directives" || arg == "--iursd") {r.ignore_unresolved_state_id_in_directives = true; continue;}
+
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {
 					r.server_port = r.port = arg.substr(6);

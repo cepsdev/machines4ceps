@@ -9,6 +9,8 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 
 	current_event().id_= {};
+	assert_in_end_states_.clear();
+	assert_not_in_end_states_.clear();
 
 	states_t states;
 	trans_hull_of_containment_rel(states_in,states);

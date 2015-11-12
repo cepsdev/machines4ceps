@@ -1651,6 +1651,7 @@ void init_state_machine_simulation(	int argc,
 	result_cmd_line = process_cmd_line(argc,argv);
 	smc->print_debug_info(result_cmd_line.debug_mode);
 	smc->quiet_mode() = result_cmd_line.quiet;
+	smc->conf_ignore_unresolved_state_id_in_directives() = result_cmd_line.ignore_unresolved_state_id_in_directives;
 	string last_file_processed;
 
 	for(std::string const & f : result_cmd_line.definition_file_rel_paths)

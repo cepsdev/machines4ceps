@@ -58,6 +58,8 @@ struct Result_process_cmd_line
 	std::string timeout;
 	std::string port;
 
+	bool ignore_unresolved_state_id_in_directives = false;
+
 	Result_process_cmd_line() = default;
 	Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,

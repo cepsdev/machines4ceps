@@ -17,5 +17,10 @@
 sender{
   id{out_channel;};
   //transport{use{messages_in_channel;};}; 
-  transport{generic_tcp_out{port{"4006";};ip{"127.0.0.1";};};}; 
+  transport{generic_tcp_out{port{"4006";};ip{"127.0.0.1";};};};
+  periodically{id{xy;};period{1.0*s;};frame_id{;};active;};
 };
+
+
+//activate(xy);
+//deactivate(xy);
