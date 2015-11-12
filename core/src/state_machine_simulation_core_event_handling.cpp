@@ -225,9 +225,7 @@ do{
 							continue;
 						}
 						assert_in_end_states_.insert(state);
-
 					}//for
-
 		}
 	      else if (node_raw->kind() ==
 				ceps::ast::Ast_node_kind::structdef
