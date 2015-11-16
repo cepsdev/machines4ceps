@@ -42,14 +42,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -71,21 +71,31 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\..\ceps\core\include;$(ProjectDir)..\..\..\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\..\..\ceps\core\windows\cepswin32\Debug;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\x86\win32\</OutDir>
+    <IncludePath>$(ProjectDir)../../../include;$(ProjectDir)../../..;$(ProjectDir)../../../pugixml-1.6/src;$(ProjectDir)../../../../ceps/core/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)../../../../ceps/core/windows/cepswin32/Debug;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)../../../x86</OutDir>
+    <TargetName>sm4ceps</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)../../../x86</OutDir>
+    <TargetName>sm4ceps</TargetName>
+    <IncludePath>$(ProjectDir)../../../include;$(ProjectDir)../../..;$(ProjectDir)../../../pugixml-1.6/src;$(ProjectDir)../../../../ceps/core/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)../../../../ceps/core/windows/cepswin32/Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\..\ceps\core\include;$(ProjectDir)..\..\..\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\..\..\ceps\core\windows\cepswin32\Release;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\x86\win32\</OutDir>
+    <IncludePath>$(ProjectDir)../../../include;$(ProjectDir)../../..;$(ProjectDir)../../../pugixml-1.6/src;$(ProjectDir)../../../../ceps/core/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)../../../../ceps/core/windows/cepswin32/Release;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)../../../x86</OutDir>
+    <TargetName>sm4ceps</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(MSBuildProjectDirectory)/../../x86</OutDir>
+    <TargetName>sm4ceps.exe</TargetName>
+    <IncludePath>$(ProjectDir)../../../include;$(ProjectDir)../../..;$(ProjectDir)../../../pugixml-1.6/src;$(ProjectDir)../../../../ceps/core/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)../../../../ceps/core/windows/cepswin32/Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -112,6 +122,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>cepswin32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -172,11 +183,13 @@
     <ClCompile Include="..\..\..\core\src\sm_raw_frame.cpp" />
     <ClCompile Include="..\..\..\core\src\sm_sim_core_asserts.cpp" />
     <ClCompile Include="..\..\..\core\src\sm_sim_core_simulation_loop.cpp" />
+    <ClCompile Include="..\..\..\core\src\sm_xml_frame.cpp" />
     <ClCompile Include="..\..\..\core\src\state_machines.cpp" />
     <ClCompile Include="..\..\..\core\src\state_machine_simulation_core.cpp" />
     <ClCompile Include="..\..\..\core\src\state_machine_simulation_core_action_handling.cpp" />
     <ClCompile Include="..\..\..\core\src\state_machine_simulation_core_event_handling.cpp" />
     <ClCompile Include="..\..\..\core\src\state_machine_simulation_core_guard_handling.cpp" />
+    <ClCompile Include="..\..\..\pugixml-1.6\src\pugixml.cpp" />
     <ClCompile Include="..\..\..\src\main.cpp" />
     <ClCompile Include="sm4cepssim.cpp" />
     <ClCompile Include="stdafx.cpp" />

@@ -27,4 +27,5 @@ Simulation{
   Start{S1;};
   Start{S2;};
   ASSERT_CURRENT_STATES_CONTAINS{S2.A;};
+  stop(S2);
 };

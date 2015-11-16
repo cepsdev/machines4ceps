@@ -304,7 +304,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		   {
 				 std::stringstream ss;
 				 ss << *p;
-				 fatal_(-1,"Function '"+id+"': illformed argument, unknown state: "+ss.str());
+ 				 if (conf_ignore_unresolved_state_id_in_directives())
+							log() << "****Warning: stop(): Expression doesn't evaluate to an existing state: "<<ss.str();
+ 				 else fatal_(-1,"Function '"+id+"': illformed argument, unknown state: "+ss.str());
 			}
 		   remove_states_.insert(state);
 		}
