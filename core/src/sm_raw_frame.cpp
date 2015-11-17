@@ -775,7 +775,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 		char* buffer = nullptr;
 		for(;!smc->shutdown();){
 			std::uint32_t new_size = 0;
-			auto r = recv(sck,&new_size,sizeof(new_size),0);
+			auto r = recv(sck,(char*)&new_size,sizeof(new_size),0);
 			if (r != sizeof(new_size)) break;
 			new_size = ntohl(new_size);
 			if (new_size > size){if (buffer) delete[] buffer; buffer = new char[size = new_size];}

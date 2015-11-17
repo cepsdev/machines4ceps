@@ -810,6 +810,18 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		auto emit = sender["emit"];
 		auto transport  = sender["transport"];
 
+		if (transport["generic_tcp_out"].empty()) {
+			//Handle user defined transport layers
+			std::string call_name="(NULL)";
+			if (transport.nodes().size() && transport.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef)
+				call_name = ceps::ast::name(ceps::ast::as_struct_ref(transport.nodes()[0]));
+			auto r = handle_userdefined_sender_definition(call_name,sender);
+			
+			if (!r) 
+				fatal_(-1, "Sender definition: '"+call_name+"' unknown CAL-identifier (Communication Abstraction Layer).\n");
+			continue;
+		}
+
 		std::string sock_name;
 		std::string port;
 		std::string ip;

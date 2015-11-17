@@ -49,12 +49,12 @@ struct Debuglogger{
 
 	Debuglogger(std::string const & s,bool p = false):toprint_(s),p_(p)
 	{
-		if(p_) std::cout << "[DEBUG][ENTER]["<< toprint_<< "]\n";
+		if(p_) std::cout << "[DEBUG][ENTER]["<< toprint_.c_str()<< "]\n";
 	}
 
 	~Debuglogger()
 	{
-		if(p_) std::cout << "[DEBUG][LEAVE]["<< toprint_<< "]\n";
+		if(p_) std::cout << "[DEBUG][LEAVE]["<< toprint_.c_str()<< "]\n";
 	}
 
 	template<typename T> Debuglogger& operator <<(T const & v)

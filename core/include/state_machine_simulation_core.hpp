@@ -392,6 +392,10 @@ public:
 		return dispatcher_thread_ctxt_[dispatcher_thread_ctxt_.size()-1];
 	}
 	dispatcher_thread_ctxt_t get_dispatcher_thread_ctxt(int i) {return dispatcher_thread_ctxt_[i];}
+
+	//CAL (Sender)
+
+	bool handle_userdefined_sender_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 };
 
 struct ceps_interface_eval_func_callback_ctxt_t{

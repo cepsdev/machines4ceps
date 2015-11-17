@@ -328,6 +328,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 				channel->push(std::make_pair(msg_block,ds));
 				return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 			}
+			else fatal_(-1, "send: failed to insert message into queue.");
 		}
 		return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	} else if (id == "write_read_frm"){
@@ -493,7 +494,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	 		}
 	 		return new ceps::ast::String("",nullptr,nullptr,nullptr);
 	} else if (id == "sleep"){
+		#ifdef _WIN32
+		#else
 		if(args.size() == 0) sleep(1);
+		#endif
 	}else if (id == "print"){
 		for(auto& n : args)
 		{

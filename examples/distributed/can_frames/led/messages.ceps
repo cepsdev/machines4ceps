@@ -18,7 +18,7 @@ globals{
   luminance_request_target_value_in = 0;
 };
 
-val luminance_cob_id = 1;
+val luminance_cob_id = 111;
 
 frame{
   id{luminance_request;};
