@@ -17,32 +17,33 @@ all: x86/sm2plantuml x86/sm x86/sm4cepssim
 
 x86/sm2plantuml:x86/serialization.o  x86/main.o x86/state_machines.o x86/sm_sim_core_asserts.o x86/state_machine_simulation_core.o \
 x86/sm_sim_core_simulation_loop.o x86/state_machine_simulation_core_action_handling.o x86/state_machine_simulation_core_event_handling.o \
-x86/state_machine_simulation_core_guard_handling.o  x86/cmdline_utils.o x86/sm_comm_naive_msg_prot.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o
+x86/state_machine_simulation_core_guard_handling.o  x86/cmdline_utils.o x86/sm_comm_naive_msg_prot.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o \
+x86/cal_sender.o x86/cal_receiver.o 
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o \
 	$(cepslibs)/cepsparserdriver.o $(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o \
 	$(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o x86/main.o x86/state_machine_simulation_core.o \
 	x86/state_machines.o x86/cmdline_utils.o  x86/state_machine_simulation_core_action_handling.o \
 	x86/state_machine_simulation_core_event_handling.o x86/state_machine_simulation_core_guard_handling.o x86/sm_sim_core_simulation_loop.o \
-	x86/sm_sim_core_asserts.o x86/sm_comm_naive_msg_prot.o x86/serialization.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o -o x86/sm2plantuml
+	x86/sm_sim_core_asserts.o x86/sm_comm_naive_msg_prot.o x86/serialization.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o x86/cal_sender.o x86/cal_receiver.o -o x86/sm2plantuml
 
 x86/sm: x86/serialization.o x86/main.o x86/state_machines.o x86/sm_sim_core_asserts.o x86/state_machine_simulation_core.o \
 x86/sm_sim_core_simulation_loop.o x86/state_machine_simulation_core_action_handling.o x86/state_machine_simulation_core_event_handling.o \
-x86/state_machine_simulation_core_guard_handling.o x86/cmdline_utils.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o
+x86/state_machine_simulation_core_guard_handling.o x86/cmdline_utils.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o x86/cal_sender.o x86/cal_receiver.o
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
 	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o \
 	x86/main.o x86/state_machine_simulation_core.o  x86/state_machines.o x86/state_machine_simulation_core_action_handling.o \
 	x86/state_machine_simulation_core_event_handling.o x86/state_machine_simulation_core_guard_handling.o x86/sm_sim_core_simulation_loop.o \
-	x86/cmdline_utils.o x86/sm_sim_core_asserts.o x86/sm_comm_naive_msg_prot.o x86/serialization.o x86/sm_raw_frame.o x86/sm_xml_frame.o \
+	x86/cmdline_utils.o x86/sm_sim_core_asserts.o x86/sm_comm_naive_msg_prot.o x86/serialization.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/cal_sender.o x86/cal_receiver.o \
 	x86/pugixml.o -o x86/sm
 
 x86/sm4cepssim: x86/serialization.o x86/main.o x86/state_machines.o x86/sm_sim_core_asserts.o x86/state_machine_simulation_core.o \
 x86/sm_sim_core_simulation_loop.o x86/state_machine_simulation_core_action_handling.o x86/state_machine_simulation_core_event_handling.o \
-x86/state_machine_simulation_core_guard_handling.o x86/cmdline_utils.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o
+x86/state_machine_simulation_core_guard_handling.o x86/cmdline_utils.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/pugixml.o x86/cal_sender.o x86/cal_receiver.o
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
 	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o \
 	x86/main.o x86/state_machine_simulation_core.o  x86/state_machines.o x86/state_machine_simulation_core_action_handling.o \
 	x86/state_machine_simulation_core_event_handling.o x86/state_machine_simulation_core_guard_handling.o x86/sm_sim_core_simulation_loop.o \
-	x86/cmdline_utils.o x86/sm_sim_core_asserts.o x86/sm_comm_naive_msg_prot.o x86/serialization.o x86/sm_raw_frame.o x86/sm_xml_frame.o \
+	x86/cmdline_utils.o x86/sm_sim_core_asserts.o x86/sm_comm_naive_msg_prot.o x86/serialization.o x86/sm_raw_frame.o x86/sm_xml_frame.o x86/cal_sender.o x86/cal_receiver.o \
 	x86/pugixml.o -o x86/sm4cepssim
 
 x86/main.o:
@@ -72,6 +73,10 @@ x86/sm_xml_frame.o: core/src/sm_xml_frame.cpp
 	$(CXX)   $(cflags) $(includes) core/src/sm_xml_frame.cpp -c -o x86/sm_xml_frame.o
 x86/pugixml.o: $(pugisrc)/pugixml.cpp 
 	$(CXX)   $(cflags) $(includes) $(pugisrc)/pugixml.cpp -c -o x86/pugixml.o
+x86/cal_sender.o: core/src/cal_sender.cpp 
+	$(CXX)   $(cflags) $(includes) core/src/cal_sender.cpp -c -o x86/cal_sender.o
+x86/cal_receiver.o: core/src/cal_receiver.cpp 
+	$(CXX)   $(cflags) $(includes) core/src/cal_receiver.cpp -c -o x86/cal_receiver.o
 	
 x86/cmdline_utils.o:
 	$(CXX)   $(cflags) $(includes) core/src/cmdline_utils.cpp -c -o x86/cmdline_utils.o
