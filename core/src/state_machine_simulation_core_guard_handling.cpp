@@ -137,16 +137,16 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::unfold(ceps::ast::Nodebas
 
 			flatten_args(this,expr,v,'.');
 			//for(auto p : v) std::cout << *p << std::endl;
-			if (v[0]->kind() != ceps::ast::Ast_node_kind::symbol || kind(as_symbol_ref(v[0])) != "Systemstate")
+			if (!node_isrw_state(v[0]))
 			{
 				std::stringstream ss;
 				ss << *expr << "\n";
-				fatal_(-1,"Expected a Systemstate: "+ ss.str());
+				fatal_(-1,"Expected a Systemstate/Systemparameter: "+ ss.str());
 			}
 			std::string s;
 			for(size_t i = 0; i < v.size();++i)
 			{
-				if (v[i]->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(v[i])) == "Systemstate")
+				if (node_isrw_state(v[i]))
 				{
 					s += name(as_symbol_ref(v[i]));
 				} else if (v[i]->kind() == ceps::ast::Ast_node_kind::identifier )
@@ -230,6 +230,8 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 	if (guard_expr == nullptr)
 		fatal_(-1,"Global guard '"+guard_name+"' has no interpretation, i.e. is not defined");
 	ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
+	ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &global_states;
+
 	std::set<std::string> guards_in_rhs;
 	guards_in_expr(guard_expr,  guards_in_rhs);
 	ceps::ast::Nodebase_ptr  result = nullptr;

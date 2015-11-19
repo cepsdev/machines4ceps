@@ -482,7 +482,7 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 			return read_raw_chunk(smc,&temp_node,data_size, data, bit_offs, bit_width,signed_value,read_data,host_byte_order);
 		} else smc->fatal_(-1,std::string("Raw frame:  Unknown identifier '")+ceps::ast::name(ident)+"'");
 	}else if (p->kind() == ceps::ast::Ast_node_kind::int_literal
-			|| (p->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(p) ) == "Systemstate"  ) ){
+			|| node_isrw_state(p)/*(p->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(p) ) == "Systemstate"  )*/ ){
 		if (read_data){
 			auto orig_bit_offs = bit_offs;
 			std::uint64_t v = 0;

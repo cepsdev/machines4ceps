@@ -1,0 +1,46 @@
+/*
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * @section DESCRIPTION
+ * Part of SM4cepS (State Machines for ceps).
+ * Regression test 
+ */
+
+
+kind Systemstate;
+kind Systemparameter;
+kind Guard;
+kind Event;
+
+Systemparameter max_actuators;
+Systemstate a_value;
+
+Guard g;
+Event e;
+
+
+globals{
+ max_actuators = 1;
+ a_value = 2;
+ g = a_value > max_actuators;
+};
+
+Statemachine {
+   id{S;};
+   States{Initial;a;};
+   Transition{Initial;a;e;g;};
+};
+
+Simulation{
+ TestCase{Stateparameters;};Test{work_in_expressions_like_systemstates;};
+ assert(max_actuators == 1);
+ assert(a_value == max_actuators + 1);
+};
+
+
+Simulation{
+ TestCase{Stateparameters;};Test{work_in_guards_like_systemstates;};
+ Start{S;};
+ e;
+ ASSERT_CURRENT_STATES_CONTAINS{S.a;};
+ ASSERT_CURRENT_STATES_CONTAINS_NOT{S.Initial;};
+};

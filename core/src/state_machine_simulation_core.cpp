@@ -1235,7 +1235,10 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 	if (node_isrw_state(node.left()) 
 		//node.left()->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(node.left())) == "Systemstate"
 		)
-	 {lhs_id = name(as_symbol_ref(node.left())); return true ;}
+	 {
+		lhs_id = name(as_symbol_ref(node.left())); return true ;
+	 }
+
 	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
 		return false;
 	std::vector<std::string> ids;

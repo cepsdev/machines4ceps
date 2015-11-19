@@ -68,7 +68,7 @@ std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr
 			auto vv = ceps::ast::value(v);
 			return std::to_string(vv);
 	}
-	if (p->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(p)) == "Systemstate")
+	if (node_isrw_state(p))
 	{
 		auto v = smc->get_global_states()[ceps::ast::name(ceps::ast::as_symbol_ref(p))];
 		return to_string(smc,v);
@@ -357,7 +357,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	   {
 		   std::lock_guard<std::recursive_mutex>g(states_mutex());
 		   auto it_cur = global_systemstates().find(state_id);
-		   if (it_cur == global_systemstates().end()) fatal(-1, "Unknown Systemstate '" + state_id + "'");
+		   if (it_cur == global_systemstates().end()) fatal(-1, "Unknown Systemstate/Systemparameter '" + state_id + "'");
 
 		   auto it_prev = global_systemstates_prev().find(state_id);
 		   if (it_prev == global_systemstates_prev().end()) {
@@ -547,7 +547,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		delete[] msg_block;
 		return new ceps::ast::Int( (r?1:0) ,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	} else if (id == "assert" || id == "ASSERT") {
-		if (args.size() == 0 || args[0]->kind() != ceps::ast::Ast_node_kind::int_literal) fatal_(-1,"assert:first argument bust be an integer.");
+		if (args.size() == 0 || args[0]->kind() != ceps::ast::Ast_node_kind::int_literal) fatal_(-1,"assert:first argument must be an integer.");
 		if (ceps::ast::value(ceps::ast::as_int_ref(args[0])) == 0){
          std::string msg;
          if (args.size() > 1 && args[1]->kind() == ceps::ast::Ast_node_kind::string_literal) msg = ceps::ast::value(ceps::ast::as_string_ref(args[1]));
@@ -627,9 +627,9 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	if (cxt == nullptr) return nullptr;
 
 	auto smc = (State_machine_simulation_core*)cxt;
-	if (ceps::ast::op(*binop) == '.' &&
+	if (ceps::ast::op(*binop) == '.' && node_isrw_state(lhs)/*
 	    lhs->kind() == ceps::ast::Ast_node_kind::symbol &&
-	    "Systemstate" == ceps::ast::kind(ceps::ast::as_symbol_ref(lhs)))
+	    "Systemstate" == ceps::ast::kind(ceps::ast::as_symbol_ref(lhs))*/)
 	{
 
 		std::string id_rhs;
@@ -640,7 +640,7 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 		else{
 			auto it = smc->get_global_states().find(ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs);
 			if (it == smc->get_global_states().end())
-						smc->fatal_(-1, "Systemstate '"+ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs+"' not defined.");
+						smc->fatal_(-1, "Systemstate/Systemparameter '"+ceps::ast::name(ceps::ast::as_symbol_ref(lhs))+"."+id_rhs+"' not defined.");
 			return it->second;
 		}
 		/*} else {
@@ -664,6 +664,8 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 
 	smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->get_global_states();
+	smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemparameter"] = &smc->get_global_states();
+
 	ceps::interpreter::Environment::func_callback_t old_callback;
 	void * old_func_callback_context_data;
 	ceps::interpreter::Environment::func_binop_resolver_t old_binop_res;
@@ -807,20 +809,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			{
 				log() << "[QUEUEING EVENT WITH PAYLOAD][" << func_name <<"]" << "\n";
 				{
-					/*std::lock_guard<std::recursive_mutex>g(states_mutex_);
-					ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-					ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-					ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);*/
-
 					for(size_t i = 0; i != args.size(); ++i)
 					{
 						args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
 
 						//args[i]  = ceps::interpreter::evaluate(args[i],ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env(),n	);
 					}
-					/*ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-					ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-					ceps_env_current().interpreter_env().symbol_mapping().clear();*/
 				}
 				event_t ev(func_name,args);
 				ev.already_sent_to_out_queues_ = false;
@@ -829,26 +823,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 
 			else if (func_name == "timer" || func_name == "start_timer" || func_name == "start_periodic_timer")
 			{
-
-
-				{
-					/*std::lock_guard<std::recursive_mutex>g(states_mutex_);
-					ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-					ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-					ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);*/
-					for(size_t i = 0; i != args.size(); ++i)
-					 {
-						args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
-						/*args[i] = ceps::interpreter::evaluate(args[i],
-																		ceps_env_current().get_global_symboltable(),
-																		ceps_env_current().interpreter_env(),n	);*/
-
-					 }
-					/*ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-					ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);*/
-				}
-
-
+				for(size_t i = 0; i != args.size(); ++i)
+				 {
+					args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
+				 }
 				exec_action_timer(args,func_name == "start_periodic_timer");
 			}
 			else if (func_name == "print")
@@ -867,22 +845,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 						std::cout << to_string(this,n);
 						continue;
 					}
-					/*ceps::ast::Nodebase_ptr r;
-					{
-						std::lock_guard<std::recursive_mutex>g(states_mutex_);
-						ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-						ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-						ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,this);
-					     r = ceps::interpreter::evaluate(n,
-														   ceps_env_current().get_global_symboltable(),
-														   ceps_env_current().interpreter_env(),n	);
-
-					     //std::cout << *r << std::endl;
-
-					    ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-						ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-					}
-					std::cout << to_string(this,r);*/
 				}
 
 			}

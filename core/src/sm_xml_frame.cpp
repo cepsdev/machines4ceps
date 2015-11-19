@@ -131,18 +131,7 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 		ceps_interface_eval_func_callback_ctxt_t ctxt;
 		ctxt.active_smp = nullptr;
 		ctxt.smc  = smc;
-		{
-			std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-
-			smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->get_global_states();
-			smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-			smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
-			cond = ceps::interpreter::evaluate(ifelse->children()[0],
-					smc->ceps_env_current().get_global_symboltable(),
-					smc->ceps_env_current().interpreter_env(),n	);
-			smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-			smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-		}
+		cond = eval_locked_ceps_expr(smc,nullptr,ifelse->children()[0],n);
 
 		if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
 			std::stringstream ss; ss << *cond;
@@ -168,20 +157,7 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 
 		if (smc->is_assignment_to_state(node,state_id))
 		{
-			ceps::ast::Nodebase_ptr rhs = nullptr;
-			ceps_interface_eval_func_callback_ctxt_t ctxt;
-			ctxt.active_smp = nullptr;
-			ctxt.smc  = smc;
-			{
-			 std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-			 smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->global_systemstates();
-			 smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-			 smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
-			 rhs = ceps::interpreter::evaluate(node.right(),smc->ceps_env_current().get_global_symboltable(),smc->ceps_env_current().interpreter_env(),data);
-			 smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-			 smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-			 smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
-			}
+			auto rhs = eval_locked_ceps_expr(smc,nullptr,node.right(),data);
 			if (rhs == nullptr) return;
 
 			if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
@@ -208,23 +184,7 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 		ctxt.smc  = smc;
 
 		ceps::ast::Nodebase_ptr r = nullptr;
-		{
-
-		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
-
-
-		smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->global_systemstates();
-		smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
-
-		r = ceps::interpreter::evaluate(data,
-				smc->ceps_env_current().get_global_symboltable(),
-				smc->ceps_env_current().interpreter_env(),nullptr	);
-
-		smc->ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
-		smc->ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
-		smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
-		}
+		r  = eval_locked_ceps_expr(smc,nullptr,data,nullptr);
 		if (r != nullptr)
 			make_xml_fragment(ss,smc,r);
 	} else {
