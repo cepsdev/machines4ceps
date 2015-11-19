@@ -14,8 +14,9 @@
 
 global_functions{
  on_luminance_request{
-  luminance_target_value_changed(luminance_request_target_value_in);  
- };
+   if (changed("luminance_request_target_value_in"))
+    luminance_target_value_changed(luminance_request_target_value_in);  
+  };
 };
 
 receiver{

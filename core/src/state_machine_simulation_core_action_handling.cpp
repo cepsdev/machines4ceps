@@ -354,15 +354,22 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	} else if (id == "changed"){
 	 if(args.size() == 1 && args[0]->kind() == ceps::ast::Ast_node_kind::string_literal){
        auto state_id = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
-       {
-    	   std::lock_guard<std::recursive_mutex>g(states_mutex());
-           auto it_cur = global_systemstates().find(state_id);
-           if (it_cur == global_systemstates().end()) fatal(-1,"Unknown Systemstate '"+state_id+"'");
+	   {
+		   std::lock_guard<std::recursive_mutex>g(states_mutex());
+		   auto it_cur = global_systemstates().find(state_id);
+		   if (it_cur == global_systemstates().end()) fatal(-1, "Unknown Systemstate '" + state_id + "'");
 
-           auto it_prev = global_systemstates_prev().find(state_id);
-           if (it_prev == global_systemstates_prev().end()) fatal(-1,"Internal error: no history for Systemstate '"+state_id+"'");
-           if (it_cur->second == it_prev->second)  return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-
+		   auto it_prev = global_systemstates_prev().find(state_id);
+		   if (it_prev == global_systemstates_prev().end()) {
+			   it_prev->second = it_cur->second;
+			   return new ceps::ast::Int(1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+		   }
+		   if (it_cur->second == it_prev->second)
+			   return new ceps::ast::Int(0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+		   if (it_prev->second == nullptr || it_cur->second == nullptr){
+			   it_prev->second = it_cur->second;
+			   return new ceps::ast::Int(1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+	       }
            if (it_cur->second->kind() != it_prev->second->kind()){
         	   it_prev->second = it_cur->second;
         	   return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);

@@ -409,6 +409,6 @@ void init_state_machine_simulation(int argc, char ** argv,State_machine_simulati
 void run_state_machine_simulation(State_machine_simulation_core* smc,Result_process_cmd_line const& result_cmd_line);
 void state_machine_simulation_fatal(int code, std::string const & msg );
 void state_machine_simulation_warn(int code, std::string const & msg);
-
+bool node_isrw_state(ceps::ast::Nodebase_ptr node);
 
 #endif

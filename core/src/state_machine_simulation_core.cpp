@@ -23,6 +23,12 @@
 #include "core/include/base_defs.hpp"
 int State_machine_simulation_core::SM_COUNTER = 0;
 
+extern bool node_isrw_state(ceps::ast::Nodebase_ptr node) {
+	using namespace ceps::ast;
+	if (node == nullptr) return false;
+	return node->kind() == ceps::ast::Ast_node_kind::symbol
+		&& (kind(as_symbol_ref(node)) == "Systemstate" || kind(as_symbol_ref(node)) == "Systemparameter");
+}
 
 std::recursive_mutex Debuglogger::mtx_;
 bool PRINT_DEBUG_INFO = false;
@@ -1226,7 +1232,9 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 {
 
 	using namespace ceps::ast;
-	if ( node.left()->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(node.left())) == "Systemstate")
+	if (node_isrw_state(node.left()) 
+		//node.left()->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(node.left())) == "Systemstate"
+		)
 	 {lhs_id = name(as_symbol_ref(node.left())); return true ;}
 	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
 		return false;

@@ -12,5 +12,5 @@ x86/
 *.pdb
 *.lastbuildstate
 *.sdf
-
+*.opensdf
 

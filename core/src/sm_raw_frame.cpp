@@ -535,11 +535,16 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 				std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 				std::string s;
 				auto w = smc->get_global_states()[s = ceps::ast::name(ceps::ast::as_symbol_ref(p))];
-				if (w == nullptr || w->kind() != ceps::ast::Ast_node_kind::int_literal)
-				 smc->get_global_states()[s] =
-						new ceps::ast::Int( v ,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-				else
+				smc->global_systemstates_prev()[s] = w;
+
+				if (w == nullptr || w->kind() != ceps::ast::Ast_node_kind::int_literal) 
+					smc->get_global_states()[s] =
+						new ceps::ast::Int(v, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				else {
+					auto old_value = ceps::ast::value(ceps::ast::as_int_ref(smc->get_global_states()[s]));
+					if (old_value != v) smc->global_systemstates_prev()[s] = nullptr;
 					ceps::ast::value(ceps::ast::as_int_ref(smc->get_global_states()[s])) = v;
+				}
 			}
 		}
 		return bit_width;
