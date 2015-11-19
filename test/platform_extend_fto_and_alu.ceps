@@ -1,0 +1,73 @@
+kind Event;
+Event E,F;
+
+
+Statemachine{
+  id{Flap_to_open;};
+  States{Initial;Final;Transient;};
+  Transition{Initial;Transient;};
+  Transition{Transient;Final;E;};
+};
+
+Statemachine{
+  id{Antenna_lashing_unlock;};
+  States{Initial;Final;Transient;};
+  Transition{Initial;Transient;};
+  Transition{Transient;Final;F;};
+};
+
+
+Statemachine
+{
+  id{Platform_extend_fto_and_alu;};
+  States{Initial;Final;};
+  join{Platform_extend_fto_and_alu.Final /*absolute state-id!*/;};
+
+  thread{
+    States{Initial;Final;};
+    import{Flap_to_open;};
+    Transition{Initial;Flap_to_open;};
+    Transition{Flap_to_open.Final;Final;};
+  };
+  
+  thread{
+    States{Initial;Final;};
+    import{Antenna_lashing_unlock;};
+    Transition{Initial;Antenna_lashing_unlock;};
+    Transition{Antenna_lashing_unlock.Final;Final;};
+  };
+};
+
+Statemachine
+{
+  id{Contains_Platform_extend_fto_and_alu;};
+  States{Initial;Final;};
+  import{Platform_extend_fto_and_alu;};
+  Transition{Initial;Platform_extend_fto_and_alu;};
+
+};
+
+Simulation{
+  Start{Platform_extend_fto_and_alu;};
+  E;
+  F;
+  ASSERT_CURRENT_STATES_CONTAINS{Platform_extend_fto_and_alu.Final;}; 
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{Platform_extend_fto_and_alu.thread_1.Final;};
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{Platform_extend_fto_and_alu.thread_2.Final;};
+};
+
+Simulation{
+  ASSERT_EVENTUALLY_VISIT_STATES{Contains_Platform_extend_fto_and_alu.Platform_extend_fto_and_alu.thread_1.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{Contains_Platform_extend_fto_and_alu.Platform_extend_fto_and_alu.thread_2.Final;};
+  Start{Contains_Platform_extend_fto_and_alu;};
+  E;
+  F;
+  ASSERT_CURRENT_STATES_CONTAINS{Platform_extend_fto_and_alu.Final;};
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{Contains_Platform_extend_fto_and_alu.Platform_extend_fto_and_alu.Final;};
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{Platform_extend_fto_and_alu.thread_1.Final;};
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{Platform_extend_fto_and_alu.thread_2.Final;};
+};
+
+
+
+

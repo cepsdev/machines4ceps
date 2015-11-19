@@ -1,0 +1,212 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of threads.
+ *
+ * Threads are essentially sub state machines and differ only in their 
+ * special treatment in the case the containing machine is entered: 
+ * all threads of a state machine S are entered in the case S is entered.
+ * 
+ * Nomenclature: A state machine containing at least one thread is called 'multithreaded'
+ * 
+ */
+
+kind Event;
+
+Event E,F,G,H;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ thread{
+  States{Initial;Final;a;b;c;};
+  Transition{Initial;a;};
+  Transition{a;b;E;};
+  Transition{b;S1.e;E;};
+ };
+ thread{
+  States{Initial;Final;a;b;c;};
+  Transition{Initial;a;};
+ };
+};
+
+Statemachine
+{
+ id{S2;};
+ States{Initial;Final;};
+ thread{
+  States{Initial;Final;a;b;c;};
+ };
+ thread{
+  States{Initial;Final;a;b;c;};
+ };
+};
+
+
+Statemachine
+{
+ id{S3;};
+ States{Initial;Final;a;};
+ Transition{Initial;S2;E;};
+};
+
+
+
+Statemachine
+{
+  id{Prog1;};
+  States{a;b;c;Initial;Final;};
+  Transition{Initial;a;};
+  Transition{a;b;E;};
+  Transition{b;Final;F;};
+};
+
+Statemachine
+{
+  id{Prog2;};
+  States{a;b;c;Initial;Final;};
+  Transition{Initial;a;};
+  Transition{a;b;E;};
+  Transition{b;Final;F;};
+};
+
+Statemachine
+{
+ id{S4;};
+ thread{
+  States{Initial;Final;a;};
+  import{Prog1;};  
+  Transition{Initial;Prog1;};
+  Transition{Prog1.Final;Final;};
+ };
+ thread{
+  States{Initial;Final;};
+ };
+};
+
+Statemachine
+{
+ id{S5;};
+ States{joined_state;};
+ join{joined_state;};
+ thread{
+  States{Initial;Final;a;};
+  import{Prog1;};  
+  Transition{Initial;Prog1;};
+  Transition{Prog1.Final;Final;};
+ };
+ thread{
+  States{Initial;Final;a;};
+  import{Prog2;};  
+  Transition{Initial;Prog2;};
+  Transition{Prog2.Final;Final;};
+ };
+};
+
+Statemachine
+{
+ id{S5_;};
+ States{joined_state;};
+ join{joined_state;};
+ thread{
+  States{Initial;Final;a;};
+  import{Prog1;};  
+  Transition{Initial;Prog1;};
+  Transition{Prog1.Final;Final;};
+ };
+ thread{
+  States{Initial;Final;a;};
+  import{Prog2;};  
+  Transition{Initial;Prog2;};
+  Transition{Prog2.Final;Final;};
+ };
+};
+
+Statemachine
+{
+  id{S6;};
+  import{S5_;};
+  States{Initial;Final;};
+  Transition{Initial;S5_;};
+};
+
+
+
+ /**
+ * @section DESCRIPTION
+ * 
+ * Base scenario 1: Starting a multithreaded state machine.
+ * 
+ * */
+Simulation
+{
+ TestCase{A_Multithreaded_SM_starts_by_entering_init_states_of_all_threads;};Test{and_threads_behave_like_ordinary_sub_state_machines_when_receiving_events;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S1.thread_1.a;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S1.thread_1.b;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S1.e;};
+ Start{S1;};
+ E;
+ E;
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Base scenario 2: A transition into a multithreaded state machine starts all threads.
+ *
+ * */
+Simulation
+{
+ TestCase{Starting_with_a_single_threaded_state_machine;};Test{after_a_transition_to_a_multithreaded_sm_the_init_states_of_all_threads_are_entered;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S2.thread_1.Initial;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S2.thread_2.Initial;}; 
+ Start{S3;};
+ E;
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Demonstrates a design pattern:  orthogonal regions constructed by importing external state machines and wiring up Initial/Final states
+ *
+ * */
+Simulation
+{
+ TestCase{Design_Pattern;};Test{Build_Orthogonal_Regions_By_Import_And_Wiring_Up_Init_And_Final;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S4.thread_1.Final;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S4.thread_1.Prog1.Final;}; 
+ Start{S4;};
+ E;
+ F;
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Thread Joins.
+ *
+ * */
+Simulation
+{
+ TestCase{Threads_Can_Be_Joined;};Test{When_All_Threads_Reach_The_Final_State_They_Proceed_By_Going_To_The_Joined_State;};
+ ASSERT_EVENTUALLY_VISIT_STATES{S5.joined_state;};
+ Start{S5;};
+ E;
+ F;
+};
+
+Simulation
+{
+  Start{S6;};
+  E;F;
+};
+
+
+
