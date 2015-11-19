@@ -18,7 +18,7 @@ globals{
   luminance_request_target_value_in = 0;
 };
 
-val luminance_cob_id = 111;
+val luminance_cob_id = 2;
 
 frame{
   id{luminance_request;};
@@ -29,8 +29,9 @@ frame{
       data_length{uint4{__current_frame_size;};};
     };
     payload{
+	  uint8{1;};
       luminance{uint8{
-	out{luminance_request_target_value;};
+	out{luminance_request_target_value*2;};
 	in{luminance_request_target_value_in;};
       };
       };

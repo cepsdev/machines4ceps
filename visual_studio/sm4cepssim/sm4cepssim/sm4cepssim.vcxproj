@@ -165,6 +165,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\core\include\cal_receiver.hpp" />
     <ClInclude Include="..\..\..\core\include\cal_sender.hpp" />
     <ClInclude Include="..\..\..\core\include\cmdline_utils.hpp" />
     <ClInclude Include="..\..\..\core\include\serialization.hpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\core\src\cal_receiver.cpp" />
     <ClCompile Include="..\..\..\core\src\cal_sender.cpp" />
     <ClCompile Include="..\..\..\core\src\cmdline_utils.cpp" />
     <ClCompile Include="..\..\..\core\src\serialization.cpp" />

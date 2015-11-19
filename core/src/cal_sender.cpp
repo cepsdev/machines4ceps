@@ -10,7 +10,7 @@ extern std::vector<std::thread*> comm_threads;
 namespace kmw {
 	constexpr auto MIN_CAN_FRAME_SIZE = 2;
 	constexpr auto MAX_CAN_FRAME_PAYLOAD = 8;
-
+	extern bool kmw_multibus_initialized;
     #include "Multibus.h"
 	
 	void map_can_frame(CanMessage* out, char* frame,int frame_size) {
@@ -26,7 +26,7 @@ namespace kmw {
 void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>* channel,
 	int can_bus, State_machine_simulation_core* smp);
 
-static bool kmw_multibus_initialized = false;
+bool kmw::kmw_multibus_initialized = false;
 
 #endif	
 
@@ -37,7 +37,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 
 #ifdef USE_KMW_MULTIBUS
 	if (call_name == "canbus") {
-		if (!kmw_multibus_initialized) {
+		if (!kmw::kmw_multibus_initialized) {
 			kmw::CanStart();
 			DEBUG << "[KMW_MULTIBUS_INITIALIZED]\n";
 		}

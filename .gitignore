@@ -5,3 +5,12 @@ eclipse/Release/
 bugs/
 x86/
 *.plantuml
+*.obj
+*.tlog
+*.log
+*.idb
+*.pdb
+*.lastbuildstate
+*.sdf
+
+

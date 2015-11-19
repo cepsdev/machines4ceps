@@ -1,0 +1,27 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Part of the LED sample.
+ * 
+ */
+
+
+global_functions{
+ on_luminance_request{
+  luminance_target_value_changed(luminance_request_target_value_in);  
+ };
+};
+
+receiver{
+  id{led_device_in_channel;};
+  transport{canbus{bus_id{0;};};};
+  on_msg{frame_id{luminance_request;};handler{on_luminance_request;};};
+};
+
+

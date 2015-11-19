@@ -396,6 +396,7 @@ public:
 	//CAL (Sender)
 
 	bool handle_userdefined_sender_definition(std::string call_name, ceps::ast::Nodeset const & ns);
+	bool handle_userdefined_receiver_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 };
 
 struct ceps_interface_eval_func_callback_ctxt_t{

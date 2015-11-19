@@ -51,6 +51,9 @@
     <ClInclude Include="..\..\..\core\include\cal_sender.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\core\include\cal_receiver.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -102,6 +105,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\core\src\cal_sender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\src\cal_receiver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

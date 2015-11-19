@@ -956,6 +956,18 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		std::string sock_name;
 		bool no_when_emit = false;
 
+		if (transport["generic_tcp_in"].empty()) {
+			//Handle user defined transport layers
+			std::string call_name = "(NULL)";
+			if (transport.nodes().size() && transport.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef)
+				call_name = ceps::ast::name(ceps::ast::as_struct_ref(transport.nodes()[0]));
+			auto r = handle_userdefined_receiver_definition(call_name, receiver);
+
+			if (!r)
+				fatal_(-1, "Receiver definition: '" + call_name + "' unknown CAL-identifier (Communication Abstraction Layer).\n");
+			continue;
+		}
+
 
 		if (when.empty() && emit.empty()) no_when_emit = true;
 		else if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
