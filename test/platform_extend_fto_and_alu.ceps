@@ -48,6 +48,8 @@ Statemachine
 };
 
 Simulation{
+  ASSERT_EVENTUALLY_VISIT_STATES{Platform_extend_fto_and_alu.thread_1.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{Platform_extend_fto_and_alu.thread_2.Final;}; 
   Start{Platform_extend_fto_and_alu;};
   E;
   F;

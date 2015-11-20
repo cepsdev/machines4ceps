@@ -1,0 +1,145 @@
+/*
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ * Demonstrates usage and semantics of conditionals.
+ */
+kind Guard;
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+Systemstate s1,s2,s3,t;
+Guard g;
+
+typedef{
+  t_composite{
+    a {
+    b {1;};
+    c {2;};
+    };
+  };
+  
+  
+};
+
+typedef{
+  t_Z_drive {
+    MAST_INDEXPOSITION {1050;};
+    MAST_ZURRPOSITION  {2;};
+    MAST_MAXHOEHE      {3280;};
+    MAST_MINHOEHE      {750;};
+    POSITION_TOLERANCE {1;};
+    SPEED_MAX          {255;};
+    
+    Baudrate;
+    NodeID;
+    SpeedLimit;
+    
+    Drehrichtung {1.0;};
+    Hublaenge    {3290.0;};
+    Getriebe     {25.0;};
+    Zwischenstufe{2.85;};
+    Steigung     {40.0;};
+    
+    IstPos;
+    IstGeschw   {1;};
+    IstStrom;
+    Status;
+    
+    SollPos;
+    SollGeschw  {1;};
+    SollStrom;
+    Control      {0x0;};
+    
+    IstMasthoehe {2;};
+  };
+};
+
+Globals{
+  s2 = t_composite;
+  g = s1 >= s2.a.b;
+  s3 = t_Z_drive;
+//  s3.Baudrate = t_composite;
+};
+
+// event payload
+//composites zuweisen
+
+Statemachine{
+  id{S2;};
+};
+
+Statemachine{
+  id{S1;};
+  States{Initial;b;c;d;e;f;h;};
+ 
+  Statemachine{
+   id{A;};
+   States{Initial;b;c;d;e;f;h;};
+   on_enter{
+    print("***A::on_enter:\n");
+    assert(!in_state(S1.A.Initial));
+    if (!in_state(S1.A.Initial)) print (" A.Initial is not yet element of the set of current states.\n");
+   };
+    
+   on_exit{
+    print("***A::on_exit:\n");
+    assert(in_state(S1.A.Initial));
+  
+    if (in_state(S1.A.Initial)) print (" A.Initial is element of the set of current states.\n");
+    };  
+   
+   Transition{Initial;S2;F;};
+  };
+  
+  Actions{
+    sub_action{print("***S1::sub_action:\n");};
+    action1{
+      print("***S1::action1:\n");
+      t = s3.Baudrate;
+      print("s3.Baudrate:", t);
+      s1 = s1 + 1;
+      if (s1 <= 1) {
+	print(" s1 <= 1\n");
+      } 
+      else if (s1 == 2)
+      { 
+	print(" s1 == 2\n");
+      }      
+      else {
+	print(" s1 > 1.\n");
+      } 
+      if (!0) print (" !0 == true.\n");
+      if ("E" == argv(0)) print (" Current Event is E.\n");
+      if (in_state(S1.Initial)) print (" Current State of S1 is S1.Initial.\n");
+      sub_action;
+    };
+  };  
+ 
+  Transition{Initial;A;E;action1;g;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * Base scenario 1: Moving along epsilon-transitions.
+ * 
+ * */
+Simulation
+{
+  ASSERT_EVENTUALLY_VISIT_STATES{S1.A;S1.A.Initial;};
+  s1 = 1;//s2 = t_composite;
+  TestCase{Conditionals;};Test{CanBeUsedInActions;};
+  Start{S1;};
+  E;
+  F;
+  if (0) assert(0);
+  if (0) { assert(0); }
+  if (0) { assert(0); } else s1=2;
+  assert(s1==2);
+  if (0) { assert(0); } else if (1) s1=4; else { s1=3; }
+  assert(s1==4); 
+  ASSERT_CURRENT_STATES_CONTAINS{S2;};  
+};

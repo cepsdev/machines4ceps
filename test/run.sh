@@ -28,5 +28,25 @@ else
  echo -e "\e[38;5;28m passed \e[0m"
 fi
 
+echo -en "Test \e[4mepsilon_transitions1.ceps\e[0m            :"
+../x86/sm epsilon_transitions1.ceps --quiet >epsilon_transitions1.log 2>epsilon_transitions1.log
+if [ $? -ne 0 ]; then
+ echo -e "\e[38;5;196m failed \e[0m"
+ echo -e "\e[38;5;196m"
+ cat epsilon_transitions1.log
+ echo -e "\e[0m"
+else
+ echo -e "\e[38;5;28m passed \e[0m"
+fi
 
 
+echo -en "Test \e[4mconditionals1.ceps\e[0m                   :"
+../x86/sm conditionals1.ceps --quiet >conditionals1.log 2>conditionals1.log
+if [ $? -ne 0 ]; then
+ echo -e "\e[38;5;196m failed \e[0m"
+ echo -e "\e[38;5;196m"
+ cat conditionals1.log
+ echo -e "\e[0m"
+else
+ echo -e "\e[38;5;28m passed \e[0m"
+fi
