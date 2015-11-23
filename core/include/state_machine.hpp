@@ -44,9 +44,9 @@ struct state_rep_t {
 	bool& tag1() {return tag1_;}
 };
 
-struct State_machine
+class State_machine
 {
-	
+public:	
  
   std::string const & id() const {return id_;}
   std::string & id() {return id_;}

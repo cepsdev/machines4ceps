@@ -121,13 +121,13 @@ void serialize_system_state_block(State_machine_simulation_core* smc,
 		 int d;
 		 auto w = ceps::serialize_value(d,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		 data_size += w;
-		 ceps::ast::Unit_rep::sc_t u;
+		 ceps::ast::Unit_rep::sc_t u=0;
 		 data_size += 7* ceps::serialize_value(htons(u),nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 
 		} else if (p->kind() == ceps::ast::Ast_node_kind::float_literal){
 		 double d=ceps::ast::value(ceps::ast::as_double_ref(p));;
 		 data_size += ceps::serialize_value(d,nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
-		 ceps::ast::Unit_rep::sc_t u;
+		 ceps::ast::Unit_rep::sc_t u=0;
 		 data_size += 7* ceps::serialize_value(htons(u),nullptr,std::numeric_limits<size_t>::max(),false,ceps::nothrow_exception_policy());
 		} else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
 		 std::string d = ceps::ast::value(ceps::ast::as_string_ref(p));;
@@ -268,7 +268,7 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 			DEBUG << "[MONITORING_THREAD][NMP_EVAL_CEPS_EXPRESSION]\n";
 			char * cmd = new char[header.len+1];
 			r = recv(sck,cmd,header.len,0);
-			if (r < header.len)
+			if (r < (int)header.len)
 			{
 				delete[] cmd;
 				DEBUG << "[MONITORING_THREAD][READ_FAILED=>TERMINATE]\n";closesocket(sck);return;
@@ -380,7 +380,7 @@ void comm_dispatcher_thread(int id,
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = AF_INET;
 
-    hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
+    hints.ai_flags = AI_PASSIVE ;//| AI_NUMERICSERV;
 	//hints.ai_flags = AI_PASSIVE;
 	hints.ai_protocol = IPPROTO_TCP;
 	
@@ -459,7 +459,7 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 
 	* ((int*)(*data+offs)) = htonl(ev.id_.length());
 	offs += sizeof(int);
-	strncpy(*data+offs,ev.id_.c_str(),ev.id_.length());
+	strncpy_s(*data+offs, ev.id_.length()+1,ev.id_.c_str(),ev.id_.length());
 	offs += ev.id_.length();
 
 	for(auto p:in)
@@ -566,7 +566,7 @@ void comm_sender_thread(int id,
 			hints.ai_family = AF_INET;
 
 			hints.ai_socktype = SOCK_STREAM;
-			hints.ai_flags = AI_NUMERICSERV;
+            //hints.ai_flags = AI_NUMERICSERV;
 			if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &result) != 0){
 				DEBUG << "[comm_sender_thread][FAILED_TO_CONNECT:getaddrinfo(ip.c_str(), port.c_str(), &hints, &result) != 0]\n";
 				std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;

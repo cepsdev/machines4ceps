@@ -183,7 +183,7 @@ size_t fill_raw_chunk( State_machine_simulation_core* smc,
 			   else if (bit_width == 28) v &= 0xFFFFFFFLL;
 			   else if (bit_width == 32) v &= 0xFFFFFFFFLL;
 			   else{
-				   std:uint64_t w=1;
+				   std::uint64_t w=1;
 				   for(size_t i = 0; i < bit_width;++i) w |= (w << 1);
 				   v &= w;
 			   }
@@ -193,7 +193,7 @@ size_t fill_raw_chunk( State_machine_simulation_core* smc,
 				unsigned short o = bit_offs % 8;
 				unsigned short d = 8 - o ; // d is the number of bits left in the byte to write
 				unsigned char w = *(data + bit_offs/8);
-				if (d > bit_width) d = bit_width;
+				if (d > bit_width) d = (unsigned short) bit_width;
 				unsigned char c1=1;for(int i = 0; i < d;++i)c1 |= (c1 << 1);
 				unsigned char c2=1;for(int i = 0; i < o-1;++i)c2 |= (c2 << 1);
 
@@ -204,16 +204,16 @@ size_t fill_raw_chunk( State_machine_simulation_core* smc,
 			v = v >> bits_written;
 
 			//INVARIANT: bit_offs points to a byte address
-			if (bits_written < bit_width){
-				for(int i = 0; i < (bit_width-bits_written)/8;++i,bit_offs+=8,bits_written+=8){
+			if (bits_written < (int) bit_width){
+				for(int i = 0; i < ( (int)bit_width-bits_written)/8;++i,bit_offs+=8,bits_written+=8){
 					*(data+bit_offs/8) = ((unsigned char)v & 0xFF);
 				    v = v >> 8;
 				}
 			}
 			//INVARIANT: bit_offs points to a byte address
 			//INVARIANT: bit_width - bits_written < 8
-			if (bits_written < bit_width){
-				if (bit_width-bits_written  == 1){
+			if (bits_written < (int)bit_width){
+				if ((int)bit_width-bits_written  == 1){
 					unsigned char & target = *( (unsigned char*)(data+ bit_offs/8) );
 					if (v & 1)  target |= 1;
 					else target &= 0xFE;
@@ -221,7 +221,7 @@ size_t fill_raw_chunk( State_machine_simulation_core* smc,
 				{
 					unsigned char & target = *( (unsigned char*)(data+ bit_offs/8) );
 					unsigned char c = 1;
-					for(int i = 0; i < bit_width-bits_written-1; ++i ) c |= c << 1;
+					for(int i = 0; i < (int)bit_width-bits_written-1; ++i ) c |= c << 1;
 					target = c & v;
 				}
 			}
@@ -494,25 +494,25 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 				v = *( ( (unsigned char*) data) + bit_offs/8);
 				v = v >> o;
 				if (d > bit_width) {
-				 unsigned char c1=1;for(int i = 1; i < bit_width;++i)c1 |= (c1 << 1);
+				 unsigned char c1=1;for(int i = 1; i < (int)bit_width;++i)c1 |= (c1 << 1);
 				 v &= c1;
-				 d = bit_width;
+				 d = (unsigned short) bit_width;
 				}
 				bits_read = d;bit_offs+=d;
 			}
 
 			//INVARIANT: bit_offs points to a byte address
 			int bits_read_after_byte_boundary=0;
-			if (bits_read< bit_width){
+			if (bits_read< (int)bit_width){
 				std::uint64_t v_temp = 0;
-				for(int i = 0; i < (bit_width-bits_read)/8;++i,bit_offs+=8,bits_read+=8,bits_read_after_byte_boundary+=8){
+				for(int i = 0; i < ((int)bit_width-bits_read)/8;++i,bit_offs+=8,bits_read+=8,bits_read_after_byte_boundary+=8){
 					v_temp |=  ((std::uint64_t) *( ( (unsigned char*) data) +bit_offs/8)) << bits_read;
 				}
 				v |= v_temp;
 			}
 			//INVARIANT: bit_offs points to a byte address
 			//INVARIANT: bit_width - bits_written < 8
-			if (bits_read < bit_width){
+			if (bits_read < (int)bit_width){
  			 std::uint64_t target = *( (unsigned char*)(data+ bit_offs/8) );
  			 int bit_left = bit_width-bits_read;
  			 std::uint64_t ch=1;
@@ -539,11 +539,11 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 
 				if (w == nullptr || w->kind() != ceps::ast::Ast_node_kind::int_literal) 
 					smc->get_global_states()[s] =
-						new ceps::ast::Int(v, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+						new ceps::ast::Int((std::int64_t)v, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 				else {
 					auto old_value = ceps::ast::value(ceps::ast::as_int_ref(smc->get_global_states()[s]));
 					if (old_value != v) smc->global_systemstates_prev()[s] = nullptr;
-					ceps::ast::value(ceps::ast::as_int_ref(smc->get_global_states()[s])) = v;
+					ceps::ast::value(ceps::ast::as_int_ref(smc->get_global_states()[s])) = (std::int64_t)v;
 				}
 			}
 		}
@@ -681,7 +681,7 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			hints.ai_family = AF_INET;
 
 			hints.ai_socktype = SOCK_STREAM;
-			hints.ai_flags = AI_NUMERICSERV;
+            //hints.ai_flags = AI_NUMERICSERV;
 			if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &result) != 0){
 				DEBUG << "[comm_sender_generic_tcp_out_thread][FAILED_TO_CONNECT@"<< ip << ":" << port << "]\n";
 				std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
@@ -885,7 +885,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 			if (data == nullptr){DEBUG << "[ERROR_comm_generic_tcp_in_thread_fn][ALLOC_FAILED]\n";close(sck);return;}
 			ssize_t already_read = 0;
 			ssize_t n = 0;
-			for(; (already_read < frame_size) && (n = recv(sck,data+already_read,frame_size-already_read,0)) > 0;already_read+=n);
+			for(; (already_read < (ssize_t)frame_size) && (n = recv(sck,data+already_read,(ssize_t)frame_size-already_read,0)) > 0;already_read+=n);
 
 			if(already_read < frame_size){DEBUG << "[ERROR_comm_generic_tcp_in_thread_fn][READ_FAILED]\n";close(sck);return;}
 		    DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_SUCCESSFULLY_READ]\n";
@@ -964,7 +964,7 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 	hints.ai_next = nullptr;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = AF_INET;
-    hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
+    hints.ai_flags = AI_PASSIVE;// | AI_NUMERICSERV;
 
     if (getaddrinfo(nullptr,port.c_str(),&hints,&result) != 0)
     	smc->fatal_(-1,"getaddrinfo failed");

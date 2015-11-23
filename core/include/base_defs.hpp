@@ -30,7 +30,9 @@ static inline int closesocket(int s) { return close(s); }
 #pragma comment(lib, "Ws2_32.lib")
 static inline int write(SOCKET s, const void* buf, int len, int flags = 0) { return send(s, (char*)buf, len, flags); }
 static inline int close(SOCKET s) { return closesocket(s); }
-typedef std::int64_t ssize_t;
+#ifndef __GNUC__
+ typedef std::int64_t ssize_t;
+#endif
 #include <intrin.h>
 
 

@@ -84,7 +84,6 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 	auto multibus_queue = kmw::CanOpen((unsigned char)can_bus);
 	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
-		int cfd;
 
 	char* frame = nullptr;
 	size_t frame_size = 0;

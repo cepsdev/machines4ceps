@@ -106,7 +106,7 @@ void canbus_read_callback(unsigned char queue) {
 	kmw::CanRead(queue,&event);
 	if (!event.messageValid) return;
 	bzero(can_msg, CAN_MSG_SIZE);
-	*((std::uint16_t*)can_msg) = event.message.id;
+	*((std::uint16_t*)can_msg) = (std::uint16_t)event.message.id;
 	if (event.message.rtr) *((std::uint16_t*)can_msg) |= 0x800;
 	*(can_msg + 1) |= (event.message.length+2) << 4;
 	memcpy(can_msg + 2, event.message.data, event.message.length);

@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "core/include/state_machine_simulation_core.hpp"
 #include "core/include/base_defs.hpp"
 #include "pugixml.hpp"
@@ -29,7 +31,7 @@ extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_
 			if (args.size() > 0 && args[0]->kind() == ceps::ast::Ast_node_kind::int_literal){
 				auto idx = value(as_int_ref(args[0]));
 				if (idx == 0){ v.push_back(new ceps::ast::String(smc->current_event().id_,nullptr,nullptr,nullptr)); return;}
-				else if (idx > 0 && idx-1 < smc->current_event().payload_.size() ) { v.push_back(smc->current_event().payload_[idx-1]);return;}
+				else if (idx > 0 && idx-1 < (int)smc->current_event().payload_.size() ) { v.push_back(smc->current_event().payload_[idx-1]);return;}
 				else {v.push_back(new ceps::ast::Int(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr)); return;}
 
 			}
@@ -89,7 +91,7 @@ std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr
 				if (msg_block == nullptr) return "(undef)";
 				else{
 					std::string t;
-					for(int i = 0; i < size;++i)
+					for(int i = 0; i < (int)size;++i)
 					{
 						t+="byte #"+std::to_string(i)+" =\t"+std::to_string(msg_block[i])+"\n";
 					}
@@ -245,7 +247,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			auto idx = value(as_int_ref(args[0]));
 			if (idx == 0)
 				return new ceps::ast::String(current_event().id_,nullptr,nullptr,nullptr);
-			else if (idx > 0 && idx-1 < current_event().payload_.size() )
+			else if (idx > 0 && idx-1 < (int)current_event().payload_.size() )
 				return current_event().payload_[idx-1];
 		}
 	} else if (id == "argc")
@@ -258,7 +260,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		{
 			std::cerr << "***EXPECTATION NOT SATISFIED";
 			if (args.size() > 1) std::cerr << ":\n\t";
-			for(int i = 1; i < args.size() ;++i){
+			for(int i = 1; i <(int) args.size() ;++i){
 				std::cerr << to_string(this,args[i]);
 			}
 			std::cerr << "\n";
@@ -357,7 +359,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	   {
 		   std::lock_guard<std::recursive_mutex>g(states_mutex());
 		   auto it_cur = global_systemstates().find(state_id);
-		   if (it_cur == global_systemstates().end()) fatal(-1, "Unknown Systemstate/Systemparameter '" + state_id + "'");
+           if (it_cur == global_systemstates().end()) fatal_(-1, "Unknown Systemstate/Systemparameter '" + state_id + "'");
 
 		   auto it_prev = global_systemstates_prev().find(state_id);
 		   if (it_prev == global_systemstates_prev().end()) {
@@ -539,7 +541,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		size_t ds;
 		char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
 		bool r = ds >= args.size()-1;
-		if(r)for(int i = 1; i < args.size();++i){
+		if(r)for(int i = 1; i < (int)args.size();++i){
 			if (args[i]->kind() != ceps::ast::Ast_node_kind::int_literal) continue;
 			unsigned char u = (unsigned char) ceps::ast::value(ceps::ast::as_int_ref(args[i]));
 			if (u != (unsigned char)msg_block[i-1]){r = false;break;}

@@ -106,7 +106,7 @@ void mk_directories(std::string const & path)
 		if (stat(s.c_str(), &st) != -1)
 			continue;
 
-		auto r = CreateDirectory(s.c_str(), NULL);
+        auto r = CreateDirectoryA(s.c_str(), NULL);
 	}
 #endif
 }
@@ -146,7 +146,7 @@ void traverse_directories(std::string const & current_path,std::vector<std::stri
 		}
 	}
 #else
-	WIN32_FIND_DATA ffd = { 0 };
+    WIN32_FIND_DATAA ffd = { 0 };
 	HANDLE hf = INVALID_HANDLE_VALUE;
 	std::string cc = current_path +  "*" ;
 	hf = FindFirstFileA(cc.c_str(), &ffd);

@@ -464,13 +464,13 @@ void run_as_monitor(Result_process_cmd_line const & result_cmd_line){
 						ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
 						auto r = ceps::deserialize_value(v, data+offs, header.len-offs);offs+=r;
 						v = ntohl(v);
-						r = ceps::deserialize_value(m, data+offs, header.len-offs);m = ntohl(m);offs+=r;
-						r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = ntohl(kg);offs+=r;
-						r = ceps::deserialize_value(s, data+offs, header.len-offs);s = ntohl(s);offs+=r;
-						r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = ntohl(ampere);offs+=r;
-						r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = ntohl(kelvin);offs+=r;
-						r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = ntohl(mol);offs+=r;
-						r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = ntohl(candela);offs+=r;
+						r = ceps::deserialize_value(m, data+offs, header.len-offs);m = (ceps::ast::Unit_rep::sc_t)ntohl(m);offs+=r;
+						r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = (ceps::ast::Unit_rep::sc_t)ntohl(kg);offs+=r;
+						r = ceps::deserialize_value(s, data+offs, header.len-offs);s = (ceps::ast::Unit_rep::sc_t)ntohl(s);offs+=r;
+						r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = (ceps::ast::Unit_rep::sc_t)ntohl(ampere);offs+=r;
+						r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = (ceps::ast::Unit_rep::sc_t)ntohl(kelvin);offs+=r;
+						r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = (ceps::ast::Unit_rep::sc_t)ntohl(mol);offs+=r;
+						r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = (ceps::ast::Unit_rep::sc_t)ntohl(candela);offs+=r;
 						sysstates_table.push_back(
 								std::make_pair(
 										name,
@@ -482,13 +482,13 @@ void run_as_monitor(Result_process_cmd_line const & result_cmd_line){
 						double v;
 						ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
 						auto r = ceps::deserialize_value(v, data+offs, header.len-offs);offs+=r;
-						r = ceps::deserialize_value(m, data+offs, header.len-offs);m = ntohl(m);offs+=r;
-						r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = ntohl(kg);offs+=r;
-						r = ceps::deserialize_value(s, data+offs, header.len-offs);s = ntohl(s);offs+=r;
-						r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = ntohl(ampere);offs+=r;
-						r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = ntohl(kelvin);offs+=r;
-						r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = ntohl(mol);offs+=r;
-						r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = ntohl(candela);offs+=r;
+						r = ceps::deserialize_value(m, data+offs, header.len-offs);m = (ceps::ast::Unit_rep::sc_t)ntohl(m);offs+=r;
+						r = ceps::deserialize_value(kg, data+offs, header.len-offs);kg = (ceps::ast::Unit_rep::sc_t)ntohl(kg);offs+=r;
+						r = ceps::deserialize_value(s, data+offs, header.len-offs);s = (ceps::ast::Unit_rep::sc_t)ntohl(s);offs+=r;
+						r = ceps::deserialize_value(ampere, data+offs, header.len-offs);ampere = (ceps::ast::Unit_rep::sc_t)ntohl(ampere);offs+=r;
+						r = ceps::deserialize_value(kelvin, data+offs, header.len-offs);kelvin = (ceps::ast::Unit_rep::sc_t)ntohl(kelvin);offs+=r;
+						r = ceps::deserialize_value(mol, data+offs, header.len-offs);mol = (ceps::ast::Unit_rep::sc_t)ntohl(mol);offs+=r;
+						r = ceps::deserialize_value(candela, data+offs, header.len-offs);candela = (ceps::ast::Unit_rep::sc_t)ntohl(candela);offs+=r;
 						sysstates_table.push_back(
 								std::make_pair(name,
 								new ceps::ast::Double( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr))

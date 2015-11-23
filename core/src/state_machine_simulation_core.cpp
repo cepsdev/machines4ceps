@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "core/include/state_machine_simulation_core.hpp"
 #include "core/include/sm_comm_naive_msg_prot.hpp"
 #include "core/include/sm_ev_comm_layer.hpp"
@@ -942,7 +944,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 				                     reuse_sock,
 				                     reg_socket });
 		} else {
-			warn(-1,"Sender definition incomplete, will be ignored.");
+            warn_(-1,"Sender definition incomplete, will be ignored.");
 		}
 
 	}
@@ -977,10 +979,10 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 		if (when.empty() && emit.empty()) no_when_emit = true;
 		else if (when.size() != 1 || when.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-			{warn(-1,"Illformed receiver definition."); continue;}
+            {warn_(-1,"Illformed receiver definition."); continue;}
 
 		if (transport["generic_tcp_in"].empty() && transport["use"].empty())
-		    {warn(-1,"Illformed receiver definition."); continue;}
+            {warn_(-1,"Illformed receiver definition."); continue;}
 
 		if (!transport["use"].empty()){
 			if (transport["use"].nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier){
@@ -1914,13 +1916,13 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 				auto r = ceps::deserialize_value(v, data+offs, h.len-offs);offs+=r;
 				v = ntohl(v);DEBUG << "[State_machine_simulation_core::process_event_from_remote][READ_INT]["<< v <<"]\n" ;
 				//std::cout << v << std::endl;
-				r = ceps::deserialize_value(m, data+offs, h.len-offs);m = ntohl(m);offs+=r;
-				r = ceps::deserialize_value(kg, data+offs, h.len-offs);kg = ntohl(kg);offs+=r;
-				r = ceps::deserialize_value(s, data+offs, h.len-offs);s = ntohl(s);offs+=r;
-				r = ceps::deserialize_value(ampere, data+offs, h.len-offs);ampere = ntohl(ampere);offs+=r;
-				r = ceps::deserialize_value(kelvin, data+offs, h.len-offs);kelvin = ntohl(kelvin);offs+=r;
-				r = ceps::deserialize_value(mol, data+offs, h.len-offs);mol = ntohl(mol);offs+=r;
-				r = ceps::deserialize_value(candela, data+offs, h.len-offs);candela = ntohl(candela);offs+=r;
+				r = ceps::deserialize_value(m, data+offs, h.len-offs);m = (ceps::ast::Unit_rep::sc_t)ntohl(m);offs+=r;
+				r = ceps::deserialize_value(kg, data+offs, h.len-offs);kg = (ceps::ast::Unit_rep::sc_t)ntohl(kg);offs+=r;
+				r = ceps::deserialize_value(s, data+offs, h.len-offs);s = (ceps::ast::Unit_rep::sc_t)ntohl(s);offs+=r;
+				r = ceps::deserialize_value(ampere, data+offs, h.len-offs);ampere = (ceps::ast::Unit_rep::sc_t)ntohl(ampere);offs+=r;
+				r = ceps::deserialize_value(kelvin, data+offs, h.len-offs);kelvin = (ceps::ast::Unit_rep::sc_t)ntohl(kelvin);offs+=r;
+				r = ceps::deserialize_value(mol, data+offs, h.len-offs);mol = (ceps::ast::Unit_rep::sc_t)ntohl(mol);offs+=r;
+				r = ceps::deserialize_value(candela, data+offs, h.len-offs);candela = (ceps::ast::Unit_rep::sc_t)ntohl(candela);offs+=r;
 				ev.payload_.push_back(new ceps::ast::Int( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr));
 			} else if (nmp_payload_id == NMP_PAYLOAD_DOUBLE)	{
 				offs+=sizeof(int);
@@ -1928,13 +1930,13 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 				ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
 				auto r = ceps::deserialize_value(v, data+offs, h.len-offs);offs+=r;
 				DEBUG << "[State_machine_simulation_core::process_event_from_remote][READ_DOUBLE]["<< v <<"]\n" ;
-				r = ceps::deserialize_value(m, data+offs, h.len-offs);m = ntohl(m);offs+=r;
-				r = ceps::deserialize_value(kg, data+offs, h.len-offs);kg = ntohl(kg);offs+=r;
-				r = ceps::deserialize_value(s, data+offs, h.len-offs);s = ntohl(s);offs+=r;
-				r = ceps::deserialize_value(ampere, data+offs, h.len-offs);ampere = ntohl(ampere);offs+=r;
-				r = ceps::deserialize_value(kelvin, data+offs, h.len-offs);kelvin = ntohl(kelvin);offs+=r;
-				r = ceps::deserialize_value(mol, data+offs, h.len-offs);mol = ntohl(mol);offs+=r;
-				r = ceps::deserialize_value(candela, data+offs, h.len-offs);candela = ntohl(candela);offs+=r;
+				r = ceps::deserialize_value(m, data+offs, h.len-offs);m = (ceps::ast::Unit_rep::sc_t)ntohl(m);offs+=r;
+				r = ceps::deserialize_value(kg, data+offs, h.len-offs);kg = (ceps::ast::Unit_rep::sc_t)ntohl(kg);offs+=r;
+				r = ceps::deserialize_value(s, data+offs, h.len-offs);s = (ceps::ast::Unit_rep::sc_t)ntohl(s);offs+=r;
+				r = ceps::deserialize_value(ampere, data+offs, h.len-offs);ampere = (ceps::ast::Unit_rep::sc_t)ntohl(ampere);offs+=r;
+				r = ceps::deserialize_value(kelvin, data+offs, h.len-offs);kelvin = (ceps::ast::Unit_rep::sc_t)ntohl(kelvin);offs+=r;
+				r = ceps::deserialize_value(mol, data+offs, h.len-offs);mol = (ceps::ast::Unit_rep::sc_t)ntohl(mol);offs+=r;
+				r = ceps::deserialize_value(candela, data+offs, h.len-offs);candela = (ceps::ast::Unit_rep::sc_t)ntohl(candela);offs+=r;
 				ev.payload_.push_back(new ceps::ast::Double( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr));
 			} else if (nmp_payload_id == NMP_PAYLOAD_STRING)	{
 				offs+=sizeof(int);
