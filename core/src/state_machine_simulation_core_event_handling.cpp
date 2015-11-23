@@ -48,7 +48,6 @@ bool State_machine_simulation_core::fetch_event(event_rep_t& ev,
 	using namespace ceps::ast;
 	bool pending_timed_event;
 	states_updated = false;
-	size_t timer = 0;
 do{
 	pending_timed_event = false;
 	if (!ignore_ev_queue)

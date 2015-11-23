@@ -112,7 +112,6 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 
 void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr data,bool inside_attr)
 {
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	if (data == nullptr) return;
 	if (data->kind() == ceps::ast::Ast_node_kind::string_literal)
@@ -128,9 +127,6 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 		auto n = data;
 		auto ifelse = ceps::ast::as_ifelse_ptr(n);
 		ceps::ast::Nodebase_ptr cond = nullptr;
-		ceps_interface_eval_func_callback_ctxt_t ctxt;
-		ctxt.active_smp = nullptr;
-		ctxt.smc  = smc;
 		cond = eval_locked_ceps_expr(smc,nullptr,ifelse->children()[0],n);
 
 		if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
@@ -179,10 +175,6 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 		}
 
 	} else if (data->kind() == ceps::ast::Ast_node_kind::func_call) {
-		ceps_interface_eval_func_callback_ctxt_t ctxt;
-		ctxt.active_smp = nullptr;
-		ctxt.smc  = smc;
-
 		ceps::ast::Nodebase_ptr r = nullptr;
 		r  = eval_locked_ceps_expr(smc,nullptr,data,nullptr);
 		if (r != nullptr)
@@ -212,15 +204,9 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 
 void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size){
 	if (smc == nullptr) return nullptr;
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2;
 	auto data_format = spec_["data"];
 	if (data_format.nodes().empty()) return nullptr;
-
-	ceps_interface_eval_func_callback_ctxt_t ctxt;
-	ctxt.active_smp = nullptr;
-	ctxt.smc  = smc;
-
 
 	std::stringstream ss;
 	ss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
@@ -295,7 +281,7 @@ static bool eval_query(std::vector<ceps::ast::Nodebase_ptr>& nodes,State_machine
 			}
 
 		}else{
-		 auto r = eval_locked_ceps_expr(smc,nullptr,p,nullptr);
+		 eval_locked_ceps_expr(smc,nullptr,p,nullptr);
 		}
 	}
 	return true;

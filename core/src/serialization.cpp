@@ -52,10 +52,10 @@ size_t ceps::deserialize_value(std::string & v, char * buffer, size_t max_buffer
 
 size_t ceps::serialize_value(const double & v, char * buffer, size_t max_buffer_size, bool write_data, nothrow_exception_policy){
 	char buffer_[64] = {0};
-	sprintf_s(buffer_,"%la",v);
+	sprintf(buffer_,"%la",v);
 	auto s =  strlen(buffer_) + 1;
 	if (write_data)
-		strcpy_s(buffer,max_buffer_size, buffer_);
+		strcpy(buffer, buffer_);
 	return s;
 }
 

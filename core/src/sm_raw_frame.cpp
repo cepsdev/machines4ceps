@@ -294,7 +294,6 @@ extern ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_co
 void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size){
 
 	if (smc == nullptr) return nullptr;
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2;
 	auto data_format = spec_["data"];
 	if (data_format.nodes().empty()) {
@@ -304,10 +303,6 @@ void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& dat
 			id = ceps::ast::name(ceps::ast::as_id_ref(t.nodes()[0]));
 		smc->fatal_(-1,"Frame '"+id+"' doesn't contain a data section.");
 	}
-
-	ceps_interface_eval_func_callback_ctxt_t ctxt;
-	ctxt.active_smp = nullptr;
-	ctxt.smc  = smc;
 
 	ceps::ast::Nodebase_ptr frame_pattern = nullptr;
 	ceps::ast::Scope scope;
@@ -484,7 +479,6 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 	}else if (p->kind() == ceps::ast::Ast_node_kind::int_literal
 			|| node_isrw_state(p)/*(p->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(p) ) == "Systemstate"  )*/ ){
 		if (read_data){
-			auto orig_bit_offs = bit_offs;
 			std::uint64_t v = 0;
 
 			int bits_read = 0;
@@ -530,7 +524,7 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 					if (v == 0) return -2;
 				 } else if (v!=0) return -2;
 			    }
-			    else if (v != ceps::ast::value(ceps::ast::as_int_ref(p))) return -2;
+			    else if ((std::int64_t)v != ceps::ast::value(ceps::ast::as_int_ref(p))) return -2;
 			} else {
 				std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 				std::string s;
@@ -542,7 +536,7 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 						new ceps::ast::Int((std::int64_t)v, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 				else {
 					auto old_value = ceps::ast::value(ceps::ast::as_int_ref(smc->get_global_states()[s]));
-					if (old_value != v) smc->global_systemstates_prev()[s] = nullptr;
+					if (old_value != (std::int64_t)v) smc->global_systemstates_prev()[s] = nullptr;
 					ceps::ast::value(ceps::ast::as_int_ref(smc->get_global_states()[s])) = (std::int64_t)v;
 				}
 			}
@@ -597,9 +591,6 @@ bool Podframe_generator::read_msg(char* data,size_t size,
 	if (data == nullptr || size == 0) return true;
 
 	auto data_format = spec_["data"];
-	size_t offs = 0;
-
-
 	if (data_format.nodes().empty()) {
 		std::string id;
 		auto t = spec_["id"];
@@ -607,20 +598,9 @@ bool Podframe_generator::read_msg(char* data,size_t size,
 			id = ceps::ast::name(ceps::ast::as_id_ref(t.nodes()[0]));
 		smc->fatal_(-1,"Frame '"+id+"' doesn't contain a data section.");
 	}
-
-	ceps_interface_eval_func_callback_ctxt_t ctxt;
-	ctxt.active_smp = nullptr;
-	ctxt.smc  = smc;
-
-
 	if (0 > read_raw_chunk( smc,data_format.nodes(),size, data,0)) return false;
-
 	return true;
 }
-
-
-
-
 
 void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* frames,
 			     State_machine_simulation_core* smc,
@@ -632,7 +612,6 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			     bool reuse_socket,
 			     bool reg_socket)
 {
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	int cfd;
 	struct addrinfo hints;
@@ -722,14 +701,14 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			}
 		}
 		if (som.size())
-		 if ( (wr = write(cfd, som.c_str(),eof.length() )) != som.length())
+		 if ( (wr = write(cfd, som.c_str(),eof.length() )) != (int)som.length())
 		 {
 			close(cfd);
 			conn_established=false;
 			DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
 			continue;
 		}
-		if (len && frame) if ( (wr = write(cfd, frame,len )) != len)
+		if (len && frame) if ( (wr = write(cfd, frame,len )) != (int)len)
 		{
 			close(cfd);
 			conn_established=false;
@@ -737,7 +716,7 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 			continue;
 		}
 		if (eof.size())
-			if ( (wr = write(cfd, eof.c_str(),eof.length() )) != eof.length())
+			if ( (wr = write(cfd, eof.c_str(),eof.length() )) != (int)eof.length())
 			{
 				close(cfd);
 				conn_established=false;
@@ -760,7 +739,6 @@ void comm_generic_tcp_in_thread_fn(int id,
 		 State_machine_simulation_core* smc,
 		 sockaddr_storage claddr,int sck,std::string som,std::string eof)
 {
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	char host[1024] = {0};
 	char service[1024] = {0};
@@ -887,7 +865,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 			ssize_t n = 0;
 			for(; (already_read < (ssize_t)frame_size) && (n = recv(sck,data+already_read,(ssize_t)frame_size-already_read,0)) > 0;already_read+=n);
 
-			if(already_read < frame_size){DEBUG << "[ERROR_comm_generic_tcp_in_thread_fn][READ_FAILED]\n";close(sck);return;}
+			if(already_read < (ssize_t)frame_size){DEBUG << "[ERROR_comm_generic_tcp_in_thread_fn][READ_FAILED]\n";close(sck);return;}
 		    DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_SUCCESSFULLY_READ]\n";
 
 
@@ -929,7 +907,6 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 			     std::string port,std::string som,std::string eof,std::string sock_name,bool reg_sock,bool reuse_sock,
 			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string,std::string))
 {
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	std::vector<std::thread*> client_handler_threads;
 

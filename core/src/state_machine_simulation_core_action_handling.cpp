@@ -157,15 +157,10 @@ bool State_machine_simulation_core::kill_named_timer(std::string const & timer_i
 void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool periodic_timer)
 {
 
-	if (args.size() >= 2 &&
-		( args[1]->kind() == ceps::ast::Ast_node_kind::symbol &&
-		kind(ceps::ast::as_symbol_ref(args[1])) == "Event"
-		|| args[1]->kind() == ceps::ast::Ast_node_kind::func_call
-	    || args[1]->kind() == ceps::ast::Ast_node_kind::identifier
-		)
+	if (args.size() >= 2 && (( args[1]->kind() == ceps::ast::Ast_node_kind::symbol && kind(ceps::ast::as_symbol_ref(args[1])) == "Event")
+		                               || args[1]->kind() == ceps::ast::Ast_node_kind::func_call  || args[1]->kind() == ceps::ast::Ast_node_kind::identifier)
 		)
 	{
-		bool public_event = true;
 		std::string ev_id;
 		std::vector<ceps::ast::Nodebase_ptr> fargs;
 
@@ -174,7 +169,6 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 		{
 			ev_id = "@@queued_action";
 			fargs.push_back(args[1]);
-			public_event = false;
 		}
 		else {
 			std::string  func_name;
@@ -703,9 +697,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 	if (ac_seq->kind() != ceps::ast::Ast_node_kind::structdef && ac_seq->kind() != ceps::ast::Ast_node_kind::scope) return nullptr;
 	auto actions = ceps::ast::nlf_ptr(ac_seq);
 	if (verbose_log) log() << "[EXECUTE STATEMENTS][START]\n";
-	ceps_interface_eval_func_callback_ctxt_t ctxt;
-	ctxt.active_smp = containing_smp;
-	ctxt.smc  = this;
 	for(auto & n : actions->children())
 	{
 		if (verbose_log)log() << "[EXECUTE STATEMENT]" << *n << "\n";
@@ -889,7 +880,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 					main_event_queue().data() = event_queue_temp;
 				}
 			} else{
-				auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
+				eval_locked_ceps_expr(this,containing_smp,n,nullptr);
 			}
 		}
 	}

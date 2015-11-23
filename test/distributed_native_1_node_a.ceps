@@ -1,0 +1,28 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+kind Systemparameter;
+
+Event A,B,EXIT;
+Guard g;
+
+globals{
+  g = 1;
+};
+
+Statemachine {
+  id{Node_A;};
+  Actions{
+    on_ev_b{
+      assert(argv(1) == 2);
+      EXIT;
+    };    
+    send_a{
+      g = 0;
+      A(1);
+    };
+  };
+  States{Initial;Final;b_received;};
+  Transition{Initial;Initial;g;send_a;};
+  Transition{Initial;b_received;B;on_ev_b;};
+};

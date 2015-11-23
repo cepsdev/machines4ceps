@@ -1272,7 +1272,6 @@ void State_machine_simulation_core::eval_guard_assign(ceps::ast::Binary_operator
 void define_a_struct(State_machine_simulation_core* smc,
 		ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix)
 {
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 
 	if (sp->children().size() == 0){
@@ -1727,7 +1726,6 @@ void init_state_machine_simulation(	int argc,
 void run_state_machine_simulation(State_machine_simulation_core* smc,Result_process_cmd_line const& result_cmd_line)
 {
 	using namespace std;
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	if(result_cmd_line.timeout.length()) smc->timeout_ = 5000;
 	if (result_cmd_line.start_in_server_mode)

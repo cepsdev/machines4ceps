@@ -1,0 +1,4 @@
+Simulation{
+ ASSERT_END_STATES_CONTAINS{Node_B.Final;Node_A.b_received;};
+ Start{Node_A;Node_B;};
+};

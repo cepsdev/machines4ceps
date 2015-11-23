@@ -90,7 +90,6 @@ void serialize_system_state_block(State_machine_simulation_core* smc,
 		                          char** data,
 		                          size_t& buffer_size)
 {
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	size_t data_size = 0;
 
@@ -259,7 +258,7 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 			serialize_system_state_block(smc,&data,buffer_size);
 			DEBUG << "[MONITORING_THREAD][PAYLOAD_SIZE="<< buffer_size <<"]\n";
 			int wr;
-			if ( ( wr = write(sck, data,buffer_size )) !=	 buffer_size )
+			if ( ( wr = write(sck, data,buffer_size )) !=	 (int)buffer_size )
 			{
 				closesocket(sck);delete[] data;return;
 			}
@@ -327,7 +326,7 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 					if ( write(sck, (char*)&header,sizeof(header) ) !=	 sizeof(header) ){
 							closesocket(sck);return;
 					}
-					if ( write(sck, err_text.c_str(),err_text.length() ) !=	err_text.length() ){
+					if ( write(sck, err_text.c_str(),err_text.length() ) !=	(int)err_text.length() ){
 							closesocket(sck);return;
 					}
 					continue;
@@ -339,7 +338,7 @@ void nmp_monitoring_thread_fn(int id,State_machine_simulation_core* smc,sockaddr
 			serialize_system_state_block(smc,&data,buffer_size);
 			DEBUG << "[MONITORING_THREAD][PAYLOAD_SIZE="<< buffer_size <<"]\n";
 			int wr;
-			if ( ( wr = write(sck, data,buffer_size )) !=	 buffer_size )
+			if ( ( wr = write(sck, data,buffer_size )) !=	 (int)buffer_size )
 			{
 				closesocket(sck);delete[] data;return;
 			}
@@ -424,8 +423,6 @@ void comm_dispatcher_thread(int id,
 
 void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_simulation_core::event_t const & ev, std::vector<ceps::ast::Nodebase_ptr> const& in, char** data, size_t& buffer_size)
 {
-
-	auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	size_t data_size = 0;
 	for(auto p:in)
@@ -459,7 +456,7 @@ void serialize_flat_payload(State_machine_simulation_core* smc,State_machine_sim
 
 	* ((int*)(*data+offs)) = htonl(ev.id_.length());
 	offs += sizeof(int);
-	strncpy_s(*data+offs, ev.id_.length()+1,ev.id_.c_str(),ev.id_.length());
+	strncpy(*data+offs, ev.id_.c_str(),ev.id_.length());
 	offs += ev.id_.length();
 
 	for(auto p:in)
@@ -612,7 +609,7 @@ void comm_sender_thread(int id,
 				continue;
 			}
 
-			if (len && data) if ( (wr = write(cfd, data,len )) != len)
+			if (len && data) if ( (wr = write(cfd, data,len )) != (int)len)
 			{
 				close(cfd);
 				conn_established=false;
@@ -637,7 +634,7 @@ void comm_sender_thread(int id,
 				serialize_flat_payload(smc,ev,ev.payload_, &data,buffer_size);
 
 				DEBUG << "[comm_sender_thread][FLAT_PAYLOAD_SIZE="<< buffer_size <<"]\n";
-				if ( ( wr = write(cfd, data,buffer_size )) !=	 buffer_size )
+				if ( ( wr = write(cfd, data,buffer_size )) !=	 (int)buffer_size )
 				{
 					close(cfd);
 					conn_established=false;
