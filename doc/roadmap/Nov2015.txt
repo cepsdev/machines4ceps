@@ -1,0 +1,4 @@
+ROADMAP FOR November 2015
+=========================
+
+- Rework logging: sync over multiple threads, timestamps (use log4kmw?).

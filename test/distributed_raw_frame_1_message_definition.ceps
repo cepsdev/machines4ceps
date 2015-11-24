@@ -1,0 +1,24 @@
+kind Systemstate;
+
+Systemstate a_frame_payload_in,a_frame_payload_out,b_frame_payload_in,b_frame_payload_out;
+
+
+frame{
+   id{a_frame;};
+   data{
+     uint8{
+       in{a_frame_payload_in;};
+       in{a_frame_payload_out;};
+    };     
+   };
+};
+
+frame{
+   id{b_frame;};
+   data{
+     uint8{
+       in{b_frame_payload_in;};
+       in{b_frame_payload_out;};
+    };     
+   };
+};
