@@ -44,7 +44,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 		std::string channel_id;
 		int can_bus = 0;
 		if (ns["id"].size() != 1 || ns["id"].nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-			fatal(-1,"A CAN(KMW MULTIBUS) CAL sender definition requires an id.");
+			fatal_(-1,"A CAN(KMW MULTIBUS) CAL sender definition requires an id.");
 		channel_id = ceps::ast::name(ceps::ast::as_id_ref(ns["id"].nodes()[0]));
 		auto bus_id_ = ns["transport"]["canbus"]["bus_id"];
 		if (bus_id_.nodes().empty())
@@ -54,7 +54,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 				can_bus = bus_id_.as_int();
 			}
 			catch (...) {
-				fatal(-1, "CAN(KMW MULTIBUS) CAL sender definition: bus_id must be an integer value.");
+				fatal_(-1, "CAN(KMW MULTIBUS) CAL sender definition: bus_id must be an integer value.");
 			}
 
 			auto channel = new threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>;

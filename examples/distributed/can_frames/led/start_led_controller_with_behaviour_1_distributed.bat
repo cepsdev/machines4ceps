@@ -1,0 +1,1 @@
+START /WAIT ../../../../x86/sm4ceps.exe base_defs.ceps messages.ceps comm_led_controller_canbus.ceps  led_controller.ceps scenarios/led_controller_behaviour_1.ceps --quiet
