@@ -1,0 +1,23 @@
+/*
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ * Demonstrates usage and semantics of conditionals.
+ */
+kind Guard;
+kind Event;
+kind Systemstate;
+
+
+Simulation{
+ print("sm4ceps_version_major()=",sm4ceps_version_major(),"\n");
+ print("sm4ceps_version_minor()=",sm4ceps_version_minor(),"\n");
+ print("sm4ceps version is ",sm4ceps_version_major()+sm4ceps_version_minor(),"\n");
+ print("odd(3) = ",odd(3),"\n","even(3) = ",even(3),"\n");
+ print("truncate(3.14) = ",truncate(3.14),"\n");
+ print("min(1,2)=",min(1,2),"\n");
+ print("min(1.0,2)=",min(1.0,2),"\n");
+ print("min(1,2.1)=",min(1,2.1),"\n");
+ print("min(1.1,2.1)=",min(1.1,2.1),"\n");
+};

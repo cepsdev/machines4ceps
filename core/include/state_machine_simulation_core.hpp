@@ -397,6 +397,40 @@ public:
 
 	bool handle_userdefined_sender_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 	bool handle_userdefined_receiver_definition(std::string call_name, ceps::ast::Nodeset const & ns);
+
+	//Userdefined functions (will be replaced by variadic templates)
+
+	void regfn(std::string name, int(*fn) ());
+	void regfn(std::string name, double(*fn) ());
+	void regfn(std::string name, int (*fn) (int) );
+	void regfn(std::string name, double (*fn) (int));
+	void regfn(std::string name, int (*fn) (double));
+	void regfn(std::string name, double (*fn) (double));
+	void regfn(std::string name, int(*fn) (int,int));
+	void regfn(std::string name, double(*fn) (int,int));
+	void regfn(std::string name, int(*fn) (double,int));
+	void regfn(std::string name, double(*fn) (double, int));
+	void regfn(std::string name, int(*fn) (int, double));
+	void regfn(std::string name, double(*fn) (int, double));
+	void regfn(std::string name, int(*fn) (double, double));
+	void regfn(std::string name, double(*fn) (double, double));
+
+	private:
+		std::map<std::string, int(*) ()> regfntbl_i_;
+		std::map<std::string, double(*) ()> regfntbl_d_;
+		std::map<std::string, int(*) (int)> regfntbl_ii_;
+		std::map<std::string, double(*) (int)> regfntbl_di_;
+		std::map<std::string, int(*) (double)> regfntbl_id_;
+		std::map<std::string, double(*) (double)> regfntbl_dd_;
+
+		std::map<std::string, int(*) (int,int)> regfntbl_iii_;
+		std::map<std::string, double(*) (int, int)> regfntbl_dii_;
+		std::map<std::string, int(*) (double, int)> regfntbl_idi_;
+		std::map<std::string, double(*) (double, int)> regfntbl_ddi_;
+		std::map<std::string, int(*) (int, double)> regfntbl_iid_;
+		std::map<std::string, double(*) (int, double)> regfntbl_did_;
+		std::map<std::string, int(*) (double, double)> regfntbl_idd_;
+		std::map<std::string, double(*) (double, double)> regfntbl_ddd_;
 };
 
 struct ceps_interface_eval_func_callback_ctxt_t{

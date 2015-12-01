@@ -1,3 +1,18 @@
+#include <algorithm>
+
+const auto SM4CEPS_VER_MAJ = 0;
+const auto SM4CEPS_VER_MINOR = .600;
+
+int get_sm4ceps_ver_maj() { return SM4CEPS_VER_MAJ; }
+double get_sm4ceps_ver_minor() { return SM4CEPS_VER_MINOR; }
+int odd(int i) { return i % 2; }
+int even(int i) { return !odd(i); }
+double truncate(double i) { return (int)i; }
+double mymin(double a, double b) { return std::min(a,b); }
+double mymin(double a, int b) { return std::min(a, (double)b); }
+double mymin(int a, double b) { return std::min((double)a, b); }
+int mymin(int a, int b) { return std::min(a, b); }
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "core/include/state_machine_simulation_core.hpp"
@@ -583,7 +598,17 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 {
 	using namespace ceps::ast;
 	using namespace std;
-	DEBUG_FUNC_PROLOGUE
+	DEBUG_FUNC_PROLOGUE;
+
+	regfn("sm4ceps_version_major",get_sm4ceps_ver_maj);
+	regfn("sm4ceps_version_minor", get_sm4ceps_ver_minor);
+	regfn("odd", odd);
+	regfn("even", even);
+	regfn("truncate",truncate);
+	regfn("min", static_cast<double(*)(double,double)> (mymin));
+	regfn("min", static_cast<double(*)(int, double)> (mymin));
+	regfn("min", static_cast<double(*)(double, int)> (mymin));
+	regfn("min", static_cast<int(*)(int, int)> (mymin));
 
 	ceps::ast::Nodeset ns = current_universe();
 
@@ -1713,7 +1738,17 @@ void init_state_machine_simulation(	int argc,
 	}
 #endif
 #ifdef _WIN32
-	
+/*	for (auto const & plugin_lib : result_cmd_line.plugins) {
+		auto handle = dlopen(plugin_lib.c_str(), RTLD_NOW);
+		if (handle == nullptr)
+			smc->fatal_(-1, dlerror());
+
+		auto init_fn_ = dlsym(handle, "init_plugin");
+		if (init_fn_ == nullptr)
+			smc->fatal_(-1, dlerror());
+		auto init_fn = (init_plugin_t)init_fn_;
+		init_fn(smc, register_plugin);
+	}*/
 #endif
 
 	smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);

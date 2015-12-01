@@ -255,9 +255,16 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 		if (this->print_debug_info_)
 		{
 			DEBUG << *guard_expr  << "\n";
-			DEBUG << "[STATES]\n";
+			DEBUG << "[CURRENT STATES]\n";
+			std::cout << "*************************************??" << std::endl;
 			for (auto & t : global_states)
 			{
+				if (t.first == "x_drive") std::cout << "*************************************" << std::endl;
+				if (t.second == nullptr) {
+					DEBUG << t.first << " is null \n";
+					fatal_(-1, "Systemstate '" + t.first + "' is null");
+				}
+				std::cout << "*************************************" << t.second <<std::endl;
 				DEBUG << t.first << " = " << *t.second << "\n";
 			}
 		}

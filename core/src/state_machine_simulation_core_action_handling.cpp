@@ -600,6 +600,108 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		}
 	}
 
+	if (args.size() == 0)
+	{ 
+		{
+			auto it = regfntbl_i_.find(id);
+			if (it != regfntbl_i_.end()) return new  ceps::ast::Int(it->second(), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+		}
+		{
+			auto it = regfntbl_d_.find(id);
+			if (it != regfntbl_d_.end()) return new  ceps::ast::Double(it->second(), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+		}
+	}
+
+	if (args.size() == 1)
+	{
+		bool arg1isint = args[0]->kind() == ceps::ast::Ast_node_kind::int_literal;
+		bool arg1isdouble = args[0]->kind() == ceps::ast::Ast_node_kind::float_literal;
+		if (arg1isint) {
+			{
+				auto it = regfntbl_ii_.find(id);
+				if (it != regfntbl_ii_.end()) 
+					return new  ceps::ast::Int(it->second(ceps::ast::value(ceps::ast::as_int_ref(args[0]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			}
+			{
+				auto it = regfntbl_di_.find(id);
+				if (it != regfntbl_di_.end()) return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_int_ref(args[0]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			}
+		}
+		else if (arg1isdouble) {
+			{
+				auto it = regfntbl_id_.find(id);
+				if (it != regfntbl_id_.end())
+					return new  ceps::ast::Int(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			}
+			{
+				auto it = regfntbl_dd_.find(id);
+				if (it != regfntbl_dd_.end()) 
+					return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			}
+		}
+	}
+
+	if (args.size() == 2)
+	{
+		bool arg1isint = args[0]->kind() == ceps::ast::Ast_node_kind::int_literal;
+		bool arg1isdouble = args[0]->kind() == ceps::ast::Ast_node_kind::float_literal;
+		bool arg2isint = args[1]->kind() == ceps::ast::Ast_node_kind::int_literal;
+		bool arg2isdouble = args[1]->kind() == ceps::ast::Ast_node_kind::float_literal;
+
+		if (arg1isint) {
+			if (arg2isint) {
+				{
+					auto it = regfntbl_iii_.find(id);
+					if (it != regfntbl_iii_.end())
+						return new  ceps::ast::Int(it->second(ceps::ast::value(ceps::ast::as_int_ref(args[0])), ceps::ast::value(ceps::ast::as_int_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+				{
+					auto it = regfntbl_dii_.find(id);
+					if (it != regfntbl_dii_.end())
+						return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_int_ref(args[0])), ceps::ast::value(ceps::ast::as_int_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+			}
+			if (arg2isdouble) {
+				{
+					auto it = regfntbl_iid_.find(id);
+					if (it != regfntbl_iid_.end())
+						return new  ceps::ast::Int(it->second(ceps::ast::value(ceps::ast::as_int_ref(args[0])), ceps::ast::value(ceps::ast::as_double_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+				{
+					auto it = regfntbl_did_.find(id);
+					if (it != regfntbl_did_.end())
+						return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_int_ref(args[0])), ceps::ast::value(ceps::ast::as_double_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+			}
+		}
+		else if (arg1isdouble) {
+			if (arg2isint) {
+				{
+					auto it = regfntbl_idi_.find(id);
+					if (it != regfntbl_idi_.end())
+						return new  ceps::ast::Int(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0])), ceps::ast::value(ceps::ast::as_int_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+				{
+					auto it = regfntbl_ddi_.find(id);
+					if (it != regfntbl_ddi_.end())
+						return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0])), ceps::ast::value(ceps::ast::as_int_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+			}
+			if (arg2isdouble) {
+				{
+					auto it = regfntbl_idd_.find(id);
+					if (it != regfntbl_idd_.end())
+						return new  ceps::ast::Int(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0])), ceps::ast::value(ceps::ast::as_double_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+				{
+					auto it = regfntbl_ddd_.find(id);
+					if (it != regfntbl_ddd_.end())
+						return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0])), ceps::ast::value(ceps::ast::as_double_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+				}
+			}
+		}
+	}
+
 	//fatal_(-1,"Undefined function '"+id+"' called.");
 	return nullptr;
 }
@@ -886,4 +988,47 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 	}
 	if (verbose_log) log() << "[EXECUTE STATEMENTS][END]\n";
 	return nullptr;
+}
+
+void State_machine_simulation_core::regfn(std::string name, int(*fn) ()) {
+	regfntbl_i_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, double(*fn) ()) {
+	regfntbl_d_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (int)) {
+	regfntbl_ii_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, double(*fn) (int)) {
+	regfntbl_di_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (double)) {
+	regfntbl_id_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, double(*fn) (double)) {
+	regfntbl_dd_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (int, int)) {
+	regfntbl_iii_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, double(*fn) (int, int)) {
+	regfntbl_dii_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (double, int)) {
+	regfntbl_idi_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, double(*fn) (double, int)) {
+	regfntbl_ddi_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (int, double)) {
+	regfntbl_iid_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, double(*fn) (int, double)) {
+	regfntbl_did_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (double, double)) {
+	regfntbl_idd_[name] = fn;
+}
+void State_machine_simulation_core::regfn(std::string name, double(*fn) (double, double)) {
+	regfntbl_ddd_[name] = fn;
 }
