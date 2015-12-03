@@ -58,7 +58,7 @@ class State_machine_simulation_core
 	using states_t = std::vector<state_rep_t>;
 	bool quiet_mode_= false;
 	bool shutdown_threads_ = false;
-	mutable std::recursive_mutex states_mutex_;
+	mutable std::recursive_mutex glob_states_mutex_;
 	states_t current_states_;
 
 	std::map<std::string,ceps::ast::Nodebase_ptr> global_funcs_;
@@ -90,12 +90,12 @@ public:
 	std::map<std::string, Rawframe_generator*>&  frame_generators() {return frame_generators_;}
 	std::map<std::string, Rawframe_generator*> const &  frame_generators() const {return frame_generators_;}
 
-	std::recursive_mutex& states_mutex() {return states_mutex_;}
+	std::recursive_mutex& states_mutex() {return glob_states_mutex_;}
 
 	states_t & current_states(){return current_states_;}
 	bool shutdown(){return shutdown_threads_;}
-	void lock_global_states() const {states_mutex_.lock();}
-	void unlock_global_states() const {states_mutex_.unlock();}
+	//void lock_global_states() const {states_mutex_.lock();}
+	//void unlock_global_states() const {states_mutex_.unlock();}
 	std::map<std::string, ceps::ast::Nodebase_ptr> & get_global_states() {return global_states;}
 	bool& quiet_mode(){return quiet_mode_;}
 	bool quiet_mode() const {return quiet_mode_;}

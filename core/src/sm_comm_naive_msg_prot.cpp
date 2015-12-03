@@ -93,7 +93,7 @@ void serialize_system_state_block(State_machine_simulation_core* smc,
 	DEBUG_FUNC_PROLOGUE2
 	size_t data_size = 0;
 
-	smc->lock_global_states();
+	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 	auto& states = smc->get_global_states();
 
 	size_t states_to_write = 0;
@@ -218,9 +218,6 @@ void serialize_system_state_block(State_machine_simulation_core* smc,
 		}
 	}
 	DEBUG << "[serialize_flat_payload][FINISHED at offset"<<offs<<"]\n";
-
-
-	smc->unlock_global_states();
 }
 
 

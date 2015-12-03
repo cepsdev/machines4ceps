@@ -229,8 +229,6 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 	Nodebase_ptr guard_expr = global_guards[guard_name];
 	if (guard_expr == nullptr)
 		fatal_(-1,"Global guard '"+guard_name+"' has no interpretation, i.e. is not defined");
-	ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-	ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &global_states;
 
 	std::set<std::string> guards_in_rhs;
 	guards_in_expr(guard_expr,  guards_in_rhs);
@@ -245,13 +243,22 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 		auto guard_unfolded = unfold(guard_expr,guard_to_interpretation,eval_path,states);
 		DEBUG << "[CALL][ceps::interpreter::evaluate][A]\n";
 		//std::cout << "UNFOLDED:" << *guard_unfolded << std::endl;
+		std::lock_guard<std::recursive_mutex>g(states_mutex());
+		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
+		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &global_states;
+
 		result  = ceps::interpreter::evaluate(guard_unfolded,
 															ceps_env.get_global_symboltable(),
 															ceps_env.interpreter_env(),nullptr	);
+		ceps_env.interpreter_env().symbol_mapping().clear();
 		DEBUG << "[RET_FROM_CALL][ceps::interpreter::evaluate][A]\n";
 	} else
 	{
 		DEBUG << "[CALL][ceps::interpreter::evaluate][B]\n";
+		std::lock_guard<std::recursive_mutex>g(states_mutex());
+		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
+		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &global_states;
+
 		if (this->print_debug_info_)
 		{
 			DEBUG << *guard_expr  << "\n";
@@ -262,7 +269,8 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 				if (t.first == "x_drive") std::cout << "*************************************" << std::endl;
 				if (t.second == nullptr) {
 					DEBUG << t.first << " is null \n";
-					fatal_(-1, "Systemstate '" + t.first + "' is null");
+					warn_(-1, "Systemstate '" + t.first + "' is null");
+					continue;
 				}
 				std::cout << "*************************************" << t.second <<std::endl;
 				DEBUG << t.first << " = " << *t.second << "\n";
@@ -272,6 +280,7 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 		result  = ceps::interpreter::evaluate(guard_expr,
 										ceps_env.get_global_symboltable(),
 										ceps_env.interpreter_env(),nullptr	);
+		ceps_env.interpreter_env().symbol_mapping().clear();
 		DEBUG << "[RET_FROM_CALL][ceps::interpreter::evaluate][B]\n";
 	}
 	//std::cout << "UNFOLDED/EVALUATED " << *result << std::endl;
@@ -281,7 +290,7 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 
 	DEBUG << "[GUARD_EVAL] " << guard_name << "=" << bool_result << "\n";
 
-	ceps_env.interpreter_env().symbol_mapping().clear();
+
 	return bool_result;
 }
 

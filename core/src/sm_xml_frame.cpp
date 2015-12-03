@@ -169,6 +169,7 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 				 auto it = smc->type_definitions().find(id);
 				 if (it == smc->type_definitions().end())
 						smc->fatal_(-1,id+" is not a type.\n");
+				 std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 				 define_a_struct(smc,ceps::ast::as_struct_ptr(it->second),smc->get_global_states(),name(as_symbol_ref(node.left())) );
 				}
 			} else 	{ std::lock_guard<std::recursive_mutex>g(smc->states_mutex());smc->get_global_states()[state_id] = rhs;}
@@ -275,6 +276,7 @@ static bool eval_query(std::vector<ceps::ast::Nodebase_ptr>& nodes,State_machine
 					 auto it = smc->type_definitions().find(id);
 					 if (it == smc->type_definitions().end())
 							smc->fatal_(-1,id+" is not a type.\n");
+					 std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 					 define_a_struct(smc,ceps::ast::as_struct_ptr(it->second),smc->get_global_states(),name(as_symbol_ref(node.left())) );
 					}
 				} else 	{ std::lock_guard<std::recursive_mutex>g(smc->states_mutex());smc->get_global_states()[state_id] = rhs;}

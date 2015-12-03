@@ -1342,6 +1342,8 @@ void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator
 {
 	DEBUG_FUNC_PROLOGUE
 	DEBUG << "[STATE_ASSIGNMENT][LHS=" << lhs_id << "]\n";
+	std::lock_guard<std::recursive_mutex>g(states_mutex());
+
 	if (root.right()->kind() == ceps::ast::Ast_node_kind::identifier)
 	{
 		std::string id = ceps::ast::name(ceps::ast::as_id_ref(root.right()));

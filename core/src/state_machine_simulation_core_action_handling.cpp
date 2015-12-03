@@ -315,6 +315,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
 			auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
 			auto it_frame_gen = frame_generators().find(id);
+			//std::cout << "************************* \n";
+			//std::cout << id << std::endl;
+			//std::cout << "************************* \n";
 			if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a frame id.");
 			auto channel = get_out_channel(ch_id);
 			if (channel == nullptr) fatal_(-1,ch_id+" is not an output channel.");
@@ -827,18 +830,19 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 
 				if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
 				{
+					std::lock_guard<std::recursive_mutex>g(states_mutex());
 					std::string id = ceps::ast::name(ceps::ast::as_id_ref(node.right()));
 					auto sym = this->ceps_env_current().get_global_symboltable().lookup(id);
 					if (sym != nullptr) {
 					  //std::cout <<  *(ceps::ast::Nodebase_ptr)sym->payload << std::endl;
-					  if (sym->payload) { std::lock_guard<std::recursive_mutex>g(states_mutex_);global_states[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;}
+					  if (sym->payload) {global_states[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;}
 					} else {
 					 auto it = type_definitions().find(id);
 					 if (it == type_definitions().end())
 							fatal_(-1,id+" is not a type.\n");
 					 define_a_struct(this,ceps::ast::as_struct_ptr(it->second),global_states,name(as_symbol_ref(node.left())) );
 					}
-				} else 	{ std::lock_guard<std::recursive_mutex>g(states_mutex_);global_states[state_id] = rhs;}
+				} else 	{ std::lock_guard<std::recursive_mutex>g(states_mutex());global_states[state_id] = rhs;}
 			}
 			else {
 			 std::stringstream ss;ss << *n;
