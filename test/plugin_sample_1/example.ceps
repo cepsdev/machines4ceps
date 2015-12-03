@@ -1,0 +1,32 @@
+kind Event;
+kind Systemstate;
+
+Event E;
+Systemstate v1,v2,v3;
+
+
+Statemachine{
+   id{S1;};
+   States{Initial;};
+   Actions{
+    A{
+      v2 = X_SollPosition_Berechnen(v1);assert(v2==138688);
+      print("v2=",v2,"\n");
+      v3 = X_IstPosition_Berechnen();assert(v3==0.0);
+      print("v3=",v3,"\n");
+      v2 = Y_SollPosition_Berechnen(v1);assert(v2==83359);
+      print("v2=",v2,"\n");
+      v3 = Y_IstPosition_Berechnen();assert(v3==0.0);
+      print("v3=",v3,"\n");
+   
+    };  
+   };
+   Transition{Initial;Initial;E;A;};
+};
+
+Simulation{
+  v1 = 2.1;
+  TestCase{Plugins;};Test{double_value_function;};
+  Start{S1;};
+  E;
+};

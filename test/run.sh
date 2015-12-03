@@ -89,31 +89,50 @@ else
  echo -e "\e[38;5;28m passed \e[0m"
 fi
 
-# echo -en "Test \e[4mdistributed_raw_frame_1_two_simulation_cores\e[0m       :"
-# 
-# ../x86/sm distributed_native_1_node_a.ceps \
-#  distributed_raw_frame_1_message_definition.ceps simulation_distributed_native_1_run_node_a.ceps >distributed_raw_frame_1_one_simulation_core_node_a.log 2>distributed_raw_frame_1_one_simulation_core_node_a.log &
-# my_pid1=$!
-# ../x86/sm distributed_native_1_node_b.ceps \
-#  distributed_raw_frame_1_message_definition.ceps simulation_distributed_native_1_run_node_b.ceps >distributed_raw_frame_1_one_simulation_core_node_b.log 2>distributed_raw_frame_1_one_simulation_core_node_b.log &
-# my_pid2=$!
-# #$(sleep 5;kill $my_pid1;kill $my_pid2) &
-# wait $my_pid1 
-# exit_status_1=$?
-# wait $my_pid2 
-# exit_status_2=$?
-# if [ $exit_status_1 -ne 0 ] || [ $exit_status_2 -ne 0 ]; then
-#  echo -e "\e[38;5;196m failed \e[0m"
-#  echo -e "\e[38;5;196m"
-#  if [ $exit_status_1 -ne 0 ]; then
-#   cat distributed_raw_frame_1_one_simulation_core_node_a.log
-#  fi
-#  if [ $exit_status_2 -ne 0 ]; then
-#   cat distributed_raw_frame_1_one_simulation_core_node_b.log
-#  fi
-#  echo -e "\e[0m"
-# else
-#  echo -e "\e[38;5;28m passed \e[0m"
-# fi
+echo -en "Test \e[4mdistributed_raw_frame_1_two_simulation_cores\e[0m       :"
+
+../x86/sm distributed_native_1_node_a.ceps \
+ distributed_raw_frame_1_message_definition.ceps channels_node_a_rawframe.ceps simulation_distributed_native_1_run_node_a.ceps >distributed_raw_frame_1_one_simulation_core_node_a.log 2>distributed_raw_frame_1_one_simulation_core_node_a.log &
+my_pid1=$!
+../x86/sm distributed_native_1_node_b.ceps \
+ distributed_raw_frame_1_message_definition.ceps channels_node_b_rawframe.ceps simulation_distributed_native_1_run_node_b.ceps >distributed_raw_frame_1_one_simulation_core_node_b.log 2>distributed_raw_frame_1_one_simulation_core_node_b.log &
+my_pid2=$!
+#$(sleep 5;kill $my_pid1;kill $my_pid2) &
+wait $my_pid1 
+exit_status_1=$?
+wait $my_pid2 
+exit_status_2=$?
+if [ $exit_status_1 -ne 0 ] || [ $exit_status_2 -ne 0 ]; then
+ echo -e "\e[38;5;196m failed \e[0m"
+ echo -e "\e[38;5;196m"
+ if [ $exit_status_1 -ne 0 ]; then
+  cat distributed_raw_frame_1_one_simulation_core_node_a.log
+ fi
+ if [ $exit_status_2 -ne 0 ]; then
+  cat distributed_raw_frame_1_one_simulation_core_node_b.log
+ fi
+ echo -e "\e[0m"
+else
+ echo -e "\e[38;5;28m passed \e[0m"
+fi
+
+echo -en "Test \e[4mplugin_support\e[0m                                     :"
+cd plugin_sample_1
+make clean > /dev/null 2> /dev/null
+make > plugin_support_make_step.log 2> plugin_support_make_step.log
+if [ $? -ne 0 ]; then
+ echo -e "\e[38;5;196m failed (build step)"
+ cat plugin_support_make_step.log
+ echo -e "\e[0m"
+else
+  ../../x86/sm example.ceps --quiet --pluginAntriebe.so > plugin_support_run_step.log 2> plugin_support_run_step.log
+ if [ $? -ne 0 ]; then
+  echo -e "\e[38;5;196m failed \e[0m"
+ else
+  echo -e "\e[38;5;28m passed \e[0m"
+ fi
+fi
+
+cd ..
 
 

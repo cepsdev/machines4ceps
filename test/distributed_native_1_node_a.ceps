@@ -15,11 +15,12 @@ Statemachine {
   Actions{
     on_ev_b{
       assert(argv(1) == 2);
-      EXIT;
+      
     };    
     send_a{
       g = 0;
       A(1);
+      start_timer(2.0*s,EXIT);
     };
   };
   States{Initial;Final;b_received;};

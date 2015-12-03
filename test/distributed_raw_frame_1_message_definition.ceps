@@ -8,7 +8,7 @@ frame{
    data{
      uint8{
        in{a_frame_payload_in;};
-       in{a_frame_payload_out;};
+       out{a_frame_payload_out;};
     };     
    };
 };
@@ -18,7 +18,7 @@ frame{
    data{
      uint8{
        in{b_frame_payload_in;};
-       in{b_frame_payload_out;};
+       out{b_frame_payload_out;};
     };     
    };
 };

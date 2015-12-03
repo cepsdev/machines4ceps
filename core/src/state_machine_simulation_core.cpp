@@ -1728,11 +1728,12 @@ void init_state_machine_simulation(	int argc,
 
 #ifdef __gnu_linux__
 	for(auto const & plugin_lib : result_cmd_line.plugins){
-		auto handle = dlopen( plugin_lib.c_str(), RTLD_NOW);
+		void* handle = dlopen( plugin_lib.c_str(), RTLD_LAZY);
 		if (handle == nullptr)
 			smc->fatal_(-1,dlerror());
 
-	    auto init_fn_ = dlsym(handle,"init_plugin");
+		dlerror();
+	    void* init_fn_ = dlsym(handle,"init_plugin");
 	    if (init_fn_ == nullptr)
 	    	smc->fatal_(-1,dlerror());
 	    auto init_fn = (init_plugin_t)init_fn_;

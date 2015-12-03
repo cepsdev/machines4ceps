@@ -3,7 +3,7 @@
 #
 
 includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src"
-cflags := -O0 -g3 -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread
+cflags := -O0 -g3 -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -fPIC 
 TARGET :=
 OBJDIR := bin$(TARGET)
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
