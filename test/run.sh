@@ -116,6 +116,35 @@ else
  echo -e "\e[38;5;28m passed \e[0m"
 fi
 
+echo -en "Test \e[4mdistr_via_canbus_loopback_1_two_simulation_cores\e[0m   :"
+
+../x86/sm distributed_native_1_node_b.ceps \
+ distributed_raw_frame_1_message_definition.ceps channels_node_b_rawframe_canbus_loopback.ceps simulation_distributed_native_1_run_node_b.ceps >distributed_raw_frame_1_one_simulation_core_node_b_canbus.log 2>distributed_raw_frame_1_one_simulation_core_node_b_canbus.log &
+my_pid2=$!
+sleep 2
+../x86/sm distributed_native_1_node_a.ceps distributed_raw_frame_1_message_definition.ceps channels_node_a_rawframe_canbus_loopback.ceps simulation_distributed_native_1_run_node_a.ceps >distributed_raw_frame_1_one_simulation_core_node_a_canbus.log 2>distributed_raw_frame_1_one_simulation_core_node_a_canbus.log &
+my_pid1=$!
+
+#$(sleep 5;kill $my_pid1;kill $my_pid2) &
+wait $my_pid1 
+exit_status_1=$?
+wait $my_pid2 
+exit_status_2=$?
+if [ $exit_status_1 -ne 0 ] || [ $exit_status_2 -ne 0 ]; then
+ echo -e "\e[38;5;196m failed \e[0m"
+ echo -e "\e[38;5;196m"
+ if [ $exit_status_1 -ne 0 ]; then
+  cat distributed_raw_frame_1_one_simulation_core_node_a_canbus.log
+ fi
+ if [ $exit_status_2 -ne 0 ]; then
+  cat distributed_raw_frame_1_one_simulation_core_node_b_canbus.log
+ fi
+ echo -e "\e[0m"
+else
+ echo -e "\e[38;5;28m passed \e[0m"
+fi
+
+
 echo -en "Test \e[4mplugin_support\e[0m                                     :"
 cd plugin_sample_1
 make clean > /dev/null 2> /dev/null

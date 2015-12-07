@@ -13,4 +13,5 @@ x86/
 *.lastbuildstate
 *.sdf
 *.opensdf
+*.so
 

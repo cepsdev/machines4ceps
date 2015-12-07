@@ -269,4 +269,5 @@ simple_plugin.o: simple_plugin.cpp ../../core/include/state_machine.hpp \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h /usr/include/getopt.h \
  ../../core/include/serialization.hpp \
- ../../../ceps/core/include/si_units.hh
+ ../../../ceps/core/include/si_units.hh \
+ ../../core/include/sm_raw_frame.hpp

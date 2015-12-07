@@ -1,0 +1,32 @@
+
+
+
+
+sender{
+  id{channel_1_out;};
+  // provide port and IP of Your communication partner here
+  //transport{canbus{bus_id{0;};};};
+  transport{canbus{bus_id{"vcan0";};};};
+};
+
+global_functions{
+  b_frame_received{
+    print("Node A: handler: b_frame_received:",b_frame_payload_in,"\n");
+    B(b_frame_payload_in);
+  };
+};
+  
+post_event_processing{
+  print("Node A: post_event_processing\n");
+  if (argv(0) == "A"){
+    a_frame_payload_out = argv(1);
+    print(" Node A: send(a_frame,channel_1_out);\n");
+    send(a_frame,channel_1_out);
+  }
+};
+
+receiver{
+  id{channel_1_in;};
+  transport{canbus{bus_id{"vcan0";};};};
+  on_msg{frame_id{b_frame;};         handler{b_frame_received;};};
+};

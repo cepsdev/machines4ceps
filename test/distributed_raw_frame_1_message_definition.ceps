@@ -6,19 +6,33 @@ Systemstate a_frame_payload_in,a_frame_payload_out,b_frame_payload_in,b_frame_pa
 frame{
    id{a_frame;};
    data{
-     uint8{
+     header{
+      cob_id{uint11{1;};};
+      rtr{bit{0;};};
+      data_length{uint4{__current_frame_size;};};
+     };
+     payload{
+      uint8{
        in{a_frame_payload_in;};
        out{a_frame_payload_out;};
-    };     
+      };     
+     };
    };
 };
 
 frame{
    id{b_frame;};
    data{
-     uint8{
+    header{
+      cob_id{uint11{2;};};
+      rtr{bit{0;};};
+      data_length{uint4{__current_frame_size;};};
+     };
+     payload{
+      uint8{
        in{b_frame_payload_in;};
        out{b_frame_payload_out;};
-    };     
+     };
+     };
    };
 };

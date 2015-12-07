@@ -20,7 +20,7 @@ Statemachine {
     send_a{
       g = 0;
       A(1);
-      start_timer(2.0*s,EXIT);
+      start_timer(5.0*s,EXIT);
     };
   };
   States{Initial;Final;b_received;};

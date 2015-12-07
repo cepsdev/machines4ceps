@@ -7,7 +7,7 @@ int get_sm4ceps_ver_maj() { return SM4CEPS_VER_MAJ; }
 double get_sm4ceps_ver_minor() { return SM4CEPS_VER_MINOR; }
 int odd(int i) { return i % 2; }
 int even(int i) { return !odd(i); }
-double truncate(double i) { return (int)i; }
+int truncate(double i) { return (int)i; }
 double mymin(double a, double b) { return std::min(a,b); }
 double mymin(double a, int b) { return std::min(a, (double)b); }
 double mymin(int a, double b) { return std::min((double)a, b); }
