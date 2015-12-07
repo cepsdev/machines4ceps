@@ -356,7 +356,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	   {
 		   std::lock_guard<std::recursive_mutex>g(states_mutex());
 		   auto it_cur = global_systemstates().find(state_id);
-           if (it_cur == global_systemstates().end()) fatal_(-1, "Unknown Systemstate/Systemparameter '" + state_id + "'");
+           if (it_cur == global_systemstates().end()) {
+        	   warn_(-1, "changed(): Uninitialized Systemstate/Systemparameter '" + state_id + "' will be set to 0.");
+        	   global_systemstates()[state_id] = new ceps::ast::Int(0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+        	   it_cur = global_systemstates().find(state_id);
+           }
 
 		   auto it_prev = global_systemstates_prev().find(state_id);
 		   if (it_prev == global_systemstates_prev().end()) {

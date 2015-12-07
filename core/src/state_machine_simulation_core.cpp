@@ -8,6 +8,7 @@ double get_sm4ceps_ver_minor() { return SM4CEPS_VER_MINOR; }
 int odd(int i) { return i % 2; }
 int even(int i) { return !odd(i); }
 int truncate(double i) { return (int)i; }
+int truncate(int i) { return i; }
 double mymin(double a, double b) { return std::min(a,b); }
 double mymin(double a, int b) { return std::min(a, (double)b); }
 double mymin(int a, double b) { return std::min((double)a, b); }
@@ -604,7 +605,8 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 	regfn("sm4ceps_version_minor", get_sm4ceps_ver_minor);
 	regfn("odd", odd);
 	regfn("even", even);
-	regfn("truncate",truncate);
+	regfn("truncate",static_cast<int(*)(double)>(truncate));
+	regfn("truncate",static_cast<int(*)(int)>(truncate));
 	regfn("min", static_cast<double(*)(double,double)> (mymin));
 	regfn("min", static_cast<double(*)(int, double)> (mymin));
 	regfn("min", static_cast<double(*)(double, int)> (mymin));
