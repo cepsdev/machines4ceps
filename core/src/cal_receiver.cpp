@@ -213,12 +213,13 @@ void comm_receiver_kmw_multibus(int id,
 }
 #else
 constexpr int CAN_MSG_SIZE = 10;
-
+//#define DEBUG std::cout
 void comm_receiver_socket_can(int id,
 	std::string can_bus,
 	State_machine_simulation_core* smc){
 	int s = 0;
 	DEBUG_FUNC_PROLOGUE2
+	DEBUG << "[comm_receiver_socket_can][STARTED]\n";
 
 	{
 		//extern std::map<std::string,int> interfaces_to_sockets;
@@ -250,10 +251,13 @@ void comm_receiver_socket_can(int id,
 	auto current_smc = smc;
 	auto in_ctxt = smc->get_dispatcher_thread_ctxt(id);
 
-	for (;;)
+	int ctr=1;
+	for (;;++ctr)
 	{
 		struct can_frame can_message{0};
+		DEBUG << "[comm_receiver_socket_can]["<< ctr << "][PRE_RECV]\n";
 		auto r = recv(s, &can_message, sizeof(struct can_frame),0);
+		DEBUG << "[comm_receiver_socket_can]["<< ctr << "][POST_RECV][r="<< r <<"]\n";
 		if (r <= 0)
 			smc->fatal_(-1,"comm_receiver_socket_can:Read failed.");
 
@@ -271,10 +275,7 @@ void comm_receiver_socket_can(int id,
 					handler_info.first->read_msg((char*)can_msg, can_message.can_dlc + 2, current_smc, v1, v2);
 			if (!match) continue;
 			current_smc->execute_action_seq(nullptr, handler_info.second);
-			return;
 		}
-
-
 	}//for(;;)
 }
 

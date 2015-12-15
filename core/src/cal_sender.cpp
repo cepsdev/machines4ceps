@@ -182,6 +182,7 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 	}//for(;;)
 }
 #else
+//#define DEBUG std::cout
 void comm_sender_socket_can(threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>* frames,
 	std::string can_bus, State_machine_simulation_core* smc) {
 	int s = 0;
@@ -219,22 +220,24 @@ void comm_sender_socket_can(threadsafe_queue< std::pair<char*, size_t>, std::que
 	}
 
 
-	for (;;)
+	int ctr = 1;
+	for (;;++ctr)
 	{
-		DEBUG << "[comm_sender_socket_can][WAIT_FOR_FRAME][pop_frame=" << pop_frame << "]\n";
+		DEBUG << "[comm_sender_socket_can]["<< ctr << "][WAIT_FOR_FRAME][pop_frame=" << pop_frame << "]\n";
 		std::pair<char*, size_t> frame_info;
 
 		if (pop_frame) {
 			frames->wait_and_pop(frame_info); frame_size = frame_info.second; frame = frame_info.first;
 		}
 		pop_frame = false;
-		DEBUG << "[comm_sender_socket_can][FETCHED_FRAME]\n";
+		DEBUG << "[comm_sender_socket_can]["<< ctr << "][FETCHED_FRAME]\n";
 		auto len = frame_size;
 		int wr = 0;
 		struct can_frame can_message{0};
 		if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {
 			sockcan::map_can_frame(&can_message, frame, frame_size);
 			auto r = write(s, &can_message, sizeof(struct can_frame));
+			DEBUG << "[comm_sender_socket_can]["<< ctr << "][r = write(s, &can_message, sizeof(struct can_frame));][r=" << r << "]\n";
 		}
 		if (frame != nullptr) { delete[] frame; frame = nullptr; }
 		pop_frame = true;
