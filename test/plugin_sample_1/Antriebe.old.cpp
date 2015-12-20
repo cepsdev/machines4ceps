@@ -1,71 +1,20 @@
-/* ---------------------------------------------------------------------
-   Dingo2 BÜR                                      KRAUSS-MAFFEI WEGMANN
-   ---------------------------------------------------------------------
 
-
-   ---------------------------------------------------------------------
-                           Schutzvermerk
-                       nach DIN 34 beachten
-
-          Weitergabe sowie Vervielfaeltigung dieser Unterlage,
-          Verwertung ihres Inhalts und Mitteilung ihres Inhalts
-          nicht gestattet, soweit nicht ausdruecklich zugestanden.
-          Zuwiderhandlungen verpflichten zu Schadensersatz.
-          Alle Rechte fuer den Fall der Patenterteilung oder
-          Gebrauchsmuster-Eintragung vorbehalten.
-   ---------------------------------------------------------------------
-
-
-   ---------------------------------------------------------------------
-   PROJEKT           : Dingo2 BÜR
-   ---------------------------------------------------------------------
-   Funktion          :
-   Dateiname         : ANTRIEBE.CPP
-   Ablage_ort        :
-   Dokumenten_Nr     : SK000-000.000.000.0
-
-   Aenderungsindex   : 0.01
-   Datum             : 12.12.2008
-   Bearbeiter        : EW201 Bachmann
-
-   ---------------------------------------------------------------------
-
-   Aenderungsstand   :
-
-   0.01   Ersterstellung                            12.12.2008  Bachmann
-
-   --------------------------------------------------------------------- */
-
-   
-/* ---------------------------------------------------------------------
-   Modulbeschreibung
-   ---------------------------------------------------------------------
-   Das Modul...
-   --------------------------------------------------------------------- */
-
-//---------------------------------------------------------------------------
-//#include <vcl.h>
-//#pragma hdrstop
 #include "core/include/state_machine.hpp"
 #include "core/include/state_machine_simulation_core.hpp"
 
 #include "Antriebe.h"
 #include "math.h"
-//---------------------------------------------------------------------------
-//#pragma package(smart_init)
-//---------------------------------------------------------------------------
-
 CAntriebX AntriebX;
 CAntriebY AntriebY;
 CAntriebZ AntriebZ;
+
 /***************************************************************************/
 /***************************   Antrieb X   *********************************/
 int X_SollPosition_Berechnen(double Winkel){
   AntriebX.SollPosition_Berechnen(Winkel);
   return AntriebX.getSollPos();
 }
-double X_IstPosition_Berechnen(signed int Position){
-  AntriebX.Set_IstPos(Position);
+double X_IstPosition_Berechnen(void){
   AntriebX.IstPosition_Berechnen();
   return AntriebX.getIstWinkel();
 }
@@ -76,8 +25,7 @@ int Y_SollPosition_Berechnen(double Winkel){
   AntriebY.SollPosition_Berechnen(Winkel);
   return AntriebY.getSollPos();
 }
-double Y_IstPosition_Berechnen(signed int Position){
-  AntriebY.Set_IstPos(Position);
+int Y_IstPosition_Berechnen(void){
   AntriebY.IstPosition_Berechnen();
   return AntriebY.getIstWinkel();
 }
@@ -88,12 +36,14 @@ int Z_SollPosition_Berechnen(double Winkel){
   AntriebZ.SollPosition_Berechnen(Winkel);
   return AntriebZ.getSollPos();
 }
-double Z_IstPosition_Berechnen(signed int Position){
-  AntriebZ.Set_IstPos(Position);
+int Z_IstPosition_Berechnen(void){
   AntriebZ.IstPosition_Berechnen();
   return AntriebZ.getIstMasthoehe();
 }
 
+
+
+//extern "C" void init_plugin(void*,void*) {}
 
 extern "C" void init_plugin(State_machine_simulation_core* smc, 
 			     void (*register_plugin)(State_machine_simulation_core*,std::string const&,ceps::ast::Nodebase_ptr (ceps::ast::Call_parameters* )))
@@ -141,11 +91,6 @@ CAntriebX::CAntriebX()
         Hublaenge = 64.5;
         WinkelMax = 16.0;
         Steigung = 4.0;
-}
-//---------------------------------------------------------------------------
-void CAntriebX::Set_IstPos(signed int Position)
-{
-  AntriebX.IstPos = Position;
 }
 //---------------------------------------------------------------------------
 int CAntriebX::getSollPos()
@@ -264,11 +209,6 @@ CAntriebY::CAntriebY()
         Hublaenge = 283.0 - 5.0;
         WinkelMax = 98.0;
         Steigung = 5.0;
-}
-//---------------------------------------------------------------------------
-void CAntriebY::Set_IstPos(signed int Position)
-{
-  AntriebY.IstPos = Position;
 }
 //---------------------------------------------------------------------------
 int CAntriebY::getSollPos()
@@ -440,11 +380,6 @@ CAntriebZ::CAntriebZ()
         Getriebe = 25.0;         // Untersetzung
         Zwischenstufe = 2.85;    // Untersetzung
         Steigung = 40.0;
-}
-//---------------------------------------------------------------------------
-void CAntriebZ::Set_IstPos(signed int Position)
-{
-  AntriebZ.IstPos = Position;
 }
 //---------------------------------------------------------------------------
 int CAntriebZ::getSollPos()

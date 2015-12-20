@@ -1,0 +1,13 @@
+kind Event;
+Event A,B,C;
+Statemachine{id{S1;};
+ Actions{a{print("In a\n");};b{print("In b\n");};};
+ States{s1;s2;Initial;};
+ Transition{Initial;s1;};
+ Transition{s1;s2;A;a;b;};
+};
+
+Simulation{
+ Start{S1;};Start{S1;};
+ A; 
+};

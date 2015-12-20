@@ -12,11 +12,11 @@ Statemachine{
     A{
       v2 = X_SollPosition_Berechnen(v1);assert(v2==138688);
       print("v2=",v2,"\n");
-      v3 = X_IstPosition_Berechnen();assert(v3==0.0);
+      v3 = X_IstPosition_Berechnen(10);assert(v3==0.0);
       print("v3=",v3,"\n");
       v2 = Y_SollPosition_Berechnen(v1);assert(v2==83359);
       print("v2=",v2,"\n");
-      v3 = Y_IstPosition_Berechnen();assert(v3==0.0);
+      v3 = Y_IstPosition_Berechnen(10);assert(v3==0.0);
       print("v3=",v3,"\n");
    
     };  
@@ -29,4 +29,5 @@ Simulation{
   TestCase{Plugins;};Test{double_value_function;};
   Start{S1;};
   E;
+  start_timer(10.0*s,E);
 };

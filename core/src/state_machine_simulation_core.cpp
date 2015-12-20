@@ -1515,9 +1515,9 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 
 	bool transition_taken = false;
 
-	/*std::cout << "*******************\n";
+	//std::cout << "*******************KERNEL\n";
 
-	if (!remove_states.empty()){
+	/*if (!remove_states.empty()){
 		for(auto & st : remove_states) {
 
 			std::cout << st.is_sm_ << "/" << st.sid_ << "/" << (void*) st.smp_ << std::endl;
@@ -1596,6 +1596,8 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			for(auto & temp: t.actions()) temp.associated_sm_ = containing_smp;
 			//if (t.actions().size()) associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = t.actions();
 			if (t.actions().size()){
+				//std::cout << "t.actions().size()" << t.actions().size() << std::endl;
+				//std::cout << containing_smp->id_ << ":" << t.from_.id_ << "->" << t.to_.id_ << std::endl;
 				auto & v = associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)];
 				v.insert(v.end(),t.actions().begin(), t.actions().end());
 

@@ -145,23 +145,23 @@ else
 fi
 
 
-echo -en "Test \e[4mplugin_support\e[0m                                     :"
-cd plugin_sample_1
-make clean > /dev/null 2> /dev/null
-make > plugin_support_make_step.log 2> plugin_support_make_step.log
-if [ $? -ne 0 ]; then
- echo -e "\e[38;5;196m failed (build step)"
- cat plugin_support_make_step.log
- echo -e "\e[0m"
-else
-  ../../x86/sm example.ceps --quiet --pluginAntriebe.so > plugin_support_run_step.log 2> plugin_support_run_step.log
- if [ $? -ne 0 ]; then
-  echo -e "\e[38;5;196m failed \e[0m"
- else
-  echo -e "\e[38;5;28m passed \e[0m"
- fi
-fi
-
-cd ..
+# echo -en "Test \e[4mplugin_support\e[0m                                     :"
+# cd plugin_sample_1
+# make clean > /dev/null 2> /dev/null
+# make > plugin_support_make_step.log 2> plugin_support_make_step.log
+# if [ $? -ne 0 ]; then
+#  echo -e "\e[38;5;196m failed (build step)"
+#  cat plugin_support_make_step.log
+#  echo -e "\e[0m"
+# else
+#   ../../x86/sm example.ceps --quiet --pluginAntriebe.so > plugin_support_run_step.log 2> plugin_support_run_step.log
+#  if [ $? -ne 0 ]; then
+#   echo -e "\e[38;5;196m failed \e[0m"
+#  else
+#   echo -e "\e[38;5;28m passed \e[0m"
+#  fi
+# fi
+# 
+# cd ..
 
 

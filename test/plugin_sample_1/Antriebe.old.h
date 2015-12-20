@@ -69,7 +69,6 @@ public:
         void Reset_Control(unsigned char Control);
         void Reset_AllControl();
         void Set_Speed(short Speed);
-	void Set_IstPos(signed int IstPos);
 private:
         static const unsigned char Baudrate;
         static const unsigned char NodeID;
@@ -116,7 +115,6 @@ public:
         void Reset_Control(unsigned char Control);  
         void Reset_AllControl();
         void Set_Speed(short Speed);
-	void Set_IstPos(signed int IstPos);
 private:
         static const unsigned char Baudrate;
         static const unsigned char NodeID;
@@ -163,7 +161,6 @@ public:
         void Reset_Control(unsigned char Control);  
         void Reset_AllControl();
         void Set_Speed(short Speed);
-	void Set_IstPos(signed int IstPos);
 
 private:
         static const unsigned char Baudrate;
