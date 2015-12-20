@@ -356,6 +356,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	   {
 		   std::lock_guard<std::recursive_mutex>g(states_mutex());
 		   auto it_cur = global_systemstates().find(state_id);
+		   //std::cout << "FOUND?" << (it_cur != global_systemstates().end()) << std::endl;
            if (it_cur == global_systemstates().end()) {
         	   warn_(-1, "changed(): Uninitialized Systemstate/Systemparameter '" + state_id + "' will be set to 0.");
         	   global_systemstates()[state_id] = new ceps::ast::Int(0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
@@ -363,9 +364,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
            }
 
 		   auto it_prev = global_systemstates_prev().find(state_id);
+		   //std::cout << "HISTORIZED?" << (it_prev != global_systemstates_prev().end()) << std::endl;
 		   if (it_prev == global_systemstates_prev().end()) {
-			   it_prev->second = it_cur->second;
-			   return new ceps::ast::Int(1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			   //it_prev->second = it_cur->second;
+			   global_systemstates_prev()[state_id] = it_cur->second;
+			   return new ceps::ast::Int(0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 		   }
 		   if (it_cur->second == it_prev->second)
 			   return new ceps::ast::Int(0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);

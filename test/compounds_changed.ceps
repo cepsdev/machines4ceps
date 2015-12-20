@@ -1,0 +1,66 @@
+kind Event;
+kind Systemstate;
+
+Event E;
+Systemstate v1,v2,v3;
+
+typedef{
+  t_Z_drive {
+    MAST_INDEXPOSITION {1050;};
+    MAST_ZURRPOSITION  {1;};
+    MAST_MAXHOEHE      {3280;};
+    MAST_MINHOEHE      {800;};
+    POSITION_TOLERANCE {0.3;};
+    SPEED_MAX          {255;};
+    
+    Baudrate;
+    NodeID;
+    SpeedLimit;
+    
+    Drehrichtung       {1.0;};
+    Hublaenge          {3290.0;};
+    Getriebe           {25.0;};
+    Zwischenstufe      {2.85;};
+    Steigung           {40.0;};
+                       
+    IstGeschw          {1;};
+    IstStrom;          
+    z_Status;            
+                       
+    SollPos            {0;};           
+    SollGeschw         {10;};
+    SollStrom          {0;};         
+    z_Control;
+                       
+    IstMasthoehe       {1;};
+  };
+};
+
+globals{
+  v1 =  t_Z_drive;
+};
+
+Statemachine{
+   id{S1;};
+   States{Initial;};
+   Actions{
+    A{
+      print("changed(v1.Drehrichtung):",changed("v1.Drehrichtung"),"\n");
+      v1.Drehrichtung = 2.0;
+      print("changed(v1.Drehrichtung):",changed("v1.Drehrichtung"),"\n");
+      v1.Drehrichtung = 3.0;
+      print("changed(v1.Drehrichtung):",changed("v1.Drehrichtung"),"\n");
+      print("changed(v1.Drehrichtung):",changed("v1.Drehrichtung"),"\n");
+      print(changed("v2"),"\n"); print(changed("v2"),"\n");v2=1; print(changed("v2"),"\n");
+   
+    };  
+   };
+   Transition{Initial;Initial;E;A;};
+};
+
+Simulation{
+  TestCase{X;};Test{Y;};
+  Start{S1;};
+  E;
+
+};
