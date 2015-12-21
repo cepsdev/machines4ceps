@@ -1698,9 +1698,7 @@ bool state_machine_sim_core_default_stepping()
 }
 
 
-typedef void (*init_plugin_t)(State_machine_simulation_core* ,
-	                     void (*)(State_machine_simulation_core*,
-	                    		  std::string const&,ceps::ast::Nodebase_ptr (ceps::ast::Call_parameters* )));
+typedef void (*init_plugin_t)(IUserdefined_function_registry*);
 
 
 void register_plugin(State_machine_simulation_core* smc,std::string const& id,ceps::ast::Nodebase_ptr (*fn) (ceps::ast::Call_parameters* ))
@@ -1741,7 +1739,7 @@ void init_state_machine_simulation(	int argc,
 	    if (init_fn_ == nullptr)
 	    	smc->fatal_(-1,dlerror());
 	    auto init_fn = (init_plugin_t)init_fn_;
-	    init_fn(smc,register_plugin);
+	    init_fn(smc);
 	}
 #endif
 #ifdef _WIN32

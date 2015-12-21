@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------
-   Dingo2 BÜR                                      KRAUSS-MAFFEI WEGMANN
+   Dingo2 Bï¿½R                                      KRAUSS-MAFFEI WEGMANN
    ---------------------------------------------------------------------
 
 
@@ -17,7 +17,7 @@
 
 
    ---------------------------------------------------------------------
-   PROJEKT           : Dingo2 BÜR
+   PROJEKT           : Dingo2 Bï¿½R
    ---------------------------------------------------------------------
    Funktion          :
    Dateiname         : ANTRIEBE.CPP
@@ -46,8 +46,8 @@
 //---------------------------------------------------------------------------
 //#include <vcl.h>
 //#pragma hdrstop
-#include "core/include/state_machine.hpp"
-#include "core/include/state_machine_simulation_core.hpp"
+
+#include "core/include/state_machine_simulation_core_reg_fun.hpp"
 
 #include "Antriebe.h"
 #include "math.h"
@@ -95,8 +95,7 @@ double Z_IstPosition_Berechnen(signed int Position){
 }
 
 
-extern "C" void init_plugin(State_machine_simulation_core* smc, 
-			     void (*register_plugin)(State_machine_simulation_core*,std::string const&,ceps::ast::Nodebase_ptr (ceps::ast::Call_parameters* )))
+extern "C" void init_plugin(IUserdefined_function_registry* smc)
 {
   smc->regfn("X_SollPosition_Berechnen",X_SollPosition_Berechnen);
   smc->regfn("X_IstPosition_Berechnen", X_IstPosition_Berechnen);
@@ -171,13 +170,13 @@ void CAntriebX::Set_PDO()
 //---------------------------------------------------------------------------
 void CAntriebX::SollPosition_Berechnen(double Winkel)
 /*
-Die Hublänge für Horizentierung X beträgt:              90mm
-Bei -8° beträgt der Hub:                                -33,0mm
-Bei +8° beträgt der Hub:                                +31,5mm
+Die Hublï¿½nge fï¿½r Horizentierung X betrï¿½gt:              90mm
+Bei -8ï¿½ betrï¿½gt der Hub:                                -33,0mm
+Bei +8ï¿½ betrï¿½gt der Hub:                                +31,5mm
 Untersetzung Zwischenstufe (geht nicht ein in die Berechnung):  10
 Spindelsteigung:                                        4mm
-Anzahl Umdrehungen vom Inkrementalgeber für Hublänge:   22,5 (für Hublänge 90mm)
-Berechnung dafür: (Hublänge/Steigung)
+Anzahl Umdrehungen vom Inkrementalgeber fï¿½r Hublï¿½nge:   22,5 (fï¿½r Hublï¿½nge 90mm)
+Berechnung dafï¿½r: (Hublï¿½nge/Steigung)
 
 Anzahl Umdrehungen als Ganzzahl in Byte 2 und 3 von T_IstPos
 Soll Position Inkrementalg. in Bit 4,5,6,7 von Byte 0 und in Byte 1 von T_IstPos
@@ -199,13 +198,13 @@ Berechnung von SollUmdrehungen: SollInkr/4096 + AnzahlUmdrehungen
 void CAntriebX::IstPosition_Berechnen(void)
 /*
 *************************************************************************
-Die Hublänge für Horizentierung X beträgt:              90mm
-Bei -8° beträgt der Hub:                                -33,0mm
-Bei +8° beträgt der Hub:                                +31,5mm
+Die Hublï¿½nge fï¿½r Horizentierung X betrï¿½gt:              90mm
+Bei -8ï¿½ betrï¿½gt der Hub:                                -33,0mm
+Bei +8ï¿½ betrï¿½gt der Hub:                                +31,5mm
 Untersetzung Zwischenstufe (geht nicht ein in die Berechnung):     10
 Spindelsteigung:                                        4mm
-Anzahl Umdrehungen vom Inkrementalgeber für Hublänge:   22,5 (für Hublänge 90mm)
-Berechnung dafür: (Hublänge/Steigung)
+Anzahl Umdrehungen vom Inkrementalgeber fï¿½r Hublï¿½nge:   22,5 (fï¿½r Hublï¿½nge 90mm)
+Berechnung dafï¿½r: (Hublï¿½nge/Steigung)
 
 Anzahl Umdrehungen als Ganzzahl in Byte 2 und 3 von IstPos
 Ist Position Inkrementalg. in Bit 4,5,6,7 von Byte 0 und in Byte 1 von IstPos
@@ -294,13 +293,13 @@ void CAntriebY::Set_PDO()
 //---------------------------------------------------------------------------
 void CAntriebY::SollPosition_Berechnen(double Winkel)
 /*
-Die Hublänge für Plattform Y beträgt:                   290mm
-Bei 0° beträgt der Hub:                                 5mm
-Bei 98° beträgt der Hub:                                283mm
+Die Hublï¿½nge fï¿½r Plattform Y betrï¿½gt:                   290mm
+Bei 0ï¿½ betrï¿½gt der Hub:                                 5mm
+Bei 98ï¿½ betrï¿½gt der Hub:                                283mm
 Untersetzung Zwischenstufe:                             16
 Spindelsteigung:                                        5mm
-Anzahl Umdrehungen vom Inkrementalgeber für Hublänge:   58,0
-Berechnung dafür: (Hublänge/Steigung)
+Anzahl Umdrehungen vom Inkrementalgeber fï¿½r Hublï¿½nge:   58,0
+Berechnung dafï¿½r: (Hublï¿½nge/Steigung)
 
 Anzahl Umdrehungen als Ganzzahl in Byte 2 und 3 von T_IstPos
 Soll Position Inkrementalg. in Bit 4,5,6,7 von Byte 0 und in Byte 1 von T_IstPos
@@ -321,7 +320,7 @@ Berechnung von SollUmdrehungen: SollInkr/4096 + AnzahlUmdrehungen
 */
         float fLaenge = 0.0f;
         // 1. Winkel Laenge -> Stellstab
-        // fuer die Anzeige am ExtBG genügt: 3 Bereiche
+        // fuer die Anzeige am ExtBG genï¿½gt: 3 Bereiche
         // 1.     0 mm .. 248.3 mm    0..82 Grad    Faktor : 3.0285  mm/Grad
         // 2. 248.3 mm .. 266.7 mm   82..90 Grad    Faktor : 2.29725 mm/Grad
         // 3. 266.7 mm .. 283.3 mm   90..88 Grad    Faktor : 2.0786  mm/Grad
@@ -348,13 +347,13 @@ Berechnung von SollUmdrehungen: SollInkr/4096 + AnzahlUmdrehungen
 void CAntriebY::IstPosition_Berechnen(void)
 /*
 *************************************************************************
-Die Hublänge für Plattform Y beträgt:                   290mm
-Bei 0° beträgt der Hub:                                 5mm
-Bei 98° beträgt der Hub:                                283mm
+Die Hublï¿½nge fï¿½r Plattform Y betrï¿½gt:                   290mm
+Bei 0ï¿½ betrï¿½gt der Hub:                                 5mm
+Bei 98ï¿½ betrï¿½gt der Hub:                                283mm
 Untersetzung Zwischenstufe:                             16
 Spindelsteigung:                                        5mm
-Anzahl Umdrehungen vom Inkrementalgeber für Hublänge:   58,0
-Berechnung dafür: (Hublänge/Steigung)
+Anzahl Umdrehungen vom Inkrementalgeber fï¿½r Hublï¿½nge:   58,0
+Berechnung dafï¿½r: (Hublï¿½nge/Steigung)
 
 Anzahl Umdrehungen als Ganzzahl in Byte 2 und 3 von IstPos
 Ist Position Inkrementalg. in Bit 4,5,6,7 von Byte 0 und in Byte 1 von IstPos
@@ -373,7 +372,7 @@ float fLaenge,fHORIZ_WinkelY = 0.0f;
         fLaenge = (float)IstPos / 65536.0;     // ganze Umdrehungen
         fLaenge *= 5.0;                       // 1 Umdrehungen sind 5 mm
         // 2. Laenge Stellstab -> Winkel
-        // fuer die Anzeige am ExtBG genügt: 3 Bereiche
+        // fuer die Anzeige am ExtBG genï¿½gt: 3 Bereiche
         // 1.     0 mm .. 248.3 mm    0..82 Grad    Faktor : 3.0285  mm/Grad
         // 2. 248.3 mm .. 266.7 mm   82..90 Grad    Faktor : 2.29725 mm/Grad
         // 3. 266.7 mm .. 283.3 mm   90..88 Grad    Faktor : 2.0786  mm/Grad
@@ -470,12 +469,12 @@ void CAntriebZ::Set_PDO()
 //---------------------------------------------------------------------------
 void CAntriebZ::SollPosition_Berechnen(int MastHoehe)
 /*
-Die Hublänge vom Mast beträgt:                          3290mm
+Die Hublï¿½nge vom Mast betrï¿½gt:                          3290mm
 Untersetzung Zwischenstufe:                             2,85
 Untersetzung Getriebe:                                  25
 Spindelsteigung:                                        40mm
-Anzahl Umdrehungen vom Inkrementalgeber für Hublänge:   5963,13
-Berechnung dafür: (Hublänge/Steigung) * iGetr * iZw
+Anzahl Umdrehungen vom Inkrementalgeber fï¿½r Hublï¿½nge:   5963,13
+Berechnung dafï¿½r: (Hublï¿½nge/Steigung) * iGetr * iZw
 
 Anzahl Umdrehungen als Ganzzahl in Byte 2 und 3 von T_IstPos
 Soll Position Inkrementalg. in Bit 4,5,6,7 von Byte 0 und in Byte 1 von T_IstPos
@@ -497,12 +496,12 @@ Berechnung von SollUmdrehungen: SollInkr/4096 + AnzahlUmdrehungen
 void CAntriebZ::IstPosition_Berechnen(void)
 /*
 *************************************************************************
-Die Hublänge vom Mast beträgt:                          3290mm
+Die Hublï¿½nge vom Mast betrï¿½gt:                          3290mm
 Untersetzung Zwischenstufe:                             2,9
 Untersetzung Getriebe:                                  25
 Spindelsteigung:                                        40mm
-Anzahl Umdrehungen vom Inkrementalgeber für Hublänge:   5963,13
-Berechnung dafür: (Hublänge/Steigung) * iGetr * iZw
+Anzahl Umdrehungen vom Inkrementalgeber fï¿½r Hublï¿½nge:   5963,13
+Berechnung dafï¿½r: (Hublï¿½nge/Steigung) * iGetr * iZw
 
 Anzahl Umdrehungen als Ganzzahl in Byte 2 und 3 von IstPos
 Ist Position Inkrementalg. in Bit 4,5,6,7 von Byte 0 und in Byte 1 von IstPos

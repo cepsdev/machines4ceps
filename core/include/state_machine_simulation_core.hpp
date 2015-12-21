@@ -17,6 +17,7 @@
 #include "core/include/cmdline_utils.hpp"
 #include "core/include/sm_ev_comm_layer.hpp"
 #include "core/include/sm_raw_frame.hpp"
+#include "core/include/state_machine_simulation_core_reg_fun.hpp"
 
 template<typename T, typename Q> class threadsafe_queue{
 	Q data_;
@@ -45,7 +46,7 @@ public:
 	std::mutex& data_mutex() const {return m_;}
 };
 
-class State_machine_simulation_core
+class State_machine_simulation_core:public IUserdefined_function_registry
 {
 	typedef std::chrono::steady_clock clock_type;
 
@@ -400,20 +401,20 @@ public:
 
 	//Userdefined functions (will be replaced by variadic templates)
 
-	void regfn(std::string name, int(*fn) ());
-	void regfn(std::string name, double(*fn) ());
-	void regfn(std::string name, int (*fn) (int) );
-	void regfn(std::string name, double (*fn) (int));
-	void regfn(std::string name, int (*fn) (double));
-	void regfn(std::string name, double (*fn) (double));
-	void regfn(std::string name, int(*fn) (int,int));
-	void regfn(std::string name, double(*fn) (int,int));
-	void regfn(std::string name, int(*fn) (double,int));
-	void regfn(std::string name, double(*fn) (double, int));
-	void regfn(std::string name, int(*fn) (int, double));
-	void regfn(std::string name, double(*fn) (int, double));
-	void regfn(std::string name, int(*fn) (double, double));
-	void regfn(std::string name, double(*fn) (double, double));
+	virtual void regfn(std::string name, int(*fn) ());
+	virtual void regfn(std::string name, double(*fn) ());
+	virtual void regfn(std::string name, int (*fn) (int) );
+	virtual void regfn(std::string name, double (*fn) (int));
+	virtual void regfn(std::string name, int (*fn) (double));
+	virtual void regfn(std::string name, double (*fn) (double));
+	virtual void regfn(std::string name, int(*fn) (int,int));
+	virtual void regfn(std::string name, double(*fn) (int,int));
+	virtual void regfn(std::string name, int(*fn) (double,int));
+	virtual void regfn(std::string name, double(*fn) (double, int));
+	virtual void regfn(std::string name, int(*fn) (int, double));
+	virtual void regfn(std::string name, double(*fn) (int, double));
+	virtual void regfn(std::string name, int(*fn) (double, double));
+	virtual void regfn(std::string name, double(*fn) (double, double));
 
 	private:
 		std::map<std::string, int(*) ()> regfntbl_i_;
