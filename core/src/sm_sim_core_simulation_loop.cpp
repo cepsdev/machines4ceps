@@ -254,6 +254,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			}
 		}
 
+/*
 		if (on_enter_seq.size())
 		{
 			for(auto const & sm : on_enter_seq)
@@ -266,7 +267,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				execute_action_seq(sm,it->body());
 			}
 		}
-
+*/
 		for(auto const & a : on_enter_sm_derived_action_list)
 		{
 			log() << "[EXECUTE ACTION:on_enter_sm_derived_action_list][ID="<< a.id_ <<"]"  << "\n";

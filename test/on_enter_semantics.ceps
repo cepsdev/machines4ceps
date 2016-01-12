@@ -1,0 +1,52 @@
+/*
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ * Demonstrates usage and semantics of conditionals.
+ */
+kind Guard;
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+Systemstate s1,s2,s3,t;
+Guard g;
+
+globals{g=1;};
+
+Statemachine{
+  id{S1;};
+  States{Initial;b;c;d;e;f;h;};
+ 
+  Statemachine{
+   id{A;};
+   States{Initial;b;c;d;e;f;h;};
+   on_enter{
+    print("***A::on_enter:\n");
+    g=0;
+   };
+    
+   on_exit{
+    print("***A::on_exit:\n");
+    };  
+   
+   Transition{Initial;b;g;};
+   Transition{Initial;c;!g;};
+  };
+  
+ 
+  Transition{Initial;A;E;};
+};
+
+/**
+ * @section DESCRIPTION
+ * 
+ * */
+Simulation
+{
+  Start{S1;};
+  E;
+  ASSERT_CURRENT_STATES_CONTAINS{S1.A.c;};  
+
+};

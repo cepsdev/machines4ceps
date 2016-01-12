@@ -51,6 +51,14 @@ else
  echo -e "\e[38;5;28m passed \e[0m"
 fi
 
+echo -en "Test \e[4mon_enter_semantics.ceps\e[0m                           :"
+../x86/sm on_enter_semantics.ceps --quiet >on_enter_semantics.log 2>on_enter_semantics.log
+if [ $? -ne 0 ]; then
+ echo -e "\e[38;5;196m failed \e[0m"
+else
+ echo -e "\e[38;5;28m passed \e[0m"
+fi
+
 echo -en "Test \e[4mdistributed_native_1_single_simulation_core\e[0m        :"
 ../x86/sm distributed_native_1_node_a.ceps distributed_native_1_node_b.ceps simulation_distributed_native_1_run_both_nodes_on_one_sim_core.ceps >distributed_native_1_single_simulation_core.log 2>distributed_native_1_single_simulation_core.log
 if [ $? -ne 0 ]; then

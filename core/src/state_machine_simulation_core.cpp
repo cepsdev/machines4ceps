@@ -1495,9 +1495,12 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 	std::set<state_rep_t> states_from(states.begin(),states.end());
 	std::set<state_rep_t> states_to;
 	std::set<State_machine*> threaded_sm_with_all_threads_in_final;
+	std::set<State_machine*> active_sms;
+
 	//Assumption: with any state s in states the sm containing s is also in states
 	for(auto & s : states)
 	{
+		if (s.containing_sm()) active_sms.insert(s.containing_sm());
 		if (!s.is_sm_) continue;
 		if (!s.smp_->join()) continue;
 		bool all_threads_in_final = true;
@@ -1588,6 +1591,18 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 
 			if (!triggered) continue;
 			DEBUG << "[TRIGGERED STATE]" << "\n";
+
+
+			if(t.to_.is_sm_ && t.to_.smp_ && active_sms.find(t.to_.smp_) ==  active_sms.end() )
+			{
+				auto sm  = t.to_.smp_;
+				active_sms.insert(sm);
+				auto it = sm->actions_.find(State_machine::Transition::Action("on_enter"));
+				if (it != sm->actions_.end() && it->body_ != nullptr ){
+					execute_action_seq(sm,it->body());
+				}
+			}
+
 			auto const & to_state = t.to_;
 			states_to.insert(state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_));
 			trans_found=true;transition_taken=true;
