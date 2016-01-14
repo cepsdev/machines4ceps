@@ -205,7 +205,7 @@ size_t fill_raw_chunk( State_machine_simulation_core* smc,
 
 			//INVARIANT: bit_offs points to a byte address
 			if (bits_written < (int) bit_width){
-				for(int i = 0; i < ( (int)bit_width-bits_written)/8;++i,bit_offs+=8,bits_written+=8){
+				for(; (int)bit_width-bits_written>=8;bit_offs+=8,bits_written+=8){
 					*(data+bit_offs/8) = ((unsigned char)v & 0xFF);
 				    v = v >> 8;
 				}
@@ -499,7 +499,7 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 			int bits_read_after_byte_boundary=0;
 			if (bits_read< (int)bit_width){
 				std::uint64_t v_temp = 0;
-				for(int i = 0; i < ((int)bit_width-bits_read)/8;++i,bit_offs+=8,bits_read+=8,bits_read_after_byte_boundary+=8){
+				for(; (int)bit_width-bits_read >= 8;bit_offs+=8,bits_read+=8,bits_read_after_byte_boundary+=8){
 					v_temp |=  ((std::uint64_t) *( ( (unsigned char*) data) +bit_offs/8)) << bits_read;
 				}
 				v |= v_temp;
