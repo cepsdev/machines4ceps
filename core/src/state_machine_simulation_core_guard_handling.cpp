@@ -125,7 +125,16 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::unfold(ceps::ast::Nodebas
 
 			 return new Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 		 }
-		 return expr;
+		 ceps::ast::Call_parameters* clp= new Call_parameters();
+		 ceps::ast::Identifier* fid = new ceps::ast::Identifier(name(id),nullptr,nullptr,nullptr);
+
+		 for(auto p : args)
+		 {
+			clp->children().push_back( unfold(p,guard_to_interpretation,path,current_states));
+		 }
+		 ceps::ast::Func_call* fc =new ceps::ast::Func_call(fid,clp,nullptr);
+
+	     return fc;
 	}
 
 	ceps::ast::Nodebase_ptr nlf_base = nullptr;

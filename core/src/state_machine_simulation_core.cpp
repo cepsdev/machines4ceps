@@ -39,6 +39,11 @@ int mymin(int a, int b) { return std::min(a, b); }
 #include <cstring>
 
 #include "core/include/base_defs.hpp"
+
+
+
+
+
 int State_machine_simulation_core::SM_COUNTER = 0;
 
 extern bool node_isrw_state(ceps::ast::Nodebase_ptr node) {
@@ -1142,6 +1147,31 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 
 		}
 	}
+
+	//Assign unique ids
+	int ctr = 0;
+	for(auto sm : State_machine::statemachines){
+		if (nullptr != sm.second->parent_) continue;
+		std::queue<State_machine*> q;q.push(sm.second);
+		for(;!q.empty();){
+			State_machine* cur_sm= q.front(); q.pop();
+			if (cur_sm->idx_ < 0) cur_sm->idx_ = ctr++;
+			std::set<State_machine::State> new_states;
+			for(auto it = cur_sm->states.begin(); it != cur_sm->states.end(); ++it) {
+				auto& state = *it;
+				State_machine::State new_state(state);
+				new_state.idx_ = ctr++;
+				new_states.insert(new_state);
+				if (!state.is_sm_) continue;
+				state.smp_->idx_ = state.idx_;
+				q.push(state.smp_);
+			}
+			cur_sm->states = new_states;
+		}
+	}
+
+	DEBUG << "[STATE_COUNT=" << ctr <<"]\n";
+
 
 	auto simulations = ns[all{"Simulation"}];
 	if (simulations.size())

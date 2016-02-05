@@ -18,6 +18,17 @@
 #include "core/include/sm_ev_comm_layer.hpp"
 #include "core/include/sm_raw_frame.hpp"
 #include "core/include/state_machine_simulation_core_reg_fun.hpp"
+#include "core/include/events.hpp"
+
+#include "log4kmw_state.hpp"
+#include "log4kmw_record.hpp"
+#include "log4kmw_logger.hpp"
+
+
+namespace log4ceps = log4kmw;
+
+
+
 
 template<typename T, typename Q> class threadsafe_queue{
 	Q data_;
@@ -56,10 +67,20 @@ class State_machine_simulation_core:public IUserdefined_function_registry
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_prev_;
 
+	using Logger_active_states = std::vector<int>;
+	using Logger_entry_counter = int;
+
+	using Activestates_logentry = log4ceps::State_record <Logger_entry_counter,Logger_active_states>;
+
+	log4ceps::Logger<Activestates_logentry, log4ceps::persistence::in_memory>* active_states_logger_ = nullptr;
+	int active_states_logger_ctr_ = 0;
+
+
 	using states_t = std::vector<state_rep_t>;
 	bool quiet_mode_= false;
 	bool shutdown_threads_ = false;
 	mutable std::recursive_mutex glob_states_mutex_;
+	mutable std::recursive_mutex active_states_logger_mutex_;
 	states_t current_states_;
 
 	std::map<std::string,ceps::ast::Nodebase_ptr> global_funcs_;
@@ -71,6 +92,15 @@ class State_machine_simulation_core:public IUserdefined_function_registry
 	bool conf_ignore_unresolved_state_id_in_directives_ = false;
 
 public:
+
+	log4ceps::Logger<Activestates_logentry, log4ceps::persistence::in_memory>* set_active_states_logger(log4ceps::Logger<Activestates_logentry, log4ceps::persistence::in_memory>* l){
+		auto t = active_states_logger_;active_states_logger_ = l;
+		return t;
+	}
+
+	log4ceps::Logger<Activestates_logentry, log4ceps::persistence::in_memory>* active_states_logger() const {return active_states_logger_;}
+
+	std::recursive_mutex& active_states_logger_mutex() const {return active_states_logger_mutex_;}
 
 	bool& conf_ignore_unresolved_state_id_in_directives() {return conf_ignore_unresolved_state_id_in_directives_;}
 
@@ -138,7 +168,7 @@ private:
 
 	std::map<std::string,smcore_plugin_fn_t> name_to_smcore_plugin_fn;
 
-	using main_event_queue_t = threadsafe_queue<event_t, std::priority_queue<event_t> >;
+	using main_event_queue_t = threadsafe_queue<event_t, std::queue<event_t> >;
 	using out_event_queue_t  = threadsafe_queue<event_t, std::queue<event_t> >;
 	using out_event_queues_t = std::vector<out_event_queue_t*>;
 
@@ -242,7 +272,12 @@ private:
 	void update_asserts(states_t const & reached_states);
 
 	int timed_events_active_ = 0;
+public:
 	void enqueue_event(event_t ev,bool update_out_queues = false);
+	void inc_timed_events() {++timed_events_active_;}
+	void dec_timed_events() {--timed_events_active_;}
+	bool timed_events_pending() {return timed_events_active_;}
+private:
 	clock_type clock_;
 	clock_type::time_point base_time_point_;
 

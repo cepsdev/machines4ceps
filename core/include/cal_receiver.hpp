@@ -1,5 +1,5 @@
 #ifndef INC_CAL_RECEIVER_INC
-#define INC_CAL_RECEIVERR_INC
+#define INC_CAL_RECEIVER_INC
 
 #include <string> 
 #include <vector>

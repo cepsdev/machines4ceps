@@ -1,0 +1,33 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Systemstate counter;
+Event Up,E;
+
+Statemachine{id{SubS1;}; 
+ States{Initial;a;b;c;}; 
+ Transition{Initial;Initial;E;};
+ 
+};
+
+
+Statemachine{id{S1;}; 
+ import{SubS1;};
+ States{Initial;}; 
+ on_enter{
+  start_periodic_timer(2.0*s,Up);
+ };
+ Actions{
+  increment_counter{
+   counter = counter + 1;
+  };
+ };
+ Transition{Initial;Initial;Up;increment_counter;};
+ 
+};
+
+Simulation{
+ counter = 0;
+ Start{S1;};
+};

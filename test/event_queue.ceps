@@ -1,0 +1,77 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+
+Event A,B,C,EXIT;
+Systemstate ctr,last_a_arg;
+globals{
+ last_a_arg=0;
+ ctr =0;
+};
+Statemachine{
+ id{S1;};
+ States{Initial;};
+ on_enter{
+  A(1);A(2);A(3);A(4);A(5);A(6);A(7);A(8);start_timer(2.5*s,B);
+ };
+ Actions{ 
+  on_A{
+   print(argv(0),"(",argv(1),")","\n");
+   assert(argv(1) == last_a_arg + 1, "argv(1) != last_a_arg + 1");
+   last_a_arg = argv(1);
+  };
+  on_B{
+   print(argv(0),"()","\n");
+   start_periodic_timer(1.5*s,C,timer1);
+  };
+  on_C{
+   print(argv(0),"()","\n");
+   kill_timer(timer1);
+  };
+ 
+ };
+ Transition{Initial;Initial;A;on_A;};
+ Transition{Initial;Initial;B;on_B;};
+ Transition{Initial;Initial;C;on_C;};
+};
+
+Statemachine{
+ id{S2;};
+ States{Initial;};
+ on_enter{
+  start_periodic_timer(0.1*s,B);
+ };
+ Actions{ 
+  on_A{
+   print(argv(0),"(",argv(1),")","\n");
+   assert(argv(1) == last_a_arg + 1, "argv(1) != last_a_arg + 1");
+   last_a_arg = argv(1);
+  };
+  on_B{
+   ctr = ctr + 1;
+   print("on_B:",ctr,"\n");
+   if (ctr == 10) kill_timer();
+  };
+  on_C{
+   print(argv(0),"()","\n");
+   kill_timer(timer1);
+  };
+ 
+ };
+ Transition{Initial;Initial;A;on_A;};
+ Transition{Initial;Initial;B;on_B;};
+ Transition{Initial;Initial;C;on_C;};
+};
+
+Simulation{
+ print("---Simulation 1---\n");
+ Start{S1;}; 
+};
+
+Simulation{
+ print("---Simulation 2---\n");
+
+ Start{S2;};
+ 
+};

@@ -134,24 +134,62 @@ bool is_second(ceps::ast::Unit_rep unit)
 }
 
 
+#include<chrono>
+std::mutex timer_threads_m;
+std::vector< std::tuple<int,std::thread*,bool,bool,std::string >> timer_threads;
+constexpr int TIMER_THREAD_FN_CTRL_THREADOBJ = 1;
+constexpr int TIMER_THREAD_FN_CTRL_TERMINATED = 2;
+constexpr int TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED = 3;
+constexpr int TIMER_THREAD_FN_CTRL_ID = 4;
+
+
 bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
 	DEBUG_FUNC_PROLOGUE
 	DEBUG << "[KILLING NAMED TIMERS][TIMER_ID="<< timer_id <<"]\n";
-	bool r = false;
-	std::priority_queue<event_t> event_queue_temp;
-	std::lock_guard<std::mutex> lk(main_event_queue().data_mutex());
-	for(;main_event_queue().data().size();)
 	{
-		auto top = main_event_queue().data().top();
-		if (top.timer_id_ == timer_id)
-			{ main_event_queue().data().pop();r=true;}
-		else {
-			event_queue_temp.push(top);
-			main_event_queue().data().pop();
+		std::lock_guard<std::mutex> lk(timer_threads_m);
+		auto t = 0;
+		for(auto& tinf : timer_threads){
+			if (timer_id.length()  == 0 || std::get<4>(tinf) == timer_id){
+				std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = true;
+			} else if (!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) && !std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)){
+				++t;
+			}
 		}
+		timed_events_active_ = t;
 	}
-	main_event_queue().data() = event_queue_temp;
-	return r;
+	return false;
+}
+
+
+void timer_thread_fn(State_machine_simulation_core* smc, int id, bool periodic, double delta,State_machine_simulation_core::event_t event){
+
+	std::chrono::seconds seconds_to_wait{(int)delta};
+	std::chrono::milliseconds ms_to_wait{(int) ((delta - std::floor(delta))*1000.0)};
+	do{
+
+		auto start_time = std::chrono::steady_clock::now();
+		if (delta >= 1.0) {
+			std::this_thread::sleep_for(seconds_to_wait);
+		}
+		std::this_thread::sleep_for(ms_to_wait);
+
+		//std::int64_t a = (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time)).count();
+		//if(a != 1) std::cout << a << std::endl;
+		{
+			std::lock_guard<std::mutex> lk(timer_threads_m);
+			if (!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[id]))
+				smc->enqueue_event(event,false);
+			else break;
+		}
+
+	}while (periodic);
+
+	{
+		std::lock_guard<std::mutex> lk(timer_threads_m);
+		if(!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[id])) smc->dec_timed_events();
+		std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[id]) = true;
+	}
 }
 
 void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool periodic_timer)
@@ -218,10 +256,40 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 						timer_id,
 						periodic_timer);
 		ev_to_send.already_sent_to_out_queues_ = false;
-			if (fargs.size())
-				ev_to_send.payload_ = fargs;
 
-			enqueue_event(ev_to_send,/*public_event*/false);
+		if (fargs.size())
+				ev_to_send.payload_ = fargs;
+		int timer_thread_id = -1;
+
+
+		{
+			std::lock_guard<std::mutex> lk(timer_threads_m);
+			if (timer_threads.size() == 0){
+				timer_threads.resize(128);
+				for(auto& tinf : timer_threads){
+					std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(tinf) = nullptr;
+					std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = false;
+					std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)= true;
+				}
+				timed_events_active_ = 0;
+			}
+			assert(timer_threads.size()>0);
+
+
+			for(size_t i = 0; i < timer_threads.size(); ++i)
+				if (std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i])){
+					std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i]) = false;
+					std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[i]) = false;
+					std::get<TIMER_THREAD_FN_CTRL_ID>(timer_threads[i]) = timer_id;
+					if (std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])){ std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])->join();delete std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i]);}
+					timer_thread_id = i; break;
+				}
+
+			if (timer_thread_id < 0) fatal_(-1,"Out of resources: timer.");
+			inc_timed_events();
+			std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[timer_thread_id]) = new std::thread{timer_thread_fn,this,timer_thread_id,periodic_timer,delta,ev_to_send};
+		}
+			//enqueue_event(ev_to_send,/*public_event*/false);
 		}
 
 }
@@ -956,41 +1024,18 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			}
 			else if (func_name == "kill_timer" || func_name == "stop_timer")
 			{
+
 				if (args.size() == 0){
 					DEBUG << "[KILLING ALL TIMERS]\n";
 
-					std::priority_queue<event_t> event_queue_temp;
-					std::lock_guard<std::mutex> lk(main_event_queue().data_mutex());
-					for(;main_event_queue().data().size();)
-					{
-						auto top = main_event_queue().data().top();
-						if (top.delta_time_ != top.delta_time_.zero() || top.timer_id_.size() > 0)
-							main_event_queue().data().pop();
-						else {
-							event_queue_temp.push(top);
-							main_event_queue().data().pop();
-						}
-					}
-					main_event_queue().data()  = event_queue_temp;
+					this->kill_named_timer(std::string{});
 				}else{
 					std::string timer_id;
 					if (args[0]->kind() != ceps::ast::Ast_node_kind::identifier)
 						fatal_(-1,"stop_timer: first argument (the timer id) has to be an unbound identifier.\n");
 					timer_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
 					DEBUG << "[KILLING NAMED TIMERS][TIMER_ID="<< timer_id <<"]\n";
-					std::priority_queue<event_t> event_queue_temp;
-					std::lock_guard<std::mutex> lk(main_event_queue().data_mutex());
-					for(;main_event_queue().data().size();)
-					{
-						auto top = main_event_queue().data().top();
-						if (top.timer_id_ == timer_id)
-							main_event_queue().data().pop();
-						else {
-							event_queue_temp.push(top);
-							main_event_queue().data().pop();
-						}
-					}
-					main_event_queue().data() = event_queue_temp;
+					this->kill_named_timer(timer_id);
 				}
 			} else{
 				eval_locked_ceps_expr(this,containing_smp,n,nullptr);

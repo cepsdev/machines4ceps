@@ -119,6 +119,15 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 		states_t states_without_transition;
 		current_states() = states;
+		if (active_states_logger()){
+			std::lock_guard<std::recursive_mutex> g (this->active_states_logger_mutex_);
+			std::vector<int> v;
+			for(auto & s: states){
+				//if (s.is_sm_) v.push_back(s.smp_->idx_) else
+			}
+			++active_states_logger_ctr_;
+		}
+
 		states_t triggered_kernel_states(states.begin(),states.end());
 		std::map<state_rep_t,state_rep_t> pred;
 		std::map<state_rep_t,std::vector<State_machine::Transition::Action>> associated_kernerl_states_action;

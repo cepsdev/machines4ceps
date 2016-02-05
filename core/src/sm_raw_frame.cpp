@@ -47,6 +47,7 @@ size_t fill_raw_chunk( State_machine_simulation_core* smc,
 		               bool write_data = true,
 		               bool host_byte_order = true) {
 	using namespace ceps::ast;
+	//unsigned char * data = (unsigned char *) data_;
 	if (p == nullptr) return 0;
 	//if (write_data) std::cout << "*** bit_width=" << bit_width << std::endl;
 	if (p->kind() == ceps::ast::Ast_node_kind::structdef){
@@ -201,12 +202,12 @@ size_t fill_raw_chunk( State_machine_simulation_core* smc,
 				*( (unsigned char*)( data + bit_offs/8)) = w;
 				bits_written = d;bit_offs+=d;
 			}
-			v = v >> bits_written;
+			if (bits_written) v = v >> bits_written;
 
 			//INVARIANT: bit_offs points to a byte address
 			if (bits_written < (int) bit_width){
-				for(; (int)bit_width-bits_written>=8;bit_offs+=8,bits_written+=8){
-					*(data+bit_offs/8) = ((unsigned char)v & 0xFF);
+				for(; bit_width-bits_written>=8;bit_offs+=8,bits_written+=8){
+					*( (unsigned char*)data+bit_offs/8) = (unsigned char) v;
 				    v = v >> 8;
 				}
 			}
@@ -499,7 +500,7 @@ int read_raw_chunk( State_machine_simulation_core* smc,
 			int bits_read_after_byte_boundary=0;
 			if (bits_read< (int)bit_width){
 				std::uint64_t v_temp = 0;
-				for(; (int)bit_width-bits_read >= 8;bit_offs+=8,bits_read+=8,bits_read_after_byte_boundary+=8){
+				for(; bit_width-bits_read>=8;bit_offs+=8,bits_read+=8,bits_read_after_byte_boundary+=8){
 					v_temp |=  ((std::uint64_t) *( ( (unsigned char*) data) +bit_offs/8)) << bits_read;
 				}
 				v |= v_temp;

@@ -95,6 +95,7 @@ public:
     State_machine* parent_ = nullptr;
     std::vector<std::string> q_id_;
     bool unresolved_ = false;
+	int idx_= 0;
 
 
     State() = default;
@@ -191,7 +192,6 @@ public:
     std::set<Event> const & events() const {return events_;}
     std::vector<Action>& actions() {return action_;}
     std::vector<Action> const & actions() const {return action_;}
-
      bool can_take(std::string ev_id) const
      {
     	 if(events_.size() == 0) return true;
@@ -304,6 +304,7 @@ public:
 
   bool join_ = false;
   State join_state_;
+  int idx_ =-1;
 
   bool& join() {return join_;}
   bool join() const {return join_;}

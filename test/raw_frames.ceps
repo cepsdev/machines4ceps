@@ -1,0 +1,139 @@
+/**
+ The MIT License (MIT)
+
+Copyright (c) 2016 The authors of ceps
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ **/
+
+
+kind Systemstate;
+
+Systemstate x,y,z,p,a;
+
+
+frame{
+ id{frm_1;};
+ data{
+  //bit{0;};
+  uint16{0;};
+  uint32{x;};
+  };
+};
+
+frame{
+ id{frm_1_in;};
+ data{
+  //bit{0;};
+  uint32{y;};
+  };
+};
+
+Simulation{
+ p=1;a=0;
+ x=0;y=0;z=0;
+ x=0x1000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,1),"frm_1 contains wrong data.");
+ x=0x2000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,2),"frm_1 contains wrong data.");
+ x=0x10000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,16),"frm_1 contains wrong data.");
+ x=0x20000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,32),"frm_1 contains wrong data.");
+ x=0x30000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,48),"frm_1 contains wrong data.");
+ x=0x40000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,64),"frm_1 contains wrong data.");
+ x=0x50000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,80),"frm_1 contains wrong data.");
+ x=0x60000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,96),"frm_1 contains wrong data.");
+ x=0x70000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,112),"frm_1 contains wrong data.");
+ x=0x70000000;
+ x = x + 0x10000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,128),"frm_1 contains wrong data.");
+ x=0x70000000;
+ x = x + 0x20000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,144),"frm_1 contains wrong data.");
+ x=0x70000000;
+ x = x + 0x30000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,160),"frm_1 contains wrong data.");
+ x=0x70000000;
+ x = x + 0x40000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,176),"frm_1 contains wrong data.");
+ x=0x70000000;
+ x = x + 0x50000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,192),"frm_1 contains wrong data.");
+ x=0x70000000;
+ x = x + 0x60000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,208),"frm_1 contains wrong data.");
+ x=0x70000000;
+ x = x + 0x70000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,224),"frm_1 contains wrong data.");
+
+ x=0x70000000;
+ x = x + 0x70000000 +0x10000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,240),"frm_1 contains wrong data.");
+
+ x=0x70000000;
+ x = x + 0x70000000 +0x20000000;
+ if(p)print(frm_1,"\n");
+ if(a)assert(raw_frame_starts_with(frm_1,0,0,0,0),"frm_1 contains wrong data.");
+
+ x = 0;
+ write_read_frm(frm_1,frm_1_in);
+ if(a)assert(x == y);
+ x = 0x70000000;
+ write_read_frm(frm_1,frm_1_in);
+ if(a)assert(x == y);
+ x=0x70000000;
+ x = x + 0x10000000;
+ write_read_frm(frm_1,frm_1_in);
+ if(a)assert(x == y);
+};
+
+
+
+
+
+
+
+
+
+
+
+

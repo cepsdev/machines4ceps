@@ -61,6 +61,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/cal_sender.hpp</locationURI>
 		</link>
 		<link>
+			<name>include/events.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/include/events.hpp</locationURI>
+		</link>
+		<link>
 			<name>include/pugixml.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/pugixml-1.6/src/pugixml.hpp</locationURI>

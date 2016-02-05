@@ -1,0 +1,32 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+Guard g;
+Systemstate a,t;
+
+typedef{
+  t_composite{
+    k {
+    b {1;};
+    c {2;};
+    };
+    };
+};
+
+globals{
+ t = t_composite;
+};
+
+Statemachine{id{S1;};
+ States{Initial;A;B;C;};
+ Actions{ enter_a{print("enter_a:","\n");}; };
+ on_enter{a=1;};
+ Transition{Initial;A;g;};
+};
+
+
+Simulation{
+ print(t.k.b,"\n");
+ g = abs(t.k.b) > 1;
+ Start{S1;};
+};

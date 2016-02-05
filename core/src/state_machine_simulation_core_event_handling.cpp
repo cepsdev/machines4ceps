@@ -16,15 +16,6 @@ bool State_machine_simulation_core::is_global_event(std::string const & ev_name)
 
 void State_machine_simulation_core::enqueue_event(event_t ev, bool update_out_queues)
 {
-
-	if(ev.delta_time_ != clock_type::duration::zero())
-	{
-		if (timed_events_active_== 0)base_time_point_ = clock_.now();
-		else ev.delta_time_ += clock_.now() - base_time_point_;
-		++timed_events_active_;
-	}
-
-
 	ev.already_sent_to_out_queues_ = update_out_queues;
 	this->main_event_queue().push(ev);
 	if (!update_out_queues) return;
@@ -49,46 +40,24 @@ bool State_machine_simulation_core::fetch_event(event_rep_t& ev,
 	bool pending_timed_event;
 	states_updated = false;
 do{
-	pending_timed_event = false;
+	pending_timed_event = timed_events_pending();
 	if (!ignore_ev_queue)
 	{
 		//global_event_queue.size();
 
 		std::unique_lock<std::mutex> lk(main_event_queue().data_mutex());
 		if (!main_event_queue().data().empty()) {
-			auto& next_event = main_event_queue().data().top();
-			bool timed_event = false;
-			bool periodic_event = false;
-			if (next_event.delta_time_ != clock_type::duration::zero())
-			{
-				timed_event = true;
-				periodic_event = next_event.periodic_;
-				if(clock_.now()-this->base_time_point_ < next_event.delta_time_)
-				 { pending_timed_event = true;}
-			}
-			if(!pending_timed_event)
-			{
-			 if(timed_event&&!periodic_event) --timed_events_active_;
-			 auto eev = main_event_queue().data().top();
+			 auto eev = main_event_queue().data().front();
 			 main_event_queue().data().pop();
 			 lk.unlock();
-			 if (periodic_event){
-
-				 eev.delta_time_ = eev.delta_time_orig_;
-				 enqueue_event(eev,true);
-			 }
 
 			 ev.sid_ = eev.id_;
 			 ev.payload_ = eev.payload_;
 
-
 			 if (!eev.already_sent_to_out_queues_)
-			 {
 				 for(auto oq : out_event_queues_)oq->push(eev);
-			 }
 
 			 return true;
-			}
 		}
 	}
 
@@ -355,11 +324,19 @@ do{
 
 
 
-	if (pending_timed_event) std::this_thread::sleep_for(std::chrono::microseconds(1));
-	else if (pos >= (int)sim.nodes().size() && running_as_node()){
-		DEBUG << "[FETCH_EVENT_LOOP][WAIT_FOR_DATA]\n";
-		this->main_event_queue().wait_for_data();
+	//std::cout << timed_events_pending() << std::endl;
+	if (pos >= (int)sim.nodes().size()){
+		if (running_as_node() || timed_events_pending()){
+			DEBUG << "[FETCH_EVENT_LOOP][WAIT_FOR_DATA]\n";
+			this->main_event_queue().wait_for_data();
+		}
 	}
+
+	//if (pending_timed_event) std::this_thread::sleep_for(std::chrono::microseconds(1));
+	//else if (pos >= (int)sim.nodes().size() && running_as_node()){
+	//	DEBUG << "[FETCH_EVENT_LOOP][WAIT_FOR_DATA]\n";
+	//	this->main_event_queue().wait_for_data();
+	//}
 } while (pending_timed_event || running_as_node());
 	return false;
 }

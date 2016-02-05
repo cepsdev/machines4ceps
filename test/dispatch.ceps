@@ -1,0 +1,38 @@
+
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Event A,B,C,D;
+
+Statemachine{id{S;};
+States{Initial;Idle;};
+
+//Transition{Initial;Idle;};
+
+};
+Statemachine{id{DispatchImp;};
+States{Initial;Idle;};
+
+//Transition{Initial;Idle;};
+
+};
+
+Statemachine{id{Ctrl;};
+States{Initial;Idle;};
+//import {Dispatch;};
+Statemachine{id{Dispatch;};
+States{Initial;Idle;};
+
+//Transition{Initial;Idle;};
+
+};
+
+Transition{Initial;Idle;};
+Transition{Idle;Dispatch.Initial;};
+};
+
+
+Simulation{
+ Start{Ctrl;};
+};
