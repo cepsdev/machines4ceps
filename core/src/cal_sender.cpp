@@ -186,7 +186,7 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 void comm_sender_socket_can(threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>* frames,
 	std::string can_bus, State_machine_simulation_core* smc) {
 	int s = 0;
-	auto THIS = smc;
+	//auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	char* frame = nullptr;
 	size_t frame_size = 0;
@@ -232,7 +232,7 @@ void comm_sender_socket_can(threadsafe_queue< std::pair<char*, size_t>, std::que
 		pop_frame = false;
 		DEBUG << "[comm_sender_socket_can]["<< ctr << "][FETCHED_FRAME]\n";
 		auto len = frame_size;
-		int wr = 0;
+		//int wr = 0;
 		struct can_frame can_message{0};
 		if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {
 			sockcan::map_can_frame(&can_message, frame, frame_size);

@@ -117,25 +117,29 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		 log()<< "[FETCHED_EVENT][" << ev.sid_ << "]\n";
 		}
 
+
+		bool ignore_ev = false;
+		if (ev_read && not_transitional_events().find(ev.sid_) != not_transitional_events().end() ) ignore_ev = true;
+
 		states_t states_without_transition;
 		current_states() = states;
 		if (active_states_logger()){
 			std::lock_guard<std::recursive_mutex> g (this->active_states_logger_mutex_);
 			std::vector<int> v;
-			for(auto & s: states){
+			//for(auto & s: states){
 				//if (s.is_sm_) v.push_back(s.smp_->idx_) else
-			}
+			//}
 			++active_states_logger_ctr_;
 		}
 
-		states_t triggered_kernel_states(states.begin(),states.end());
-		std::map<state_rep_t,state_rep_t> pred;
-		std::map<state_rep_t,std::vector<State_machine::Transition::Action>> associated_kernerl_states_action;
-		std::vector<State_machine::Transition::Action> on_enter_sm_derived_action_list;
-		std::set<state_rep_t> removed_states;
+		if (!ignore_ev) {
+		 states_t triggered_kernel_states(states.begin(),states.end());
+		 std::map<state_rep_t,state_rep_t> pred;
+	 	 std::map<state_rep_t,std::vector<State_machine::Transition::Action>> associated_kernerl_states_action;
+		 std::vector<State_machine::Transition::Action> on_enter_sm_derived_action_list;
+		 std::set<state_rep_t> removed_states;
 
-		//std::cout << remove_states_.empty() << std::endl;
-		bool transitions_taken = compute_successor_states_kernel_under_event(ev,
+		 bool transitions_taken = compute_successor_states_kernel_under_event(ev,
 													triggered_kernel_states,
 													pred,
 													states_without_transition,ceps_env,
@@ -146,70 +150,67 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 													);
 
 
-		if (!transitions_taken && taking_epsilon_transitions && removed_states.empty())
-		{
+		 if (!transitions_taken && taking_epsilon_transitions && removed_states.empty())
+		 {
 			log() <<"[NO FURTHER EPSILON TRANSITIONS FOUND => FETCH EVENT]\n";
 			remove_states_.clear();
 			taking_epsilon_transitions = false;
 			continue;
-		}
-		if (taking_epsilon_transitions)
-		{
+		 }
+		 if (taking_epsilon_transitions)
+		 {
 			log() <<"[EPSILON TRANSITIONS FOUND]\n";
-		}
+		 }
 
-		if (print_debug_info_){DEBUG <<"[INITIAL KERNEL STATES]"; print_info(triggered_kernel_states);DEBUG <<"\n";}
+		 if (print_debug_info_){DEBUG <<"[INITIAL KERNEL STATES]"; print_info(triggered_kernel_states);DEBUG <<"\n";}
 
-		//std::cerr<< "##########";print_info(states_without_transition);
-		std::set<State_machine*> sms_exited;
-		std::vector<State_machine*> on_exit_seq;
-		std::vector<State_machine*> on_enter_seq;
+		 std::set<State_machine*> sms_exited;
+		 std::vector<State_machine*> on_exit_seq;
+		 std::vector<State_machine*> on_enter_seq;
 
-		for(auto& st : removed_states){
+		 for(auto& st : removed_states){
 			if (!st.is_sm_) continue;
 			leave_sm(st.smp_,states,sms_exited,on_exit_seq);
-		}
-		remove_states_.clear();
+		 }
+		 remove_states_.clear();
 
-		for(auto const & s : triggered_kernel_states)
-		{
+		 for(auto const & s : triggered_kernel_states)
+		 {
 			bool leave = false;
 			if(pred[s].is_sm_ /* && s.containing_sm() != s.smp_*/) leave = true;
 			if(!pred[s].is_sm_ && s.containing_sm() != pred[s].containing_sm()) leave = true;
 			if(!leave) continue;
 			leave_sm(pred[s].smp_,states,sms_exited,on_exit_seq);
-		}
+		 }
 
-		std::set<state_rep_t> new_states_set;
-		std::set<state_rep_t> new_states_triggered_set;
+		 std::set<state_rep_t> new_states_set;
+		 std::set<state_rep_t> new_states_triggered_set;
 
-		for(auto const & s : triggered_kernel_states)
-		{
+		 for(auto const & s : triggered_kernel_states)
+		 {
 			if (sms_exited.find(s.smp_) != sms_exited.end()) continue;
 			new_states_set.insert(s);
 			new_states_triggered_set.insert(s);
-		}
-		std::set<State_machine*> sms_entered;
-		for(auto const & s : states_without_transition)
-		{
+		 }
+		 std::set<State_machine*> sms_entered;
+		 for(auto const & s : states_without_transition)
+		 {
 			if (sms_exited.find(s.smp_) != sms_exited.end()) continue;
 			new_states_set.insert(s);
 			sms_entered.insert(s.smp_);
-		}
-		for(auto const & s : triggered_kernel_states)
-		{
+		 }
+		 for(auto const & s : triggered_kernel_states)
+		 {
 			//if (sms_exited.find(s.smp_) != sms_exited.end()) continue;
 			sms_entered.insert(pred[s].containing_sm());
-		}
+		 }
+
+		 if(print_debug_info_) { DEBUG <<  "[new_states_triggered_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_triggered_set.begin(),new_states_triggered_set.end() )); DEBUG << "\n";}
+		 if(print_debug_info_) { DEBUG << "[new_states_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() )); DEBUG << "\n";}
 
 
-		//std::cerr<< "########## new_states_set (before enter)=";
-		if(print_debug_info_) { DEBUG <<  "[new_states_triggered_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_triggered_set.begin(),new_states_triggered_set.end() )); DEBUG << "\n";}
-		if(print_debug_info_) { DEBUG << "[new_states_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() )); DEBUG << "\n";}
-
-
-		for(auto const& s : new_states_triggered_set)
-		{
+		 for(auto const& s : new_states_triggered_set)
+		 {
 			//climb up until you reach an already entered sm (or null)
 
 			auto top = s.smp_;
@@ -225,14 +226,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 			assert(s.is_sm_ || s.smp_ != nullptr);
 			enter_sm(!s.is_sm_,s.smp_,sms_entered,on_enter_seq,new_states_set,on_enter_sm_derived_action_list,states);
-		}
+		 }
 
 		if(print_debug_info_) { DEBUG << "[new_states_set (after enter_sm())]";
 		print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() )); DEBUG << "\n";}
 
-
-		//std::cerr<< "########## new_states_set (after enter)=";
-		//print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() ));
 
 
 		auto new_states = states_t(new_states_set.begin(),new_states_set.end());
@@ -277,12 +275,20 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			}
 		}
 */
-		for(auto const & a : on_enter_sm_derived_action_list)
-		{
+		 for(auto const & a : on_enter_sm_derived_action_list)
+		 {
 			log() << "[EXECUTE ACTION:on_enter_sm_derived_action_list][ID="<< a.id_ <<"]"  << "\n";
 			if (a.body() == nullptr) continue;
 			execute_action_seq(a.associated_sm_,a.body());
-		}
+		 }
+
+
+		 update_asserts(states);update_asserts(new_states);
+
+		 if(ev_read && ev.sid_ == "EXIT") quit = true;
+
+		 states = new_states;
+		}//if(!ignore_ev)
 
 		if (ev_read && !post_event_processing().empty()){
 			ceps::ast::Scope scope;
@@ -291,27 +297,21 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			execute_action_seq(nullptr,&scope);
 		}
 
-
-
 		//Call CALL
 
-		if (ev_read) for(auto p: event_triggered_sender()){
+	    if (ev_read) for(auto p: event_triggered_sender()){
 			if (p.event_id_ != current_event().id_) continue;
 			size_t data_size;
 			char* data = (char*)p.frame_gen_->gen_msg(this,data_size);
 			DEBUG << "[State_machine_simulation_core::simulate][PUSH_FRAME_TO_SENDER_QUEUE]\n";
 			if (data != nullptr) p.frame_queue_->push(std::make_pair(data,data_size));
-		}
+		 }
 
-		if (ev_read && global_event_call_back_fn_) {
+		 if (ev_read && global_event_call_back_fn_) {
 			global_event_call_back_fn_(current_event());
-		}
+		 }
 
-		update_asserts(states);update_asserts(new_states);
 
-		if(ev_read && ev.sid_ == "EXIT") quit = true;
-
-		states = new_states;
 		taking_epsilon_transitions = true;//Next loop starts with epsilon transitions
 	}
 

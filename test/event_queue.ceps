@@ -3,7 +3,11 @@ kind Systemstate;
 kind Guard;
 
 
-Event A,B,C,EXIT;
+Event A,B,C,D,E,EXIT;
+
+unique{D;D;};
+no_transitions{E;};
+
 Systemstate ctr,last_a_arg;
 globals{
  last_a_arg=0;
@@ -40,7 +44,7 @@ Statemachine{
  id{S2;};
  States{Initial;};
  on_enter{
-  start_periodic_timer(0.1*s,B);
+  start_periodic_timer((1.0/300.0)*s,B);
  };
  Actions{ 
   on_A{
@@ -50,8 +54,8 @@ Statemachine{
   };
   on_B{
    ctr = ctr + 1;
-   print("on_B:",ctr,"\n");
-   if (ctr == 10) kill_timer();
+   //print("on_B:",ctr,"\n");
+   if (ctr == 3600) /*12 sec*/ kill_timer();
   };
   on_C{
    print(argv(0),"()","\n");
@@ -69,8 +73,29 @@ Simulation{
  Start{S1;}; 
 };
 
+Statemachine{id{S3;};
+ States{Initial;};
+ 
+ on_enter{
+  comment{"queuing events";};
+  D(1); D(2); D(3); D(4); D(5); D(6); E;
+ };
+ Actions{
+  on_D{print("S3::on_D: argv(1)=",argv(1),"\n");assert(argv(1)==6);};
+  on_E{assert(0,"E should induce no transition.");};
+ };
+ Transition{Initial;Initial;D;on_D;};
+ Transition{Initial;Initial;E;on_E;};
+};
+
 Simulation{
  print("---Simulation 2---\n");
+ Start{S3;};
+};
+
+
+Simulation{
+ print("---Simulation 3---\n");
 
  Start{S2;};
  

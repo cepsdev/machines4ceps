@@ -57,6 +57,9 @@ public:
 	std::mutex& data_mutex() const {return m_;}
 };
 
+
+
+
 class State_machine_simulation_core:public IUserdefined_function_registry
 {
 	typedef std::chrono::steady_clock clock_type;
@@ -90,6 +93,12 @@ class State_machine_simulation_core:public IUserdefined_function_registry
 
 	std::set<state_rep_t> remove_states_;
 	bool conf_ignore_unresolved_state_id_in_directives_ = false;
+
+
+	std::set<std::string> unique_events_;
+	std::set<std::string>& unique_events(){return unique_events_;}
+	std::set<std::string> not_transitional_events_;
+	std::set<std::string>& not_transitional_events(){return not_transitional_events_;}
 
 public:
 
@@ -132,23 +141,14 @@ public:
 	bool quiet_mode() const {return quiet_mode_;}
 	struct event_t {
 		std::string id_;
-		clock_type::duration delta_time_ = {};
-
-		std::string timer_id_;
 		bool already_sent_to_out_queues_ = false;
 		std::vector<ceps::ast::Nodebase_ptr> payload_;
-		bool periodic_ = false;
-		clock_type::duration delta_time_orig_ = {};
+		bool unique_= false;
 		event_t() = default;
 		event_t(std::string const & id,std::vector<ceps::ast::Nodebase_ptr> const & payload = {}):id_(id),payload_(payload) {}
-		event_t(std::string const & id,
-				clock_type::duration delta_time,
-				std::string timer_id = "",
-				bool periodic = false)
-		 :id_(id),delta_time_(delta_time),timer_id_(timer_id),periodic_(periodic),delta_time_orig_(delta_time) {}
 		bool operator < (event_t const & rhs) const
 		{
-			return delta_time_ > rhs.delta_time_;
+			return id_ < rhs.id_;
 		}
 		bool is_epsilon() const {return id_ == "";}
 		event_t& operator = (event_rep_t const & rhs) { id_=rhs.sid_;payload_=rhs.payload_;return *this;}
@@ -168,7 +168,7 @@ private:
 
 	std::map<std::string,smcore_plugin_fn_t> name_to_smcore_plugin_fn;
 
-	using main_event_queue_t = threadsafe_queue<event_t, std::queue<event_t> >;
+	using main_event_queue_t = threadsafe_queue<event_t, sm4ceps::Eventqueue<event_t> /*std::queue<event_t>*/ >;
 	using out_event_queue_t  = threadsafe_queue<event_t, std::queue<event_t> >;
 	using out_event_queues_t = std::vector<out_event_queue_t*>;
 
@@ -474,6 +474,14 @@ struct ceps_interface_eval_func_callback_ctxt_t{
 	State_machine* active_smp;
 };
 
+namespace sm4ceps{
+
+template<> struct Eventqueue_traits<State_machine_simulation_core::event_t>{using id_t =std::string;};
+
+}
+
+bool is_unique_event(State_machine_simulation_core::event_t const & ev);
+std::string const & id(State_machine_simulation_core::event_t const & ev);
 bool state_machine_sim_core_default_stepping();
 void init_state_machine_simulation(int argc, char ** argv,State_machine_simulation_core* smc,Result_process_cmd_line& result_cmd_line);
 void run_state_machine_simulation(State_machine_simulation_core* smc,Result_process_cmd_line const& result_cmd_line);

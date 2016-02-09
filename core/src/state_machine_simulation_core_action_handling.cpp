@@ -168,7 +168,7 @@ void timer_thread_fn(State_machine_simulation_core* smc, int id, bool periodic, 
 	std::chrono::milliseconds ms_to_wait{(int) ((delta - std::floor(delta))*1000.0)};
 	do{
 
-		auto start_time = std::chrono::steady_clock::now();
+		//auto start_time = std::chrono::steady_clock::now();
 		if (delta >= 1.0) {
 			std::this_thread::sleep_for(seconds_to_wait);
 		}
@@ -251,10 +251,8 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 
 		log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
 
-		event_t ev_to_send(ev_id,
-						clock_type::duration((long int) ((clock_type::duration::period::den*delta)/clock_type::duration::period::num)),
-						timer_id,
-						periodic_timer);
+		event_t ev_to_send(ev_id);
+		ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
 		ev_to_send.already_sent_to_out_queues_ = false;
 
 		if (fargs.size())
@@ -970,6 +968,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 		{
 			log() << "[QUEUEING EVENT][" << ceps::ast::name(ceps::ast::as_symbol_ref(n)) <<"]" << "\n";
 			event_t ev(ceps::ast::name(ceps::ast::as_symbol_ref(n)));
+			ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
 			ev.already_sent_to_out_queues_ = false;
 			enqueue_event(ev,true);
 		} else if (n->kind() == ceps::ast::Ast_node_kind::func_call)
@@ -992,6 +991,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				}
 				event_t ev(func_name,args);
 				ev.already_sent_to_out_queues_ = false;
+				ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
 				enqueue_event(ev,true);
 			}
 

@@ -313,6 +313,7 @@ do{
 		ev = cev;
 		if (running_as_node()) {
 			event_t real_ev(ev.sid_);
+			real_ev.unique_ = this->unique_events().find(real_ev.id_) != this->unique_events().end();
 			std::lock_guard<std::mutex> lk(out_event_queues_m_);
 			for(auto oq : out_event_queues_){
 				oq->push(real_ev);

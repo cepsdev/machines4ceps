@@ -46,6 +46,9 @@ int mymin(int a, int b) { return std::min(a, b); }
 
 int State_machine_simulation_core::SM_COUNTER = 0;
 
+bool is_unique_event(State_machine_simulation_core::event_t const & ev){return ev.unique_;}
+std::string const & id(State_machine_simulation_core::event_t const & ev){return ev.id_;}
+
 extern bool node_isrw_state(ceps::ast::Nodebase_ptr node) {
 	using namespace ceps::ast;
 	if (node == nullptr) return false;
@@ -625,6 +628,32 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 	auto xmlframes = ns[all{"xml_frame"}];
 	auto all_sender = ns[all{"sender"}];
 	auto all_receiver = ns[all{"receiver"}];
+	auto unique_event_declarations = ns["unique"];
+	auto no_transitions_declarations = ns["no_transitions"];
+
+
+	//handle unique definitions
+
+	if (unique_event_declarations.size()){
+		for (auto const & e : unique_event_declarations.nodes()){
+			if (e->kind() != ceps::ast::Ast_node_kind::symbol || ceps::ast::kind(ceps::ast::as_symbol_ref(e)) != "Event")
+				fatal_(-1,"unique definition requires a list of events.");
+			auto  & ev = ceps::ast::as_symbol_ref(e);
+			std::string id = ceps::ast::name(ev);
+			this->unique_events().insert(id);
+		}
+	}
+	//handle no_transitions definitions
+
+	if (no_transitions_declarations.size()){
+		for (auto const & e : no_transitions_declarations.nodes()){
+			if (e->kind() != ceps::ast::Ast_node_kind::symbol || ceps::ast::kind(ceps::ast::as_symbol_ref(e)) != "Event")
+				fatal_(-1,"no_transitions definition requires a list of events.");
+			auto  & ev = ceps::ast::as_symbol_ref(e);
+			std::string id = ceps::ast::name(ev);
+			this->not_transitional_events().insert(id);
+		}
+	}
 
 	post_event_processing() = ns["post_event_processing"];
 
@@ -2039,6 +2068,7 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 	 strncpy(buffer,data,std::min(1023,(int)h.len));
 	 event_t ev(buffer);
 	 ev.already_sent_to_out_queues_=true;
+	 ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
 	 main_event_queue().push(ev);
 	}
 	//std::cerr << "State_machine_simulation_core::process_event_from_remote\n";
