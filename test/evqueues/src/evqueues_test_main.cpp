@@ -1,4 +1,6 @@
 #include "core/include/events.hpp"
+#include <vector>
+
 template<typename T, typename Q> class threadsafe_queue{
 	Q data_;
 	mutable std::mutex m_;
@@ -27,13 +29,68 @@ public:
 };
 
 
-struct Event {int id=0;int payload=0;};
-bool is_unique_event(Event const & ev) {return ev.id == 2 || ev.id == 7;}
-int id(Event const & ev) {return ev.id;}
+struct Event {std::string id=0;std::string payload=0; std::string str;std::vector<int>v;  Event(std::string i, std::string p):id(i),payload(p),str{"Hello World!"} {v.push_back(3);} };
+//struct Event {int id=0;int payload=0; std::string str;  Event(int i, int p):id(i),payload(p),str{"Hello World!"} {} };
+
+bool is_unique_event(Event const & ev) {return ev.id == "2" || ev.id == "7";}
+std::string  id(Event const & ev) {return ev.id;}
 
 
 int main(int argc, char ** argv){
 	std::cout << "evqueues_test_main" << std::endl;
+	threadsafe_queue<Event, sm4ceps::Eventqueue<Event,3,2> > thdq;
+	thdq.push(Event{"1","1"});
+	thdq.push(Event{"2","2"});
+	thdq.push(Event{"3","3"});
+	std::cout << "Data:" << std::endl;
+	for(int i = 0; i < thdq.data().count(); ++i){
+		std::cout << "id=" << thdq.data().get_at_index(i).id << " payload=" << thdq.data().get_at_index(i).payload<< std::endl;
+	}
+
+
+	thdq.data().pop();
+	thdq.push(Event{"4","4"});
+	thdq.data().pop();thdq.data().pop();
+	thdq.push(Event{"5","5"});
+	thdq.push(Event{"6","6"});
+	thdq.push(Event{"7","7"});
+	thdq.data().pop();thdq.data().pop();
+	thdq.push(Event{"7","8"});
+	thdq.push(Event{"7","9"});
+	thdq.push(Event{"2","3"});thdq.data().pop();thdq.data().pop();thdq.data().pop();thdq.data().pop();
+	thdq.push(Event{"2","4"});
+	thdq.data().pop();
+	thdq.data().pop();
+	thdq.data().pop();
+	thdq.data().pop();
+	thdq.push(Event{"7","7"});thdq.data().pop();thdq.push(Event{"2","7"});thdq.push(Event{"2","7"});thdq.push(Event{"1","7"});
+	thdq.data().pop();thdq.data().pop();thdq.data().pop();
+
+	std::cout << "Number of unique events:" << thdq.data().number_of_unique_events() << std::endl;
+	thdq.push(Event{"7","3"});
+	thdq.push(Event{"2","2"});
+	thdq.push(Event{"2","3"});
+	thdq.push(Event{"1","3"});
+	thdq.push(Event{"7","2"});
+	//for(int i = 0; i < 11;++i)thdq.data().pop();
+
+	std::cout << "Number of unique events:" << thdq.data().number_of_unique_events() << std::endl;
+	//return 0;
+	//thdq.data().pop();thdq.data().pop();thdq.data().pop();
+
+	for(int i = 0; i < 11;++i)thdq.data().pop();
+
+	std::cout << "Data:" << std::endl;
+	for(int i = 0; i < thdq.data().count(); ++i){
+		std::cout << "id=" << thdq.data().get_at_index(i).id << " payload=" << thdq.data().get_at_index(i).payload<< std::endl;
+	}
+	std::cout << "Info:" << std::endl;
+	for(int i = 0; i < thdq.data().unique_events().size(); ++i){
+		std::cout << "id=" << thdq.data().unique_events().get_at_index(i).id_ << " stored at =" << thdq.data().unique_events().get_at_index(i).stored_at_<< std::endl;
+	}
+
+	std::cout << "passed." << std::endl;
+#if 0
 	sm4ceps::Ringbuffer<int,2> q;
 	std::cout << q.count() << " ";q.push(1);std::cout << "q.front()="<< q.front() << " q.count()=" << q.count() << "\n";
 
@@ -79,5 +136,6 @@ int main(int argc, char ** argv){
 	for(int i = 0; i < thdq.data().count(); ++i){
 		std::cout << "id=" << thdq.data().get_at_index(i).id << " payload=" << thdq.data().get_at_index(i).payload<< std::endl;
 	}
+#endif
 	return 0;
 }

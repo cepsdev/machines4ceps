@@ -450,6 +450,10 @@ public:
 	virtual void regfn(std::string name, double(*fn) (int, double));
 	virtual void regfn(std::string name, int(*fn) (double, double));
 	virtual void regfn(std::string name, double(*fn) (double, double));
+	virtual void regfn(std::string name, int(*fn) (std::string));
+	virtual void regfn(std::string name, std::string(*fn) (std::string));
+	virtual void regfn(std::string name, int(*fn) (int,int,int,int,int,int));
+
 
 	private:
 		std::map<std::string, int(*) ()> regfntbl_i_;
@@ -467,6 +471,12 @@ public:
 		std::map<std::string, double(*) (int, double)> regfntbl_did_;
 		std::map<std::string, int(*) (double, double)> regfntbl_idd_;
 		std::map<std::string, double(*) (double, double)> regfntbl_ddd_;
+		std::map<std::string,  int(*) (int,int,int,int,int,int)> regfntbl_iiiiiii_;
+		std::map<std::string,  int(*) (std::string)> regfntbl_is_;
+		std::map<std::string,  std::string(*) (std::string)> regfntbl_ss_;
+
+
+
 };
 
 struct ceps_interface_eval_func_callback_ctxt_t{

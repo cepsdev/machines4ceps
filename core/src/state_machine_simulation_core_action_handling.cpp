@@ -692,6 +692,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	{
 		bool arg1isint = args[0]->kind() == ceps::ast::Ast_node_kind::int_literal;
 		bool arg1isdouble = args[0]->kind() == ceps::ast::Ast_node_kind::float_literal;
+		bool arg1isstring = args[0]->kind() == ceps::ast::Ast_node_kind::string_literal;
+
 		if (arg1isint) {
 			{
 				auto it = regfntbl_ii_.find(id);
@@ -713,6 +715,17 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 				auto it = regfntbl_dd_.find(id);
 				if (it != regfntbl_dd_.end()) 
 					return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			}
+		}else if (arg1isstring) {
+			{
+				auto it = regfntbl_is_.find(id);
+				if (it != regfntbl_is_.end())
+					return new  ceps::ast::Int(it->second(ceps::ast::value(ceps::ast::as_string_ref(args[0]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			}
+			{
+				auto it = regfntbl_ss_.find(id);
+				if (it != regfntbl_ss_.end())
+					return new  ceps::ast::String(it->second(ceps::ast::value(ceps::ast::as_string_ref(args[0]))));
 			}
 		}
 	}
@@ -774,6 +787,23 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 					if (it != regfntbl_ddd_.end())
 						return new  ceps::ast::Double(it->second(ceps::ast::value(ceps::ast::as_double_ref(args[0])), ceps::ast::value(ceps::ast::as_double_ref(args[1]))), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 				}
+			}
+		}
+	}
+
+
+	if (args.size() == 6)
+	{
+		bool allint = args[0]->kind() == ceps::ast::Ast_node_kind::int_literal && args[1]->kind() == ceps::ast::Ast_node_kind::int_literal && args[2]->kind() == ceps::ast::Ast_node_kind::int_literal
+				                         && args[3]->kind() == ceps::ast::Ast_node_kind::int_literal && args[4]->kind() == ceps::ast::Ast_node_kind::int_literal && args[5]->kind() == ceps::ast::Ast_node_kind::int_literal;
+
+		if (allint) {
+			{
+				auto it = regfntbl_iiiiiii_.find(id);
+				if (it != regfntbl_iiiiiii_.end())
+					return new  ceps::ast::Int(	it->second(ceps::ast::value(ceps::ast::as_int_ref(args[0])),ceps::ast::value(ceps::ast::as_int_ref(args[1])),ceps::ast::value(ceps::ast::as_int_ref(args[2])),
+							ceps::ast::value(ceps::ast::as_int_ref(args[3])),ceps::ast::value(ceps::ast::as_int_ref(args[4])),ceps::ast::value(ceps::ast::as_int_ref(args[5])) ) ,
+							                    ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 			}
 		}
 	}
@@ -1088,3 +1118,28 @@ void State_machine_simulation_core::regfn(std::string name, int(*fn) (double, do
 void State_machine_simulation_core::regfn(std::string name, double(*fn) (double, double)) {
 	regfntbl_ddd_[name] = fn;
 }
+
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (std::string)) {
+	regfntbl_is_[name] = fn;
+}
+
+void State_machine_simulation_core::regfn(std::string name, std::string(*fn) (std::string)) {
+	regfntbl_ss_[name] = fn;
+}
+
+
+void State_machine_simulation_core::regfn(std::string name, int(*fn) (int,int,int,int,int,int)) {
+	regfntbl_iiiiiii_[name] = fn;
+}
+
+
+
+
+
+
+
+
+
+
+
+

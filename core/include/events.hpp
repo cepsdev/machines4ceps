@@ -164,7 +164,8 @@ namespace sm4ceps{
 			if(empty()) return capacity_;
 			auto s = start;
 			if (offset != 0) {s+=offset;if(s >= capacity_) s= 0;}
-			for(auto ofs = s; ofs != end;++ofs){
+			int i = 0;
+			for(auto ofs = s; i != n_elems; ofs+=sizeof(R)){
 				if (ofs > capacity_) ofs= 0;
 				if (get(ofs) == r) return ofs;
 			}
@@ -183,10 +184,12 @@ namespace sm4ceps{
 			return true;
 		}
 
-		void copy_front_elem_and_pop(size_t ofs){
+		void swap_to_front_and_pop(size_t ofs){
 			if (ofs >= capacity_ || empty()) return;
 			if (ofs == start) {pop(); return;};
-			get(ofs)= front();
+			R temp = front();
+			front() = get(ofs);
+			get(ofs) = temp;
 			pop();
 		}
 
@@ -199,11 +202,11 @@ namespace sm4ceps{
 	};
 
 
-	template<typename T> struct Eventqueue_traits{using id_t =int;};
+	template<typename T> struct Eventqueue_traits{using id_t =std::string;};
 	template<typename T> bool is_unique_event(T const &) {return false;}
 	template<typename T> typename Eventqueue_traits<T>::id_t id(T const &) {return typename Eventqueue_traits<T>::id_t{};}
 
-	template<typename E,int defaultlength=128> class Eventqueue{
+	template<typename E,int defaultlength=128,int defaultlength_evinfo=1024> class Eventqueue{
 		struct ev_info{
 			typename Eventqueue_traits<E>::id_t id_;
 			std::size_t stored_at_;
@@ -211,7 +214,7 @@ namespace sm4ceps{
 			ev_info(typename Eventqueue_traits<E>::id_t id, std::size_t stored_at) : id_(id), stored_at_(stored_at){}
 		};
 		Ringbuffer<E,defaultlength> data_;
-		Ringbuffer<ev_info> stored_unique_events;
+		Ringbuffer<ev_info,defaultlength_evinfo> stored_unique_events;
 	public:
 		void push(E const & elem){
 			if (is_unique_event(elem)){
@@ -227,18 +230,20 @@ namespace sm4ceps{
 		}
 		E& front(){return data_.front();}
 		void pop() {
+			if (data_.empty()) return;
 			if (stored_unique_events.empty()){data_.pop(); return;}
 			if(!is_unique_event(front())){data_.pop(); return;}
 			auto ofs = stored_unique_events.find(ev_info(id(front()),0));
 			data_.pop();
 			if (!stored_unique_events.valid_ofs(ofs)) return;
-			stored_unique_events.copy_front_elem_and_pop(ofs);
+			stored_unique_events.swap_to_front_and_pop(ofs);
 		}
 		size_t count() const {return data_.count();}
 		E& get_at_index(size_t i){
 			return data_.get_at_index(i);
 		}
 		size_t number_of_unique_events() const {return stored_unique_events.count();}
+		Ringbuffer<ev_info,defaultlength_evinfo>& unique_events() {return stored_unique_events;}
 
 		bool empty() const {return count() == 0;}
 	};

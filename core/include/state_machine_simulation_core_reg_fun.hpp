@@ -19,6 +19,10 @@ public:
 	virtual void regfn(std::string name, double(*fn) (int, double)) = 0;
 	virtual void regfn(std::string name, int(*fn) (double, double)) = 0;
 	virtual void regfn(std::string name, double(*fn) (double, double)) = 0;
+	virtual void regfn(std::string name, int(*fn) (std::string)) = 0;
+	virtual void regfn(std::string name, std::string(*fn) (std::string)) = 0;
+	virtual void regfn(std::string name, int(*fn) (int,int,int,int,int,int) ) = 0;
+
 
 };
 
