@@ -879,7 +879,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		auto emit = sender["emit"];
 		auto transport  = sender["transport"];
 
-		if (transport["generic_tcp_out"].empty()) {
+		if (transport["generic_tcp_out"].empty() && 0==transport["use"].size()) {
 			//Handle user defined transport layers
 			std::string call_name="(NULL)";
 			if (transport.nodes().size() && transport.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef)
@@ -1025,7 +1025,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		std::string sock_name;
 		bool no_when_emit = false;
 
-		if (transport["generic_tcp_in"].empty()) {
+		if (transport["generic_tcp_in"].empty() && transport["use"].empty()) {
 			//Handle user defined transport layers
 			std::string call_name = "(NULL)";
 			if (transport.nodes().size() && transport.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef)
@@ -1412,15 +1412,15 @@ void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator
 		if (it == type_definitions().end())
 			fatal_(-1,id+" is not a type.\n");
 
-		define_a_struct(this,ceps::ast::as_struct_ptr(it->second),global_states,lhs_id );
+		define_a_struct(this,ceps::ast::as_struct_ptr(it->second),get_global_states(),lhs_id );
 		return;
 	}
 	auto rhs = eval_locked_ceps_expr(this,nullptr,root.right(),&root);
 
 
-	auto pp = global_states[lhs_id];
+	auto pp = get_global_states()[lhs_id];
 	if (pp) global_states_prev_[lhs_id] = pp;
-	global_states[lhs_id] = rhs;
+	get_global_states()[lhs_id] = rhs;
 	if(!pp) global_states_prev_[lhs_id] = rhs;
 
 	DEBUG << "[STATE_ASSIGNMENT_DONE][LHS=" << lhs_id << "]\n";
@@ -1933,8 +1933,8 @@ void run_state_machine_simulation(State_machine_simulation_core* smc,Result_proc
 		}
 		else if (cmd.substr(0,6) == "states")
 		{
-			if (smc->states().size() == 0) std::cout << "***No states defined.\n";
-			for(auto s : smc->states())
+			if (smc->get_global_states().size() == 0) std::cout << "***No states defined.\n";
+			for(auto s : smc->get_global_states())
 			{
 				auto state_expr = s.second;
 				if (state_expr == nullptr) continue;

@@ -166,8 +166,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::unfold(ceps::ast::Nodebas
 			}
 			DEBUG << "[UNFOLD][EVAL_STATE]" << s << "\n";
 
-			auto it = this->states().find(s);
-			if (it == states().end())
+			auto it = this->get_global_states().find(s);
+			if (it == get_global_states().end())
 				fatal_(-1,s + " has no value.");
 
 			return it->second;
@@ -249,12 +249,12 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 
 		decltype(global_guards) guard_to_interpretation;
 		std::set<std::string> eval_path {guard_name};
-		auto guard_unfolded = unfold(guard_expr,guard_to_interpretation,eval_path,states);
-		DEBUG << "[CALL][ceps::interpreter::evaluate][A]\n";
 		//std::cout << "UNFOLDED:" << *guard_unfolded << std::endl;
 		std::lock_guard<std::recursive_mutex>g(states_mutex());
-		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &global_states;
+		auto guard_unfolded = unfold(guard_expr,guard_to_interpretation,eval_path,states);
+		DEBUG << "[CALL][ceps::interpreter::evaluate][A]\n";
+		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &get_global_states();
+		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &get_global_states();
 
 		result  = ceps::interpreter::evaluate(guard_unfolded,
 															ceps_env.get_global_symboltable(),
@@ -265,15 +265,15 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 	{
 		DEBUG << "[CALL][ceps::interpreter::evaluate][B]\n";
 		std::lock_guard<std::recursive_mutex>g(states_mutex());
-		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &global_states;
-		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &global_states;
+		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &get_global_states();
+		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &get_global_states();
 
 		if (this->print_debug_info_)
 		{
 			DEBUG << *guard_expr  << "\n";
 			DEBUG << "[CURRENT STATES]\n";
 			std::cout << "*************************************??" << std::endl;
-			for (auto & t : global_states)
+			for (auto & t : get_global_states())
 			{
 				if (t.first == "x_drive") std::cout << "*************************************" << std::endl;
 				if (t.second == nullptr) {

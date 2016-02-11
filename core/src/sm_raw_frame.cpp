@@ -603,6 +603,8 @@ bool Podframe_generator::read_msg(char* data,size_t size,
 	return true;
 }
 
+
+
 void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
@@ -631,6 +633,8 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t
 
 		if (pop_frame) {q->wait_and_pop(frame_info);frame_size = frame_info.second;frame= frame_info.first;}
 		pop_frame = false;
+
+		//std::cout << "SEND   => " << std::endl << frame << std::endl;
 
 		DEBUG << "[comm_sender_generic_tcp_out_thread][FETCHED_FRAME]\n";
 		if (!conn_established)
@@ -751,7 +755,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 	else
 		snprintf(addrstr,2048,"[host=?,service=?]");
 	DEBUG << "[comm_generic_tcp_in_thread_fn][CONN_ESTABLISHED]" << addrstr << "\n";
-
+    //std::cout << "id ="<< id << " eof="<< eof << std::endl;
 	if (id >= 0){ // This is a generic fixed size input stream with a handler context
 
 		auto ctxt = smc->get_dispatcher_thread_ctxt(id);
@@ -837,6 +841,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 					    }
 
 					    if (decode_result){
+					    	//std::cout << " IN <== " << buffer->str().c_str() << std::endl;
 					    	State_machine_simulation_core::event_t ev(ev_id);
 					    	ev.already_sent_to_out_queues_ = true;
 					    	if (payload.size())

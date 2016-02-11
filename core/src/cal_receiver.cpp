@@ -275,6 +275,7 @@ void comm_receiver_socket_can(int id,
 					handler_info.first->read_msg((char*)can_msg, can_message.can_dlc + 2, current_smc, v1, v2);
 			if (!match) continue;
 			current_smc->execute_action_seq(nullptr, handler_info.second);
+			break;
 		}
 	}//for(;;)
 }

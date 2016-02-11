@@ -421,12 +421,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
        auto state_id = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
 	   {
 		   std::lock_guard<std::recursive_mutex>g(states_mutex());
-		   auto it_cur = global_systemstates().find(state_id);
+		   auto it_cur = get_global_states().find(state_id);
 		   //std::cout << "FOUND?" << (it_cur != global_systemstates().end()) << std::endl;
-           if (it_cur == global_systemstates().end()) {
+           if (it_cur == get_global_states().end()) {
         	   warn_(-1, "changed(): Uninitialized Systemstate/Systemparameter '" + state_id + "' will be set to 0.");
-        	   global_systemstates()[state_id] = new ceps::ast::Int(0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-        	   it_cur = global_systemstates().find(state_id);
+        	   get_global_states()[state_id] = new ceps::ast::Int(0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+        	   it_cur = get_global_states().find(state_id);
            }
 
 		   auto it_prev = global_systemstates_prev().find(state_id);
@@ -938,14 +938,14 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 					auto sym = this->ceps_env_current().get_global_symboltable().lookup(id);
 					if (sym != nullptr) {
 					  //std::cout <<  *(ceps::ast::Nodebase_ptr)sym->payload << std::endl;
-					  if (sym->payload) {global_states[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;}
+					  if (sym->payload) {get_global_states()[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;}
 					} else {
 					 auto it = type_definitions().find(id);
 					 if (it == type_definitions().end())
 							fatal_(-1,id+" is not a type.\n");
-					 define_a_struct(this,ceps::ast::as_struct_ptr(it->second),global_states,name(as_symbol_ref(node.left())) );
+					 define_a_struct(this,ceps::ast::as_struct_ptr(it->second),get_global_states(),name(as_symbol_ref(node.left())) );
 					}
-				} else 	{ std::lock_guard<std::recursive_mutex>g(states_mutex());global_states[state_id] = rhs;}
+				} else 	{ std::lock_guard<std::recursive_mutex>g(states_mutex());get_global_states()[state_id] = rhs;}
 			}
 			else {
 			 std::stringstream ss;ss << *n;

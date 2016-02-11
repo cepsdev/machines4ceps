@@ -1,0 +1,181 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Declaration of messages with mapping logic.
+ * 
+ * 
+ */
+
+/* Example for xmls:
+
+a{1;}; => <a>1</a>
+a{xml_attr{"w";2;};1;};=> <a w="2">1</a>
+
+*/
+
+/**
+ * An 'out' frame
+ * */
+xml_frame{
+    id{TrgsBagMastToiVeNet;};
+    data{
+      TrgsBagMastToiVeNet{ 
+	ApplicationHeartbeat{
+	  TimeSource{
+	    TrgsBagMastOut.ApplicationHeartbeat.TimeSource;
+	  };
+	  
+	  Year{TrgsBagMastOut.ApplicationHeartbeat.Year;};
+	  Month{TrgsBagMastOut.ApplicationHeartbeat.Month;};
+	  Day{TrgsBagMastOut.ApplicationHeartbeat.Day;};
+	  Hour{TrgsBagMastOut.ApplicationHeartbeat.Hour;};
+	  Minute{TrgsBagMastOut.ApplicationHeartbeat.Minute;};
+	  Second{TrgsBagMastOut.ApplicationHeartbeat.Second;};
+	  AppVersion{TrgsBagMastOut.ApplicationHeartbeat.AppVersion;};
+	};
+	
+	StatusMast{
+	  xml_attr{"IsValid";TrgsBagMastOut.StatusMast.IsValid;};
+	  MastStatus{TrgsBagMastOut.StatusMast.MastStatus; };
+	};
+	StatusRadarEnabled{
+	  xml_attr{"IsValid";TrgsBagMastOut.StatusRadarEnabled.IsValid;};
+	  IsRadarWorkingEnabled{TrgsBagMastOut.StatusRadarEnabled.IsRadarWorkingEnabled;};	    
+	};//StatusRadarEnabled
+	  
+	StatusPlatform{
+	  xml_attr{"IsValid";TrgsBagMastOut.StatusPlatform.IsValid;};
+	  PlatformStatus{
+	    TrgsBagMastOut.StatusPlatform.PlatformStatus;
+	  };	    
+	};
+	RadarParkpositionRequest{
+	  xml_attr{"IsValid";TrgsBagMastOut.RadarParkpositionRequest.IsValid;};
+	  IsRequestActive{
+	    TrgsBagMastOut.RadarParkpositionRequest.IsRequestActive;
+	  };	    
+	};
+      };      
+    };//data
+};
+
+
+/**
+ * An 'in' frame
+ * */
+Systemstate t;
+
+xml_frame{id{iVeNetToTrgsBagMast_in;};
+  query{
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/TimeSource");
+    if (!empty(t)){ TrgsBagMastIn.ApplicationHeartbeat.TimeSource = as_string(t);}
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/Year");
+    if (!empty(t))TrgsBagMastIn.ApplicationHeartbeat.Year = as_string(t);    
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/Month");
+    if (!empty(t))TrgsBagMastIn.ApplicationHeartbeat.Month = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/Day");
+    if (!empty(t))TrgsBagMastIn.ApplicationHeartbeat.Day = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/Hour");
+    if (!empty(t))TrgsBagMastIn.ApplicationHeartbeat.Hour = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/Minute");
+    if (!empty(t))TrgsBagMastIn.ApplicationHeartbeat.Minute = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/Second");
+    if (!empty(t))TrgsBagMastIn.ApplicationHeartbeat.Second = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/ApplicationHeartbeat/AppVersion");
+    if (!empty(t))TrgsBagMastIn.ApplicationHeartbeat.AppVersion = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/OwnVehiclePosition/Coordinate/Latitude");
+     if (!empty(t))TrgsBagMastIn.OwnVehiclePosition.Coordinate.Latitude = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/OwnVehiclePosition/Coordinate/Altitude");
+    if (!empty(t))TrgsBagMastIn.OwnVehiclePosition.Coordinate.Altitude = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/OwnVehiclePosition/Coordinate/Longitude");
+    if (!empty(t))TrgsBagMastIn.OwnVehiclePosition.Coordinate.Longitude = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/OwnVehicleAlignment/Azimuth");
+    if (!empty(t))TrgsBagMastIn.OwnVehicleAlignment.Azimuth = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/StatusMast/MastStatus");
+    if (!empty(t))TrgsBagMastIn.StatusMast.MastStatus = as_string(t);
+    t = xpath("iVeNetToTrgsBagMast/StateRadarPosition/IsRadarInParkposition");
+    if (!empty(t))TrgsBagMastIn.StateRadarPosition.IsRadarInParkposition = as_string(t);
+  };
+};
+
+
+xml_frame{
+    id{TrgsBagMastToiVeNet_in;};
+    query{1;};
+};
+
+
+/**
+ * Just for completeness: the 'out' frame of the iVeNet System
+ * */
+
+xml_frame{
+    id{iVeNetToTrgsBagMast;};
+    data{
+      iVeNetToTrgsBagMast{
+	ApplicationHeartbeat{
+	  TimeSource{
+	    ivenet_heartbeat_time_source;
+	  };
+	  Year{
+	    ivenet_heartbeat_year;
+	  };
+	  Month{
+	    ivenet_heartbeat_month;
+	  };
+	  Day{
+	    ivenet_heartbeat_day;
+	  };
+	  Hour{
+	    ivenet_heartbeat_hour;
+	  };
+	  Minute{
+	    ivenet_heartbeat_minute;
+	    
+	  };
+	  Second{
+	    ivenet_heartbeat_second;
+	  };
+	  AppVersion{	    
+	    ivenet_heartbeat_app_version;
+	  };
+	};
+	OwnVehiclePosition{
+	  Coordinate{
+	    Latitude{ivenet_veh_pos_coord_latitude;};Longitude{ivenet_veh_pos_coord_longitude;};Altitude{ivenet_veh_pos_coord_altitude;};
+	  };	  
+	};
+	OwnVehicleAlignment{
+	  Azimuth{ivenet_veh_own_alignment;};
+	};
+	StatusMast{
+	  MastStatus{ivenet_mast_status;};	  
+	};
+	StateRadarPosition{
+	  IsRadarInParkposition{ivenet_radar_in_park_position;};
+	};
+      };
+    };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

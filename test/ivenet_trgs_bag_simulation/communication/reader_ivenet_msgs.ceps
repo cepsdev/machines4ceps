@@ -1,0 +1,26 @@
+/**
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Receiver definition for iVeNet ==> TRGS BAG communication.
+ * 
+ */
+
+receiver{
+  id{receiver_of_ivenet_messages;};
+  when{iVeNetToTrgsBagMast_in;}; //Read: *when*ever a message iVeNetToTrgsBagMast was successfuly processed *emit* the event IVenetNotify.
+                              //      the message iVeNetToTrgsBagMast is defined in comm.ceps.
+  emit{IVenetNotify;};
+  transport{
+     som{2;}; //Sentinels: start of message (som)/ end of message (eom) 
+     eom{3;}; 
+   
+    generic_tcp_in{
+      port{TRGSBAGMAST_PORT;};
+      ip{"127.0.0.1";};         
+    };
+   };    
+};
+

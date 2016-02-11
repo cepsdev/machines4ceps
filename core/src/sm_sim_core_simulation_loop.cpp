@@ -51,7 +51,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 	{
 		std::lock_guard<std::recursive_mutex>g(states_mutex());
-		global_systemstates_prev().insert(global_systemstates().begin(),global_systemstates().end());
+		global_systemstates_prev().insert(get_global_states().begin(),get_global_states().end());
 	}
 
 

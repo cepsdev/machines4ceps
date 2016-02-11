@@ -67,7 +67,7 @@ class State_machine_simulation_core:public IUserdefined_function_registry
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
 	ceps::Ceps_Environment * ceps_env_current_ = nullptr;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_guards;
-	std::map<std::string, ceps::ast::Nodebase_ptr> global_states;
+	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_prev_;
 
 	using Logger_active_states = std::vector<int>;
@@ -120,7 +120,7 @@ public:
 
 
 
-	std::map<std::string, ceps::ast::Nodebase_ptr>& global_systemstates(){return global_states;}
+	//std::map<std::string, ceps::ast::Nodebase_ptr>& global_systemstates(){return global_states_;}
 	std::map<std::string, ceps::ast::Nodebase_ptr>& global_systemstates_prev(){return global_states_prev_;}
 
 
@@ -136,7 +136,7 @@ public:
 	bool shutdown(){return shutdown_threads_;}
 	//void lock_global_states() const {states_mutex_.lock();}
 	//void unlock_global_states() const {states_mutex_.unlock();}
-	std::map<std::string, ceps::ast::Nodebase_ptr> & get_global_states() {return global_states;}
+	std::map<std::string, ceps::ast::Nodebase_ptr> & get_global_states() {return global_states_;}
 	bool& quiet_mode(){return quiet_mode_;}
 	bool quiet_mode() const {return quiet_mode_;}
 	struct event_t {
@@ -404,7 +404,7 @@ public:
 
 
 	std::map<std::string, ceps::ast::Nodebase_ptr>&  guards(){return global_guards;}
-	std::map<std::string, ceps::ast::Nodebase_ptr>&  states(){return global_states;}
+	//std::map<std::string, ceps::ast::Nodebase_ptr>&  states(){return global_states_;}
 
 	event_t current_event_;
 	event_t& current_event() {return current_event_;}

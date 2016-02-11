@@ -1,0 +1,187 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Common declarations used by all iVeNet <-> SDIS models
+ * 
+ */
+
+val VERSION = "TRGS_BAG_MAST_SIM@sm4ceps. Version 10-22-2015.\nWritten by tomas.prerovsky@gmail.com. ceps (c) 2015 ceps developers, all rights reserved.";
+
+kind Systemstate;
+kind Event;
+kind Guard;
+
+
+Event TrgsBagNotify;
+Event IVenetNotify;
+
+
+
+
+val IVENET_PORT = "2011"; 
+val IVENET_IP = "127.0.0.1";
+val TRGSBAGMAST_PORT = "2012";
+
+val enum_TimeSource_utc = "UTC_Time";
+val enum_TimeSource_gps = "GPS_Time";
+val enum_TimeSource_bios = "BIOS_Time";
+val enum_MastStatus_locked_nav = "IsLocked_NavigationMode";
+val enum_MastStatus_moving_antenna = "IsMoving_AntennaDeployment";
+val enum_MastStatus_unlocked_observe = "IsUnlocked_ObservationMode";
+val enum_StatusRadarEnabled_true = "true";
+val enum_StatusRadarEnabled_false = "false";
+val enum_PlatformStatus_notaligned = "NotAligned";
+val enum_PlatformStatus_align_inprogress = "AlignmentInProgress";
+val enum_PlatformStatus_aligned = "Aligned";
+val enum_PlatformStatus_notaligned_vehmov = "NotAlignedDueToVehicleMovement";
+val enum_PlatformStatus_notaligned_mastmov = "NotAlignedDueToMastMovement";
+val enum_PlatformStatus_notaligned_malfunc = "GeneralTechnicalMalfunction"; 
+val enum_IsRequestActive_true = "true";
+val enum_IsRequestActive_false = "false";
+val enum_isValid_true = "true";
+val enum_isValid_false = "false";
+
+typedef{
+  TrgsBagMastToiVeNet_t{
+    ApplicationHeartbeat{
+      TimeSource{
+	enum_TimeSource_utc;
+      };
+      Year{
+	2015;
+      };
+      Month{
+	10;
+      };
+      Day{
+	22;
+      };
+      Hour{
+	13;
+      };
+      Minute{
+	8;
+      };
+      Second{
+	0;
+      };
+      AppVersion{
+	VERSION;
+      };
+    };
+    StatusMast{
+      IsValid{enum_isValid_true;};
+      MastStatus{enum_MastStatus_locked_nav;};
+    };
+    StatusRadarEnabled{
+      IsValid{enum_isValid_true;};
+      IsRadarWorkingEnabled{enum_StatusRadarEnabled_true;};
+    };
+    StatusPlatform{
+      IsValid{enum_isValid_true;};
+      PlatformStatus{enum_PlatformStatus_notaligned;};      
+    };
+    RadarParkpositionRequest{
+      IsValid{enum_isValid_true;};
+      IsRequestActive{enum_IsRequestActive_true;};
+    };    
+  };
+};
+
+typedef{
+  iVeNetToTrgsBagMast_t{
+    ApplicationHeartbeat{
+      TimeSource{
+	enum_TimeSource_utc;
+      };
+      Year{
+	0;
+      };
+      Month{
+	0;
+      };
+      Day{
+	0;
+      };
+      Hour{
+	0;
+      };
+      Minute{
+	0;
+      };
+      Second{
+	0;
+      };
+      AppVersion{
+	VERSION;
+      };     
+    };
+    OwnVehiclePosition{
+      IsValid{"false";};
+      Coordinate{
+	Latitude{0.0;};
+	Longitude{0.0;};
+	Altitude{0.0;};
+      };
+    };
+    OwnVehicleAlignment{
+      IsValid{"false";};
+      Azimuth{0.0;};
+    };
+    StatusMast{
+      IsValid{"false";};
+      MastStatus{"IsLocked_NavigationMode";};
+    };
+    StateRadarPosition{
+      IsValid{"false";};
+      IsRadarInParkposition{"true";};
+    };    
+  };
+};
+
+Systemstate TrgsBagMastOut;
+Systemstate TrgsBagMastIn;
+
+//What follows is the list of states reflecting the state of the iVeNet mock 
+
+Systemstate ivenet_heartbeat_time_source;
+Systemstate ivenet_heartbeat_year;
+Systemstate ivenet_heartbeat_month;
+Systemstate ivenet_heartbeat_day;
+Systemstate ivenet_heartbeat_hour;
+Systemstate ivenet_heartbeat_minute;
+Systemstate ivenet_heartbeat_second;
+Systemstate ivenet_heartbeat_app_version;
+Systemstate ivenet_veh_pos_coord_latitude;
+Systemstate ivenet_veh_pos_coord_altitude;
+Systemstate ivenet_veh_pos_coord_longitude;
+Systemstate ivenet_veh_own_alignment;
+Systemstate ivenet_mast_status;
+Systemstate ivenet_radar_in_park_position;
+
+Globals{
+  //TRGS BAG MAST MOCK
+  TrgsBagMastOut = TrgsBagMastToiVeNet_t;
+  TrgsBagMastIn = iVeNetToTrgsBagMast_t;
+  
+  //IveNet mock relevant initializations
+  ivenet_veh_pos_coord_latitude = 0;
+  ivenet_veh_pos_coord_altitude = 0;
+  ivenet_veh_pos_coord_longitude = 0;
+  ivenet_veh_own_alignment = 0;
+  ivenet_mast_status = "IsLocked_NavigationMode";
+  ivenet_radar_in_park_position = 0;
+  ivenet_heartbeat_time_source = 0;
+  ivenet_heartbeat_year = 0;
+  ivenet_heartbeat_month = 0;
+  ivenet_heartbeat_day = 0;
+  ivenet_heartbeat_hour = 0;
+  ivenet_heartbeat_minute = 0;
+  ivenet_heartbeat_second = 0;
+  ivenet_heartbeat_app_version = 0; 
+ 
+};
+
