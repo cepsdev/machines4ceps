@@ -15,12 +15,13 @@
 class Xmlframe_generator:public Rawframe_generator{
 	ceps::ast::Nodeset spec_;
 public:
-	virtual bool readfrom_spec(ceps::ast::Nodeset const & spec);
 	ceps::ast::Nodeset const & spec() const {return spec_;}
 	ceps::ast::Nodeset & spec() {return spec_;}
-	virtual void* gen_msg(State_machine_simulation_core*,size_t&);
-	virtual size_t compute_size_of_msg(State_machine_simulation_core*,std::vector<std::string>,bool&);
-	virtual bool read_msg(char* data,size_t size,State_machine_simulation_core*,std::vector<std::string>,std::vector<ceps::ast::Nodebase_ptr>&);
+	bool readfrom_spec(ceps::ast::Nodeset const & spec);
+	void* gen_msg(State_machine_simulation_core*,size_t&);
+	size_t compute_size_of_msg(State_machine_simulation_core*,std::vector<std::string>,bool&);
+	bool read_msg(char* data,size_t size,State_machine_simulation_core*,std::vector<std::string>,std::vector<ceps::ast::Nodebase_ptr>&);
+	size_t header_length() {return 0;}
 };
 
 

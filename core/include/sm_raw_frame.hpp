@@ -15,18 +15,25 @@ public:
 	virtual bool readfrom_spec(ceps::ast::Nodeset const & spec) = 0;
 	virtual void* gen_msg(State_machine_simulation_core*,size_t&) = 0;
 	virtual size_t compute_size_of_msg(State_machine_simulation_core*,std::vector<std::string>,bool&) = 0;
-	virtual bool read_msg(char* data,size_t size,State_machine_simulation_core*,std::vector<std::string>,std::vector<ceps::ast::Nodebase_ptr>&) = 0;
+	virtual bool read_msg(char* data,
+			              size_t size,
+						  State_machine_simulation_core*,
+						  std::vector<std::string>,
+						  std::vector<ceps::ast::Nodebase_ptr>&) = 0;
+	virtual size_t header_length() = 0;
 };
 
 class Podframe_generator:public Rawframe_generator{
 	ceps::ast::Nodeset spec_;
+	size_t header_length_ = 0;
 public:
-	virtual bool readfrom_spec(ceps::ast::Nodeset const & spec);
+	bool readfrom_spec(ceps::ast::Nodeset const & spec);
 	ceps::ast::Nodeset const & spec() const {return spec_;}
 	ceps::ast::Nodeset & spec() {return spec_;}
-	virtual void* gen_msg(State_machine_simulation_core*,size_t&);
-	virtual size_t compute_size_of_msg(State_machine_simulation_core*,std::vector<std::string>,bool&);
-	virtual bool read_msg(char* data,size_t size,State_machine_simulation_core*,std::vector<std::string>,std::vector<ceps::ast::Nodebase_ptr>&);
+	void* gen_msg(State_machine_simulation_core*,size_t&);
+	size_t compute_size_of_msg(State_machine_simulation_core*,std::vector<std::string>,bool&);
+	bool read_msg(char* data,size_t size,State_machine_simulation_core*,std::vector<std::string>,std::vector<ceps::ast::Nodebase_ptr>&);
+	size_t header_length();
 };
 
 #endif

@@ -390,7 +390,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			size_t ds;
 			char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
 			if (ds > 0 && msg_block != nullptr){
-				channel->push(std::make_pair(msg_block,ds));
+				channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length()));
 				return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 			}
 			else fatal_(-1, "send: failed to insert message into queue.");

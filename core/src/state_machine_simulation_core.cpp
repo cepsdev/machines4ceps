@@ -68,7 +68,7 @@ bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodeba
 
 extern void define_a_struct(State_machine_simulation_core* smc,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix);
 
-void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* frames,
+void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,
@@ -279,6 +279,13 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   using namespace ceps::ast;
 
   DEBUG_FUNC_PROLOGUE
+
+
+  if (fatal_ == nullptr || warn_ == nullptr){
+	  std::cerr << "***** Fatal Error: Errorhandler not defined (fatal_ and/or warn_ not initialized)." << std::endl;
+	  exit(1);
+  }
+
 
   auto states = sm_definition["States"];
   auto transitions = sm_definition[all{"Transition"}];
@@ -981,7 +988,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		 descr.event_id_ = ev_id;
 		 descr.frame_gen_ = gen;
 		 descr.frame_id_ = frame_id;
-		 descr.frame_queue_ = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
+		 descr.frame_queue_ = new threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>;
 
 		 comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
 		 running_as_node() = true;
@@ -990,7 +997,7 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		} else if (!condition_defined && !emit_defined && channel_id.length()){
 			 DEBUG << "[PROCESSING_UNCONDITIONED_SENDER]"
 				   <<"\n";
-			 auto channel = new threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>;
+			 auto channel = new threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>;
 			 this->set_out_channel(channel_id,channel);
 			 running_as_node() = true;
 			 comm_threads.push_back(

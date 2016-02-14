@@ -40,7 +40,8 @@ void comm_receiver_kmw_multibus(int id,
 #else
 void comm_receiver_socket_can(int id,
 	std::string bus_id,
-	State_machine_simulation_core* smc);
+	State_machine_simulation_core* smc,
+	bool extended_can_id);
 namespace sockcan{
 	constexpr auto MIN_CAN_FRAME_SIZE = 2;
 	constexpr auto MAX_CAN_FRAME_PAYLOAD = 8;
@@ -117,6 +118,16 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 				fatal_(-1, "A CAN(SOCKET CAN) CAL receiver definition requires an id.");
 			channel_id = ceps::ast::name(ceps::ast::as_id_ref(ns["id"].nodes()[0]));
 			auto bus_id_ = ns["transport"]["canbus"]["bus_id"];
+
+			bool extended= false;
+			auto candef = ns["transport"]["canbus"];
+			for(auto p : candef.nodes())
+			{
+				if (p->kind() != ceps::ast::Ast_node_kind::identifier) continue;
+				if (ceps::ast::name(ceps::ast::as_id_ref(p))!="extended") continue;
+				extended =true;
+				break;
+			}
 			if (bus_id_.nodes().empty())
 				DEBUG << "[SOCKET_CAN_RECEIVER_DEFINITION][No bus specified, default assumed (can0)]\n";
 			else {
@@ -155,7 +166,7 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 
 				comm_threads.push_back(new std::thread{ comm_receiver_socket_can,
 					dispatcher_id,
-					can_bus, this });
+					can_bus, this, extended });
 
 				running_as_node() = true;
 			}
@@ -212,11 +223,12 @@ void comm_receiver_kmw_multibus(int id,
 	}
 }
 #else
-constexpr int CAN_MSG_SIZE = 10;
+constexpr int CAN_MSG_SIZE = 13;
 //#define DEBUG std::cout
 void comm_receiver_socket_can(int id,
 	std::string can_bus,
-	State_machine_simulation_core* smc){
+	State_machine_simulation_core* smc,
+	bool extended_can_id){
 	int s = 0;
 	DEBUG_FUNC_PROLOGUE2
 	DEBUG << "[comm_receiver_socket_can][STARTED]\n";
@@ -264,15 +276,29 @@ void comm_receiver_socket_can(int id,
 
 		std::uint8_t can_msg[CAN_MSG_SIZE];
 		bzero(can_msg, CAN_MSG_SIZE);
-		*((std::uint16_t*)can_msg) = can_message.can_id & 0x7FF;
-		if (can_message.can_id & 0x800) *((std::uint16_t*)can_msg) |= 0x800;
-		*(can_msg + 1) |= (can_message.can_dlc+2) << 4;
-		memcpy(can_msg + 2, can_message.data, can_message.can_dlc);
+		if(!extended_can_id){
+		 *((std::uint16_t*)can_msg) = can_message.can_id & 0x7FF;
+		 if (can_message.can_id & 0x800) *((std::uint16_t*)can_msg) |= 0x800;
+		 *(can_msg + 1) |= (can_message.can_dlc+2) << 4;
+		 memcpy(can_msg + 2, can_message.data, can_message.can_dlc);
+		} else {
+		 *((std::uint32_t*)can_msg) = can_message.can_id;
+		 *((std::uint8_t*)(can_msg+sizeof(std::uint32_t)) ) = can_message.can_dlc+5;
+		 memcpy(can_msg + sizeof(std::uint32_t) + sizeof(std::uint8_t), can_message.data, can_message.can_dlc);
+		}
 		std::vector<std::string> v1;
 		std::vector<ceps::ast::Nodebase_ptr> v2;
+		std::cout <<  *((int*)can_msg) << std::endl;
+		std::cout << (int) *((std::uint8_t*)(can_msg+sizeof(std::uint32_t)) ) << std::endl;
 		for (auto handler_info : in_ctxt.handler) {
+
+			/**
+			 * Trigger recomputation of message size to get the header length
+			 *
+			 */
+
 			auto match =
-					handler_info.first->read_msg((char*)can_msg, can_message.can_dlc + 2, current_smc, v1, v2);
+					handler_info.first->read_msg((char*)can_msg, extended_can_id? can_message.can_dlc + 5 : can_message.can_dlc + 2, current_smc, v1, v2);
 			if (!match) continue;
 			current_smc->execute_action_seq(nullptr, handler_info.second);
 			break;

@@ -1,0 +1,38 @@
+kind Systemstate;
+
+Systemstate a_frame_payload_in,a_frame_payload_out,b_frame_payload_in,b_frame_payload_out;
+
+
+frame{
+   id{a_frame;};
+   data{
+     header{
+      cob_id{uint29{1024;};};
+      uint3{any;};
+      data_length{uint8{__current_frame_size;};};
+     };
+     payload{
+      uint8{
+       in{a_frame_payload_in;};
+       out{a_frame_payload_out;};
+      };     
+     };
+   };
+};
+
+frame{
+   id{b_frame;};
+   data{
+    header{
+      cob_id{uint29{2048;};};
+      uint3{any;};
+      data_length{uint8{__current_frame_size;};};
+     };
+     payload{
+      uint8{
+       in{b_frame_payload_in;};
+       out{b_frame_payload_out;};
+     };
+     };
+   };
+};

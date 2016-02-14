@@ -1,0 +1,20 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+kind Systemparameter;
+
+Event A,B,EXIT;
+
+Statemachine {
+  id{Node_B;};
+  on_enter{ start_timer(5.0*s,EXIT);};
+  Actions{
+    on_ev_a{
+      assert(argv(1) == 1);
+      B(2);
+     
+    };    
+  };
+  States{Initial;Final;};
+  Transition{Initial;Final;A;on_ev_a;};
+};

@@ -194,15 +194,15 @@ private:
 
 	Log std_log_;
 
-	std::map<std::string,threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* > id_to_out_chan_;
+	std::map<std::string,threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* > id_to_out_chan_;
 
 public:
 
-	threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* get_out_channel(std::string const & s){
+	threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* get_out_channel(std::string const & s){
 		return id_to_out_chan_[s];
 	}
 
-	void set_out_channel(std::string const & s, threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* ch){
+	void set_out_channel(std::string const & s, threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* ch){
 		id_to_out_chan_[s] = ch;
 	}
 
@@ -309,7 +309,7 @@ private:
 		std::string event_id_;
 		std::string frame_id_;
 		Rawframe_generator* frame_gen_;
-		threadsafe_queue< std::pair<char*,size_t>, std::queue<std::pair<char*,size_t> >>* frame_queue_;
+		threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* frame_queue_;
 		std::thread* thread_;
 	};
 	std::vector<event_triggered_sender_t>event_triggered_sender_;

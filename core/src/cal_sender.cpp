@@ -51,19 +51,28 @@ namespace sockcan{
 	extern std::mutex interfaces_to_sockets_m;
 
 
-	void map_can_frame(struct can_frame* out, char* frame,int frame_size) {
+	void map_can_frame(struct can_frame* out, char* frame,int frame_size, int header_size) {
 		if (frame_size < MIN_CAN_FRAME_SIZE) return;
 		if (frame == nullptr) return;
-		out->can_id = (*((std::uint16_t*)frame) & 0x7FF) | ((*((std::uint16_t*)frame) & 0x800) >> 11);
-		out->can_dlc = std::min( ((*((std::uint16_t*)frame) & 0xF000) >> 12) - 2, MAX_CAN_FRAME_PAYLOAD);
-		memcpy(out->data, frame + 2, out->can_dlc);
+
+		//std::cout << "!!!!!!!!!!!!!!!!!!!"<< header_size << std::endl;
+		if (header_size == 16){
+		  out->can_id = (*((std::uint16_t*)frame) & 0x7FF) | ((*((std::uint16_t*)frame) & 0x800) >> 11);
+		  out->can_dlc = std::min( ((*((std::uint16_t*)frame) & 0xF000) >> 12) - 2, MAX_CAN_FRAME_PAYLOAD);
+		  memcpy(out->data, frame + 2, out->can_dlc);
+		}
+		else {
+		 out->can_id = *((std::uint32_t*)frame) ;
+		 out->can_dlc = *((std::uint8_t*) (frame+4)) - 5;
+		 memcpy(out->data, frame + 5, out->can_dlc);
+		}
 	}
 }
 
 std::map<std::string,int> sockcan::interfaces_to_sockets;
 std::mutex sockcan::interfaces_to_sockets_m;
 
-void comm_sender_socket_can(threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>* channel,
+void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t>, std::queue<std::tuple<char*, size_t,size_t> >>* channel,
 	std::string can_bus, State_machine_simulation_core* smp);
 #endif	
 
@@ -123,7 +132,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 				fatal_(-1, "CAN-CAL sender definition: bus_id must be an integer or string.");
 		}
 
-		auto channel = new threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>;
+		auto channel = new threadsafe_queue< std::tuple<char*, size_t,size_t>, std::queue<std::tuple<char*, size_t,size_t> >>;
 		this->set_out_channel(channel_id, channel);
 		running_as_node() = true;
 
@@ -183,13 +192,14 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 }
 #else
 //#define DEBUG std::cout
-void comm_sender_socket_can(threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>* frames,
+void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t>, std::queue<std::tuple<char*, size_t,size_t> >>* frames,
 	std::string can_bus, State_machine_simulation_core* smc) {
 	int s = 0;
 	//auto THIS = smc;
 	DEBUG_FUNC_PROLOGUE2
 	char* frame = nullptr;
 	size_t frame_size = 0;
+	size_t header_size = 0;
 	bool pop_frame = true;
 
 	{
@@ -220,24 +230,26 @@ void comm_sender_socket_can(threadsafe_queue< std::pair<char*, size_t>, std::que
 	}
 
 
-	int ctr = 1;
-	for (;;++ctr)
+	for (;;)
 	{
-		DEBUG << "[comm_sender_socket_can]["<< ctr << "][WAIT_FOR_FRAME][pop_frame=" << pop_frame << "]\n";
-		std::pair<char*, size_t> frame_info;
+		DEBUG << "[comm_sender_socket_can][WAIT_FOR_FRAME][pop_frame=" << pop_frame << "]\n";
+		std::tuple<char*, size_t,size_t> frame_info;
 
 		if (pop_frame) {
-			frames->wait_and_pop(frame_info); frame_size = frame_info.second; frame = frame_info.first;
+			frames->wait_and_pop(frame_info);
+			frame_size = std::get<1>(frame_info);
+			frame = std::get<0>(frame_info);
+			header_size = std::get<2>(frame_info);
 		}
 		pop_frame = false;
-		DEBUG << "[comm_sender_socket_can]["<< ctr << "][FETCHED_FRAME]\n";
+		DEBUG << "[comm_sender_socket_can][FETCHED_FRAME]\n";
 		auto len = frame_size;
 		//int wr = 0;
 		struct can_frame can_message{0};
 		if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {
-			sockcan::map_can_frame(&can_message, frame, frame_size);
+			sockcan::map_can_frame(&can_message, frame, frame_size,header_size);
 			auto r = write(s, &can_message, sizeof(struct can_frame));
-			DEBUG << "[comm_sender_socket_can]["<< ctr << "][r = write(s, &can_message, sizeof(struct can_frame));][r=" << r << "]\n";
+			DEBUG << "[comm_sender_socket_can][r = write(s, &can_message, sizeof(struct can_frame));][r=" << r << "]\n";
 		}
 		if (frame != nullptr) { delete[] frame; frame = nullptr; }
 		pop_frame = true;
