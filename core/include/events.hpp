@@ -165,7 +165,7 @@ namespace sm4ceps{
 			auto s = start;
 			if (offset != 0) {s+=offset;if(s >= capacity_) s= 0;}
 			size_t i = 0;
-			for(auto ofs = s; i != n_elems; ofs+=sizeof(R)){
+                        for(auto ofs = s; i != n_elems; ofs+=sizeof(R),++i){
 				if (ofs > capacity_) ofs= 0;
 				if (get(ofs) == r) return ofs;
 			}
