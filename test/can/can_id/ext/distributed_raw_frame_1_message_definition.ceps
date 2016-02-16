@@ -7,7 +7,7 @@ frame{
    id{a_frame;};
    data{
      header{
-      cob_id{uint29{1024;};};
+      cob_id{uint29{0xAAAAAA;};};
       uint3{any;};
       data_length{uint8{__current_frame_size;};};
      };

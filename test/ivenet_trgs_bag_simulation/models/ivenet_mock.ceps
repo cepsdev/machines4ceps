@@ -39,6 +39,10 @@ Statemachine{
 //     ivenet_heartbeat_app_version=
 //    
   };   
+ data_received{
+  print("data_received\n");
+};
+
   
  };
  
@@ -52,10 +56,10 @@ Statemachine{
             HeartbeatStarted;
 	    IVenetNotify;
 	    update_state_values;};
- /*Transition{HeartbeatStarted;
+ Transition{HeartbeatStarted;
             HeartbeatStarted;
-	    IVenetNotify;
-	    copy_values;}; */
+	    TrgsBagNotify;
+	    data_received;}; 
  
 };
 

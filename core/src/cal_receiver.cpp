@@ -288,8 +288,8 @@ void comm_receiver_socket_can(int id,
 		}
 		std::vector<std::string> v1;
 		std::vector<ceps::ast::Nodebase_ptr> v2;
-		std::cout <<  *((int*)can_msg) << std::endl;
-		std::cout << (int) *((std::uint8_t*)(can_msg+sizeof(std::uint32_t)) ) << std::endl;
+		//std::cout <<  *((int*)can_msg) << std::endl;
+		//std::cout << (int) *((std::uint8_t*)(can_msg+sizeof(std::uint32_t)) ) << std::endl;
 		for (auto handler_info : in_ctxt.handler) {
 
 			/**

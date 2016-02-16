@@ -51,19 +51,23 @@ namespace sockcan{
 	extern std::mutex interfaces_to_sockets_m;
 
 
-	void map_can_frame(struct can_frame* out, char* frame,int frame_size, int header_size) {
-		if (frame_size < MIN_CAN_FRAME_SIZE) return;
-		if (frame == nullptr) return;
+        bool map_can_frame(struct can_frame* out, char* frame,int frame_size, int header_size) {
+                if (frame_size < MIN_CAN_FRAME_SIZE) return false;
+                if (frame == nullptr) return false;
 
 		//std::cout << "!!!!!!!!!!!!!!!!!!!"<< header_size << std::endl;
 		if (header_size == 16){
 		  out->can_id = (*((std::uint16_t*)frame) & 0x7FF) | ((*((std::uint16_t*)frame) & 0x800) >> 11);
 		  out->can_dlc = std::min( ((*((std::uint16_t*)frame) & 0xF000) >> 12) - 2, MAX_CAN_FRAME_PAYLOAD);
+                  if(out->can_dlc > 8 || out->can_dlc < 0)
+                   return false;
 		  memcpy(out->data, frame + 2, out->can_dlc);
 		}
 		else {
-		 out->can_id = *((std::uint32_t*)frame) ;
+                 out->can_id = *((std::uint32_t*)frame) ;
 		 out->can_dlc = *((std::uint8_t*) (frame+4)) - 5;
+                 if(out->can_dlc > 8 || out->can_dlc < 0)
+                   return false;
 		 memcpy(out->data, frame + 5, out->can_dlc);
 		}
 	}
@@ -180,7 +184,10 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 		int wr = 0;
 
 		if (len >= kmw::MIN_CAN_FRAME_SIZE && frame) {
-			map_can_frame(&can_message, frame, frame_size);
+                        auto mr = map_can_frame(&can_message, frame, frame_size);
+                        if (!mr)
+                          smc->fatal_(-1,"CAN Frame incompatible (too long?)");
+
 			auto r = kmw::CanWrite(
 				multibus_queue,
 				&can_message);
@@ -232,7 +239,7 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t>, 
 
 	for (;;)
 	{
-		DEBUG << "[comm_sender_socket_can][WAIT_FOR_FRAME][pop_frame=" << pop_frame << "]\n";
+                DEBUG << "[comm_sender_socket_can][WAIT_FOR_FRAME][pop_frame=" << pop_frame << "]\n";
 		std::tuple<char*, size_t,size_t> frame_info;
 
 		if (pop_frame) {

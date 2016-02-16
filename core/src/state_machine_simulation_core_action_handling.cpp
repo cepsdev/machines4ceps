@@ -583,9 +583,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			if (n->kind() == ceps::ast::Ast_node_kind::int_literal ||
 			    n->kind() == ceps::ast::Ast_node_kind::float_literal ||
 			    n->kind() == ceps::ast::Ast_node_kind::string_literal
-			    )
-
-				std::cout << to_string(this,n);
+			    )std::cout << to_string(this,n);
 
 		}
 
