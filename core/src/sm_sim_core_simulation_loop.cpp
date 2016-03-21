@@ -123,6 +123,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 		states_t states_without_transition;
 		current_states() = states;
+		call_states_visitors();
 		if (active_states_logger()){
 			std::lock_guard<std::recursive_mutex> g (this->active_states_logger_mutex_);
 			std::vector<int> v;

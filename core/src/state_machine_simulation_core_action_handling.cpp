@@ -72,16 +72,19 @@ std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr
 	}
 	if (node_isrw_state(p))
 	{
+		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 		auto v = smc->get_global_states()[ceps::ast::name(ceps::ast::as_symbol_ref(p))];
 		return to_string(smc,v);
 	}
 	if (p->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(p)) == "Guard")
 	{
-			auto v = smc->guards()[ceps::ast::name(ceps::ast::as_symbol_ref(p))];
-			return to_string(smc,v);
+		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+		auto v = smc->guards()[ceps::ast::name(ceps::ast::as_symbol_ref(p))];
+		return to_string(smc,v);
 	}
 	if (p->kind() == ceps::ast::Ast_node_kind::identifier)
 	{
+		std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 			auto id = ceps::ast::name(ceps::ast::as_id_ref(p));
 			auto it_frame_gen = smc->frame_generators().find(id);
 			if (it_frame_gen != smc->frame_generators().end())
@@ -880,7 +883,7 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
 	auto r = ceps::interpreter::evaluate(node,
 			smc->ceps_env_current().get_global_symboltable(),
-			smc->ceps_env_current().interpreter_env(),root_node	);
+			smc->ceps_env_current().interpreter_env(),root_node,nullptr	);
 	smc->ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
 	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();

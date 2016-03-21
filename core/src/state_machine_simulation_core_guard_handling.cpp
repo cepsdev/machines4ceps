@@ -258,7 +258,7 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 
 		result  = ceps::interpreter::evaluate(guard_unfolded,
 															ceps_env.get_global_symboltable(),
-															ceps_env.interpreter_env(),nullptr	);
+															ceps_env.interpreter_env(),nullptr,nullptr	);
 		ceps_env.interpreter_env().symbol_mapping().clear();
 		DEBUG << "[RET_FROM_CALL][ceps::interpreter::evaluate][A]\n";
 	} else
@@ -288,7 +288,7 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 		//std::cout << "NOTUNFOLDED:" << *guard_expr << std::endl;
 		result  = ceps::interpreter::evaluate(guard_expr,
 										ceps_env.get_global_symboltable(),
-										ceps_env.interpreter_env(),nullptr	);
+										ceps_env.interpreter_env(),nullptr,nullptr	);
 		ceps_env.interpreter_env().symbol_mapping().clear();
 		DEBUG << "[RET_FROM_CALL][ceps::interpreter::evaluate][B]\n";
 	}

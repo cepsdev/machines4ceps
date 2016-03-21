@@ -99,9 +99,16 @@ class State_machine_simulation_core:public IUserdefined_function_registry
 	std::set<std::string>& unique_events(){return unique_events_;}
 	std::set<std::string> not_transitional_events_;
 	std::set<std::string>& not_transitional_events(){return not_transitional_events_;}
+	std::vector< std::pair< void (*) (states_t const&,State_machine_simulation_core*,void *), void * > > states_vistors;
+	void call_states_visitors() {
+		for(auto & e : states_vistors) e.first(current_states_,this,e.second);
+	}
 
 public:
 
+	void reg_states_visitor(void (*f) (states_t const&,State_machine_simulation_core*,void *), void * tag){
+		states_vistors.push_back(std::make_pair(f,tag));
+	}
 	log4ceps::Logger<Activestates_logentry, log4ceps::persistence::in_memory>* set_active_states_logger(log4ceps::Logger<Activestates_logentry, log4ceps::persistence::in_memory>* l){
 		auto t = active_states_logger_;active_states_logger_ = l;
 		return t;
@@ -133,6 +140,7 @@ public:
 	std::recursive_mutex& states_mutex() {return glob_states_mutex_;}
 
 	states_t & current_states(){return current_states_;}
+
 	bool shutdown(){return shutdown_threads_;}
 	//void lock_global_states() const {states_mutex_.lock();}
 	//void unlock_global_states() const {states_mutex_.unlock();}

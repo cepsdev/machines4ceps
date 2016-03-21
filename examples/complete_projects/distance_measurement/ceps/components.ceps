@@ -1,0 +1,77 @@
+components{
+  warn_led{
+    on();
+    off();
+  };
+  
+  system_timer{
+    reset();
+    get_tick_count();    
+  };
+  
+  led{
+    on();
+    off();
+  };
+  
+  sensor{
+    high();
+    low();
+  };
+  
+  control{
+    start();
+  };
+};
+
+system_architecture{
+ device{id{cpu;};"Hercules Processor (ARM32)";control;system_timer;};
+ device{id{sensor;};"Microsonic M30";sensor;};
+ devive{id{warn_led;};"warn led"; warn_led;};
+ device{id{led;};"ctrl led"; led;}; 
+};
+
+bus_topolgy{
+  bus{can;"can0";cpu;sensor;};
+  bus{can;"can1";cpu;led;warn_led;};
+};
+
+scenario{
+  description{};
+  actors{led;sensor;system_timer;};
+  seq{
+  reset_timer;
+  led_on;
+  expect_event_before_time_delta{0.5*sec;sensor_edge;};
+  expect_event_after_time_delta{0.1*sec;sensor_edge;};};
+};
+
+scenario{  
+  actors{warn_led;sensor;system_timer;control;};
+  seq{start_control;
+  wait_for(0.5*sec);
+  expect_to_be_in{warn_led{on;};};};  
+};
+
+
+//Doc "component view"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

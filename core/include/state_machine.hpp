@@ -18,12 +18,16 @@ struct state_rep_t {
 
 	bool tag1_;
 
+	int id_ = -1;
+
 	bool valid() const {return valid_;}
 	state_rep_t() = default;
 	state_rep_t(bool valid, bool is_sm,State_machine* smp, std::string const & sid) : valid_(valid),is_sm_(is_sm),smp_(smp),sid_(sid)
 	{ assert(!valid || is_sm || smp != nullptr);}
 	bool initial() const {return sid_ == "initial" || sid_ == "Initial";}
 	bool final() const {return sid_ == "final" || sid_ == "Final";}
+	int& id() {return id_;}
+	bool has_valid_id() {return id_ != -1;}
 
 	bool operator < (state_rep_t const & rhs) const
 	{
