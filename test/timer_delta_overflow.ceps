@@ -1,0 +1,30 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+kind Systemparameter;
+
+Event A,B,EXIT;
+Guard g;
+
+globals{
+  g = 1;
+};
+
+Statemachine {
+  id{Node_A;};
+  Actions{
+    on_A{
+      print(1.0/0.0,"\n"); //Should be: inf ?
+    };    
+    send_a{
+      start_periodic_timer((1.0/0.0)*s,A);//=> Should throw an exception
+    };
+  };
+  States{Initial;Final;};
+  Transition{Initial;Final;send_a;};
+  Transition{Final;Final;A;on_A;};
+};
+
+Simulation{
+  Start{Node_A;};
+};

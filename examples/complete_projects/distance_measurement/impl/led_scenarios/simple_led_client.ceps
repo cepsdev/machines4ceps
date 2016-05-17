@@ -1,0 +1,9 @@
+sender{
+  id{channel_can_0_out;};
+  transport{canbus{bus_id{"vcan0";};};};
+};
+
+Simulation{
+  led_msg_out=1;
+  send(led_msg,channel_can_0_out);
+};

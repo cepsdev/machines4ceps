@@ -1,0 +1,9 @@
+
+
+
+
+//Prints floating point numbers with ',' instead '.' on some systems (gcc 5.2.1?)
+
+Simulation{
+print(100000000.0,"\n");
+};

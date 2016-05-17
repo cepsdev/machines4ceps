@@ -23,7 +23,8 @@ Statemachine {
       start_timer(5.0*s,EXIT);
     };
   };
-  States{Initial;Final;b_received;};
+  States{Initial;Final;/*b_received;*/};
   Transition{Initial;Initial;g;send_a;};
-  Transition{Initial;b_received;B;on_ev_b;};
+  //Transition{Initial;b_received;B;on_ev_b;};
 };
+a

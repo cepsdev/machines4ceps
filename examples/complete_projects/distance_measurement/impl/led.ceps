@@ -1,0 +1,20 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+
+Event LedOn,LedOff,LedTurnOn,LedTurnOff;
+
+
+Statemachine{
+   id{Led;};
+   States{Initial;On;Off;};
+   
+   Actions{emit_on{LedOn;};emit_off{LedOff;};};
+ 
+   Transition{Initial;Off;emit_off;};  // Intial => Off Action: emit_off
+   Transition{Off;On;LedTurnOn;emit_on;}; 
+   Transition{On;Off;LedTurnOff;emit_off;};
+};
+
+

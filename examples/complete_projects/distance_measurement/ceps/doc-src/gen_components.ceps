@@ -1,0 +1,18 @@
+//Doc "component view"
+
+components_doc{
+  digraph{
+    id{"components";};
+    for(h:root.components.content().is_struct()){node{id{name(h);};};}    
+  };
+  dump("doc/components.gv",predecessor());
+  system("dot doc/components.gv -Tsvg -o doc/components.svg" );
+
+  html{
+    body{
+      h1{"Components";};
+      img{attr{src{"components.svg";};};};
+    };
+  };
+  dump("doc/components.html",predecessor());
+};

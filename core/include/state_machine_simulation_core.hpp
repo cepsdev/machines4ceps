@@ -28,6 +28,23 @@
 namespace log4ceps = log4kmw;
 
 
+namespace sm4cepslog{
+ class Logger{
+	 char* cur_val_;
+	 size_t state_count_;
+	 size_t cur_val_size_;
+	 size_t compute_length_in_bytes(size_t s){
+		 if (s == 0) return 1;
+		 return (s + 7) / 8;
+	 }
+ public:
+	 explicit Logger (size_t state_count):state_count_{state_count}{
+		 cur_val_ = new char[cur_val_size_=compute_length_in_bytes(state_count_)];
+	 }
+
+
+ };
+};
 
 
 template<typename T, typename Q> class threadsafe_queue{

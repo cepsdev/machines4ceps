@@ -1,0 +1,159 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event TimeoutOccured,Tick,LedTurnOn,LedTurnOff,WarnLedTurnOn,WarnLedTurnOff,LedOff,LedOn,WarnLedOff,WarnLedOn,SignalEdge,OutOfBounds,EXIT;
+
+Systemstate timer_counter; 
+
+Guard upper_time_bound;
+
+Globals{
+  upper_time_bound = timer_counter < 0.8*s /*&& timer_counter > 0.1*s*/;
+};
+
+val timeout_delay = 4.0*s;
+val timer_granularity = 0.5*s;
+val sensor_delay = 0.5*s;
+
+
+
+Statemachine{id{Sensor;};
+  States{Initial;WaitForLedOn;WaitForLedOff;};
+  Actions{
+    emit_signal_edge{
+      start_timer(sensor_delay,SignalEdge,sen_timer);
+    };
+  };
+  Transition{Initial;WaitForLedOn;LedOff;};
+  Transition{Initial;WaitForLedOff;LedOn;};
+  Transition{WaitForLedOn;WaitForLedOff;LedOn;emit_signal_edge;};
+  Transition{WaitForLedOff;WaitForLedOn;LedOff;emit_signal_edge;};
+};
+
+
+Statemachine{id{Warn_led;};
+ 
+ States{Initial;On;Off;}; 
+};
+
+Statemachine {
+  
+  id{System_Timer;};
+  States{Initial;Running;};
+   Actions{
+     start{timer_counter=0.0*s; start_periodic_timer(timer_granularity,Tick,system_timer);};
+     increment_counter{timer_counter=timer_counter+timer_granularity;};
+   };
+  on_exit{kill_timer(system_timer);};
+  Transition{Initial;Running;start;};
+  Transition{Running;Running;Tick;increment_counter;};
+   
+};
+
+
+
+Statemachine {
+  id{Control;};
+  States{Initial;Error;Final;};
+  
+  
+  Statemachine {id{Run;}; 
+    States{Initial;Wait_For_Signal_Edge;Loop;Final;};
+    import{System_Timer;};
+    
+    on_enter{start_timer(timeout_delay,TimeoutOccured,timeout_gen);};
+    Actions{
+      trigger_led{LedTurnOn;};
+      trigger_led_off{LedTurnOff;start_timer(timeout_delay,TimeoutOccured,timeout_gen);timer_counter=0.0*s;};
+      emit_out_of_bounds{OutOfBounds;};
+    };
+    Transition{Initial;System_Timer;};
+    Transition{Initial;Loop;};
+    Transition{Loop;Wait_For_Signal_Edge;trigger_led;};
+    Transition{Wait_For_Signal_Edge;Loop;upper_time_bound; SignalEdge;trigger_led_off;};
+    Transition{Wait_For_Signal_Edge;Final;!upper_time_bound; SignalEdge;emit_out_of_bounds;};
+    
+  };
+  
+  Actions{emit_exit{EXIT;};};
+  Transition{Initial;Run;};
+  Transition{Run;Error;TimeoutOccured;};
+  Transition{Run;Error;OutOfBounds;};
+  Transition{Error;Final;emit_exit;};
+};
+
+
+val doc_path = "doc/";
+val img_path = "img/";
+
+
+
+smgraphs{
+for(statemachine : root.Statemachine)
+{
+  smgraph{
+   statemachine.id;
+   for(transition : statemachine.Transition) 
+   { 
+     edge{from{transition.content().at(0);};to{transition.content().at(1);};event{transition.content().is_kind("Event");};};
+   };
+   
+   for(t:statemachine.thread){
+    thread{
+       localstates{t.States.content();};
+       for(transition : t.Transition) 
+       { 
+	  edge{from{transition.content().at(0);};to{transition.content().at(1);};event{transition.content().is_kind("Event");};};
+       };
+    }; 
+   };
+   
+   references{
+     //for(t:statemachine.import){name{text(t.content());};};
+    for(t:statemachine.import ){
+       val smname = text(root.Statemachine.id.text_value_of_content_equals(text(t.content())).content());
+       ref{smname;meta(root.Statemachine.id.text_value_of_content_equals(text(t.content())),"file");};
+     }   
+
+     for(t:statemachine.thread.import ){
+       val smname = text(root.Statemachine.id.text_value_of_content_equals(text(t.content())).content());
+       ref{smname;meta(root.Statemachine.id.text_value_of_content_equals(text(t.content())),"file");};
+     }
+   };//references
+  };
+  //references{for(r:statemachine.Transition){"111";text(r.content());} };
+};
+};
+
+for(dgraph:root.smgraphs.smgraph) {
+  val outfile=doc_path+"sm_"+text(dgraph.id.content())+".gv";
+  dump(outfile,dgraph);
+  system("dot "+outfile+" -Tsvg -o "+doc_path+img_path+"sm_"+text(dgraph.id.content())+".svg" ); 
+  html{
+    body{
+      h1{text(dgraph.id.content());};
+      img{
+	attr{src{img_path+"sm_"+text(dgraph.id.content())+".svg";};};	
+      };
+      p{};a{attr{href{meta(dgraph,"file");};};"source code...";};
+      h3{"Imports";};
+      for(r:dgraph.references.ref){
+	a{attr{href{"sm_"+text(r.content().at(0))+".html";};};text(r.content().at(0)); };" (";
+	a{attr{href{text(r.content().at(1));};};"source)"; };br{};
+	
+      }
+    };
+  };
+  dump(doc_path+"sm_"+text(dgraph.id.content())+".html",predecessor());  
+};
+
+
+/*
+Simulation{
+  Start{Sensor;};
+  Start{Led;};
+  Start{Control;};
+  start_timer(10.0*s,EXIT);
+  ASSERT_END_STATES_CONTAINS_NOT{Control.Error;Control.Final;};
+};*/

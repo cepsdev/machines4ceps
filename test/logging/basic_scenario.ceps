@@ -1,0 +1,68 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event E;
+
+
+
+Statemachine{id{S1;};
+  States{a;b;c;d;Initial;};
+  Transition{Initial;a;E;};
+  Transition{a;b;E;};
+};
+
+//6
+
+Statemachine{
+  id{S2;};
+  import{S1;};
+  States{a;b;c;d;Initial;};
+  Transition{Initial;a;E;};
+  Transition{a;b;E;};
+};
+
+//12
+
+Statemachine{
+  id{S3;};
+  Statemachine{id{S1;};
+  States{a;b;c;d;Initial;};
+  Transition{Initial;a;E;};
+  Transition{a;b;E;};
+  };
+  States{a;b;c;d;Initial;};
+  Transition{Initial;a;E;};
+  Transition{a;b;E;};
+};
+
+//==30
+
+Statemachine{
+  id{S4;};
+  import{S1;};
+  States{a;b;c;d;Initial;};
+  Transition{Initial;a;E;};
+  Transition{a;b;E;};
+};
+
+//==42
+
+
+Statemachine{
+  id{S5;};
+  import{S4;};
+  States{a;b;c;d;Initial;};
+  Transition{Initial;a;E;};
+  Transition{a;b;E;};
+};
+
+//==60
+
+
+Simulation{
+  Start{S2;};
+  E;
+  E;
+};
+

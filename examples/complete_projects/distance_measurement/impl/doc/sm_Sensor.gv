@@ -1,0 +1,10 @@
+digraph Sensor{
+
+ graph [layout = dot]
+ node [fontname="Arial",fontsize="14",shape="box", style="rounded,filled", fillcolor=PowderBlue,margin=0];
+ edge [fontname="Arial bold italic",fontsize="12",fontcolor="Indigo"];
+ "Initial" -> "WaitForLedOn" [ label = "LedOff" ] ;
+"Initial" -> "WaitForLedOff" [ label = "LedOn" ] ;
+"WaitForLedOn" -> "WaitForLedOff" [ label = "LedOn" ] ;
+"WaitForLedOff" -> "WaitForLedOn" [ label = "LedOff" ] ;
+}

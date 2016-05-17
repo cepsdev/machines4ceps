@@ -18,6 +18,7 @@ Statemachine {
       
     };    
     send_a{
+     1.0 / 0.0;
       g = 0;
       A(1);
       start_timer(5.0*s,EXIT);

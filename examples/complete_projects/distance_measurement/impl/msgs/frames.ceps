@@ -1,0 +1,17 @@
+kind Systemstate;
+Systemstate led_msg_in,led_msg_out;
+
+
+
+frame{
+  id{led_msg;};
+  data{
+    header{
+      cob_id{uint11{1;};};
+      rtr{bit{0;};};
+      data_length{uint4{__current_frame_size;};};
+    };
+    payload{uint8{in{led_msg_in;};out{led_msg_out;};};};
+  };
+};
+

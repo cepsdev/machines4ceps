@@ -1,0 +1,24 @@
+
+
+global_functions{
+  handler_led_msg_in{
+    //print("led_msg_in=",led_msg_in,"\n");
+    if (led_msg_in == 0){
+      LedTurnOff;
+    } else {
+      LedTurnOn;
+    }
+  };
+};
+
+receiver{
+  id{channel_can_0_in;};
+  transport{canbus{bus_id{"vcan0";};};}; 
+  on_msg{frame_id{led_msg;}; handler{handler_led_msg_in;};};
+};
+
+
+
+Simulation{
+  Start{Led;};
+};

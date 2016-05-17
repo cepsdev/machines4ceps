@@ -14,13 +14,13 @@ components{
     off();
   };
   
-  sensor{
+  photo_sensor{
     high();
     low();
   };
   
   control{
-    start();
+    run();
   };
 };
 
@@ -54,7 +54,6 @@ scenario{
 };
 
 
-//Doc "component view"
 
 
 

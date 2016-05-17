@@ -1,0 +1,23 @@
+
+
+global_functions{
+  f {
+    params{x=1;};
+    print(x,"\n");
+    
+    return x;
+  };
+};
+
+
+Statemachine{id{S;};
+States{Initial;};
+on_enter{
+   assert(f()==1);
+   assert(f(2)==2);
+};
+};
+
+Simulation{
+  Start{S;};
+};

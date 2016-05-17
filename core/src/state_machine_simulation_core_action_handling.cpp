@@ -266,7 +266,7 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 		{
 			std::lock_guard<std::mutex> lk(timer_threads_m);
 			if (timer_threads.size() == 0){
-				timer_threads.resize(128);
+				timer_threads.resize(1024);
 				for(auto& tinf : timer_threads){
 					std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(tinf) = nullptr;
 					std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = false;

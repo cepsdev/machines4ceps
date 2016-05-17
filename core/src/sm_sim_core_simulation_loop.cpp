@@ -55,7 +55,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 	}
 
 
-	log()<< "[SIMULATION STARTED]\n";	log()<<"[START STATES] " ;	print_info(states);
+	log()<< "[SIMULATION STARTED]\n";	//log()<<"[START STATES] " ;	print_info(states);
 
 	int pos = 0;	int loop_ctr = 0;	bool quit = false;
 
@@ -69,7 +69,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 	{
 		bool ev_read = false;
 		current_event().id_= {};
-		log()<< "[SIMULATION_LOOP][" << ++loop_ctr << "]\n";
+		if (print_debug_info_)log()<< "[SIMULATION_LOOP][" << ++loop_ctr << "]\n";
 
 		event_rep_t ev;
 		bool fetch_made_states_update = false;
@@ -85,7 +85,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				{
 				 for(auto const & sm : on_enter_seq){
 				 	 //Handle on_enter
-					 log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
+					 if (print_debug_info_)log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
 					 auto it = sm->actions_.find(State_machine::Transition::Action("on_enter"));
 					 if (it == sm->actions_.end()) continue;
 					 if (it->body_ == nullptr) continue;
@@ -99,7 +99,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			   taking_epsilon_transitions = true;
 			   continue;
 		     } else {
-			  log()<< "[NO EVENT FOUND => COMPUTATION COMPLETE]\n";
+		    	 if (print_debug_info_)log()<< "[NO EVENT FOUND => COMPUTATION COMPLETE]\n";
 			  break;
 			 }
 		 } else {
@@ -153,14 +153,14 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 		 if (!transitions_taken && taking_epsilon_transitions && removed_states.empty())
 		 {
-			log() <<"[NO FURTHER EPSILON TRANSITIONS FOUND => FETCH EVENT]\n";
+			 if (print_debug_info_)log() <<"[NO FURTHER EPSILON TRANSITIONS FOUND => FETCH EVENT]\n";
 			remove_states_.clear();
 			taking_epsilon_transitions = false;
 			continue;
 		 }
 		 if (taking_epsilon_transitions)
 		 {
-			log() <<"[EPSILON TRANSITIONS FOUND]\n";
+			 if (print_debug_info_)log() <<"[EPSILON TRANSITIONS FOUND]\n";
 		 }
 
 		 if (print_debug_info_){DEBUG <<"[INITIAL KERNEL STATES]"; print_info(triggered_kernel_states);DEBUG <<"\n";}
@@ -236,9 +236,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 		auto new_states = states_t(new_states_set.begin(),new_states_set.end());
 
-		print_info(states,new_states,new_states_triggered_set,std::set<state_rep_t>(  states_without_transition.begin(),states_without_transition.end()) );
+		if(print_debug_info_)print_info(states,new_states,new_states_triggered_set,std::set<state_rep_t>(  states_without_transition.begin(),states_without_transition.end()) );
 
-		if(new_states_triggered_set.size() == 0) log() << "[NO TRANSITIONS]\n";
+		if(new_states_triggered_set.size() == 0) if(print_debug_info_)log() << "[NO TRANSITIONS]\n";
 		if (on_exit_seq.size())
 		{
 			for(auto const & sm : on_exit_seq){
@@ -256,7 +256,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			if (it == associated_kernerl_states_action.end()) continue;
 			for(auto act_it = it->second.begin(); act_it != it->second.end();++act_it)
 			{
-				log() << "[EXECUTE ACTION][ID="<< act_it->id_ <<"]"  << "\n";
+				if (print_debug_info_)log() << "[EXECUTE ACTION][ID="<< act_it->id_ <<"]"  << "\n";
 				if (act_it->body() == nullptr) continue;
 				execute_action_seq(act_it->associated_sm_,act_it->body());
 			}
@@ -278,7 +278,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 */
 		 for(auto const & a : on_enter_sm_derived_action_list)
 		 {
-			log() << "[EXECUTE ACTION:on_enter_sm_derived_action_list][ID="<< a.id_ <<"]"  << "\n";
+			 if (print_debug_info_)log() << "[EXECUTE ACTION:on_enter_sm_derived_action_list][ID="<< a.id_ <<"]"  << "\n";
 			if (a.body() == nullptr) continue;
 			execute_action_seq(a.associated_sm_,a.body());
 		 }
@@ -314,9 +314,10 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 
 		taking_epsilon_transitions = true;//Next loop starts with epsilon transitions
+		{log() << "[ACTIVE_STATES] "; print_info(states);}
 	}
 
-	{log() << "[END STATES] "; print_info(states);}
+	{log() << "[ACTIVE_STATES(After Termination)] "; print_info(states);}
 
 	if (active_asserts_.size())
 	{
