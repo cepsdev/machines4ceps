@@ -315,6 +315,15 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 		taking_epsilon_transitions = true;//Next loop starts with epsilon transitions
 		{log() << "[ACTIVE_STATES] "; print_info(states);}
+		if (logtrace()){
+			clock_gettime(CLOCK_REALTIME, &log4kmw::get_value<0>(log4kmw_states::Timestamp));
+
+			log4kmw::get_value<0>(log4kmw_states::Current_states).clear();
+			for(auto & s : states){
+				log4kmw::get_value<0>(log4kmw_states::Current_states).set(s.id());
+			}
+			log4kmw_loggers::log_event(log4kmw_events::Step(), log4kmw_loggers::logger_Trace);
+		}
 	}
 
 	{log() << "[ACTIVE_STATES(After Termination)] "; print_info(states);}

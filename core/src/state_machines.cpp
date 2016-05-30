@@ -3,6 +3,25 @@
 
 std::map<std::string,State_machine*> State_machine::statemachines;
 
+int state_rep_t::id() {
+	if (id_ == -1){
+		if (is_sm_) id_ = smp_->idx_;
+		else {
+			for(auto it = smp_->states().begin(); it != smp_->states().end(); ++it) {
+					 auto state = *it;
+					 if (sid_ == state->id()) {id_ = state->idx_; break;}
+			}
+			if(id_==-1){
+				for(auto subsm: smp_->children()){
+					if(subsm->id() == sid_){id_=subsm->idx_;break;}
+				}
+			}
+		}
+	}
+	return id_;
+}
+
+
 State_machine* state_rep_t::containing_sm() const {
 	if (!is_sm_) return smp_;
 	return smp_->parent_;
@@ -38,16 +57,17 @@ void State_machine::clone_from(State_machine* rhs,int & counter,std::string cons
 
 
 
-	  states.clear();
-	  for(auto it = rhs->states.begin();it != rhs->states.end();++it)
+	  for(auto p:states()) delete p;
+	  states().clear();
+	  for(auto it = rhs->states().begin();it != rhs->states().end();++it)
 	  {
-		  State const & s = *it;
+		  State const & s = *(*it);
 		  State dest_s(s);
 
 		  if (!dest_s.is_sm_) {dest_s.smp_ = this;}
 		  else   map_state(dest_s,cloned_sms, id_to_sm,counter,q_id,resolve_imports,context);
 
-		  states.insert(dest_s);
+		  states().insert(new State(dest_s));
 	  }//for
 
 

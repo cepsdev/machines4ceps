@@ -26,8 +26,8 @@ struct state_rep_t {
 	{ assert(!valid || is_sm || smp != nullptr);}
 	bool initial() const {return sid_ == "initial" || sid_ == "Initial";}
 	bool final() const {return sid_ == "final" || sid_ == "Final";}
-	int& id() {return id_;}
-	bool has_valid_id() {return id_ != -1;}
+	int id();
+	//bool has_valid_id() {return id_ != -1;}
 
 	bool operator < (state_rep_t const & rhs) const
 	{
@@ -123,6 +123,8 @@ public:
 
     bool unresolved() const { return unresolved_;}
     bool& unresolved()  { return unresolved_;}
+    bool is_sm() const {return is_sm_;}
+    bool& is_sm() {return is_sm_;}
 
     std::vector<std::string> const & q_id() const {return q_id_;}
     std::vector<std::string>  & q_id() {return q_id_;}
@@ -203,22 +205,22 @@ public:
      }
   };
 
-  bool has_initial_state() const { for(auto const & s: states) if (s.is_initial()) return true; return false;}
-  State get_initial_state() const { for(auto const & s: states) if (s.is_initial()) return s; return State();}
+  bool has_initial_state() const { for(auto const & s: states()) if (s->is_initial()) return true; return false;}
+  State get_initial_state() const { for(auto const & s: states()) if (s->is_initial()) return *s; return State();}
 
 
   void insert_state(State s)
   {
 	s.is_sm_ = false;
 	s.smp_ = this;
-    states.insert(s);
+    states().insert(new State(s));
   }
 
   bool lookup(State& s)
   {
-
-    auto it = states.find(s);
-    if (it != states.end()) {s = *it; return true;}
+	for(auto st: states()){
+		if (st->id() == s.id()) {s = *st; return true;}
+	}
     for(auto &t : children_)
      if (t->id() == s.id()) {s.smp() = t;s.is_sm_ = true;return true;}
     if (parent_!=nullptr)
@@ -304,7 +306,13 @@ public:
   std::vector< unresolve_import_t > unresolved_imports_;
   std::vector<std::vector<Transition>> threads_;
   std::vector<Transition> transitions_;
-  std::set<State> states;
+  std::set<State*> states_;
+
+  std::set<State*>& states() {return states_;};
+  std::set<State*>const& states() const {return states_;};
+
+
+
 
   bool join_ = false;
   State join_state_;

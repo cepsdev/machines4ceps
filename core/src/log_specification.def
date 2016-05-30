@@ -1,0 +1,63 @@
+/*
+Copyright 2015, Krauss-Maffei-Wegmann GmbH & Co. KG.
+All rights reserved.
+
+Description:
+	Logging specification for sm4ceps.
+*/
+
+kind Systemstate;
+kind Event;
+kind Record;
+
+events{
+ Step{
+  description{"Fired whenever the main loop computes a new set of active states.";};
+ }; 
+};
+
+
+state{
+ id{Current_states;};
+ value{
+  Dynamic_bitset{size{32;};};
+  };
+  ceps_representation{file{"mfqsmid.ceps";};};
+};
+
+state{
+ id{Current_event;};
+ value{0;};
+};
+
+state{
+ id{Timestamp;};
+ value{Timestamp{REALTIME;};};
+};
+
+
+record{
+ id{Trace;};
+ Timestamp;
+ Current_states;
+};
+
+
+
+test{
+ Record Trace;
+ Systemstate Current_states;
+ logfile{record{Trace;};path{"test.bin";};size{1024;};};
+ Current_states.set(1);
+ Step;
+ Current_states.set(2);
+ Step;
+ Current_states.set(3); 
+ Step;
+ Current_states.reset(3); 
+ Step; 
+ //log_print(logger_Statemachine_log_entry);
+ log_print_ceps(logger_Statemachine_log_entry);
+};
+
+

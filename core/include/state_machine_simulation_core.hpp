@@ -23,28 +23,14 @@
 #include "log4kmw_state.hpp"
 #include "log4kmw_record.hpp"
 #include "log4kmw_logger.hpp"
+#include "log4kmw_states.hpp"
+#include "log4kmw_records.hpp"
+#include "log4kmw_loggers.hpp"
 
 
 namespace log4ceps = log4kmw;
+namespace log4cepsloggers = log4kmw_loggers;
 
-
-namespace sm4cepslog{
- class Logger{
-	 char* cur_val_;
-	 size_t state_count_;
-	 size_t cur_val_size_;
-	 size_t compute_length_in_bytes(size_t s){
-		 if (s == 0) return 1;
-		 return (s + 7) / 8;
-	 }
- public:
-	 explicit Logger (size_t state_count):state_count_{state_count}{
-		 cur_val_ = new char[cur_val_size_=compute_length_in_bytes(state_count_)];
-	 }
-
-
- };
-};
 
 
 template<typename T, typename Q> class threadsafe_queue{
@@ -121,7 +107,12 @@ class State_machine_simulation_core:public IUserdefined_function_registry
 		for(auto & e : states_vistors) e.first(current_states_,this,e.second);
 	}
 
+	bool logtrace_ = false;
+
 public:
+
+	bool& logtrace() {return logtrace_;}
+	bool logtrace() const {return logtrace_;}
 
 	void reg_states_visitor(void (*f) (states_t const&,State_machine_simulation_core*,void *), void * tag){
 		states_vistors.push_back(std::make_pair(f,tag));
@@ -257,8 +248,6 @@ private:
 	void eval_guard_assign(ceps::ast::Binary_operator & root);
 	void eval_state_assign(ceps::ast::Binary_operator & root,std::string const &);
 	void add(states_t& states, state_rep_t s);
-	std::string get_fullqualified_id(state_rep_t const & s);
-	std::string get_full_qualified_id(State_machine::State const& s);
 	void print_info(states_t& states_from, states_t& states_to,std::set<state_rep_t>const & new_states_triggered_set,std::set<state_rep_t> const& );
 	void print_info(states_t const& states);
 	void trans_hull_of_containment_rel(states_t& states_in,states_t& states_out);
@@ -274,6 +263,8 @@ private:
 													 std::set<state_rep_t>& removed_states);
 
 public:
+	std::string get_fullqualified_id(state_rep_t const & s);
+	std::string get_full_qualified_id(State_machine::State const& s);
 	bool is_assignment_op(ceps::ast::Nodebase_ptr n);
 	bool is_assignment_to_guard(ceps::ast::Binary_operator & node);
 	bool is_assignment_to_state(ceps::ast::Binary_operator & node,std::string& lhs_id);

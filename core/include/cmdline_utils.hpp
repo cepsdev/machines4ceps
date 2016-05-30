@@ -47,6 +47,7 @@ struct Result_process_cmd_line
 	std::vector< std::pair<std::string,std::string>> remote_nodes;
 	std::string server_port;
 	bool quiet = false;
+	bool logtrace = false;
 	std::string monitor = "";
 
 	bool run_as_monitor = false;

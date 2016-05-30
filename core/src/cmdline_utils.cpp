@@ -229,6 +229,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv)
 			else if (arg.substr(0,7) == "--rport") { if(r.remote_nodes.size()) r.remote_nodes.back().second = arg.substr(7); continue;}
 			else if (arg == "--quiet") {r.quiet = true; continue;}
 			else if (arg == "--run_as_monitor") {r.run_as_monitor = true; continue;}
+			else if (arg == "--logtrace") {r.logtrace = true; continue;}
 			else if (arg.substr(0,6) == "--rmip") {r.monitored_node_ip = arg.substr(6); continue;}
 			else if (arg.substr(0,8) == "--rmport") {r.monitored_node_port = arg.substr(8); continue;}
 			else if (arg.substr(0,9) == "--monitor") {r.monitor = arg.substr(9); continue;}

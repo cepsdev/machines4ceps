@@ -1,0 +1,16 @@
+
+Statemachine{id{S1;};};
+
+
+Statemachine{id{S2;};
+
+States{S2_state_1;S2_state_2;S2_state_3;};
+
+};
+
+Statemachine{id{S3;};
+
+ Statemachine{id{S3_Sub1;};
+ };
+};
+

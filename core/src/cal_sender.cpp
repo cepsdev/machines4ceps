@@ -70,6 +70,7 @@ namespace sockcan{
                    return false;
 		 memcpy(out->data, frame + 5, out->can_dlc);
 		}
+		return true;
 	}
 }
 
