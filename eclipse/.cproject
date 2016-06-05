@@ -26,14 +26,15 @@
 								<option id="gnu.cpp.compiler.option.dialect.std.1092503036" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++11" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.449327819" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/opt/ros/groovy/include"/>
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/log4kmw/include"/>
+									<listOptionValue builtIn="false" value="/home/tomas/projects/sm4ceps/core/src_gen/logging"/>
+									<listOptionValue builtIn="false" value="/home/tomas/projects/log4kmw/include"/>
 									<listOptionValue builtIn="false" value="../../pugixml-1.6/src"/>
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/ceps/core/include"/>
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/ceps/core/include/include_gen"/>
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/sm4ceps"/>
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/sm4ceps/include"/>
+									<listOptionValue builtIn="false" value="/home/tomas/projects/ceps/core/include"/>
+									<listOptionValue builtIn="false" value="/home/tomas/projects/ceps/core/include/include_gen"/>
+									<listOptionValue builtIn="false" value="/home/tomas/projects/sm4ceps"/>
+									<listOptionValue builtIn="false" value="/home/tomas/projects/sm4ceps/include"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.include.files.1773619622" superClass="gnu.cpp.compiler.option.include.files" valueType="includeFiles"/>
+								<option id="gnu.cpp.compiler.option.include.files.1773619622" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1091782327" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1428183180" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -44,7 +45,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1678015187" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1897794676" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.paths.2109876438" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/home/tprerovs/projects/ceps/core/bin"/>
+									<listOptionValue builtIn="false" value="/home/tomas/projects/ceps/core/bin"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.573331914" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="cepscore"/>
@@ -131,10 +132,10 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Release">
+		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/statemachines"/>
 		</configuration>
-		<configuration configurationName="Debug">
+		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/statemachines"/>
 		</configuration>
 	</storageModule>

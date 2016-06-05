@@ -733,7 +733,7 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 		lhs_id = name(as_symbol_ref(node.left())); return true ;
 	 }
 
-	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
+	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator || '.' != ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
 		return false;
 	std::vector<std::string> ids;
 	auto p = node.left();
@@ -1198,6 +1198,7 @@ void init_state_machine_simulation(	int argc,
 	smc->quiet_mode() = result_cmd_line.quiet;
 	smc->conf_ignore_unresolved_state_id_in_directives() = result_cmd_line.ignore_unresolved_state_id_in_directives;
 	smc->logtrace() = result_cmd_line.logtrace;
+	smc->generate_cpp_code() = result_cmd_line.cppgen;
 	string last_file_processed;
 
 	for(std::string const & f : result_cmd_line.definition_file_rel_paths)

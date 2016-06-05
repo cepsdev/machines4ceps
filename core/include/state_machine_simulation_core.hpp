@@ -164,6 +164,8 @@ public:
 		event_t(std::string const & id,std::vector<ceps::ast::Nodebase_ptr> const & payload = {}):id_(id),payload_(payload) {}
 		bool operator < (event_t const & rhs) const
 		{
+
+
 			return id_ < rhs.id_;
 		}
 		bool is_epsilon() const {return id_ == "";}
@@ -436,7 +438,11 @@ private:
 	std::set<state_rep_t> assert_not_in_end_states_;
 	std::set<state_rep_t> assert_in_end_states_;
 	std::vector<dispatcher_thread_ctxt_t> dispatcher_thread_ctxt_;
+	bool generate_cpp_code_ = false;
 public:
+	bool generate_cpp_code() const {return generate_cpp_code_;}
+	bool& generate_cpp_code() {return generate_cpp_code_;}
+
 	std::recursive_mutex& get_reg_sock_mtx(){return registered_sockets_mtx_;}
 	std::map<std::string,int>& get_reg_socks(){return registered_sockets_;}
 	dispatcher_thread_ctxt_t& allocate_dispatcher_thread_ctxt(int & i) {
@@ -444,6 +450,8 @@ public:
 		return dispatcher_thread_ctxt_[dispatcher_thread_ctxt_.size()-1];
 	}
 	dispatcher_thread_ctxt_t get_dispatcher_thread_ctxt(int i) {return dispatcher_thread_ctxt_[i];}
+
+	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 
 	//CAL (Sender)
 

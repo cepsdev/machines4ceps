@@ -738,6 +738,9 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 		DEBUG << "[LOG4CEPS][Trace log 'trace.bin' initialized.]\n";
 	}
 
+	if(generate_cpp_code()){
+		do_generate_cpp_code(ceps_env_current(),current_universe());
+	}
 
 	auto simulations = ns[all{"Simulation"}];
 	if (simulations.size())

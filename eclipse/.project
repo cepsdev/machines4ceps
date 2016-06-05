@@ -26,7 +26,37 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>cppgenerator</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>include</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>log4kmw_dynamic_bitset.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/log4kmw/src/log4kmw_dynamic_bitset.cpp</locationURI>
+		</link>
+		<link>
+			<name>log4kmw_record.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/log4kmw/src/log4kmw_record.cpp</locationURI>
+		</link>
+		<link>
+			<name>log4kmw_serialization.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/log4kmw/src/log4kmw_serialization.cpp</locationURI>
+		</link>
+		<link>
+			<name>log4kmw_utils.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/log4kmw/src/log4kmw_utils.cpp</locationURI>
+		</link>
+		<link>
+			<name>logging</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
@@ -44,6 +74,16 @@
 			<name>src</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>cppgenerator/cppgen.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/cppgenerator/cppgen.cpp</locationURI>
+		</link>
+		<link>
+			<name>cppgenerator/cppgen.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/include/cppgenerator/cppgen.hpp</locationURI>
 		</link>
 		<link>
 			<name>include/base_defs.hpp</name>
@@ -104,6 +144,51 @@
 			<name>include/state_machine_simulation_core.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/state_machine_simulation_core.hpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_events.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_events.cpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_events.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_events.hpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_loggers.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_loggers.cpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_loggers.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_loggers.hpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_loggers_tests.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_loggers_tests.cpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_records.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_records.cpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_records.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_records.hpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_states.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_states.cpp</locationURI>
+		</link>
+		<link>
+			<name>logging/log4kmw_states.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_states.hpp</locationURI>
 		</link>
 		<link>
 			<name>src/cal_receiver.cpp</name>
@@ -169,6 +254,11 @@
 			<name>src/state_machine_simulation_core_action_handling.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machine_simulation_core_action_handling.cpp</locationURI>
+		</link>
+		<link>
+			<name>src/state_machine_simulation_core_buildsms.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machine_simulation_core_buildsms.cpp</locationURI>
 		</link>
 		<link>
 			<name>src/state_machine_simulation_core_event_handling.cpp</name>
