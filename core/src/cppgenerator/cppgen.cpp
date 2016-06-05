@@ -7,6 +7,24 @@
 
 using namespace ceps::ast;
 
+struct Indent{
+	int indentation = 0;
+
+	void print_indentation(std::ostream& out, int n)
+	{
+		for(int i = 0; i < n; ++i)
+			out << " ";
+	}
+
+	int indent_incr(){
+		return ++indentation;
+	}
+
+	int indent_decr(){
+		return --indentation;
+	}
+};
+
 void write_copyright_and_timestamp(std::ostream& out, std::string title,bool b){
 	if(!b) return;
 	time_t timer;time(&timer);tm * timeinfo;timeinfo = localtime(&timer);
@@ -19,8 +37,12 @@ void write_copyright_and_timestamp(std::ostream& out, std::string title,bool b){
 		<< std::endl << std::endl;
 }
 
+struct Type{
+	enum {Int,String,Double,Struct,Undefined} t;
+	std::string name;
+};
+
 struct sysstate{
-	enum Type{Int,String,Double,Undefined};
 	std::string name;
 	int pos;
 	Type type;
@@ -29,11 +51,11 @@ struct sysstate{
 };
 
 
-sysstate::Type determine_type(Nodebase_ptr node){
-	if (node->kind() == Ast_node_kind::int_literal) return sysstate::Type::Int;
-	if (node->kind() == Ast_node_kind::float_literal) return sysstate::Type::Double;
-	if (node->kind() == Ast_node_kind::string_literal) return sysstate::Type::String;
-	return sysstate::Type::Undefined;
+Type determine_type(Nodebase_ptr node){
+	if (node->kind() == Ast_node_kind::int_literal) return Type{Type::Int};
+	if (node->kind() == Ast_node_kind::float_literal) return Type{Type::Double};
+	if (node->kind() == Ast_node_kind::string_literal) return Type{Type::String};
+	return Type{Type::Undefined};
 }
 
 std::map<sysstate,Nodebase_ptr> systemstate_first_def; //systemstate name => first definition
@@ -50,7 +72,7 @@ void store_first_state_assign(State_machine_simulation_core* smp,Nodebase_ptr p,
 	std::string lhs_id;
 	auto& binop = as_binop_ref(p);
 	if(!smp->is_assignment_to_state(binop, lhs_id)) return;
-	sysstate s{lhs_id,node_no,sysstate::Type::Undefined};
+	sysstate s{lhs_id,node_no,Type::Undefined};
 	if (already_seen.find(lhs_id) != already_seen.end()) return;
 	already_seen.insert(lhs_id);
 	systemstate_first_def[s] = binop.right();
@@ -62,10 +84,25 @@ void print_first_state_assigns(){
 	}
 }
 
+void write_cpp_type(std::ostream& os,Type t){
+	if(t.t == Type::Int) os << "int";
+	else if(t.t == Type::Double) os << "double";
+	else if(t.t == Type::String) os << "std::string";
+	else if(t.t == Type::Struct) os << t.name;
+	else os << "UNKNOWN_TYPE";
+}
+
+void write_cpp_systemstate_declaration(std::ostream& os,sysstate const & state){
+	write_cpp_type(os,state.type);
+	os << " ";
+	os << state.name;
+}
+
 void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,
 													  ceps::ast::Nodeset& universe){
 	DEBUG_FUNC_PROLOGUE
 
+	std::string sysstates_namespace = "systemstates";
 	auto globals = universe["Globals"];
 	auto struct_defs = universe["typedef"];
 	auto global_functions = universe["global_functions"];
@@ -77,11 +114,19 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	std::vector<sysstate> sys_states;
 	for(auto & state_entry : systemstate_first_def){
 		auto type = determine_type(state_entry.second);
-		if (type == sysstate::Type::Undefined)
+		if (type.t == Type::Undefined){
 			this->warn_(-1,"Couldn't determine type of '"+state_entry.first.name+"' will assume int.");
+			type.t = Type::Int;
+		}
+		sysstate s = state_entry.first;
+		s.type = type;
+		sys_states.push_back(s);
 	}
 
 
+
+
+	//Write files
 	std::string out_cpp;
 	std::string out_hpp;
 
@@ -91,6 +136,15 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	write_copyright_and_timestamp(o_cpp,out_cpp,true);
 	write_copyright_and_timestamp(o_hpp,out_hpp,true);
 
+	Indent indent;
+	o_hpp << "\n\n#include<iostream>\n#include<string>\n\n";
+	o_cpp << "\n\n#include \""<< out_hpp <<"\"\n\n";
+	o_hpp << "namespace "<< sysstates_namespace <<"{\n";
+	indent.indent_incr();
+	for(auto & state_entry : sys_states){
+		o_hpp << "extern ";write_cpp_systemstate_declaration(o_hpp,state_entry);o_hpp << ";\n";
+	}
+	indent.indent_decr();o_hpp<<"\n}\n";
 }
 
 
