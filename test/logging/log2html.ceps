@@ -1,0 +1,23 @@
+html{
+  body{
+    table{attr{border{1;};};
+    for(logentry:root.Trace){
+      tr{ 
+       td{for(e:logentry.Timestamp.content().is_string()) {text(" ");text(e);};};
+      td{for(e:logentry.Current_states.content().is_string()) {text(" ");text(e);};};
+      
+      };
+    };
+    };
+  };
+};
+dump("log.html",predecessor());
+
+
+
+
+
+
+
+
+

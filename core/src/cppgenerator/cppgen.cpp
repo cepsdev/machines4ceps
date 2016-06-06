@@ -292,7 +292,11 @@ void write_cpp_expr_impl(Indent& indent,std::ostream& os,Nodebase_ptr p){
  	    ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
 		std::vector<ceps::ast::Nodebase_ptr> args;
 		if (params.children().size()) flatten_args(params.children()[0], args);
-		os << name(id) << "(";
+
+
+		if ("truncate" == name(id))os << "((int)";
+		else os << name(id) << "(";
+
 		for(size_t i = 0; i != args.size();++i){
 			write_cpp_expr_impl(indent,os,args[i]);
 			if (i + 1 != args.size()) os << " , ";
