@@ -7,12 +7,53 @@
 
 using namespace ceps::ast;
 
+static std::string sysstates_namespace = "systemstates";
+static std::string guards_namespace = "guards";
+static std::string global_functions_namespace = "globfuncs";
+static std::string init_func = "void user_defined_init()";
+
+
+const std::string out_hpp_systemstates_prefix = R"(
+
+ template<typename T> class State{
+   T v_;
+   bool changed_ = true;
+   bool default_constructed_ = true;
+ public:
+   State() = default; 
+   State(T const & v):v_{v},default_constructed_{false} {}
+   State& operator = (State const & rhs){
+     if (!changed_ && !default_constructed_) changed_ = v_ != rhs.v_;
+     else if (default_constructed_) {default_constructed_ = false;changed_ = true;}
+     v_ = rhs.v_;
+   }
+   State& operator = (T const & rhs){
+     if (!changed_ && !default_constructed_) changed_ = v_ != rhs;
+     else if (default_constructed_) {changed_ = true; default_constructed_=false;}
+     v_ = rhs;     
+   }
+   bool changed() const {auto t = changed_;changed_=false;return t;}
+
+   T& value() {return v_;}
+   T value() const {return v_;}
+ 
+  };
+)";
+
+const std::string out_hpp_guards_prefix = R"(
+ using Guard = bool(*)();
+ using Guard_impl = bool ();
+)";
+
+const std::string out_hpp_global_functions_prefix = R"(
+)";
+
 struct Indent{
 	int indentation = 0;
 
-	void print_indentation(std::ostream& out, int n)
+	void print_indentation(std::ostream& out)
 	{
-		for(int i = 0; i < n; ++i)
+		for(int i = 0; i < indentation; ++i)
 			out << " ";
 	}
 
@@ -51,14 +92,13 @@ struct sysstate{
 };
 
 
-Type determine_type(Nodebase_ptr node){
-	if (node->kind() == Ast_node_kind::int_literal) return Type{Type::Int};
-	if (node->kind() == Ast_node_kind::float_literal) return Type{Type::Double};
-	if (node->kind() == Ast_node_kind::string_literal) return Type{Type::String};
-	return Type{Type::Undefined};
-}
 
 std::map<sysstate,Nodebase_ptr> systemstate_first_def; //systemstate name => first definition
+std::map<std::string,std::pair<int,Nodebase_ptr> > struct_defs; //struct decl. => pos,definition
+std::vector< std::pair<std::string,Nodebase_ptr>> guard_backpatch_vec;
+std::map<Nodebase_ptr,int> guard_backpatch_idx;
+
+static int guard_ctr = 0;
 
 template<typename F> void for_all_nodes(State_machine_simulation_core* smp, Nodeset& ns,F f){
 	int node_no = 0;
@@ -67,11 +107,34 @@ template<typename F> void for_all_nodes(State_machine_simulation_core* smp, Node
 	for(auto e: ns.nodes()) f(smp,e, node_no++,util_already_seen);
 }
 
+Type determine_type(Nodebase_ptr node){
+	if (node->kind() == Ast_node_kind::int_literal) return Type{Type::Int};
+	if (node->kind() == Ast_node_kind::float_literal) return Type{Type::Double};
+	if (node->kind() == Ast_node_kind::string_literal) return Type{Type::String};
+	if (node->kind() == Ast_node_kind::identifier && (struct_defs.find(name(as_id_ref(node))) != struct_defs.end()) )
+		return Type{Type::Struct,name(as_id_ref(node))};
+
+	return Type{Type::Undefined};
+}
+
+bool is_compound_id(std::string const & id){
+	return id.find_first_of(".") != std::string::npos;
+}
+
+void store_struct_defs(State_machine_simulation_core* smp,Nodebase_ptr p,int node_no,std::set<std::string>& already_seen){
+	if(p->kind() != Ast_node_kind::structdef) return;
+	auto& sdef = ceps::ast::as_struct_ref(p);
+	auto name_s = name(sdef);
+	if(already_seen.find(name_s) != already_seen.end() ) return;
+	struct_defs[name_s] = std::make_pair(node_no,p);
+}
+
 void store_first_state_assign(State_machine_simulation_core* smp,Nodebase_ptr p,int node_no,std::set<std::string>& already_seen){
 	if(!smp->is_assignment_op(p)) return;
 	std::string lhs_id;
 	auto& binop = as_binop_ref(p);
 	if(!smp->is_assignment_to_state(binop, lhs_id)) return;
+	if (is_compound_id(lhs_id)) return;
 	sysstate s{lhs_id,node_no,Type::Undefined};
 	if (already_seen.find(lhs_id) != already_seen.end()) return;
 	already_seen.insert(lhs_id);
@@ -84,32 +147,229 @@ void print_first_state_assigns(){
 	}
 }
 
-void write_cpp_type(std::ostream& os,Type t){
-	if(t.t == Type::Int) os << "int";
-	else if(t.t == Type::Double) os << "double";
-	else if(t.t == Type::String) os << "std::string";
+void write_cpp_systemstate_type(std::ostream& os,Type t){
+	if(t.t == Type::Int) os << "State<int>";
+	else if(t.t == Type::Double) os << "State<double>";
+	else if(t.t == Type::String) os << "State<std::string>";
 	else if(t.t == Type::Struct) os << t.name;
 	else os << "UNKNOWN_TYPE";
 }
 
 void write_cpp_systemstate_declaration(std::ostream& os,sysstate const & state){
-	write_cpp_type(os,state.type);
+	write_cpp_systemstate_type(os,state.type);
 	os << " ";
 	os << state.name;
 }
+
+void write_cpp_glob_func_decl(std::ostream& os,ceps::ast::Struct & func){
+	os << "int " << ceps::ast::name(func)  << "()";
+}
+
+bool struct_contains_single_value(ceps::ast::Struct const& outer,Nodebase_ptr& v,Type& t){
+ if(outer.children().size() != 1) return false;
+ v = outer.children()[0];
+ if (v->kind() == ceps::ast::Ast_node_kind::int_literal){
+	 t = Type{Type::Int};
+	 return true;
+ } else if (v->kind() == ceps::ast::Ast_node_kind::float_literal){
+	 t = Type{Type::Double};
+	 return true;
+ } else  if (v->kind() == ceps::ast::Ast_node_kind::string_literal){
+	 t = Type{Type::String};
+	 return true;
+ }
+ return false;
+}
+void write_cpp_value(std::ostream& os,Nodebase_ptr v,Type t){
+	if (t.t == Type::Int) os << value(as_int_ref(v));
+	else if (t.t == Type::Double) os << value(as_double_ref(v));
+	else if (t.t == Type::String) os << "R(\"" << value(as_string_ref(v)) << "\")";
+	else os << "{}";
+}
+
+void write_cpp_struct_decl_impl(Indent indent,std::ostream& os,ceps::ast::Struct const& outer){
+	for(auto e: outer.children()){
+		if(e->kind() != Ast_node_kind::structdef) continue;
+		Nodebase_ptr v;Type t;
+		if (struct_contains_single_value(as_struct_ref(e),v,t)){
+			indent.print_indentation(os);write_cpp_systemstate_type(os,t);os << " " << name(as_struct_ref(e)) << " = ";
+			write_cpp_value(os,v,t);os << ";\n";
+		} else {
+			indent.print_indentation(os);os << "struct {\n";
+			indent.indent_incr();
+			write_cpp_struct_decl_impl(indent,os,as_struct_ref(e));
+			indent.indent_decr();
+			indent.print_indentation(os);os << "}"<< name(as_struct_ref(e)) <<";\n";
+		}
+	}
+}
+
+void write_cpp_struct_decl(Indent indent,std::ostream& os,Nodebase_ptr p){
+	indent.print_indentation(os);os << "struct "<< name(as_struct_ref(p)) <<" {\n";
+	indent.indent_incr();
+	write_cpp_struct_decl_impl(indent,os,as_struct_ref(p));
+	indent.indent_decr();
+	indent.print_indentation(os);os << "};\n";
+}
+
+bool is_id_or_symbol(Nodebase_ptr p, std::string& n, std::string& k){
+	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
+	if (p->kind() == Ast_node_kind::symbol) {n = name(as_symbol_ref(p));k = kind(as_symbol_ref(p)); return true;}
+	return false;
+}
+
+bool is_id(Nodebase_ptr p, std::string & result, std::string& base_kind){
+	std::string k,l;
+	if (p->kind() == Ast_node_kind::binary_operator && op(as_binop_ref(p)) == '.'){
+	 if (!is_id_or_symbol(as_binop_ref(p).right(),k,l)) return false;
+
+	 if (!is_id(as_binop_ref(p).left(),result,base_kind)) return false;
+	 result = result + "." + k;
+	 return true;
+	} else if (is_id_or_symbol(p,k,l)){ base_kind = l; result = k; return true; }
+	return false;
+}
+
+static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
+{
+	using namespace ceps::ast;
+	if (r == nullptr) return;
+	if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
+	{
+		auto& t = as_binop_ref(r);
+		flatten_args(t.left(),v,op_val);
+		flatten_args(t.right(),v,op_val);
+		return;
+	}
+	v.push_back(r);
+}
+
+void write_cpp_expr_impl(Indent& indent,std::ostream& os,Nodebase_ptr p){
+	std::string compound_id;
+	std::string base_kind;
+
+	if (p->kind() == Ast_node_kind::int_literal)
+		os << value(as_int_ref(p));
+	else if (p->kind() == Ast_node_kind::float_literal)
+		os << value(as_double_ref(p));
+	else if (p->kind() == Ast_node_kind::string_literal)
+		os << "R\"("<< value(as_string_ref(p)) << ")\"";
+	else if (is_id(p,compound_id,base_kind)){
+		if ("Guard" == base_kind){
+			os << guards_namespace <<"::"<< compound_id << "()";
+		}else if ("Systemstate" == base_kind || "Systemparameter" == base_kind ){
+			os << sysstates_namespace<<"::"<< compound_id<<".value()";
+		} else if ("Event" == base_kind){
+
+		}
+	} else if (p->kind() == Ast_node_kind::binary_operator){
+		auto& binop = as_binop_ref(p);
+		bool print_closing_bracket = false;
+		//if (binop.left()->kind() == Ast_node_kind::binary_operator || binop.right()->kind() == Ast_node_kind::binary_operator)
+		{print_closing_bracket=true;os << "(";}
+		write_cpp_expr_impl(indent,os,binop.left());
+		if (op(binop) == '=') os << " == ";
+		else if (op(binop) == ceps::Cepsparser::token::REL_OP_EQ) os << " == ";
+		else if (op(binop) == ceps::Cepsparser::token::REL_OP_NEQ) os << " != ";
+		else if (op(binop) == ceps::Cepsparser::token::REL_OP_GT) os << " > ";
+		else if (op(binop) == ceps::Cepsparser::token::REL_OP_LT) os << " < ";
+		else if (op(binop) == ceps::Cepsparser::token::REL_OP_GT_EQ) os << " >= ";
+		else if (op(binop) == ceps::Cepsparser::token::REL_OP_LT_EQ) os << " <= ";
+		else if (op(binop) == '+') os << " + ";
+		else if (op(binop) == '&') os << " && ";
+		else if (op(binop) == '|') os << " || ";
+		else if (op(binop) == '-') os << " - ";
+		else if (op(binop) == '*') os << " * ";
+		else if (op(binop) == '/') os << " / ";
+		else if (op(binop) == '^') os << " ^ ";
+		else os << " Unknown_Operator ";
+		write_cpp_expr_impl(indent,os,binop.right());
+		if (print_closing_bracket) os << ")";
+
+	} else if (p->kind() == Ast_node_kind::func_call){
+		ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
+	    ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+ 	    ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
+		std::vector<ceps::ast::Nodebase_ptr> args;
+		if (params.children().size()) flatten_args(params.children()[0], args);
+		os << name(id) << "(";
+		for(size_t i = 0; i != args.size();++i){
+			write_cpp_expr_impl(indent,os,args[i]);
+			if (i + 1 != args.size()) os << " , ";
+		}
+		os << ")";
+
+	} else if (p->kind() == Ast_node_kind::unary_operator){
+		 ceps::ast::Unary_operator& unop = *dynamic_cast<ceps::ast::Unary_operator*>(p);
+		 if (op(unop) == '-') os << "-";
+		 else if (op(unop) == '!') os << "!";
+		 write_cpp_expr_impl(indent,os,unop.children()[0]);
+	}
+}
+
+void write_cpp_expr(Indent& indent,std::ostream& os,Nodebase_ptr p){
+	write_cpp_expr_impl(indent,os,p);
+}
+
+bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p){
+	if(smp->is_assignment_op(p)){
+		std::string lhs_id;
+		auto& binop = as_binop_ref(p);
+		if(smp->is_assignment_to_state(binop, lhs_id)) {
+         //if (is_compound_id(lhs_id))
+	     if (binop.right()->kind() != Ast_node_kind::identifier) {indent.print_indentation(os); os << sysstates_namespace << "::" << lhs_id <<" = ";}
+	     else return false;//typedef
+		} else if (smp->is_assignment_to_guard(binop)) {
+		 indent.print_indentation(os); os << guards_namespace << "::" << name(as_symbol_ref(binop.left())) <<" = ";
+		 os << guards_namespace << "::" <<  guard_backpatch_vec[guard_backpatch_idx[binop.right()]].first;
+		 return true;
+		}
+		write_cpp_expr(indent,os,binop.right());
+	}
+	return true;
+}
+
+bool write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p){
+	return write_cpp_stmt_impl(smp,indent,os,p);
+}
+
 
 void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,
 													  ceps::ast::Nodeset& universe){
 	DEBUG_FUNC_PROLOGUE
 
-	std::string sysstates_namespace = "systemstates";
-	auto globals = universe["Globals"];
-	auto struct_defs = universe["typedef"];
-	auto global_functions = universe["global_functions"];
-	auto sym = ceps_env.get_global_symboltable();
 
+	auto globals = universe["Globals"];
+	auto struct_defs_ns = universe["typedef"];
+	auto global_functions = universe["global_functions"];
+	auto post_proc = universe["post_event_processing"];
+	auto sym = ceps_env.get_global_symboltable();
+	guard_ctr = 0;
+
+	ceps::ast::Struct dummy_strct{"post_event_processing"};
+	dummy_strct.children_ = post_proc.nodes_;
+
+	if (post_proc.size()) global_functions.nodes_.insert(global_functions.nodes_.end(),&dummy_strct );
+
+	for_all_nodes(this,struct_defs_ns,store_struct_defs);
 	for_all_nodes(this,globals,store_first_state_assign);
+	int number_of_guards_in_globals = 0;
+	for_all_nodes(this,globals,[&](State_machine_simulation_core* smp,Nodebase_ptr p,int,std::set<std::string>& seen){
+		if(!smp->is_assignment_op(p)) return;
+		auto& binop = as_binop_ref(p);
+		if(!smp->is_assignment_to_guard(binop)) return;
+		guard_backpatch_vec.push_back(std::make_pair("guard_impl_"+std::to_string(++number_of_guards_in_globals),binop.right()));
+		guard_backpatch_idx[binop.right()] = guard_backpatch_vec.size()-1;
+	 }
+	);
+
 	//print_first_state_assigns();
+
+	std::vector<std::pair<int,Nodebase_ptr>> struct_decls;
+	for(auto e : struct_defs) struct_decls.push_back(e.second);
+	std::sort(struct_decls.begin(),struct_decls.end(),[](std::pair<int,Nodebase_ptr> const& lhs, std::pair<int,Nodebase_ptr> const& rhs){
+		return std::get<0>(lhs) < std::get<0>(rhs);
+	}  );
 
 	std::vector<sysstate> sys_states;
 	for(auto & state_entry : systemstate_first_def){
@@ -122,10 +382,6 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		s.type = type;
 		sys_states.push_back(s);
 	}
-
-
-
-
 	//Write files
 	std::string out_cpp;
 	std::string out_hpp;
@@ -136,15 +392,87 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	write_copyright_and_timestamp(o_cpp,out_cpp,true);
 	write_copyright_and_timestamp(o_hpp,out_hpp,true);
 
-	Indent indent;
-	o_hpp << "\n\n#include<iostream>\n#include<string>\n\n";
+	Indent indent_hpp;Indent indent_cpp;
+
+	o_hpp << "\n\n#include<iostream>\n#include<string>\n#include<algorithm>\n#include<map>\n#include<vector>\n\n";
 	o_cpp << "\n\n#include \""<< out_hpp <<"\"\n\n";
+
+	//Systemstates section
 	o_hpp << "namespace "<< sysstates_namespace <<"{\n";
-	indent.indent_incr();
-	for(auto & state_entry : sys_states){
-		o_hpp << "extern ";write_cpp_systemstate_declaration(o_hpp,state_entry);o_hpp << ";\n";
+	o_hpp << out_hpp_systemstates_prefix << "\n";
+
+	indent_hpp.indent_incr();
+
+	for(auto & struct_decl: struct_decls){
+		write_cpp_struct_decl(indent_hpp,o_hpp,std::get<1>(struct_decl));o_hpp << "\n";
 	}
-	indent.indent_decr();o_hpp<<"\n}\n";
+
+	//Write init
+	o_cpp << "\n\n" <<  init_func << "{\n";
+	indent_cpp.indent_incr();
+	for_all_nodes(this,globals,[&](State_machine_simulation_core*,Nodebase_ptr p,int,std::set<std::string>& seen) {
+		if (write_cpp_stmt(this,indent_cpp,o_cpp,p)) o_cpp << ";\n";
+	});
+	indent_hpp.indent_decr();
+	o_cpp << "}\n";
+
+	for(auto & state_entry : sys_states){
+		indent_hpp.print_indentation(o_hpp);o_hpp << "extern ";write_cpp_systemstate_declaration(o_hpp,state_entry);o_hpp << ";\n";
+		indent_cpp.print_indentation(o_cpp);o_cpp << sysstates_namespace<<"::";write_cpp_systemstate_declaration(o_cpp,state_entry);
+		//if (state_entry.type.t != Type::Struct){o_cpp << " = "; write_cpp_expr(indent_cpp,o_cpp,systemstate_first_def[state_entry]);}
+		//else o_cpp << "{}";
+		o_cpp << ";\n";
+	}
+	indent_hpp.indent_decr();o_hpp<<"\n}\n";
+
+	//Guards section
+	o_hpp << "namespace "<< guards_namespace <<"{\n";
+	o_hpp << out_hpp_guards_prefix << "\n";
+	indent_hpp.indent_incr();
+
+	for_all_nodes(this,globals,[&](State_machine_simulation_core*,Nodebase_ptr p,int,std::set<std::string>& seen) {
+		if(!is_assignment_op(p)) return;
+		auto& binop = as_binop_ref(p);
+		if(!is_assignment_to_guard(binop)) return;
+		auto& guard = as_symbol_ref(binop.left());
+		if (seen.find(name(guard)) != seen.end()) return;
+		seen.insert(name(guard));
+		indent_hpp.print_indentation(o_hpp);o_hpp << "extern Guard " << name(guard) << ";\n";
+	});
+	o_hpp << "\n\n";
+	for(auto& e: guard_backpatch_vec){
+		indent_hpp.print_indentation(o_hpp);o_hpp << "extern Guard_impl " << e.first << ";\n";
+ 	}
+	indent_hpp.indent_decr();o_hpp<<"\n}\n";
+
+	//Global functions section
+
+	o_hpp << "namespace "<< global_functions_namespace <<"{\n";
+	o_hpp << out_hpp_global_functions_prefix << "\n";
+	indent_hpp.indent_incr();
+
+	for_all_nodes(this,global_functions,[&](State_machine_simulation_core*,Nodebase_ptr p,int,std::set<std::string>& seen) {
+		if(p->kind() != Ast_node_kind::structdef) return;
+		auto& str = as_struct_ref(p);
+		indent_hpp.print_indentation(o_hpp);o_hpp << "extern ";
+		write_cpp_glob_func_decl(o_hpp,str);
+		o_hpp << ";\n";
+	});
+	indent_hpp.indent_decr();o_hpp<<"\n}\n";
+    //Write Guard implementations
+	for(auto e : guard_backpatch_vec){
+		auto guard_rhs = e.second;
+		indent_cpp.print_indentation(o_cpp);
+		o_cpp << "bool "<< guards_namespace<< "::" << e.first << "(){\n";
+		indent_cpp.indent_incr();
+		indent_cpp.print_indentation(o_cpp);
+		o_cpp << "return ";
+		write_cpp_expr(indent_cpp,o_cpp,guard_rhs);
+		o_cpp << ";\n";
+		indent_cpp.indent_decr();
+		indent_cpp.print_indentation(o_cpp);o_cpp << "}\n";
+	}
+
 }
 
 

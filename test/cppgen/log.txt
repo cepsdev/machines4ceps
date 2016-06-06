@@ -1,0 +1,24 @@
+out.cpp: In function ‘void user_defined_init()’:
+out.cpp:736:130: error: ‘truncate’ was not declared in this scope
+  systemstates::io_modul_luftdruck_pneumatiktank_systemdruck_out = truncate((2 * systemstates::Pneumatics.system_pressure.value()));
+                                                                                                                                  ^
+out.cpp: In function ‘bool guards::guard_impl_40()’:
+out.cpp:2627:39: error: ‘class systemstates::State<int>’ has no member named ‘ANTRIEB_FAULT’
+   return systemstates::x_drive.Status.ANTRIEB_FAULT.value();
+                                       ^
+out.cpp: In function ‘bool guards::guard_impl_49()’:
+out.cpp:2654:39: error: ‘class systemstates::State<int>’ has no member named ‘ANTRIEB_FAULT’
+   return systemstates::y_drive.Status.ANTRIEB_FAULT.value();
+                                       ^
+out.cpp: In function ‘bool guards::guard_impl_61()’:
+out.cpp:2690:39: error: ‘class systemstates::State<int>’ has no member named ‘ANTRIEB_FAULT’
+   return systemstates::z_drive.Status.ANTRIEB_FAULT.value();
+                                       ^
+out.cpp: In function ‘bool guards::guard_impl_79()’:
+out.cpp:2744:39: error: ‘class systemstates::State<int>’ has no member named ‘ANTRIEB_ENABLE_OUT’
+   return systemstates::z_drive.Status.ANTRIEB_ENABLE_OUT.value();
+                                       ^
+out.cpp: In function ‘bool guards::guard_impl_120()’:
+out.cpp:2867:43: error: ‘g_is_Abbruch_active’ is not a member of ‘guards’
+   return (guards::g_is_NotAus_active() || guards::g_is_Abbruch_active());
+                                           ^
