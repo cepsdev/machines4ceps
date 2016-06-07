@@ -66,6 +66,143 @@ struct Indent{
 	}
 };
 
+
+struct Type{
+	enum {Int,String,Double,Struct,Undefined} t;
+	std::string name;
+};
+
+bool struct_contains_single_value(ceps::ast::Struct const& outer,Nodebase_ptr& v,Type& t){
+ if(outer.children().size() != 1) return false;
+ v = outer.children()[0];
+ if (v->kind() == ceps::ast::Ast_node_kind::int_literal){
+	 t = Type{Type::Int};
+	 return true;
+ } else if (v->kind() == ceps::ast::Ast_node_kind::float_literal){
+	 t = Type{Type::Double};
+	 return true;
+ } else  if (v->kind() == ceps::ast::Ast_node_kind::string_literal){
+	 t = Type{Type::String};
+	 return true;
+ }
+ return false;
+}
+
+struct sm4ceps_struct{
+	std::string name;
+	Type t;
+	int value_int;
+	double value_double;
+	std::string value_string;
+	std::vector<sm4ceps_struct*> members;
+	sm4ceps_struct* find_member(std::string name){
+		for(auto m : members) if (m->name == name) return m;
+		return nullptr;
+	}
+};
+
+std::vector<sm4ceps_struct*> sm4ceps_structs;
+
+sm4ceps_struct* find_sm4ceps_struct(std::string name){
+	for(auto e: sm4ceps_structs) if (e->name == name) return e;
+	return nullptr;
+}
+
+void add_sm4ceps_struct(sm4ceps_struct* s) { sm4ceps_structs.push_back(s); }
+void add_sm4ceps_struct(sm4ceps_struct* s,std::string name) { s->name=name;sm4ceps_structs.push_back(s); }
+
+
+void add_sm4ceps_struct_impl(Struct& outer,sm4ceps_struct* parent) {
+	for(auto child : outer.children()){
+		if (child->kind() != Ast_node_kind::structdef) continue;
+		auto& current = as_struct_ref(child);
+		Nodebase_ptr v;
+		Type t;
+		if (struct_contains_single_value(current,v,t)){
+			if (t.t == Type::Int) {parent->members.push_back(new sm4ceps_struct{name(current),Type{Type::Int,name(current)},value(as_int_ref(v))} );}
+			else if (t.t == Type::Double) {parent->members.push_back(new sm4ceps_struct{name(current),Type{Type::Int,name(current)},0,value(as_double_ref(v))} );}
+			else if (t.t == Type::String) {parent->members.push_back(new sm4ceps_struct{name(current),Type{Type::Int,name(current)},0,0.0,value(as_string_ref(v))} );}
+		} else {
+		  auto new_parent = new sm4ceps_struct{name(current),Type{Type::Struct,name(current)}};
+		  add_sm4ceps_struct_impl(current,new_parent);
+		  parent->members.push_back(new_parent);
+		}
+	}
+}
+
+void add_sm4ceps_struct(Nodebase_ptr p) {
+	if (p->kind() != Ast_node_kind::structdef) return;
+	auto& outer = as_struct_ref(p);
+	auto& n = name(outer);
+	auto parent = new sm4ceps_struct{n,Type{Type::Struct,n}};
+	add_sm4ceps_struct(parent);
+	add_sm4ceps_struct_impl(outer,parent);
+}
+
+
+
+sm4ceps_struct* clone_sm4ceps_struct(sm4ceps_struct* s){
+
+	auto s_cpy = new sm4ceps_struct{s->name,s->t,s->value_int,s->value_double,s->value_string};
+	if (s->t.t != Type::Struct) return s_cpy;
+	for(auto e: s->members){
+		auto e_cpy = clone_sm4ceps_struct(e);
+		s_cpy->members.push_back(e_cpy);
+	}
+	return s_cpy;
+}
+
+sm4ceps_struct* clone_sm4ceps_struct(std::string name){
+	auto v = find_sm4ceps_struct(name);
+	if (v == nullptr) return nullptr;
+	return clone_sm4ceps_struct(v);
+}
+
+sm4ceps_struct* struct_assign(std::string compound_id, std::string struct_id){
+	static int counter = 0;
+
+	size_t n=0;
+	sm4ceps_struct* parent = nullptr;
+	sm4ceps_struct* current_substruct = parent;
+	sm4ceps_struct* rhs = find_sm4ceps_struct(struct_id);
+	if(rhs == nullptr) return nullptr;
+
+	std::string base_id;
+	do{
+	 auto nn = compound_id.find_first_of('.',n);
+	 auto s = (nn == std::string::npos) ? compound_id.substr(n) : compound_id.substr(n,nn-n+1);
+	 if (parent == nullptr){
+		 base_id = s;
+		 parent = current_substruct = find_sm4ceps_struct(s);
+		 if (parent == nullptr){
+			 auto cpy = clone_sm4ceps_struct(struct_id);
+			 if (cpy == nullptr) return nullptr;
+			 add_sm4ceps_struct(cpy,s);
+			 return cpy;
+		 } else {
+			 parent = current_substruct = clone_sm4ceps_struct(base_id);
+			 if (current_substruct == nullptr) return nullptr;
+			 add_sm4ceps_struct(current_substruct,base_id+"___"+std::to_string(counter));
+		 }
+	 } else {
+		 current_substruct = current_substruct->find_member(s);
+		 if (current_substruct  == nullptr) return nullptr;
+	 }
+	 n = nn;
+	}while(n != std::string::npos);
+	//Invariant current_substruct != nullptr
+	auto cpy_rhs = clone_sm4ceps_struct(rhs);
+	current_substruct->t.t = Type::Struct;
+	for(auto m:current_substruct->members) delete m;
+	current_substruct->members.clear();
+	for(auto m:cpy_rhs->members) current_substruct->members.push_back(m);
+	return parent;
+}
+
+
+
+
+
 void write_copyright_and_timestamp(std::ostream& out, std::string title,bool b){
 	if(!b) return;
 	time_t timer;time(&timer);tm * timeinfo;timeinfo = localtime(&timer);
@@ -78,10 +215,6 @@ void write_copyright_and_timestamp(std::ostream& out, std::string title,bool b){
 		<< std::endl << std::endl;
 }
 
-struct Type{
-	enum {Int,String,Double,Struct,Undefined} t;
-	std::string name;
-};
 
 struct sysstate{
 	std::string name;
@@ -107,12 +240,10 @@ template<typename F> void for_all_nodes(State_machine_simulation_core* smp, Node
 	for(auto e: ns.nodes()) f(smp,e, node_no++,util_already_seen);
 }
 
-Type determine_type(Nodebase_ptr node){
+Type determine_primitive_type(Nodebase_ptr node){
 	if (node->kind() == Ast_node_kind::int_literal) return Type{Type::Int};
 	if (node->kind() == Ast_node_kind::float_literal) return Type{Type::Double};
 	if (node->kind() == Ast_node_kind::string_literal) return Type{Type::String};
-	if (node->kind() == Ast_node_kind::identifier && (struct_defs.find(name(as_id_ref(node))) != struct_defs.end()) )
-		return Type{Type::Struct,name(as_id_ref(node))};
 
 	return Type{Type::Undefined};
 }
@@ -165,21 +296,7 @@ void write_cpp_glob_func_decl(std::ostream& os,ceps::ast::Struct & func){
 	os << "int " << ceps::ast::name(func)  << "()";
 }
 
-bool struct_contains_single_value(ceps::ast::Struct const& outer,Nodebase_ptr& v,Type& t){
- if(outer.children().size() != 1) return false;
- v = outer.children()[0];
- if (v->kind() == ceps::ast::Ast_node_kind::int_literal){
-	 t = Type{Type::Int};
-	 return true;
- } else if (v->kind() == ceps::ast::Ast_node_kind::float_literal){
-	 t = Type{Type::Double};
-	 return true;
- } else  if (v->kind() == ceps::ast::Ast_node_kind::string_literal){
-	 t = Type{Type::String};
-	 return true;
- }
- return false;
-}
+
 void write_cpp_value(std::ostream& os,Nodebase_ptr v,Type t){
 	if (t.t == Type::Int) os << value(as_int_ref(v));
 	else if (t.t == Type::Double) os << value(as_double_ref(v));
@@ -375,17 +492,20 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		return std::get<0>(lhs) < std::get<0>(rhs);
 	}  );
 
+	for(auto s:struct_decls){
+		add_sm4ceps_struct(s.second);
+	}
+
 	std::vector<sysstate> sys_states;
+	bool non_primitive_types_found = false;
 	for(auto & state_entry : systemstate_first_def){
-		auto type = determine_type(state_entry.second);
-		if (type.t == Type::Undefined){
-			this->warn_(-1,"Couldn't determine type of '"+state_entry.first.name+"' will assume int.");
-			type.t = Type::Int;
-		}
+		auto type = determine_primitive_type(state_entry.second);
+		if (type.t == Type::Undefined){ non_primitive_types_found=true; continue;}
 		sysstate s = state_entry.first;
 		s.type = type;
 		sys_states.push_back(s);
 	}
+
 	//Write files
 	std::string out_cpp;
 	std::string out_hpp;
