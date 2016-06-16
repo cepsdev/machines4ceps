@@ -1,0 +1,45 @@
+Event ev_platform_extend_is_finished, ev_platform_extend_is_starting, ev_platform_extend_preconditions_are_not_met;
+
+Statemachine
+{
+  id  { sm_Platform_extend; };
+  description { "Platform_extend";  };
+  States  { Initial;  Final;  Error;  };
+  join{Final;};
+
+  import  { sm_Platform_extend_fto_and_alu; };    // Flap_to_open and Antenna_lock_unlock
+  import  { sm_Z_drive_to_indexposition;  };
+  import  { sm_Antenna_to_raise;  };
+  import  { sm_Antenna_to_level_out;  };
+  import  { sm_Platform_retract_ftc_and_all;  };   // Flap_to_close and Antenna_lock_lock
+
+  Actions
+  {
+    a_antenna_to_raise_is_starting              { ev_antenna_to_raise;  };
+    a_z_drive_to_indexposition_is_starting      { ev_mast_ausfahren;  };
+    a_platform_extend_is_starting
+    {
+      print("---------- ev_platform_extend_is_starting ---------- \n");
+      ev_platform_extend_is_starting;
+    };
+    a_platform_extend_is_finished
+    {
+      ev_platform_extend_is_finished;
+      print("---------- ev_platform_extend_is_finished ---------- \n");
+      print("---------- CONTROL ---------- ANTRIEB_MODE:       ", z_drive.Control.ANTRIEB_MODE, "\n");
+      print("---------- CONTROL ---------- ANTRIEB_ENABLE_IN:  ", z_drive.Control.ANTRIEB_ENABLE_IN, "\n");
+      print("---------- CONTROL ---------- BREAK_RELEASE:      ", z_drive.Control.ANTRIEB_BREAK_RELEASE, "\n");
+      print("---------- STATUS  ---------- ANTRIEB_ENABLE_OUT: ", z_drive.Status.ANTRIEB_ENABLE_OUT, "\n");
+      print("---------- STATUS  ---------- ANTRIEB_INPOS:      ", z_drive.Status.ANTRIEB_INPOS, "\n");
+    };
+    a_platform_extend_preconditions_are_not_met { ev_platform_extend_preconditions_are_not_met; };
+  };
+
+  Transition  { Initial;                                sm_Platform_extend_fto_and_alu;   g_platform_extend_preconditions;  a_platform_extend_is_starting;  };
+  Transition  { Initial;                                Error;                           !g_platform_extend_preconditions;  a_platform_extend_preconditions_are_not_met;  };
+  Transition  { sm_Platform_extend_fto_and_alu.Final;   sm_Z_drive_to_indexposition;                                        a_z_drive_to_indexposition_is_starting; };
+  Transition  { sm_Z_drive_to_indexposition.Final;      sm_Antenna_to_raise;                                                a_antenna_to_raise_is_starting; };
+  Transition  { sm_Antenna_to_raise.Final;              sm_Platform_retract_ftc_and_all;  };
+  Transition  { sm_Platform_retract_ftc_and_all.Final;  sm_Antenna_to_level_out;  };
+  Transition  { sm_Antenna_to_level_out.Final;          Final;                                                              a_platform_extend_is_finished;  };
+};

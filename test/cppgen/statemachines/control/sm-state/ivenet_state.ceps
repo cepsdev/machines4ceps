@@ -1,0 +1,131 @@
+Event ev_slide_detector_slide_alarm, ev_ivenet_alignment_changed, ev_send_message_to_ivenet, ev_antenna_parkpos_state_change, ev_y_drive_actual_values;
+
+Statemachine
+{
+  id  { sm_Ivenet_notification; };
+  States  { Initial;  Listening;  };
+
+  Actions
+  {
+    a_ivenet_notification_send_msg  { ev_send_message_to_ivenet;  };
+  };
+
+  Transition  { Initial;    Listening;  };
+  Transition  { Listening;  Listening;  ev_bag_has_heartbeat; a_ivenet_notification_send_msg; };
+};
+// ---------------------------------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Slide_detector;  };
+  States  { Initial;  Dont_Care; Sensing; Alert; Sliding; };
+
+  Actions
+  {
+    a_vehicle_is_sliding        { ivenet_platform_alignment_state.value = IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_VEHICLE_MOVEMENT; };
+    a_slide_detector_set_timer  { start_timer ( 3 * s, ev_slide_detector_slide_alarm, timer_slide_detector_alert_timeout );       };
+    a_slide_detector_stop_timer { stop_timer ( timer_slide_detector_alert_timeout ); };
+    a_provide_sensing_snapshot  {
+      print ( "[Slide_detector] Taking a snapshot of azimuth, nick and roll\n" );
+      ivenet_own_vehicle_alignment.azimuth_previous            = ivenet_own_vehicle_alignment.azimuth_current;
+      Talin_state.axis_x_previous                              = Talin_state.axis_x;
+      Talin_state.axis_y_previous                              = Talin_state.axis_y;
+    };
+  };
+
+  Transition  { Initial;    Dont_Care;  };
+  Transition  { Dont_Care;  Sensing;    ev_antenna_alignment_status_changed;  ( ANTENNA_ALIGNMENT_STATUS == ANTENNA_IS_ALIGNED );   a_provide_sensing_snapshot; };
+  Transition  { Sensing;    Dont_Care;  ev_antenna_alignment_status_changed;  ( ANTENNA_ALIGNMENT_STATUS != ANTENNA_IS_ALIGNED ); };
+
+  Transition  { Sensing;    Sensing;    ev_ivenet_alignment_changed;         !g_vehicle_slide_preconditions;                      };
+  Transition  { Sensing;    Alert;      ev_ivenet_alignment_changed;          g_vehicle_slide_preconditions;                        a_slide_detector_set_timer; };
+  Transition  { Sensing;    Alert;      ev_antenna_alignment_changed;         g_vehicle_slide_preconditions;                        a_slide_detector_set_timer; };
+
+  Transition  { Alert;      Alert;      ev_ivenet_alignment_changed;          g_vehicle_slide_preconditions;                      };
+  Transition  { Alert;      Sensing;    ev_ivenet_alignment_changed;         !g_vehicle_slide_preconditions;                        a_slide_detector_stop_timer;  };
+  Transition  { Alert;      Sensing;    ev_antenna_alignment_changed;        !g_vehicle_slide_preconditions;                        a_slide_detector_stop_timer;  };
+
+  Transition  { Alert;      Sliding;    ev_slide_detector_slide_alarm;                                                              a_vehicle_is_sliding;         };
+  Transition  { Alert;      Dont_Care;  ev_antenna_alignment_status_changed;  ( ANTENNA_ALIGNMENT_STATUS != ANTENNA_IS_ALIGNED );   a_slide_detector_stop_timer;  };
+
+  Transition  { Sliding;    Dont_Care;  };
+};
+// ---------------------------------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Azimuth_change_detector; };
+  States  { Initial;  Sensing;  };
+
+  Actions
+  {
+    a_notify_in_case_of_azimuth_change  { if ( ivenet_own_vehicle_alignment.hasChanged > 0 ) { ev_ivenet_alignment_changed;  }  };
+  };
+
+  Transition  { Initial;  Sensing;  };
+  Transition  { Sensing;  Sensing;  ev_message_from_ivenet; a_notify_in_case_of_azimuth_change; };
+};
+// ---------------------------------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Antenna_parkposition_detector; };
+  //States{Initial; Not_in_parkpos;Is__in_parkpos;};
+  States  { Initial;  None_is_online; Ivenet_is_online; IO_module_is_online; Ivenet_and_io_module_online; };
+
+  Actions
+  {
+    a_set_antenna_____to_be_in_parkpos  { EVAL_ANTENNA_IS_IN_PARKPOS = 1; ev_antenna_is_in_parking_position;  }; // print("EVAL_ANTENNA_IS_IN_PARKPOS == 1 \n");};
+    a_set_antenna_not_to_be_in_parkpos  { EVAL_ANTENNA_IS_IN_PARKPOS = 0; ev_antenna_is_in_parking_position;  }; // print("EVAL_ANTENNA_IS_IN_PARKPOS == 0 \n");};
+  };
+
+
+  Transition  { Initial;                      None_is_online; };
+  Transition  { None_is_online;               Ivenet_is_online;             ev_message_from_ivenet; };
+  Transition  { None_is_online;               IO_module_is_online;          ev_io_module_is_online; };
+
+  Transition  { Ivenet_is_online;             Ivenet_and_io_module_online;  ev_io_module_is_online; };
+  Transition  { IO_module_is_online;          Ivenet_and_io_module_online;  ev_message_from_ivenet; };
+
+  Transition  { Ivenet_and_io_module_online;  Ivenet_is_online;             ev_io_module_is_offline;  };
+  Transition  { Ivenet_and_io_module_online;  IO_module_is_online;          ev_ivenet_lacks_traffic;  };
+
+  Transition  { Ivenet_is_online;             None_is_online;               ev_ivenet_lacks_traffic;                                                                                    a_set_antenna_not_to_be_in_parkpos; };
+  Transition  { IO_module_is_online;          None_is_online;               ev_io_module_is_offline;                                                                                    a_set_antenna_not_to_be_in_parkpos; };
+
+  Transition  { Ivenet_is_online;             Ivenet_is_online;             ev_message_from_ivenet;           g_ivenet_sees_antenna_in_parkpos;                                         a_set_antenna_____to_be_in_parkpos; };
+  Transition  { Ivenet_is_online;             Ivenet_is_online;             ev_message_from_ivenet;          !g_ivenet_sees_antenna_in_parkpos;                                         a_set_antenna_not_to_be_in_parkpos; };
+
+  Transition  { IO_module_is_online;          IO_module_is_online;          ev_antenna_parkpos_state_change;  g_io_module_sees_antenna_in_parkpos;                                      a_set_antenna_____to_be_in_parkpos; };
+  Transition  { IO_module_is_online;          IO_module_is_online;          ev_antenna_parkpos_state_change; !g_io_module_sees_antenna_in_parkpos;                                      a_set_antenna_not_to_be_in_parkpos; };
+
+  Transition  { Ivenet_and_io_module_online;  Ivenet_and_io_module_online;  ev_message_from_ivenet;           g_ivenet_sees_antenna_in_parkpos &&  g_io_module_sees_antenna_in_parkpos; a_set_antenna_____to_be_in_parkpos; };
+  Transition  { Ivenet_and_io_module_online;  Ivenet_and_io_module_online;  ev_antenna_parkpos_state_change;  g_ivenet_sees_antenna_in_parkpos &&  g_io_module_sees_antenna_in_parkpos; a_set_antenna_____to_be_in_parkpos; };
+  Transition  { Ivenet_and_io_module_online;  Ivenet_and_io_module_online;  ev_message_from_ivenet;          !g_ivenet_sees_antenna_in_parkpos || !g_io_module_sees_antenna_in_parkpos; a_set_antenna_not_to_be_in_parkpos; };
+
+};
+// ---------------------------------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Y_drive_tracker; };
+  States  { Initial;  current_height; };
+
+  Actions
+  {
+    a_eval_current_y_drive_state
+    {
+      print ( "a_eval_current_y_drive_state   argv ( 1 ): ", argv ( 1 ), "\n" );
+      if ( argv ( 1 ) > truncate ( y_drive.ARBEITSPOSITION + y_drive.ARBEITSBEREICH_MIN ) )
+      {
+        ivenet_radar_enabled_state.isRadarWorkingEnabled = 1; 
+      } else 
+      {
+        ivenet_radar_enabled_state.isRadarWorkingEnabled = 0;
+      };
+    };
+  };
+
+  Transition  { Initial;        current_height; ev_y_drive_actual_values; a_eval_current_y_drive_state; };
+  Transition  { current_height; current_height; ev_y_drive_actual_values; a_eval_current_y_drive_state; };
+};

@@ -1,0 +1,333 @@
+// --------------------------------------------
+// --------------- VARIABLES ------------------
+// --------------------------------------------
+Systemstate s_set_operational_node_id;
+Systemstate s_set_operational_payload;
+
+
+
+Systemstate s_heartbeat_payload_xdrv_in;
+Systemstate s_heartbeat_payload_xdrv_out;
+Systemstate s_heartbeat_payload_ydrv_in;
+Systemstate s_heartbeat_payload_ydrv_out;
+Systemstate s_heartbeat_payload_zdrv_in;
+Systemstate s_heartbeat_payload_zdrv_out;
+Systemstate s_heartbeat_payload_iomodule_in;
+Systemstate s_heartbeat_payload_iomodule_out;
+Systemstate s_heartbeat_payload_simodule_in;
+Systemstate s_heartbeat_payload_simodule_out;
+Systemstate s_heartbeat_payload_usv_1_in;
+Systemstate s_heartbeat_payload_usv_1_out;
+Systemstate s_heartbeat_payload_usv_2_in;
+Systemstate s_heartbeat_payload_usv_2_out;
+Systemstate s_heartbeat_payload_extbg_in;
+Systemstate s_heartbeat_payload_extbg_out;
+Systemstate s_heartbeat_payload_bag_in;
+Systemstate s_heartbeat_payload_bag_out;
+
+
+
+// --------------------------------------------
+// ----------------- GLOBALS ------------------
+Globals
+{
+  s_set_operational_node_id    = 0;
+  s_set_operational_payload    = OPERATIONAL_GENERIC_PAYLOAD;
+  s_heartbeat_payload_xdrv_in = 0;
+  s_heartbeat_payload_xdrv_out = 0;
+  s_heartbeat_payload_ydrv_in = 0;
+  s_heartbeat_payload_ydrv_out = 0;
+  s_heartbeat_payload_zdrv_in = 0;
+  s_heartbeat_payload_zdrv_out = 0;
+  s_heartbeat_payload_iomodule_in = 0;
+  s_heartbeat_payload_iomodule_out = 0;
+  s_heartbeat_payload_simodule_in = 0;
+  s_heartbeat_payload_simodule_out = 0;
+  s_heartbeat_payload_usv_1_in = 0;
+  s_heartbeat_payload_usv_1_out = 0;
+  s_heartbeat_payload_usv_2_in = 0;
+  s_heartbeat_payload_usv_2_out = 0;
+  s_heartbeat_payload_extbg_in = 0;
+  s_heartbeat_payload_extbg_out = 0;
+  s_heartbeat_payload_bag_in = 0;
+  s_heartbeat_payload_bag_out = 0;
+};
+
+// ------------------------------------------------------------------------
+/*frame
+  {
+  id { frame_heartbeat_generic; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { s_heartbeat_can_generic_id; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_generic_out; };
+        in  { s_heartbeat_payload_generic_in; };
+      };
+    };
+  };
+};*/
+
+
+
+frame
+{
+  id { frame_heartbeat_x_drive; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_X_DRIVE; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_xdrv_out; };
+        in  { s_heartbeat_payload_xdrv_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { frame_heartbeat_y_drive; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_Y_DRIVE; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_ydrv_out; };
+        in  { s_heartbeat_payload_ydrv_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { frame_heartbeat_z_drive; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_Z_DRIVE; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_zdrv_out; };
+        in  { s_heartbeat_payload_zdrv_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { frame_heartbeat_io_module; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_IO_MODULE; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_iomodule_out; };
+        in  { s_heartbeat_payload_iomodule_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { frame_heartbeat_si_module; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_SI_MODULE; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_simodule_out; };
+        in  { s_heartbeat_payload_simodule_in; };
+      };
+    };
+  };
+};
+
+
+frame
+{
+  id { frame_heartbeat_usv_1; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_USV_1; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_usv_1_out; };
+        in  { s_heartbeat_payload_usv_1_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { frame_heartbeat_usv_2; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_USV_2; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_usv_2_out; };
+        in  { s_heartbeat_payload_usv_2_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { frame_heartbeat_extbg; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_EXTBG; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_extbg_out; };
+        in  { s_heartbeat_payload_extbg_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { frame_heartbeat_bag; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_BAG; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_bag_out; };
+        in  { s_heartbeat_payload_bag_in; };
+      };
+    };
+  };
+};
+
+
+
+frame
+{
+  id { frame_heartbeat_generic; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { s_heartbeat_can_generic_id; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_heartbeat_payload_generic_out; };
+        in  { s_heartbeat_payload_generic_in; };
+      };
+    };
+  };
+};
+
+
+
+
+// ------------------------------------------------------------------------
+frame
+{
+  id { frame_set_operational; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { CAN_ID_BROADCAST; }; };
+      rtr { bit { 0; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { s_set_operational_payload; };
+        in{s_set_operational_payload; };
+      };
+      uint8
+      {
+        out { s_set_operational_node_id; };
+        in  { s_set_operational_node_id; };
+      };
+    };
+  };
+};

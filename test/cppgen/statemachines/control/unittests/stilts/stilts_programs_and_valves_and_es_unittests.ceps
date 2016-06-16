@@ -1,0 +1,139 @@
+// <description>
+Guard g_stilt_left_is_locked,   g_stilt_left_is_unlocked;
+Guard g_stilt_right_is_locked,  g_stilt_right_is_unlocked;
+
+Stilts_programs_and_valves_and_es_unittests 
+{
+  g_stilt_left_is_unlocked = in_state(Stilts_endschalter_SEKOL.On)  && in_state(Stilts_endschalter_SEKGL.Off);
+  g_stilt_left_is_locked   = in_state(Stilts_endschalter_SEKOL.Off) && in_state(Stilts_endschalter_SEKGL.On);
+  SENSOR_KAMPFSCHALTER_A            = 0;
+  g_system_pressure_is_sufficient = 1;
+};
+
+
+Simulation
+{
+  TestCase{Stilts_programs_and_valves_and_es_unittests;};Test{Initialization;};
+
+  Start { sm_Stilts_to_extend;  };
+  Start { sm_Stilts_endschalter_SEKGL;  };
+  Start { sm_Stilts_endschalter_SEKOL;  };
+  Start { sm_Stilts_valve_SVK;  };
+  Start { sm_Stilts_endschalter_SMUL; };
+  Start { sm_Stilts_endschalter_SMOL; };
+  Start { sm_Stilts_valve_SVZA;  };
+  Start { sm_Stilts_valve_SVZE;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Stilts_Preconditioning;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGL.On;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKOL.Off;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Closed;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMUL.Off;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.On;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZA.Open;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZE.Open;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_programs_and_valves_and_es_unittests;};Test{Stilts_to_extend_given_objective_is_reached;};
+
+  Start { sm_Stilts_to_extend;  };
+  Start { sm_Stilts_endschalter_SEKGL;  };
+  Start { sm_Stilts_endschalter_SEKOL;  };
+  Start { sm_Stilts_valve_SVK;  };
+  Start { sm_Stilts_endschalter_SMUL; };
+  Start { sm_Stilts_endschalter_SMOL; };
+  Start { sm_Stilts_valve_SVZA;  };
+  Start { sm_Stilts_valve_SVZE;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Stilts_Preconditioning;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGL.On;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKOL.Off;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Closed;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMUL.Off;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.On;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZA.Open;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZE.Open;};
+
+  ev_stilts_preconditioning_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGL.Off;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKOL.On;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Open;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMUL.Off;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.On;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZA.Open;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZE.Open;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Stilts_unlock.Unlocking;};
+
+  ev_stilts_lock_left_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Open;};
+
+  ev_stilt_left_extended;
+
+  ev_stilts_lock_left_is_locked;
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Final;};
+//  
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKOL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Closed;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMUL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZA.Closed;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZE.Closed;};
+};
+
+
+// Simulation{
+//  TestCase{Stilts_programs_and_valves_and_es_unittests;};Test{Stilts_to_retract_given_objective_is_reached;};
+//  
+//  Start{sm_Stilts_to_retract;};
+//  Start{sm_Stilts_endschalter_SEKGL;};
+//  Start{sm_Stilts_endschalter_SEKOL;};
+//  Start{sm_Stilts_valve_SVK;};
+//  Start{sm_Stilts_endschalter_SMUL.On;};
+//  Start{sm_Stilts_endschalter_SMOL.Off;};
+//  Start{sm_Stilts_valve_SVZA;};
+//  Start{sm_Stilts_valve_SVZE;};
+// 
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_retract.Stilts_Preconditioning;};
+//  
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKOL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Closed;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMUL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZA.Open;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZE.Open;};
+//  
+//  ev_stilts_preconditioning_timeout;
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKOL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Open;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMUL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZA.Open;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZE.Open;};
+//  
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_retract.Stilts_unlock.Unlocking;};
+//  
+//  ev_stilts_lock_left_is_unlocked;
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Open;};
+//  
+//  ev_stilt_left_retracted;
+//  
+//  ev_stilts_lock_left_is_locked;
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_retract.Final;};
+//  
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKOL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVK.Closed;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMUL.Off;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.On;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZA.Closed;};
+//  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_valve_SVZE.Closed;};
+// };

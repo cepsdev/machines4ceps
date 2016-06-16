@@ -1,0 +1,32 @@
+Event ev_z_drive_movement_stopped, ev_mast_move, ev_mast_move_down_preconditions_are_not_met;
+
+Statemachine
+{
+  // ev_z_drive_move(MODE_GIVEN_SPEED, -2, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT);
+  id  { sm_Mast_move_down;  };
+  description { "Mast_move_down";  };
+  States  { Initial;  Start;  Final;  Error;  };
+  import  { sm_Z_drive_move;  };
+  Actions
+  {
+    a_mast_move_down                            { ev_mast_move ( MODE_GIVEN_SPEED, -1, WITHOUT_ENABLE_TIMEOUT, WITHOUT_MOVING_TIMEOUT );  };
+    a_mast_move_down_preconditions_are_not_met  { ev_mast_move_down_preconditions_are_not_met;  };
+  };
+
+  on_enter
+  {
+    z_drive.SollPos     = 0;
+//    z_drive.SollGeschw  = z_drive.SPEED_DEFAULT;
+//    print ( "---------- Mast_move_down  ---------- on_enter, argv(1): ", argv(1), ", argv(2): ", argv(2), "\n" );
+
+    print ( "sm_Mast_move_down.on_enter --- z_drive.SollGeschw:", z_drive.SollGeschw, "\n" );
+  };
+
+  //on_exit{};
+
+  Transition  { Initial;          Start;                                          g_mast_move_down_preconditions; a_mast_move_down;   };
+  Transition  { Initial;          Error;                                         !g_mast_move_down_preconditions; a_mast_move_down_preconditions_are_not_met; };
+  Transition  { Start;            sm_Z_drive_move;  ev_mast_move;                 };
+  Transition  { sm_Z_drive_move;  Final;            ev_z_drive_movement_stopped;  };
+};
+

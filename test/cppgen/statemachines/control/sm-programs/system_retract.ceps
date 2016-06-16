@@ -1,0 +1,29 @@
+Guard g_system_extend_with_stilts;
+
+Statemachine
+{
+  id  { sm_System_retract;  };
+  description { "System_retract";  };
+  States  { Initial;  Final;  };
+  join{Final;};
+
+  thread
+  {
+    States  { Initial;  Final;  };
+    import  { sm_Stilts_to_retract; };
+
+    Transition  { Initial;                    sm_Stilts_to_retract;    };
+    Transition  { Initial;                    Final;  };
+    Transition  { sm_Stilts_to_retract.Final; Final;  };
+  };
+
+  thread
+  {
+    States  { Initial;  Final;  };
+    import  { sm_Platform_retract;  };
+
+    Transition  { Initial;                    sm_Platform_retract;  };
+    Transition  { sm_Platform_retract.Final;  Final;  };
+  };
+};
+

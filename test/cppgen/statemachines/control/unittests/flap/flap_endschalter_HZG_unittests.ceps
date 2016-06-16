@@ -1,0 +1,39 @@
+// <description>
+Event ev_total_nonsence; //  only to force a transition in statemachine
+
+Flap_endschalter_HZG_unittests
+{
+};
+
+Simulation
+{
+  TestCase{Flap_endschalter_HZG_unittests;};Test{Initialization;};
+
+  Flap_position = FLAP_POSITION_MAX;
+
+  Start { sm_Flap_endschalter_HZG;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HZG.Off;};
+};
+
+
+Simulation
+{
+  TestCase{Flap_endschalter_HZG_unittests;};Test{Visit_all_states;};
+
+  Flap_position = FLAP_POSITION_MAX;
+
+  Start { sm_Flap_endschalter_HZG;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HZG.Off;};
+
+  Flap_position = FLAP_POSITION_MIN;
+
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HZG.On;};
+
+  Flap_position = FLAP_POSITION_MAX;
+
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_END_STATES_CONTAINS{sm_Flap_endschalter_HZG.Off;};
+};

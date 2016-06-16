@@ -1,0 +1,23 @@
+Event ev_flap_lock_one_is_locked, ev_flap_lock_one_is_unlocked, ev_flap_lock_state_change;
+
+Statemachine
+{
+  id  { sm_Flap_lock_one; };
+  description { "Flap_lock_one"; };
+  States  { Initial;  Unknown; Locked; Unlocked;  };
+
+  Actions
+  {
+    a_FlapLockOneIsLocked     { ev_flap_lock_one_is_locked; };
+    a_FlapLockOneIsUnlocked   { ev_flap_lock_one_is_unlocked; };
+  };
+
+  Transition  { Initial;  Unknown;  };
+
+  Transition  { Unknown;  Locked;   ev_flap_lock_state_change;  g_flap_lock_one_is_locked;    a_FlapLockOneIsLocked;  };
+  Transition  { Unknown;  Unlocked; ev_flap_lock_state_change;  g_flap_lock_one_is_unlocked;  a_FlapLockOneIsUnlocked;  };
+
+  Transition  { Unlocked; Locked;   ev_flap_lock_state_change;  g_flap_lock_one_is_locked;    a_FlapLockOneIsLocked;  };
+  Transition  { Locked;   Unlocked; ev_flap_lock_state_change;  g_flap_lock_one_is_unlocked;  a_FlapLockOneIsUnlocked;  };
+};
+

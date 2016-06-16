@@ -1,0 +1,108 @@
+// <description>
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.01;
+};
+
+Flap_to_open_unittests
+{
+  g_mast_is_not_blocking_flap     = 1;
+  SENSOR_KAMPFSCHALTER_A            = 0;
+//  g_flap_is_locked                = 0;
+//  g_flap_is_unlocked              = 0;
+  SENSOR_HR1O = 0;  //  HaubeRiegel1_Offen
+  SENSOR_HR1V = 0;  //  HaubeRiegel1_Verriegelt
+  SENSOR_HR2O = 0;  //  HaubeRiegel2_Offen
+  SENSOR_HR2V = 0;  //  HaubeRiegel2_Verriegelt
+//  g_flap_is_open                  = 0;
+  SENSOR_HZO  = 0;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 0;  //  HaubeRiegelGeschlossen
+  y_drive.IstPos                  = y_drive.ARBEITSPOSITION;
+  z_drive.IstPos                  = z_drive.MAST_INDEXPOSITION;
+  Pneumatics.system_pressure      = DEFAULT_SYSTEM_PRESSURE;
+};
+
+Simulation
+{
+  TestCase{Flap_to_open_unittests;};Test{Initialization;};
+
+//  g_flap_is_unlocked = 1;
+  SENSOR_HR1O = 1;  //  HaubeRiegel1_Offen
+  SENSOR_HR2O = 1;  //  HaubeRiegel2_Offen
+
+  Start { sm_Flap_to_open;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_open.sm_Flap_precondition.Flap_Preconditioning;};
+};
+
+Simulation
+{
+  TestCase{Flap_to_open_unittests;};Test{Initialization_given_preconditioning_finished;};
+
+//  g_flap_is_locked   = 1;
+  SENSOR_HR1V = 1;  //  HaubeRiegel1_Verriegelt
+  SENSOR_HR2V = 1;  //  HaubeRiegel2_Verriegelt
+//  g_flap_is_unlocked = 0;
+
+  Start { sm_Flap_to_open;  };
+
+// ev_flap_preconditioning_finished;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_open.sm_Flap_unlock.Flap_Unlocking;};
+
+};
+
+
+Simulation
+{
+  TestCase{Flap_to_open_unittests;};Test{From_Start_To_Finish;};
+
+//  g_flap_is_locked   = 1;
+  SENSOR_HR1V = 1;  //  HaubeRiegel1_Verriegelt
+  SENSOR_HR2V = 1;  //  HaubeRiegel2_Verriegelt
+//  g_flap_is_unlocked = 0;
+
+  Start { sm_Flap_to_open;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_open.sm_Flap_unlock.Flap_Unlocking;};
+
+//  g_flap_is_locked   = 0;
+  SENSOR_HR1V = 0;  //  HaubeRiegel1_Verriegelt
+  SENSOR_HR2V = 0;  //  HaubeRiegel2_Verriegelt
+//  g_flap_is_unlocked = 1;
+  SENSOR_HR1O = 1;  //  HaubeRiegel1_Offen
+  SENSOR_HR2O = 1;  //  HaubeRiegel2_Offen
+
+  ev_flap_lock_one_is_unlocked;
+//  ev_flap_lock_two_is_unlocked;
+
+  ev_flap_preconditioning_finished;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_open.sm_Flap_open;};
+
+//  g_flap_is_closed = 1;
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+//  g_flap_is_open   = 0;
+  SENSOR_HZO  = 0;  //  HaubeRiegelOffen
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_open.sm_Flap_open.Flap_Opening;};
+
+//  g_flap_is_closed = 0;
+  SENSOR_HZG  = 0;  //  HaubeRiegelGeschlossen
+//  g_flap_is_open   = 1;
+  SENSOR_HZO  = 1;  //  HaubeRiegelOffen
+
+  ev_flap_is_open;
+
+//  g_flap_is_locked   = 1;
+  SENSOR_HR1V = 1;  //  HaubeRiegel1_Verriegelt
+  SENSOR_HR2V = 1;  //  HaubeRiegel2_Verriegelt
+//  g_flap_is_unlocked = 0;
+  SENSOR_HR1O = 0;  //  HaubeRiegel1_Offen
+  SENSOR_HR2O = 0;  //  HaubeRiegel2_Offen
+
+  ev_flap_lock_one_is_locked;
+//  ev_flap_lock_two_is_locked;
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_open.Final;};
+};

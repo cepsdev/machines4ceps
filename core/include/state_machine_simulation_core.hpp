@@ -265,7 +265,7 @@ private:
 													 std::set<state_rep_t>& removed_states);
 
 public:
-	std::string get_fullqualified_id(state_rep_t const & s);
+	std::string get_fullqualified_id(state_rep_t const & s,std::string delim = ".");
 	std::string get_full_qualified_id(State_machine::State const& s);
 	bool is_assignment_op(ceps::ast::Nodebase_ptr n);
 	bool is_assignment_to_guard(ceps::ast::Binary_operator & node);

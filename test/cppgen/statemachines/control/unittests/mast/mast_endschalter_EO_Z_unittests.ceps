@@ -1,0 +1,36 @@
+// <description>
+
+Mast_endschalter_EO_Z_unittests
+{
+  g_mast_height_is_lt_max_position  = 1;
+  g_mast_height_is_ge_max_position  = 0;
+};
+
+Simulation
+{
+  TestCase{Mast_endschalter_EO_Z_unittests;};Test{Initialization;};
+
+  Start { sm_Mast_endschalter_EO_Z; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_EO_Z.Off;};
+};
+
+
+Simulation
+{
+  TestCase{Mast_endschalter_EO_Z_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Mast_endschalter_EO_Z; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_EO_Z.Off;};
+
+  g_mast_height_is_lt_max_position  = 0;
+  g_mast_height_is_ge_max_position  = 1;
+  ev_z_drive_position_changed;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_EO_Z.On;};
+
+  g_mast_height_is_lt_max_position  = 1;  
+  g_mast_height_is_ge_max_position  = 0;
+  ev_z_drive_position_changed;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_EO_Z.Off;};
+};

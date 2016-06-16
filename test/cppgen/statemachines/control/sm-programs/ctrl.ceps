@@ -1,0 +1,91 @@
+Event ev_antenna_to_parking_position_timeout, ev_antenna_correction_is_not_possible, ev_antenna_to_rise_timeout;
+Event ev_antenna_lashing_lock_timeout, ev_antenna_lashing_unlock_timeout;
+Event ev_antenna_to_hinge_down_timeout, ev_antenna_to_level_out_x_drive_is_out_of_range;
+Event ev_antenna_to_rise_preconditions_are_not_met, ev_antenna_to_hinge_down_preconditions_are_not_met;
+Event ev_flap_lock_timeout, ev_flap_unlock_timeout, ev_flap_open_timeout, ev_flap_close_timeout;
+Event ev_flap_to_open_preconditions_are_not_met, ev_flap_open_preconditions_not_are_not_met, ev_flap_to_close_preconditions_are_not_met, ev_flap_unlock_preconditions_are_not_met;
+Event ev_platform_extend_preconditions_are_not_met, ev_platform_retract_preconditions_are_not_met;
+Event ev_preemptive_program_exit;
+Event ev_stilts_lock_timeout,   ev_stilts_extend_timeout,   ev_stilts_to_extend_timeout,  ev_stilts_extended_stilt_detected;
+Event ev_stilts_unlock_timeout, ev_stilts_retract_timeout,  ev_stilts_to_retract_timeout;
+Event ev_x_drive_enable_timeout, ev_x_drive_disable_timeout, ev_x_drive_to_indexposition_timeout, ev_x_drive_correction_is_not_possible;
+Event ev_y_drive_enable_timeout, ev_y_drive_disable_timeout, ev_y_drive_to_indexposition_timeout, ev_y_drive_correction_is_not_possible, ev_y_drive_to_arbeitsposition_timeout;
+Event ev_z_drive_enable_timeout, ev_z_drive_disable_timeout, ev_z_drive_to_indexposition_timeout, ev_z_drive_to_target_position_preconditions_are_not_met;
+Event ev_z_drive_to_lashing_position_timeout, ev_z_drive_to_target_position_timeout;
+Event ev_x_drive_to_target_position_timeout, ev_y_drive_to_target_position_timeout;
+Event ev_extBG_is_online, ev_extBG_is_offline;
+Event ev_extend_with_stilts, ev_extend_without_stilts;
+Event ev_kampfschalter_is_active, ev_taste_not_aus_is_active;
+Event ev_taste_a_abbruch_is_active, ev_taste_a_abbruch_is_not_active, ev_taste_e_abbruch_is_active, ev_taste_e_abbruch_is_not_active;
+
+Statemachine
+{
+  id  { sm_Ctrl;  };
+  description { "Controler";  };
+
+  import  { sm_Dispatch;  };
+
+  States  { Initial;  Idle; };
+
+  Transition  { Initial;      Idle; };
+  Transition  { Idle;         sm_Dispatch; };
+//  Transition  { Idle;         sm_Dispatch;  !g_extBG_is_online;  a_extBG_is_offline;};
+
+  Transition  { sm_Dispatch;  Idle; ev_extBG_is_online;                             g_extBG_is_online;  };
+  Transition  { sm_Dispatch;  Idle; ev_taste_not_aus_is_active; };
+  Transition  { sm_Dispatch;  Idle; ev_taste_a_abbruch_is_active; };
+  Transition  { sm_Dispatch;  Idle; ev_taste_e_abbruch_is_active; };
+  Transition  { sm_Dispatch;  Idle; ev_kampfschalter_is_active;                    !g_kampfschalter_was_active; };
+
+  Transition  { sm_Dispatch;  Idle; ev_platform_extend_preconditions_are_not_met; };
+  Transition  { sm_Dispatch;  Idle; ev_platform_retract_preconditions_are_not_met;  };
+
+  Transition  { sm_Dispatch;  Idle; ev_antenna_correction_is_not_possible;  };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_to_rise_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_lashing_lock_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_to_hinge_down_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_lashing_unlock_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_to_parking_position_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_to_rise_preconditions_are_not_met; };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_to_hinge_down_preconditions_are_not_met; };
+
+  Transition  { sm_Dispatch;  Idle; ev_flap_lock_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_flap_unlock_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_flap_open_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_flap_close_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_flap_open_preconditions_not_are_not_met; };
+  Transition  { sm_Dispatch;  Idle; ev_flap_to_open_preconditions_are_not_met;  };
+  Transition  { sm_Dispatch;  Idle; ev_flap_to_close_preconditions_are_not_met; };
+  Transition  { sm_Dispatch;  Idle; ev_flap_unlock_preconditions_are_not_met; };
+
+  Transition  { sm_Dispatch;  Idle; ev_stilts_lock_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_stilts_unlock_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_stilts_extend_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_stilts_retract_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_stilts_to_extend_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_stilts_to_retract_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_stilts_extended_stilt_detected;  };
+
+  Transition  { sm_Dispatch;  Idle; ev_x_drive_enable_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_x_drive_disable_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_x_drive_to_indexposition_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_x_drive_to_target_position_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_x_drive_correction_is_not_possible;  };
+  Transition  { sm_Dispatch;  Idle; ev_antenna_to_level_out_x_drive_is_out_of_range;  };
+
+  Transition  { sm_Dispatch;  Idle; ev_y_drive_enable_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_y_drive_disable_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_y_drive_to_arbeitsposition_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_y_drive_to_indexposition_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_y_drive_to_target_position_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_y_drive_correction_is_not_possible;  };
+
+  Transition  { sm_Dispatch;  Idle; ev_z_drive_enable_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_z_drive_disable_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_z_drive_to_target_position_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_z_drive_to_indexposition_timeout;  };
+  Transition  { sm_Dispatch;  Idle; ev_z_drive_to_lashing_position_timeout; };
+  Transition  { sm_Dispatch;  Idle; ev_mast_move_up_preconditions_are_not_met;  };
+  Transition  { sm_Dispatch;  Idle; ev_mast_move_down_preconditions_are_not_met;  };
+  Transition  { sm_Dispatch;  Idle; ev_z_drive_to_target_position_preconditions_are_not_met;  };
+};

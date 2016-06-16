@@ -1,0 +1,23 @@
+
+Antenna_lock_preconditioning_unittests {};
+
+Simulation
+{
+  TestCase{Antenna_lock_preconditioning_unittests;};Test{Initialization;};
+
+  Start { sm_Antenna_lock_preconditioning;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_lock_preconditioning.preconditioning;};
+};
+
+
+Simulation
+{
+  TestCase{Antenna_lock_preconditioning_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Antenna_lock_preconditioning;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_lock_preconditioning.preconditioning;};
+  ev_antenna_lock_preconditioning_finished;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_lock_preconditioning.Final;};
+};

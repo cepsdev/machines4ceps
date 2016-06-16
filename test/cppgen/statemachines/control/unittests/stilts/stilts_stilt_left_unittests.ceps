@@ -1,0 +1,44 @@
+// <description>
+
+Stilts_stilt_left_unittests
+{
+  SENSOR_SMOL = 0;  //  StützenMagnetObenLinks
+  SENSOR_SMUL = 0;  //  StützenMagnetUntenLinks
+};
+
+Simulation
+{
+  TestCase{Stilts_stilt_left_unittests;};Test{Initialization;};
+
+  Start { sm_Stilt_left;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilt_left.Unknown;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_stilt_left_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Stilt_left;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilt_left.Unknown;};
+  SENSOR_SMUL = 1;  //  StützenMagnetUntenLinks
+  ev_stilt_left_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilt_left.Extended;};
+
+  SENSOR_SMOL = 1;  //  StützenMagnetObenLinks
+  SENSOR_SMUL = 0;  //  StützenMagnetUntenLinks
+  ev_stilt_left_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilt_left.Retracted;};
+
+  SENSOR_SMOL = 0;  //  StützenMagnetObenLinks
+  SENSOR_SMUL = 0;  //  StützenMagnetUntenLinks
+  ev_stilt_left_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilt_left.Neither_nor;};
+
+  SENSOR_SMOL = 1;  //  StützenMagnetObenLinks
+  SENSOR_SMUL = 0;  //  StützenMagnetUntenLinks
+  ev_stilt_left_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilt_left.Retracted;};
+};

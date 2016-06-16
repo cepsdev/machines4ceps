@@ -1,0 +1,21 @@
+// SVK: Stütze Ventil Klemmung
+
+Event ev_stilts_valve_lock_left_state, ev_stilts_valve_lock_right_state, ev_stilts_unlock, ev_stilts_lock;
+
+Statemachine
+{
+  id  { sm_Stilts_valve_SVK;  };
+  description { "Stütze Ventil Klemmung"; };
+  States  { Initial;  Closed; Open; };
+
+  Actions
+  {
+    a_StiltsLeftLockState   { ev_stilts_valve_lock_left_state;  };
+    a_StiltsRightLockState  { ev_stilts_valve_lock_right_state; };
+  };
+
+  Transition  { Initial;  Closed; };
+  Transition  { Closed;   Open;   ev_stilts_unlock; a_StiltsLeftLockState;  a_StiltsRightLockState; };
+  Transition  { Open;     Closed; ev_stilts_lock;   a_StiltsLeftLockState;  a_StiltsRightLockState; };
+};
+

@@ -1,0 +1,51 @@
+Event ev_y_drive_to_target_position_timeout, ev_y_drive_move_go, ev_y_drive_is_in_target_position;
+Event ev_y_drive_enable_timeout, ev_y_drive_moving_timeout, ev_y_drive_movement_stopped;
+Systemstate SOLL_POS;
+
+Statemachine
+{
+  id  { sm_Y_drive_to_target_position;  };
+  description { "Y_drive_to_target_position";  };
+  States  { Initial;  Start;  Final;  Error;  };
+  import  { sm_Y_drive_move;  };
+  Actions
+  {
+    a_y_drive_move_to_target_position     { ev_y_drive_move_go ( MODE_TO_TARGET, SOLL_POS, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT ); };
+    a_y_drive_is_in_target_position       { ev_y_drive_is_in_target_position; ivenet_mast_state.value_out = IVENET_MAST_IS_UNLOCKED_OBSERVATION_MODE; };
+    a_y_drive_to_target_position_timeout  { ev_y_drive_to_target_position_timeout;  };
+  };
+
+  on_enter
+  {
+    if ( argc() < 1 )
+    {
+      print("---------------------------------------- Too few arguments for start of 'Y_drive_to_target_position' \n");
+    } else
+    {
+      SOLL_POS = argv ( 1 );
+
+      if ( SOLL_POS > y_drive.MAX_POS )
+      {
+        y_drive.SollPos = y_drive.MAX_POS;
+      } else
+      {
+        if ( SOLL_POS < y_drive.MIN_POS )
+        {
+          y_drive.SollPos = y_drive.MIN_POS;
+        } else
+        {
+          y_drive.SollPos = SOLL_POS;
+        };
+      };
+    };
+  };
+  //on_exit{};
+
+  Transition  { Initial;          Final;                                          a_y_drive_is_in_target_position;        g_y_drive_is_in_target_position;  };
+  Transition  { Initial;          Start;                                          a_y_drive_move_to_target_position;     !g_y_drive_is_in_target_position;  };
+  Transition  { Start;            sm_Y_drive_move;  ev_y_drive_move_go; };
+  Transition  { sm_Y_drive_move;  Error;            ev_y_drive_enable_timeout;    a_y_drive_to_target_position_timeout; };
+  Transition  { sm_Y_drive_move;  Error;            ev_y_drive_moving_timeout;    a_y_drive_to_target_position_timeout; };
+  Transition  { sm_Y_drive_move;  Final;            ev_y_drive_movement_stopped;  a_y_drive_is_in_target_position;      };
+};
+

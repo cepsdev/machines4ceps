@@ -1,0 +1,23 @@
+// AB_Y: Arbeitsbereich Y
+// CS3
+//#define SENSOR_AB_Y                             0x40
+
+Event ev_y_drive_endschalter_shows_arbeitsbereich;
+
+Statemachine
+{
+  id  { sm_Y_drive_endschalter_AB_Y;  };
+  description { "Arbeitsbereich Y"; };
+  States  { Initial;  On; Off;  };
+
+  Actions
+  {
+    a_stateChange { ev_y_drive_endschalter_shows_arbeitsbereich;  };
+    a_Off         { SENSOR_AB_Y  = 0; };
+    a_On          { SENSOR_AB_Y  = 1; };
+  };
+
+  Transition  { Initial;  Off;  };
+  Transition  { Off;      On;     g_sensor_AB_y_drive;  a_On;   a_stateChange;  };
+  Transition  { On;       Off;   !g_sensor_AB_y_drive;  a_Off;  a_stateChange;  };
+};

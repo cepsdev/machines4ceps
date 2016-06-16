@@ -1,0 +1,21 @@
+Event ev_flap_HVZO_close, ev_flap_is_closed, ev_flap_close_finished, ev_flap_close_timeout, ev_flap_stop_moving, ev_flap_close_started;
+
+Statemachine
+{
+  id  { sm_Flap_close;  };
+  States  { Initial; Final;  Flap_Closing;  };
+  Actions
+  {
+    a_close_flap        { ev_flap_HVZO_close;  ev_flap_close_started; }; 
+    a_set_timeout_timer { start_timer(DEF_TIME_HAUBE_SCHLIESSEN*s, ev_flap_close_timeout, timer_flap_close);  };
+    a_stop_moving_flap  { ev_flap_stop_moving; ev_flap_close_finished;  };
+  };
+
+  on_exit { stop_timer(timer_flap_close); };
+
+  Transition  { Initial;      Flap_Closing;                     a_close_flap; a_set_timeout_timer;   !g_flap_is_closed && g_flap_close_preconditions; };
+  Transition  { Flap_Closing; Final;        ev_flap_is_closed;  a_stop_moving_flap;};
+  Transition  { Initial;      Final;                                                                  g_flap_is_closed; };
+
+};
+

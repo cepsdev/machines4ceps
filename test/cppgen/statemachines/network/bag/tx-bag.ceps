@@ -1,0 +1,1182 @@
+// ------------------------------------------------------------------------
+//      SEND LOGIC FOR TRGS/BAG
+// ------------------------------------------------------------------------
+
+global_functions
+{
+  print_drive_control_
+  {
+    params{ _drive; _DriveName; };
+    print ( "========== TX-BAG    - CONTROL ====================== ", _DriveName, "\n"
+          , "---------- ANTRIEB_MODE:           ", _drive.Control.ANTRIEB_MODE, "\n"
+          , "---------- ANTRIEB_ENABLE_IN:      ", _drive.Control.ANTRIEB_ENABLE_IN, "\n"
+          , "---------- BREAK_RELEASE:          ", _drive.Control.ANTRIEB_BREAK_RELEASE, "\n"
+          , "---------- RESET_FAULT:            ", _drive.Control.ANTRIEB_RESET_FAULT, "\n"
+          , "---------- SollPos    CAN / MKS :  ", _drive.CanSollPos,     " / ", _drive.SollPos,     "\n"
+          , "---------- SollGeschw CAN / MKS :  ", _drive.CanSollGeschw,  " / ", _drive.SollGeschw,  "\n"
+          , "---------- SollStrom  CAN / MKS :  ", _drive.CanSollStrom,   " / ", _drive.SollStrom,   " ( not used )\n"
+          , "=====================================================\n"
+          );
+  };
+  assemble_frame_and_send_to_x_drive
+  {
+    params{ _drive; };
+    s_frame_drive_target_pos_xdrv_out             = truncate ( _drive.CanSollPos );
+    s_frame_drive_target_speed_xdrv_out           = truncate ( _drive.CanSollGeschw );
+    s_frame_drive_target_current_xdrv_out         = truncate ( _drive.CanSollStrom );
+
+    s_frame_drive_control_mode_xdrv_out           = truncate ( _drive.Control.ANTRIEB_MODE );
+    s_frame_drive_control_enable_xdrv_out         = truncate ( _drive.Control.ANTRIEB_ENABLE_IN );
+    s_frame_drive_control_break_release_xdrv_out  = truncate ( _drive.Control.ANTRIEB_BREAK_RELEASE );
+    s_frame_drive_control_reset_fault_xdrv_out    = truncate ( _drive.Control.ANTRIEB_RESET_FAULT );
+    s_frame_drive_control_calibrate_pos_xdrv_out  = truncate ( _drive.Control.ANTRIEB_CALIBRATE_POS );
+
+ //   print_drive_state(_drive.Control, _drive.Status);
+    print_drive_control_ ( _drive, "X_drive" );
+
+    send ( frame_drive_request_x, channel_can_1_out );
+  };
+  assemble_frame_and_send_to_y_drive
+  {
+    params{ _drive; };
+    s_frame_drive_target_pos_ydrv_out             = truncate ( _drive.CanSollPos );
+    s_frame_drive_target_speed_ydrv_out           = truncate ( _drive.CanSollGeschw );
+    s_frame_drive_target_current_ydrv_out         = truncate ( _drive.CanSollStrom );
+
+    s_frame_drive_control_mode_ydrv_out           = truncate ( _drive.Control.ANTRIEB_MODE );
+    s_frame_drive_control_enable_ydrv_out         = truncate ( _drive.Control.ANTRIEB_ENABLE_IN );
+    s_frame_drive_control_break_release_ydrv_out  = truncate ( _drive.Control.ANTRIEB_BREAK_RELEASE );
+    s_frame_drive_control_reset_fault_ydrv_out    = truncate ( _drive.Control.ANTRIEB_RESET_FAULT );
+    s_frame_drive_control_calibrate_pos_ydrv_out  = truncate ( _drive.Control.ANTRIEB_CALIBRATE_POS );
+
+ //   print_drive_state(_drive.Control, _drive.Status);
+    print_drive_control_ ( _drive, "Y_drive" );
+
+    send ( frame_drive_request_y, channel_can_1_out );
+  };
+  assemble_frame_and_send_to_z_drive
+  {
+    params{ _drive; };
+    s_frame_drive_target_pos_zdrv_out             = truncate ( _drive.CanSollPos );
+    s_frame_drive_target_speed_zdrv_out           = truncate ( _drive.CanSollGeschw );
+    s_frame_drive_target_current_zdrv_out         = truncate ( _drive.CanSollStrom );
+
+    s_frame_drive_control_mode_zdrv_out           = truncate ( _drive.Control.ANTRIEB_MODE );
+    s_frame_drive_control_enable_zdrv_out         = truncate ( _drive.Control.ANTRIEB_ENABLE_IN );
+    s_frame_drive_control_break_release_zdrv_out  = truncate ( _drive.Control.ANTRIEB_BREAK_RELEASE );
+    s_frame_drive_control_reset_fault_zdrv_out    = truncate ( _drive.Control.ANTRIEB_RESET_FAULT );
+    s_frame_drive_control_calibrate_pos_zdrv_out  = truncate ( _drive.Control.ANTRIEB_CALIBRATE_POS );
+
+//    print_drive_state(_drive.Control, _drive.Status);
+    print_drive_control_ ( _drive, "Z_drive" );
+
+    send ( frame_drive_request_z, channel_can_1_out );
+  };
+  assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg
+  {
+    params{ inEvent; };
+    print ( "---------- TX-BAG ---------- Event = ", inEvent, " trigger message to extbg\n" );
+    bag_fortschrittsanzeigen_change_counter_out = bag_fortschrittsanzeigen_change_counter_out + 1;
+    send ( frame_extbg_fortschritt_automatikbetrieb, channel_can_1_out );
+  };
+  event_logging
+  {
+    params{ inEvent; };
+    print ( "---------- TX-BAG ---------- Event = ", inEvent, "\n" );
+  };
+};
+
+post_event_processing
+{
+
+//   if ( ( argv ( 0 ) == "ev_antenna_to_raise_starts" ) && (irgendwas_anderes) )
+//     send();
+  
+//   if (DEBUG) print ( "post_event_processing\n", "Event = ", argv(0), "\n" );
+//   if (changed("luminance_request_target_value" ) ){
+//      print ( "Value of 'luminance_request_target_value' changed", "\n" );
+//      send(luminance_request, out_channel);
+//    }
+
+  if ( ( argv ( 0 ) == "ev_message_from_psm" )
+    || ( argv ( 0 ) == "ev_stilts_preconditioning_timeout" )
+    || ( argv ( 0 ) == "ev_io_module_has_heartbeat" )
+    || ( argv ( 0 ) == "ev_si_module_has_heartbeat" )
+    || ( argv ( 0 ) == "ev_send_message_to_ivenet" )
+    || ( argv ( 0 ) == "ev_usv1_has_heartbeat" )
+    || ( argv ( 0 ) == "ev_usv2_has_heartbeat" )
+    || ( argv ( 0 ) == "ev_x_drive_is_online" )
+    || ( argv ( 0 ) == "ev_y_drive_is_online" )
+    || ( argv ( 0 ) == "ev_z_drive_is_online" )
+    || ( argv ( 0 ) == "ev_x_drive_has_heartbeat" )
+    || ( argv ( 0 ) == "ev_y_drive_has_heartbeat" )
+    || ( argv ( 0 ) == "ev_z_drive_has_heartbeat" )
+    )
+  {
+    //  for all these events no special handling is needed
+    //  and supress logging
+  } else
+  {
+//    print ( "---------------------------------- TX-BAG - Event = ", argv(0), "\n" );
+
+// ------------------------------------------------------------------------  
+//                  DRIVES
+// ------------------------------------------------------------------------
+
+  // X drive -------------------------------------------------------
+  if ( argv ( 0 ) == "ev_x_drive_move" )
+  {
+    event_logging ( argv ( 0 ) );
+    x_drive.Control.ANTRIEB_MODE          = x_drive.Control.ANTRIEB_MODE_DEFAULT;
+
+    x_drive.CanSollPos        = X_SollPosition_Berechnen ( x_drive.SollPos );
+    x_drive.CanSollGeschw     = X_Set_Speed ( truncate ( x_drive.SollGeschw ) );
+    x_drive.CanSollStrom      = truncate ( x_drive.SollStrom );
+
+    assemble_frame_and_send_to_x_drive ( x_drive );
+  } else
+  if ( argv ( 0 ) == "ev_x_drive_enable" )
+  {
+    event_logging ( argv ( 0 ) );
+    x_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    x_drive.Control.ANTRIEB_ENABLE_IN     = 1;
+    x_drive.Control.ANTRIEB_BREAK_RELEASE = 1;
+
+    assemble_frame_and_send_to_x_drive ( x_drive );
+  } else
+  if ( argv ( 0 ) == "ev_x_drive_stop" )
+  {
+    event_logging ( argv ( 0 ) );
+    x_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    x_drive.Control.ANTRIEB_ENABLE_IN     = 0;
+
+    assemble_frame_and_send_to_x_drive ( x_drive );
+  } else
+  if ( argv ( 0 ) == "ev_x_drive_disable" ) 
+  {
+    event_logging ( argv ( 0 ) );
+    x_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    x_drive.Control.ANTRIEB_ENABLE_IN     = 0;
+    x_drive.Control.ANTRIEB_BREAK_RELEASE = 0;
+
+    assemble_frame_and_send_to_x_drive ( x_drive );
+  } else
+  if ( argv ( 0 ) == "ev_x_drive_set_antrieb_reset_fault" )
+  {
+    event_logging ( argv ( 0 ) );
+    x_drive.Control.ANTRIEB_RESET_FAULT     = 1;
+
+    assemble_frame_and_send_to_x_drive ( x_drive );
+  } else
+  if ( argv ( 0 ) == "ev_x_drive_reset_antrieb_reset_fault" )
+  {
+    event_logging ( argv ( 0 ) );
+    x_drive.Control.ANTRIEB_RESET_FAULT     = 0;
+
+    assemble_frame_and_send_to_x_drive ( x_drive );
+  } else
+
+
+  // Y drive -------------------------------------------------------
+  if ( argv ( 0 ) == "ev_y_drive_move" )
+  {
+    event_logging ( argv ( 0 ) );
+    y_drive.Control.ANTRIEB_MODE          = y_drive.Control.ANTRIEB_MODE_DEFAULT;
+
+    y_drive.CanSollPos        = Y_SollPosition_Berechnen ( y_drive.SollPos );
+    y_drive.CanSollGeschw     = Y_Set_Speed ( truncate ( y_drive.SollGeschw ) );
+    y_drive.CanSollStrom      = truncate ( y_drive.SollStrom );
+
+    assemble_frame_and_send_to_y_drive ( y_drive );
+  } else
+  if ( argv ( 0 ) == "ev_y_drive_enable" )
+  {
+    event_logging ( argv ( 0 ) );
+    y_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    y_drive.Control.ANTRIEB_ENABLE_IN     = 1;
+    y_drive.Control.ANTRIEB_BREAK_RELEASE = 1;
+
+    assemble_frame_and_send_to_y_drive ( y_drive );
+  } else
+  if ( argv ( 0 ) == "ev_y_drive_stop" )
+  {
+    event_logging ( argv ( 0 ) );
+    y_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    y_drive.Control.ANTRIEB_ENABLE_IN     = 0;
+
+    assemble_frame_and_send_to_y_drive ( y_drive );
+  } else
+  if ( argv ( 0 ) == "ev_y_drive_disable" )
+  {
+    event_logging ( argv ( 0 ) );
+    y_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    y_drive.Control.ANTRIEB_ENABLE_IN     = 0;
+    y_drive.Control.ANTRIEB_BREAK_RELEASE = 0;
+
+    assemble_frame_and_send_to_y_drive ( y_drive );
+  } else
+  if ( argv ( 0 ) == "ev_y_drive_set_antrieb_reset_fault" )
+  {
+    event_logging ( argv ( 0 ) );
+    y_drive.Control.ANTRIEB_RESET_FAULT     = 1;
+
+    assemble_frame_and_send_to_y_drive ( y_drive );
+  } else
+  if ( argv ( 0 ) == "ev_y_drive_reset_antrieb_reset_fault" )
+  {
+    event_logging ( argv ( 0 ) );
+    y_drive.Control.ANTRIEB_RESET_FAULT     = 0;
+
+    assemble_frame_and_send_to_y_drive ( y_drive );
+  } else
+
+  // Z drive -------------------------------------------------------
+  if ( argv ( 0 ) == "ev_z_drive_move" )
+  {
+    event_logging ( argv ( 0 ) );
+    z_drive.Control.ANTRIEB_MODE          = z_drive.Control.ANTRIEB_MODE_DEFAULT;
+    z_drive.Control.ANTRIEB_BREAK_RELEASE = 1;
+
+    z_drive.CanSollPos        = Z_SollPosition_Berechnen ( z_drive.SollPos );
+    z_drive.CanSollGeschw     = Z_Set_Speed ( truncate ( z_drive.SollGeschw ) );
+    z_drive.CanSollStrom      = truncate ( z_drive.SollStrom );
+
+    assemble_frame_and_send_to_z_drive ( z_drive );
+  } else
+  if ( argv ( 0 ) == "ev_z_drive_enable" )
+  {
+    event_logging ( argv ( 0 ) );
+    z_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    z_drive.Control.ANTRIEB_ENABLE_IN     = 1;
+
+    assemble_frame_and_send_to_z_drive ( z_drive );
+  } else
+  if ( argv ( 0 ) == "ev_z_drive_stop" )
+  {
+    event_logging ( argv ( 0 ) );
+    z_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    z_drive.Control.ANTRIEB_ENABLE_IN     = 0;
+    z_drive.Control.ANTRIEB_BREAK_RELEASE = 0;
+
+    assemble_frame_and_send_to_z_drive ( z_drive );
+  } else
+  if ( argv ( 0 ) == "ev_z_drive_disable" )
+  {
+    event_logging ( argv ( 0 ) );
+    z_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    z_drive.Control.ANTRIEB_ENABLE_IN     = 0;
+    z_drive.Control.ANTRIEB_BREAK_RELEASE = 0;
+
+    assemble_frame_and_send_to_z_drive ( z_drive );
+  } else
+  if ( argv ( 0 ) == "ev_z_drive_set_antrieb_reset_fault" )
+  {
+    event_logging ( argv ( 0 ) );
+    z_drive.Control.ANTRIEB_RESET_FAULT     = 1;
+
+    assemble_frame_and_send_to_z_drive ( z_drive );
+  } else
+  if ( argv ( 0 ) == "ev_z_drive_reset_antrieb_reset_fault" )
+  {
+    event_logging ( argv ( 0 ) );
+    z_drive.Control.ANTRIEB_RESET_FAULT     = 0;
+
+    assemble_frame_and_send_to_z_drive ( z_drive );
+  } else
+
+
+// ------------------------------------------------------------------------  
+//                  HECKVERTEILER
+// ------------------------------------------------------------------------
+  if ( argv ( 0 ) == "ev_heckverteiler_is_online" )
+  {
+    event_logging ( argv ( 0 ) );
+    si_modul_ansteuerung_ausgaenge_versorgung_radaranlage_out        = 1;
+    si_modul_ansteuerung_ausgaenge_versorgung_xyz_antriebe_out       = 1;
+    si_modul_ansteuerung_ausgaenge_versorgung_pneumatik_out          = 1;  
+    si_modul_ansteuerung_ausgaenge_versorgung_windsensor_out         = 1;
+    si_modul_ansteuerung_ausgaenge_versorgung_windsensor_heizung_out = 1;
+    send ( si_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+
+// ------------------------------------------------------------------------  
+//                  IO MODUL
+// ------------------------------------------------------------------------
+
+// ------------------------------------------------------------------------
+//                  STUETZEN 
+
+  if ( argv ( 0 ) == "ev_stilts_lock" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_stilts_unlock" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_out = 1;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_stilts_extend_is_starting" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_stilts_retract" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_stilts_prepare_moving" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_out = 1;
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_out = 1;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( ( argv ( 0 ) == "ev_stilts_stop_moving" )
+    || ( argv ( 0 ) == "ev_stilts_preconditioning_was_interrupted" )
+    || ( argv ( 0 ) == "ev_stilts_unlock_preconditions_are_not_met" )
+    || ( argv ( 0 ) == "ev_stilts_lock_was_interrupted" )
+    || ( argv ( 0 ) == "ev_stilts_to_extend_was_interrupted" )
+    || ( argv ( 0 ) == "ev_stilts_to_retract_was_interrupted" )
+    )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_out = 0;
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_stilts_unlock_was_interrupted" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_out = 0;
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_out = 0;
+    io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_out           = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+
+// ------------------------------------------------------------------------
+//                  STAUBAUSTRAG 
+  if ( argv ( 0 ) == "ev_dust_discharge_start" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs13_venturiventil_1_out = 1;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_dust_discharge_stop" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs13_venturiventil_1_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+
+// ------------------------------------------------------------------------
+//                  ANTENNE VERZURRUNG 
+  if ( argv ( 0 ) == "ev_antenna_lock" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_out    = 0;
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_out = 1;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_antenna_unlock" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_out    = 1;
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_antenna_prepare_usage" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_out    = 1;
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_out = 1;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( ( argv ( 0 ) == "ev_antenna_lock_precondition_was_interrupted" ) 
+    || ( argv ( 0 ) == "ev_antenna_stop_using_lock" )
+    )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_out    = 0;
+    io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+
+// ------------------------------------------------------------------------  
+//                  HAUBE
+  if ( argv ( 0 ) == "ev_flap_VHR_open" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_out    = 1;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_flap_VHR_close" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_out    = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_flap_prepare_moving" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_out         = 1;
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_out            = 1;
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_nothalt_out = 1;
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_nothalt_out    = 1;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_flap_stop_moving" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_out         = 0;
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_out            = 0;
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_nothalt_out = 0;
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_nothalt_out    = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_flap_HVZS_close" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+  if ( argv ( 0 ) == "ev_flap_HVZO_close" )
+  {
+    event_logging ( argv ( 0 ) );
+    io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_out = 0;
+    send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+  } else
+
+// ------------------------------------------------------------------------  
+//                  FUNKTIONSUEBERWACHUNG
+// ------------------------------------------------------------------------  
+    if ( argv ( 0 ) == "ev_bag_has_heartbeat" )
+    {
+      s_heartbeat_payload_bag_out = s_bag_heartbeat_payload;
+      send ( frame_heartbeat_bag, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_X_DRIVE;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_y_drive_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_Y_DRIVE;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_Z_DRIVE;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_io_module_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_IO_MODULE;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_si_module_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_SI_MODULE;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_usv1_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_USV_1;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_usv2_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_USV_2;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( argv ( 0 ) == "ev_extbg_set_operational" )
+    {
+      event_logging ( argv ( 0 ) );
+      s_set_operational_node_id = CAN_ID_EXTBG;
+      send ( frame_set_operational, channel_can_1_out );
+    } else
+    if ( ( argv ( 0 ) == "ev_flap_unlock_was_interrupted" )
+      || ( argv ( 0 ) == "ev_flap_unlock_preconditions_are_not_met" )
+      || ( argv ( 0 ) == "ev_flap_lock_was_interrupted" )
+      || ( argv ( 0 ) == "ev_flap_precondition_was_interrupted" )
+      || ( argv ( 0 ) == "ev_flap_open_timeout" )
+      || ( argv ( 0 ) == "ev_flap_close_timeout" )
+      || ( argv ( 0 ) == "ev_flap_to_open_was_interrupted" )
+      || ( argv ( 0 ) == "ev_flap_to_close_was_interrupted" )
+      )
+    {
+      event_logging ( argv ( 0 ) );
+      io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_out         = 0;
+      io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_out            = 0;
+      io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_nothalt_out = 0;
+      io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_nothalt_out    = 0;
+      io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_out                     = 0;
+      send ( io_modul_ansteuerung_ausgaenge, channel_can_1_out );
+    } else
+
+    // ------------------------------------------------------------------------
+    //                  EXTBG
+    // ------------------------------------------------------------------------
+    if ( argv ( 0 ) == "ev_extbg_send_data" ) 
+    {
+//      event_logging ( argv ( 0 ) );
+      handler_force_bag_pdo_transmit;
+    } else
+    {
+      //  use for debugging
+//       event_logging ( argv ( 0 ) );
+//       print ( "===  this event has no special handling  ===\n" );
+    };
+  };
+
+  if ( extbg_is_online )
+  {
+    // ------------- Fehlermeldungen ---------------
+    if ( changed ( "extbg_error_0" )
+      || changed ( "extbg_error_1" )
+      || changed ( "extbg_error_2" )
+      || changed ( "extbg_error_3" )
+      || changed ( "extbg_error_4" )
+      )
+    {
+      extbg_error_0_out = extbg_error_0;
+      extbg_error_1_out = extbg_error_1;
+      extbg_error_2_out = extbg_error_2;
+      extbg_error_3_out = extbg_error_3;
+      extbg_error_4_out = extbg_error_4;
+
+      if ( ( extbg_error_0_out != NO_ERROR )
+        || ( extbg_error_1_out != NO_ERROR )
+        || ( extbg_error_2_out != NO_ERROR )
+        || ( extbg_error_3_out != NO_ERROR )
+        || ( extbg_error_4_out != NO_ERROR )
+        )
+      {
+        bag_fehler_change_counter_out = bag_fehler_change_counter_out + 1;
+        send ( frame_extbg_fortschritt_automatikbetrieb, channel_can_1_out );
+      }
+    };
+
+    // ---- Fortschrittsanzeige Automatikbetrieb ---
+    if ( argv ( 0 ) == "ev_platform_extend_is_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Plattform_Aus_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_platform_extend_is_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Plattform_Aus_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_platform_retract_is_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out= FA_Plattform_Ein_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else 
+    if ( argv ( 0 ) == "ev_platform_retract_is_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out= FA_Plattform_Ein_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else 
+
+    // Haube Entriegeln ----------------------------------------------
+    if ( argv ( 0 ) == "ev_flap_unlock" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Entriegeln_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_unlock_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Entriegeln;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( ( argv ( 0 ) == "ev_flap_unlock_was_interrupted" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_flap_unlock_preconditions_are_not_met" ) //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Entriegeln_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_unlock_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Entriegeln_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Haube Entriegeln ----------------------------------------------
+    if ( argv ( 0 ) == "ev_flap_lock" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Verriegeln_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_lock_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Verriegeln;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_lock_was_interrupted" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Verriegeln_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_lock_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Verriegeln_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Haube Zylinderdruck  ------------------------------------------
+    if ( argv ( 0 ) == "ev_flap_prepare_moving" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Zylinderdruck;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_precondition_was_interrupted" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Zylinderdruck_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_preconditioning_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Zylinderdruck_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Haube Oeffnen  ------------------------------------------------
+    if ( argv ( 0 ) == "ev_flap_open_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Oeffnen_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_open_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Oeffnen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( ( argv ( 0 ) == "ev_flap_open_timeout" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_flap_to_open_was_interrupted" ) //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Oeffnen_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_open_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Oeffnen_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Haube Schliessen ----------------------------------------------
+    if ( argv ( 0 ) == "ev_flap_close_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Schliessen_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_close_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Schliessen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( ( argv ( 0 ) == "ev_flap_close_timeout" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_flap_to_close_was_interrupted" ) //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Schliessen_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_flap_close_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Haube_Schliessen_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Zurrung Antenne - Vorkonditionierung --------------------------
+    if ( argv ( 0 ) == "ev_antenna_prepare_usage" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Warten;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_lock_precondition_was_interrupted" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Warten_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Zurrung Antenne - Oeffnen  ------------------------------------
+    if ( argv ( 0 ) == "ev_antenna_lashing_unlock_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Oeffnen_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_lashing_unlock_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Oeffnen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_lashing_unlock_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Oeffnen_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_is_unlocked" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Oeffnen_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Zurrung Antenne - Schliessen ----------------------------------
+    if ( argv ( 0 ) == "ev_antenna_lashing_lock_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Schliessen_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_lashing_lock_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Schliessen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_lashing_lock_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Schliessen_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_is_locked" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Zurrung_Ant_Schliessen_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Mast auf Indexposition ----------------------------------------
+    if ( argv ( 0 ) == "ev_mast_ausfahren" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufIndexpos_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_move_to_indexposition_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufIndexpos_Fahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_to_indexposition_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufIndexpos_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_is_in_indexposition" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufIndexpos_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Mast auf Zurrposition  ----------------------------------------
+    if ( argv ( 0 ) == "ev_mast_einfahren" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufZurrpos_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_move_to_lashing_position_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufZurrpos_Fahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_to_lashing_position_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufZurrpos_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_is_in_indexposition" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufZurrpos_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Mast auf Sollposition  ----------------------------------------
+    if ( argv ( 0 ) == "ev_mast_anfahren" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufSollpos_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_move_to_target_position_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufSollpos_Fahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "a_z_drive_to_target_position_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufSollpos_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_is_in_target_position" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_MastAufSollpos_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // X Antrieb auf Indexposition  ----------------------------------
+    if ( argv ( 0 ) == "ev_x_drive_to_indexposition" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_In_Nullpos_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_to_indexposition_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_In_Nullpos_Fahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_is_disabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_In_Nullpos_Erreicht;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_to_indexposition_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_In_Nullpos_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_is_in_indexposition" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_In_Nullpos_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Antenne Aufrichten --------------------------------------------
+    if ( argv ( 0 ) == "ev_antenna_to_raise" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Aufrichten_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_to_raise_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Aufrichten;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_to_rise_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Aufrichten_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_is_risen" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Aufrichten_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Antenne Abklappen  --------------------------------------------
+    if ( argv ( 0 ) == "ev_antenna_to_hinge_down" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Abklappen_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_y_drive_move_starts" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Abklappen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "a_y_drive_to_indexposition_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Abklappen_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "a_y_drive_is_in_indexposition" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Abklappen_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Antenne hat ihre Position erreicht ----------------------------
+    if ( argv ( 0 ) == "ev_y_drive_is_disabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Antenne_Hat_SollPosition_Erreicht;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Antenne Parkposition Anfordern --------------------------------
+    if ( argv ( 0 ) == "ev_antenna_is_moving_to_parking_position" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Parkposition_Anfordern;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_to_parking_position_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Parkposition_Anfordern_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_is_in_parking_position" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Parkposition_Erreicht;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Stuetzen Druckaufbau ------------------------------------------
+    if ( argv ( 0 ) == "ev_stilts_prepare_moving" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Zylinderdruck;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_preconditioning_was_interrupted" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Zylinderdruck_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_are_preconditioned" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Zylinderdruck_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Stuetzen Klemmung oeffnen  ------------------------------------
+    if ( ( argv ( 0 ) == "ev_stilts_to_extend_started_stilts_unlock" )   //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_stilts_to_retract_started_stilts_unlock" )  //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Oeffnen_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_unlock" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Oeffnen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_unlock_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Oeffnen_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_are_unlocked" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Oeffnen_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Stuetzen Klemmung schliessen ----------------------------------
+    if ( ( argv ( 0 ) == "ev_stilts_to_extend_started_stilts_lock" )   //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_stilts_to_retract_started_stilts_lock" )  //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Schliessen_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_lock" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Schliessen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_lock_timeout" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Schliessen_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_are_locked" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Klemmung_Schliessen_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Stuetzen ausfahren --------------------------------------------
+    if ( ( argv ( 0 ) == "ev_stilts_to_extend_started_stilts_extend" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_stilts_extend" ) //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Ausfahren_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_extend_is_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Ausfahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( ( argv ( 0 ) == "ev_stilts_extend_timeout" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_stilts_to_extend_timeout" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_stilts_extended_stilt_detected" ) //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Ausfahren_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_have_ground_contact" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Ausfahren_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Stuetzen einfahren --------------------------------------------
+    if ( ( argv ( 0 ) == "ev_stilts_to_retract_started_stilts_retract" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_stilts_retract" ) //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Einfahren_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_retract_is_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Einfahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( ( argv ( 0 ) == "ev_stilts_retract_timeout" ) //  bag_fortschrittsanzeigen_out
+      || ( argv ( 0 ) == "ev_stilts_to_retract_timeout" ) //  bag_fortschrittsanzeigen_out
+      )
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Einfahren_Abgebrochen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_stilts_are_retracted" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Stuetzen_Einfahren_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Horizontierung ------------------------------------------------
+    if ( argv ( 0 ) == "ev_antenna_to_level_out" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_to_level_out_is_not_necessary" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_Nicht_Notwendig;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_to_level_out_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_Im_Arbeitsbereich;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_level_out_x" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_X_Fahren_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_level_out_x_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_X_Fahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_level_out_x_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_X_Erreicht;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_level_out_y" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_Y_Fahren_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_level_out_y_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_Y_Fahren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_level_out_y_finished" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_Y_Erreicht;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_antenna_is_levelled_out" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Horizontierung_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Staubaustragseinrichtung --------------------------------------
+    if ( argv ( 0 ) == "ev_dust_discharge_started" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Staubaustrag_Gestartet;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_dust_discharge_start" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_VV1_Aktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_dust_discharge_stop" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_VV1_Deaktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_dust_discharge_done" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Staubaustrag_Abgeschlossen;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // X Antrieb -----------------------------------------------------
+    if ( argv ( 0 ) == "ev_x_drive_enable_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_Aktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_is_enabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_Aktiviert;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_disable_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_Deaktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_x_drive_is_disabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_X_Deaktiviert;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Y Antrieb -----------------------------------------------------
+    if ( argv ( 0 ) == "ev_y_drive_enable_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Y_Aktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_y_drive_is_enabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Y_Aktiviert;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_y_drive_disable_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Y_Deaktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_y_drive_is_disabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Y_Deaktiviert;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+
+    // Z Antrieb -----------------------------------------------------
+    if ( argv ( 0 ) == "ev_z_drive_enable_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Z_Aktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_is_enabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Z_Aktiviert;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_disable_starting" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Z_Deaktivieren;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    } else
+    if ( argv ( 0 ) == "ev_z_drive_is_disabled" ) //  bag_fortschrittsanzeigen_out
+    {
+      bag_fortschrittsanzeigen_out = FA_Z_Deaktiviert;
+      assemble_next_frame_fortschritt_automatikbetrieb_and_send_to_extbg ( argv ( 0 ) );
+    };
+  }; // g_extBG_is_online
+
+};

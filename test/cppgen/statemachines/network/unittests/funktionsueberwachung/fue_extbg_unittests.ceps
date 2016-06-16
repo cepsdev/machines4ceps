@@ -1,0 +1,94 @@
+// <description>
+
+FUE_extbg_unittests {};
+
+Event EXIT;
+
+// Redefinition for test acceleration
+val NODE_HEARTBEAT_PERIOD = 0.01; 
+
+global_functions
+{
+  a_stop_extbg_timers
+  {
+    stop_timer(extbg_supervision_heartbeat_timer);
+    stop_timer(extbg_heartbeat_timer);
+    EXIT;
+  };
+
+  a_stop_extbg
+  {
+    stop(sm_ExtBG);
+  };
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_extbg_unittests;};Test{ExtBG_becoming_Operational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(2*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG.Operational;};
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_extbg_unittests;};Test{ExtBG_lacks_multiple_heartbeats_when_being_preoperational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  stop(sm_ExtBG);
+  start_timer(3*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.PreOperational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_extbg_unittests;};Test{ExtBG_fails_when_being_preoperational;};
+
+  g_extbg_is_functional = 0;
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(4*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS_NOT{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_extbg_unittests;};Test{ExtBG_lacks_multiple_heartbeats_when_being_operational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(2*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+  start_timer(5*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_extbg_unittests;};Test{ExtBG_fails_when_being_operational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  stop(sm_ExtBG);
+  start_timer(6*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Offline;};
+};

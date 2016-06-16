@@ -1,0 +1,48 @@
+// to hinge antenna down means: move Y-drive to indexposition (0°)
+Event ev_x_drive_is_in_indexposition, ev_x_drive_to_indexposition_timeout;
+Event ev_y_drive_is_in_indexposition, ev_y_drive_to_indexposition_timeout;
+Event ev_antenna_is_in_parking_position,  ev_antenna_to_hinge_down_was_interrupted, ev_antenna_to_hinge_down_starts,  ev_antenna_to_hinge_down_preconditions_are_not_met;
+Event ev_antenna_is_hinged_down,          ev_antenna_to_hinge_down_flap_is_open,    ev_antenna_to_hinge_down_timeout;
+
+Statemachine
+{
+  id  { sm_Antenna_to_hinge_down; };
+  description { "Antenna_to_hinge_down"; };
+  States  { Initial;  Final;  Error;  };
+
+  import  { sm_Antenna_to_parking_position; };
+  import  { sm_X_drive_to_indexposition;  };
+  import  { sm_Y_drive_to_indexposition;  };
+
+  Actions
+  {
+    a_antenna_to_hinge_down_timeout { ev_antenna_to_hinge_down_timeout; };
+    a_antenna_is_hinged_down        { ev_antenna_is_hinged_down;  };
+    a_preconditions_are_not_met     { ev_antenna_to_hinge_down_preconditions_are_not_met; };
+    a_was_interrupted               { ev_antenna_to_hinge_down_was_interrupted; };
+    a_flap_is_open                  { ev_antenna_to_hinge_down_flap_is_open;  };
+    a_antenna_to_hinge_down_starts  { ev_antenna_to_hinge_down_starts;  };
+  };
+
+  on_exit
+  {
+    if ( !in_state ( Final, Error ) )
+    {
+      if ( SENSOR_HZO &&  !SENSOR_HZG ) // corresponds to g_flap_is_open
+      {
+        a_flap_is_open;
+      } else
+      {
+        a_was_interrupted;
+      };
+    };
+  };
+
+  Transition  { Initial;                        Final;                                                                a_antenna_is_hinged_down;         g_antenna_is_hinged_down;  };
+  Transition  { Initial;                        sm_Antenna_to_parking_position;                                       a_antenna_to_hinge_down_starts;  !g_antenna_is_hinged_down &&  g_antenna_to_hinge_down_preconditions; };
+  Transition  { Initial;                        Error;                                                                a_preconditions_are_not_met;     !g_antenna_is_hinged_down && !g_antenna_to_hinge_down_preconditions; };
+  Transition  { sm_Antenna_to_parking_position; sm_X_drive_to_indexposition;    ev_antenna_is_in_parking_position;  };
+  Transition  { sm_X_drive_to_indexposition;    sm_Y_drive_to_indexposition;    ev_x_drive_is_in_indexposition; };
+  Transition  { sm_Y_drive_to_indexposition;    Error;                          ev_y_drive_to_indexposition_timeout;  a_antenna_to_hinge_down_timeout;  };
+  Transition  { sm_Y_drive_to_indexposition;    Final;                          ev_y_drive_is_in_indexposition;       a_antenna_is_hinged_down; };
+};

@@ -1,0 +1,233 @@
+// <description>
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.001;
+};
+
+Stilts_to_extend_unittests
+{
+//  g_stilt_left_has_ground_contact   = 0;
+  Pneumatics.stilt_left_pressure  = DEFAULT_SYSTEM_PRESSURE;
+//  g_stilt_right_has_ground_contact  = 0;
+  Pneumatics.stilt_right_pressure = DEFAULT_SYSTEM_PRESSURE;
+
+  SENSOR_SEKOL  = 0;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 1;  //  StützeEndlageKlemmungGeschlossenLinks
+  SENSOR_SEKOR  = 0;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 1;  //  StützeEndlageKlemmungGeschlossenRechts
+
+  SENSOR_SMOL = 1;  //  StützenMagnetObenLinks
+  SENSOR_SMOR = 1;  //  StützenMagnetObenRechts
+  SENSOR_SMUL = 0;  //  StützenMagnetUntenLinks
+  SENSOR_SMUR = 0;  //  StützenMagnetUntenRechts
+
+  //  g_system_pressure_is_sufficient   = 1;
+  Pneumatics.system_pressure      = DEFAULT_SYSTEM_PRESSURE;
+  SENSOR_KAMPFSCHALTER_A            = 0;
+};
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{Initialization;};
+
+  Start { sm_Stilts_to_extend;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_preconditioning;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{Stilts_preconditioning;};
+
+  Start { sm_Stilts_to_extend;  };
+
+  ev_stilts_preconditioning_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_unlock.Unlocking;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{Stilts_unlock;};
+
+  Start { sm_Stilts_to_extend;  };
+
+  ev_stilts_preconditioning_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_unlock.Unlocking;};
+
+//  g_stilts_all_are_unlocked   = 1;
+//  g_stilt_any_is_locked       = 0;
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  ev_stilts_lock_left_is_unlocked;
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  ev_stilts_lock_right_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_extend;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{Stilts_extend_given_objective_is_reached;};
+
+  Start { sm_Stilts_to_extend;  };
+
+  ev_stilts_preconditioning_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_unlock.Unlocking;};
+
+//  g_stilts_all_are_unlocked   = 1;
+//  g_stilt_any_is_locked       = 0;
+//  g_stilts_all_are_locked     = 0;
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  ev_stilts_lock_left_is_unlocked;
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  ev_stilts_lock_right_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_extend;};
+
+  SENSOR_SMOL = 0;  //  StützenMagnetObenLinks
+  SENSOR_SMOR = 0;  //  StützenMagnetObenRechts
+//  g_stilt_left_has_ground_contact = 1;
+  Pneumatics.stilt_left_pressure  = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_left_is_not_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_extend;};
+//  g_stilt_right_has_ground_contact = 1;
+  Pneumatics.stilt_right_pressure = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_right_is_not_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_lock;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{Stilts_extend_given_stilt_left_has_no_ground_contact;};
+
+  Start { sm_Stilts_to_extend;  };
+
+  ev_stilts_preconditioning_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_unlock.Unlocking;};
+
+//  g_stilts_all_are_unlocked   = 1;
+//  g_stilt_any_is_locked       = 0;
+//  g_stilts_all_are_locked     = 0;
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  ev_stilts_lock_left_is_unlocked;
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  ev_stilts_lock_right_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_extend;};
+
+  SENSOR_SMOL = 0;  //  StützenMagnetObenLinks
+  SENSOR_SMOR = 0;  //  StützenMagnetObenRechts
+
+  Pneumatics.stilt_right_pressure = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_right_is_not_extended;
+//  g_stilt_left_is_extended    = 1; 
+  SENSOR_SMUL = 1;  //  StützenMagnetUntenLinks
+  ev_stilt_left_is_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{Stilts_extend_given_stilt_right_has_no_ground_contact;};
+
+  Start { sm_Stilts_to_extend; };
+
+  ev_stilts_preconditioning_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_unlock.Unlocking;};
+
+//  g_stilts_all_are_unlocked   = 1;
+//  g_stilt_any_is_locked       = 0;
+//  g_stilts_all_are_locked     = 0;
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  ev_stilts_lock_left_is_unlocked;
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  ev_stilts_lock_right_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_extend;};
+
+  SENSOR_SMOL = 0;  //  StützenMagnetObenLinks
+  SENSOR_SMOR = 0;  //  StützenMagnetObenRechts
+
+  Pneumatics.stilt_left_pressure  = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_left_is_not_extended;
+//  g_stilt_right_is_extended   = 1; 
+  SENSOR_SMUR = 1;  //  StützenMagnetUntenRechts
+  ev_stilt_right_is_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Final;};
+};
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{From_Initial_to_Final_given_program_is_executed_normally;};
+
+  Start { sm_Stilts_to_extend;  };
+
+  ev_stilts_preconditioning_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_unlock.Unlocking;};
+
+//  g_stilts_all_are_unlocked   = 1;
+//  g_stilt_any_is_locked       = 0;
+//  g_stilts_all_are_locked     = 0;
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  ev_stilts_lock_left_is_unlocked;
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  ev_stilts_lock_right_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_extend;};
+
+  SENSOR_SMOL = 0;  //  StützenMagnetObenLinks
+  SENSOR_SMOR = 0;  //  StützenMagnetObenRechts
+
+//  g_stilt_left_has_ground_contact   = 1;
+//  g_stilt_right_has_ground_contact  = 1;
+  Pneumatics.stilt_left_pressure  = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_left_is_not_extended;
+  Pneumatics.stilt_right_pressure = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_right_is_not_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.sm_Stilts_lock;};
+
+//  g_stilts_all_are_unlocked   = 0;
+//  g_stilts_all_are_locked     = 1;
+  SENSOR_SEKOL  = 0;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 1;  //  StützeEndlageKlemmungGeschlossenLinks
+  ev_stilts_lock_left_is_locked;
+  SENSOR_SEKOR  = 0;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 1;  //  StützeEndlageKlemmungGeschlossenRechts
+  ev_stilts_lock_right_is_locked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{From_Initial_to_Final_given_stilt_left_is_extended;};
+
+//  g_stilt_any_is_extended = 1;
+  SENSOR_SMUL = 1;  //  StützenMagnetUntenLinks
+  Start { sm_Stilts_to_extend;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Final;};
+};
+
+Simulation
+{
+  TestCase{Stilts_to_extend_unittests;};Test{From_Initial_to_Final_given_stilt_right_is_extended;};
+
+//  g_stilt_any_is_extended = 1;
+  SENSOR_SMUR = 1;  //  StützenMagnetUntenRechts
+  Start { sm_Stilts_to_extend;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_to_extend.Final;};
+};
+

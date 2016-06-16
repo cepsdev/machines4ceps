@@ -1,0 +1,32 @@
+Event ev_z_drive_is_enabled, ev_z_drive_enable, ev_z_drive_enable_timeout, ev_z_drive_fault_antrieb_is_reset;
+Guard g_z_drive_has_antrieb_fault;
+
+Statemachine
+{
+  id  { sm_Z_drive_enable;};
+  description { "Z_drive_enable"; };
+  States  { Initial;  Final;  Enabling; };
+
+  import  { sm_Z_drive_reset_fault_antrieb; };
+
+  Actions
+  {
+    a_reset_antrieb_fault     { ev_z_drive_reset_antrieb_fault; };
+    a_enable_z_drive
+    {
+      print ( "---------- Z_drive_enable ---------- a_enable_z_drive\n" );
+      ev_z_drive_enable;
+    };
+    a_set_timeout_timer       { start_timer ( DEF_TIME_RUCKMLD_ANTRIEBE * s, ev_z_drive_enable_timeout, timer_z_drive_enable );  };
+    a_z_drive_is_enabled      { /*ev_z_drive_is_enabled;*/ print ( "---------- Z_drive_enable ---------- unexpected timeout\n" ); };
+  };
+
+  on_exit { stop_timer(timer_z_drive_enable); };
+
+  Transition  { Initial;                        Enabling;                                                          !g_z_drive_has_antrieb_fault;  a_enable_z_drive; a_set_timeout_timer;  };
+  Transition  { Initial;                        sm_Z_drive_reset_fault_antrieb;                                     g_z_drive_has_antrieb_fault;  };
+  Transition  { sm_Z_drive_reset_fault_antrieb; Enabling;                       ev_z_drive_fault_antrieb_is_reset; !g_z_drive_has_antrieb_fault;  a_enable_z_drive; a_set_timeout_timer;  };
+  Transition  { Enabling;                       Final;                                                              g_z_drive_is_enabled;         a_z_drive_is_enabled; };
+  Transition  { Enabling;                       Final;                          ev_z_drive_is_enabled;  };
+};
+

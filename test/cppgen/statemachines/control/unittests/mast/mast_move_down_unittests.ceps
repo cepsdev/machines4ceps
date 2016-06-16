@@ -1,0 +1,41 @@
+Event ev_mast_move_down, ev_z_drive_movement_stopped, ev_z_drive_stop;
+// <description>
+
+Mast_move_down_unittests
+{
+  g_z_drive_has_antrieb_fault = 0;
+  g_z_drive_is_operational    = 1;
+  g_flap_is_open              = 1;
+};
+
+Statemachine
+{
+ id { sm_Ctrl;  };
+ import { sm_Mast_move_down;  };
+ States { Initial;  Final;  };
+ Transition { Initial;            sm_Mast_move_down;  ev_mast_move_down; };
+ Transition { sm_Mast_move_down;  Final;              ev_z_drive_movement_stopped;  };
+};
+
+Simulation
+{
+  TestCase{Mast_move_down_unittests;};Test{Initialization;};
+
+  z_drive.IstPos  = 200;
+
+  Start { sm_Ctrl; };
+  Start { sm_Z_drive; };
+  Start { sm_Z_drive_state; };
+
+  ev_mast_move_down(-10);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Mast_move_down.sm_Z_drive_move.Prepare_Talin;};
+
+  // pretend that TALIN is prepared
+  ev_talin_is_ready_to_be_moved;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Mast_move_down.sm_Z_drive_move.Moving;};
+
+  start_timer(0.5*s,  ev_z_drive_stop);
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+};

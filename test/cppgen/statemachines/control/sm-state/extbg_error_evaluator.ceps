@@ -1,0 +1,501 @@
+Event ev_antenna_to_rise_preconditions_are_not_met, ev_antenna_to_hinge_down_preconditions_are_not_met, ev_antenna_to_rise_timeout, ev_antenna_to_hinge_down_timeout; 
+Event ev_antenna_lashing_lock_timeout, ev_antenna_lashing_unlock_timeout, ev_antenna_to_parking_position_timeout, ev_antenna_correction_is_not_possible;
+Event ev_flap_lock_timeout, ev_flap_unlock_timeout, ev_flap_open_timeout, ev_flap_close_timeout, ev_flap_to_open_preconditions_are_not_met, ev_flap_to_close_preconditions_are_not_met;
+Event ev_heckverteiler_is_offline, ev_system_pressure_is_low;
+Event ev_kampfschalter_is_active, ev_not_aus_is_active, ev_taste_e_abbruch_is_active, ev_taste_a_abbruch_is_active;
+Event ev_extBG_is_online, ev_talin_data_is_invalid, ev_ivenet_lacks_traffic, ev_psm_lacks_traffic;
+Event ev_platform_extend_preconditions_are_not_met, ev_platform_retract_preconditions_are_not_met;
+Event ev_stilts_lock_timeout, ev_stilts_unlock_timeout, ev_stilts_to_extend_timeout, ev_stilts_to_retract_timeout, ev_stilt_left_is_extended, ev_stilt_right_is_extended;
+Event ev_usv_is_offline;
+Event ev_x_drive_is_offline, ev_x_drive_has_antrieb_fault, ev_x_drive_to_indexposition_timeout;
+Event ev_y_drive_is_offline, ev_y_drive_has_antrieb_fault, ev_y_drive_to_indexposition_timeout, ev_y_drive_to_arbeitsposition_timeout;
+Event ev_z_drive_is_offline, ev_z_drive_has_antrieb_fault, ev_z_drive_to_indexposition_timeout, ev_z_drive_to_lashing_position_timeout, ev_z_drive_to_target_position_timeout, ev_z_drive_to_target_position_preconditions_are_not_met;
+
+global_functions
+{
+  set_extbg_error
+  {
+    params{ p_ERROR_ID; };
+    print ( "BAG --> EXTBG >>> ERROR_ID: ", p_ERROR_ID, ", extbg_error_counter: ", extbg_error_counter, "\n" );
+    if ( extbg_error_counter == 0 )
+    {
+      extbg_error_0 = p_ERROR_ID;
+    } else
+    if ( extbg_error_counter == 1 )
+    {
+      extbg_error_1 = p_ERROR_ID;
+    } else
+    if ( extbg_error_counter == 2 )
+    {
+      extbg_error_2 = p_ERROR_ID;
+    } else
+    if ( extbg_error_counter == 3 )
+    {
+      extbg_error_3 = p_ERROR_ID;
+    } else
+    if ( extbg_error_counter == 4 )
+    {
+      extbg_error_4 = p_ERROR_ID;
+    };
+    extbg_error_counter = extbg_error_counter + 1;
+  };
+
+  reset_extbg_error
+  {
+    extbg_error_0       = NO_ERROR;
+    extbg_error_1       = NO_ERROR;
+    extbg_error_2       = NO_ERROR;
+    extbg_error_3       = NO_ERROR;
+    extbg_error_4       = NO_ERROR;
+    extbg_error_counter = 0;
+  };
+};
+
+Statemachine
+{
+  id  { sm_ExtBG_error_evaluator; };
+  States  { Initial; Idle; Error_Evaluation;  };
+
+  Actions
+  {
+    a_reset_all_errors
+    {
+      reset_extbg_error();
+    };
+
+    a_not_aus_is_active
+    {
+      if ( TASTE_NOT_AUS )
+        set_extbg_error ( 1 );
+    };
+
+    a_taste_e_abbruch_is_active
+    {
+      if ( TASTE_E_ABBRUCH )
+        set_extbg_error ( 2 );
+    };
+
+    a_taste_a_abbruch_is_active
+    {
+      if ( TASTE_A_ABBRUCH )
+        set_extbg_error ( 3 );
+    };
+
+    a_extBG_is_online
+    {
+      if(extbg_is_online) 
+      {
+        print("ExtBG is online\n");
+        //set_extbg_error(4);
+      }
+    };
+
+    a_kampfschalter_is_active
+    {
+      if(SENSOR_KAMPFSCHALTER_A)
+        set_extbg_error(5);
+    };
+
+    // PLATTFORM
+    a_platform_extend_preconditions_are_not_met
+    {
+      if ( Vehicle.Speed != 0.0 )
+        set_extbg_error ( 10 );
+      if ( !GEAR_IS_DC_NEUTRAL )
+        set_extbg_error ( 11 );
+      if ( !BRAKE_IS_ACTIVE )
+        set_extbg_error ( 12 );
+    };
+
+    a_platform_retract_preconditions_are_not_met
+    {
+      if ( Vehicle.Speed != 0.0 )
+        set_extbg_error ( 10 );
+      if ( !GEAR_IS_DC_NEUTRAL )
+        set_extbg_error ( 11 );
+      if ( !BRAKE_IS_ACTIVE )
+        set_extbg_error ( 12 );
+    };
+
+    // PNEUMATIK
+    a_system_pressure_is_low
+    {
+      if ( Pneumatics.system_pressure < MINIMUM_SYSTEM_PRESSURE )
+        set_extbg_error ( 20 );
+    };
+
+    // HAUBE
+    a_flap_lock_timeout
+    {
+      if ( SENSOR_HR1O )  //  HaubeRiegel1_Offen
+        set_extbg_error ( 30 );
+      if ( SENSOR_HR2O )  //  HaubeRiegel2_Offen
+        set_extbg_error ( 32 );
+      if ( !SENSOR_HR1V ) //  HaubeRiegel1_Verriegelt
+        set_extbg_error ( 35 );
+      if ( !SENSOR_HR2V ) //  HaubeRiegel2_Verriegelt
+        set_extbg_error ( 37 );
+    };
+
+    a_flap_unlock_timeout
+    {
+      if ( !SENSOR_HR1O ) //  HaubeRiegel1_Offen
+        set_extbg_error ( 31 );
+      if ( !SENSOR_HR2O ) //  HaubeRiegel2_Offen
+        set_extbg_error ( 33 );
+      if ( SENSOR_HR1V )  //  HaubeRiegel1_Verriegelt
+        set_extbg_error ( 34 );
+      if ( SENSOR_HR2V )  //  HaubeRiegel2_Verriegelt
+        set_extbg_error ( 36 );
+    };
+
+    a_flap_open_timeout
+    {
+      if ( SENSOR_HZG )   //  HaubeRiegelGeschlossen
+        set_extbg_error ( 38 );
+      if ( !SENSOR_HZO )  //  HaubeRiegelOffen
+        set_extbg_error ( 41 );
+    };
+
+    a_flap_close_timeout
+    {
+      if ( !SENSOR_HZG )  //  HaubeRiegelGeschlossen
+        set_extbg_error ( 39 );
+      if ( SENSOR_HZO )   //  HaubeRiegelOffen
+        set_extbg_error ( 40 );
+    };
+
+    a_flap_to_open_preconditions_are_not_met
+    {
+      if ( Pneumatics.system_pressure < MINIMUM_SYSTEM_PRESSURE )
+         set_extbg_error ( 20 );
+      if ( !( ( z_drive.IstPos <= z_drive.MAST_ZURRPOSITION + 5 ) || ( SENSOR_AB_Y && SENSOR_IP_Z ) ) )
+         set_extbg_error ( 42 );
+      if ( SENSOR_HZG )  //  HaubeRiegelGeschlossen
+        set_extbg_error ( 38 );
+      if ( SENSOR_HZO )  //  HaubeRiegelOffen
+        set_extbg_error ( 40 );
+    };
+
+    a_flap_to_close_preconditions_are_not_met
+    {
+      if ( Pneumatics.system_pressure < MINIMUM_SYSTEM_PRESSURE )
+      {
+         set_extbg_error ( 20 );
+      }
+      if ( !( ( z_drive.IstPos <= z_drive.MAST_ZURRPOSITION + 5 ) || ( SENSOR_AB_Y && SENSOR_IP_Z ) ) )
+      {
+         set_extbg_error ( 42 );
+      }
+    };
+
+    a_antenna_to_raise_preconditions_are_not_met
+    {
+      if ( !( SENSOR_IP_Z ||  ( ( z_drive.IstPos >= z_drive.MAST_INDEXPOSITION - z_drive.POSITION_TOLERANCE )
+                             && ( z_drive.IstPos <= z_drive.MAST_INDEXPOSITION + z_drive.POSITION_TOLERANCE )
+                              )
+            )
+         )
+        set_extbg_error ( 43 );
+    };
+
+    a_antenna_to_hinge_down_preconditions_are_not_met
+    {
+      if ( !( SENSOR_IP_Z ||  ( ( z_drive.IstPos >= z_drive.MAST_INDEXPOSITION - z_drive.POSITION_TOLERANCE )
+                             && ( z_drive.IstPos <= z_drive.MAST_INDEXPOSITION + z_drive.POSITION_TOLERANCE )
+                              )
+            )
+         )
+        set_extbg_error ( 43 );
+    };
+
+    a_antenna_lashing_lock_timeout
+    {
+      if ( SENSOR_VZ1O )  //  VerzurrungAntenneOffen
+        set_extbg_error ( 50 );
+      if ( !SENSOR_VZ1V ) //  VerzurrungAntenneVerriegelt
+        set_extbg_error ( 53 );
+    };
+
+    a_antenna_lashing_unlock_timeout
+    {
+      if ( !SENSOR_VZ1O )  //  VerzurrungAntenneOffen
+        set_extbg_error ( 51 );
+      if ( SENSOR_VZ1V )   //  VerzurrungAntenneVerriegelt
+        set_extbg_error ( 52 );
+    };
+
+    a_stilts_lock_timeout
+    {
+      if ( SENSOR_SEKOL )   //  StützeEndlageKlemmungOffenLinks
+        set_extbg_error ( 61 );
+      if ( SENSOR_SEKOR )   //  StützeEndlageKlemmungOffenRechts
+        set_extbg_error ( 63 );
+      if ( !SENSOR_SEKGL )  //  StützeEndlageKlemmungGeschlossenLinks
+        set_extbg_error ( 64 );
+      if ( !SENSOR_SEKGR )  //  StützeEndlageKlemmungGeschlossenRechts
+        set_extbg_error ( 66 );
+    };
+
+    a_stilts_unlock_timeout
+    {
+      print("SENSOR_SEKOL: ",SENSOR_SEKOL,", SENSOR_SEKOR: ",SENSOR_SEKOR,", SENSOR_SEKGL",SENSOR_SEKGL,", SENSOR_SEKGR: ",SENSOR_SEKGR,"\n");
+
+      if ( !SENSOR_SEKOL )  //  StützeEndlageKlemmungOffenLinks
+        set_extbg_error ( 60 );
+      if ( !SENSOR_SEKOR )  //  StützeEndlageKlemmungOffenRechts
+        set_extbg_error ( 62 );
+      if ( SENSOR_SEKGL )   //  StützeEndlageKlemmungGeschlossenLinks
+        set_extbg_error ( 65 );
+      if ( SENSOR_SEKGR )   //  StützeEndlageKlemmungGeschlossenRechts
+        set_extbg_error ( 67 );
+    };
+
+    a_stilts_to_extend_timeout
+    {
+      if ( Pneumatics.stilt_left_pressure > STILT_PRESSURE_GROUND_CONTACT )
+        set_extbg_error ( 72 );
+      if ( Pneumatics.stilt_right_pressure > STILT_PRESSURE_GROUND_CONTACT )
+        set_extbg_error ( 73 );
+    };
+
+   a_stilts_to_retract_timeout
+   {
+      if ( !SENSOR_SMOL ) //  StützenMagnetObenLinks
+        set_extbg_error ( 68 );
+      if ( !SENSOR_SMOR ) //  StützenMagnetObenRechts
+        set_extbg_error ( 69 );
+    };
+
+    a_stilt_left_is_extended
+    {
+      if ( SENSOR_SMUL )  //  StützenMagnetUntenLinks
+        set_extbg_error ( 70 );
+    };
+
+    a_stilt_right_is_extended
+    {
+      if ( SENSOR_SMUR )  //  StützenMagnetUntenRechts
+        set_extbg_error ( 71 );
+    };
+
+    a_y_drive_to_arbeitsposition_timeout
+    {
+      set_extbg_error ( 80 );
+    };
+
+    a_y_drive_to_indexposition_timeout
+    {
+      set_extbg_error ( 81 );
+    };
+
+    a_antenna_to_parking_position_timeout
+    {
+      if ( !SENSOR_IN_PARKPOS )
+        set_extbg_error ( 82 );
+    };
+
+    a_x_drive_to_indexposition_timeout
+    {
+      if ( !( SENSOR_IP_X || ( ( x_drive.IstPos >= x_drive.INDEXPOSITION - x_drive.ANGLE_TOLERANCE )
+                            && ( x_drive.IstPos <= x_drive.INDEXPOSITION + x_drive.ANGLE_TOLERANCE )
+                            )
+            )
+        )
+        set_extbg_error ( 83 );
+    };
+
+    a_z_drive_to_indexposition_timeout
+    {
+      if ( z_drive.IstPos > ( z_drive.MAST_INDEXPOSITION + z_drive.POSITION_TOLERANCE ) )
+        set_extbg_error ( 84 );
+
+      if ( z_drive.IstPos < ( z_drive.MAST_INDEXPOSITION - z_drive.POSITION_TOLERANCE ) )
+        set_extbg_error ( 85 );
+    };
+
+    a_z_drive_to_lashing_position_timeout
+    {
+      if ( z_drive.IstPos > z_drive.MAST_ZURRPOSITION )
+        set_extbg_error ( 86 );
+    };
+
+    a_z_drive_to_target_position_preconditions_are_not_met
+    {
+      if ( SOLL_POS > z_drive.MAX_POS )
+        set_extbg_error ( 87 );
+      if ( SOLL_POS < z_drive.MAST_MINHOEHE )
+        set_extbg_error ( 88 );
+      if ( y_drive.IstPos < 77.0 )
+        set_extbg_error ( 89 );
+      if ( z_drive.IstPos > 3310 )
+        set_extbg_error ( 90 );
+      if ( z_drive.IstPos < 750 )
+        set_extbg_error ( 91 );
+    };
+
+    a_z_drive_to_target_position_timeout
+    {
+      if ( z_drive.IstPos > ( z_drive.SollPos + z_drive.POSITION_TOLERANCE ) )
+        set_extbg_error ( 92 );
+      if ( z_drive.IstPos < ( z_drive.SollPos - z_drive.POSITION_TOLERANCE ) )
+        set_extbg_error ( 93 );
+    };
+
+    a_antenna_to_raise_timeout
+    {
+      if ( y_drive.IstPos < 89.0 )
+        set_extbg_error ( 94 );
+      if ( y_drive.IstPos > 91.0 )
+        set_extbg_error ( 95 );
+    };
+
+    a_antenna_to_hinge_down_timeout
+    {
+      if ( y_drive.IstPos < -1.0 )
+        set_extbg_error ( 96 );
+      if ( y_drive.IstPos >  1.0 )
+        set_extbg_error ( 97 );
+    };
+
+    a_antenna_correction_is_not_possible
+    {
+      if ( abs ( x_drive.IstPos ) > x_drive.ARBEITSBEREICH_MAX )
+        set_extbg_error ( 98 );
+      if ( abs ( x_drive.IstPos + Talin_state.axis_x ) > x_drive.ARBEITSBEREICH_MAX )
+        set_extbg_error ( 99 );
+      if ( ( y_drive.IstPos + Talin_state.axis_y ) > ( y_drive.ARBEITSPOSITION + y_drive.ARBEITSBEREICH_MAX ) )
+        set_extbg_error ( 100 );
+      if ( ( y_drive.IstPos + Talin_state.axis_y ) < ( y_drive.ARBEITSPOSITION + y_drive.ARBEITSBEREICH_MIN ) )
+        set_extbg_error ( 101 );
+      if ( abs ( x_drive.IstPos - x_drive.SollPos ) > 0.5 )
+        set_extbg_error ( 102 );
+      if ( abs ( y_drive.IstPos - y_drive.SollPos ) > 0.5 )
+        set_extbg_error ( 103 );
+    };
+
+    a_x_drive_has_antrieb_fault
+    {
+      if ( x_drive.Status.ANTRIEB_FAULT )
+        set_extbg_error ( 110 );
+    };
+
+    a_y_drive_has_antrieb_fault
+    {
+      if ( y_drive.Status.ANTRIEB_FAULT )
+        set_extbg_error ( 120 );
+    };
+
+    a_z_drive_has_antrieb_fault
+    {
+      set_extbg_error ( 130 );
+    };
+
+    a_x_drive_is_offline
+    {
+      set_extbg_error ( 111 );
+    };
+
+    a_y_drive_is_offline
+    {
+      set_extbg_error ( 121 );
+    };
+
+    a_z_drive_is_offline
+    {
+      set_extbg_error ( 131 );
+    };
+
+    a_talin_data_is_invalid
+    {
+      if ( Talin_state.isValid < 1 )
+        set_extbg_error ( 140 );
+    };
+
+    a_ivenet_lacks_traffic
+    {
+      set_extbg_error ( 150 );
+    };
+
+    a_usv_is_offline
+    {
+      set_extbg_error ( 160 );
+    };
+
+    a_psm_lacks_traffic
+    {
+      set_extbg_error ( 170 );
+    };
+
+    a_heckverteiler_is_offline
+    {
+      set_extbg_error ( 180 );
+    };
+ };
+
+  Transition  { Initial;  Idle;             g_extBG_is_online;  };
+  // HAUBE
+  Transition  { Idle;     Error_Evaluation; ev_flap_lock_timeout;                                     a_flap_lock_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_flap_unlock_timeout;                                   a_flap_unlock_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_flap_open_timeout;                                     a_flap_open_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_flap_close_timeout;                                    a_flap_close_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_flap_to_open_preconditions_are_not_met;                a_flap_to_open_preconditions_are_not_met; };
+  Transition  { Idle;     Error_Evaluation; ev_flap_to_close_preconditions_are_not_met;               a_flap_to_close_preconditions_are_not_met; };
+  // HECKVERTEILER
+  Transition  { Idle;     Error_Evaluation; ev_heckverteiler_is_offline;                              a_heckverteiler_is_offline; };
+  // PNEUMATIK
+  Transition  { Idle;     Error_Evaluation; ev_system_pressure_is_low;                                a_system_pressure_is_low; };
+  // ANTENNE
+  Transition  { Idle;     Error_Evaluation; ev_antenna_to_rise_preconditions_are_not_met;             a_antenna_to_raise_preconditions_are_not_met; };
+  Transition  { Idle;     Error_Evaluation; ev_antenna_to_hinge_down_preconditions_are_not_met;       a_antenna_to_hinge_down_preconditions_are_not_met; };
+  Transition  { Idle;     Error_Evaluation; ev_antenna_to_rise_timeout;                               a_antenna_to_raise_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_antenna_to_hinge_down_timeout;                         a_antenna_to_hinge_down_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_antenna_lashing_lock_timeout;                          a_antenna_lashing_lock_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_antenna_lashing_unlock_timeout;                        a_antenna_lashing_unlock_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_y_drive_to_arbeitsposition_timeout;                    a_y_drive_to_arbeitsposition_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_y_drive_to_indexposition_timeout;                      a_y_drive_to_indexposition_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_antenna_to_parking_position_timeout;                   a_antenna_to_parking_position_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_antenna_correction_is_not_possible;                    a_antenna_correction_is_not_possible; };
+  // STUETZEN
+  Transition  { Idle;     Error_Evaluation; ev_stilts_lock_timeout;                                   a_stilts_lock_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_stilts_unlock_timeout;                                 a_stilts_unlock_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_stilts_to_extend_timeout;                              a_stilts_to_extend_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_stilts_to_retract_timeout;                             a_stilts_to_retract_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_stilt_left_is_extended;                                a_stilt_left_is_extended; };
+  Transition  { Idle;     Error_Evaluation; ev_stilt_right_is_extended;                               a_stilt_right_is_extended; };
+  // USV
+  Transition  { Idle;     Error_Evaluation; ev_usv_is_offline;                                        a_usv_is_offline; };
+  // X
+  Transition  { Idle;     Error_Evaluation; ev_x_drive_to_indexposition_timeout;                      a_x_drive_to_indexposition_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_x_drive_is_offline;                                    a_x_drive_is_offline; };
+  Transition  { Idle;     Error_Evaluation; ev_x_drive_has_antrieb_fault;                             a_x_drive_has_antrieb_fault; };
+  // Y
+  Transition  { Idle;     Error_Evaluation; ev_y_drive_is_offline;                                    a_y_drive_is_offline; };
+  Transition  { Idle;     Error_Evaluation; ev_y_drive_has_antrieb_fault;                             a_y_drive_has_antrieb_fault; };
+  // Z 
+  Transition  { Idle;     Error_Evaluation; ev_z_drive_is_offline;                                    a_z_drive_is_offline; };
+  Transition  { Idle;     Error_Evaluation; ev_z_drive_to_indexposition_timeout;                      a_z_drive_to_indexposition_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_z_drive_to_lashing_position_timeout;                   a_z_drive_to_lashing_position_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_z_drive_to_target_position_preconditions_are_not_met;  a_z_drive_to_target_position_preconditions_are_not_met; };
+  Transition  { Idle;     Error_Evaluation; ev_z_drive_to_target_position_timeout;                    a_z_drive_to_target_position_timeout; };
+  Transition  { Idle;     Error_Evaluation; ev_z_drive_has_antrieb_fault;                             a_z_drive_has_antrieb_fault; };
+  // PLATTFORM
+  Transition  { Idle;     Error_Evaluation; ev_platform_extend_preconditions_are_not_met;             a_platform_extend_preconditions_are_not_met; };
+  Transition  { Idle;     Error_Evaluation; ev_platform_retract_preconditions_are_not_met;            a_platform_retract_preconditions_are_not_met; };
+  // USER
+  Transition  { Idle;     Error_Evaluation; ev_kampfschalter_is_active;                               a_kampfschalter_is_active; };
+  Transition  { Idle;     Error_Evaluation; ev_not_aus_is_active;                                     a_not_aus_is_active; };
+  Transition  { Idle;     Error_Evaluation; ev_taste_e_abbruch_is_active;                             a_taste_e_abbruch_is_active; };
+  Transition  { Idle;     Error_Evaluation; ev_taste_a_abbruch_is_active;                             a_taste_a_abbruch_is_active; };
+  // EXTBG
+  //Transition  { Idle;     Error_Evaluation; ev_extBG_is_online;                                       a_extBG_is_online; };
+  // TALIN
+  Transition  { Idle;     Error_Evaluation; ev_talin_data_is_invalid;                                 a_talin_data_is_invalid; };
+  // IVENET
+  Transition  { Idle;     Error_Evaluation; ev_ivenet_lacks_traffic;                                  a_ivenet_lacks_traffic; };
+  // PSM
+  Transition  { Idle;     Error_Evaluation; ev_psm_lacks_traffic;                                     a_psm_lacks_traffic; };
+
+
+  Transition  { Error_Evaluation;     Idle;   g_extBG_is_online;                                      a_reset_all_errors; };
+};

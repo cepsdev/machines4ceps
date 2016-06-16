@@ -1,0 +1,36 @@
+// <description>
+
+Mast_endschalter_IP_Z_unittests
+{
+  g_mast_height_is_lt_indexposition  = 1;
+  g_mast_height_is_ge_indexposition  = 0;
+};
+
+Simulation
+{
+  TestCase{Mast_endschalter_IP_Z_unittests;};Test{Initialization;};
+
+  Start { sm_Mast_endschalter_IP_Z; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_IP_Z.Off;};
+};
+
+
+Simulation
+{
+  TestCase{Mast_endschalter_IP_Z_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Mast_endschalter_IP_Z; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_IP_Z.Off;};
+
+  g_mast_height_is_lt_indexposition  = 0;
+  g_mast_height_is_ge_indexposition  = 1;
+  ev_z_drive_position_changed;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_IP_Z.On;};
+
+  g_mast_height_is_lt_indexposition  = 1;
+  g_mast_height_is_ge_indexposition  = 0;  
+  ev_z_drive_position_changed;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Mast_endschalter_IP_Z.Off;};
+};

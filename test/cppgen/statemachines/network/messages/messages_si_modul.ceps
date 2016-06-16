@@ -1,0 +1,689 @@
+/*
+ * 
+ * Interface CANopen HV : SI Module
+ * 
+ */
+
+
+val si_module_node_id = 0x50;
+
+val cob_si_modul_betriebsart            = si_module_node_id + 0x180;
+val cob_si_modul_ansteuerung_ausgaenge  = si_module_node_id + 0x280;
+val cob_si_modul_force_pdo_transmit_hv  = si_module_node_id + 0x380;
+val cob_si_modul_geraetestatus          = si_module_node_id + 0x200;
+val cob_si_modul_digitale_eingaenge     = si_module_node_id + 0x300;
+val cob_si_modul_analoge_eingaenge_1    = si_module_node_id + 0x400;
+val cob_si_modul_analoge_eingaenge_2    = si_module_node_id + 0x500;
+val cob_si_modul_analoge_eingaenge_3    = si_module_node_id + 0x201;
+val cob_si_modul_analoge_eingaenge_4    = si_module_node_id + 0x301;
+val cob_si_modul_analoge_eingaenge_5    = si_module_node_id + 0x401;
+val cob_si_modul_analoge_eingaenge_6    = si_module_node_id + 0x501;
+val cob_si_modul_analoge_eingaenge_7    = si_module_node_id + 0x202;
+val cob_si_modul_analoge_eingaenge_8    = si_module_node_id + 0x302;
+
+val rtr_si_modul_force_pdo_transmit_hv = 0;
+val rtr_si_modul_betriebsart = 0;
+val rtr_si_modul_geraetestatus = 0;
+val rtr_si_modul_ansteuerung_ausgaenge = 0;
+val rtr_si_modul_digitale_eingaenge = 0;
+val rtr_si_modul_analoge_eingaenge = 0;
+
+
+Systemstate si_modul_betriebsart_out;
+Systemstate si_modul_betriebsart_in;
+
+
+Systemstate si_modul_ansteuerung_ausgaenge_reserve_out;
+Systemstate si_modul_ansteuerung_ausgaenge_reserve_in;
+Systemstate si_modul_ansteuerung_ausgaenge_reserve1_out;
+Systemstate si_modul_ansteuerung_ausgaenge_reserve1_in;
+Systemstate si_modul_ansteuerung_ausgaenge_reserve2_out;
+Systemstate si_modul_ansteuerung_ausgaenge_reserve2_in;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_pneumatik_out;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_pneumatik_in;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_radaranlage_out;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_radaranlage_in;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_windsensor_out;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_windsensor_in;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_windsensor_heizung_out;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_windsensor_heizung_in;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_xyz_antriebe_out;
+Systemstate si_modul_ansteuerung_ausgaenge_versorgung_xyz_antriebe_in;
+
+
+Systemstate si_modul_force_pdo_transmit_hv_changecounter_out;
+Systemstate si_modul_force_pdo_transmit_hv_changecounter_in;
+
+
+Systemstate si_modul_geraetestatus_rueckmeldung_betriebsart_out;
+Systemstate si_modul_geraetestatus_rueckmeldung_betriebsart_in;
+
+
+Systemstate si_modul_digitale_eingaenge_cs2_extbg_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs2_extbg_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs2_kfzsteckdose_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs2_kfzsteckdose_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs2_maststeuerung_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs2_maststeuerung_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs2_pneumatik_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs2_pneumatik_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs2_sensorik_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs2_sensorik_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs2_windsensor_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs2_windsensor_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs2_windsensorhzg_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs2_windsensorhzg_fused_in;
+
+Systemstate si_modul_digitale_eingaenge_cs3_pneumatik_switched_out;
+Systemstate si_modul_digitale_eingaenge_cs3_pneumatik_switched_in;
+Systemstate si_modul_digitale_eingaenge_cs3_radar_switched_out;
+Systemstate si_modul_digitale_eingaenge_cs3_radar_switched_in;
+Systemstate si_modul_digitale_eingaenge_cs3_reserve1_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs3_reserve1_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs3_reserve2_fused_out;
+Systemstate si_modul_digitale_eingaenge_cs3_reserve2_fused_in;
+Systemstate si_modul_digitale_eingaenge_cs3_windsensor_switched_out;
+Systemstate si_modul_digitale_eingaenge_cs3_windsensor_switched_in;
+Systemstate si_modul_digitale_eingaenge_cs3_windsensorhzg_switched_out;
+Systemstate si_modul_digitale_eingaenge_cs3_windsensorhzg_switched_in;
+Systemstate si_modul_digitale_eingaenge_cs3_xyz_switched_out;
+Systemstate si_modul_digitale_eingaenge_cs3_xyz_switched_in;
+
+Systemstate si_modul_digitale_eingaenge_cs4_ks_oeffner_out;
+Systemstate si_modul_digitale_eingaenge_cs4_ks_oeffner_in;
+Systemstate si_modul_digitale_eingaenge_cs4_ks_schliesser_out;
+Systemstate si_modul_digitale_eingaenge_cs4_ks_schliesser_in;
+
+Systemstate si_modul_analoger_eingang_extbg_fused_out;
+Systemstate si_modul_analoger_eingang_extbg_fused_in;
+Systemstate si_modul_analoger_eingang_maststeuerung_fused_out;
+Systemstate si_modul_analoger_eingang_maststeuerung_fused_in;
+Systemstate si_modul_analoger_eingang_pneumatik_fused_out;
+Systemstate si_modul_analoger_eingang_pneumatik_fused_in;
+Systemstate si_modul_analoger_eingang_pneumatik_switched_out;
+Systemstate si_modul_analoger_eingang_pneumatik_switched_in;
+Systemstate si_modul_analoger_eingang_radar_fused_out;
+Systemstate si_modul_analoger_eingang_radar_fused_in;
+Systemstate si_modul_analoger_eingang_reserve_out;
+Systemstate si_modul_analoger_eingang_reserve_in;
+Systemstate si_modul_analoger_eingang_reserve1_fused_out;
+Systemstate si_modul_analoger_eingang_reserve1_fused_in;
+Systemstate si_modul_analoger_eingang_reserve2_fused_out;
+Systemstate si_modul_analoger_eingang_reserve2_fused_in;
+Systemstate si_modul_analoger_eingang_sensorik_fused_out;
+Systemstate si_modul_analoger_eingang_sensorik_fused_in;
+Systemstate si_modul_analoger_eingang_strom_antriebe_nicht_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_antriebe_nicht_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_strom_antriebe_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_antriebe_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_strom_other_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_strom_other_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_other_nicht_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_other_nicht_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_strom_pneumatik_nicht_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_pneumatik_nicht_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_strom_pneumatik_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_pneumatik_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_strom_radar_nicht_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_radar_nicht_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_strom_radar_verstaerkt_out;
+Systemstate si_modul_analoger_eingang_strom_radar_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_windsensor_switched_out;
+Systemstate si_modul_analoger_eingang_windsensor_switched_in;
+Systemstate si_modul_analoger_eingang_windsensorhzg_switched_out;
+Systemstate si_modul_analoger_eingang_windsensorhzg_switched_in;
+Systemstate si_modul_analoger_eingang_xyz_switched_out;
+Systemstate si_modul_analoger_eingang_xyz_switched_in;
+Systemstate si_modul_analoger_eingang_x_fused_out;
+Systemstate si_modul_analoger_eingang_x_fused_in;
+Systemstate si_modul_analoger_eingang_y_fused_out;
+Systemstate si_modul_analoger_eingang_y_fused_in;
+Systemstate si_modul_analoger_eingang_z_fused_out;
+Systemstate si_modul_analoger_eingang_z_fused_in;
+
+// --------------------------------------------
+// ------------- INITIALIZATION ---------------
+
+Globals
+{
+  si_modul_betriebsart_out  = SI_MODULE_BETRIEBSART_NORMAL;
+  si_modul_betriebsart_in   = SI_MODULE_BETRIEBSART_NORMAL;
+
+
+  si_modul_ansteuerung_ausgaenge_reserve_out = 0;
+  si_modul_ansteuerung_ausgaenge_reserve_in = 0;
+  si_modul_ansteuerung_ausgaenge_reserve1_out = 0;
+  si_modul_ansteuerung_ausgaenge_reserve1_in = 0;
+  si_modul_ansteuerung_ausgaenge_reserve2_out = 0;
+  si_modul_ansteuerung_ausgaenge_reserve2_in = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_pneumatik_out = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_pneumatik_in = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_radaranlage_out = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_radaranlage_in = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_windsensor_out = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_windsensor_in = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_windsensor_heizung_out = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_windsensor_heizung_in = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_xyz_antriebe_out = 0;
+  si_modul_ansteuerung_ausgaenge_versorgung_xyz_antriebe_in = 0;
+
+
+  si_modul_force_pdo_transmit_hv_changecounter_out = 0;
+  si_modul_force_pdo_transmit_hv_changecounter_in = 0;
+
+
+  si_modul_geraetestatus_rueckmeldung_betriebsart_out = SI_MODULE_BETRIEBSART_NORMAL;
+  si_modul_geraetestatus_rueckmeldung_betriebsart_in  = SI_MODULE_BETRIEBSART_NORMAL;
+
+
+  si_modul_digitale_eingaenge_cs2_extbg_fused_out = 0;
+  si_modul_digitale_eingaenge_cs2_extbg_fused_in = 0;
+  si_modul_digitale_eingaenge_cs2_kfzsteckdose_fused_out = 0;
+  si_modul_digitale_eingaenge_cs2_kfzsteckdose_fused_in = 0;
+  si_modul_digitale_eingaenge_cs2_maststeuerung_fused_out = 0;
+  si_modul_digitale_eingaenge_cs2_maststeuerung_fused_in = 0;
+  si_modul_digitale_eingaenge_cs2_pneumatik_fused_out = 0;
+  si_modul_digitale_eingaenge_cs2_pneumatik_fused_in = 0;
+  si_modul_digitale_eingaenge_cs2_sensorik_fused_out = 0;
+  si_modul_digitale_eingaenge_cs2_sensorik_fused_in = 0;
+  si_modul_digitale_eingaenge_cs2_windsensor_fused_out = 0;
+  si_modul_digitale_eingaenge_cs2_windsensor_fused_in = 0;
+  si_modul_digitale_eingaenge_cs2_windsensorhzg_fused_out = 0;
+  si_modul_digitale_eingaenge_cs2_windsensorhzg_fused_in = 0;
+
+  si_modul_digitale_eingaenge_cs3_reserve1_fused_out = 0;
+  si_modul_digitale_eingaenge_cs3_reserve1_fused_in = 0;
+  si_modul_digitale_eingaenge_cs3_reserve2_fused_out = 0;
+  si_modul_digitale_eingaenge_cs3_reserve2_fused_in = 0;
+  si_modul_digitale_eingaenge_cs3_radar_switched_out = 0;
+  si_modul_digitale_eingaenge_cs3_radar_switched_in = 0;
+  si_modul_digitale_eingaenge_cs3_pneumatik_switched_out = 0;
+  si_modul_digitale_eingaenge_cs3_pneumatik_switched_in = 0;
+  si_modul_digitale_eingaenge_cs3_windsensor_switched_out = 0;
+  si_modul_digitale_eingaenge_cs3_windsensor_switched_in = 0;
+  si_modul_digitale_eingaenge_cs3_windsensorhzg_switched_out = 0;
+  si_modul_digitale_eingaenge_cs3_windsensorhzg_switched_in = 0;
+  si_modul_digitale_eingaenge_cs3_xyz_switched_out = 0;
+  si_modul_digitale_eingaenge_cs3_xyz_switched_in = 0;
+
+  si_modul_digitale_eingaenge_cs4_ks_oeffner_out = 0;
+  si_modul_digitale_eingaenge_cs4_ks_oeffner_in = 0;
+  si_modul_digitale_eingaenge_cs4_ks_schliesser_out = 0;
+  si_modul_digitale_eingaenge_cs4_ks_schliesser_in = 0;
+
+
+  si_modul_analoger_eingang_extbg_fused_out = 0;
+  si_modul_analoger_eingang_extbg_fused_in = 0;
+  si_modul_analoger_eingang_maststeuerung_fused_out = 0;
+  si_modul_analoger_eingang_maststeuerung_fused_in = 0;
+  si_modul_analoger_eingang_pneumatik_fused_out = 0;
+  si_modul_analoger_eingang_pneumatik_fused_in = 0;
+  si_modul_analoger_eingang_radar_fused_out = 0;
+  si_modul_analoger_eingang_radar_fused_in = 0;
+  si_modul_analoger_eingang_reserve_out = 0;
+  si_modul_analoger_eingang_reserve_in = 0;
+  si_modul_analoger_eingang_reserve1_fused_out = 0;
+  si_modul_analoger_eingang_reserve1_fused_in = 0;
+  si_modul_analoger_eingang_reserve2_fused_out = 0;
+  si_modul_analoger_eingang_reserve2_fused_in = 0;
+  si_modul_analoger_eingang_sensorik_fused_out = 0;
+  si_modul_analoger_eingang_sensorik_fused_in = 0;
+  si_modul_analoger_eingang_strom_antriebe_nicht_verstaerkt_out = 0;
+  si_modul_analoger_eingang_strom_antriebe_nicht_verstaerkt_in = 0;
+  si_modul_analoger_eingang_strom_antriebe_verstaerkt_out = 0;
+  si_modul_analoger_eingang_strom_antriebe_verstaerkt_in = 0;
+  si_modul_analoger_eingang_strom_other_nicht_verstaerkt_out = 0;
+  si_modul_analoger_eingang_strom_other_nicht_verstaerkt_in = 0;
+  si_modul_analoger_eingang_strom_pneumatik_nicht_verstaerkt_out = 0;
+  si_modul_analoger_eingang_strom_pneumatik_nicht_verstaerkt_in = 0;
+  si_modul_analoger_eingang_strom_pneumatik_verstaerkt_out = 0;
+  si_modul_analoger_eingang_strom_pneumatik_verstaerkt_in = 0;
+  si_modul_analoger_eingang_strom_radar_nicht_verstaerkt_out = 0;
+  si_modul_analoger_eingang_strom_radar_nicht_verstaerkt_in = 0;
+  si_modul_analoger_eingang_strom_radar_verstaerkt_out = 0;
+  si_modul_analoger_eingang_strom_radar_verstaerkt_in = 0;
+  si_modul_analoger_eingang_windsensor_switched_out = 0;
+  si_modul_analoger_eingang_windsensor_switched_in = 0;
+  si_modul_analoger_eingang_windsensorhzg_switched_out = 0;
+  si_modul_analoger_eingang_windsensorhzg_switched_in = 0;
+  si_modul_analoger_eingang_xyz_switched_out = 0;
+  si_modul_analoger_eingang_xyz_switched_in = 0;
+  si_modul_analoger_eingang_x_fused_out = 0;
+  si_modul_analoger_eingang_x_fused_in = 0;
+  si_modul_analoger_eingang_y_fused_out = 0;
+  si_modul_analoger_eingang_y_fused_in = 0;
+  si_modul_analoger_eingang_z_fused_out = 0;
+  si_modul_analoger_eingang_z_fused_in = 0;
+};
+
+
+
+// --------------------------------------------
+// ----------------- FRAMES -------------------
+
+frame
+{
+  id { si_modul_betriebsart; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_betriebsart; }; };
+      rtr { bit { rtr_si_modul_betriebsart; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { si_modul_force_betriebsart_out; };
+        in  { si_modul_force_betriebsart_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_ansteuerung_ausgaenge; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_ansteuerung_ausgaenge; }; };
+      rtr { bit { rtr_si_modul_ansteuerung_ausgaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      bit
+      {
+        out { si_modul_ansteuerung_ausgaenge_versorgung_radaranlage_out; };
+        in  { si_modul_ansteuerung_ausgaenge_versorgung_radaranlage_in; };
+        out { si_modul_ansteuerung_ausgaenge_versorgung_xyz_antriebe_out; };
+        in  { si_modul_ansteuerung_ausgaenge_versorgung_xyz_antriebe_in; };
+        out { si_modul_ansteuerung_ausgaenge_versorgung_pneumatik_out; };
+        in  { si_modul_ansteuerung_ausgaenge_versorgung_pneumatik_in; };
+        out { si_modul_ansteuerung_ausgaenge_versorgung_windsensor_out; };
+        in  { si_modul_ansteuerung_ausgaenge_versorgung_windsensor_in; };
+        out { si_modul_ansteuerung_ausgaenge_versorgung_windsensor_heizung_out; };
+        in  { si_modul_ansteuerung_ausgaenge_versorgung_windsensor_heizung_in; };
+        out { si_modul_ansteuerung_ausgaenge_reserve_out; };
+        in  { si_modul_ansteuerung_ausgaenge_reserve_in; };
+        out { si_modul_ansteuerung_ausgaenge_reserve1_out; };
+        in  { si_modul_ansteuerung_ausgaenge_reserve1_in; };
+        out { si_modul_ansteuerung_ausgaenge_reserve2_out; };
+        in  { si_modul_ansteuerung_ausgaenge_reserve2_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_force_pdo_transmit_hv; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_force_pdo_transmit_hv; }; };
+      rtr { bit { rtr_si_modul_force_pdo_transmit_hv; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { si_modul_force_pdo_transmit_hv_changecounter_out; };
+        in  { si_modul_force_pdo_transmit_hv_changecounter_in; };
+      };
+    };
+  };
+};
+
+
+
+
+frame
+{
+  id { si_modul_geraetestatus; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_geraetestatus; }; };
+      rtr { bit { rtr_si_modul_geraetestatus; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint8
+      {
+        out { si_modul_geraetestatus_rueckmeldung_betriebsart_out; };
+        in  { si_modul_geraetestatus_rueckmeldung_betriebsart_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_digitale_eingaenge; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_digitale_eingaenge; }; };
+      rtr { bit { rtr_si_modul_digitale_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      bit
+      {
+        out { si_modul_digitale_eingaenge_cs2_pneumatik_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs2_pneumatik_fused_in; };
+        out { si_modul_digitale_eingaenge_cs2_maststeuerung_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs2_maststeuerung_fused_in; };
+        out { si_modul_digitale_eingaenge_cs2_sensorik_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs2_sensorik_fused_in; };
+        out { si_modul_digitale_eingaenge_cs2_extbg_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs2_extbg_fused_in; };
+        out { si_modul_digitale_eingaenge_cs2_windsensor_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs2_windsensor_fused_in; };
+        out { si_modul_digitale_eingaenge_cs2_windsensorhzg_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs2_windsensorhzg_fused_in; };
+        any;
+        out { si_modul_digitale_eingaenge_cs2_kfzsteckdose_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs2_kfzsteckdose_fused_in; };
+      };
+      bit
+      {
+        out { si_modul_digitale_eingaenge_cs3_reserve1_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs3_reserve1_fused_in; };
+        out { si_modul_digitale_eingaenge_cs3_reserve2_fused_out; };
+        in  { si_modul_digitale_eingaenge_cs3_reserve2_fused_in; };
+        out { si_modul_digitale_eingaenge_cs3_radar_switched_out; };
+        in  { si_modul_digitale_eingaenge_cs3_radar_switched_in; };
+        out { si_modul_digitale_eingaenge_cs3_xyz_switched_out; };
+        in  { si_modul_digitale_eingaenge_cs3_xyz_switched_in; };
+        out { si_modul_digitale_eingaenge_cs3_pneumatik_switched_out; };
+        in  { si_modul_digitale_eingaenge_cs3_pneumatik_switched_in; };
+        out { si_modul_digitale_eingaenge_cs3_windsensor_switched_out; };
+        in  { si_modul_digitale_eingaenge_cs3_windsensor_switched_in; };
+        out { si_modul_digitale_eingaenge_cs3_windsensorhzg_switched_out; };
+        in  { si_modul_digitale_eingaenge_cs3_windsensorhzg_switched_in; };
+        any;
+      };
+      bit
+      {
+        out { si_modul_digitale_eingaenge_cs4_ks_oeffner_out; };
+        in  { si_modul_digitale_eingaenge_cs4_ks_oeffner_in; };
+        out { si_modul_digitale_eingaenge_cs4_ks_schliesser_out; };
+        in  { si_modul_digitale_eingaenge_cs4_ks_schliesser_in; };
+        any;
+        any;
+        any;
+        any;
+        any;
+        any;
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_1; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_1; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_z_fused_out; };
+        in  { si_modul_analoger_eingang_z_fused_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_radar_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_radar_verstaerkt_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_extbg_fused_out; };
+        in  { si_modul_analoger_eingang_extbg_fused_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_2; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_2; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_y_fused_out; };
+        in  { si_modul_analoger_eingang_y_fused_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_radar_nicht_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_radar_nicht_verstaerkt_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_windsensor_switched_out; };
+        in  { si_modul_analoger_eingang_windsensor_switched_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_3; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_3; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_x_fused_out; };
+        in  { si_modul_analoger_eingang_x_fused_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_other_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_other_verstaerkt_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_windsensorhzg_switched_out; };
+        in  { si_modul_analoger_eingang_windsensorhzg_switched_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_4; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_4; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_radar_fused_out; };
+        in  { si_modul_analoger_eingang_radar_fused_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_other_nicht_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_other_nicht_verstaerkt_in; };
+      };
+      uint16
+      {
+        any;
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_5; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_5; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_antriebe_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_antriebe_verstaerkt_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_pneumatik_switched_out; };
+        in  { si_modul_analoger_eingang_pneumatik_switched_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_reserve1_fused_out; };
+        in  { si_modul_analoger_eingang_reserve1_fused_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_6; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_6; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_antriebe_nicht_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_antriebe_nicht_verstaerkt_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_pneumatik_fused_out; };
+        in  { si_modul_analoger_eingang_pneumatik_fused_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_reserve2_fused_out; };
+        in  { si_modul_analoger_eingang_reserve2_fused_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_7; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_7; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_pneumatik_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_pneumatik_verstaerkt_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_maststeuerung_fused_out; };
+        in  { si_modul_analoger_eingang_maststeuerung_fused_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_xyz_switched_out; };
+        in  { si_modul_analoger_eingang_xyz_switched_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { si_modul_analoge_eingaenge_8; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_si_modul_analoge_eingaenge_8; }; };
+      rtr { bit { rtr_si_modul_analoge_eingaenge; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      uint16
+      {
+        out { si_modul_analoger_eingang_strom_pneumatik_nicht_verstaerkt_out; };
+        in  { si_modul_analoger_eingang_strom_pneumatik_nicht_verstaerkt_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_sensorik_fused_out; };
+        in  { si_modul_analoger_eingang_sensorik_fused_in; };
+      };
+      uint16
+      {
+        out { si_modul_analoger_eingang_reserve_out; };
+        in  { si_modul_analoger_eingang_reserve_in; };
+      };
+    };
+  };
+};
+

@@ -1,0 +1,65 @@
+// <description>
+
+FUE_psm_unittests {};
+
+Event EXIT;
+
+// Redefinition for test acceleration
+val PSM_TRAFFIC_PERIOD = 1.0; 
+
+global_functions
+{
+  a_stop_psm_timers
+  {
+    stop_timer(psm_traffic_producer_timer);
+    stop_timer(psm_traffic_consumer_timer);
+    EXIT;
+  };
+
+  a_stop_psm
+  {
+    stop(PSM);
+  };
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_psm_unittests;};Test{PSM_becoming_Operational;};
+
+  Start { sm_PSM; };
+  Start { sm_PSM_operational_state; };
+
+  start_timer(2*PSM_TRAFFIC_PERIOD*s, a_stop_psm_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_PSM.Active;};
+  ASSERT_END_STATES_CONTAINS{sm_PSM_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_psm_unittests;};Test{PSM_still_operational_after_an_intervall_without_traffic;};
+
+  Start { sm_PSM; }; 
+  Start { sm_PSM_operational_state; };
+
+  stop(sm_PSM);
+  start_timer(3*PSM_TRAFFIC_PERIOD*s, a_stop_psm_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_PSM_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_psm_unittests;};Test{PSM_Offline_detection_after_having_been_operational;};
+
+  Start { sm_PSM; };
+  Start { sm_PSM_operational_state; };
+
+  stop(sm_PSM);
+  start_timer(5*PSM_TRAFFIC_PERIOD*s, a_stop_psm_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_PSM_operational_state.Offline;};
+};

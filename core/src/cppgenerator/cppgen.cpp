@@ -4,6 +4,9 @@
 #include "core/include/base_defs.hpp"
 #include <map>
 #include <iostream>
+#include <set>
+#include <unordered_set>
+
 
 using namespace ceps::ast;
 
@@ -12,6 +15,34 @@ static std::string guards_namespace = "guards";
 static std::string global_functions_namespace = "globfuncs";
 static std::string init_func = "void user_defined_init()";
 
+
+
+template<typename F, typename T> void traverse_sm(std::unordered_set<State_machine*>& m,State_machine* sm, T const & sms, F f){
+	f(sm);
+
+	for(auto state: sm->states()){
+		if (!state->is_sm() || state->smp() == nullptr) continue;
+		if (m.find(state->smp()) != m.end()) continue;
+		m.insert(state->smp());
+		traverse_sm(m,state->smp(),sms,f);
+	}
+
+	for(auto subsm: sm->children()){
+		//assert(m.find(subsm) != m.end());
+		if (m.find(subsm) != m.end()) continue;
+		m.insert(subsm);
+		traverse_sm(m,subsm,sms,f);
+	}
+}
+
+template<typename F, typename T> void traverse_sms(T const & sms, F f){
+	std::unordered_set<State_machine*> m;
+	for(auto sm: sms){
+	 if (m.find(sm) != m.end()) continue;
+	 traverse_sm(m,sm,sms,f);
+	 m.insert(sm);
+	}
+}
 
 const std::string out_hpp_systemstates_prefix = R"(
 
@@ -26,11 +57,13 @@ const std::string out_hpp_systemstates_prefix = R"(
      if (!changed_ && !default_constructed_) changed_ = v_ != rhs.v_;
      else if (default_constructed_) {default_constructed_ = false;changed_ = true;}
      v_ = rhs.v_;
+     return *this;
    }
    State& operator = (T const & rhs){
      if (!changed_ && !default_constructed_) changed_ = v_ != rhs;
      else if (default_constructed_) {changed_ = true; default_constructed_=false;}
-     v_ = rhs;     
+     v_ = rhs;
+     return *this;
    }
    bool changed() const {auto t = changed_;changed_=false;return t;}
 
@@ -111,9 +144,9 @@ void write_cpp_value(std::ostream& os,Nodebase_ptr v,Type t){
 void write_cpp_sm4ceps_struct_impl(Indent& indent,std::ostream& os,sm4ceps_struct* str){
   if (str->t.t != Type::Struct){
 	  indent.print_indentation(os);
-	  if (str->t.t == Type::Int) os << "int ";
-	  else if (str->t.t == Type::Double) os << "double ";
-	  else  os << "std::string ";
+	  if (str->t.t == Type::Int) os << "State<int> ";
+	  else if (str->t.t == Type::Double) os << "State<double> ";
+	  else  os << "State<std::string> ";
 	  os << str->name << " = ";
 	  if (str->t.t == Type::Int) os << str->value_int;
 	  else if (str->t.t == Type::Double) os << str->value_double;
@@ -125,7 +158,7 @@ void write_cpp_sm4ceps_struct_impl(Indent& indent,std::ostream& os,sm4ceps_struc
 	  indent.indent_incr();
 	  for(auto m:str->members)write_cpp_sm4ceps_struct_impl(indent,os,m);
 	  indent.indent_decr();
-	  os << "} " << str->name << ";\n";
+	  indent.print_indentation(os);os << "} " << str->name << ";\n";
   }
 }
 
@@ -135,7 +168,7 @@ void write_cpp_sm4ceps_struct(Indent& indent,std::ostream& os,sm4ceps_struct* st
     indent.indent_incr();
 	for(auto m:str->members)write_cpp_sm4ceps_struct_impl(indent,os,m);
 	indent.indent_decr();
-	os << "};\n";
+	indent.print_indentation(os);os << "};\n";
 }
 
 
@@ -147,11 +180,26 @@ sm4ceps_struct* find_sm4ceps_struct(std::string name){
 }
 
 void add_sm4ceps_struct(sm4ceps_struct* s) { sm4ceps_structs.push_back(s); }
-void add_sm4ceps_struct(sm4ceps_struct* s,std::string name) { s->name=name;sm4ceps_structs.push_back(s); }
+void add_sm4ceps_struct(sm4ceps_struct* s,std::string name) {
+	s->name=name;
+	for(auto& e: sm4ceps_structs){
+		if (e->name == name)
+		{
+			e = s;
+			return;
+		}
+	}
+	sm4ceps_structs.push_back(s);
+}
 
 
 void add_sm4ceps_struct_impl(Struct& outer,sm4ceps_struct* parent) {
 	for(auto child : outer.children()){
+		if (child->kind() == Ast_node_kind::identifier){
+			auto& current = as_id_ref(child);
+			parent->members.push_back(new sm4ceps_struct{name(current),Type{Type::Int,name(current)},0} );
+			continue;
+		}
 		if (child->kind() != Ast_node_kind::structdef) continue;
 		auto& current = as_struct_ref(child);
 		Nodebase_ptr v;
@@ -197,8 +245,6 @@ sm4ceps_struct* clone_sm4ceps_struct(std::string name){
 }
 
 sm4ceps_struct* struct_assign(std::string compound_id, std::string struct_id){
-	static int counter = 0;
-
 	size_t n=0;
 	sm4ceps_struct* parent = nullptr;
 	sm4ceps_struct* current_substruct = parent;
@@ -206,11 +252,11 @@ sm4ceps_struct* struct_assign(std::string compound_id, std::string struct_id){
 	if(rhs == nullptr) return nullptr;
 
 	std::string base_id;
-	std::cout << "struct_assign:" <<compound_id << std::endl;
-	do{
+	//std::cout << "struct_assign:" <<compound_id << std::endl;
+	for(;n<compound_id.length();){
 	 auto nn = compound_id.find_first_of('.',n);
 	 auto s = (nn == std::string::npos) ? compound_id.substr(n) : compound_id.substr(n,nn-n);
-	 std::cout << "s=" << s<<std::endl;
+	 //std::cout << "s=" << s<<std::endl;
 	 if (parent == nullptr){
 		 base_id = s;
 		 parent = current_substruct = find_sm4ceps_struct(s);
@@ -222,14 +268,15 @@ sm4ceps_struct* struct_assign(std::string compound_id, std::string struct_id){
 		 } else {
 			 parent = current_substruct = clone_sm4ceps_struct(base_id);
 			 if (current_substruct == nullptr) return nullptr;
-			 add_sm4ceps_struct(current_substruct,base_id+"___"+std::to_string(counter));
+			 add_sm4ceps_struct(current_substruct,base_id/*+"___"+std::to_string(counter)*/);
 		 }
 	 } else {
 		 current_substruct = current_substruct->find_member(s);
 		 if (current_substruct  == nullptr) return nullptr;
 	 }
-	 if(n != std::string::npos) n = nn+1;
-	}while(n != std::string::npos && n<compound_id.length());
+	 if (nn == std::string::npos) break;
+	 n = nn+1;
+	}
 	//Invariant current_substruct != nullptr
 	auto cpy_rhs = clone_sm4ceps_struct(rhs);
 	current_substruct->t.t = Type::Struct;
@@ -301,6 +348,16 @@ void store_struct_defs(State_machine_simulation_core* smp,Nodebase_ptr p,int nod
 }
 
 void store_first_state_assign(State_machine_simulation_core* smp,Nodebase_ptr p,int node_no,std::set<std::string>& already_seen){
+	if (p->kind() == Ast_node_kind::symbol){
+		auto kind_of_sym = kind(as_symbol_ref(p));
+		if (kind_of_sym != "Systemstate" && kind_of_sym != "Systemparameter") return;
+		auto lhs_id = name(as_symbol_ref(p));
+		sysstate s{lhs_id,node_no,Type::Undefined};
+		if (already_seen.find(lhs_id) != already_seen.end()) return;
+		already_seen.insert(lhs_id);
+		systemstate_first_def[s] = new ceps::ast::Int(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+		return;
+	}
 	if(!smp->is_assignment_op(p)) return;
 	std::string lhs_id;
 	auto& binop = as_binop_ref(p);
@@ -337,6 +394,19 @@ void write_cpp_glob_func_decl(std::ostream& os,ceps::ast::Struct & func){
 }
 
 
+std::string get_cpp_action_name(std::string prefix,State_machine::Transition::Action const & a){
+	return prefix + "__action__" + a.id_;
+}
+
+
+
+void write_cpp_action_func_decl(std::ostream& os,std::string prefix,State_machine::Transition::Action const & a){
+	os << "void " << get_cpp_action_name(prefix,a)  << "()";
+}
+
+void write_cpp_action_func_decl_full_name(std::ostream& os,std::string prefix,State_machine::Transition::Action const & a){
+	os << "void " << global_functions_namespace << "::" << get_cpp_action_name(prefix,a)  << "()";
+}
 
 void write_cpp_struct_decl_impl(Indent indent,std::ostream& os,ceps::ast::Struct const& outer){
 	for(auto e: outer.children()){
@@ -355,12 +425,14 @@ void write_cpp_struct_decl_impl(Indent indent,std::ostream& os,ceps::ast::Struct
 	}
 }
 
-void write_cpp_struct_decl(Indent indent,std::ostream& os,Nodebase_ptr p){
-	indent.print_indentation(os);os << "struct "<< name(as_struct_ref(p)) <<" {\n";
+std::string write_cpp_struct_decl(Indent indent,std::ostream& os,Nodebase_ptr p){
+	std::string r;
+	indent.print_indentation(os);os << "struct "<< (r = name(as_struct_ref(p))) <<" {\n";
 	indent.indent_incr();
 	write_cpp_struct_decl_impl(indent,os,as_struct_ref(p));
 	indent.indent_decr();
 	indent.print_indentation(os);os << "};\n";
+	return r;
 }
 
 bool is_id_or_symbol(Nodebase_ptr p, std::string& n, std::string& k){
@@ -480,7 +552,7 @@ bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		 return true;
 		}
 		write_cpp_expr(indent,os,binop.right());
-	}
+	} else write_cpp_expr(indent,os,p);
 	return true;
 }
 
@@ -542,7 +614,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		if (non_primitive_types_found)sys_states_which_are_structs.push_back(s); else sys_states.push_back(s);
 	}
 	for (auto & s : sys_states_which_are_structs){
-		std::cout << "Determining type of " << s.name << std::endl;
+		//std::cout << "Determining type of " << s.name << std::endl;
 		for_all_nodes(this,globals,[&](State_machine_simulation_core* smp,Nodebase_ptr p,int,std::set<std::string>& seen) {
 			if(!smp->is_assignment_op(p)) return;
 			std::string lhs_id;
@@ -551,20 +623,30 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 			if (lhs_id != s.name && s.name+"." != lhs_id.substr(0,s.name.length()+1)) return;
 			std::string rhs_id;std::string base_kind;
 			if (!is_id(binop.right(), rhs_id, base_kind)) return;
-			std::cout << "Seen the assignment "<< lhs_id << " = " << rhs_id << std::endl;
+			//std::cout << "Seen the assignment "<< lhs_id << " = " << rhs_id << std::endl;
 			auto struct_type= struct_assign(lhs_id, rhs_id);
-			if (struct_type == nullptr){smp->fatal_(-1,"Couldn't deduce type of "+s.name);}
+			if (struct_type == nullptr){
+				smp->warn_(-1,"Couldn't deduce type of "+s.name+" assume int.");
+				s.type.t = Type::Int;
+				return;
+			}
 			Indent indent;
-			write_cpp_sm4ceps_struct(indent,std::cout,struct_type);
+			//write_cpp_sm4ceps_struct(indent,std::cout,struct_type);
 			s.type.name = struct_type->name;
 			s.type.t = Type::Struct;
 		});
-		std::cout << "Type of " << s.name << " is " << s.type.name << std::endl;
+		//std::cout << "---->Type of " << s.name << " is " << s.type.name << std::endl;
+		if (s.type.t == Type::Undefined){
+			warn_(-1,"Couldn't deduce type of "+s.name+" assume int.");
+			s.type.t = Type::Int;
+		}
 		sys_states.push_back(s);
 	}
 
 
 	//Write files
+
+	//Preludes
 	std::string out_cpp;
 	std::string out_hpp;
 
@@ -585,8 +667,25 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 
 	indent_hpp.indent_incr();
 
+	std::set<std::string> struct_declarations_already_written;
 	for(auto & struct_decl: struct_decls){
-		write_cpp_struct_decl(indent_hpp,o_hpp,std::get<1>(struct_decl));o_hpp << "\n";
+		auto struct_name = write_cpp_struct_decl(indent_hpp,o_hpp,std::get<1>(struct_decl));o_hpp << "\n";
+		struct_declarations_already_written.insert(struct_name);
+	}
+
+	for (auto & s : sys_states){
+
+
+		if (s.type.t != Type::Struct) continue;
+		std::string struct_name;
+		if (s.name == s.type.name) struct_name = s.name + "__type"; else struct_name = s.type.name;
+		if ( struct_declarations_already_written.end() != struct_declarations_already_written.find(struct_name)) continue;
+		struct_declarations_already_written.insert(struct_name);
+		auto struct_type=find_sm4ceps_struct(s.type.name);
+		if (struct_type == nullptr ) struct_type=find_sm4ceps_struct(struct_name);
+		if (struct_type == nullptr ) fatal_(-1,"Couldn't find struct declaration for systemstate '"+s.name+"' .");
+		struct_type->name = s.type.name = struct_name;
+		write_cpp_sm4ceps_struct(indent_hpp,o_hpp,struct_type);
 	}
 
 	//Write init
@@ -640,8 +739,31 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		write_cpp_glob_func_decl(o_hpp,str);
 		o_hpp << ";\n";
 	});
+
+
+	{
+		//print state machine action declarations
+		std::vector<State_machine*> smsv;
+		for(auto sm : State_machine::statemachines) smsv.push_back(sm.second);
+		State_machine_simulation_core* smp = this;
+		traverse_sms(smsv,[smp,&o_hpp,&indent_hpp](State_machine* cur_sm){
+			state_rep_t srep(true,true,cur_sm,cur_sm->id());
+			for(auto & a: cur_sm->actions_){
+				indent_hpp.print_indentation(o_hpp);o_hpp << "extern ";
+				write_cpp_action_func_decl(o_hpp,smp->get_fullqualified_id(srep,"__"),a);
+				o_hpp << ";\n";
+				//write_cpp_action_func_decl(std::cout,smp->get_fullqualified_id(srep,"__"),a);std::cout << "\n";
+			//std::cout << "'" << smp->get_fullqualified_id(srep,"__")<< "'" << std::endl;
+			}
+		});
+	}
+
+
 	indent_hpp.indent_decr();o_hpp<<"\n}\n";
-    //Write Guard implementations
+
+
+
+	//Write Guard implementations
 	for(auto e : guard_backpatch_vec){
 		auto guard_rhs = e.second;
 		indent_cpp.print_indentation(o_cpp);
@@ -654,6 +776,29 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		indent_cpp.indent_decr();
 		indent_cpp.print_indentation(o_cpp);o_cpp << "}\n";
 	}
+
+
+
+	//Write definitions of actions
+		{
+			std::vector<State_machine*> smsv;
+			for(auto sm : State_machine::statemachines) smsv.push_back(sm.second);
+			State_machine_simulation_core* smp = this;
+			traverse_sms(smsv,[smp,&o_cpp,&indent_cpp](State_machine* cur_sm){
+				state_rep_t srep(true,true,cur_sm,cur_sm->id());
+				for(auto & a: cur_sm->actions_){
+					indent_cpp.print_indentation(o_cpp);
+					write_cpp_action_func_decl_full_name(o_cpp,smp->get_fullqualified_id(srep,"__"),a);
+					o_cpp << "{\n";indent_cpp.indent_incr();
+
+					auto & func_body = as_struct_ref(a.body_);
+					for(auto p : func_body.children()){
+						write_cpp_stmt(smp,indent_cpp,o_cpp,p); o_cpp << ";\n";}
+
+					indent_cpp.indent_decr();indent_cpp.print_indentation(o_cpp);o_cpp << "}\n";
+				}
+			});
+		}
 
 }
 

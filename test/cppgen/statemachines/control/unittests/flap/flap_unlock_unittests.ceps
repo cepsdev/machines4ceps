@@ -1,0 +1,83 @@
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.01;
+};
+
+Flap_unlock_unittests
+{
+//  g_flap_lock_one_is_unlocked     = 0;
+  SENSOR_HR1O = 0;  //  HaubeRiegel1_Offen
+  SENSOR_HR1V = 0;  //  HaubeRiegel1_Verriegelt
+//  g_flap_lock_two_is_unlocked     = 0;
+  SENSOR_HR2O = 0;  //  HaubeRiegel2_Offen
+  SENSOR_HR2V = 0;  //  HaubeRiegel2_Verriegelt
+
+  SENSOR_HZO  = 0;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+
+//  g_system_pressure_is_sufficient = 1;
+  Pneumatics.system_pressure      = DEFAULT_SYSTEM_PRESSURE;
+  SENSOR_KAMPFSCHALTER_A            = 0;
+};
+
+
+Simulation
+{
+  TestCase{Flap_unlock_unittests;};Test{Initialization_given_both_locks_are_unlocked_already;};
+
+//  g_flap_lock_one_is_unlocked = 1;
+  SENSOR_HR1O = 1;  //  HaubeRiegel1_Offen
+//  g_flap_lock_two_is_unlocked = 1;
+  SENSOR_HR2O = 1;  //  HaubeRiegel2_Offen
+
+  Start { sm_Flap_unlock; };
+
+  //ev_flap_lock_two_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_unlock.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Flap_unlock_unittests;};Test{Initialization_given_lock_two_is_unlocked;};
+
+//  g_flap_lock_one_is_unlocked = 0;
+//  g_flap_lock_two_is_unlocked = 1;
+  SENSOR_HR2O = 1;  //  HaubeRiegel2_Offen
+
+  Start { sm_Flap_unlock; };
+
+  ev_flap_lock_two_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_unlock.Flap_Unlocking;};
+
+//  g_flap_lock_one_is_unlocked = 1;
+  SENSOR_HR1O = 1;  //  HaubeRiegel1_Offen
+  ev_flap_lock_one_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_unlock.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Flap_unlock_unittests;};Test{Initialization_given_both_locks_are_locked;};
+
+  Start { sm_Flap_unlock;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_unlock.Flap_Unlocking;};
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{sm_Flap_unlock.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Flap_unlock_unittests;};Test{Initialization_given_preconditions_are_not_met;};
+
+//  g_system_pressure_is_sufficient = 0;
+  Pneumatics.system_pressure      = 0.0;
+
+  Start { sm_Flap_unlock; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_unlock.Error;};
+  ASSERT_CURRENT_STATES_CONTAINS_NOT{sm_Flap_unlock.Final;};
+};

@@ -1,0 +1,147 @@
+Event ev_z_drive_move, ev_mast_move_up, ev_mast_move_down, ev_mast_anfahren;
+
+Mast_move_to_target_unittests
+{
+  y_drive.IstPos              = 90.0;
+  g_z_drive_has_antrieb_fault = 0;
+  g_z_drive_is_operational    = 1;
+  g_flap_is_closed            = 1;
+  g_flap_is_open              = 0;
+};
+
+// g_z_drive_to_target_position_preconditions = (
+//    g_flap_is_closed && 
+//    (z_drive.SollPos <= z_drive.MAX_POS) && 
+//    (z_drive.SollPos >= z_drive.MAST_MINHOEHE) && 
+//    (y_drive.IstPos >= 77.0) && 
+//    (z_drive.IstPos <= 3310) && 
+//    (z_drive.IstPos >= z_drive.MAST_MINHOEHE)
+
+Statemachine
+{
+  id  { sm_Ctrl;  };
+  import  { sm_Z_drive_to_target_position; };
+  States  { Initial;  Final;  Error;  };
+  Transition  { Initial;                        sm_Z_drive_to_target_position;  ev_mast_anfahren; };
+  Transition  { sm_Z_drive_to_target_position;  Final;                          ev_z_drive_is_in_target_position; };
+  Transition  { sm_Z_drive_to_target_position;  Error;                          ev_z_drive_to_target_position_preconditions_are_not_met;  };
+};
+
+Simulation
+{
+  TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_all_preconditions_and_mast_in_indexposition;};
+
+  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+  z_drive.SollGeschw  = 50;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive.Disabled;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Talin.Not_Ready;};
+
+  Start { sm_Z_drive; };
+  Start { sm_Talin; };
+  Start { sm_Ctrl;  };
+
+  ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+};
+
+Simulation
+{
+  TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_flap_is_open;};
+
+  g_flap_is_open      = 1;
+  g_flap_is_closed    = 0;
+  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+  z_drive.SollGeschw  = 50;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.sm_Z_drive_to_target_position.Error;};
+
+  Start { sm_Z_drive; };
+  Start { sm_Talin; };
+  Start { sm_Ctrl;  };
+
+  ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+};
+
+// Simulation{
+//   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_target_position_is_too_high;};
+// 
+//   z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+//   z_drive.SollGeschw  = 50;
+//   
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
+//   
+//   Start{sm_Z_drive;};
+//   Start{sm_Talin;};
+//   Start{sm_Ctrl;};
+// 
+//   ev_mast_anfahren(z_drive.MAX_POS + 10);  
+// };
+
+// Simulation{
+//   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_target_position_is_too_low;};
+// 
+//   z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+//   z_drive.SollGeschw  = 50;
+//   
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
+//   
+//   Start{sm_Z_drive;};
+//   Start{sm_Talin;};
+//   Start{sm_Ctrl;};
+// 
+//   ev_mast_anfahren(z_drive.MAST_MINHOEHE - 10);  
+// };
+// 
+Simulation
+{
+  TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_y_drive_not_in_position;};
+
+  y_drive.IstPos      = 76.0;
+  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+  z_drive.SollGeschw  = 50;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.sm_Z_drive_to_target_position.Error;};
+
+  Start { sm_Z_drive; };
+  Start { sm_Talin; };
+  Start { sm_Ctrl;  };
+
+  ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+};
+
+// Simulation{
+//   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_IstMasthoehe_too_high;};
+// 
+//   z_drive.IstPos      = 3311;
+//   z_drive.SollGeschw  = 50;
+//   
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
+//   
+//   Start{sm_Z_drive;};
+//   Start{sm_Talin;};
+//   Start{sm_Ctrl;};
+// 
+//   ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+// };
+
+// Simulation{
+//   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_IstMasthoehe_too_low;};
+// 
+//   z_drive.IstPos      = z_drive.MAST_MINHOEHE - 1;
+//   z_drive.SollGeschw  = 50;
+//   
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
+//   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
+//   
+//   Start{sm_Z_drive;};
+//   Start{sm_Talin;};
+//   Start{sm_Ctrl;};
+// 
+//   ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+// };

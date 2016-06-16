@@ -1,0 +1,33 @@
+// <description>
+
+Stilts_endschalter_lock_SEKGR_unittests
+{
+  g_stilts_valve_SVK_is_in_locking_position = 1;
+};
+
+Simulation
+{
+  TestCase{Stilts_endschalter_lock_SEKGR_unittests;};Test{Initialization;};
+
+  Start { sm_Stilts_endschalter_SEKGR;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGR.Yes;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_endschalter_lock_SEKGR_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Stilts_endschalter_SEKGR;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGR.Yes;};
+
+  g_stilts_valve_SVK_is_in_locking_position = 0;
+  ev_stilts_valve_lock_right_state;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGR.No;};
+
+  g_stilts_valve_SVK_is_in_locking_position = 1;
+  ev_stilts_valve_lock_right_state;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SEKGR.Yes;};
+};

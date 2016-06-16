@@ -1,0 +1,23 @@
+// IP_Y: Index position Y
+// CS3
+//#define SENSOR_IP_Y                             0x20
+
+Event ev_y_drive_endschalter_shows_indexposition;
+
+Statemachine
+{
+  id  { sm_Y_drive_endschalter_IP_Y;  };
+  description { "Index Position Y"; };
+  States  { Initial;  On; Off;  };
+
+  Actions
+  {
+    a_stateChange { ev_y_drive_endschalter_shows_indexposition; };
+    a_Off         { SENSOR_IP_Y  = 0; };
+    a_On          { SENSOR_IP_Y  = 1; };
+  };
+
+  Transition  { Initial;  Off;  };
+  Transition  { Off;      On;     g_sensor_IP_y_drive;  a_On;   a_stateChange;  };
+  Transition  { On;       Off;   !g_sensor_IP_y_drive;  a_Off;  a_stateChange;  };
+};

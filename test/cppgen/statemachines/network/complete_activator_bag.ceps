@@ -1,0 +1,12 @@
+unique         {ev_x_drive_actual_values; ev_y_drive_actual_values; ev_z_drive_actual_values; ev_send_message_to_ivenet;  ev_message_from_ivenet;};
+no_transitions {ev_x_drive_actual_values;                           ev_z_drive_actual_values;};
+
+
+Event EXIT;
+
+Globals{g_is_Abbruch_active=0;};
+Simulation
+{
+ EXIT;
+};
+

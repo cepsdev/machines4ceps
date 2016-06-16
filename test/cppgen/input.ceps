@@ -453,7 +453,7 @@ typedef
   {
     isValid_in {0;};
     isValid_out{0;};
-    coordinate;
+    coordinate ;
   };
 };
 
@@ -4384,6 +4384,9 @@ Systemstate ivenet_own_vehicle_pos_altitude_current_in;
 
 Globals
 {
+
+  g_is_Abbruch_active = 0;
+  
   ivenet_time_source_out                 = "BIOS_Time";
   ivenet_time_source_in                  = "BIOS_Time";
 

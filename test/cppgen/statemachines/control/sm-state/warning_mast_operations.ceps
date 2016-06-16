@@ -1,0 +1,43 @@
+Event ev_mast_operations_status_changed, ev_vehicle_brake_position_changed, ev_vehicle_inclination_x_changed, ev_vehicle_inclination_y_changed, ev_vehicle_gear_changed;
+
+Statemachine
+{
+  id  { sm_Warning_mast_operations; };
+  States  { Initial;  OK; Not_OK; Dont_Care;  };
+
+  Actions
+  {
+    a_warning_mast_ops_dont_care  { MAST_STATUS = 0; ev_mast_operations_status_changed(MAST_STATUS);  };
+    a_warning_mast_ops_ok         { MAST_STATUS = 1; ev_mast_operations_status_changed(MAST_STATUS);  };
+    a_warning_mast_ops_not_ok     { MAST_STATUS = 2; ev_mast_operations_status_changed(MAST_STATUS);  };
+  };
+
+  Transition  { Initial;  Dont_Care;  };
+
+  Transition  { Dont_Care;        OK;   ev_x_drive_has_heartbeat;           g_mast_operations_are_possible  &&  g_mast_operations_are_reasonable;   a_warning_mast_ops_ok;  };
+  Transition  { Dont_Care;        OK;   ev_y_drive_has_heartbeat;           g_mast_operations_are_possible  &&  g_mast_operations_are_reasonable;   a_warning_mast_ops_ok;  };
+  Transition  { Dont_Care;        OK;   ev_z_drive_has_heartbeat;           g_mast_operations_are_possible  &&  g_mast_operations_are_reasonable;   a_warning_mast_ops_ok;  };
+
+  Transition  { Dont_Care;    Not_OK;   ev_x_drive_has_heartbeat;           g_mast_operations_are_possible  && !g_mast_operations_are_reasonable;   a_warning_mast_ops_not_ok;  };
+  Transition  { Dont_Care;    Not_OK;   ev_y_drive_has_heartbeat;           g_mast_operations_are_possible  && !g_mast_operations_are_reasonable;   a_warning_mast_ops_not_ok;  };
+  Transition  { Dont_Care;    Not_OK;   ev_z_drive_has_heartbeat;           g_mast_operations_are_possible  && !g_mast_operations_are_reasonable;   a_warning_mast_ops_not_ok;  };
+
+  Transition  {       OK;   Dont_Care;  ev_x_drive_lacks_heartbeat;                                                                                 a_warning_mast_ops_dont_care;  };
+  Transition  {       OK;   Dont_Care;  ev_y_drive_lacks_heartbeat;                                                                                 a_warning_mast_ops_dont_care;  };
+  Transition  {       OK;   Dont_Care;  ev_z_drive_lacks_heartbeat;                                                                                 a_warning_mast_ops_dont_care;  };
+
+  Transition  {   Not_OK;   Dont_Care;  ev_x_drive_lacks_heartbeat;                                                                                 a_warning_mast_ops_dont_care;  };
+  Transition  {   Not_OK;   Dont_Care;  ev_y_drive_lacks_heartbeat;                                                                                 a_warning_mast_ops_dont_care;  };
+  Transition  {   Not_OK;   Dont_Care;  ev_z_drive_lacks_heartbeat;                                                                                 a_warning_mast_ops_dont_care;  };
+
+  Transition  {       OK;     Not_OK;   ev_vehicle_brake_position_changed; !g_vehicle_brake_is_active;                                              a_warning_mast_ops_not_ok;  };
+  Transition  {       OK;     Not_OK;   ev_vehicle_inclination_x_changed;  !g_vehicle_inclination_x_is_tolerable;                                   a_warning_mast_ops_not_ok;  };
+  Transition  {       OK;     Not_OK;   ev_vehicle_inclination_y_changed;  !g_vehicle_inclination_y_is_tolerable;                                   a_warning_mast_ops_not_ok;  };
+  Transition  {       OK;     Not_OK;   ev_vehicle_gear_changed;           !g_vehicle_gear_is_neutral;                                              a_warning_mast_ops_not_ok;  };
+  Transition  {       OK;     Not_OK;   ev_psm_lacks_traffic;              !g_psm_is_operational;                                                   a_warning_mast_ops_not_ok;  };
+
+  Transition  {   Not_OK;         OK;   ev_vehicle_brake_position_changed;  g_mast_operations_are_reasonable;                                       a_warning_mast_ops_ok;  };
+  Transition  {   Not_OK;         OK;   ev_vehicle_inclination_x_changed;   g_mast_operations_are_reasonable;                                       a_warning_mast_ops_ok;  };
+  Transition  {   Not_OK;         OK;   ev_vehicle_inclination_y_changed;   g_mast_operations_are_reasonable;                                       a_warning_mast_ops_ok;  };
+  Transition  {   Not_OK;         OK;   ev_vehicle_gear_changed;            g_mast_operations_are_reasonable;                                       a_warning_mast_ops_ok;  };
+};

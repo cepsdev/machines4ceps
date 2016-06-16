@@ -1,0 +1,150 @@
+//  local events
+Event ev_stilts_left_moving_time, ev_stilts_right_moving_time;
+
+Guard g_stilt_moveing_up, g_stilt_moveing_down;
+
+val   SIM_STILT_MOVING_TIMER_PERIOD = 0.2; //  sec
+Globals
+{
+  g_stilt_moveing_up    = g_stilts_valve_SVK_is_in_unlocking_position && g_stilts_valve_is_in_retracting_position;
+  g_stilt_moveing_down  = g_stilts_valve_SVK_is_in_unlocking_position && g_stilts_valve_is_in_extending_position;
+};
+
+// ----------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Stilt_position_left; };
+  States  { Initial;  Stoped; Moving_up; Moving_down; };
+  Actions
+  {
+    a_start_moving_up
+    {
+      start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_left_moving_time, timer_stilts_left_moving );
+    };
+    a_start_moving_down
+    {
+      start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_left_moving_time, timer_stilts_left_moving );
+    };
+    a_moving_up
+    {
+      if ( Stilt_position_left > STILTS_POSITION_MIN )
+      {
+        Stilt_position_left = Stilt_position_left - ( 10 * ( System_pressure - Stilt_left_pressure ) );
+        if ( Stilt_position_left <= STILTS_POSITION_MIN )
+        {
+          Stilt_position_left = STILTS_POSITION_MIN;
+        };
+        print ( "--- dingo-sim --- Stilt_position_left: ", Stilt_position_left, " and move up/retracting\n" );
+      };
+    };
+    a_moving_down
+    {
+      if ( Stilt_position_left >= STILTS_POSITION_MAX )
+      {
+        Stilt_position_left = STILTS_POSITION_MAX;
+      } else
+      {
+        if ( Stilt_left_pressure  > STILT_PRESSURE_ON_GROUND )
+        {
+          Stilt_position_left = Stilt_position_left + ( 10 * ( System_pressure - Stilt_left_pressure ) );
+          if ( Stilt_position_left >= STILTS_POSITION_MAX )
+          {
+            Stilt_position_left = STILTS_POSITION_MAX;
+          };
+          print ( "--- dingo-sim --- Stilt_position_left: ", Stilt_position_left, " and move down/extracting\n" );
+        } else
+        {
+          print ( "--- dingo-sim --- Stilt_position_left: ", Stilt_position_left, " and ground contact\n" );
+        };
+      };
+    };
+    a_stop_moving
+    {
+      stop_timer ( timer_stilts_left_moving );
+      print ( "--- dingo-sim --- Stilt_position_left: ", Stilt_position_left, " and stoped\n" );
+    };
+  };
+  on_exit
+  {
+    stop_timer ( timer_stilts_left_moving );
+  };
+
+  Transition  { Initial;      Stoped; };
+  Transition  { Stoped;       Moving_up;                                  a_start_moving_up;    g_stilt_moveing_up;  };
+  Transition  { Stoped;       Moving_down;                                a_start_moving_down;  g_stilt_moveing_down; };
+  Transition  { Moving_up;    Moving_up;    ev_stilts_left_moving_time;   a_moving_up;          g_stilt_moveing_up;  };
+  Transition  { Moving_up;    Stoped;                                     a_stop_moving;       !g_stilt_moveing_up;  };
+  Transition  { Moving_down;  Moving_down;  ev_stilts_left_moving_time;   a_moving_down;        g_stilt_moveing_down;  };
+  Transition  { Moving_down;  Stoped;                                     a_stop_moving;       !g_stilt_moveing_down;  };
+};
+
+// ----------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Stilt_position_right; };
+  States  { Initial;  Stoped; Moving_up; Moving_down; };
+  Actions
+  {
+    a_start_moving_up
+    {
+      start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_right_moving_time, timer_stilts_right_moving );
+    };
+    a_start_moving_down
+    {
+      start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_right_moving_time, timer_stilts_right_moving );
+    };
+    a_moving_up
+    {
+      if ( Stilt_position_right > STILTS_POSITION_MIN )
+      {
+        Stilt_position_right = Stilt_position_right - ( 10 * ( System_pressure - Stilt_right_pressure ) );
+        if ( Stilt_position_right <= STILTS_POSITION_MIN )
+        {
+          Stilt_position_right = STILTS_POSITION_MIN;
+        };
+        print ( "--- dingo-sim --- Stilt_position_right: ", Stilt_position_right, " and move up/retracting\n" );
+      };
+    };
+    a_moving_down
+    {
+      if ( Stilt_position_right >= STILTS_POSITION_MAX )
+      {
+        Stilt_position_right = STILTS_POSITION_MAX;
+      } else
+      {
+        if ( Stilt_right_pressure  > STILT_PRESSURE_ON_GROUND )
+        {
+          Stilt_position_right = Stilt_position_right + ( 10 * ( System_pressure - Stilt_right_pressure ) );
+          if ( Stilt_position_right >= STILTS_POSITION_MAX )
+          {
+            Stilt_position_right = STILTS_POSITION_MAX;
+          };
+          print ( "--- dingo-sim --- Stilt_position_right: ", Stilt_position_right, " and move down/extracting\n" );
+        } else
+        {
+          print ( "--- dingo-sim --- Stilt_position_right: ", Stilt_position_right, " and ground contact\n" );
+        };
+      };
+    };
+    a_stop_moving
+    {
+      stop_timer ( timer_stilts_right_moving );
+      print ( "--- dingo-sim --- Stilt_position_right: ", Stilt_position_right, " and stoped\n" );
+    };
+  };
+  on_exit
+  {
+    stop_timer ( timer_stilts_right_moving );
+  };
+
+  Transition  { Initial;      Stoped; };
+  Transition  { Stoped;       Moving_up;                                  a_start_moving_up;    g_stilt_moveing_up;  };
+  Transition  { Stoped;       Moving_down;                                a_start_moving_down;  g_stilt_moveing_down; };
+  Transition  { Moving_up;    Moving_up;    ev_stilts_right_moving_time;  a_moving_up;          g_stilt_moveing_up;  };
+  Transition  { Moving_up;    Stoped;                                     a_stop_moving;       !g_stilt_moveing_up;  };
+  Transition  { Moving_down;  Moving_down;  ev_stilts_right_moving_time;  a_moving_down;        g_stilt_moveing_down;  };
+  Transition  { Moving_down;  Stoped;                                     a_stop_moving;       !g_stilt_moveing_down;  };
+};
+

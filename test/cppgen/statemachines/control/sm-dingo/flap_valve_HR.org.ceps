@@ -1,0 +1,35 @@
+// HR1 - (Ventil) Haube Riegel 1 
+Event ev_flap_lock, ev_flap_unlock, ev_flap_lock_one_state_change;
+
+Statemachine
+{
+  id{Flap_valve_HR1;};
+  States{Initial; Open; Closed;};
+
+  Actions{
+    a_FlapLockState {ev_flap_lock_one_state_change;};
+  };
+  
+  Transition{Initial; Closed;};
+  Transition{Closed;  Open;   ev_flap_unlock; a_FlapLockState;};
+  Transition{Open;    Closed; ev_flap_lock;   a_FlapLockState;};
+};
+
+
+
+// HR2 - (Ventil) Haube Riegel 2 
+Event ev_flap_lock, ev_flap_unlock, ev_flap_lock_two_state_change;
+
+Statemachine
+{
+  id{Flap_valve_HR2;};
+  States{Initial; Open; Closed;};
+
+  Actions{
+    a_FlapLockState {ev_flap_lock_two_state_change;};
+  };
+  
+  Transition{Initial; Closed;};
+  Transition{Closed;  Open;   ev_flap_unlock; a_FlapLockState;};
+  Transition{Open;    Closed; ev_flap_lock;   a_FlapLockState;};
+};

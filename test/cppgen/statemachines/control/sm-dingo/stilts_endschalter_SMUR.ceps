@@ -1,0 +1,32 @@
+// SMUR - Stütze Magnet Unten Rechts  ( Stütze rechts voll ausgefahren )
+
+//  external events and guards
+Event ev_stilts_valve_state, ev_stilt_right_state_change;
+
+//  local events and guards
+Guard g_SMUR_sim_goes_on, g_SMUR_sim_still_off;
+
+Globals 
+{
+  g_SMUR_sim_goes_on    = ( Stilt_position_right  >=  STILTS_POSITION_MAX );
+  g_SMUR_sim_still_off  = ( Stilt_position_right  <   STILTS_POSITION_MAX );
+};
+
+Statemachine
+{
+  id  { sm_Stilts_endschalter_SMUR; };
+  description { "Endschalter Stütze Magnet Unten Rechts"; };
+  States  { Initial;  On; Off;  };
+
+  Actions
+  {
+    a_StiltsState_right { ev_stilt_right_state_change;  };
+    a_Off               { SENSOR_SMUR  = 0; };
+    a_On                { SENSOR_SMUR  = 1; };
+  };
+
+  Transition  { Initial;  Off;                        a_Off; !g_SMUR_sim_goes_on; };
+  Transition  { Initial;  On;                         a_On;   g_SMUR_sim_goes_on; };
+  Transition  { Off;      On;   a_StiltsState_right;  a_On;   g_SMUR_sim_goes_on; };
+  Transition  { On;       Off;  a_StiltsState_right;  a_Off;  g_SMUR_sim_still_off; };
+};

@@ -1,0 +1,26 @@
+// SVK: Stütze Ventil Klemmung
+
+Event ev_stilt_left_lock_state_change,  ev_stilts_lock_left_is_locked,  ev_stilts_lock_left_is_unlocked;
+Guard g_stilt_left_is_locked,   g_stilt_left_is_unlocked;
+
+Statemachine
+{
+  id  { sm_Stilts_VK_left;  };
+  description { "Stütze Ventil Klemmung links"; };
+  States  { Initial;  Unknown; Locked; Unlocked;  };
+
+  Actions
+  {
+    a_StiltsLockLeftIslocked      { ev_stilts_lock_left_is_locked;  };
+    a_StiltsLockLeftIsunlocked    { ev_stilts_lock_left_is_unlocked;  };
+  };
+
+  Transition  { Initial;  Unknown;  };
+  Transition  { Unknown;    Locked; ev_stilt_left_lock_state_change;    g_stilt_left_is_locked;     a_StiltsLockLeftIslocked; };
+  Transition  { Unknown;  Unlocked; ev_stilt_left_lock_state_change;    g_stilt_left_is_unlocked;   a_StiltsLockLeftIsunlocked; };
+
+  Transition  { Unlocked;   Locked; ev_stilt_left_lock_state_change;    g_stilt_left_is_locked;     a_StiltsLockLeftIslocked; };
+  Transition  { Locked;   Unlocked; ev_stilt_left_lock_state_change;    g_stilt_left_is_unlocked;   a_StiltsLockLeftIsunlocked; };
+};
+
+

@@ -1,0 +1,43 @@
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
+
+Flap_endschalter_HR2V_unittests
+{
+  g_flap_lock_HR2_is_closed = 1;
+};
+
+Simulation
+{
+  TestCase{Flap_endschalter_HR2V_unittests;};Test{Initialization;};
+
+  Start { sm_Flap_endschalter_HR2V; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.On;};
+};
+
+Simulation
+{
+  TestCase{Flap_endschalter_HR2V_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Flap_endschalter_HR2V;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.On;};
+
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.On;};
+
+  g_flap_lock_HR2_is_closed = 0;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  stop_timer ( timer_flap_HR2V_is_open );
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.Opening;};
+
+  ev_flap_HR2V_is_open;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.Off;};
+
+  g_flap_lock_HR2_is_closed = 1;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  stop_timer ( timer_flap_HR2V_is_close );
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.Closing;};
+
+  ev_flap_HR2V_is_close;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.On;};
+};

@@ -1,0 +1,36 @@
+// <description>
+
+Antenna_endschalter_lock_VZ1O_unittests
+{
+  g_antenna_valve_lock_is_in_unlocking_position = 0;
+  g_antenna_valve_lock_is_in_locking_position   = 1;
+};
+
+Simulation
+{
+  TestCase{Antenna_endschalter_lock_VZ1O_unittests;};Test{Initialization;};
+ 
+  Start { sm_Antenna_endschalter_lock_VZ1O; };
+ 
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_endschalter_lock_VZ1O.Off;};
+};
+
+
+Simulation
+{
+  TestCase{Antenna_endschalter_lock_VZ1O_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Antenna_endschalter_lock_VZ1O; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_endschalter_lock_VZ1O.Off;};
+
+  g_antenna_valve_lock_is_in_unlocking_position = 1;
+  g_antenna_valve_lock_is_in_locking_position   = 0;
+  ev_antenna_valve_lock_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_endschalter_lock_VZ1O.On;};
+
+  g_antenna_valve_lock_is_in_unlocking_position = 0;
+  g_antenna_valve_lock_is_in_locking_position   = 1;
+  ev_antenna_valve_lock_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_endschalter_lock_VZ1O.Off;};
+};

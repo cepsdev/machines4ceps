@@ -1,0 +1,29 @@
+Event ev_flap_lock_one_is_locked, ev_flap_lock_started,   ev_flap_lock_timeout,  ev_flap_lock_preconditions_are_not_met;
+Event ev_flap_lock_two_is_locked, ev_flap_lock_finished,  ev_flap_lock_was_interrupted, ev_flap_VHR_close;
+
+Statemachine
+{
+  id  { sm_Flap_lock; };
+  States  { Initial;  Final;  Flap_Locking; };
+  Actions
+  {
+    a_lock_flap                     { ev_flap_VHR_close; ev_flap_lock_started; };
+    a_flap_lock_is_interrupted      { ev_flap_lock_was_interrupted; };
+    a_set_timeout_timer             { start_timer ( DEF_TIME_HAUBE_VERRIEGELN * s, ev_flap_lock_timeout, timer_flap_lock );  };
+    a_lock_finished                 { ev_flap_lock_finished;  };
+  };
+
+  on_exit
+  {
+    stop_timer(timer_flap_lock);
+    if(!in_state(Final)) 
+    {
+      a_flap_lock_is_interrupted;
+    };
+  };
+
+  Transition  { Initial;      Flap_Locking;                             a_lock_flap;    a_set_timeout_timer;       !g_flap_is_locked; };
+  Transition  { Flap_Locking; Final;        ev_flap_lock_one_is_locked; a_lock_finished;                            g_flap_is_locked; };
+  Transition  { Flap_Locking; Final;        ev_flap_lock_two_is_locked; a_lock_finished;                            g_flap_is_locked; };
+  Transition  { Initial;      Final;                                    a_lock_finished;                            g_flap_is_locked; };
+};

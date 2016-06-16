@@ -1,0 +1,132 @@
+// <description>
+
+flap_unittests
+{
+//  g_flap_is_neither_nor = 1;
+  SENSOR_HZO  = 0;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 0;  //  HaubeRiegelGeschlossen
+};
+
+Simulation
+{
+  TestCase{flap_unittests;};Test{Initialization_given_flap_state_is_unknown_and_no_event_is_emitted;};
+
+  Start { sm_Flap;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Unknown;};
+
+  SENSOR_HZO  = 1;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 0;  //  HaubeRiegelGeschlossen
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Unknown;};
+
+  SENSOR_HZO  = 0;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Unknown;};
+
+  SENSOR_HZO  = 1;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Unknown;};
+};
+
+
+Simulation
+{
+  TestCase{flap_unittests;};Test{Initialization_given_flap_is_neither_open_nor_closed;};
+
+  Start { sm_Flap;  };
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Neither_Nor;};
+};
+
+
+Simulation
+{
+  TestCase{flap_unittests;};Test{Initialization_given_ev_flap_is_open;};
+
+//  g_flap_is_open        = 1;
+  SENSOR_HZO  = 1;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 0;  //  HaubeRiegelGeschlossen
+
+  Start { sm_Flap;  };
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Open;};
+};
+
+
+Simulation
+{
+  TestCase{flap_unittests;};Test{Initialization_given_Closed;};
+
+//  g_flap_is_closed      = 1;
+  SENSOR_HZO  = 0;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+
+  Start { sm_Flap;  };
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Closed;};
+};
+
+
+Simulation
+{
+  TestCase{flap_unittests;};Test{Initialization_given_Wrong;};
+
+//  g_flap_is_wrong       = 1;
+  SENSOR_HZO  = 1;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+
+  Start { sm_Flap;  };
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Wrong;};
+};
+
+
+Simulation
+{
+  TestCase{flap_unittests;};Test{Visit_all_states;};
+
+//  g_flap_is_neither_nor = 1;
+
+  Start { sm_Flap;  };
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Neither_Nor;};
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Neither_Nor;};
+
+//  g_flap_is_open        = 1;
+  SENSOR_HZO  = 1;  //  HaubeRiegelOffen
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Open;};
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Open;};
+
+//  g_flap_is_wrong       = 1;
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Wrong;};
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Wrong;};
+
+//  g_flap_is_closed      = 0;
+  SENSOR_HZO  = 0;  //  HaubeRiegelOffen
+  SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Closed;};
+
+  ev_flap_state_change;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap.Closed;};
+};

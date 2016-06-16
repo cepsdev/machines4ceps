@@ -840,12 +840,12 @@ void State_machine_simulation_core::add(states_t& states, state_rep_t s)
 }
 
 
-std::string State_machine_simulation_core::get_fullqualified_id(state_rep_t const & s)
+std::string State_machine_simulation_core::get_fullqualified_id(state_rep_t const & s,std::string delim)
 {
 	if (!s.valid()) {return "";fatal_(-1,"Invalid Identifier.");}
 	State_machine* root = s.smp_;
 	if(root != nullptr && root->parent() == nullptr && s.is_sm_) return s.sid_;
-	if(root != nullptr && root->parent() == nullptr &&   !s.is_sm_) return root->id_ +"."+s.sid_ ;
+	if(root != nullptr && root->parent() == nullptr &&   !s.is_sm_) return root->id_ +delim+s.sid_ ;
 
 	std::vector<State_machine*> v;
 	for(;root && root->parent_;root = root->parent_) v.push_back(root->parent_);
@@ -853,15 +853,15 @@ std::string State_machine_simulation_core::get_fullqualified_id(state_rep_t cons
 	for(int i = v.size()-1;i >= 0;--i)
 	{
 		r.append(v[i]->id());
-		if (i > 0) r.append(".");
+		if (i > 0) r.append(delim);
 	}
 
 	if (!s.is_sm_){
 		assert(s.smp_ != nullptr);
-		return r.append(".").append(s.smp_->id_).append(".").append(s.sid_) ;
+		return r.append(delim).append(s.smp_->id_).append(delim).append(s.sid_) ;
 	}
 
-	return r.append(".").append(s.sid_);
+	return r.append(delim).append(s.sid_);
 }
 
 void State_machine_simulation_core::print_info(states_t& states_from, states_t& states_to,std::set<state_rep_t> const& new_states_triggered_set,

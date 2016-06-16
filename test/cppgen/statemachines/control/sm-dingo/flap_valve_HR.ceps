@@ -1,0 +1,35 @@
+// VHR - (Ventil) Haube Riegel
+
+Event ev_flap_VHR_close, ev_flap_VHR_open;
+
+//  local events
+Event ev_flap_VHR_is_open, ev_flap_VHR_is_close;
+
+Statemachine
+{
+  id  { sm_Flap_valve_HR;  };
+  description { "Ventil Haube Riegel"; };
+  States  { Initial;  Opening;  Open; Closing;  Closed; };
+
+  Actions
+  {
+    a_valve_is_opening    { start_timer ( DELAY_VHR_OPEN * s,   ev_flap_VHR_is_open,  timer_flap_VHR_is_open ); };
+    a_valve_is_closing    { start_timer ( DELAY_VHR_CLOSE * s,  ev_flap_VHR_is_close, timer_flap_VHR_is_close );  };
+    a_stop_valve_opening  { stop_timer ( timer_flap_VHR_is_open );  };
+    a_stop_valve_closing  { stop_timer ( timer_flap_VHR_is_close ); };
+  };
+  on_exit
+  {
+    if ( in_state ( Opening ) ) a_stop_valve_opening;
+    if ( in_state ( Closing ) ) a_stop_valve_closing;
+  };
+
+  Transition  { Initial;  Closed; };
+  Transition  { Closed;   Opening;  ev_flap_VHR_open;                               a_valve_is_opening; };
+  Transition  { Opening;  Closing;  ev_flap_VHR_close;      a_stop_valve_opening;   a_valve_is_closing; };
+  Transition  { Opening;  Open;     ev_flap_VHR_is_open;    };
+
+  Transition  { Open;     Closing;  ev_flap_VHR_close;                              a_valve_is_closing; };
+  Transition  { Closing;  Opening;  ev_flap_VHR_open;       a_stop_valve_closing;   a_stop_valve_opening; };
+  Transition  { Closing;  Closed;   ev_flap_VHR_is_close;   };
+};

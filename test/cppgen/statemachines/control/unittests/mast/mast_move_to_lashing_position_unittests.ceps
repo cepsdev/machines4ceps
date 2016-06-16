@@ -1,0 +1,58 @@
+Event ev_z_drive_move, ev_mast_move_to_lashing_position;
+
+Mast_move_to_lashing_position_unittests
+{
+  g_z_drive_has_antrieb_fault = 0;
+  g_z_drive_is_operational    = 1;
+};
+
+Statemachine
+{
+ id { sm_Ctrl;  };
+ import { sm_Z_drive_to_lashing_position; };
+ States { Initial;  Final;  };
+ Transition { Initial;                        sm_Z_drive_to_lashing_position;   ev_mast_move_to_lashing_position;   };
+ Transition { sm_Z_drive_to_lashing_position; Final;                            ev_z_drive_is_in_lashing_position;  };
+};
+
+Simulation
+{
+  TestCase{Mast_move_to_lashing_position_unittests;};Test{Run_given_ist_masthoehe_is_higher_than_lashing_position;};
+
+  z_drive.IstPos      = z_drive.MAST_ZURRPOSITION + 17;
+  z_drive.SollGeschw  = 50.0;
+
+  Start { sm_Talin;  };
+  Start { sm_Z_drive; };
+  Start { sm_Z_drive_state; };
+  Start { sm_Ctrl;  };
+
+  // activate Z_drive_to_lashing_position
+  ev_mast_move_to_lashing_position;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive.Disabled;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Talin.Not_Ready;};
+};
+
+Simulation
+{
+  TestCase{Mast_move_to_lashing_position_unittests;};Test{Run_given_ist_masthoehe_is_equal_to_lashing_position;};
+
+  z_drive.IstPos      = z_drive.MAST_ZURRPOSITION;
+  z_drive.SollGeschw  = 50.0;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive.Disabled;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Talin.Not_Ready;};
+
+  Start { sm_Ctrl;  };
+  Start { sm_Talin; };
+  Start { sm_Z_drive_state; };
+  Start { sm_Z_drive; };
+
+  // activate Z_drive_to_lashing_position
+  ev_mast_move_to_lashing_position;
+};

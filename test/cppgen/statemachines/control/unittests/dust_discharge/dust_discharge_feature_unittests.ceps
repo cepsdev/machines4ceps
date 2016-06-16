@@ -1,0 +1,94 @@
+// <description>
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.1;
+};
+
+Dust_discharge_feature_unittests
+{
+  g_dust_discharge_is_ready    = 1;
+//  g_system_pressure_is_sufficient = 1;
+  Pneumatics.system_pressure      = DEFAULT_SYSTEM_PRESSURE;
+  SENSOR_KAMPFSCHALTER_A            = 0;
+};
+
+Simulation
+{
+  TestCase{Dust_discharge_feature_unittests;};Test{Initialization_given_dust_discharge_not_yet_ready;};
+
+  g_dust_discharge_is_ready    = 0;
+//  g_system_pressure_is_sufficient = 0;
+  Pneumatics.system_pressure      = 0.0;
+
+  Start { sm_Dust_discharge;  };
+  Start { sm_Dust_valve_VV1;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Not_yet_ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+};
+
+
+Simulation
+{
+  TestCase{Dust_discharge_feature_unittests;};Test{From_Initial_to_Final;};
+
+  Start { sm_Dust_discharge.Ready;  };
+  Start { sm_Dust_valve_VV1;  };
+  Start { sm_Dust_discharge_to_do;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Open;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Open;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Open;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+};
+
+
+Simulation
+{
+  TestCase{Dust_discharge_feature_unittests;};Test{From_Initial_to_Final_given_a_declining_air_pressure;};
+
+  Start { sm_Dust_discharge.Ready;  };
+  Start { sm_Dust_valve_VV1;  };
+  Start { sm_Dust_discharge_to_do;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Open;};
+//  g_system_pressure_is_sufficient = 0;
+  Pneumatics.system_pressure      = 0.0;
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Open;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Open;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+  ev_dust_discharge_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+};

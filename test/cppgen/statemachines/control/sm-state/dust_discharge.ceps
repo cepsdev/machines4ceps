@@ -1,0 +1,16 @@
+Event ev_dust_discharge_delay_timeout;
+
+Statemachine
+{
+  id  { sm_Dust_discharge;  };
+  description { "Dust_discharge"; };
+  States  { Initial;  Ready; Not_yet_ready; };
+
+  Actions
+  {
+    a_start_dust_discharge_delay_timer  { start_timer ( DEF_TIME_VV1 * s, ev_dust_discharge_delay_timeout ); };
+  };
+
+  Transition  { Initial;        Not_yet_ready;                                    a_start_dust_discharge_delay_timer; };
+  Transition  { Not_yet_ready;  Ready;          ev_dust_discharge_delay_timeout;  };
+};
