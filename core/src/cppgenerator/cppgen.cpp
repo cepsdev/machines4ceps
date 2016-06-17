@@ -465,6 +465,40 @@ void write_cpp_systemstate_declaration(std::ostream& os,sysstate const & state){
 	os << state.name;
 }
 
+
+std::pair<std::string,std::string> cpp_templatized_decl(ceps::ast::Struct & func,std::vector<std::string>& parameters){
+	auto params = ceps::ast::Nodeset(func.children())["params"];
+	if(params.size()){
+
+	  std::vector<std::string> typeparams;
+	  std::vector<std::string> args;
+	  std::pair<std::string,std::string> r;
+
+      for(size_t i = 0; i != params.nodes().size();++i){
+    	  if (params.nodes()[i]->kind() != Ast_node_kind::identifier) continue;
+    	  typeparams.push_back("T"+std::to_string(i));
+    	  args.push_back(name(as_id_ref(params.nodes()[i])));
+      }
+
+      r.first+= "template<";
+      for(size_t i = 0; i != typeparams.size(); ++i){
+    	  r.first+= "typename "; r.first+= typeparams[i];
+    	  if (i+1 < typeparams.size()) r.first+= ",";
+      }
+      r.first+= "> ";
+
+      r.second+= "(";
+      for(size_t i = 0; i != typeparams.size(); ++i){
+    	  r.second += typeparams[i]; r.second += " "; r.second += args[i];
+    	  if (i+1 < typeparams.size()) r.second += ",";
+      }
+      r.second += ")";
+      parameters = args;
+      return r;
+	}
+	return std::make_pair(std::string{},std::string{});
+}
+
 void write_cpp_glob_func_decl(std::ostream& os,ceps::ast::Struct & func){
 	auto params = ceps::ast::Nodeset(func.children())["params"];
 	if(params.size()){
@@ -504,12 +538,20 @@ std::string get_cpp_action_name(std::string prefix,State_machine::Transition::Ac
 
 
 void write_cpp_action_func_decl(std::ostream& os,std::string prefix,State_machine::Transition::Action const & a){
+	std::vector<std::string> dummy;
+	auto decl = cpp_templatized_decl(as_struct_ref(a.body_),dummy);
 
-	os << "void " << get_cpp_action_name(prefix,a)  << "()";
+	if (decl.first.length() == 0){ os << "void " << get_cpp_action_name(prefix,a)  << "()";}
+	else {os << decl.first << " " << "void " << get_cpp_action_name(prefix,a) << decl.second;}
 }
 
-void write_cpp_action_func_decl_full_name(std::ostream& os,std::string prefix,State_machine::Transition::Action const & a){
-	os << "void " << global_functions_namespace << "::" << get_cpp_action_name(prefix,a)  << "()";
+void write_cpp_action_func_decl_full_name(std::ostream& os,std::string prefix,State_machine::Transition::Action const & a,std::vector<std::string>& parameters){
+	auto decl = cpp_templatized_decl(as_struct_ref(a.body_),parameters);
+
+	if (decl.first.length() == 0){ os << "void " << global_functions_namespace << "::" << get_cpp_action_name(prefix,a)  << "()";}
+	else {os << decl.first << " " << "void " << global_functions_namespace << "::"<< get_cpp_action_name(prefix,a) << decl.second;}
+
+
 }
 
 void write_cpp_struct_decl_impl(Indent indent,std::ostream& os,ceps::ast::Struct const& outer){
@@ -571,7 +613,12 @@ static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodeb
 	v.push_back(r);
 }
 
-void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,bool inside_func_param_list=false){
+void write_cpp_expr_impl(State_machine_simulation_core* smp,
+		                 Indent& indent,
+						 std::ostream& os,
+						 Nodebase_ptr p,
+						 State_machine* cur_sm,std::vector<std::string>& parameters,
+						 bool inside_func_param_list=false){
 	std::string compound_id;
 	std::string base_kind;
 
@@ -592,6 +639,23 @@ void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		} else if (compound_id == "s") {
 			os << "1";
 		} else {
+			if (cur_sm != nullptr){
+				for(auto a : cur_sm->actions_){
+				 if (a.id_ != compound_id) continue;
+				 state_rep_t srep(true,true,cur_sm,cur_sm->id());
+				 auto fname = get_cpp_action_name(smp->get_fullqualified_id(srep,"__"),a);
+				 os << fname << "()";
+				 return;
+				}
+			}
+
+			if (parameters.size()){//std::cout << "*******************" << std::endl;
+				for(auto const & s : parameters )
+				{
+					if (s != compound_id) continue;
+					os << s; return;
+				}
+			}
 			os << sysstates_namespace<<"::"<< "id{\"" << compound_id << "\"}";
 		}
 	} else if (p->kind() == Ast_node_kind::binary_operator){
@@ -599,7 +663,7 @@ void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		bool print_closing_bracket = false;
 		//if (binop.left()->kind() == Ast_node_kind::binary_operator || binop.right()->kind() == Ast_node_kind::binary_operator)
 		{print_closing_bracket=true;os << "(";}
-		write_cpp_expr_impl(smp,indent,os,binop.left());
+		write_cpp_expr_impl(smp,indent,os,binop.left(),cur_sm,parameters);
 		if (op(binop) == '=') os << " == ";
 		else if (op(binop) == ceps::Cepsparser::token::REL_OP_EQ) os << " == ";
 		else if (op(binop) == ceps::Cepsparser::token::REL_OP_NEQ) os << " != ";
@@ -615,7 +679,7 @@ void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		else if (op(binop) == '/') os << " / ";
 		else if (op(binop) == '^') os << " ^ ";
 		else os << " Unknown_Operator ";
-		write_cpp_expr_impl(smp,indent,os,binop.right());
+		write_cpp_expr_impl(smp,indent,os,binop.right(),cur_sm,parameters);
 		if (print_closing_bracket) os << ")";
 	} else if (p->kind() == Ast_node_kind::func_call){
 		ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
@@ -625,13 +689,28 @@ void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		if (params.children().size()) flatten_args(params.children()[0], args);
 
 		//indent.print_indentation(os);
+		if (cur_sm != nullptr){
+			for(auto a : cur_sm->actions_){
+				if (a.id_ != name(id)) continue;
+				state_rep_t srep(true,true,cur_sm,cur_sm->id());
+				auto fname = get_cpp_action_name(smp->get_fullqualified_id(srep,"__"),a);
+				os <<  fname << "(";
+				for(size_t i = 0; i != args.size();++i){
+					write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
+					if (i+1<args.size()) os << " , ";
+				}
+				os << ")";
+				return;
+			}
+		}
+
 		if ("truncate" == name(id))os << "((int)";
 		else if (smp->is_global_event(name(id))){
 			os <<  sysstates_namespace  <<"::queue_event" << "(\""<< name(id)<<"\",{";
 
 			for(size_t i = 0; i != args.size();++i){
 				os << sysstates_namespace << "::Variant{";
-				write_cpp_expr_impl(smp,indent,os,args[i],true);
+				write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
 				os << "}";
 				if (i+1<args.size()) os << " , ";
 			}
@@ -640,7 +719,7 @@ void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		} else if ("in_state" == name(id)){
 			os <<  builtin_funcs_namespace  <<"::in_state" << "({";
 			for(size_t i = 0; i != args.size();++i){
-				write_cpp_expr_impl(smp,indent,os,args[i],true);
+				write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
 				if (i+1<args.size()) os << " , ";
 			}
 			os << "})";
@@ -649,14 +728,14 @@ void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		else if ("print" == name(id)){
 			os << "std::cout";
 			for(size_t i = 0; i != args.size();++i){
-				os << "<<";write_cpp_expr_impl(smp,indent,os,args[i],true);
+				os << "<<";write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
 			}
 			return;
 		}
 		else os << name(id) << "(";
 
 		for(size_t i = 0; i != args.size();++i){
-			write_cpp_expr_impl(smp,indent,os,args[i],true);
+			write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
 			if (i + 1 != args.size()) os << " , ";
 		}
 		os << ")";
@@ -665,15 +744,15 @@ void write_cpp_expr_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		 ceps::ast::Unary_operator& unop = *dynamic_cast<ceps::ast::Unary_operator*>(p);
 		 if (op(unop) == '-') os << "-";
 		 else if (op(unop) == '!') os << "!";
-		 write_cpp_expr_impl(smp,indent,os,unop.children()[0]);
+		 write_cpp_expr_impl(smp,indent,os,unop.children()[0],cur_sm,parameters);
 	} else os << "/* "<< *p << " ??*/";
 }
 
-void write_cpp_expr(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p){
-	write_cpp_expr_impl(smp,indent,os,p,false);
+void write_cpp_expr(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters){
+	write_cpp_expr_impl(smp,indent,os,p,cur_sm,parameters,false);
 }
 
-bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p){
+bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters){
 	if(smp->is_assignment_op(p)){
 		std::string lhs_id;
 		auto& binop = as_binop_ref(p);
@@ -681,7 +760,7 @@ bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::
          //if (is_compound_id(lhs_id))
 	     if (binop.right()->kind() != Ast_node_kind::identifier) {
 	    	 indent.print_indentation(os); os <<"set_value("<< sysstates_namespace << "::" << lhs_id <<" , ";
-	    	 write_cpp_expr(smp,indent,os,binop.right());
+	    	 write_cpp_expr(smp,indent,os,binop.right(),cur_sm,parameters);
 	    	 os << ")";
 	    	 return true;
 	     }
@@ -696,18 +775,18 @@ bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::
 		ceps::ast::Nodebase_ptr cond = ifelse->children()[0];
 		indent.print_indentation(os);
 		os << "if (";
-		write_cpp_expr(smp,indent,os,cond);
+		write_cpp_expr(smp,indent,os,cond,cur_sm,parameters);
 		os << ") {\n";
 		indent.indent_incr();
 		if (ifelse->children().size() > 1) {
-			if (write_cpp_stmt_impl(smp,indent,os,ifelse->children()[1])) os << ";\n";
+			if (write_cpp_stmt_impl(smp,indent,os,ifelse->children()[1],cur_sm,parameters)) os << ";\n";
 		}
 		indent.indent_decr();
 		indent.print_indentation(os);os << "}";
 		if (ifelse->children().size() > 2) {
 		 os << " else {\n";
 		 indent.indent_incr();
-		 if(write_cpp_stmt_impl(smp,indent,os,ifelse->children()[2])) os << ";\n";
+		 if(write_cpp_stmt_impl(smp,indent,os,ifelse->children()[2],cur_sm,parameters)) os << ";\n";
 		 indent.indent_decr();
 		 indent.print_indentation(os);os << "}\n";
 		} else os << "\n";
@@ -715,15 +794,15 @@ bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::
 	} else if (p->kind() == Ast_node_kind::scope) {
 		auto scp = ceps::ast::nlf_ptr(p);
 		for (auto pp : scp->children()){
-			if (write_cpp_stmt_impl(smp,indent,os,pp)) os << ";\n";
+			if (write_cpp_stmt_impl(smp,indent,os,pp,cur_sm,parameters)) os << ";\n";
 		}
 		return false;
-	} else {indent.print_indentation(os);write_cpp_expr(smp,indent,os,p);}
+	} else {indent.print_indentation(os);write_cpp_expr(smp,indent,os,p,cur_sm,parameters);}
 	return true;
 }
 
-bool write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p){
-	return write_cpp_stmt_impl(smp,indent,os,p);
+bool write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters){
+	return write_cpp_stmt_impl(smp,indent,os,p,cur_sm,parameters);
 }
 
 
@@ -858,13 +937,14 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	o_cpp << "\n\n" <<  init_func << "{\n";
 	indent_cpp.indent_incr();
 	for_all_nodes(this,globals,[&](State_machine_simulation_core*,Nodebase_ptr p,int,std::set<std::string>& seen) {
-		if (write_cpp_stmt(this,indent_cpp,o_cpp,p)) o_cpp << ";\n";
+		std::vector<std::string> dummy;
+		if (write_cpp_stmt(this,indent_cpp,o_cpp,p,nullptr,dummy)) o_cpp << ";\n";
 	});
 	indent_hpp.indent_decr();
 	o_cpp << "}\n";
 
 	for(auto & state_entry : sys_states){
-		indent_hpp.print_indentation(o_hpp);o_hpp << "extern ";write_cpp_systemstate_declaration(o_hpp,state_entry);o_hpp << ";\n";
+		indent_hpp.print_indentation(o_hpp);write_cpp_systemstate_declaration(o_hpp,state_entry);o_hpp << ";\n";
 		indent_cpp.print_indentation(o_cpp);o_cpp << sysstates_namespace<<"::";write_cpp_systemstate_declaration(o_cpp,state_entry);
 		//if (state_entry.type.t != Type::Struct){o_cpp << " = "; write_cpp_expr(indent_cpp,o_cpp,systemstate_first_def[state_entry]);}
 		//else o_cpp << "{}";
@@ -915,7 +995,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		traverse_sms(smsv,[smp,&o_hpp,&indent_hpp](State_machine* cur_sm){
 			state_rep_t srep(true,true,cur_sm,cur_sm->id());
 			for(auto & a: cur_sm->actions_){
-				indent_hpp.print_indentation(o_hpp);o_hpp << "extern ";
+				indent_hpp.print_indentation(o_hpp);
 				write_cpp_action_func_decl(o_hpp,smp->get_fullqualified_id(srep,"__"),a);
 				o_hpp << ";\n";
 				//write_cpp_action_func_decl(std::cout,smp->get_fullqualified_id(srep,"__"),a);std::cout << "\n";
@@ -937,7 +1017,8 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		indent_cpp.indent_incr();
 		indent_cpp.print_indentation(o_cpp);
 		o_cpp << "return ";
-		write_cpp_expr(this,indent_cpp,o_cpp,guard_rhs);
+		std::vector<std::string> parameters;
+		write_cpp_expr(this,indent_cpp,o_cpp,guard_rhs,nullptr,parameters);
 		o_cpp << ";\n";
 		indent_cpp.indent_decr();
 		indent_cpp.print_indentation(o_cpp);o_cpp << "}\n";
@@ -954,12 +1035,13 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 				state_rep_t srep(true,true,cur_sm,cur_sm->id());
 				for(auto & a: cur_sm->actions_){
 					indent_cpp.print_indentation(o_cpp);
-					write_cpp_action_func_decl_full_name(o_cpp,smp->get_fullqualified_id(srep,"__"),a);
+					std::vector<std::string> parameters;
+					write_cpp_action_func_decl_full_name(o_cpp,smp->get_fullqualified_id(srep,"__"),a,parameters);
 					o_cpp << "{\n";indent_cpp.indent_incr();
 
 					auto & func_body = as_struct_ref(a.body_);
 					for(auto p : func_body.children()){
-						if(write_cpp_stmt(smp,indent_cpp,o_cpp,p)) o_cpp << ";\n";}
+						if(write_cpp_stmt(smp,indent_cpp,o_cpp,p,cur_sm,parameters)) o_cpp << ";\n";}
 
 					indent_cpp.indent_decr();indent_cpp.print_indentation(o_cpp);o_cpp << "}\n";
 				}
