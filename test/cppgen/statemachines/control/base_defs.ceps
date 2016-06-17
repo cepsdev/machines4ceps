@@ -59,6 +59,8 @@ Guard g_y_drive_is_levelled_out, g_y_drive_levelling_out_was_successful;
 Guard g_z_drive_may_be_enabled;
 Guard g_z_drive_is_enabled;
 
+Systemstate TIME_VERZURRUNG;
+
 // --------------------------------------------
 // ----------- SYSTEM CONSTANTS ---------------
 // --------------------------------------------
@@ -644,12 +646,14 @@ Systemstate ivenet_radar_parkposition_request_state;
 Systemstate ivenet_radar_position_state;
 Systemstate ivenet_time_source_out;
 Systemstate ivenet_time_source_in;
-
+Systemstate IS_ENABLE_TIMER_ON;
+Systemstate IS_MOVE_TIMER_ON;
 
 // --------------------------------------------
 // ----------------- GLOBALS ------------------
 Globals
 {
+IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;
 // --------------------------------------------
 // ---------------- ANTRIEBE ------------------
   SENSOR_IP_X = DEF_SYS_INIT_INT_0;

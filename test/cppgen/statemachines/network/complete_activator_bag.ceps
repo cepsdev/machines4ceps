@@ -4,7 +4,7 @@ no_transitions {ev_x_drive_actual_values;                           ev_z_drive_a
 
 Event EXIT;
 
-Globals{g_is_Abbruch_active=0;};
+Globals{g_is_Abbruch_active=0;TIME_VERZURRUNG=0;};
 Simulation
 {
  EXIT;

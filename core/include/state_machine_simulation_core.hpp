@@ -295,7 +295,7 @@ public:
 	void inc_timed_events() {++timed_events_active_;}
 	void dec_timed_events() {--timed_events_active_;}
 	bool timed_events_pending() {return timed_events_active_;}
-private:
+
 	clock_type clock_;
 	clock_type::time_point base_time_point_;
 
