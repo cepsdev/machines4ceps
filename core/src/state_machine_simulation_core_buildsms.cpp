@@ -28,6 +28,14 @@
 #include <unordered_set>
 
 
+typedef void (*init_plugin_t)(IUserdefined_function_registry*);
+
+
+void register_plugin(State_machine_simulation_core* smc,std::string const& id,ceps::ast::Nodebase_ptr (*fn) (ceps::ast::Call_parameters* ))
+{
+	smc->register_plugin_fn(id,fn);
+}
+
 const auto SM4CEPS_VER_MAJ = 0;
 const auto SM4CEPS_VER_MINOR = .600;
 
@@ -146,7 +154,7 @@ int compute_state_ids(State_machine_simulation_core* smp,std::map<std::string,St
 }
 
 
-void State_machine_simulation_core::processs_content(State_machine **entry_machine)
+void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)
 {
 	using namespace ceps::ast;
 	using namespace std;
@@ -741,6 +749,35 @@ void State_machine_simulation_core::processs_content(State_machine **entry_machi
 	if(generate_cpp_code()){
 		do_generate_cpp_code(ceps_env_current(),current_universe());
 	}
+
+
+#ifdef __gnu_linux__
+	for(auto const & plugin_lib : result_cmd_line.plugins){
+		void* handle = dlopen( plugin_lib.c_str(), RTLD_LAZY);
+		if (handle == nullptr)
+			fatal_(-1,dlerror());
+
+		dlerror();
+	    void* init_fn_ = dlsym(handle,"init_plugin");
+	    if (init_fn_ == nullptr)
+	    	fatal_(-1,dlerror());
+	    auto init_fn = (init_plugin_t)init_fn_;
+	    init_fn(this);
+	}
+#endif
+#ifdef _WIN32
+/*	for (auto const & plugin_lib : result_cmd_line.plugins) {
+		auto handle = dlopen(plugin_lib.c_str(), RTLD_NOW);
+		if (handle == nullptr)
+			smc->fatal_(-1, dlerror());
+
+		auto init_fn_ = dlsym(handle, "init_plugin");
+		if (init_fn_ == nullptr)
+			smc->fatal_(-1, dlerror());
+		auto init_fn = (init_plugin_t)init_fn_;
+		init_fn(smc, register_plugin);
+	}*/
+#endif
 
 	auto simulations = ns[all{"Simulation"}];
 	if (simulations.size())

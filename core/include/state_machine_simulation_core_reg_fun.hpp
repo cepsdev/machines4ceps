@@ -22,6 +22,7 @@ public:
 	virtual void regfn(std::string name, int(*fn) (std::string)) = 0;
 	virtual void regfn(std::string name, std::string(*fn) (std::string)) = 0;
 	virtual void regfn(std::string name, int(*fn) (int,int,int,int,int,int) ) = 0;
+	virtual bool register_action(std::string state_machine_id,std::string action, void(*fn)()) = 0;
 
 
 };

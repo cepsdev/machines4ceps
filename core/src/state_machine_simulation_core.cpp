@@ -392,9 +392,9 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
     	{
 
     	   if (v->kind() == ceps::ast::Ast_node_kind::identifier)
-    		   current_statemachine->actions().insert(State_machine::Transition::Action(name(as_id_ref(v))));
+    		   current_statemachine->insert_action(State_machine::Transition::Action(name(as_id_ref(v))));
     	   else if (v->kind() == ceps::ast::Ast_node_kind::structdef)
-    		   current_statemachine->actions().insert(State_machine::Transition::Action(name(as_struct_ref(v)),v));
+    		   current_statemachine->insert_action(State_machine::Transition::Action(name(as_struct_ref(v)),v));
     	   else {
     		   std::stringstream ss;
     		   ss << *v;
@@ -407,9 +407,9 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   if (on_exit.size() > 1) fatal_(-1,"Statemachine '"+id+"': not more than one 'on_exit' allowed.");
 
   if (on_enter.size())
-	  current_statemachine->actions().insert(State_machine::Transition::Action(current_statemachine,name(as_struct_ref(on_enter.nodes()[0])),on_enter.nodes()[0]));
+	  current_statemachine->insert_action(State_machine::Transition::Action(current_statemachine,name(as_struct_ref(on_enter.nodes()[0])),on_enter.nodes()[0]));
   if (on_exit.size())
- 	  current_statemachine->actions().insert(State_machine::Transition::Action(current_statemachine,name(as_struct_ref(on_exit.nodes()[0])),on_exit.nodes()[0]));
+ 	  current_statemachine->insert_action(State_machine::Transition::Action(current_statemachine,name(as_struct_ref(on_exit.nodes()[0])),on_exit.nodes()[0]));
 
 
 
@@ -1062,8 +1062,8 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			{
 				auto sm  = t.to_.smp_;
 				active_sms.insert(sm);
-				auto it = sm->actions_.find(State_machine::Transition::Action("on_enter"));
-				if (it != sm->actions_.end() && it->body_ != nullptr ){
+				auto it = sm->find_action("on_enter");
+				if (it != nullptr && it->body_ != nullptr ){
 					execute_action_seq(sm,it->body());
 				}
 			}
@@ -1178,14 +1178,6 @@ bool state_machine_sim_core_default_stepping()
 }
 
 
-typedef void (*init_plugin_t)(IUserdefined_function_registry*);
-
-
-void register_plugin(State_machine_simulation_core* smc,std::string const& id,ceps::ast::Nodebase_ptr (*fn) (ceps::ast::Call_parameters* ))
-{
-	smc->register_plugin_fn(id,fn);
-}
-
 void init_state_machine_simulation(	int argc,
 									char ** argv,
 									State_machine_simulation_core* smc,
@@ -1209,34 +1201,6 @@ void init_state_machine_simulation(	int argc,
 			 ss << "\n***Error: Couldn't open file '" << f << "' " << std::endl << std::endl;
 			 throw std::runtime_error(ss.str()) ;
 		 }
-
-#ifdef __gnu_linux__
-	for(auto const & plugin_lib : result_cmd_line.plugins){
-		void* handle = dlopen( plugin_lib.c_str(), RTLD_LAZY);
-		if (handle == nullptr)
-			smc->fatal_(-1,dlerror());
-
-		dlerror();
-	    void* init_fn_ = dlsym(handle,"init_plugin");
-	    if (init_fn_ == nullptr)
-	    	smc->fatal_(-1,dlerror());
-	    auto init_fn = (init_plugin_t)init_fn_;
-	    init_fn(smc);
-	}
-#endif
-#ifdef _WIN32
-/*	for (auto const & plugin_lib : result_cmd_line.plugins) {
-		auto handle = dlopen(plugin_lib.c_str(), RTLD_NOW);
-		if (handle == nullptr)
-			smc->fatal_(-1, dlerror());
-
-		auto init_fn_ = dlsym(handle, "init_plugin");
-		if (init_fn_ == nullptr)
-			smc->fatal_(-1, dlerror());
-		auto init_fn = (init_plugin_t)init_fn_;
-		init_fn(smc, register_plugin);
-	}*/
-#endif
 
 	smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);
 }
@@ -1279,7 +1243,7 @@ void run_state_machine_simulation(State_machine_simulation_core* smc,Result_proc
 		}
 	}
 
-	smc->processs_content();
+	smc->processs_content(result_cmd_line);
 	if (!result_cmd_line.interactive_mode) return;
 	string last_file_processed;
 	for(;std::cin;)
@@ -1303,12 +1267,12 @@ void run_state_machine_simulation(State_machine_simulation_core* smc,Result_proc
 		}
 		else if (cmd.substr(0,3) == "run")
 		{
-			smc->processs_content();
+			smc->processs_content(result_cmd_line);
 		}
 		else if (cmd.substr(0,4) == "step")
 		{
 				smc->set_step_handler(state_machine_sim_core_default_stepping);
-				smc->processs_content();
+				smc->processs_content(result_cmd_line);
 		}
 		else if (cmd.substr(0,8) == "machines")
 		{

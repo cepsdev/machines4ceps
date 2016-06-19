@@ -638,8 +638,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 
 		ceps::ast::Nodebase_ptr body = nullptr;
 		if(active_smp){
-		 auto it = active_smp->actions().find(State_machine::Transition::Action(id));
-		 if (it != active_smp->actions().end() && it->body_ != nullptr) body = it->body_;
+		 //auto it = active_smp->actions().find(State_machine::Transition::Action(id));
+		 //if (it != active_smp->actions().end() && it->body_ != nullptr) body = it->body_;
+		 auto it = active_smp->find_action(id);
+		 if (it != nullptr && it->body_ != nullptr) body = it->body_;
 		}
 
 		if (body == nullptr){
@@ -956,8 +958,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 		} else if (n->kind() == ceps::ast::Ast_node_kind::identifier) {
 			if (containing_smp != nullptr)
 			{
-				auto it = containing_smp->actions().find(State_machine::Transition::Action(ceps::ast::name(ceps::ast::as_id_ref(n))));
-				if (it != containing_smp->actions().end() && it->body() != nullptr){
+				//auto it = containing_smp->actions().find(State_machine::Transition::Action(ceps::ast::name(ceps::ast::as_id_ref(n))));
+				auto it = containing_smp->find_action(ceps::ast::name(ceps::ast::as_id_ref(n)));
+				if (it != /*containing_smp->actions().end()*/nullptr && it->body() != nullptr){
 					execute_action_seq(containing_smp,it->body());
 					continue;
 				}

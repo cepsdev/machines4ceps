@@ -86,8 +86,8 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				 for(auto const & sm : on_enter_seq){
 				 	 //Handle on_enter
 					 if (print_debug_info_)log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
-					 auto it = sm->actions_.find(State_machine::Transition::Action("on_enter"));
-					 if (it == sm->actions_.end()) continue;
+					 auto it = sm->find_action("on_enter");
+					 if (it == nullptr) continue;
 					 if (it->body_ == nullptr) continue;
 					 execute_action_seq(sm,it->body());
 				 }//for
@@ -243,8 +243,8 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		{
 			for(auto const & sm : on_exit_seq){
 				log() << "[ON_EXIT]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) <<"\n";
-				auto it = sm->actions_.find(State_machine::Transition::Action("on_exit"));
-				if (it == sm->actions_.end()) continue;
+				auto it = sm->find_action("on_exit");
+				if (it == nullptr) continue;
 				if (it->body_ == nullptr) continue;
 				execute_action_seq(sm,it->body());
 			}
@@ -257,6 +257,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			for(auto act_it = it->second.begin(); act_it != it->second.end();++act_it)
 			{
 				if (print_debug_info_)log() << "[EXECUTE ACTION][ID="<< act_it->id_ <<"]"  << "\n";
+				if (act_it->native_func()){
+					if (print_debug_info_)log() << "[EXECUTE NATIVE ACTION]\n";
+					act_it->native_func()();
+					continue;
+				}
 				if (act_it->body() == nullptr) continue;
 				execute_action_seq(act_it->associated_sm_,act_it->body());
 			}

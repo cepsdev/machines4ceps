@@ -177,6 +177,7 @@ public:
     	State_machine* associated_sm_ = nullptr;
     	bool valid() const {return id_.length() > 0;}
     	ceps::ast::Nodebase_ptr body_ = nullptr;
+    	void(* native_func_)() = nullptr;
     	Action() = default;
     	Action(std::string id): id_(id),body_(nullptr) {}
     	Action(std::string id,ceps::ast::Nodebase_ptr body): id_(id),body_(body) {}
@@ -189,6 +190,8 @@ public:
     	std::string & id() {return id_;}
     	bool operator == (Action const & rhs) const {return id_ == rhs.id_;}
     	bool operator < (Action const & rhs) const {return id_ < rhs.id_;}
+    	decltype(native_func_)& native_func() {return native_func_;}
+    	decltype(native_func_) native_func() const {return native_func_;}
      };
 
     std::set<Event> events_;
@@ -229,14 +232,12 @@ public:
     if (it_glob != statemachines.end()) { s.smp() = it_glob->second;s.is_sm_ = true;return true;}
     return false;
   }
-
-
   std::set<Transition::Event>& events() {return events_;}
   std::set<Transition::Event> const & events() const {return events_;}
-  std::set<Transition::Action>& actions() {return actions_;}
-  std::set<Transition::Action> const & actions() const {return actions_;}
-
-
+  std::vector<Transition::Action>& actions() {return actions_;}
+  std::vector<Transition::Action> const & actions() const {return actions_;}
+  Transition::Action* find_action(std::string name){for(auto & a: actions()) if (a.id_==name) return &a; return nullptr;}
+  void insert_action(Transition::Action const & act){for(auto & a: actions()) if (a.id_==act.id_) {a = act;return;} actions().push_back(act);}
 
 
   using unresolve_import_t = std::tuple<std::string /*name of SM which is to be imported.*/ ,
@@ -248,15 +249,23 @@ public:
   std::vector< unresolve_import_t >& unresolved_imports() {return unresolved_imports_;}
 
   bool & definition_complete() {return complete_;}
-
-
-
-
   template <typename T> bool lookup_info(T& s,std::set<T> const & cont)
   {
     if (s.id().length() == 0) {return false;}
     auto it = cont.find(s);
     if (it != cont.end()) {s = *it; return true;}
+    if (parent_!=nullptr)
+     return parent_->lookup_info(s,cont);
+
+    return false;
+  }
+
+  template <typename T> bool lookup_info(T& s,std::vector<T> const & cont)
+  {
+    if (s.id().length() == 0) {return false;}
+    T const * it = nullptr;
+    for(auto const & e:cont) if (e.id() == s.id()) {it = &e;break;}
+    if (it != nullptr) {s = *it; return true;}
     if (parent_!=nullptr)
      return parent_->lookup_info(s,cont);
 
@@ -301,7 +310,7 @@ public:
   std::vector<Transition> const & transitions() const {return transitions_;}
   std::vector<Transition> & transitions() {return transitions_;}
 
-  std::set<Transition::Action> actions_;
+  std::vector<Transition::Action> actions_;
   std::set<Transition::Event> events_;
   std::vector< unresolve_import_t > unresolved_imports_;
   std::vector<std::vector<Transition>> threads_;
@@ -310,9 +319,6 @@ public:
 
   std::set<State*>& states() {return states_;};
   std::set<State*>const& states() const {return states_;};
-
-
-
 
   bool join_ = false;
   State join_state_;
@@ -326,6 +332,26 @@ public:
 
   decltype(threads_)& threads() {return threads_;}
   decltype(threads_) const & threads() const {return threads_;}
+
+  state_rep_t find(std::string compound_id){
+	  std::string prefix;
+	  std::string rest;
+	  auto i = compound_id.find_first_of('.');
+	  if (i == std::string::npos ) prefix = compound_id;
+	  else {prefix = compound_id.substr(0,i);rest=compound_id.substr(i+1);}
+	  for(auto& s:states()){
+		  if (s->id_ != prefix) continue;
+		  if (rest.length()==0 && !s->is_sm_) return state_rep_t{true,false,this,s->id_};
+		  if (rest.length()!=0 && s->is_sm_) return s->smp()->find(rest);
+	  }
+
+	  if (rest.length() == 0) return state_rep_t{false,false,nullptr,""};
+	  for(auto smp: children()){
+		  if(smp->id_ != prefix) continue;
+		  return smp->find(rest);
+	  }
+	  return state_rep_t{false,false,nullptr,""};
+  }
 
 };
 

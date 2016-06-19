@@ -595,11 +595,26 @@ void write_cpp_action_func_decl(std::ostream& os,std::string prefix,State_machin
 	else {os << decl.first << " " << "void " << get_cpp_action_name(prefix,a) << decl.second;}
 }
 
-void write_cpp_action_func_decl_full_name(std::ostream& os,std::string prefix,State_machine::Transition::Action const & a,std::vector<std::string>& parameters){
+void write_cpp_action_func_decl_full_name(std::ostream& os,
+		std::string prefix,
+		State_machine::Transition::Action const & a,
+		std::vector<std::string>& parameters, bool print_return_type=true, bool print_params=true){
 	auto decl = cpp_templatized_decl(as_struct_ref(a.body_),parameters);
 
-	if (decl.first.length() == 0){ os << "void " << global_functions_namespace << "::" << get_cpp_action_name(prefix,a)  << "()";}
-	else {os << decl.first << " " << "void " << global_functions_namespace << "::"<< get_cpp_action_name(prefix,a) << decl.second;}
+	if (decl.first.length() == 0){
+		os << ( print_return_type ? "void ":"")
+		   << global_functions_namespace
+		   << "::" << get_cpp_action_name(prefix,a)
+		   << ( print_params ? "()":"");
+	}
+	else {
+		os << decl.first
+		   << " "
+		   << ( print_return_type ? "void ":"")
+		   << global_functions_namespace
+		   << "::"
+		   << get_cpp_action_name(prefix,a)
+		   << ( print_params ? decl.second:"");}
 
 
 }
@@ -975,7 +990,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 
 	Indent indent_hpp;Indent indent_cpp;
 
-	o_hpp << "\n\n#include<iostream>\n#include<string>\n#include<algorithm>\n#include<map>\n#include<vector>\n#include<cstdlib>\n#include\"user_defined.hpp\"\n\n";
+	o_hpp << "\n\n#include<iostream>\n#include<string>\n#include<algorithm>\n#include<map>\n#include<vector>\n#include<cstdlib>\n#include \"core/include/state_machine_simulation_core_reg_fun.hpp\"\n#include\"user_defined.hpp\"\n\n";
 	o_cpp << "\n\n#include \""<< out_hpp <<"\"\n\n";
 
 	//Systemstates section
@@ -1059,17 +1074,23 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		o_hpp << ";\n";
 	});
 
+	std::stringstream init_plugin_content;
+	init_plugin_content << "extern \"C\" void init_plugin(IUserdefined_function_registry* smc){\n";
 
 	{
 		//print state machine action declarations
 		std::vector<State_machine*> smsv;
 		for(auto sm : State_machine::statemachines) smsv.push_back(sm.second);
 		State_machine_simulation_core* smp = this;
-		traverse_sms(smsv,[smp,&o_hpp,&indent_hpp](State_machine* cur_sm){
+		traverse_sms(smsv,[smp,&o_hpp,&indent_hpp,&init_plugin_content](State_machine* cur_sm){
 			state_rep_t srep(true,true,cur_sm,cur_sm->id());
 			for(auto & a: cur_sm->actions_){
 				indent_hpp.print_indentation(o_hpp);
 				write_cpp_action_func_decl(o_hpp,smp->get_fullqualified_id(srep,"__"),a);
+				init_plugin_content << "smc->register_action(\""<<smp->get_fullqualified_id(srep,".") <<"\",\""<<a.id_ <<"\", ";
+				std::vector<std::string> parameters;
+				write_cpp_action_func_decl_full_name(init_plugin_content,smp->get_fullqualified_id(srep,"__"),a,parameters,false,false);
+				init_plugin_content<<");\n";
 				o_hpp << ";\n";
 				//write_cpp_action_func_decl(std::cout,smp->get_fullqualified_id(srep,"__"),a);std::cout << "\n";
 			//std::cout << "'" << smp->get_fullqualified_id(srep,"__")<< "'" << std::endl;
@@ -1138,6 +1159,11 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 			o_cpp << "}\n";
 	   });
 	}
+
+
+	init_plugin_content << "\n}";
+
+	o_cpp << init_plugin_content.str();
 
 }
 

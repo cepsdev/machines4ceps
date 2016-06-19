@@ -401,7 +401,7 @@ public:
 	*/
 	void process_files(	std::vector<std::string> const & file_names,
 						std::string& last_file_processed);
-	void processs_content(State_machine **entry_machine = nullptr);
+	void processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine = nullptr);
 	void leave_sm(State_machine* smp,states_t & states,std::set<State_machine*>& sms_exited,std::vector<State_machine*>& on_exit_seq);
 	void enter_sm(	bool triggered_by_immediate_child_state, /*true <=> state which triggered enter is a pure state => No automatic trigger of Initial*/
 					State_machine* smp,
@@ -457,6 +457,38 @@ public:
 
 	bool handle_userdefined_sender_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 	bool handle_userdefined_receiver_definition(std::string call_name, ceps::ast::Nodeset const & ns);
+
+	virtual bool register_action(std::string state_machine_id,std::string action, void(*fn)()){
+		auto i = state_machine_id.find_first_of('.');
+		State_machine* sm = nullptr;
+		if (i == std::string::npos){
+			auto it = State_machine::statemachines.find(state_machine_id);
+			if (it == State_machine::statemachines.end()) return false;
+			sm = it->second;
+		} else {
+			auto prefix = state_machine_id.substr(0,i);
+			auto rest =  state_machine_id.substr(i+1);
+			auto it = State_machine::statemachines.find(prefix);
+			if (it == State_machine::statemachines.end()) return false;
+			auto srep = it->second->find(rest);
+			if (!srep.valid_ || srep.smp_ == nullptr || !srep.is_sm_) return false;
+			sm = srep.smp_;
+		}
+		bool r = false;
+		for(auto & a : sm->actions()){
+			if (a.id_ != action) continue;
+			a.native_func() = fn;
+			r = true;
+		}
+		for(auto & t: sm->transitions()){
+			for (auto & a : t.actions()){
+				if (a.id_ != action) continue;
+				a.native_func() = fn;
+				r = true;
+			}
+		}
+		return r;
+	}
 
 	//Userdefined functions (will be replaced by variadic templates)
 
