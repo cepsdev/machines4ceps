@@ -648,12 +648,13 @@ Systemstate ivenet_time_source_out;
 Systemstate ivenet_time_source_in;
 Systemstate IS_ENABLE_TIMER_ON;
 Systemstate IS_MOVE_TIMER_ON;
+Systemstate vorzeichen_speed;
 
 // --------------------------------------------
 // ----------------- GLOBALS ------------------
 Globals
 {
-IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;
+IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
 // --------------------------------------------
 // ---------------- ANTRIEBE ------------------
   SENSOR_IP_X = DEF_SYS_INIT_INT_0;
