@@ -235,6 +235,13 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 
     DEBUG_FUNC_PROLOGUE
 
+	{
+    	auto it =  get_user_supplied_guards().find(guard_name);
+    	if (it !=  get_user_supplied_guards().end()){
+    		return (*it->second)();
+    	}
+	}
+
 	Nodebase_ptr guard_expr = global_guards[guard_name];
 	if (guard_expr == nullptr)
 		fatal_(-1,"Global guard '"+guard_name+"' has no interpretation, i.e. is not defined");

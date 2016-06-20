@@ -37,6 +37,46 @@ echo
  fi
  cd ../..
 
+
+ echo -en "Test \e[4mGeneration of C++ code\e[0m (basic examples - basic_example_2) :"
+ cd cppgen/basic_examples
+ rm out.cpp
+ rm out.hpp
+ ../../../x86/sm basic_example_2.ceps --cppgen --quiet > basic_example_2_cppgen_step.log 2> basic_example_2_cppgen_step.log
+ if [ $? -ne 0 ]; then
+  echo -e "\e[38;5;196m failed (cpp generation step)"
+  cat basic_example_2_cppgen_step.log
+  echo -e "\e[0m"
+ else
+  g++ -fPIC -shared -std=c++11 out.cpp -I"../" -I"../../../" -o basic_example_2.so > basic_example_2_buildso_step.log 2> basic_example_2_buildso_step.log
+  if [ $? -ne 0 ]; then
+   echo -e "\e[38;5;196m failed (build shared library step)"
+   echo
+   cat basic_example_2_buildso_step.log
+   echo -e "\e[0m"
+  else
+   ../../../x86/sm basic_example_2_ripped.ceps --plugin./basic_example_2.so --quiet > basic_example_2_actions_removed_step.log 2> basic_example_2_actions_removed_step.log
+   if [ $? -ne 0 ]; then
+    echo -e "\e[38;5;196m failed (Rerunning basic_example_2 with native actions)"
+    echo
+    cat basic_example_2_actions_removed_step.log
+    echo -e "\e[0m"
+   else
+    diff basic_example_2_actions_removed_step.log basic_example_2_cppgen_step.log >diff.log 2>diff.log
+    if [ $? -ne 0 ]; then
+     echo -e "\e[38;5;196m failed (Output differs between pure interpreted run and run with actions replaced by native code)"
+     echo
+     cat diff.log
+     echo -e "\e[0m"
+    else
+     echo -e "\e[38;5;28m passed \e[0m"
+    fi
+   fi 
+  fi
+ fi
+ cd ../..
+
+
  
 echo -en "Test \e[4msystemparameter.ceps\e[0m                                      :"
 ../x86/sm systemparameter.ceps --quiet >systemparameter.log 2>systemparameter.log

@@ -4,8 +4,10 @@
 #include <string> 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <algorithm>
-#include <set> 
+#include <set>
+#include <unordered_set>
 #include <chrono>
 #include <thread>
 #include <mutex>
@@ -19,6 +21,7 @@
 #include "core/include/sm_raw_frame.hpp"
 #include "core/include/state_machine_simulation_core_reg_fun.hpp"
 #include "core/include/events.hpp"
+
 
 #include "log4kmw_state.hpp"
 #include "log4kmw_record.hpp"
@@ -451,7 +454,7 @@ public:
 	}
 	dispatcher_thread_ctxt_t get_dispatcher_thread_ctxt(int i) {return dispatcher_thread_ctxt_[i];}
 
-	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
+	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards);
 
 	//CAL (Sender)
 
@@ -489,6 +492,26 @@ public:
 		}
 		return r;
 	}
+
+	using global_init_t = void (*)();
+	global_init_t global_init = nullptr;
+	global_init_t & user_supplied_global_init() {return global_init;}
+
+	virtual bool register_global_init(global_init_t fn){
+		user_supplied_global_init() = fn;
+		return true;
+	}
+
+	std::unordered_map<std::string,bool(**)()> user_supplied_guards;
+
+	virtual bool register_guard(std::string name,bool(**fn)()){
+		user_supplied_guards[name] = fn;
+		return true;
+	}
+
+	decltype(user_supplied_guards)& get_user_supplied_guards() {return user_supplied_guards;}
+	decltype(user_supplied_guards) const & get_user_supplied_guards() const {return user_supplied_guards;}
+
 
 	//Userdefined functions (will be replaced by variadic templates)
 

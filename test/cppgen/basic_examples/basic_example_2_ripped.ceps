@@ -1,0 +1,27 @@
+kind Event;kind Systemstate;kind Guard;
+Event A;
+Guard g1;
+Guard g2;
+
+
+Statemachine{id{S;};
+ States{Initial;s1;s2;s3;s4;};
+ Actions{
+  OnAs1{};
+  OnAs2{};
+ };
+ Transition{Initial;s1;g1;A;OnAs1;};
+ Transition{Initial;s2;g2;A;OnAs2;};
+ Transition{Initial;s2;!g1;A;OnAs2;};
+};
+
+Globals{
+ g1 = 1;
+ g2 = 0;
+};
+
+Simulation{
+ Start{S;};
+ A;
+ ASSERT_CURRENT_STATES_CONTAINS{S.s2;};
+};

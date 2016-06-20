@@ -37,15 +37,17 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		sim.nodes().insert(sim.nodes().begin(),fixture.nodes().begin(),fixture.nodes().end());
 	}
 
-	auto globals = universe["Globals"];
-	if (!globals.empty())
-	{
-		sim.nodes().insert(sim.nodes().begin(),globals.nodes().begin(),globals.nodes().end());
-	}
-	globals = universe["globals"];
-	if (!globals.empty())
-	{
-		sim.nodes().insert(sim.nodes().begin(),globals.nodes().begin(),globals.nodes().end());
+	if (user_supplied_global_init() == nullptr){
+		auto globals = universe["Globals"];
+		if (!globals.empty())
+		{
+			sim.nodes().insert(sim.nodes().begin(),globals.nodes().begin(),globals.nodes().end());
+		}
+		globals = universe["globals"];
+		if (!globals.empty())
+		{
+			sim.nodes().insert(sim.nodes().begin(),globals.nodes().begin(),globals.nodes().end());
+		}
 	}
 
 
@@ -56,6 +58,8 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 
 	log()<< "[SIMULATION STARTED]\n";	//log()<<"[START STATES] " ;	print_info(states);
+	if (user_supplied_global_init() != nullptr)
+		user_supplied_global_init()();
 
 	int pos = 0;	int loop_ctr = 0;	bool quit = false;
 
