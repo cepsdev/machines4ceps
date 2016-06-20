@@ -20,6 +20,7 @@
 #include "core/include/sm_ev_comm_layer.hpp"
 #include "core/include/sm_raw_frame.hpp"
 #include "core/include/state_machine_simulation_core_reg_fun.hpp"
+#include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 #include "core/include/events.hpp"
 
 
@@ -66,7 +67,7 @@ public:
 
 
 
-class State_machine_simulation_core:public IUserdefined_function_registry
+class State_machine_simulation_core:public IUserdefined_function_registry, Ism4ceps_plugin_interface
 {
 	typedef std::chrono::steady_clock clock_type;
 
@@ -515,24 +516,26 @@ public:
 
 	//Userdefined functions (will be replaced by variadic templates)
 
-	virtual void regfn(std::string name, int(*fn) ());
-	virtual void regfn(std::string name, double(*fn) ());
-	virtual void regfn(std::string name, int (*fn) (int) );
-	virtual void regfn(std::string name, double (*fn) (int));
-	virtual void regfn(std::string name, int (*fn) (double));
-	virtual void regfn(std::string name, double (*fn) (double));
-	virtual void regfn(std::string name, int(*fn) (int,int));
-	virtual void regfn(std::string name, double(*fn) (int,int));
-	virtual void regfn(std::string name, int(*fn) (double,int));
-	virtual void regfn(std::string name, double(*fn) (double, int));
-	virtual void regfn(std::string name, int(*fn) (int, double));
-	virtual void regfn(std::string name, double(*fn) (int, double));
-	virtual void regfn(std::string name, int(*fn) (double, double));
-	virtual void regfn(std::string name, double(*fn) (double, double));
-	virtual void regfn(std::string name, int(*fn) (std::string));
-	virtual void regfn(std::string name, std::string(*fn) (std::string));
-	virtual void regfn(std::string name, int(*fn) (int,int,int,int,int,int));
+	void regfn(std::string name, int(*fn) ());
+	void regfn(std::string name, double(*fn) ());
+	void regfn(std::string name, int (*fn) (int) );
+	void regfn(std::string name, double (*fn) (int));
+	void regfn(std::string name, int (*fn) (double));
+	void regfn(std::string name, double (*fn) (double));
+	void regfn(std::string name, int(*fn) (int,int));
+	void regfn(std::string name, double(*fn) (int,int));
+	void regfn(std::string name, int(*fn) (double,int));
+	void regfn(std::string name, double(*fn) (double, int));
+	void regfn(std::string name, int(*fn) (int, double));
+	void regfn(std::string name, double(*fn) (int, double));
+	void regfn(std::string name, int(*fn) (double, double));
+	void regfn(std::string name, double(*fn) (double, double));
+	void regfn(std::string name, int(*fn) (std::string));
+	void regfn(std::string name, std::string(*fn) (std::string));
+	void regfn(std::string name, int(*fn) (int,int,int,int,int,int));
 
+	Ism4ceps_plugin_interface* get_plugin_interface() {return this;}
+	void queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl = {});
 
 	private:
 		std::map<std::string, int(*) ()> regfntbl_i_;

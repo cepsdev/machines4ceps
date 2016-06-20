@@ -1,0 +1,25 @@
+kind Event;kind Systemstate;kind Guard;
+Event A,B,C,D,E;
+
+Statemachine{id{S;};
+ States{Initial;
+        s1;
+        s2;
+        s3;
+        s4;};
+ Actions{
+  a1{A;};
+  a2{B;};
+  a3{C;};
+ };
+ Transition{Initial;s1;a1;};
+ Transition{s1;s2;A;a2;};
+ Transition{s2;s3;B;a3;};
+ Transition{s3;s4;C;};
+
+};
+
+Simulation{
+ Start{S;};
+ ASSERT_CURRENT_STATES_CONTAINS{S.s4;};
+};

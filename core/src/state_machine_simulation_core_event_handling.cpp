@@ -4,6 +4,9 @@
 #include <thread>
 #include "cepsparserdriver.hh"
 
+void State_machine_simulation_core::queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl){
+
+}
 
 bool State_machine_simulation_core::is_global_event(std::string const & ev_name){
 	auto symtab = ceps_env_current().get_global_symboltable();
