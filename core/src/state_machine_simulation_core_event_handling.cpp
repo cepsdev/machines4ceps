@@ -5,7 +5,33 @@
 #include "cepsparserdriver.hh"
 
 void State_machine_simulation_core::queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl){
+	event_t ev(ev_name);
+	ev.already_sent_to_out_queues_ = false;
+	ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
+	ev.payload_native_.insert(ev.payload_native_.cbegin(),vl.begin(),vl.end());
+	enqueue_event(ev,true);
+}
 
+size_t State_machine_simulation_core::argc(){
+	return std::max(current_event().payload_.size(),current_event().payload_native_.size());
+}
+
+sm4ceps_plugin_int::Variant State_machine_simulation_core::argv(size_t j){
+ if (0 == j) return sm4ceps_plugin_int::Variant{current_event().id_};
+ auto i = j - 1;
+ if (std::max(current_event().payload_.size(),current_event().payload_native_.size()) <= i )
+	 fatal_(-1,"Access to argv: Out of bounds.");
+ if (current_event().payload_native_.size()){
+	 return current_event().payload_native_[i];
+ }
+ auto r = current_event().payload_[i];
+ if (r->kind() == ceps::ast::Ast_node_kind::int_literal)
+	 return sm4ceps_plugin_int::Variant{ceps::ast::value(ceps::ast::as_int_ref(r))};
+ if (r->kind() == ceps::ast::Ast_node_kind::float_literal)
+ 	 return sm4ceps_plugin_int::Variant{ceps::ast::value(ceps::ast::as_double_ref(r))};
+ if (r->kind() == ceps::ast::Ast_node_kind::string_literal)
+ 	 return sm4ceps_plugin_int::Variant{ceps::ast::value(ceps::ast::as_string_ref(r))};
+ fatal_(-1,"Access to argv: Unsupported type.");
 }
 
 bool State_machine_simulation_core::is_global_event(std::string const & ev_name){
@@ -56,6 +82,7 @@ do{
 
 			 ev.sid_ = eev.id_;
 			 ev.payload_ = eev.payload_;
+			 ev.payload_native_ = eev.payload_native_;
 
 			 if (!eev.already_sent_to_out_queues_)
 				 for(auto oq : out_event_queues_)oq->push(eev);

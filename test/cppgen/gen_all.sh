@@ -28,7 +28,7 @@ if [ $1 == "x86" ]; then
     echo "Configuring script for $1"
     PATH_TO_BAG_EXE=$TRGS_ROOT/../../x86
 #    PATH_TO_BAG_EXE=/home/cb/subversion/TRGS/code/simulation/build-TRGS_BAG-Desktop_Qt_5_5_1_GCC_64bit-Debug
-    EXECUTABLE=TRGS_BAG
+    EXECUTABLE=sm
     EXE=$PATH_TO_BAG_EXE
     C_FUNCTIONS_4_CEPS=$TRGS_ROOT/statemachines/libs/x86
 elif [ $1 == "arm" ]; then

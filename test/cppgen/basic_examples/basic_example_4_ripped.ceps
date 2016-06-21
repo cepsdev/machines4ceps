@@ -8,14 +8,15 @@ Statemachine{id{S;};
         s3;
         s4;};
  Actions{
-  a1{print("S::a1\n");A;};
-  a2{print("S::a2\n");B;};
-  a3{print("S::a3\n");C;};
+  a1{};
+  a2{};
+  a3{};
+  a4{};
  };
  Transition{Initial;s1;a1;};
  Transition{s1;s2;A;a2;};
  Transition{s2;s3;B;a3;};
- Transition{s3;s4;C;};
+ Transition{s3;s4;C;a4;};
 
 };
 

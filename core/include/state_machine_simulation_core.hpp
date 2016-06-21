@@ -163,8 +163,12 @@ public:
 		std::string id_;
 		bool already_sent_to_out_queues_ = false;
 		std::vector<ceps::ast::Nodebase_ptr> payload_;
+		std::vector<sm4ceps_plugin_int::Variant> payload_native_;
 		bool unique_= false;
 		event_t() = default;
+		event_t(const event_t &) = default;
+		event_t& operator = (const event_t &) = default;
+
 		event_t(std::string const & id,std::vector<ceps::ast::Nodebase_ptr> const & payload = {}):id_(id),payload_(payload) {}
 		bool operator < (event_t const & rhs) const
 		{
@@ -173,7 +177,7 @@ public:
 			return id_ < rhs.id_;
 		}
 		bool is_epsilon() const {return id_ == "";}
-		event_t& operator = (event_rep_t const & rhs) { id_=rhs.sid_;payload_=rhs.payload_;return *this;}
+		event_t& operator = (event_rep_t const & rhs) { id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;}
 	};
 
 	typedef ceps::ast::Nodebase_ptr (*smcore_plugin_fn_t)(ceps::ast::Call_parameters* params);
@@ -324,6 +328,7 @@ public:
 
 	void process_event_from_remote(nmp_header,char* data);
 	void exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool);
+	bool exec_action_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id,bool periodic_timer);
 	bool is_global_event(std::string const & ev_name);
 
 
@@ -536,6 +541,14 @@ public:
 
 	Ism4ceps_plugin_interface* get_plugin_interface() {return this;}
 	void queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl = {});
+	size_t argc();
+	sm4ceps_plugin_int::Variant argv(size_t);
+	void start_timer(double,sm4ceps_plugin_int::ev);
+	void start_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id);
+	void start_periodic_timer(double,sm4ceps_plugin_int::ev);
+	void start_periodic_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id);
+	void stop_timer(sm4ceps_plugin_int::id);
+
 
 	private:
 		std::map<std::string, int(*) ()> regfntbl_i_;

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <set> 
 #include "ceps_all.hh"
+#include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 
 
 class State_machine;
@@ -362,6 +363,7 @@ struct event_rep_t {
 	State_machine* smp_ = nullptr;
 	std::string sid_;
 	std::vector<ceps::ast::Nodebase_ptr> payload_;
+	std::vector<sm4ceps_plugin_int::Variant> payload_native_;
 	bool valid() const {return valid_;}
 	bool epsilon() const {return !valid_;}
 

@@ -1,0 +1,50 @@
+kind Event;kind Systemstate;kind Guard;
+Event A,B,C,D,E;
+
+Statemachine{id{S;};
+ States{Initial;
+        s1;
+        s2;
+        s3;
+        s4;};
+ Actions{
+  a1{print("S::a1\n");A(10,20,30);};
+  a2{
+    print("S::a2\n");
+    print("Number of arguments = ",argc(),"\n");
+    print("Event = ",argv(0),"\n");
+    print("argv(1) = ",argv(1),"\n");
+    print("argv(2) = ",argv(2),"\n");
+    print("argv(3) = ",argv(3),"\n");
+    B("A","B");
+  };
+  a3{
+    print("S::a3\n");
+    print("Number of arguments = ",argc(),"\n");
+    print("Event = ",argv(0),"\n");
+    print("argv(1) = ",argv(1),"\n");
+    print("argv(2) = ",argv(2),"\n");
+    C(1.1,2.2,"AA","BB",3);
+  };
+  a4{
+    print("S::a4\n");
+    print("Number of arguments = ",argc(),"\n");
+    print("Event = ",argv(0),"\n");
+    print("argv(1) = ",argv(1),"\n");
+    print("argv(2) = ",argv(2),"\n");
+    print("argv(3) = ",argv(3),"\n");
+    print("argv(4) = ",argv(4),"\n");
+    print("argv(5) = ",argv(5),"\n");
+  };
+ };
+ Transition{Initial;s1;a1;};
+ Transition{s1;s2;A;a2;};
+ Transition{s2;s3;B;a3;};
+ Transition{s3;s4;C;a4;};
+
+};
+
+Simulation{
+ Start{S;};
+ ASSERT_CURRENT_STATES_CONTAINS{S.s4;};
+};

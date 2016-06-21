@@ -295,6 +295,75 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 
 }
 
+bool State_machine_simulation_core::exec_action_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_,bool periodic_timer){
+
+	if (t < 0) return true;
+	std::string ev_id = ev_.name_;
+	std::string timer_id;
+
+	if (id_.name_.length())
+	{
+		timer_id = id_.name_;
+		kill_named_timer(timer_id);
+	}
+
+	double delta = t;
+	ceps::ast::Unit_rep u;
+
+	log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
+
+	event_t ev_to_send(ev_id);
+	ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
+	ev_to_send.already_sent_to_out_queues_ = false;
+
+	if (ev_.args_.size())
+		ev_to_send.payload_native_ = ev_.args_;
+	int timer_thread_id = -1;
+	{
+	 std::lock_guard<std::mutex> lk(timer_threads_m);
+	 if (timer_threads.size() == 0){
+	  timer_threads.resize(1024);
+	  for(auto& tinf : timer_threads){
+		std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(tinf) = nullptr;
+		std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = false;
+		std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)= true;
+	  }
+	  timed_events_active_ = 0;
+	 }
+	 assert(timer_threads.size()>0);
+
+ 	 for(size_t i = 0; i < timer_threads.size(); ++i)
+	  if (std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i])){
+	   std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i]) = false;
+	   std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[i]) = false;
+	   std::get<TIMER_THREAD_FN_CTRL_ID>(timer_threads[i]) = timer_id;
+	   if (std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])){ std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])->join();delete std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i]);}
+	   timer_thread_id = i; break;
+	  }
+
+	  if (timer_thread_id < 0) fatal_(-1,"Out of resources: timer.");
+	  inc_timed_events();
+	  std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[timer_thread_id]) = new std::thread{timer_thread_fn,this,timer_thread_id,periodic_timer,delta,ev_to_send};
+	}
+}
+
+void State_machine_simulation_core::start_timer(double t,sm4ceps_plugin_int::ev ev_){
+ exec_action_timer(t,ev_,sm4ceps_plugin_int::id{},false);
+}
+void State_machine_simulation_core::start_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_){
+ exec_action_timer(t,ev_,id_,false);
+}
+void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin_int::ev ev_){
+	exec_action_timer(t,ev_,sm4ceps_plugin_int::id{},true);
+}
+void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_){
+	exec_action_timer(t,ev_,id_,true);
+}
+void State_machine_simulation_core::stop_timer(sm4ceps_plugin_int::id id_){
+	kill_named_timer(id_.name_);
+}
+
+
 
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,

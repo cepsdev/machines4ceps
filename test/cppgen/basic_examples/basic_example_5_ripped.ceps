@@ -1,0 +1,30 @@
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+
+Systemstate duration_timer_1,duration_timer_2,s1;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    a1{};
+    a2{};
+    a3{};    
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;a;E;a2;};
+ Transition{a;a;F;a3;};
+};
+
+Globals{
+};
+Simulation
+{
+ Start{S1;};
+};
+
+
+

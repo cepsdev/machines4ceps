@@ -1,0 +1,40 @@
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+
+Systemstate duration_timer_1,duration_timer_2,s1;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    a1{start_periodic_timer(duration_timer_1,E,T1);start_periodic_timer(duration_timer_2,F(s1),T2);};
+    a2{print("action a2(triggered by E)\n","Incrementing s1 (old value = ",s1,")\n");s1=s1+1;};
+    a3{
+       print("action a3(triggered by F)\n");
+       print("s1 = ",s1,"\n");
+       if (s1 >= 100){
+        stop_timer(T1);stop_timer(T2);
+       };
+      };    
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;a;E;a2;};
+ Transition{a;a;F;a3;};
+};
+
+Globals{
+ s1 = 1;
+ duration_timer_2 = 0.0*s;
+ duration_timer_1 = 0.1*s;
+ duration_timer_2 = 5*duration_timer_1;
+};
+Simulation
+{
+ Start{S1;};
+};
+
+
+

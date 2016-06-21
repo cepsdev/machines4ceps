@@ -271,6 +271,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machine_simulation_core_guard_handling.cpp</locationURI>
 		</link>
 		<link>
+			<name>src/state_machine_simulation_core_plugin_interface.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machine_simulation_core_plugin_interface.cpp</locationURI>
+		</link>
+		<link>
 			<name>src/state_machines.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machines.cpp</locationURI>

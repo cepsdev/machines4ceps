@@ -1,0 +1,4 @@
+out.cpp: In function ‘void init_plugin(IUserdefined_function_registry*)’:
+out.cpp:25593:57: error: a template declaration cannot appear at block scope
+ smc->register_action("sm_Flap","a_print_sensor_states", template<typename T0>  globfuncs::sm_Flap__action__a_print_sensor_states);
+                                                         ^

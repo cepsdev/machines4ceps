@@ -19,7 +19,7 @@ namespace sm4ceps{
 		Ringbufferexception(const std::string & what) : std::runtime_error(what) {}
 	};
 
-	template<typename T> void call_destructor(T*){}
+	template<typename T> void call_destructor(T* t){t->~T();}
 
 
 	template<typename R, size_t default_size = 1024> class Ringbuffer

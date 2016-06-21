@@ -1,0 +1,61 @@
+sender
+{
+  id { vcan_out; };
+  transport { canbus { bus_id { "vcan0"; }; }; };
+};
+
+Event EXIT;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    a1{print("s1=",s1,"\n"); if (s1<100) {E;} else EXIT; send(frame_zustand_komponenten,vcan_out); };
+    a2{s1=s1+1;F;};
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;b;E;a2;};
+ Transition{b;a;F;a1;};
+};
+
+
+
+Globals{
+ s1 = 0;
+ extbg_luftdruck_pneumatiktank_out = 0;
+ extbg_luftdruck_pneumatiktank_in = 0;
+ extbg_luftdruck_stuetze_links_out = 0;
+ extbg_luftdruck_stuetze_links_in = 0;
+ extbg_luftdruck_stuetze_rechts_out = 0;
+ extbg_luftdruck_stuetze_rechts_in = 0; 
+ extbg_zustand_mastantrieb_stoerung_kommunikation_out = 0;
+ extbg_zustand_mastantrieb_stoerung_kommunikation_in = 0; 
+ extbg_zustand_mastantrieb_interner_fehler_out = 0;
+ extbg_zustand_mastantrieb_interner_fehler_in = 0; 
+ extbg_zustand_horizontierantriebe_stoerung_kommunikation_out = 0;
+ extbg_zustand_horizontierantriebe_stoerung_kommunikation_in = 0;
+ extbg_zustand_antrieb_x_ok_out = 0; 
+ extbg_zustand_antrieb_x_ok_in = 0;
+ extbg_zustand_antrieb_y_ok_out = 0;
+ extbg_zustand_antrieb_y_ok_in = 0;
+ extbg_zustand_talin_daten_gueltig_out = 0;
+ extbg_zustand_talin_daten_gueltig_in = 0;
+ extbg_zustand_antrieb_x_interner_fehler_out = 0;
+ extbg_zustand_antrieb_x_interner_fehler_in = 0;
+ extbg_zustand_antrieb_y_interner_fehler_out = 0;
+ extbg_zustand_antrieb_y_interner_fehler_in = 0;
+ extbg_zustand_heckverteiler_stoerung_out = 0;
+ extbg_zustand_heckverteiler_stoerung_in = 0;
+ extbg_zustand_heckverteiler_ok_out = 0;
+ extbg_zustand_heckverteiler_ok_in = 0;
+ extbg_kommunikation_ivenet_ok_out = 0;
+ extbg_kommunikation_ivenet_ok_in = 0;
+};
+Simulation
+{
+ Start{S1;};
+};
+
+
+
