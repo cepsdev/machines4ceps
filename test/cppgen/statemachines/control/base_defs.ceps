@@ -683,6 +683,7 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   y_drive.Status  = t_Status;
   z_drive.Status  = t_Status;
 
+ 
 // --------------------------------------------
 // ---------- FUNKTIONSUEBERWACHUNG -----------
   s_bag_heartbeat_payload       = -1;
@@ -698,7 +699,7 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
 // --------------------------------------------
 // ------------------ EXTBG -------------------
   extbg_is_online       = DEF_SYS_INIT_INT_0;
-  NO_ERROR              = 0xFF;
+  NO_ERROR              = 0xFF;ERROR_ID = 0;
   ERROR_ID              = NO_ERROR;
   extbg_error_0         = NO_ERROR;
   extbg_error_1         = NO_ERROR;

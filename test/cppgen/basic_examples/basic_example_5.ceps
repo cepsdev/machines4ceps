@@ -26,7 +26,7 @@ Statemachine
 };
 
 Globals{
- s1 = 1;
+ s1 = 0;
  duration_timer_2 = 0.0*s;
  duration_timer_1 = 0.1*s;
  duration_timer_2 = 5*duration_timer_1;
