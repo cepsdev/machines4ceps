@@ -4,6 +4,20 @@ sender
   transport { canbus { bus_id { "vcan0"; }; }; };
 };
 
+receiver
+{
+  id { channel_can_1_in; };
+  transport { canbus { bus_id { "vcan0"; }; }; };
+  on_msg { frame_id { frame_zustand_komponenten; };  handler { handler_frame_zustand_komponenten; }; };
+
+};
+
+global_functions{
+ handler_frame_zustand_komponenten{
+  print(s1,"\n");
+ };
+};
+
 Event EXIT;
 
 Statemachine
@@ -11,10 +25,8 @@ Statemachine
  id{S1;};
  States{Initial;Final;a;b;c;d;e;};
  Actions{
-    a1{/*print("s1=",s1,"\n");*/ if (s1<10) {E;} else EXIT; send(frame_zustand_komponenten,vcan_out); };
-    a2{
-       if ( (s1 / 2)*2 == s1) {extbg_zustand_mastantrieb_stoerung_kommunikation_out=0;} else
-                        {extbg_zustand_mastantrieb_stoerung_kommunikation_out=1;}; s1=s1+1;F;};
+  a1{};
+  a2{};
  };
  Transition{Initial;a;a1;};
  Transition{a;b;E;a2;};

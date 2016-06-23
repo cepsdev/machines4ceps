@@ -91,55 +91,14 @@ const std::string out_hpp_systemstates_prefix = R"(
   return o;
  }
 
- double abs(Variant const &v){if (v.what_ == Variant::Double) return std::abs(v.dv_); return std::abs(v.iv_); }
  
-
- bool operator == (Variant const & lhs, std::string const & rhs) {return lhs.sv_ == rhs;}
- bool operator == (std::string const & lhs, Variant const & rhs) {return rhs.sv_ == lhs;}
- bool operator == (Variant const & lhs, int const & rhs) {return lhs.iv_ == rhs;}
- bool operator == (int const & lhs, Variant const & rhs) {return rhs.iv_ == lhs;}
- bool operator == (Variant const & lhs, double const & rhs) {return lhs.dv_ == rhs;}
- bool operator == (double const & lhs, Variant const & rhs) {return rhs.dv_ == lhs;}
-
- bool operator != (Variant const & lhs, std::string const & rhs) {return lhs.sv_ != rhs;}
- bool operator != (std::string const & lhs, Variant const & rhs) {return rhs.sv_ != lhs;}
- bool operator != (Variant const & lhs, int const & rhs) {return lhs.iv_ != rhs;}
- bool operator != (int const & lhs, Variant const & rhs) {return rhs.iv_ != lhs;}
- bool operator != (Variant const & lhs, double const & rhs) {return lhs.dv_ != rhs;}
- bool operator != (double const & lhs, Variant const & rhs) {return rhs.dv_ != lhs;}
-
- bool operator > (Variant const & lhs, std::string const & rhs) {return lhs.sv_ > rhs;}
- bool operator > (std::string const & lhs, Variant const & rhs) {return rhs.sv_ > lhs;}
- bool operator > (Variant const & lhs, int const & rhs) {return lhs.iv_ > rhs;}
- bool operator > (int const & lhs, Variant const & rhs) {return rhs.iv_ > lhs;}
- bool operator > (Variant const & lhs, double const & rhs) {return lhs.dv_ > rhs;}
- bool operator > (double const & lhs, Variant const & rhs) {return rhs.dv_ > lhs;}
-
- bool operator >= (Variant const & lhs, std::string const & rhs) {return lhs.sv_ >= rhs;}
- bool operator >= (std::string const & lhs, Variant const & rhs) {return rhs.sv_ >= lhs;}
- bool operator >= (Variant const & lhs, int const & rhs) {return lhs.iv_ >= rhs;}
- bool operator >= (int const & lhs, Variant const & rhs) {return rhs.iv_ >= lhs;}
- bool operator >= (Variant const & lhs, double const & rhs) {return lhs.dv_ >= rhs;}
- bool operator >= (double const & lhs, Variant const & rhs) {return rhs.dv_ >= lhs;}
-
- bool operator < (Variant const & lhs, std::string const & rhs) {return lhs.sv_ < rhs;}
- bool operator < (std::string const & lhs, Variant const & rhs) {return rhs.sv_ < lhs;}
- bool operator < (Variant const & lhs, int const & rhs) {return lhs.iv_ < rhs;}
- bool operator < (int const & lhs, Variant const & rhs) {return rhs.iv_ < lhs;}
- bool operator < (Variant const & lhs, double const & rhs) {return lhs.dv_ < rhs;}
- bool operator < (double const & lhs, Variant const & rhs) {return rhs.dv_ < lhs;}
-
- bool operator <= (Variant const & lhs, std::string const & rhs) {return lhs.sv_ <= rhs;}
- bool operator <= (std::string const & lhs, Variant const & rhs) {return rhs.sv_ <= lhs;}
- bool operator <= (Variant const & lhs, int const & rhs) {return lhs.iv_ <= rhs;}
- bool operator <= (int const & lhs, Variant const & rhs) {return rhs.iv_ <= lhs;}
- bool operator <= (Variant const & lhs, double const & rhs) {return lhs.dv_ <= rhs;}
- bool operator <= (double const & lhs, Variant const & rhs) {return rhs.dv_ <= lhs;}
-
  State<int>& set_value(State<int>& lhs, Variant const & rhs){lhs.value() = rhs.iv_; return lhs;}
  State<int>& set_value(State<int>& lhs, int rhs){lhs.value() = rhs; return lhs;}
  State<double>& set_value(State<double>& lhs, double rhs){lhs.value() = rhs; return lhs;}
  State<std::string>& set_value(State<std::string>& lhs, std::string rhs){lhs.value() = rhs; return lhs;}
+
+ 
+
 
  //void queue_event(std::string ev_name,std::initializer_list<Variant> vl = {});
 
@@ -196,6 +155,7 @@ struct raw_frame_t{
 	std::vector<raw_frame_entry> entries_out;
 	std::string name;
 	size_t header_length = 0;
+	size_t len;
 	std::string create_basetype(int width, bool signd){
 		if (width <= 8 && signd) return "char";
 		if (width <= 8 && !signd) return "unsigned char";
@@ -434,6 +394,37 @@ void write_copyright_and_timestamp(std::ostream& out, std::string title,bool b){
 		<< std::endl << std::endl;
 }
 
+static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
+{
+	using namespace ceps::ast;
+	if (r == nullptr) return;
+	if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
+	{
+		auto& t = as_binop_ref(r);
+		flatten_args(t.left(),v,op_val);
+		flatten_args(t.right(),v,op_val);
+		return;
+	}
+	v.push_back(r);
+}
+
+bool is_id_or_symbol(Nodebase_ptr p, std::string& n, std::string& k){
+	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
+	if (p->kind() == Ast_node_kind::symbol) {n = name(as_symbol_ref(p));k = kind(as_symbol_ref(p)); return true;}
+	return false;
+}
+
+bool is_id(Nodebase_ptr p, std::string & result, std::string& base_kind){
+	std::string k,l;
+	if (p->kind() == Ast_node_kind::binary_operator && op(as_binop_ref(p)) == '.'){
+	 if (!is_id_or_symbol(as_binop_ref(p).right(),k,l)) return false;
+
+	 if (!is_id(as_binop_ref(p).left(),result,base_kind)) return false;
+	 result = result + "." + k;
+	 return true;
+	} else if (is_id_or_symbol(p,k,l)){ base_kind = l; result = k; return true; }
+	return false;
+}
 
 struct sysstate{
 	std::string name;
@@ -452,6 +443,20 @@ std::map<Nodebase_ptr,int> guard_backpatch_idx;
 
 static int guard_ctr = 0;
 
+
+
+
+
+
+
+
+
+
+
+// ******************* CPPGENERATOR
+
+
+
 class Cppgenerator{
 	std::map<std::string,sysstate> sysstates_;
 	std::vector<raw_frame_t> raw_frames_;
@@ -463,6 +468,29 @@ class Cppgenerator{
 								 bool inside_func_param_list=false);
 	bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
 	bool write_raw_frame_declaration_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,std::vector<raw_frame_t::raw_frame_entry> const & frame_entries);
+    template<typename F> void traverse_inorder_expr(Nodebase_ptr p,F f){
+    	if (p == nullptr) return;
+    	std::string compound_id,base_kind;
+    	if (p->kind() == Ast_node_kind::binary_operator){
+    		auto& binop = as_binop_ref(p);
+    		traverse_inorder_expr(binop.left(),f);
+    		f(p);
+    		traverse_inorder_expr(binop.right(),f);
+    	} else if (p->kind() == Ast_node_kind::func_call){
+    		f(p);
+    		ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
+    	    ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+     	    ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
+    		std::vector<ceps::ast::Nodebase_ptr> args;
+    		if (params.children().size()) flatten_args(params.children()[0], args);
+    		for(size_t i = 0; i != args.size();++i)
+    			traverse_inorder_expr(args[i],f);
+    	} else if (p->kind() == Ast_node_kind::unary_operator){
+    		 ceps::ast::Unary_operator& unop = *dynamic_cast<ceps::ast::Unary_operator*>(p);
+    		 f(p);
+    		 traverse_inorder_expr(unop.children()[0],f);
+    	} else f(p);
+    }
 public:
 	using sysstates_t = decltype(sysstates_);
 	using raw_frames_t = decltype(raw_frames_);
@@ -483,6 +511,115 @@ public:
 	}
 	void write_raw_frame_send(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,raw_frame_t const & raw_frame,std::string channel_id,
 			 State_machine* cur_sm,std::vector<std::string>& parameters);
+	std::vector<std::string> compute_all_sysstates_frame_depends_on(raw_frame_t const & raw_frame, bool in){
+		std::vector<raw_frame_t::raw_frame_entry> const * pentry;
+
+		std::set<std::string> result_set;
+		if (in) pentry = &raw_frame.entries_in; else pentry = &raw_frame.entries_out;
+		for(auto const & entry : *pentry){
+			if (entry.expr == nullptr) continue;
+			traverse_inorder_expr(entry.expr,[&result_set](Nodebase_ptr p){
+				std::string compound_id,base_kind;
+				if (!is_id(p,compound_id,base_kind)) return;
+				if ("Systemstate" != base_kind && "Systemparameter" != base_kind ) return;
+				result_set.insert(compound_id);
+			} );
+		}
+		return std::vector<std::string>{result_set.begin(),result_set.end()};
+	}
+	void write_frame_context_definitions(State_machine_simulation_core* smp,Indent& indent,std::ostream& os){
+		for(auto const & raw_frame : raw_frames()){
+			auto s = compute_all_sysstates_frame_depends_on(raw_frame,true);
+			indent.print_indentation(os);
+			os << "struct " << raw_frame.name << "_in_ctxt_t : public sm4ceps_plugin_int::Framecontext "<<  "{\n";
+			indent.indent_incr();
+			for(auto & e : s){
+				indent.print_indentation(os);
+				os << "decltype(systemstates::"<< e << ") "<< e << "_";
+				os << ";\n";
+			}
+			indent.print_indentation(os);os << "void update_sysstates();\n";
+			indent.print_indentation(os);os << "void read_chunk(void*,size_t);\n";
+			indent.print_indentation(os);os << "bool match_chunk(void*,size_t);\n";
+			indent.print_indentation(os);os << "void init();\n";
+
+			indent.indent_decr();
+			indent.print_indentation(os);os << "};\n";
+			indent.print_indentation(os);os <<"extern "<< raw_frame.name << "_in_ctxt_t " << raw_frame.name <<"_in_ctxt;\n";
+		}
+	}
+
+	void write_frame_context_method_definitions(State_machine_simulation_core* smp,Indent& indent,std::ostream& os){
+		std::vector<std::string> params;
+		for(auto const & raw_frame : raw_frames()){
+		  auto s = compute_all_sysstates_frame_depends_on(raw_frame,true);
+		  indent.print_indentation(os);
+		  os << "\n";
+		  os << R"(
+//Frame Context Definitions
+
+)";
+		  os << "void systemstates::" << raw_frame.name << "_in_ctxt_t::update_sysstates(){\n";
+			indent.indent_incr();
+			for(auto & e : s){
+				indent.print_indentation(os);
+				os << "systemstates::"<< e << " = " <<   e << "_";
+				os << ";\n";
+			}
+			indent.indent_decr();
+			indent.print_indentation(os);os << "}\n";
+
+            os << "void systemstates::" << raw_frame.name << "_in_ctxt_t::read_chunk(void* chunk,size_t){\n";
+			indent.indent_incr();
+			indent.print_indentation(os);
+			os << "raw_frm_dcls::"<< raw_frame.name << "_in& in = *((" << "raw_frm_dcls::"<< raw_frame.name << "_in" <<"*)chunk);\n";
+			for(auto & e : raw_frame.entries_in){
+				if (e.expr == nullptr) continue;
+				std::string cid,base_kind;
+				if (!is_id(e.expr,cid,base_kind)) continue;
+				if (base_kind != "Systemstate" && base_kind != "Systemparameter") continue;
+				indent.print_indentation(os);
+				if (e.width > 1) os << cid<<"_ = " << " in." << e.name << ";\n";
+				else os << cid<<"_ = (" << " in." << e.name<<"==0?0:1 )" << ";\n";
+
+			}
+			indent.indent_decr();
+			indent.print_indentation(os);os << "}\n";
+
+			os << "bool systemstates::" << raw_frame.name << "_in_ctxt_t::match_chunk(void* chunk,size_t chunk_size){\n";
+			indent.indent_incr();
+			indent.print_indentation(os);
+			os << "if(chunk_size != " << raw_frame.len << ") return false;\n";
+			indent.print_indentation(os);
+			os << "raw_frm_dcls::"<< raw_frame.name << "_in& in = *((" << "raw_frm_dcls::"<< raw_frame.name << "_in" <<"*)chunk);\n";
+			for(auto & e : raw_frame.entries_in){
+				if (e.expr == nullptr) continue;
+				std::string cid,base_kind;
+				if (is_id(e.expr,cid,base_kind)) continue;
+				indent.print_indentation(os);
+				os << "if (";
+				this->write_cpp_expr(smp,indent,os,e.expr,nullptr,params);
+				os <<" != in."<< e.name<<") return false;\n";
+			}
+			indent.print_indentation(os);
+			os << "return true;\n";
+			indent.indent_decr();
+			indent.print_indentation(os);os << "}\n";
+
+	        os << "void systemstates::" << raw_frame.name << "_in_ctxt_t::init(){\n";
+			indent.indent_incr();
+			auto ss = compute_all_sysstates_frame_depends_on(raw_frame,true);
+			for(auto & e : ss){
+				indent.print_indentation(os);
+				os << e <<"_ " << " = systemstates::"<< e << ";\n";
+			}
+			indent.indent_decr();
+		    indent.print_indentation(os);os << "}\n";
+
+			indent.print_indentation(os);os <<"systemstates::"<< raw_frame.name << "_in_ctxt_t systemstates::" << raw_frame.name <<"_in_ctxt;\n";
+		}
+		os << "\n\n";
+	}
 };
 
 template<typename F> void for_all_nodes(State_machine_simulation_core* smp, Nodeset& ns,F f){
@@ -693,37 +830,6 @@ std::string write_cpp_struct_decl(Indent indent,std::ostream& os,Nodebase_ptr p)
 	return r;
 }
 
-bool is_id_or_symbol(Nodebase_ptr p, std::string& n, std::string& k){
-	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
-	if (p->kind() == Ast_node_kind::symbol) {n = name(as_symbol_ref(p));k = kind(as_symbol_ref(p)); return true;}
-	return false;
-}
-
-bool is_id(Nodebase_ptr p, std::string & result, std::string& base_kind){
-	std::string k,l;
-	if (p->kind() == Ast_node_kind::binary_operator && op(as_binop_ref(p)) == '.'){
-	 if (!is_id_or_symbol(as_binop_ref(p).right(),k,l)) return false;
-
-	 if (!is_id(as_binop_ref(p).left(),result,base_kind)) return false;
-	 result = result + "." + k;
-	 return true;
-	} else if (is_id_or_symbol(p,k,l)){ base_kind = l; result = k; return true; }
-	return false;
-}
-
-static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
-{
-	using namespace ceps::ast;
-	if (r == nullptr) return;
-	if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
-	{
-		auto& t = as_binop_ref(r);
-		flatten_args(t.left(),v,op_val);
-		flatten_args(t.right(),v,op_val);
-		return;
-	}
-	v.push_back(r);
-}
 
 
 
@@ -966,7 +1072,7 @@ void Cppgenerator::write_raw_frame_send(State_machine_simulation_core* smp,
 	indent.print_indentation(os);
 	os << "smcore_interface->send_raw_frame(&out,sizeof(out),"<<raw_frame.header_length<<",\""<<channel_id <<"\");\n";
 	indent.indent_decr();
-	os << "}\n";
+	indent.print_indentation(os);os << "}";
 }
 
 bool Cppgenerator::write_raw_frame_declaration_impl(State_machine_simulation_core* smp,
@@ -1205,7 +1311,7 @@ void handle_frames(Cppgenerator& cppgenerator,State_machine_simulation_core* smc
 	 		            false,
 	 		            true
 	 		            );
-	 data_size = data_size / 8 + (data_size % 8 ? 1 : 0);
+	 raw_frame.len = data_size = data_size / 8 + (data_size % 8 ? 1 : 0);
 	 framebuilder.build_raw_frame(
 			 	 	 	    raw_frame.header_length,
 	 						Nodeset(frame.children())["data"].nodes(),
@@ -1219,7 +1325,7 @@ void handle_frames(Cppgenerator& cppgenerator,State_machine_simulation_core* smc
  }
 
  for (auto& frame : cppgenerator.raw_frames()){
-	 cppgenerator.write_raw_frame_declaration(smc,indent_hpp,o_hpp,frame);
+	 cppgenerator.write_raw_frame_declaration(smc,indent_hpp,o_hpp,frame);o_hpp << "\n";
  }
 
  indent_hpp.indent_decr();
@@ -1370,7 +1476,10 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		write_cpp_sm4ceps_struct(indent_hpp,o_hpp,struct_type);
 	}
 
+
+
 	//Write init
+	o_cpp <<"void init_frame_ctxts();\n";
 	o_cpp << "\n\n" <<  init_func << "{\n";
 	indent_cpp.indent_incr();
 	for_all_nodes(this,globals,[&](State_machine_simulation_core*,Nodebase_ptr p,int,std::set<std::string>& seen) {
@@ -1378,6 +1487,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		if (cppgenerator.write_cpp_stmt(this,indent_cpp,o_cpp,p,nullptr,dummy)) o_cpp << ";\n";
 	});
 	indent_hpp.indent_decr();
+	indent_cpp.print_indentation(o_cpp);o_cpp <<"init_frame_ctxts();\n";
 	o_cpp << "}\n";
 
 	for(auto & state_entry : sys_states){
@@ -1388,6 +1498,25 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		//else o_cpp << "{}";
 		o_cpp << ";\n";
 	}
+
+	handle_frames(cppgenerator,this,ceps_env,
+				  universe,
+				  all_guards,
+				  raw_frames);
+	o_hpp << "\n";
+	cppgenerator.write_frame_context_definitions(this,indent_hpp,o_hpp);
+
+	o_cpp << "\n\n";
+	indent_cpp.print_indentation(o_cpp);
+	o_cpp << "void init_frame_ctxts(){\n";
+	indent_cpp.indent_incr();
+	for(auto & r : cppgenerator.raw_frames()){
+		indent_cpp.print_indentation(o_cpp);o_cpp << "systemstates::"<< r.name <<"_in_ctxt.init();\n";
+	}
+	indent_cpp.indent_decr();
+	indent_cpp.print_indentation(o_cpp);
+	o_cpp << "}\n";
+
 	indent_hpp.indent_decr();o_hpp<<"\n}\n";
 
 	//Guards section
@@ -1423,10 +1552,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	indent_hpp.indent_decr();o_hpp<<"\n}\n";
 
 
-	handle_frames(cppgenerator,this,ceps_env,
-			  universe,
-			  all_guards,
-			  raw_frames);
+
 
 	//START: Global functions section
 
@@ -1530,8 +1656,36 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	   });
 	}
 
+	cppgenerator.write_frame_context_method_definitions(this,indent_cpp,o_cpp);
 
-	init_plugin_content << "\n}";
+
+    //Handle receiver of raw messages
+	auto receiver = universe[all{"receiver"}];
+	if(receiver.size()){
+		for(auto r_:receiver.nodes()){
+			auto r = Nodeset(as_struct_ref(r_).children());
+			std::string recv_id = r["id"].as_str();
+			auto on_msgs_ = r[all{"on_msg"}];
+			if (on_msgs_.size() == 0) continue;
+			for(auto on_msg_: on_msgs_.nodes()){
+			 auto on_msg = Nodeset(as_struct_ref(on_msg_).children());
+			 auto frame_ids = on_msg["frame_id"];
+			 if (frame_ids.size() != 1) continue;
+			 std::string frame_id = name(as_id_ref(frame_ids.nodes()[0]));
+			 auto handler = on_msg["handler"];
+			 for (auto h : handler.nodes()){
+				 if (h->kind() != Ast_node_kind::identifier) continue;
+				 init_plugin_content << "systemstates::"<< frame_id <<"_in_ctxt.set_handler("
+				 << "&globfuncs::"<< name(as_id_ref(h)) << ");\n";
+				 init_plugin_content << "smcore_interface->register_frame_ctxt(&"
+				 << "systemstates::"<< frame_id <<"_in_ctxt,\"" << recv_id <<"\");\n";
+			 }
+			}
+		}
+	}
+
+
+	init_plugin_content << "}\n";
 
 	o_cpp << init_plugin_content.str();
 

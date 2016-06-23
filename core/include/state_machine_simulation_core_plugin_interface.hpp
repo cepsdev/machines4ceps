@@ -79,6 +79,18 @@ namespace sm4ceps_plugin_int{
  bool operator <= (Variant const & lhs, double const & rhs);
  bool operator <= (double const & lhs, Variant const & rhs);
 
+ using glob_handler_t = Variant (*)();
+
+ class Framecontext{
+   glob_handler_t handler = nullptr;
+  public:
+   virtual void update_sysstates() = 0;
+   virtual void read_chunk(void*,size_t) = 0;
+   virtual bool match_chunk(void*,size_t) = 0;
+   glob_handler_t get_handler() {return handler;}
+   void set_handler(glob_handler_t h) {handler = h;}
+ };
+
 
 }
 class Ism4ceps_plugin_interface{
@@ -92,6 +104,7 @@ public:
  virtual void start_periodic_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id) = 0;
  virtual void stop_timer(sm4ceps_plugin_int::id) = 0;
  virtual void send_raw_frame(void*,size_t,size_t,std::string const &) = 0;
+ virtual void register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id) = 0;
 
 };
 

@@ -153,6 +153,9 @@ int compute_state_ids(State_machine_simulation_core* smp,std::map<std::string,St
 	 return ctr;
 }
 
+void State_machine_simulation_core::register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id){
+
+}
 
 void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)
 {

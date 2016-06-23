@@ -549,6 +549,7 @@ public:
 	void start_periodic_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id);
 	void stop_timer(sm4ceps_plugin_int::id);
 	void send_raw_frame(void*,size_t,size_t,std::string const &);
+	void register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id);
 
 
 	private:

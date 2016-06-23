@@ -53,7 +53,7 @@ frame
       uint8
       {
         out { s1; };
-        in  { extbg_luftdruck_pneumatiktank_in; };
+        in  { s1; /*extbg_luftdruck_pneumatiktank_in;*/ };
       };
       uint8
       {
