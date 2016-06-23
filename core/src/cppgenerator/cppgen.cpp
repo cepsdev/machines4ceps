@@ -207,11 +207,23 @@ struct raw_frame_t{
 		if (width <= 64 && !signd) return "unsigned long long";
 		return "int";
 	}
-	void create_any(int width, bool signd,bool in){
+	void create_any(int width, bool signd,bool in,bool out){
+		if (!in && !out) return;
+		if (in && out){
+			create_any(width, signd,true,false);
+			create_any(width, signd,false,true);
+			return;
+		}
 		std::vector<raw_frame_entry>* pentries= in ? &entries_in:&entries_out;
 		pentries->push_back(raw_frame_entry{width,create_basetype(width,signd),"pos_"+std::to_string(pentries->size()+1),nullptr});
 	}
-	void create_entry(ceps::ast::Nodebase_ptr expr,int width, bool signd,bool in){
+	void create_entry(ceps::ast::Nodebase_ptr expr,int width, bool signd,bool in,bool out){
+		if (!in && !out) return;
+		if (in && out){
+			create_entry(expr,width, signd,true,false);
+			create_entry(expr,width, signd,false,true);
+			return;
+		}
 		std::vector<raw_frame_entry>* pentries= in ? &entries_in:&entries_out;
 		pentries->push_back(raw_frame_entry{width,create_basetype(width,signd),"pos_"+std::to_string(pentries->size()+1),expr});
 	}
@@ -464,6 +476,13 @@ public:
 	void write_cpp_expr(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
 	bool write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
 	bool write_raw_frame_declaration(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,raw_frame_t const & raw_frame);
+	raw_frames_t::iterator  find_raw_frame(std::string id){
+		for(auto i = raw_frames().begin(); i != raw_frames().end();++i)
+			if (id == i->name) return i;
+		return raw_frames().end();
+	}
+	void write_raw_frame_send(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,raw_frame_t const & raw_frame,std::string channel_id,
+			 State_machine* cur_sm,std::vector<std::string>& parameters);
 };
 
 template<typename F> void for_all_nodes(State_machine_simulation_core* smp, Nodeset& ns,F f){
@@ -841,6 +860,12 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 				os << "<<";write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
 			}
 			return;
+		} else if ("send" == name(id)){
+			auto raw_frame_it = this->find_raw_frame(name(as_id_ref(args[0])));
+			if (raw_frame_it == raw_frames().end())
+				smp->fatal_(-1,name(as_id_ref(args[0]))+": No raw frame definition with that id found.");
+			this->write_raw_frame_send(smp,indent,os,*raw_frame_it,name(as_id_ref(args[1])),cur_sm,parameters);
+			return;
 		}
 		else os << name(id) << "(";
 
@@ -919,8 +944,41 @@ bool Cppgenerator::write_cpp_stmt(State_machine_simulation_core* smp,Indent& ind
 	return write_cpp_stmt_impl(smp,indent,os,p,cur_sm,parameters);
 }
 
-bool Cppgenerator::write_raw_frame_declaration_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,std::vector<raw_frame_t::raw_frame_entry> const & frame_entries){
+void Cppgenerator::write_raw_frame_send(State_machine_simulation_core* smp,
+		Indent& indent,
+		std::ostream& os,
+		raw_frame_t const & raw_frame,
+		std::string channel_id,
+		State_machine* cur_sm,std::vector<std::string>& parameters){
 
+	os << "{\n";
+	indent.indent_incr();
+	indent.print_indentation(os);
+	os << "raw_frm_dcls::"<<raw_frame.name<< "_out out = {0};\n";
+	for (auto const & entry: raw_frame.entries_out){
+		if (entry.expr == nullptr) continue;
+		indent.print_indentation(os);
+		os << "out." << entry.name << " = ";
+		this->write_cpp_expr(smp,indent,os,entry.expr,cur_sm,parameters);
+		if (entry.width == 1) os << " != 0";
+		os << ";\n";
+	}
+	indent.print_indentation(os);
+	os << "smcore_interface->send_raw_frame(&out,sizeof(out),"<<raw_frame.header_length<<",\""<<channel_id <<"\");\n";
+	indent.indent_decr();
+	os << "}\n";
+}
+
+bool Cppgenerator::write_raw_frame_declaration_impl(State_machine_simulation_core* smp,
+		Indent& indent,
+		std::ostream& os,
+		std::vector<raw_frame_t::raw_frame_entry> const & frame_entries){
+
+	for(auto const& entry : frame_entries){
+		indent.print_indentation(os);
+		os << entry.base_type << " " << entry.name << ":"<< entry.width;
+		os << ";\n";
+	}
 	return true;
 }
 
@@ -931,14 +989,14 @@ bool Cppgenerator::write_raw_frame_declaration(State_machine_simulation_core* sm
 		indent.indent_incr();
 		write_raw_frame_declaration_impl(smp,indent,os,raw_frame.entries_in);
 		indent.indent_decr();
-		indent.print_indentation(os);os << "};\n";
+		indent.print_indentation(os);os << "}__attribute__ ((__packed__));\n";
 	}
 	if (raw_frame.entries_out.size()){
-		indent.print_indentation(os);os << "struct " << raw_frame.name << "_in" << "{\n";
+		indent.print_indentation(os);os << "struct " << raw_frame.name << "_out" << "{\n";
 		indent.indent_incr();
 		write_raw_frame_declaration_impl(smp,indent,os,raw_frame.entries_out);
 		indent.indent_decr();
-		indent.print_indentation(os);os << "};\n";
+		indent.print_indentation(os);os << "}__attribute__ ((__packed__));\n";
 	}
 
 	return true;
@@ -1035,7 +1093,7 @@ size_t build_raw_frame( size_t & header_length,
 		                size_t data_size,
 						raw_frame_t& raw_frame,
 						size_t bit_offs,
-						bool in,
+						bool in,bool out,
 		                size_t bit_width=sizeof(std::int64_t)*8,
 		                bool signed_value = true,
 		                bool write_data = true,
@@ -1047,29 +1105,33 @@ size_t build_raw_frame( size_t & header_length,
 		auto& nm = ceps::ast::name(st);
 		auto type_id = map_descr_to_inttype.find(nm);
 		if (type_id != map_descr_to_inttype.end()){
-			build_raw_frame(header_length,st.children(), data_size,raw_frame, bit_offs, in, type_id->second.first,type_id->second.second,write_data,host_byte_order);
+			return build_raw_frame(header_length,st.children(), data_size,raw_frame, bit_offs, in,out, type_id->second.first,type_id->second.second,write_data,host_byte_order);
 		} else 	if (nm == "in"){
-			return build_raw_frame(header_length,st.children(), data_size,raw_frame, bit_offs, true, bit_width,signed_value,write_data,host_byte_order);
+			build_raw_frame(header_length,st.children(), data_size,raw_frame, bit_offs,true,false,  bit_width,signed_value,write_data,host_byte_order);
+			//We assume there is always a twin out
+			return 0;
+		}else 	if (nm == "out"){
+			return build_raw_frame(header_length,st.children(), data_size,raw_frame, bit_offs,false,true,  bit_width,signed_value,write_data,host_byte_order);
 		} else {
-			return build_raw_frame(header_length,st.children(), data_size,raw_frame, bit_offs, bit_width,signed_value,write_data,host_byte_order);
+			return build_raw_frame(header_length,st.children(), data_size,raw_frame, bit_offs,in,out, bit_width,signed_value,write_data,host_byte_order);
 		}
 	}
 	else if (p->kind() == ceps::ast::Ast_node_kind::identifier){
 		auto& ident = ceps::ast::as_id_ref(p);
 		if (ceps::ast::name(ident) == "any") {
 			if (write_data){
-				raw_frame.create_any(bit_width,signed_value,in);
+				raw_frame.create_any(bit_width,signed_value,in,out);
 			}
 			return bit_width;
 		}
 		else if (ceps::ast::name(ident) == "__current_frame_size") {
 			if (write_data){
 				auto temp_node = new ceps::ast::Int(data_size,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-				raw_frame.create_entry(temp_node,bit_width,signed_value,in);
+				raw_frame.create_entry(temp_node,bit_width,signed_value,in,out);
 			}
 			return bit_width;
 		} else {
-			if (write_data) raw_frame.create_entry(p,bit_width,signed_value,in);
+			if (write_data) raw_frame.create_entry(p,bit_width,signed_value,in,out);
 			return bit_width;
 		};
 	}	else if (p->kind() == ceps::ast::Ast_node_kind::float_literal) {
@@ -1077,14 +1139,14 @@ size_t build_raw_frame( size_t & header_length,
 	}	else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
 		 smc->fatal_(-1,"Strings not supported in raw frames.");
 	}	else {
-		if (write_data) raw_frame.create_entry(p,bit_width,signed_value,in);
+		if (write_data) raw_frame.create_entry(p,bit_width,signed_value,in,out);
 		return bit_width;
 	}
 	return 0;
 }
 
 size_t build_raw_frame(size_t & header_length,std::vector<ceps::ast::Nodebase_ptr> pattern,
-		            size_t data_size,raw_frame_t& raw_frame,size_t bit_offs,bool in,
+		            size_t data_size,raw_frame_t& raw_frame,size_t bit_offs,bool in,bool out,
 		            size_t bit_width=sizeof(std::int64_t)*8,
 		            bool signed_value = true,
 		            bool write_data = true,
@@ -1099,7 +1161,7 @@ size_t build_raw_frame(size_t & header_length,std::vector<ceps::ast::Nodebase_pt
 				auto& nm = ceps::ast::name(st);
 				if (nm == "header") {header = true;}
 		}
-		auto rr = build_raw_frame(header_length,p,data_size,raw_frame,bit_offs,bit_width,signed_value,write_data,host_byte_order);
+		auto rr = build_raw_frame(header_length,p,data_size,raw_frame,bit_offs,in,out,bit_width,signed_value,write_data,host_byte_order);
 		if (header) {header_length = rr; }
 		r+=rr;
 		bit_offs += rr;
@@ -1137,16 +1199,17 @@ void handle_frames(Cppgenerator& cppgenerator,State_machine_simulation_core* smc
 	 size_t data_size = framebuilder.build_raw_frame(
 			            raw_frame.header_length,
 						Nodeset(frame.children())["data"].nodes(),
-	 		            0,raw_frame,0,true,
+	 		            0,raw_frame,0,true,true,
 	 		            sizeof(std::int64_t)*8,
 	 		            true,
 	 		            false,
 	 		            true
 	 		            );
+	 data_size = data_size / 8 + (data_size % 8 ? 1 : 0);
 	 framebuilder.build_raw_frame(
 			 	 	 	    raw_frame.header_length,
 	 						Nodeset(frame.children())["data"].nodes(),
-	 	 		            data_size,raw_frame,0,true,
+	 	 		            data_size,raw_frame,0,true,true,
 	 	 		            sizeof(std::int64_t)*8,
 	 	 		            true,
 	 	 		            true,
@@ -1275,6 +1338,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 #include "user_defined.hpp"
 )";
+	if (raw_frames.size()) o_hpp << "#include\"out_frames.hpp\"\n";
 	o_hpp << out_hpp_prefix << "\n";
 
 	o_cpp << "\n\n#include \""<< out_hpp <<"\"\n\n";
@@ -1357,6 +1421,12 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		indent_hpp.print_indentation(o_hpp);o_hpp << "extern Guard_impl " << e.first << ";\n";
  	}
 	indent_hpp.indent_decr();o_hpp<<"\n}\n";
+
+
+	handle_frames(cppgenerator,this,ceps_env,
+			  universe,
+			  all_guards,
+			  raw_frames);
 
 	//START: Global functions section
 
@@ -1499,10 +1569,7 @@ void globfuncs::stop_timer(sm4ceps_plugin_int::id id_){smcore_interface->stop_ti
 )~";
 
 
-handle_frames(cppgenerator,this,ceps_env,
-		  universe,
-		  all_guards,
-		  raw_frames);
+
 }
 
 

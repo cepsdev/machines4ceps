@@ -91,6 +91,7 @@ public:
  virtual void start_periodic_timer(double,sm4ceps_plugin_int::ev) = 0;
  virtual void start_periodic_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id) = 0;
  virtual void stop_timer(sm4ceps_plugin_int::id) = 0;
+ virtual void send_raw_frame(void*,size_t,size_t,std::string const &) = 0;
 
 };
 
