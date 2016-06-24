@@ -1,0 +1,44 @@
+Event ev_flap_open_starting,    ev_flap_open_finished;
+Event ev_flap_lock_starting,    ev_flap_lock_finished;
+Event ev_flap_unlock_starting,  ev_flap_unlock_finished;
+Event ev_flap_preconditioning_finished, ev_flap_to_open_was_interrupted;
+Event ev_flap_to_open_starts, ev_flap_to_open_finished, ev_flap_to_open_preconditions_are_not_met;
+
+Statemachine
+{
+  id  { sm_Flap_to_open;  };
+  description { "Flap_to_open";  };
+  States  { Initial;  Final;  Error;  };
+
+  import  { sm_Flap_precondition; };
+  import  { sm_Flap_unlock; };
+  import  { sm_Flap_open; };
+  import  { sm_Flap_lock; };
+
+  Actions
+  {
+    a_flap_to_open_finished                   { ev_flap_to_open_finished; };
+    a_flap_to_open_starts                     { ev_flap_to_open_starts; };
+    a_was_interrupted                         { ev_flap_to_open_was_interrupted;  };
+    a_flap_to_open_preconditions_are_not_met  { ev_flap_to_open_preconditions_are_not_met;  };
+    a_flap_unlock_starting                    { ev_flap_unlock_starting;  };
+    a_flap_open_starting                      { ev_flap_open_starting;  };
+    a_flap_lock_starting                      { ev_flap_lock_starting;  };
+  };
+
+  on_exit
+  {
+    if ( !in_state ( Final, Error ) )
+    {
+      a_was_interrupted;
+    };
+  };
+
+  Transition  { Initial;              Final;                                                  a_flap_to_open_finished;                   g_flap_is_open;  }; 
+  Transition  { Initial;              sm_Flap_unlock;                                         a_flap_unlock_starting;                   !g_flap_is_open &&  g_flap_to_open_preconditions; };
+  Transition  { Initial;              Error;                                                  a_flap_to_open_preconditions_are_not_met;  g_flap_is_wrong ||!g_flap_to_open_preconditions; };
+  Transition  { sm_Flap_unlock;       sm_Flap_precondition; ev_flap_unlock_finished;          a_flap_open_starting; };
+  Transition  { sm_Flap_precondition; sm_Flap_open;         ev_flap_preconditioning_finished; a_flap_open_starting; };
+  Transition  { sm_Flap_open;         sm_Flap_lock;         ev_flap_open_finished;            a_flap_lock_starting; };
+  Transition  { sm_Flap_lock;         Final;                ev_flap_lock_finished;            a_flap_to_open_finished;  };
+};

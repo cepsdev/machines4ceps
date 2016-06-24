@@ -1,0 +1,26 @@
+// <description>
+
+Dust_valve_VV1_unittests {};
+
+Simulation
+{
+  TestCase{Dust_valve_VV1_unittests;};Test{Initialization;};
+
+  Start { sm_Dust_valve_VV1;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+};
+
+
+Simulation
+{
+  TestCase{Dust_valve_VV1_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Dust_valve_VV1;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+  ev_dust_discharge_start;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Open;};
+  ev_dust_discharge_stop;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_valve_VV1.Closed;};
+};

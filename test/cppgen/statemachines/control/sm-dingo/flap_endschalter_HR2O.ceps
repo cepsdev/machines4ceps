@@ -1,5 +1,5 @@
 // HR2O: Haube Riegel 2 Offen
-Event ev_flap_lock_state_change; 
+Event ev_flap_endschalter_HR2O_changed; 
 
 //  local events
 Event ev_flap_HR2O_is_open, ev_flap_HR2O_is_close;
@@ -12,22 +12,22 @@ Statemachine
 
   Actions
   {
-    a_endschalter_is_opening     { start_timer ( DELAY_HR2O_OPEN * s,   ev_flap_HR2O_is_open,  timer_flap_HR2O_is_open ); };
-    a_endschalter_is_closing     { start_timer ( DELAY_HR2O_CLOSE * s,  ev_flap_HR2O_is_close, timer_flap_HR2O_is_close );  };
-    a_stop_endschalter_opening   { stop_timer ( timer_flap_HR2O_is_open );  };
-    a_stop_endschalter_closing   { stop_timer ( timer_flap_HR2O_is_close ); };
-    a_FlapLockState { ev_flap_lock_state_change;  };
-    a_Off           { SENSOR_HR2O = 0;  };
-    a_On            { SENSOR_HR2O = 1;  };
+    a_endschalter_is_opening    { start_timer ( DELAY_HR2O_OPEN * s,   ev_flap_HR2O_is_open,  timer_flap_HR2O_is_open ); };
+    a_endschalter_is_closing    { start_timer ( DELAY_HR2O_CLOSE * s,  ev_flap_HR2O_is_close, timer_flap_HR2O_is_close );  };
+    a_stop_endschalter_opening  { stop_timer ( timer_flap_HR2O_is_open );  };
+    a_stop_endschalter_closing  { stop_timer ( timer_flap_HR2O_is_close ); };
+    a_flap_lock_state_change    { ev_flap_endschalter_HR2O_changed;  };
+    a_flap_es_HR20_Off          { SENSOR_HR2O = 0;  print ( "SENSOR_HR2O = 0\n" );  };
+    a_flap_es_HR20_On           { SENSOR_HR2O = 1;  print ( "SENSOR_HR2O = 1\n" );  };
   };
 
-  Transition  { Initial;  Off;      };
-  Transition  { Off;      Closing;                          g_flap_lock_HR2_is_open;                              a_endschalter_is_closing; };
-  Transition  { Closing;  Opening;                         !g_flap_lock_HR2_is_open;  a_stop_endschalter_closing; a_endschalter_is_opening; };
-  Transition  { Closing;  On;       ev_flap_HR2O_is_close;                            a_On;                       a_FlapLockState;  };
+  Transition  { Initial;  Off;                                                          a_flap_es_HR20_Off;                                   };
+  Transition  { Off;      Closing;                          g_flap_lock_HR2_is_open;                                a_endschalter_is_closing; };
+  Transition  { Closing;  Opening;                         !g_flap_lock_HR2_is_open;    a_stop_endschalter_closing; a_endschalter_is_opening; };
+  Transition  { Closing;  On;       ev_flap_HR2O_is_close;                              a_flap_es_HR20_On;          a_flap_lock_state_change; };
 
-  Transition  { On;       Opening;                         !g_flap_lock_HR2_is_open;                              a_endschalter_is_opening; };
-  Transition  { Opening;  Closing;                          g_flap_lock_HR2_is_open;  a_stop_endschalter_opening; a_endschalter_is_closing; };
-  Transition  { Opening;  Off;      ev_flap_HR2O_is_open;                             a_Off;                      a_FlapLockState;  };
+  Transition  { On;       Opening;                         !g_flap_lock_HR2_is_open;                                a_endschalter_is_opening; };
+  Transition  { Opening;  Closing;                          g_flap_lock_HR2_is_open;    a_stop_endschalter_opening; a_endschalter_is_closing; };
+  Transition  { Opening;  Off;      ev_flap_HR2O_is_open;                               a_flap_es_HR20_Off;         a_flap_lock_state_change; };
 };
 

@@ -8,7 +8,7 @@
  * 
  * 
  */
-receiver
+receiver__
 {
   id { channel_ivenet_receiver; };
 
@@ -27,7 +27,7 @@ receiver
   };
 };
 
-sender
+sender__
 {
   when { ev_send_message_to_ivenet; };
   emit { frame_TrgsBagMastToiVeNet; };
@@ -57,13 +57,13 @@ sender
 receiver
 {
   id{channel_can_0_in; };
-  transport { generic_tcp_in { port { "4005"; }; }; };
-  //transport { canbus { extended; bus_id { "vcan0"; }; }; };
+  //transport { generic_tcp_in { port { "4005"; }; }; };
+  transport { canbus { extended; bus_id { "vcan0"; }; }; };
   //transport { canbus { bus_id { "can1"; }; }; };
 
   on_msg { frame_id { frame_GPM_13; }; handler { handler_GPM_13; }; };
- /* on_msg { frame_id { frame_GPM_14; }; handler { handler_GPM_14; }; };
-  on_msg { frame_id { frame_GPM_16; }; handler { handler_GPM_16; }; };*/
+  on_msg { frame_id { frame_GPM_14; }; handler { handler_GPM_14; }; };
+  on_msg { frame_id { frame_GPM_16; }; handler { handler_GPM_16; }; };
 };
 
 
@@ -74,9 +74,9 @@ sender
 {
   id { channel_can_1_out; };
   // provide port and IP of Your communication partner here
-  transport { generic_tcp_out { port { "4006"; }; ip { "127.0.0.1"; }; }; };
+  //transport { generic_tcp_out { port { "4006"; }; ip { "127.0.0.1"; }; }; };
   //transport { generic_tcp_out { port { "4006"; }; ip { "192.168.1.7"; }; }; };
-  //transport { canbus { bus_id { "vcan1"; }; }; };
+  transport { canbus { bus_id { "vcan1"; }; }; };
   //transport { canbus { bus_id { "can1"; }; }; };
   //transport { canbus { bus_id { "can0"; }; }; };
 };
@@ -87,13 +87,13 @@ sender
 receiver
 {
   id { channel_can_1_in; };
-  transport { generic_tcp_in { port { "4008"; }; }; };
-  //transport { canbus { bus_id { "vcan1"; }; }; };
+  //transport { generic_tcp_in { port { "4005"; }; }; };
+  transport { canbus { bus_id { "vcan1"; }; }; };
   //transport { canbus { bus_id { "can1"; }; }; };
   //transport { canbus { bus_id { "can0"; }; }; };
 
- on_msg { frame_id { frame_heartbeat_x_drive; };                     handler { handler_heartbeat_x_drive; }; };
-/*  on_msg { frame_id { frame_heartbeat_y_drive; };                     handler { handler_heartbeat_y_drive; }; };
+  on_msg { frame_id { frame_heartbeat_x_drive; };                     handler { handler_heartbeat_x_drive; }; };
+  on_msg { frame_id { frame_heartbeat_y_drive; };                     handler { handler_heartbeat_y_drive; }; };
   on_msg { frame_id { frame_heartbeat_z_drive; };                     handler { handler_heartbeat_z_drive; }; };
   on_msg { frame_id { frame_heartbeat_io_module; };                   handler { handler_heartbeat_io_module; }; };
   on_msg { frame_id { frame_heartbeat_si_module; };                   handler { handler_heartbeat_si_module; }; };
@@ -105,7 +105,8 @@ receiver
   on_msg { frame_id { io_modul_fahrzeugwinkel; };                     handler { handler_io_modul_fahrzeugwinkel; }; };
   on_msg { frame_id { io_modul_luftdruck_pneumatiktank; };            handler { handler_io_modul_pneumatiktank; }; };
   on_msg { frame_id { io_modul_rueckmeldung_ios; };                   handler { handler_io_modul_rueckmeldung_ios; }; };
-  on_msg { frame_id { io_modul_sensordaten; };                        handler { handler_io_modul_sensordaten; }; };
+  on_msg { frame_id { io_modul_talin_daten_1; };                      handler { handler_io_modul_talin_daten_1; }; };
+  on_msg { frame_id { io_modul_talin_daten_2; };                      handler { handler_io_modul_talin_daten_2; }; };
   on_msg { frame_id { io_modul_sensordaten_windmesser; };             handler { handler_io_modul_sensordaten_windmesser; }; };
   on_msg { frame_id { io_modul_software_version; };                   handler { handler_io_modul_software_version; }; };
   on_msg { frame_id { io_modul_zustand_heckverteiler_1; };            handler { handler_io_modul_zustand_heckverteiler_1; }; };
@@ -127,7 +128,7 @@ receiver
   on_msg { frame_id { frame_extbg_x_drive_sollwerte; };               handler { handler_extbg_x_drive_sollwerte; }; };
   on_msg { frame_id { frame_extbg_y_drive_sollwerte; };               handler { handler_extbg_y_drive_sollwerte; }; };
   on_msg { frame_id { frame_extbg_z_drive_sollwerte; };               handler { handler_extbg_z_drive_sollwerte; }; };
-  on_msg { frame_id { frame_force_bag_pdo_transmit; };                handler { handler_force_bag_pdo_transmit; }; };
+  on_msg { frame_id { frame_extbg_force_bag_pdo_transmit; };          handler { handler_extbg_force_bag_pdo_transmit; }; };
 
   on_msg { frame_id { frame_x_drive_response; };                      handler { handler_x_drive_response; }; };
   on_msg { frame_id { frame_y_drive_response; };                      handler { handler_y_drive_response; }; };
@@ -135,5 +136,5 @@ receiver
   on_msg { frame_id { frame_x_drive_emcy; };                          handler { handler_x_drive_emcy; }; };
   on_msg { frame_id { frame_y_drive_emcy; };                          handler { handler_y_drive_emcy; }; };
   on_msg { frame_id { frame_z_drive_emcy; };                          handler { handler_z_drive_emcy; }; };
-*/
+
 };

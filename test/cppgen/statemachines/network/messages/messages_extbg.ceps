@@ -150,6 +150,10 @@ Systemstate extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_zurrposit
 Systemstate extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_zurrposition_in;
 Systemstate extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_90_grad_out;
 Systemstate extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_90_grad_in;
+Systemstate extbg_taster_betaetigung_manueller_betrieb_x_achse_sollposition_anfahren_out;
+Systemstate extbg_taster_betaetigung_manueller_betrieb_x_achse_sollposition_anfahren_in;
+Systemstate extbg_taster_betaetigung_manueller_betrieb_y_achse_sollposition_anfahren_out;
+Systemstate extbg_taster_betaetigung_manueller_betrieb_y_achse_sollposition_anfahren_in;
 
 // --------------------------------------------
 // --------------- Betriebsart ----------------
@@ -165,51 +169,45 @@ Systemstate bag_minor_software_version_out;
 
 // --------------------------------------------
 // ----------- Force Transmit PDO -------------
-Systemstate force_bag_pdo_transmit_counter_in;
-Systemstate force_bag_pdo_transmit_counter_out;
+Systemstate extbg_force_bag_pdo_transmit_counter_in;
+Systemstate extbg_force_bag_pdo_transmit_counter_out;
 
 // --------------------------------------------
 // ----------------- Motordaten----------------
-Systemstate fahrzeugnetzspannung_in;
-Systemstate fahrzeugnetzspannung_out;
-Systemstate gangstellung_in;
-Systemstate gangstellung_out;
-Systemstate feststellbremse_in;
-Systemstate feststellbremse_out;
-Systemstate motordrehzahl_in;
-Systemstate motordrehzahl_out;
+Systemstate extbg_fahrzeugnetzspannung_in;
+Systemstate extbg_fahrzeugnetzspannung_out;
+Systemstate extbg_gangstellung_in;
+Systemstate extbg_gangstellung_out;
+Systemstate extbg_feststellbremse_in;
+Systemstate extbg_feststellbremse_out;
+Systemstate extbg_motordrehzahl_in;
+Systemstate extbg_motordrehzahl_out;
 
 // --------------------------------------------
 // ------------- Zustand Ruestsatz-------------
-Systemstate bag_fahrzeugwinkel_x_in;
-Systemstate bag_fahrzeugwinkel_x_out;
-Systemstate bag_fahrzeugwinkel_y_in;
-Systemstate bag_fahrzeugwinkel_y_out;
-Systemstate messwert_windmesser_gueltig_in;
-Systemstate messwert_windmesser_gueltig_out;
-Systemstate messwert_windmesser_in;
-Systemstate messwert_windmesser_out;
+Systemstate extbg_bag_fahrzeugwinkel_x_in;
+Systemstate extbg_bag_fahrzeugwinkel_x_out;
+Systemstate extbg_bag_fahrzeugwinkel_y_in;
+Systemstate extbg_bag_fahrzeugwinkel_y_out;
+Systemstate extbg_messwert_windmesser_gueltig_in;
+Systemstate extbg_messwert_windmesser_gueltig_out;
+Systemstate extbg_messwert_windmesser_in;
+Systemstate extbg_messwert_windmesser_out;
 
 // --------------------------------------------
-// ------------- Zustand Ruestsatz-------------
+// ------------- Zustand Komponenten ----------
 Systemstate extbg_luftdruck_pneumatiktank_in;
 Systemstate extbg_luftdruck_pneumatiktank_out;
 Systemstate extbg_luftdruck_stuetze_links_in;
 Systemstate extbg_luftdruck_stuetze_links_out;
 Systemstate extbg_luftdruck_stuetze_rechts_in;
 Systemstate extbg_luftdruck_stuetze_rechts_out;
-Systemstate anzeige_zustand_mastantrieb_in;
-Systemstate anzeige_zustand_mastantrieb_out;
-Systemstate anzeige_zustand_horizontierantriebe_in;
-Systemstate anzeige_zustand_horizontierantriebe_out;
-Systemstate extbg_zustand_heckverteiler_stoerung_in;
-Systemstate extbg_zustand_heckverteiler_stoerung_out;
 Systemstate extbg_zustand_heckverteiler_ok_in;
 Systemstate extbg_zustand_heckverteiler_ok_out;
-Systemstate extbg_kommunikation_ivenet_stoerung_in;
-Systemstate extbg_kommunikation_ivenet_stoerung_out;
 Systemstate extbg_kommunikation_ivenet_ok_in;
 Systemstate extbg_kommunikation_ivenet_ok_out;
+Systemstate extbg_kommunikation_psm_ok_in;
+Systemstate extbg_kommunikation_psm_ok_out;
 
 // --------------------------------------------
 // -------------- Betriebsstunden--------------
@@ -235,30 +233,34 @@ Systemstate extbg_z_drive_sollgeschwindigkeit_in;
 
 // --------------------------------------------
 // ------------ Zustand Plattform -------------
-Systemstate zurrung_plattform_out;
-Systemstate zurrung_plattform_in;
-Systemstate sensorik_stuetzen_bodenkontakt_stuetze_links_out;
-Systemstate sensorik_stuetzen_bodenkontakt_stuetze_links_in;
-Systemstate sensorik_stuetzen_bodenkontakt_stuetze_rechts_out;
-Systemstate sensorik_stuetzen_bodenkontakt_stuetze_rechts_in;
-Systemstate sensorik_stuetzen_SENSOR_SMOL_out;  //  StützenMagnetObenLinks
-Systemstate sensorik_stuetzen_SENSOR_SMOL_in;   //  StützenMagnetObenLinks
-Systemstate sensorik_stuetzen_SENSOR_SMOR_out;  //  StützenMagnetObenRechts
-Systemstate sensorik_stuetzen_SENSOR_SMOR_in;   //  StützenMagnetObenRechts
-Systemstate sensorik_stuetzen_SENSOR_SMUL_out;  //  StützenMagnetUntenLinks
-Systemstate sensorik_stuetzen_SENSOR_SMUL_in;   //  StützenMagnetUntenLinks
-Systemstate sensorik_stuetzen_SENSOR_SMUR_out;  //  StützenMagnetUntenRechts
-Systemstate sensorik_stuetzen_SENSOR_SMUR_in;   //  StützenMagnetUntenRechts
-Systemstate sensorik_stuetzen_klemmung_links_geschlossen_out;
-Systemstate sensorik_stuetzen_klemmung_links_geschlossen_in;
-Systemstate sensorik_stuetzen_klemmung_rechts_geschlossen_out;
-Systemstate sensorik_stuetzen_klemmung_rechts_geschlossen_in;
-Systemstate extbg_sensorik_haube_out;
-Systemstate extbg_sensorik_haube_in;
-Systemstate istposition_z_achse_out;
-Systemstate istposition_z_achse_in;
-Systemstate parkposition_radar_out;
-Systemstate parkposition_radar_in;
+Systemstate extbg_zurrung_plattform_out;
+Systemstate extbg_zurrung_plattform_in;
+Systemstate extbg_sensorik_stuetzen_bodenkontakt_stuetze_links_out;
+Systemstate extbg_sensorik_stuetzen_bodenkontakt_stuetze_links_in;
+Systemstate extbg_sensorik_stuetzen_bodenkontakt_stuetze_rechts_out;
+Systemstate extbg_sensorik_stuetzen_bodenkontakt_stuetze_rechts_in;
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMOL_out;  //  StützenMagnetObenLinks
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMOL_in;   //  StützenMagnetObenLinks
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMOR_out;  //  StützenMagnetObenRechts
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMOR_in;   //  StützenMagnetObenRechts
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMUL_out;  //  StützenMagnetUntenLinks
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMUL_in;   //  StützenMagnetUntenLinks
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMUR_out;  //  StützenMagnetUntenRechts
+Systemstate extbg_sensorik_stuetzen_SENSOR_SMUR_in;   //  StützenMagnetUntenRechts
+Systemstate extbg_sensorik_stuetzen_klemmung_links_geschlossen_out;
+Systemstate extbg_sensorik_stuetzen_klemmung_links_geschlossen_in;
+Systemstate extbg_sensorik_stuetzen_klemmung_rechts_geschlossen_out;
+Systemstate extbg_sensorik_stuetzen_klemmung_rechts_geschlossen_in;
+Systemstate extbg_sensorik_haube_geschlossen_out;
+Systemstate extbg_sensorik_haube_geschlossen_in;
+Systemstate extbg_sensorik_haube_offen_out;
+Systemstate extbg_sensorik_haube_offen_in;
+Systemstate extbg_istposition_z_achse_out;
+Systemstate extbg_istposition_z_achse_in;
+Systemstate extbg_parkposition_radar_io_module_out;
+Systemstate extbg_parkposition_radar_io_module_in;
+Systemstate extbg_parkposition_radar_ivenet_out;
+Systemstate extbg_parkposition_radar_ivenet_in;
 
 // --------------------------------------------
 // ---------- Messwerte Navigation ------------
@@ -319,7 +321,7 @@ Globals
   bag_betriebsmodus_out = 0;
   bag_betriebsmodus_in = 0;
 
-// --------------------------------------------
+  // --------------------------------------------
   // --------- Taster Automatikbetrieb ----------
   extbg_taster_betaetigung_automatikbetrieb_plattform_ausfahren_out = 0;
   extbg_taster_betaetigung_automatikbetrieb_plattform_ausfahren_in = 0;
@@ -436,6 +438,10 @@ Globals
   extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_zurrposition_in = 0;
   extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_90_grad_out = 0;
   extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_90_grad_in = 0;
+  extbg_taster_betaetigung_manueller_betrieb_x_achse_sollposition_anfahren_out = 0;
+  extbg_taster_betaetigung_manueller_betrieb_x_achse_sollposition_anfahren_in = 0;
+  extbg_taster_betaetigung_manueller_betrieb_y_achse_sollposition_anfahren_out = 0;
+  extbg_taster_betaetigung_manueller_betrieb_y_achse_sollposition_anfahren_in = 0;
 
   // --------------------------------------------
   // --------------- Betriebsart ----------------
@@ -451,51 +457,45 @@ Globals
 
   // --------------------------------------------
   // ----------- Force Transmit PDO -------------
-  force_bag_pdo_transmit_counter_in = 0;
-  force_bag_pdo_transmit_counter_out = 0;
+  extbg_force_bag_pdo_transmit_counter_in = 0;
+  extbg_force_bag_pdo_transmit_counter_out = 0;
 
   // --------------------------------------------
   // ----------------- Motordaten----------------
-  fahrzeugnetzspannung_in = 0;
-  fahrzeugnetzspannung_out = 0;
-  gangstellung_in = 0;
-  gangstellung_out = 0;
-  feststellbremse_in = 0;
-  feststellbremse_out = 0;
-  motordrehzahl_in = 0;
-  motordrehzahl_out = 0;
+  extbg_fahrzeugnetzspannung_in = 0;
+  extbg_fahrzeugnetzspannung_out = 0;
+  extbg_gangstellung_in = 0;
+  extbg_gangstellung_out = 0;
+  extbg_feststellbremse_in = 0;
+  extbg_feststellbremse_out = 0;
+  extbg_motordrehzahl_in = 0;
+  extbg_motordrehzahl_out = 0;
 
   // --------------------------------------------
   // ------------- Zustand Ruestsatz-------------
-  bag_fahrzeugwinkel_x_in = 0;
-  bag_fahrzeugwinkel_x_out = 0;
-  bag_fahrzeugwinkel_y_in = 0;
-  bag_fahrzeugwinkel_y_out = 0;
-  messwert_windmesser_gueltig_in = 0;
-  messwert_windmesser_gueltig_out = 0;
-  messwert_windmesser_in = 0;
-  messwert_windmesser_out = 0;
+  extbg_bag_fahrzeugwinkel_x_in = 0;
+  extbg_bag_fahrzeugwinkel_x_out = 0;
+  extbg_bag_fahrzeugwinkel_y_in = 0;
+  extbg_bag_fahrzeugwinkel_y_out = 0;
+  extbg_messwert_windmesser_gueltig_in = 0;
+  extbg_messwert_windmesser_gueltig_out = 0;
+  extbg_messwert_windmesser_in = 0;
+  extbg_messwert_windmesser_out = 0;
 
   // --------------------------------------------
-  // ------------- Zustand Ruestsatz-------------
+  // ------------- Zustand Komponenten ----------
   extbg_luftdruck_pneumatiktank_in = 0;
   extbg_luftdruck_pneumatiktank_out = 0;
   extbg_luftdruck_stuetze_links_in = 0;
   extbg_luftdruck_stuetze_links_out = 0;
   extbg_luftdruck_stuetze_rechts_in = 0;
   extbg_luftdruck_stuetze_rechts_out = 0;
-  anzeige_zustand_mastantrieb_in = 0;
-  anzeige_zustand_mastantrieb_out = 0;
-  anzeige_zustand_horizontierantriebe_in = 0;
-  anzeige_zustand_horizontierantriebe_out = 0;
-  extbg_zustand_heckverteiler_stoerung_in = 0;
-  extbg_zustand_heckverteiler_stoerung_out = 0;
   extbg_zustand_heckverteiler_ok_in = 0;
   extbg_zustand_heckverteiler_ok_out = 0;
-  extbg_kommunikation_ivenet_stoerung_in = 0;
-  extbg_kommunikation_ivenet_stoerung_out = 0;
   extbg_kommunikation_ivenet_ok_in = 0;
   extbg_kommunikation_ivenet_ok_out = 0;
+  extbg_kommunikation_psm_ok_in = 0;
+  extbg_kommunikation_psm_ok_out = 0;
 
   // --------------------------------------------
   // -------------- Betriebsstunden--------------
@@ -514,37 +514,41 @@ Globals
   extbg_y_drive_sollgeschwindigkeit_out = 0;
   extbg_y_drive_sollgeschwindigkeit_in = 0;
 
-  extbg_z_drive_sollposition_out = 0;
-  extbg_z_drive_sollposition_in = 0;
+  extbg_z_drive_sollposition_out = 800;
+  extbg_z_drive_sollposition_in = 800;
   extbg_z_drive_sollgeschwindigkeit_out = 0;
   extbg_z_drive_sollgeschwindigkeit_in = 0;
 
   // --------------------------------------------
   // ------------ Zustand Plattform -------------
-  zurrung_plattform_out = 0;
-  zurrung_plattform_in = 0;
-  sensorik_stuetzen_bodenkontakt_stuetze_links_out = 0;
-  sensorik_stuetzen_bodenkontakt_stuetze_links_in = 0;
-  sensorik_stuetzen_bodenkontakt_stuetze_rechts_out = 0;
-  sensorik_stuetzen_bodenkontakt_stuetze_rechts_in = 0;
-  sensorik_stuetzen_SENSOR_SMOL_out = 0;  //  StützenMagnetObenLinks
-  sensorik_stuetzen_SENSOR_SMOL_in = 0;   //  StützenMagnetObenLinks
-  sensorik_stuetzen_SENSOR_SMOR_out = 0;  //  StützenMagnetObenRechts
-  sensorik_stuetzen_SENSOR_SMOR_in = 0;   //  StützenMagnetObenRechts
-  sensorik_stuetzen_SENSOR_SMUL_out = 0;  //  StützenMagnetUntenLinks
-  sensorik_stuetzen_SENSOR_SMUL_in = 0;   //  StützenMagnetUntenLinks
-  sensorik_stuetzen_SENSOR_SMUR_out = 0;  //  StützenMagnetUntenRechts
-  sensorik_stuetzen_SENSOR_SMUR_in = 0;   //  StützenMagnetUntenRechts
-  sensorik_stuetzen_klemmung_links_geschlossen_out = 0;
-  sensorik_stuetzen_klemmung_links_geschlossen_in = 0;
-  sensorik_stuetzen_klemmung_rechts_geschlossen_out = 0;
-  sensorik_stuetzen_klemmung_rechts_geschlossen_in = 0;
-  extbg_sensorik_haube_out = 0;
-  extbg_sensorik_haube_in = 0;
-  istposition_z_achse_out = 0;
-  istposition_z_achse_in = 0;
-  parkposition_radar_out = 0;
-  parkposition_radar_in = 0;
+  extbg_zurrung_plattform_out = 0;
+  extbg_zurrung_plattform_in = 0;
+  extbg_sensorik_stuetzen_bodenkontakt_stuetze_links_out = 0;
+  extbg_sensorik_stuetzen_bodenkontakt_stuetze_links_in = 0;
+  extbg_sensorik_stuetzen_bodenkontakt_stuetze_rechts_out = 0;
+  extbg_sensorik_stuetzen_bodenkontakt_stuetze_rechts_in = 0;
+  extbg_sensorik_stuetzen_SENSOR_SMOL_out = 0;  //  StützenMagnetObenLinks
+  extbg_sensorik_stuetzen_SENSOR_SMOL_in = 0;   //  StützenMagnetObenLinks
+  extbg_sensorik_stuetzen_SENSOR_SMOR_out = 0;  //  StützenMagnetObenRechts
+  extbg_sensorik_stuetzen_SENSOR_SMOR_in = 0;   //  StützenMagnetObenRechts
+  extbg_sensorik_stuetzen_SENSOR_SMUL_out = 0;  //  StützenMagnetUntenLinks
+  extbg_sensorik_stuetzen_SENSOR_SMUL_in = 0;   //  StützenMagnetUntenLinks
+  extbg_sensorik_stuetzen_SENSOR_SMUR_out = 0;  //  StützenMagnetUntenRechts
+  extbg_sensorik_stuetzen_SENSOR_SMUR_in = 0;   //  StützenMagnetUntenRechts
+  extbg_sensorik_stuetzen_klemmung_links_geschlossen_out = 0;
+  extbg_sensorik_stuetzen_klemmung_links_geschlossen_in = 0;
+  extbg_sensorik_stuetzen_klemmung_rechts_geschlossen_out = 0;
+  extbg_sensorik_stuetzen_klemmung_rechts_geschlossen_in = 0;
+  extbg_sensorik_haube_geschlossen_out = 0;
+  extbg_sensorik_haube_geschlossen_in = 0;
+  extbg_sensorik_haube_offen_out = 0;
+  extbg_sensorik_haube_offen_in = 0;
+  extbg_istposition_z_achse_out = 0;
+  extbg_istposition_z_achse_in = 0;
+  extbg_parkposition_radar_io_module_out = 0;
+  extbg_parkposition_radar_io_module_in = 0;
+  extbg_parkposition_radar_ivenet_out = 0;
+  extbg_parkposition_radar_ivenet_in = 0;
 
 
 
@@ -601,7 +605,7 @@ val rtr_extbg_taster_betaetigung           = 0;
 val rtr_extbg_taster_manuell_betaetigung   = 0;
 val rtr_extbg_betriebsart                  = 0;
 val rtr_bag_software_version               = 0;
-val rtr_force_bag_pdo_transmit             = 0;
+val rtr_extbg_force_bag_pdo_transmit       = 0;
 val rtr_zustand_ruestsatz                  = 0;
 val rtr_motordaten                         = 0;
 val rtr_zustand_komponenten                = 0;
@@ -621,13 +625,13 @@ val cob_extbg_betriebsart                   = 0x1E0;
 val cob_extbg_taster_betaetigung            = 0x2E0;
 val cob_extbg_taster_manuell_betaetigung    = 0x3E0;
 val cob_bag_software_version                = 0x362;
-val cob_force_bag_pdo_transmit              = 0x1E1;
+val cob_extbg_force_bag_pdo_transmit        = 0x1E1;
 val cob_zustand_ruestsatz                   = 0x460;
 val cob_motordaten                          = 0x560;
 val cob_zustand_komponenten                 = 0x361;
 val cob_betriebsstunden                     = 0x461;
-val cob_extbg_x_drive_sollwerte             = 0x3E1;
-val cob_extbg_y_drive_sollwerte             = 0x4E1;
+val cob_extbg_x_drive_sollwerte             = 0x4E1;
+val cob_extbg_y_drive_sollwerte             = 0x3E1;
 val cob_extbg_z_drive_sollwerte             = 0x2E1;
 val cob_zustand_plattform                   = 0x561;
 val cob_messwerte_navigation                = 0x262;
@@ -642,7 +646,7 @@ val cob_betriebsmodus                       = 0x363;
 // ---------- Messwerte Navigation ------------
 frame
 {
-  id { frame_messwerte_navigation; };
+  id { frame_extbg_messwerte_navigation; };
   data
   {
     header
@@ -681,7 +685,7 @@ frame
 // ------------ Zustand Plattform -------------
 frame
 {
-  id { frame_zustand_plattform; };
+  id { frame_extbg_zustand_plattform; };
   data
   {
     header
@@ -693,46 +697,68 @@ frame
     payload
     {
       uint8
+      { //  byte 0
+        out { extbg_zurrung_plattform_out; };
+        in  { extbg_zurrung_plattform_in; };
+      };
+      uint8
+      { //  byte 1
+        bit
+        {
+          out { extbg_sensorik_stuetzen_bodenkontakt_stuetze_links_out; };  //  bit 0
+          in  { extbg_sensorik_stuetzen_bodenkontakt_stuetze_links_in; };
+          out { extbg_sensorik_stuetzen_bodenkontakt_stuetze_rechts_out; };  //  bit 1
+          in  { extbg_sensorik_stuetzen_bodenkontakt_stuetze_rechts_in; };
+          out { extbg_sensorik_stuetzen_SENSOR_SMOL_out; };  //  bit 2
+          in  { extbg_sensorik_stuetzen_SENSOR_SMOL_in; };
+          out { extbg_sensorik_stuetzen_SENSOR_SMOR_out; };  //  bit 3
+          in  { extbg_sensorik_stuetzen_SENSOR_SMOR_in; };
+          out { extbg_sensorik_stuetzen_SENSOR_SMUL_out; };  //  bit 4
+          in  { extbg_sensorik_stuetzen_SENSOR_SMUL_in; };
+          out { extbg_sensorik_stuetzen_SENSOR_SMUR_out; };  //  bit 5
+          in  { extbg_sensorik_stuetzen_SENSOR_SMUR_in; };
+          out { extbg_sensorik_stuetzen_klemmung_links_geschlossen_out; };  //  bit 6
+          in  { extbg_sensorik_stuetzen_klemmung_links_geschlossen_in; };
+          out { extbg_sensorik_stuetzen_klemmung_rechts_geschlossen_out; };  //  bit 7
+          in  { extbg_sensorik_stuetzen_klemmung_rechts_geschlossen_in; };
+        };
+      };
+      uint8
+      { //  byte 2
+        bit
+        {
+          out { extbg_sensorik_haube_geschlossen_out; };  //  bit 0
+          in  { extbg_sensorik_haube_geschlossen_in; };
+          out { extbg_sensorik_haube_offen_out; };  //  bit 1
+          in  { extbg_sensorik_haube_offen_in; };
+          any;  //  bit 2
+          any;  //  bit 3
+          any;  //  bit 4
+          any;  //  bit 5
+          any;  //  bit 6
+          any;  //  bit 7
+        };
+      };
+      uint16
       {
-        out { zurrung_plattform_out; };
-        in  { zurrung_plattform_in; };
+        out { extbg_istposition_z_achse_out; };
+        in  { extbg_istposition_z_achse_in; };
       };
       uint8
       {
         bit
         {
-          out { sensorik_stuetzen_bodenkontakt_stuetze_links_out; };
-          in  { sensorik_stuetzen_bodenkontakt_stuetze_links_in; };
-          out { sensorik_stuetzen_bodenkontakt_stuetze_rechts_out; };
-          in  { sensorik_stuetzen_bodenkontakt_stuetze_rechts_in; };
-          out { sensorik_stuetzen_SENSOR_SMOL_out; };
-          in  { sensorik_stuetzen_SENSOR_SMOL_in; };
-          out { sensorik_stuetzen_SENSOR_SMOR_out; };
-          in  { sensorik_stuetzen_SENSOR_SMOR_in; };
-          out { sensorik_stuetzen_SENSOR_SMUL_out; };
-          in  { sensorik_stuetzen_SENSOR_SMUL_in; };
-          out { sensorik_stuetzen_SENSOR_SMUR_out; };
-          in  { sensorik_stuetzen_SENSOR_SMUR_in; };
-          out { sensorik_stuetzen_klemmung_links_geschlossen_out; };
-          in  { sensorik_stuetzen_klemmung_links_geschlossen_in; };
-          out { sensorik_stuetzen_klemmung_rechts_geschlossen_out; };
-          in  { sensorik_stuetzen_klemmung_rechts_geschlossen_in; };
+          out { extbg_parkposition_radar_io_module_out; };  //  bit 0
+          in  { extbg_parkposition_radar_io_module_in; };
+          out { extbg_parkposition_radar_ivenet_out; };  //  bit 1
+          in  { extbg_parkposition_radar_ivenet_in; };
+          any;  //  bit 2
+          any;  //  bit 3
+          any;  //  bit 4
+          any;  //  bit 5
+          any;  //  bit 6
+          any;  //  bit 7
         };
-      };
-      uint8
-      {
-        out { extbg_sensorik_haube_out; };
-        in  { extbg_sensorik_haube_in; };
-      };
-      uint16
-      {
-        out { istposition_z_achse_out; };
-        in  { istposition_z_achse_in; };
-      };
-      uint8
-      {
-        out { parkposition_radar_out; };
-        in  { parkposition_radar_in; };
       };
     };
   };
@@ -766,7 +792,7 @@ frame
 // ----------- Zustand Komponenten ------------
 frame
 {
-  id { frame_zustand_komponenten; };
+  id { frame_extbg_zustand_komponenten; };
   data
   {
     header
@@ -793,74 +819,83 @@ frame
         in  { extbg_luftdruck_stuetze_rechts_in; };
       };
       uint8
-      {
+      { //  Zustand Mastantrieb
         bit
-        {
-          out { extbg_zustand_mastantrieb_stoerung_kommunikation_out; };
+        { //  0x00  == Stoerung Kommunikation
+          out { extbg_zustand_mastantrieb_stoerung_kommunikation_out; };  //  bit 0
           in  { extbg_zustand_mastantrieb_stoerung_kommunikation_in; };
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          out { extbg_zustand_mastantrieb_interner_fehler_out; };
+          any;  //  bit 1
+          any;  //  bit 2
+          any;  //  bit 3
+          any;  //  bit 4
+          any;  //  bit 5
+          any;  //  bit 6
+          out { extbg_zustand_mastantrieb_interner_fehler_out; };  //  bit 7
           in  { extbg_zustand_mastantrieb_interner_fehler_in; };
         };
       };
       uint8
-      {
+      { //  Zustand Horizontierantriebe
         bit
-        {
-//           out { extbg_zustand_horizontierantriebe_stoerung_kommunikation_out; };
-//            in  { extbg_zustand_horizontierantriebe_stoerung_kommunikation_in; };
-          out { extbg_zustand_antrieb_x_ok_out; };
+        { //  0x00  == Stoerung Kommunikation
+          out { extbg_zustand_antrieb_x_ok_out; };  //  bit 0
           in  { extbg_zustand_antrieb_x_ok_in; };
-          out { extbg_zustand_antrieb_y_ok_out; };
+          out { extbg_zustand_antrieb_y_ok_out; };  //  bit 1
           in  { extbg_zustand_antrieb_y_ok_in; };
-          out { extbg_zustand_talin_daten_gueltig_out; };
+          out { extbg_zustand_talin_daten_gueltig_out; };  //  bit 2
           in  { extbg_zustand_talin_daten_gueltig_in; };
-          any;
-          any;
-          any;
-          out { extbg_zustand_antrieb_x_interner_fehler_out; };
+          any;  //  bit 3
+          any;  //  bit 4
+          any;  //  bit 5
+          out { extbg_zustand_antrieb_x_interner_fehler_out; };  //  bit 6
           in  { extbg_zustand_antrieb_x_interner_fehler_in; };
-          out { extbg_zustand_antrieb_y_interner_fehler_out; };
+          out { extbg_zustand_antrieb_y_interner_fehler_out; };  //  bit 7
           in  { extbg_zustand_antrieb_y_interner_fehler_in; };
         };
       };
       uint8
-      {
+      { //  Zustand Heckverteiler
         bit
-        {
-//            out { extbg_zustand_heckverteiler_stoerung_out; };
-//            in  { extbg_zustand_heckverteiler_stoerung_in; };
-          out { extbg_zustand_heckverteiler_ok_out; };
+        { //  0x00  == Stoerung Kommunikation
+          out { extbg_zustand_heckverteiler_ok_out; };  //  bit 0
           in  { extbg_zustand_heckverteiler_ok_in; };
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
+          any;  //  bit 1
+          any;  //  bit 2
+          any;  //  bit 3
+          any;  //  bit 4
+          any;  //  bit 5
+          any;  //  bit 6
+          any;  //  bit 7
         };
       };
       uint8
-      {
+      { //  Zustand IveNet
         bit
-        {
-//            out { extbg_kommunikation_ivenet_stoerung_out; };
-//            in  { extbg_kommunikation_ivenet_stoerung_in; };
-          out { extbg_kommunikation_ivenet_ok_out; };
+        { //  0x00  == Stoerung Kommunikation
+          out { extbg_kommunikation_ivenet_ok_out; };  //  bit 0
           in  { extbg_kommunikation_ivenet_ok_in; };
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
+          any;  //  bit 1
+          any;  //  bit 2
+          any;  //  bit 3
+          any;  //  bit 4
+          any;  //  bit 5
+          any;  //  bit 6
+          any;  //  bit 7
+        };
+      };
+      uint8
+      { //  Zustand PSM
+        bit
+        { //  0x00  == Stoerung Kommunikation
+          out { extbg_kommunikation_psm_ok_out; };  //  bit 0
+          in  { extbg_kommunikation_psm_ok_in; };
+          any;  //  bit 1
+          any;  //  bit 2
+          any;  //  bit 3
+          any;  //  bit 4
+          any;  //  bit 5
+          any;  //  bit 6
+          any;  //  bit 7
         };
       };
     };
@@ -871,7 +906,7 @@ frame
 // ------------- Frame Motordaten -------------
 frame
 {
-  id { frame_motordaten; };
+  id { frame_extbg_motordaten; };
   data
   {
     header
@@ -884,23 +919,23 @@ frame
     {
       uint16
       {
-        out { fahrzeugnetzspannung_out; };
-        in  { fahrzeugnetzspannung_in; };
+        out { extbg_fahrzeugnetzspannung_out; };
+        in  { extbg_fahrzeugnetzspannung_in; };
       };
       uint8
       {
-        out { gangstellung_out; };
-        in  { gangstellung_in; };
+        out { extbg_gangstellung_out; };
+        in  { extbg_gangstellung_in; };
       };
       uint8
       {
-        out { feststellbremse_out; };
-        in  { feststellbremse_in; };
+        out { extbg_feststellbremse_out; };
+        in  { extbg_feststellbremse_in; };
       };
       uint16
       {
-        out { motordrehzahl_out; };
-        in  { motordrehzahl_in; };
+        out { extbg_motordrehzahl_out; };
+        in  { extbg_motordrehzahl_in; };
       };
     };
   };
@@ -910,7 +945,7 @@ frame
 // --------- Frame Zustand Ruestsatz ----------
 frame
 {
-  id { frame_zustand_ruestsatz; };
+  id { frame_extbg_zustand_ruestsatz; };
   data
   {
     header
@@ -923,23 +958,23 @@ frame
     {
       uint16
       {
-        out { bag_fahrzeugwinkel_x_out; };
-        in  { bag_fahrzeugwinkel_x_in; };
+        out { extbg_bag_fahrzeugwinkel_x_out; };
+        in  { extbg_bag_fahrzeugwinkel_x_in; };
       };
       uint16
       {
-        out { bag_fahrzeugwinkel_y_out; };
-        in  { bag_fahrzeugwinkel_y_in; };
+        out { extbg_bag_fahrzeugwinkel_y_out; };
+        in  { extbg_bag_fahrzeugwinkel_y_in; };
       };
       uint8
       {
-        out { messwert_windmesser_gueltig_out; };
-        in  { messwert_windmesser_gueltig_in; };
+        out { extbg_messwert_windmesser_gueltig_out; };
+        in  { extbg_messwert_windmesser_gueltig_in; };
       };
       uint8
       {
-        out { messwert_windmesser_out; };
-        in  { messwert_windmesser_in; };
+        out { extbg_messwert_windmesser_out; };
+        in  { extbg_messwert_windmesser_in; };
       };
     };
   };
@@ -964,6 +999,9 @@ frame
       {
         out { bag_major_software_version_out; };
         in  { bag_major_software_version_in; };
+      };
+      uint8
+      {
         out { bag_minor_software_version_out; };
         in  { bag_minor_software_version_in; };
       };
@@ -999,7 +1037,7 @@ frame
 // ------- Frame BAG Piktogramme ---------
 frame
 {
-  id { frame_bag_piktogramme; };
+  id { frame_extbg_bag_piktogramme; };
   data
   {
     header
@@ -1063,12 +1101,24 @@ frame
       {
         out { extbg_error_0_out; };
         in  { extbg_error_0_in; };
+      };
+      uint8
+      {
         out { extbg_error_1_out; };
         in  { extbg_error_1_in; };
+      };
+      uint8
+      {
         out { extbg_error_2_out; };
         in  { extbg_error_2_in; };
+      };
+      uint8
+      {
         out { extbg_error_3_out; };
         in  { extbg_error_3_in; };
+      };
+      uint8
+      {
         out { extbg_error_4_out; };
         in  { extbg_error_4_in; };
       };
@@ -1173,21 +1223,21 @@ frame
 // --------- Force BAG PDO Transmit -----------
 frame
 {
-  id { frame_force_bag_pdo_transmit; };
+  id { frame_extbg_force_bag_pdo_transmit; };
   data
   {
     header
     {
-      cob_id { uint11 { cob_force_bag_pdo_transmit; }; };
-      rtr { bit { rtr_force_bag_pdo_transmit; }; };
+      cob_id { uint11 { cob_extbg_force_bag_pdo_transmit; }; };
+      rtr { bit { rtr_extbg_force_bag_pdo_transmit; }; };
       data_length { uint4 { __current_frame_size; }; };
     };
     payload
     {
       uint8
       {
-        out { force_bag_pdo_transmit_counter_out; };
-        in  { force_bag_pdo_transmit_counter_in; };
+        out { extbg_force_bag_pdo_transmit_counter_out; };
+        in  { extbg_force_bag_pdo_transmit_counter_in; };
       };
     };
   };
@@ -1197,7 +1247,7 @@ frame
 // ------------ Frame Betriebsart -------------
 frame
 {
-  id { frame_betriebsart; };
+  id { frame_extbg_betriebsart; };
   data
   {
     header
@@ -1234,87 +1284,87 @@ frame
     {
       uint16
       { // Taster Automatikbetrieb
-        bit 
+        bit
         {
-          out { extbg_taster_betaetigung_automatikbetrieb_plattform_ausfahren_out; };
+          out { extbg_taster_betaetigung_automatikbetrieb_plattform_ausfahren_out; };  //  bit 0
           in  { extbg_taster_betaetigung_automatikbetrieb_plattform_ausfahren_in; };
-          out { extbg_taster_betaetigung_automatikbetrieb_plattform_einfahren_out; };
+          out { extbg_taster_betaetigung_automatikbetrieb_plattform_einfahren_out; };  //  bit 1
           in  { extbg_taster_betaetigung_automatikbetrieb_plattform_einfahren_in; };
-          out { extbg_taster_betaetigung_automatikbetrieb_stuetzen_ausfahren_out; };
+          out { extbg_taster_betaetigung_automatikbetrieb_stuetzen_ausfahren_out; };  //  bit 2
           in  { extbg_taster_betaetigung_automatikbetrieb_stuetzen_ausfahren_in; };
-          out { extbg_taster_betaetigung_automatikbetrieb_stuetzen_einfahren_out; };
+          out { extbg_taster_betaetigung_automatikbetrieb_stuetzen_einfahren_out; };  //  bit 3
           in  { extbg_taster_betaetigung_automatikbetrieb_stuetzen_einfahren_in; };
-          any;
-          any;
-          out { extbg_taster_betaetigung_automatikbetrieb_mast_sollposition_anfahren_out; };
+          any;  //  bit 4
+          any;  //  bit 5
+          out { extbg_taster_betaetigung_automatikbetrieb_mast_sollposition_anfahren_out; };  //  bit 6
           in  { extbg_taster_betaetigung_automatikbetrieb_mast_sollposition_anfahren_in; };
-          out { extbg_taster_betaetigung_automatikbetrieb_horizontieren_out; };
+          out { extbg_taster_betaetigung_automatikbetrieb_horizontieren_out; };  //  bit 7
           in  { extbg_taster_betaetigung_automatikbetrieb_horizontieren_in; };
-          any;
-          out { extbg_taster_betaetigung_automatikbetrieb_abbruch_out; };
+          any;  //  bit 8
+          out { extbg_taster_betaetigung_automatikbetrieb_abbruch_out; };  //  bit 9
           in  { extbg_taster_betaetigung_automatikbetrieb_abbruch_in; };
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
+          any;  //  bit 10
+          any;  //  bit 11
+          any;  //  bit 12
+          any;  //  bit 13
+          any;  //  bit 14
+          any;  //  bit 15
         };
       };
       uint32
       { // Taster Einzelbetrieb
         bit
         {
-          out { extbg_taster_betaetigung_einzelbetrieb_stuetzen_ausfahren_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_stuetzen_ausfahren_out; };  //  bit 0
           in  { extbg_taster_betaetigung_einzelbetrieb_stuetzen_ausfahren_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_stuetzen_einfahren_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_stuetzen_einfahren_out; };  //  bit 1
           in  { extbg_taster_betaetigung_einzelbetrieb_stuetzen_einfahren_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_haube_auf_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_haube_auf_out; };  //  bit 2
           in  { extbg_taster_betaetigung_einzelbetrieb_haube_auf_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_haube_zu_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_haube_zu_out; };  //  bit 3
           in  { extbg_taster_betaetigung_einzelbetrieb_haube_zu_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_zurrung_antenne_entriegeln_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_zurrung_antenne_entriegeln_out; };  //  bit 4
           in  { extbg_taster_betaetigung_einzelbetrieb_zurrung_antenne_entriegeln_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_zurrung_antenne_verriegeln_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_zurrung_antenne_verriegeln_out; };  //  bit 5
           in  { extbg_taster_betaetigung_einzelbetrieb_zurrung_antenne_verriegeln_in; };
-          any;
-          any;
-          out { extbg_taster_betaetigung_einzelbetrieb_antenne_aufrichten_out; };
+          any;  //  bit 6
+          any;  //  bit 7
+          out { extbg_taster_betaetigung_einzelbetrieb_antenne_aufrichten_out; };  //  bit 8
           in  { extbg_taster_betaetigung_einzelbetrieb_antenne_aufrichten_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_antenne_abklappen_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_antenne_abklappen_out; };  //  bit 9
           in  { extbg_taster_betaetigung_einzelbetrieb_antenne_abklappen_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_mast_ausfahren_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_mast_ausfahren_out; };  //  bit 10
           in  { extbg_taster_betaetigung_einzelbetrieb_mast_ausfahren_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_mast_einfahren_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_mast_einfahren_out; };  //  bit 11
           in  { extbg_taster_betaetigung_einzelbetrieb_mast_einfahren_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_plattform_automatisch_ausrichten_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_plattform_automatisch_ausrichten_out; };  //  bit 12
           in  { extbg_taster_betaetigung_einzelbetrieb_plattform_automatisch_ausrichten_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_plattform_vorne_nach_unten_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_plattform_vorne_nach_unten_out; };  //  bit 13
           in  { extbg_taster_betaetigung_einzelbetrieb_plattform_vorne_nach_unten_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_plattform_hinten_nach_unten_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_plattform_hinten_nach_unten_out; };  //  bit 14
           in  { extbg_taster_betaetigung_einzelbetrieb_plattform_hinten_nach_unten_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_plattform_links_nach_unten_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_plattform_links_nach_unten_out; };  //  bit 15
           in  { extbg_taster_betaetigung_einzelbetrieb_plattform_links_nach_unten_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_plattform_rechts_nach_unten_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_plattform_rechts_nach_unten_out; };  //  bit 16
           in  { extbg_taster_betaetigung_einzelbetrieb_plattform_rechts_nach_unten_in; };
-          any;
-          out { extbg_taster_betaetigung_einzelbetrieb_staubaustragseinrichtung_aktivieren_out; };
+          any;  //  bit 17
+          out { extbg_taster_betaetigung_einzelbetrieb_staubaustragseinrichtung_aktivieren_out; };  //  bit 18
           in  { extbg_taster_betaetigung_einzelbetrieb_staubaustragseinrichtung_aktivieren_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_abbruch_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_abbruch_out; };  //  bit 19
           in  { extbg_taster_betaetigung_einzelbetrieb_abbruch_in; };
-          out { extbg_taster_betaetigung_einzelbetrieb_mast_auf_zurrposition_out; };
+          out { extbg_taster_betaetigung_einzelbetrieb_mast_auf_zurrposition_out; };  //  bit 20
           in  { extbg_taster_betaetigung_einzelbetrieb_mast_auf_zurrposition_in; };
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
-          any;
+          any;  //  bit 21
+          any;  //  bit 22
+          any;  //  bit 23
+          any;  //  bit 24
+          any;  //  bit 25
+          any;  //  bit 26
+          any;  //  bit 27
+          any;  //  bit 28
+          any;  //  bit 29
+          any;  //  bit 30
+          any;  //  bit 31
         };
       };
     };
@@ -1340,75 +1390,89 @@ frame
       { // Taster Manueller Betrieb
         bit
         {
-          out { extbg_taster_betaetigung_manueller_betrieb_haube_riegel_oeffnen_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_haube_riegel_oeffnen_out; };  //  bit 0
           in  { extbg_taster_betaetigung_manueller_betrieb_haube_riegel_oeffnen_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_haube_riegel_schliessen_out; };
-          in  { extbg_taster_betaetigung_manueller_betrieb_haube_riegel_schliessen_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_haube_oeffnen_out; };
+          any;  //  bit 1
+          out { extbg_taster_betaetigung_manueller_betrieb_haube_oeffnen_out; };  //  bit 2
           in  { extbg_taster_betaetigung_manueller_betrieb_haube_oeffnen_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_haube_schliessen_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_haube_schliessen_out; };  //  bit 3
           in  { extbg_taster_betaetigung_manueller_betrieb_haube_schliessen_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_haube_oeffnen_nothalt_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_haube_oeffnen_nothalt_out; };  //  bit 4
           in  { extbg_taster_betaetigung_manueller_betrieb_haube_oeffnen_nothalt_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_haube_schliessen_nothalt_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_haube_schliessen_nothalt_out; };  //  bit 5
           in  { extbg_taster_betaetigung_manueller_betrieb_haube_schliessen_nothalt_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_zurrung_antenne_oeffnen_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_zurrung_antenne_oeffnen_out; };  //  bit 6
           in  { extbg_taster_betaetigung_manueller_betrieb_zurrung_antenne_oeffnen_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_zurrung_antenne_schliessen_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_zurrung_antenne_schliessen_out; };  //  bit 7
           in  { extbg_taster_betaetigung_manueller_betrieb_zurrung_antenne_schliessen_in; };
-          any;
-          any;
-          out { extbg_taster_betaetigung_manueller_betrieb_venturiventil_1_ein_out; };
+          any;  //  bit 8
+          any;  //  bit 9
+          out { extbg_taster_betaetigung_manueller_betrieb_venturiventil_1_ein_out; };  //  bit 10
           in  { extbg_taster_betaetigung_manueller_betrieb_venturiventil_1_ein_in; };
-          any;
-          any;
-          out { extbg_taster_betaetigung_manueller_betrieb_stuetzen_klemmung_ein_out; };
+          any;  //  bit 11
+          any;  //  bit 12
+          out { extbg_taster_betaetigung_manueller_betrieb_stuetzen_klemmung_ein_out; };  //  bit 13
           in  { extbg_taster_betaetigung_manueller_betrieb_stuetzen_klemmung_ein_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_stuetzen_ausfahren_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_stuetzen_ausfahren_out; };  //  bit 14
           in  { extbg_taster_betaetigung_manueller_betrieb_stuetzen_ausfahren_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_stuetzen_einfahren_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_stuetzen_einfahren_out; };  //  bit 15
           in  { extbg_taster_betaetigung_manueller_betrieb_stuetzen_einfahren_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_x_achse_auf_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_x_achse_auf_out; };  //  bit 16
           in  { extbg_taster_betaetigung_manueller_betrieb_x_achse_auf_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_x_achse_ab_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_x_achse_ab_out; };  //  bit 17
           in  { extbg_taster_betaetigung_manueller_betrieb_x_achse_ab_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_y_achse_auf_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_y_achse_auf_out; };  //  bit 18
           in  { extbg_taster_betaetigung_manueller_betrieb_y_achse_auf_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_y_achse_ab_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_y_achse_ab_out; };  //  bit 19
           in  { extbg_taster_betaetigung_manueller_betrieb_y_achse_ab_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_z_achse_auf_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_z_achse_auf_out; };  //  bit 20
           in  { extbg_taster_betaetigung_manueller_betrieb_z_achse_auf_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_z_achse_ab_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_z_achse_ab_out; };  //  bit 21
           in  { extbg_taster_betaetigung_manueller_betrieb_z_achse_ab_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_z_achse_sollposition_anfahren_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_z_achse_sollposition_anfahren_out; };  //  bit 22
           in  { extbg_taster_betaetigung_manueller_betrieb_z_achse_sollposition_anfahren_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_radar_power_on_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_radar_power_on_out; };  //  bit 23
           in  { extbg_taster_betaetigung_manueller_betrieb_radar_power_on_in; };
-          any;
-          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_radar_out; };
+          any;  //  bit 24
+          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_radar_out; };  //  bit 25
           in  { extbg_taster_betaetigung_manueller_betrieb_versorgung_radar_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_xyz_antriebe_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_xyz_antriebe_out; };  //  bit 26
           in  { extbg_taster_betaetigung_manueller_betrieb_versorgung_xyz_antriebe_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_pneumatik_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_pneumatik_out; };  //  bit 27
           in  { extbg_taster_betaetigung_manueller_betrieb_versorgung_pneumatik_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_windsensor_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_windsensor_out; };  //  bit 28
           in  { extbg_taster_betaetigung_manueller_betrieb_versorgung_windsensor_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_windsensor_heizung_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_versorgung_windsensor_heizung_out; };  //  bit 29
           in  { extbg_taster_betaetigung_manueller_betrieb_versorgung_windsensor_heizung_in; };
-          any;
-          any;
+          any;  //  bit 30
+          any;  //  bit 31
         };
       };
       uint16
       { // Taster Manueller Betrieb 2
         bit 
         {
-          out { extbg_taster_betaetigung_manueller_betrieb_2_x_antrieb_auf_zurrposition_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_2_x_antrieb_auf_zurrposition_out; };  //  bit 0
           in  { extbg_taster_betaetigung_manueller_betrieb_2_x_antrieb_auf_zurrposition_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_zurrposition_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_zurrposition_out; };  //  bit 1
           in  { extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_zurrposition_in; };
-          out { extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_90_grad_out; };
+          out { extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_90_grad_out; };  //  bit 2
           in  { extbg_taster_betaetigung_manueller_betrieb_2_y_antrieb_auf_90_grad_in; };
+          out { extbg_taster_betaetigung_manueller_betrieb_x_achse_sollposition_anfahren_out; };  //  bit 3
+          in  { extbg_taster_betaetigung_manueller_betrieb_x_achse_sollposition_anfahren_in; };
+          out { extbg_taster_betaetigung_manueller_betrieb_y_achse_sollposition_anfahren_out; };  //  bit 4
+          in  { extbg_taster_betaetigung_manueller_betrieb_y_achse_sollposition_anfahren_in; };
+          any;  //  bit 5
+          any;  //  bit 6
+          any;  //  bit 7
+          any;  //  bit 8
+          any;  //  bit 9
+          any;  //  bit 10
+          any;  //  bit 11
+          any;  //  bit 12
+          any;  //  bit 13
+          any;  //  bit 14
+          any;  //  bit 15
         };
       };
     };

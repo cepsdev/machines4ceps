@@ -17,7 +17,7 @@ Systemstate ivenet_heartbeat_app_version_in;
 Systemstate ivenet_own_vehicle_pos_latitude_current_in;
 Systemstate ivenet_own_vehicle_pos_longitude_current_in;
 Systemstate ivenet_own_vehicle_pos_altitude_current_in;
-
+Systemstate ivenet_time_source_out;
 // --------------------------------------------
 // ------------- INITIALIZATION ---------------
 
@@ -56,9 +56,9 @@ xml_frame
 // ------------------------------------------------------------------------
           TimeSource
           {
-            if (ivenet_time_source_out == "UTC_Time")
+            if ( ivenet_time_source_out == "UTC_Time" )
               "UTC_Time";
-            else if (ivenet_time_source_out == "GPS_Time")
+            else if ( ivenet_time_source_out == "GPS_Time" )
               "GPS_Time";
             else
               "BIOS_Time";
@@ -82,12 +82,12 @@ xml_frame
             {
                 MastStatus
                 {
-                    if (ivenet_mast_state.value_out      == IVENET_MAST_IS_LOCKED_NAVIGATION_MODE)
-                     "IsLocked_NavigationMode";
-                    else if (ivenet_mast_state.value_out == IVENET_MAST_IS_MOVING_ANTENNA_DEPLOYMENT)
-                    "IsMoving_AntennaDeployment";
+                    if ( ivenet_mast_state.value_out      == IVENET_MAST_IS_LOCKED_NAVIGATION_MODE )
+                      "IsLocked_NavigationMode";
+                    else if ( ivenet_mast_state.value_out == IVENET_MAST_IS_MOVING_ANTENNA_DEPLOYMENT )
+                      "IsMoving_AntennaDeployment";
                     else
-                    "IsUnlocked_ObservationMode";
+                      "IsUnlocked_ObservationMode";
                 };
             }
         };//StatusMast	
@@ -109,18 +109,18 @@ xml_frame
             xml_attr { "IsValid"; if ( ivenet_platform_alignment_state.isValid_out > 0 ) "true"; else "false"; };
             PlatformStatus
             {
-                if (ivenet_platform_alignment_state.value      == IVENET_PLATFORM_IS_NOT_ALIGNED)
-                "NotAligned";
-                else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_ALIGNMENT_IS_IN_PROGRESS)
-                "AlignmentInProgress";
-                else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_ALIGNED)
-                "Aligned";
-                else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_VEHICLE_MOVEMENT)
-                "NotAlignedDueToVehicleMovement";
-                else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_MAST_MOVEMENT)
-                "NotAlignedDueToMastMovement";
+                if ( ivenet_platform_alignment_state.value      == IVENET_PLATFORM_IS_NOT_ALIGNED )
+                  "NotAligned";
+                else if ( ivenet_platform_alignment_state.value == IVENET_PLATFORM_ALIGNMENT_IS_IN_PROGRESS )
+                  "AlignmentInProgress";
+                else if ( ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_ALIGNED )
+                  "Aligned";
+                else if ( ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_VEHICLE_MOVEMENT )
+                  "NotAlignedDueToVehicleMovement";
+                else if ( ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_MAST_MOVEMENT )
+                  "NotAlignedDueToMastMovement";
                 else
-                "GeneralTechnicalMalfunction";
+                  "GeneralTechnicalMalfunction";
             };
         };
 

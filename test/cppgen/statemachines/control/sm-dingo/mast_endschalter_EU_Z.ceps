@@ -2,22 +2,22 @@
 // CS4
 // #define SENSOR_EU_Z	0x20
 
-Event ev_z_drive_position_changed, ev_z_drive_endschalter_shows_endanschlag_unten;
+Event ev_z_drive_position_changed, ev_z_drive_endschalter_EU_Z_changed;
 
 Statemachine
 {
   id  { sm_Mast_endschalter_EU_Z; };
   description { "Mast Endanschlag Unten"; };
-  States  { Initial; On; Off; };
+  States  { Initial;  On; Off;  };
 
   Actions
   {
-    a_MastStateChange { ev_z_drive_endschalter_shows_endanschlag_unten; };
-    a_Off             { SENSOR_EU_Z = 0;  };
-    a_On              { SENSOR_EU_Z = 1;  };
+    a_mast_state_change { ev_z_drive_endschalter_EU_Z_changed; };
+    a_mast_es_EU_Z_Off  { SENSOR_EU_Z = 0;  print ( "SENSOR_EU_Z = 0\n" );  };
+    a_mast_es_EU_Z_On   { SENSOR_EU_Z = 1;  print ( "SENSOR_EU_Z = 1\n" );  };
   };
 
-  Transition  { Initial;  Off;  };
-  Transition  { On;       Off;  ev_z_drive_position_changed;  g_mast_height_is_gt_min_position; a_MastStateChange;  a_Off;  };
-  Transition  { Off;      On;   ev_z_drive_position_changed;  g_mast_height_is_le_min_position; a_MastStateChange;  a_On; };
+  Transition  { Initial;  Off;                                                        a_mast_es_EU_Z_Off;                       };
+  Transition  { Off;      On;   ev_z_drive_position_changed;    g_sensor_EU_z_drive;  a_mast_es_EU_Z_On;  a_mast_state_change;  };
+  Transition  { On;       Off;  ev_z_drive_position_changed;   !g_sensor_EU_z_drive;  a_mast_es_EU_Z_Off; a_mast_state_change;  };
 };

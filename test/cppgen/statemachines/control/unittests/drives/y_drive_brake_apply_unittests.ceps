@@ -1,0 +1,54 @@
+// <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.1;
+};
+
+Y_drive_brake_apply_unittests
+{
+  y_drive.Status.ANTRIEB_BRAKE_RELEASED = 1;
+  g_y_drive_has_antrieb_fault = 0;
+};
+
+Simulation
+{
+  TestCase{Y_drive_brake_apply_unittests;};Test{Initialization_given_no_antrieb_fault;};
+
+  Start { sm_Y_drive_brake_apply;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_brake_apply.Applying;};
+};
+
+
+Simulation
+{
+  TestCase{Y_drive_brake_apply_unittests;};Test{Timeout;};
+
+  Start { sm_Y_drive_brake_apply;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_brake_apply.Applying;};
+
+  ev_y_drive_brake_apply_timeout;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_brake_apply.Error;};
+};
+
+
+Simulation
+{
+  TestCase{Y_drive_brake_apply_unittests;};Test{Initialization_given_antrieb_fault;};
+
+  g_y_drive_has_antrieb_fault = 1;
+  Start { sm_Y_drive_brake_apply;};
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_brake_apply.Start;};
+  g_y_drive_has_antrieb_fault = 0;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_brake_apply.Applying;};
+
+  y_drive.Status.ANTRIEB_BRAKE_RELEASED = 0;
+  ev_y_drive_can_state_response;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_brake_apply.Final;};
+};

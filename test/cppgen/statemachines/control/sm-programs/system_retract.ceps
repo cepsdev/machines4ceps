@@ -4,26 +4,31 @@ Statemachine
 {
   id  { sm_System_retract;  };
   description { "System_retract";  };
-  States  { Initial;  Final;  };
+  States  { Initial;  Final;  Error;  };
   join{Final;};
 
   thread
   {
-    States  { Initial;  Final;  };
+    States  { Initial;  Final;  Error;  };
     import  { sm_Stilts_to_retract; };
 
     Transition  { Initial;                    sm_Stilts_to_retract;    };
-    Transition  { Initial;                    Final;  };
+//    Transition  { Initial;                    Final;  };
     Transition  { sm_Stilts_to_retract.Final; Final;  };
+    Transition  { sm_Stilts_to_retract.Error; Error;  };
   };
 
   thread
   {
-    States  { Initial;  Final;  };
+    States  { Initial;  Final;  Error;  };
     import  { sm_Platform_retract;  };
 
     Transition  { Initial;                    sm_Platform_retract;  };
     Transition  { sm_Platform_retract.Final;  Final;  };
+    Transition  { sm_Platform_retract.Error;  Error;  };
   };
+
+  Transition  { thread_1.Error;   Error;  };
+  Transition  { thread_2.Error;   Error;  };
 };
 

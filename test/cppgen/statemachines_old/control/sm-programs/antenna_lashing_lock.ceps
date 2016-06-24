@@ -1,0 +1,34 @@
+Event ev_antenna_lashing_is_locked, ev_antenna_lashing_lock_timeout, ev_antenna_lashing_lock_preconditions_are_not_met, ev_antenna_lock;
+Event ev_antenna_lock_is_preconditioned, ev_antenna_lashing_lock_starts, ev_antenna_is_locked, ev_antenna_lashing_lock_was_interrupted;
+
+Statemachine
+{
+  id  { sm_Antenna_lashing_lock;  };
+  description { "Antenna_lashing_lock"; };
+  States  { Initial;  Final;  Error;  Locking;  };
+
+  import  { sm_Antenna_lock_preconditioning;  };
+
+  Actions 
+  {
+    a_set_timeout_timer                   { start_timer ( TIME_VERZURRUNG * s, ev_antenna_lashing_lock_timeout, timer_antenna_lashing_lock );  }; 
+    a_preconditions_are_not_met           { ev_antenna_lashing_lock_preconditions_are_not_met;  };
+    a_was_interrupted                     { ev_antenna_lashing_lock_was_interrupted;  };
+    a_antenna_lock                        { ev_antenna_lock;  };
+    a_antenna_lashing_lock_starts         { ev_antenna_lashing_lock_starts; };
+    a_antenna_is_locked                   { ev_antenna_is_locked; };
+  };
+
+  on_exit
+  {
+    stop_timer ( timer_antenna_lashing_lock );
+    if ( !in_state ( Final, Error ) ) a_was_interrupted;
+  };
+
+  Transition  { Initial;                          sm_Antenna_lock_preconditioning;                                     !g_antenna_lashing_is_locked &&  g_antenna_lashing_lock_preconditions;  a_antenna_lashing_lock_starts; };
+  Transition  { Initial;                          Error;                                                               !g_antenna_lashing_is_locked && !g_antenna_lashing_lock_preconditions;  a_preconditions_are_not_met; };
+  Transition  { sm_Antenna_lock_preconditioning;  Locking;                          ev_antenna_lock_is_preconditioned;                                                                          a_antenna_lock; };
+  Transition  { Locking;                          Final;                            ev_antenna_lashing_is_locked;                                                                               a_antenna_is_locked;  };
+  Transition  { Initial;                          Final;                                                                g_antenna_lashing_is_locked;                                           a_antenna_is_locked; };
+};
+

@@ -1,28 +1,44 @@
-Event ev_y_drive_to_indexposition_timeout, ev_y_drive_move_go, ev_y_drive_is_in_indexposition, ev_y_drive_enable_timeout, ev_y_drive_moving_timeout, ev_y_drive_movement_stopped, ev_y_drive_move_starts, ev_y_drive_move_to_indexposition_starts;
+Event ev_y_drive_to_indexposition_not_needed,   ev_y_drive_to_indexposition_starts,   ev_y_drive_to_indexposition_moving,   ev_y_drive_is_in_indexposition;
+Event ev_y_drive_to_indexposition_interrupted,  ev_y_drive_to_indexposition_timeout,  ev_y_drive_to_indexposition_finished;
+Event ev_y_drive_move_init;
 
 Statemachine
 {
   id  { sm_Y_drive_to_indexposition;  };
-  description { "Y_drive_to_indexposition";  };
-  States  { Initial;  Start;  Final;  Error;  };
+  description { "Y_drive_to_indexposition"; };
+  States  { Initial;  Final;  Start;  Error;  };
   import  { sm_Y_drive_move;  };
   Actions
   {
-    a_y_drive_start                     { ev_y_drive_move_to_indexposition_starts;  };
-    a_y_drive_move_start                { ev_y_drive_move_starts; };
-    a_y_drive_move_to_indexposition     { ev_y_drive_move_go ( MODE_TO_TARGET, y_drive.INDEXPOSITION, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT );  };
-    a_y_drive_is_in_indexposition       { ev_y_drive_is_in_indexposition; ivenet_mast_state.value_out = IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;  };
-    a_y_drive_to_indexposition_timeout  { ev_y_drive_to_indexposition_timeout;  };
+    a_y_drive_to_indexposition_not_needed     { ev_y_drive_to_indexposition_not_needed; };
+    a_y_drive_to_indexposition_start          { ev_y_drive_to_indexposition_starts;
+                                                ev_y_drive_move_init ( MODE_TO_TARGET, y_drive.INDEXPOSITION );
+                                                start_timer ( DEF_TIME_Y_FAHREN * s, ev_y_drive_to_indexposition_timeout,  timer_y_drive_to_indexposition_timeout );
+                                              };
+    a_y_drive_to_indexposition_moving         { ev_y_drive_to_indexposition_moving;       };
+    a_y_drive_is_in_indexposition             { ev_y_drive_is_in_indexposition;           };
+    a_y_drive_to_indexposition_timeout        { ev_y_drive_to_indexposition_interrupted;  };
+    a_y_drive_to_indexposition_interrupted    { ev_y_drive_to_indexposition_interrupted;  };
   };
 
-  //on_enter {};
-  //on_exit{};
+  on_enter
+  {
+//    print ( "--- guard --- SENSOR_IP_Y:             ", SENSOR_IP_Y, "\n"
+//          , "              y_drive.IstPos:          ", y_drive.IstPos, "\n"
+//          );
+  };
+  on_exit
+  {
+    stop_timer ( timer_y_drive_to_indexposition_timeout );
+    ev_y_drive_to_indexposition_finished;
+  };
 
-  Transition  { Initial;          Start;                                          a_y_drive_move_to_indexposition; a_y_drive_start;  !g_y_drive_is_in_indexposition;  };
-  Transition  { Start;            sm_Y_drive_move;  ev_y_drive_move_go; };
-  Transition  { sm_Y_drive_move;  Error;            ev_y_drive_enable_timeout;    a_y_drive_to_indexposition_timeout; };
-  Transition  { sm_Y_drive_move;  Error;            ev_y_drive_moving_timeout;    a_y_drive_to_indexposition_timeout; };
-  Transition  { sm_Y_drive_move;  Final;            ev_y_drive_movement_stopped;  a_y_drive_is_in_indexposition;      };
-  Transition  { Initial;          Final;                                          a_y_drive_is_in_indexposition;                      g_y_drive_is_in_indexposition;  };
+  Transition  { Initial;                Final;                                                  a_y_drive_to_indexposition_not_needed;    g_y_drive_is_in_indexposition;  };
+  Transition  { Initial;                Start;                                                  a_y_drive_to_indexposition_start;        !g_y_drive_is_in_indexposition;  };
+  Transition  { Start;                  sm_Y_drive_move;  ev_y_drive_move_init;                 a_y_drive_to_indexposition_moving;      };
+  Transition  { sm_Y_drive_move.Final;  Final;                                                  a_y_drive_is_in_indexposition;            g_y_drive_is_in_indexposition;  };
+  Transition  { sm_Y_drive_move.Final;  Error;                                                  a_y_drive_to_indexposition_interrupted;  !g_y_drive_is_in_indexposition;  };
+  Transition  { sm_Y_drive_move;        Error;            ev_y_drive_to_indexposition_timeout;  a_y_drive_to_indexposition_timeout;     };
+  Transition  { sm_Y_drive_move.Error;  Error;                                                  a_y_drive_to_indexposition_interrupted; };
 };
 

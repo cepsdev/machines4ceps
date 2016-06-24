@@ -1,0 +1,37 @@
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.01;
+};
+
+Antenna_to_parking_position_unittests
+{
+//  g_antenna_is_in_parking_position  = 0;
+  EVAL_ANTENNA_IS_IN_PARKPOS  = 0;
+};
+
+Simulation
+{
+  TestCase{Antenna_to_parking_position_unittests;};Test{Initialization_given_antenna_is_moving_to_parking_position;};
+
+  Start { sm_Antenna_to_parking_position; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_to_parking_position.Moving;};
+//  g_antenna_is_in_parking_position  = 1;
+  EVAL_ANTENNA_IS_IN_PARKPOS  = 1;
+
+  ev_antenna_is_in_parking_position;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_to_parking_position.Final;};
+};
+
+Simulation
+{
+  TestCase{Antenna_to_parking_position_unittests;};Test{Initialization_given_antenna_is_already_in_parking_position;};
+
+//  g_antenna_is_in_parking_position  = 1;
+  EVAL_ANTENNA_IS_IN_PARKPOS  = 1;
+  Start { sm_Antenna_to_parking_position; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_to_parking_position.Final;};
+};

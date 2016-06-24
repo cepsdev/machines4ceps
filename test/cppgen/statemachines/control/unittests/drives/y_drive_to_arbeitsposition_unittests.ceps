@@ -17,84 +17,222 @@ Statemachine
 {
   id  { sm_Ctrl;  };
   import  { sm_Y_drive_to_arbeitsposition; };
-  States  { Initial;  Final;  };
-
-  Transition  { Initial;                        sm_Y_drive_to_arbeitsposition;  ev_y_drive_move_to_arbeitsposition; };
-  Transition  { sm_Y_drive_to_arbeitsposition;  Final;                          ev_y_drive_is_in_arbeitsposition;  };
+  States  { Initial;  Final;  Error;  };
+  Actions
+  {
+    a_report_error  { print ( "\n\n--- ERROR DETECTED ---\n\n" ); };
+  };
+  Transition  { Initial;                              sm_Y_drive_to_arbeitsposition;  ev_y_drive_move_to_arbeitsposition; };
+  Transition  { sm_Y_drive_to_arbeitsposition.Final;  Final;                          };
+  Transition  { sm_Y_drive_to_arbeitsposition.Error;  Error;                                                              a_report_error;  };
 };
 
 Simulation
 {
   TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_below_range_of_arbeitsposition;};
 
-  y_drive.IstPos       = 87.3;
-  y_drive.SollGeschw   = 50.0;
+  y_drive.IstPos      = 87.3;
+//  y_drive.CanIstPos    = Y_SollPosition_Berechnen ( y_drive.IstPos );
+  y_drive.CanIstPos   = 87300;
+  y_drive.SollGeschw  = 50.0;
 
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Idle;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+//  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_sim.Idle;};
+//  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_sim.Disabled;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Moving_up;};
 
   Start { sm_Ctrl;  };
   Start { sm_Y_drive_state; };
-  Start { sm_Y_drive; };
+  Start { sm_Y_drive_sim; };
 
+  y_drive.CanSollPos  = 90000;
   ev_y_drive_move_to_arbeitsposition;
+
+  ev_y_drive_sim_control; //  enable
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  brake release
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  drive-mode funktioniert erste wenn c-funktionen in statemaschinen aufgerufen werden können
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  y_drive.IstPos      = y_drive.SollPos;
+  ev_y_drive_can_state_response;  //  INPOS
+
+  ev_y_drive_sim_control; //  brake apply
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  disable
+  ev_y_drive_can_state_response;
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.Final;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
 };
 
 Simulation
 {
   TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_above_range_of_arbeitsposition;};
 
-  y_drive.IstPos       = 90.9;
-  y_drive.SollGeschw   = 50.0;
+  y_drive.IstPos      = 90.9;
+//  y_drive.CanIstPos    = Y_SollPosition_Berechnen ( y_drive.IstPos );
+  y_drive.CanIstPos   = 90900;
+  y_drive.SollGeschw  = 50.0;
 
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Idle;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+//  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_sim.Idle;};
+//  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_sim.Disabled;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Moving_down;};
 
   Start { sm_Ctrl;  };
   Start { sm_Y_drive_state; };
-  Start { sm_Y_drive; };
+  Start { sm_Y_drive_sim; };
 
+  y_drive.CanSollPos  = 90000;
   ev_y_drive_move_to_arbeitsposition;
+
+  ev_y_drive_sim_control; //  enable
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  brake release
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  drive-mode funktioniert erste wenn c-funktionen in statemaschinen aufgerufen werden können
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  y_drive.IstPos      = y_drive.SollPos;
+  ev_y_drive_can_state_response;  //  INPOS
+
+  ev_y_drive_sim_control; //  brake apply
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  disable
+  ev_y_drive_can_state_response;
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.Final;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
 };
 
 Simulation
 {
   TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_in_range_of_arbeitsposition_in_tolerance;};
 
-  y_drive.IstPos       = 89.9;
-  y_drive.SollGeschw   = 50.0;
+  y_drive.IstPos      = 89.9;
+//  y_drive.CanIstPos    = Y_SollPosition_Berechnen ( y_drive.IstPos );
+  y_drive.CanIstPos   = 89900;
+  y_drive.SollGeschw  = 50.0;
 
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+//  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_sim.Disabled;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
 
   Start { sm_Ctrl;  };
   Start { sm_Y_drive_state; };
-  Start { sm_Y_drive; };
+  Start { sm_Y_drive_sim; };
 
+  y_drive.CanSollPos  = 90000;
   ev_y_drive_move_to_arbeitsposition;
+
+  ev_y_drive_sim_control; //  enable
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  brake release
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  drive-mode funktioniert erste wenn c-funktionen in statemaschinen aufgerufen werden können
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  y_drive.IstPos      = y_drive.SollPos;
+  ev_y_drive_can_state_response;  //  INPOS
+
+  ev_y_drive_sim_control; //  brake apply
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  disable
+  ev_y_drive_can_state_response;
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.Final;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
 };
 
 Simulation
 {
   TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_also_in_range_of_arbeitsposition_in_tolerance;};
 
-  y_drive.IstPos       = 90.1;
-  y_drive.SollGeschw   = 50.0;
+  y_drive.IstPos      = 90.1;
+//  y_drive.CanIstPos    = Y_SollPosition_Berechnen ( y_drive.IstPos );
+  y_drive.CanIstPos   = 90100;
+  y_drive.SollGeschw  = 50.0;
 
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+//  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_sim.Disabled;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
 
   Start { sm_Ctrl;  };
   Start { sm_Y_drive_state; };
-  Start { sm_Y_drive; };
+  Start { sm_Y_drive_sim; };
 
+  y_drive.CanSollPos  = 90000;
   ev_y_drive_move_to_arbeitsposition;
+
+  ev_y_drive_sim_control; //  enable
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  brake release
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  drive-mode funktioniert erste wenn c-funktionen in statemaschinen aufgerufen werden können
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  y_drive.IstPos      = y_drive.SollPos;
+  ev_y_drive_can_state_response;  //  INPOS
+
+  ev_y_drive_sim_control; //  brake apply
+  ev_y_drive_can_state_response;
+
+  ev_y_drive_sim_control; //  disable
+  ev_y_drive_can_state_response;
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.Final;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
 };

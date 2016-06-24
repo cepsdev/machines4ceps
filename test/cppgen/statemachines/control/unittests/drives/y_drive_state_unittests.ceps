@@ -1,0 +1,26 @@
+// <description>
+
+Y_drive_state_unittests {};
+
+Simulation
+{
+  TestCase{Y_drive_state_unittests;};Test{Initialization;};
+
+  Start { sm_Y_drive_state; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_state.Idle;};
+};
+
+
+Simulation
+{
+  TestCase{Y_drive_state_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Y_drive_state; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_state.Idle;};
+  ev_y_drive_enable;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_state.Enabled;};
+  ev_y_drive_disable;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_state.Disabled;};
+};

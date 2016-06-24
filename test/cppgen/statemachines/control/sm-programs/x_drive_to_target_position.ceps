@@ -1,51 +1,71 @@
-Event ev_x_drive_to_target_position_timeout, ev_x_drive_move_go, ev_x_drive_is_in_target_position;
-Event ev_x_drive_enable_timeout, ev_x_drive_moving_timeout, ev_x_drive_movement_stopped;
-Systemstate SOLL_POS;
+Event ev_x_drive_to_target_position_not_needed,   ev_x_drive_to_target_position_starts,   ev_x_drive_to_target_position_moving,   ev_x_drive_is_in_target_position;
+Event ev_x_drive_to_target_position_interrupted,  ev_x_drive_to_target_position_timeout,  ev_x_drive_to_target_position_finished;
+Event ev_x_drive_move_init;
+
+global_functions
+{
+  x_drive_set_target_position
+  {
+    params{ inTargetPos; };
+    print ( "-------- x_drive_set_target_position -------- inTargetPos: ", inTargetPos, "\n" );
+
+    if ( inTargetPos > x_drive.MAX_POS )
+    {
+      x_drive.TargetPosition = x_drive.MAX_POS;
+    } else
+    if ( inTargetPos < x_drive.MIN_POS )
+    {
+      x_drive.TargetPosition = x_drive.MIN_POS;
+    } else
+    {
+      x_drive.TargetPosition = inTargetPos;
+    };
+    print ( "-------------------------------- x_drive.TargetPosition: ", x_drive.TargetPosition, ", SollGeschw: ", x_drive.SollGeschw, "\n" );
+  };
+};
 
 Statemachine
 {
   id  { sm_X_drive_to_target_position;  };
   description { "X_drive_to_target_position";  };
-  States  { Initial;  Start;  Final;  Error;  };
+  States  { Initial;  Final;  Start;  Error;  };
   import  { sm_X_drive_move;  };
   Actions
   {
-    a_x_drive_move_to_target_position     { ev_x_drive_move_go ( MODE_TO_TARGET, SOLL_POS, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT ); };
-    a_x_drive_is_in_target_position       { ev_x_drive_is_in_target_position; };
-    a_x_drive_to_target_position_timeout  { ev_x_drive_to_target_position_timeout;  };
+    a_x_drive_to_target_position_not_needed   { ev_x_drive_to_target_position_not_needed; };
+    a_x_drive_to_target_position_start        { ev_x_drive_to_target_position_starts;
+                                                ev_x_drive_move_init ( MODE_TO_TARGET, x_drive.TargetPosition );
+                                                start_timer ( DEF_TIME_X_FAHREN * s, ev_x_drive_to_target_position_timeout,  timer_x_drive_to_target_position_timeout );
+                                              };
+    a_x_drive_to_target_position_moving       { ev_x_drive_to_target_position_moving;       };
+    a_x_drive_is_in_target_position           { ev_x_drive_is_in_target_position;           };
+    a_x_drive_to_target_position_timeout      { ev_x_drive_to_target_position_interrupted;  };
+    a_x_drive_to_target_position_interrupted  { ev_x_drive_to_target_position_interrupted;  };
+    a_x_drive_stop_timout_timer               { stop_timer ( timer_x_drive_to_target_position_timeout ); };
   };
 
   on_enter
   {
     if ( argc() < 1 )
     {
-      print("---------------------------------------- Too few arguments for start of 'X_drive_to_target_position' \n");
+      print ( "---------------------------------------- Too few arguments for start of 'X_drive_to_target_position' \n" );
     } else
     {
-      SOLL_POS = argv ( 1 );
-
-      if ( SOLL_POS > x_drive.MAX_POS )
-      {
-        x_drive.SollPos = x_drive.MAX_POS;
-      } else
-      {
-        if ( SOLL_POS < x_drive.MIN_POS )
-        {
-          x_drive.SollPos = x_drive.MIN_POS;
-        } else
-        {
-          x_drive.SollPos = SOLL_POS;
-        };
-      };
+      x_drive_set_target_position ( argv ( 1 ) );
     };
   };
-  //on_exit{};
+  on_exit
+  {
+    a_x_drive_stop_timout_timer;
+    ev_x_drive_to_target_position_finished;
+  };
 
-  Transition  { Initial;          Final;                                          a_x_drive_is_in_target_position;        g_x_drive_is_in_target_position;  };
-  Transition  { Initial;          Start;                                          a_x_drive_move_to_target_position;     !g_x_drive_is_in_target_position;  };
-  Transition  { Start;            sm_X_drive_move;  ev_x_drive_move_go; };
-  Transition  { sm_X_drive_move;  Error;            ev_x_drive_enable_timeout;    a_x_drive_to_target_position_timeout; };
-  Transition  { sm_X_drive_move;  Error;            ev_x_drive_moving_timeout;    a_x_drive_to_target_position_timeout; };
-  Transition  { sm_X_drive_move;  Final;            ev_x_drive_movement_stopped;  a_x_drive_is_in_target_position;      };
+  Transition  { Initial;                Final;                                                    a_x_drive_to_target_position_not_needed;                                  g_x_drive_is_in_target_position;  };
+  Transition  { Initial;                Start;                                                    a_x_drive_to_target_position_start;                                      !g_x_drive_is_in_target_position;  };
+  Transition  { Start;                  sm_X_drive_move;  ev_x_drive_move_init;                   a_x_drive_to_target_position_moving;                                    };
+  Transition  { sm_X_drive_move.Final;  Final;                                                    a_x_drive_is_in_target_position;          a_x_drive_stop_timout_timer;    g_x_drive_is_in_target_position;  };
+  Transition  { sm_X_drive_move.Final;  Error;                                                    a_x_drive_to_target_position_interrupted;                                !g_x_drive_is_in_target_position;  };
+  Transition  { sm_X_drive_move;        Error;            ev_x_drive_to_target_position_timeout;  a_x_drive_to_target_position_timeout;                                   };
+  Transition  { sm_X_drive_move.Error;  Error;                                                    a_x_drive_to_target_position_interrupted; a_x_drive_stop_timout_timer;  };
 };
 

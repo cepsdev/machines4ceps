@@ -11,7 +11,7 @@ Statemachine
  id{S1;};
  States{Initial;Final;a;b;c;d;e;};
  Actions{
-    a1{/*print("s1=",s1,"\n");*/ if (s1<10) {E;} else EXIT; send(frame_zustand_komponenten,vcan_out); };
+    a1{/*print("s1=",s1,"\n");*/ if (s1<10) {E;} else start_timer(1.0*s,EXIT); send(frame_zustand_komponenten,vcan_out);print(s1,"\n"); };
     a2{
        if ( (s1 / 2)*2 == s1) {extbg_zustand_mastantrieb_stoerung_kommunikation_out=0;} else
                         {extbg_zustand_mastantrieb_stoerung_kommunikation_out=1;}; s1=s1+1;F;};

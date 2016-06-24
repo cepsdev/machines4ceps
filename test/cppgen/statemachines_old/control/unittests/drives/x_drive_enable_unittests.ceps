@@ -1,0 +1,37 @@
+// <description>
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.01;
+};
+
+X_drive_enable_unittests
+{
+  g_x_drive_has_antrieb_fault = 0;
+};
+
+Simulation
+{
+  TestCase{X_drive_enable_unittests;};Test{Initialization_given_no_antrieb_fault;};
+
+  Start { sm_X_drive_enable;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Enabling;};
+};
+
+
+Simulation
+{
+  TestCase{X_drive_enable_unittests;};Test{Initialization_given_antrieb_fault;};
+
+  g_x_drive_has_antrieb_fault = 1;
+  Start { sm_X_drive_enable;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.sm_X_drive_reset_fault_antrieb;};
+  g_x_drive_has_antrieb_fault = 0;
+  ev_x_drive_fault_antrieb_reset;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Enabling;};
+  ev_x_drive_is_enabled;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Final;};
+};

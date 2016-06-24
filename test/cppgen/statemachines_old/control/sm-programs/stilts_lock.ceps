@@ -1,0 +1,30 @@
+Event ev_stilts_lock, ev_stilts_are_locked, ev_stilts_lock_timeout, ev_stilts_lock_left_is_locked, ev_stilts_lock_right_is_locked, ev_stilts_lock_was_interrupted;
+Guard g_stilts_all_are_locked;
+
+Statemachine
+{
+  id  { sm_Stilts_lock; };
+  description { "Stilts_lock";  };
+  States  { Initial;  Final;  Locking;  };
+  Actions
+  {
+    a_was_interrupted     { ev_stilts_lock_was_interrupted; };
+    a_stilts_locking      { ev_stilts_lock; };
+    a_finished            { ev_stilts_are_locked; };
+    a_set_timeout_timer   { start_timer ( DEF_TIME_STUETZEN_KLEMMUNG * s, ev_stilts_lock_timeout, timer_stilts_lock ); };
+  };
+
+  on_exit
+  {
+    stop_timer ( timer_stilts_lock );
+    if ( !in_state ( Final ) )
+    {
+      a_was_interrupted;
+    };
+  };
+
+  Transition  { Initial;  Final;                                    a_finished;                             g_stilts_all_are_locked; };
+  Transition  { Initial;  Locking;                                  a_stilts_locking; a_set_timeout_timer; !g_stilts_all_are_locked; };
+  Transition  { Locking;  Final;    ev_stilts_lock_left_is_locked;  a_finished;                             g_stilts_all_are_locked; };
+  Transition  { Locking;  Final;    ev_stilts_lock_right_is_locked; a_finished;                             g_stilts_all_are_locked; };
+};

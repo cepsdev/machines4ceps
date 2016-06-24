@@ -1,8 +1,9 @@
 // Better delete the content of this file before executing next command
 // use >> to append instead of replacing with >
 // grep --include=*.ceps --exclude="events.ceps" -r /home/cb/subversion/TRGS/network/ -e "\<ev_\w*" | grep -o "ev_\w*" | sort | uniq > events.neu
-
+/*
 Event
+ev_antenna_alignment_changed,
 ev_antenna_is_levelled_out,
 ev_antenna_lashing_lock_starts,
 ev_antenna_lashing_state_change,
@@ -70,12 +71,16 @@ ev_usv1_has_heartbeat,
 ev_usv1_set_operational,
 ev_usv2_has_heartbeat,
 ev_usv2_set_operational,
+ev_x_drive_move,
 ev_x_drive_has_heartbeat,
 ev_x_drive_set_operational,
+ev_x_drive_can_state_response,
+ev_y_drive_move,
 ev_y_drive_has_heartbeat,
 ev_y_drive_set_operational,
+ev_y_drive_can_state_response,
 ev_z_drive_has_heartbeat,
-ev_z_drive_move_to_indexposition_starts,
-ev_z_drive_move_to_lashing_position_starts,
+ev_z_drive_move,
 ev_z_drive_set_operational,
-ev_antenna_alignment_changed;
+ev_z_drive_can_state_response;
+*/

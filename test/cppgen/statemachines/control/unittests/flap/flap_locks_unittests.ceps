@@ -84,12 +84,13 @@ Simulation
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR1O.On;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2O.On;};
 
-  // allows preconditioning to finish ..
-  ev_flap_preconditioning_finished;
-
   // entering Flap_unlock ..
+  ev_flap_lock_state_change;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_one.Unlocked;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_two.Unlocked;};
+
+  // allows preconditioning to finish ..
+  ev_flap_preconditioning_finished;
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_open.sm_Flap_open;};
 
@@ -137,6 +138,7 @@ Simulation
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR1V.On;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.On;};
 
+  ev_flap_lock_state_change;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_one.Locked;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_two.Locked;};
 
@@ -211,12 +213,13 @@ Simulation
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR1O.On;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2O.On;};
 
-  // allows preconditioning to finish ..
-  ev_flap_preconditioning_finished;
-
   // entering Flap_unlock ..
+  ev_flap_lock_state_change;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_one.Unlocked;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_two.Unlocked;};
+
+  // allows preconditioning to finish ..
+  ev_flap_preconditioning_finished;
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_to_close.sm_Flap_close.Flap_Closing;};
 
@@ -258,6 +261,7 @@ Simulation
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR1V.On;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HR2V.On;};
 
+  ev_flap_lock_state_change;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_one.Locked;};
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_lock_two.Locked;};
 

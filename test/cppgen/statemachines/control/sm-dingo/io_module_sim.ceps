@@ -1,0 +1,77 @@
+// simulation on IO-module
+Event ev_x_drive_endschalter_IP_X_changed;
+Event ev_y_drive_endschalter_IP_Y_changed, ev_y_drive_endschalter_AB_Y_changed;
+Event ev_z_drive_endschalter_IP_Z_changed, ev_z_drive_endschalter_EO_Z_changed, ev_z_drive_endschalter_EU_Z_changed, ev_z_drive_endschalter_UB_Z_changed;
+Event ev_stilt_endschalter_SMUL_change, ev_stilt_endschalter_SMOL_change, ev_stilt_endschalter_SMUR_change, ev_stilt_endschalter_SMOR_change;
+Event ev_stilt_left_lock_state_change,  ev_stilt_right_lock_state_change;
+Event ev_flap_endschalter_HZG_changed,  ev_flap_endschalter_HR1O_changed, ev_flap_endschalter_HR1V_changed;
+Event ev_flap_endschalter_HZO_changed,  ev_flap_endschalter_HR2O_changed, ev_flap_endschalter_HR2V_changed;
+Event ev_pneumatic_pressure_change;
+Event ev_vehicle_position_changed;
+Event ev_force_pdo_transmit_hv;
+
+Event ev_io_module_send_can_bus_message_ZHV1, ev_io_module_send_can_bus_message_ZHV2, ev_io_module_send_can_bus_message_PNEU;
+Event ev_io_module_send_can_bus_message_FW;
+
+unique
+{
+  ev_io_module_send_can_bus_message_ZHV1;
+  ev_io_module_send_can_bus_message_ZHV2;
+  ev_io_module_send_can_bus_message_PNEU;
+  ev_io_module_send_can_bus_message_FW;
+};
+no_transitions
+{
+  ev_io_module_send_can_bus_message_ZHV1;
+  ev_io_module_send_can_bus_message_ZHV2;
+  ev_io_module_send_can_bus_message_PNEU;
+  ev_io_module_send_can_bus_message_FW;
+};
+
+Statemachine
+{
+  id  { sm_IO_module_sim; };
+  description { "IO module sim"; };
+  States  { Initial;  NotReady; Ready; };
+
+  Actions
+  {
+    a_io_module_send_can_bus_message_ZHV1 { ev_io_module_send_can_bus_message_ZHV1;   };
+    a_io_module_send_can_bus_message_ZHV2 { ev_io_module_send_can_bus_message_ZHV2;   };
+    a_io_module_send_can_bus_message_PNEU { ev_io_module_send_can_bus_message_PNEU;   };
+    a_io_module_send_can_bus_message_FW   { ev_io_module_send_can_bus_message_FW;     };
+    a_io_module_send_all_can_bus_messages { ev_io_module_state_update;                };
+  };
+
+  Transition  { Initial;  NotReady;   };
+  Transition  { NotReady; Ready;      g_io_module_is_operational;             };
+  Transition  { Ready;    NotReady;  !g_io_module_is_operational;             };
+
+  Transition  { Ready;    Ready;      ev_antenna_lashing_state_change;        a_io_module_send_can_bus_message_ZHV2;  };
+
+  Transition  { Ready;    Ready;      ev_flap_endschalter_HR1O_changed;       a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_flap_endschalter_HR1V_changed;       a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_flap_endschalter_HR2O_changed;       a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_flap_endschalter_HR2V_changed;       a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_flap_endschalter_HZG_changed;        a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_flap_endschalter_HZO_changed;        a_io_module_send_can_bus_message_ZHV1;  };
+
+  Transition  { Ready;    Ready;      ev_stilt_endschalter_SMUL_change;       a_io_module_send_can_bus_message_ZHV2;  };
+  Transition  { Ready;    Ready;      ev_stilt_endschalter_SMOL_change;       a_io_module_send_can_bus_message_ZHV2;  };
+  Transition  { Ready;    Ready;      ev_stilt_endschalter_SMUR_change;       a_io_module_send_can_bus_message_ZHV2;  };
+  Transition  { Ready;    Ready;      ev_stilt_endschalter_SMOR_change;       a_io_module_send_can_bus_message_ZHV2;  };
+  Transition  { Ready;    Ready;      ev_stilt_left_lock_state_change;        a_io_module_send_can_bus_message_ZHV2;  };
+  Transition  { Ready;    Ready;      ev_stilt_right_lock_state_change;       a_io_module_send_can_bus_message_ZHV2;  };
+
+  Transition  { Ready;    Ready;      ev_x_drive_endschalter_IP_X_changed;    a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_y_drive_endschalter_AB_Y_changed;    a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_y_drive_endschalter_IP_Y_changed;    a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_z_drive_endschalter_EO_Z_changed;    a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_z_drive_endschalter_EU_Z_changed;    a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_z_drive_endschalter_IP_Z_changed;    a_io_module_send_can_bus_message_ZHV1;  };
+  Transition  { Ready;    Ready;      ev_z_drive_endschalter_UB_Z_changed;    a_io_module_send_can_bus_message_ZHV1;  };
+
+  Transition  { Ready;    Ready;      ev_pneumatic_pressure_change;           a_io_module_send_can_bus_message_PNEU;  };
+  Transition  { Ready;    Ready;      ev_vehicle_position_changed;            a_io_module_send_can_bus_message_FW;    };
+  Transition  { Ready;    Ready;      ev_force_pdo_transmit_hv;               a_io_module_send_all_can_bus_messages;  };
+};

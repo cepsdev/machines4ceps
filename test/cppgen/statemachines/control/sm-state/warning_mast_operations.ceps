@@ -1,4 +1,8 @@
 Event ev_mast_operations_status_changed, ev_vehicle_brake_position_changed, ev_vehicle_inclination_x_changed, ev_vehicle_inclination_y_changed, ev_vehicle_gear_changed;
+Event ev_x_drive_has_heartbeat, ev_x_drive_lacks_heartbeat;
+Event ev_y_drive_has_heartbeat, ev_y_drive_lacks_heartbeat;
+Event ev_z_drive_has_heartbeat, ev_z_drive_lacks_heartbeat;
+Event ev_psm_lacks_traffic;
 
 Statemachine
 {
@@ -7,9 +11,9 @@ Statemachine
 
   Actions
   {
-    a_warning_mast_ops_dont_care  { MAST_STATUS = 0; ev_mast_operations_status_changed(MAST_STATUS);  };
-    a_warning_mast_ops_ok         { MAST_STATUS = 1; ev_mast_operations_status_changed(MAST_STATUS);  };
-    a_warning_mast_ops_not_ok     { MAST_STATUS = 2; ev_mast_operations_status_changed(MAST_STATUS);  };
+    a_warning_mast_ops_dont_care  { MAST_STATUS = 0; ev_mast_operations_status_changed ( MAST_STATUS );  };
+    a_warning_mast_ops_ok         { MAST_STATUS = 1; ev_mast_operations_status_changed ( MAST_STATUS );  };
+    a_warning_mast_ops_not_ok     { MAST_STATUS = 2; ev_mast_operations_status_changed ( MAST_STATUS );  };
   };
 
   Transition  { Initial;  Dont_Care;  };

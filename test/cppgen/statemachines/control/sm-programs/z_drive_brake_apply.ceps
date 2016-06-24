@@ -1,0 +1,51 @@
+Event ev_z_drive_brake_apply, ev_z_drive_brake_is_applied,  ev_z_drive_brake_apply_timeout, ev_z_drive_brake_apply_was_interrupted, ev_z_drive_brake_apply_interrupted;
+Event ev_z_drive_can_control, ev_z_drive_can_state_response;
+Guard g_z_drive_has_antrieb_fault;
+
+Statemachine
+{
+  id  { sm_Z_drive_brake_apply;  };
+  description { "Z_drive_brake_apply"; };
+  States  { Initial;  Final;  Start;  Error;  Applying; };
+
+  Actions
+  {
+    a_z_drive_brake_apply_not_needed
+    {
+      print ( "---------- Z_drive brake_apply_not_needed ----------\n" );
+      ev_z_drive_brake_is_applied;
+    };
+    a_z_drive_brake_apply_start
+    {
+      print ( "---------- Z_drive brake_apply ----------\n" );
+      z_drive.Control.ANTRIEB_BRAKE_RELEASE = 0;
+      ev_z_drive_can_control;
+      ev_z_drive_brake_apply;
+      start_timer ( DEF_TIME_RUCKMLD_ANTRIEBE * s, ev_z_drive_brake_apply_timeout,   timer_z_drive_brake_apply );
+      //ev_z_drive_brake_apply_timeout; //  force timeout only for test
+    };
+    a_z_drive_brake_is_applied
+    {
+      print ( "---------- Z_drive brake_is_applied ----------\n" );
+      ev_z_drive_brake_is_applied;
+    };
+    a_z_drive_was_interrupted           { ev_z_drive_brake_apply_was_interrupted; };
+    a_z_drive_brake_apply_interrupted   { ev_z_drive_brake_apply_interrupted; };
+  };
+
+  on_exit
+  {
+    stop_timer ( timer_z_drive_brake_apply );
+    if ( !in_state ( Final ) )
+    {
+      a_z_drive_was_interrupted;
+    };
+  };
+
+  Transition  { Initial;      Final;                                       !g_z_drive_brake_is_released;  a_z_drive_brake_apply_not_needed;   };
+  Transition  { Initial;      Start;                                        g_z_drive_brake_is_released;                                      };
+  Transition  { Start;        Applying;                                    !g_z_drive_has_antrieb_fault;  a_z_drive_brake_apply_start;        };
+  Transition  { Applying;     Final;      ev_z_drive_can_state_response;   !g_z_drive_brake_is_released;  a_z_drive_brake_is_applied;         };
+  Transition  { Applying;     Error;      ev_z_drive_brake_apply_timeout;                                 a_z_drive_brake_apply_interrupted;  };
+};
+

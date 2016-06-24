@@ -1,0 +1,25 @@
+//Systemstate g_flap_is_open, g_flap_is_closed;
+// <description>
+
+Simulation
+{
+  TestCase{Flap_valve_HVZSN_unittests;};Test{Initialization;};
+
+  Start { sm_Flap_valve_HVZSN;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZSN.Closed;};
+};
+
+
+Simulation
+{
+  TestCase{Flap_valve_HVZSN_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Flap_valve_HVZSN;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZSN.Closed;};
+  ev_flap_prepare_moving;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZSN.Open;};
+  ev_flap_stop_moving;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZSN.Closed;};
+};

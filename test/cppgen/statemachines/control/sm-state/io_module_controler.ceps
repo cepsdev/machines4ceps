@@ -1,0 +1,116 @@
+Event ev_antenna_lock;
+Event ev_antenna_unlock;
+Event ev_antenna_prepare_usage;
+Event ev_antenna_lock_precondition_was_interrupted;
+Event ev_antenna_stop_using_lock;
+Event ev_dust_discharge_start;
+Event ev_dust_discharge_stop;
+Event ev_flap_VHR_open;
+Event ev_flap_VHR_close;
+Event ev_flap_HVZS_close;
+Event ev_flap_HVZO_close;
+Event ev_flap_prepare_moving;
+Event ev_flap_stop_moving;
+Event ev_flap_unlock_was_interrupted;
+Event ev_flap_unlock_preconditions_are_not_met;
+Event ev_flap_lock_was_interrupted;
+Event ev_flap_precondition_was_interrupted;
+Event ev_flap_open_timeout;
+Event ev_flap_close_timeout;
+Event ev_flap_to_open_was_interrupted;
+Event ev_flap_to_close_was_interrupted;
+Event ev_stilts_lock;
+Event ev_stilts_unlock;
+Event ev_stilts_extend_is_starting;
+Event ev_stilts_retract;
+Event ev_stilts_prepare_moving;
+Event ev_stilts_unlock_was_interrupted;
+Event ev_stilts_stop_moving;
+Event ev_stilts_preconditioning_was_interrupted;
+Event ev_stilts_unlock_preconditions_are_not_met;
+Event ev_stilts_lock_was_interrupted;
+Event ev_stilts_to_extend_was_interrupted;
+Event ev_stilts_to_retract_was_interrupted;
+
+
+
+Event ev_io_module_contol_AA;
+Event ev_io_module_contol_FPTHV;
+
+Statemachine
+{
+  id  { sm_IO_module_controler;  };
+  description { "IO_module_controler"; };
+  States  { Initial;  NotReady; Ready;  };
+
+  Actions
+  {
+    a_iom_antenna_lock                  { VENTIL_VZ1O   = 0;  VENTIL_VZ1V   = 1;  ev_io_module_contol_AA;    };
+    a_iom_antenna_unlock                { VENTIL_VZ1O   = 1;  VENTIL_VZ1V   = 0;  ev_io_module_contol_AA;    };
+    a_iom_antenna_prepare_usage         { VENTIL_VZ1O   = 1;  VENTIL_VZ1V   = 1;  ev_io_module_contol_AA;    };
+    a_iom_antenna_stop_using_lock       { VENTIL_VZ1O   = 0;  VENTIL_VZ1V   = 0;  ev_io_module_contol_AA;    };
+//---------------------------------------
+    a_iom_dust_discharge_start          { VENTIL_VV1    = 1;  ev_io_module_contol_AA;    };
+    a_iom_dust_discharge_stop           { VENTIL_VV1    = 0;  ev_io_module_contol_AA;    };
+//---------------------------------------
+    a_iom_flap_VHR_open                 { VENTIL_HRO    = 1;                                                                                  ev_io_module_contol_AA;    };
+    a_iom_flap_VHR_close                { VENTIL_HRO    = 0;                                                                                  ev_io_module_contol_AA;    };
+    a_iom_flap_prepare_moving           {                     VENTIL_HVZO   = 1;  VENTIL_HVZON  = 1;  VENTIL_HVZS   = 1;  VENTIL_HVZSN  = 1;  ev_io_module_contol_AA;    };
+    a_iom_flap_HVZS_close               {                                                             VENTIL_HVZS   = 0;                      ev_io_module_contol_AA;    };
+    a_iom_flap_HVZO_close               {                     VENTIL_HVZO   = 0;                                                              ev_io_module_contol_AA;    };
+    a_iom_flap_stop_moving              {                     VENTIL_HVZO   = 0;  VENTIL_HVZON  = 0;  VENTIL_HVZS   = 0;  VENTIL_HVZSN  = 0;  ev_io_module_contol_AA;    };
+    a_iom_flap_stop_moving_and_lock     { VENTIL_HRO    = 0;  VENTIL_HVZO   = 0;  VENTIL_HVZON  = 0;  VENTIL_HVZS   = 0;  VENTIL_HVZSN  = 0;  ev_io_module_contol_AA;    };
+//---------------------------------------
+    a_iom_stilts_lock                   { VENTIL_SVK    = 0;                                          ev_io_module_contol_AA;    };
+    a_iom_stilts_unlock                 { VENTIL_SVK    = 1;                                          ev_io_module_contol_AA;    };
+    a_iom_stilts_extend_is_starting     {                                         VENTIL_SVZE   = 0;  ev_io_module_contol_AA;    };
+    a_iom_stilts_retract                {                     VENTIL_SVZA   = 0;                      ev_io_module_contol_AA;    };
+    a_iom_stilts_prepare_moving         {                     VENTIL_SVZA   = 1;  VENTIL_SVZE   = 1;  ev_io_module_contol_AA;    };
+    a_iom_stilts_unlock_was_interrupted { VENTIL_SVK    = 0;  VENTIL_SVZA   = 0;  VENTIL_SVZE   = 0;  ev_io_module_contol_AA;    };
+    a_iom_stilts_stop_moving            {                     VENTIL_SVZA   = 0;  VENTIL_SVZE   = 0;  ev_io_module_contol_AA;    };
+
+    a_iom_force_pdo_transmit            { s_iom_force_pdo_transmit_counter  = s_iom_force_pdo_transmit_counter + 1;  ev_io_module_contol_FPTHV;    };
+  };
+
+  Transition  { Initial;    NotReady;   };
+  Transition  { NotReady;   Ready;      ev_io_module_is_online;                       a_iom_force_pdo_transmit;       g_io_module_is_online;  };
+  Transition  { Ready;      NotReady;   ev_io_module_is_offline;                                                     !g_io_module_is_online;  };
+
+  Transition  { Ready;      Ready;      ev_antenna_lock;                              a_iom_antenna_lock; };
+  Transition  { Ready;      Ready;      ev_antenna_unlock;                            a_iom_antenna_unlock; };
+  Transition  { Ready;      Ready;      ev_antenna_prepare_usage;                     a_iom_antenna_prepare_usage; };
+  Transition  { Ready;      Ready;      ev_antenna_lock_precondition_was_interrupted; a_iom_antenna_stop_using_lock; };
+  Transition  { Ready;      Ready;      ev_antenna_stop_using_lock;                   a_iom_antenna_stop_using_lock; };
+
+  Transition  { Ready;      Ready;      ev_dust_discharge_start;                      a_iom_dust_discharge_start; };
+  Transition  { Ready;      Ready;      ev_dust_discharge_stop;                       a_iom_dust_discharge_stop; };
+
+  Transition  { Ready;      Ready;      ev_flap_VHR_open;                             a_iom_flap_VHR_open; };
+  Transition  { Ready;      Ready;      ev_flap_VHR_close;                            a_iom_flap_VHR_close; };
+  Transition  { Ready;      Ready;      ev_flap_HVZS_close;                           a_iom_flap_HVZS_close; };
+  Transition  { Ready;      Ready;      ev_flap_HVZO_close;                           a_iom_flap_HVZO_close; };
+  Transition  { Ready;      Ready;      ev_flap_prepare_moving;                       a_iom_flap_prepare_moving; };
+  Transition  { Ready;      Ready;      ev_flap_stop_moving;                          a_iom_flap_stop_moving; };
+  Transition  { Ready;      Ready;      ev_flap_unlock_was_interrupted;               a_iom_flap_stop_moving_and_lock; };
+  Transition  { Ready;      Ready;      ev_flap_unlock_preconditions_are_not_met;     a_iom_flap_stop_moving_and_lock; };
+  Transition  { Ready;      Ready;      ev_flap_lock_was_interrupted;                 a_iom_flap_stop_moving_and_lock; };
+  Transition  { Ready;      Ready;      ev_flap_precondition_was_interrupted;         a_iom_flap_stop_moving_and_lock; };
+  Transition  { Ready;      Ready;      ev_flap_open_timeout;                         a_iom_flap_stop_moving_and_lock; };
+  Transition  { Ready;      Ready;      ev_flap_close_timeout;                        a_iom_flap_stop_moving_and_lock; };
+  Transition  { Ready;      Ready;      ev_flap_to_open_was_interrupted;              a_iom_flap_stop_moving_and_lock; };
+  Transition  { Ready;      Ready;      ev_flap_to_close_was_interrupted;             a_iom_flap_stop_moving_and_lock; };
+
+  Transition  { Ready;      Ready;      ev_stilts_lock;                               a_iom_stilts_lock; };
+  Transition  { Ready;      Ready;      ev_stilts_unlock;                             a_iom_stilts_unlock; };
+  Transition  { Ready;      Ready;      ev_stilts_extend_is_starting;                 a_iom_stilts_extend_is_starting; };
+  Transition  { Ready;      Ready;      ev_stilts_retract;                            a_iom_stilts_retract; };
+  Transition  { Ready;      Ready;      ev_stilts_prepare_moving;                     a_iom_stilts_prepare_moving; };
+  Transition  { Ready;      Ready;      ev_stilts_unlock_was_interrupted;             a_iom_stilts_unlock_was_interrupted; };
+  Transition  { Ready;      Ready;      ev_stilts_stop_moving;                        a_iom_stilts_stop_moving; };
+  Transition  { Ready;      Ready;      ev_stilts_preconditioning_was_interrupted;    a_iom_stilts_stop_moving; };
+  Transition  { Ready;      Ready;      ev_stilts_unlock_preconditions_are_not_met;   a_iom_stilts_stop_moving; };
+  Transition  { Ready;      Ready;      ev_stilts_lock_was_interrupted;               a_iom_stilts_stop_moving; };
+  Transition  { Ready;      Ready;      ev_stilts_to_extend_was_interrupted;          a_iom_stilts_stop_moving; };
+  Transition  { Ready;      Ready;      ev_stilts_to_retract_was_interrupted;         a_iom_stilts_stop_moving; };
+};
+

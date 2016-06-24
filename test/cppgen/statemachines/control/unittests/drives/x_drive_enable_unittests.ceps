@@ -1,13 +1,15 @@
 // <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
 
 Globals
 {
   // Redefinition for test acceleration
-  TIMER_ACTIVATION = 0.01;
+  TIMER_ACTIVATION = 0.1;
 };
 
 X_drive_enable_unittests
 {
+  x_drive.Status.ANTRIEB_ENABLE_OUT = 0;
   g_x_drive_has_antrieb_fault = 0;
 };
 
@@ -23,15 +25,30 @@ Simulation
 
 Simulation
 {
+  TestCase{X_drive_enable_unittests;};Test{Timeout;};
+
+  Start { sm_X_drive_enable;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Enabling;};
+
+  ev_x_drive_enable_timeout;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Error;};
+};
+
+
+Simulation
+{
   TestCase{X_drive_enable_unittests;};Test{Initialization_given_antrieb_fault;};
 
   g_x_drive_has_antrieb_fault = 1;
   Start { sm_X_drive_enable;  };
 
-  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.sm_X_drive_reset_fault_antrieb;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Start;};
   g_x_drive_has_antrieb_fault = 0;
-  ev_x_drive_fault_antrieb_reset;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
   ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Enabling;};
-  ev_x_drive_is_enabled;
+
+  x_drive.Status.ANTRIEB_ENABLE_OUT = 1;
+  ev_x_drive_can_state_response;
   ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_enable.Final;};
 };

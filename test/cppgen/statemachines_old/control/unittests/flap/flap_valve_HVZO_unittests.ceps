@@ -1,0 +1,36 @@
+// <description>
+
+Simulation
+{
+  TestCase{Flap_valve_HVZO_unittests;};Test{Initialization;};
+
+  Start { sm_Flap_valve_HVZO; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Closed;};
+};
+
+
+Simulation
+{
+  TestCase{Flap_valve_HVZO_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Flap_valve_HVZO; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Closed;};
+  ev_flap_prepare_moving;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Opening;};
+  ev_flap_HVZO_is_open;   //  delay_timer
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Open;};
+  ev_flap_HVZO_close;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Closing;};
+  ev_flap_HVZO_is_close;  //  delay_timer
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Closed;};
+  ev_flap_prepare_moving;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Opening;};
+  ev_flap_HVZO_is_open;   //  delay_timer
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Open;};
+  ev_flap_stop_moving;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Closing;};
+  ev_flap_HVZO_is_close;  //  delay_timer
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_valve_HVZO.Closed;};
+};

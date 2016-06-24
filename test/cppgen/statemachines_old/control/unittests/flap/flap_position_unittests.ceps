@@ -1,0 +1,90 @@
+// <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
+
+Globals
+{
+};
+Flap_position_left_unittests
+{
+  g_flap_lock_HR1_is_open = 0;
+  g_flap_lock_HR2_is_open = 0;
+  g_valves_are_in_opening_flap_position = 0;
+  g_valves_are_in_closing_flap_position = 0;
+  System_pressure = DEFAULT_SYSTEM_PRESSURE;
+  Flap_position   = FLAP_POSITION_DEFAULT;
+};
+
+Simulation
+{
+  TestCase{Flap_position_left_unittests;};Test{Initialization;};
+
+  Start { sm_Flap_position;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Stoped;};
+};
+
+
+Simulation
+{
+  TestCase{Flap_position_left_unittests;};Test{Visit_all_states;};
+
+  Flap_position = FLAP_POSITION_MIN;
+
+  Start { sm_Flap_position;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Stoped;};
+
+  g_flap_lock_HR1_is_open = 1;
+  g_flap_lock_HR2_is_open = 1;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Stoped;};
+
+  g_valves_are_in_opening_flap_position = 1;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Opening;};
+
+  stop_timer(timer_flap_moving); //  arki: till it is neded to force event from timer manualy
+
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Opening;};
+
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Opening;};
+
+  Flap_position   = FLAP_POSITION_MAX - System_pressure;
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Opening;};
+
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Opening;};
+
+  g_valves_are_in_opening_flap_position = 0;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Stoped;};
+
+  g_valves_are_in_closing_flap_position = 1;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Closing;};
+
+  stop_timer(timer_flap_moving); //  arki: till it is neded to force event from timer manualy
+
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Closing;};
+
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Closing;};
+
+  Flap_position   = FLAP_POSITION_MIN + System_pressure;
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Closing;};
+
+  ev_flap_moving_time;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Closing;};
+
+  g_valves_are_in_closing_flap_position = 0;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Stoped;};
+
+  g_flap_lock_HR1_is_open = 0;
+  g_flap_lock_HR2_is_open = 0;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_position.Flap_Stoped;};
+};

@@ -1,0 +1,38 @@
+Event ev_stilt_left_is_extended,  ev_stilt_left_is_not_extended;
+Event ev_stilt_right_is_extended, ev_stilt_right_is_not_extended;
+Event ev_stilts_locked_stilt_detected,  ev_stilts_extended_stilt_detected,  ev_stilts_extend_timeout;
+Event ev_stilts_stop_moving,            ev_stilts_extend_is_starting,       ev_stilts_have_ground_contact;
+Event ev_system_pressure_is_low;
+
+Guard g_kampfschalter_is_active,  g_system_pressure_is_sufficient;
+Guard g_stilt_right_is_extended,  g_stilt_any_is_extended;
+Guard g_stilt_left_is_extended,   g_stilts_all_have_ground_contact;
+
+Statemachine
+{
+  id  { sm_Stilts_extend; };
+  description { "Stilts_extend";  };
+  States  { Initial; Final;  Stilts_Extending;  Error;  };
+  Actions
+  {
+    a_stilts_extend         { ev_stilts_extend_is_starting; };
+    a_set_timeout_timer     { start_timer ( DEF_TIME_STUETZEN_FAHREN * s, ev_stilts_extend_timeout, timer_stilts_extend );  };
+    a_stilts_extend_success { ev_stilts_have_ground_contact;       ev_stilts_stop_moving; };
+    a_stilts_extend_failure_stilt_extended      { ev_stilts_extended_stilt_detected;  ev_stilts_stop_moving; };
+    a_stilts_extend_failure_stilt_locked        { ev_stilts_locked_stilt_detected;    ev_stilts_stop_moving; };
+    a_stilts_extend_failure_low_system_pressure { ev_system_pressure_is_low;          ev_stilts_stop_moving; };
+  };
+
+  on_exit { stop_timer ( timer_stilts_extend );  };
+
+  Transition  { Initial;          Final;                                            a_stilts_extend_success;                      g_stilts_all_have_ground_contact; };
+  Transition  { Initial;          Error;                                            a_stilts_extend_failure_stilt_extended;       g_stilt_any_is_extended; };
+  Transition  { Initial;          Error;                                            a_stilts_extend_failure_stilt_locked;        !g_stilts_all_have_ground_contact && g_stilt_any_is_locked; };
+  Transition  { Initial;          Error;                                            a_stilts_extend_failure_low_system_pressure; !g_system_pressure_is_sufficient; };
+  Transition  { Initial;          Stilts_Extending;                                 a_stilts_extend; a_set_timeout_timer;        !g_stilts_all_have_ground_contact && !g_stilt_any_is_extended && !g_stilt_any_is_locked && (g_kampfschalter_is_active || g_system_pressure_is_sufficient); };
+
+  Transition  { Stilts_Extending; Final;            ev_stilt_left_is_extended;      a_stilts_extend_failure_stilt_extended;       g_stilt_left_is_extended; };
+  Transition  { Stilts_Extending; Final;            ev_stilt_right_is_extended;     a_stilts_extend_failure_stilt_extended;       g_stilt_right_is_extended;  };
+  Transition  { Stilts_Extending; Final;            ev_stilt_left_is_not_extended;  a_stilts_extend_success;                      g_stilts_all_have_ground_contact; };
+  Transition  { Stilts_Extending; Final;            ev_stilt_right_is_not_extended; a_stilts_extend_success;                      g_stilts_all_have_ground_contact; };
+};

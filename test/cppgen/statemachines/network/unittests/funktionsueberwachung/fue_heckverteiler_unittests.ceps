@@ -28,31 +28,31 @@ Simulation
   Start { sm_Heckverteiler_operational_state; }; 
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Offline;};
-  g_io_module_is_online = 1;
+  s_io_module_is_online = 1;
   ev_io_module_is_online;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Offline;};
-  g_si_module_is_online = 1;
+  s_si_module_is_online = 1;
   ev_si_module_is_online;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Online;};
 
-  g_si_module_is_online = 0;
+  s_si_module_is_online = 0;
   ev_si_module_is_offline;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Online;};
-  g_io_module_is_online = 0;
+  s_io_module_is_online = 0;
   ev_io_module_is_offline;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Offline;};
 
-  g_si_module_is_online = 1;
+  s_si_module_is_online = 1;
   ev_si_module_is_online;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Offline;};
-  g_io_module_is_online = 1;
+  s_io_module_is_online = 1;
   ev_io_module_is_online;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Online;};
 
-  g_io_module_is_online = 0;
+  s_io_module_is_online = 0;
   ev_io_module_is_offline;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Online;};
-  g_si_module_is_online = 0;
+  s_si_module_is_online = 0;
   ev_si_module_is_offline;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Heckverteiler_operational_state.Offline;};
 };

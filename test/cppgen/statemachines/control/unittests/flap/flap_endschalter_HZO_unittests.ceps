@@ -1,5 +1,4 @@
 // <description>
-Event ev_total_nonsence; //  only to force a transition in statemachine
 
 Flap_endschalter_HZO_unittests
 {
@@ -41,12 +40,12 @@ Simulation
 
   Flap_position = STILTS_POSITION_MAX;
 
-  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ev_flap_position_changed;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HZO.On;};
 
   Flap_position = FLAP_POSITION_DEFAULT;
 
-  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ev_flap_position_changed;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HZO.Off;};
 };
 

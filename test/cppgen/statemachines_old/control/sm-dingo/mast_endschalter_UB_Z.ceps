@@ -1,0 +1,23 @@
+// UB_Z: Mast Untere Betriebsposition Z
+// CS4
+//#define SENSOR_UB_Z	0x80
+
+Event ev_z_drive_position_changed, ev_z_drive_endschalter_UB_Z;
+
+Statemachine
+{
+  id  { sm_Mast_endschalter_UB_Z; };
+  description { "Mast Untere Betriebsposition"; };
+  States  { Initial;  On; Off;  };
+
+  Actions
+  {
+    a_MastStateChange   { ev_z_drive_endschalter_UB_Z;  };
+    a_mast_es_UB_Z_Off  { SENSOR_UB_Z = 0; print("SENSOR_UB_Z = 0\n");  };
+    a_mast_es_UB_Z_On   { SENSOR_UB_Z = 1; print("SENSOR_UB_Z = 1\n");  };
+  };
+
+  Transition  { Initial;  Off;  };
+  Transition  { On;       Off;  ev_z_drive_position_changed; !g_mast_height_is_ge_lower_working_position; a_MastStateChange;  a_mast_es_UB_Z_Off; };
+  Transition  { Off;      On;   ev_z_drive_position_changed;  g_mast_height_is_ge_lower_working_position; a_MastStateChange;  a_mast_es_UB_Z_On;  };
+};

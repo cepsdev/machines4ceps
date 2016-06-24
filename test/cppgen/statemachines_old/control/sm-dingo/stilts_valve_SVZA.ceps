@@ -1,0 +1,36 @@
+// SVZA - Stützen Ventil Zylinder Ausfahren
+// CS 14- bit 0
+
+Event ev_stilts_valve_state, ev_stilts_prepare_moving, ev_stilts_stop_moving, ev_stilts_retract;
+
+//  local events
+Event ev_stilts_SVZA_is_open, ev_stilts_SVZA_is_close;
+
+Statemachine
+{
+  id  { sm_Stilts_valve_SVZA;  };
+  description { "Stützen Ventil Zylinder Ausfahren"; };
+  States  { Initial;  Opening;  Open; Closing;  Closed; };
+
+  Actions
+  {
+    a_valve_is_opening    { start_timer ( DELAY_SVZA_OPEN * s,  ev_stilts_SVZA_is_open,   timer_stilts_SVZA_is_open );  };
+    a_valve_is_closing    { start_timer ( DELAY_SVZA_CLOSE * s, ev_stilts_SVZA_is_close,  timer_stilts_SVZA_is_close );  };
+    a_stop_valve_opening  { stop_timer ( timer_stilts_SVZA_is_open );  };
+    a_stop_valve_closing  { stop_timer ( timer_stilts_SVZA_is_close );  };
+    a_StiltsValveState    { ev_stilts_valve_state; };
+  };
+  on_exit
+  {
+    if ( in_state ( Opening ) ) a_stop_valve_opening;
+    if ( in_state ( Closing ) ) a_stop_valve_closing;
+  };
+
+  Transition  { Initial;  Closed; };
+  Transition  { Closed;   Opening;  ev_stilts_prepare_moving;     a_StiltsValveState; a_valve_is_opening; };
+  Transition  { Opening;  Open;     ev_stilts_SVZA_is_open;       a_StiltsValveState; };
+
+  Transition  { Open;     Closing;  ev_stilts_retract;            a_StiltsValveState; a_valve_is_closing; };
+  Transition  { Open;     Closing;  ev_stilts_stop_moving;        a_StiltsValveState; a_valve_is_closing; };
+  Transition  { Closing;  Closed;   ev_stilts_SVZA_is_close;      a_StiltsValveState; };
+};

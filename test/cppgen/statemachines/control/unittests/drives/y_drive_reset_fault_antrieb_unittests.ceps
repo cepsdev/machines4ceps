@@ -1,4 +1,5 @@
 // <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
 
 Globals
 {
@@ -8,7 +9,7 @@ Globals
 
 Y_reset_fault_antrieb_unittests
 {
-  g_y_drive_has_antrieb_fault = 0;
+  y_drive.Status.ANTRIEB_FAULT  = 0;
 };
 
 Simulation
@@ -25,15 +26,44 @@ Simulation
 {
   TestCase{Y_reset_fault_antrieb_unittests;};Test{Initialization_given_antrieb_fault;};
 
-  g_y_drive_has_antrieb_fault = 1;
+  y_drive.Status.ANTRIEB_FAULT  = 1;
   Start { sm_Y_drive_reset_fault_antrieb; };
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.first_set;};
+
+  stop_timer ( timer_y_drive_fault_one );
   ev_y_drive_fault_timer_one;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.first_reset;};
+
+  stop_timer ( timer_y_drive_fault_one );
   ev_y_drive_fault_timer_one;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.second_set;};
-  g_y_drive_has_antrieb_fault = 0;
+
+  y_drive.Status.ANTRIEB_FAULT  = 0;
+  stop_timer ( timer_y_drive_fault_two );
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.Final;};
+};
+
+Simulation
+{
+  TestCase{Y_reset_fault_antrieb_unittests;};Test{Initialization_given_antrieb_fault_continuously;};
+
+  y_drive.Status.ANTRIEB_FAULT  = 1;
+  Start { sm_Y_drive_reset_fault_antrieb; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.first_set;};
+
+  stop_timer ( timer_y_drive_fault_one );
+  ev_y_drive_fault_timer_one;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.first_reset;};
+
+  stop_timer ( timer_y_drive_fault_one );
+  ev_y_drive_fault_timer_one;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.second_set;};
+
+  stop_timer ( timer_y_drive_fault_two );
   ev_y_drive_fault_timer_two;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_reset_fault_antrieb.Final;};
 };
+

@@ -1,0 +1,34 @@
+// <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
+
+Stilts_endschalter_SMOL_unittests
+{
+  Stilt_position_left   = STILTS_POSITION_MIN;
+};
+
+Simulation
+{
+  TestCase{Stilts_endschalter_SMOL_unittests;};Test{Initialization;};
+
+  Start { sm_Stilts_endschalter_SMOL; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.On;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_endschalter_SMOL_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Stilts_endschalter_SMOL; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.On;};
+
+  Stilt_position_left   = STILTS_POSITION_MAX;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.Off;};
+
+  Stilt_position_left   = STILTS_POSITION_MIN;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_endschalter_SMOL.On;};
+};

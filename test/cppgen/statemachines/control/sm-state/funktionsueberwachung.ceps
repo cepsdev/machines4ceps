@@ -22,7 +22,38 @@ Event ev_z_drive_has_heartbeat, ev_z_drive_set_operational, ev_z_drive_lacks_hea
 Event ev_message_from_psm, ev_psm_lacks_traffic, ev_psm_start_supervision;
 Event ev_message_from_ivenet, ev_ivenet_lacks_traffic, ev_ivenet_start_supervision;
 Event ev_heckverteiler_is_online, ev_heckverteiler_is_offline;
-Event ev_extbg_send_data;
+Event ev_send_software_version_to_extbg, ev_send_zustand_ruestsatz_to_extbg;
+Event ev_send_motordaten_to_extbg, ev_send_zustand_komponenten_to_extbg, ev_send_zustand_plattform_to_extbg;
+Event ev_send_betriebsart_to_extbg, ev_send_piktogramme_to_extbg, ev_send_messwerte_navigation_to_extbg;
+
+unique
+{
+  //  Funktionsüberwachung
+  ev_x_drive_has_heartbeat;
+  ev_y_drive_has_heartbeat;
+  ev_z_drive_has_heartbeat;
+  ev_io_module_has_heartbeat;
+  ev_si_module_has_heartbeat;
+  ev_usv1_has_heartbeat;
+  ev_usv2_has_heartbeat;
+  ev_extbg_has_heartbeat;
+};
+
+global_functions
+{
+  a_bag_fue_send_all_data_to_extbg
+  {
+    ev_send_software_version_to_extbg;
+    ev_send_zustand_ruestsatz_to_extbg;
+    ev_send_motordaten_to_extbg;
+    ev_send_zustand_komponenten_to_extbg;
+    ev_send_zustand_plattform_to_extbg;
+    ev_send_messwerte_navigation_to_extbg;
+    ev_send_piktogramme_to_extbg;
+    ev_send_betriebsart_to_extbg;
+  };
+};
+
 // ------------------------------------------------------------------------
 
 Statemachine
@@ -47,9 +78,9 @@ Statemachine
   Actions
   {
     a_x_drive_set_operational       { ev_x_drive_set_operational; };
-    a_x_drive_supervise_heartbeat   { start_timer(3*DRIVES_HEARTBEAT_PERIOD*s, ev_x_drive_lacks_heartbeat, x_drive_os_heartbeat_timer); };
-    a_x_drive_is_online             { g_x_drive_is_online = 1; ev_x_drive_is_online;  };
-    a_x_drive_is_offline            { g_x_drive_is_online = 0; ev_x_drive_is_offline; };
+    a_x_drive_supervise_heartbeat   { start_timer ( 3 * DRIVES_HEARTBEAT_PERIOD * s, ev_x_drive_lacks_heartbeat, x_drive_os_heartbeat_timer ); };
+    a_x_drive_is_online             { s_x_drive_is_online = 1; ev_x_drive_is_online;  };
+    a_x_drive_is_offline            { s_x_drive_is_online = 0; ev_x_drive_is_offline; };
     a_x_drive_incident              { X_DRIVE_COMMUNICATION_INCIDENT = 1; };
     a_x_drive_no_incident           { X_DRIVE_COMMUNICATION_INCIDENT = 0; };
   };
@@ -75,9 +106,9 @@ Statemachine
   Actions
   {
     a_y_drive_set_operational       { ev_y_drive_set_operational; };
-    a_y_drive_supervise_heartbeat   { start_timer(3*DRIVES_HEARTBEAT_PERIOD*s, ev_y_drive_lacks_heartbeat, y_drive_os_heartbeat_timer); };
-    a_y_drive_is_online             { g_y_drive_is_online = 1; ev_y_drive_is_online;  ivenet_mast_state.isValid_out = 1;  };
-    a_y_drive_is_offline            { g_y_drive_is_online = 0; ev_y_drive_is_offline; ivenet_mast_state.isValid_out = 0;  };
+    a_y_drive_supervise_heartbeat   { start_timer ( 3 * DRIVES_HEARTBEAT_PERIOD * s, ev_y_drive_lacks_heartbeat, y_drive_os_heartbeat_timer ); };
+    a_y_drive_is_online             { s_y_drive_is_online = 1; ev_y_drive_is_online;  ivenet_mast_state.isValid_out = 1;  };
+    a_y_drive_is_offline            { s_y_drive_is_online = 0; ev_y_drive_is_offline; ivenet_mast_state.isValid_out = 0;  };
     a_y_drive_incident              { Y_DRIVE_COMMUNICATION_INCIDENT = 1; };
     a_y_drive_no_incident           { Y_DRIVE_COMMUNICATION_INCIDENT = 0; };
   };
@@ -103,9 +134,9 @@ Statemachine
   Actions
   {
     a_z_drive_set_operational       { ev_z_drive_set_operational; };
-    a_z_drive_supervise_heartbeat   { start_timer(3*DRIVES_HEARTBEAT_PERIOD*s, ev_z_drive_lacks_heartbeat, z_drive_os_heartbeat_timer); };
-    a_z_drive_is_online             { g_z_drive_is_online = 1; ev_z_drive_is_online;  };
-    a_z_drive_is_offline            { g_z_drive_is_online = 0; ev_z_drive_is_offline; };
+    a_z_drive_supervise_heartbeat   { start_timer ( 3 * DRIVES_HEARTBEAT_PERIOD * s, ev_z_drive_lacks_heartbeat, z_drive_os_heartbeat_timer ); };
+    a_z_drive_is_online             { s_z_drive_is_online = 1; ev_z_drive_is_online;  };
+    a_z_drive_is_offline            { s_z_drive_is_online = 0; ev_z_drive_is_offline; };
     a_z_drive_incident              { Z_DRIVE_COMMUNICATION_INCIDENT = 1; };
     a_z_drive_no_incident           { Z_DRIVE_COMMUNICATION_INCIDENT = 0; };
   };
@@ -131,9 +162,9 @@ Statemachine
   Actions
   {
     a_io_module_set_operational       { ev_io_module_set_operational; };
-    a_io_module_supervise_heartbeat   { start_timer(3*NODE_HEARTBEAT_PERIOD*s, ev_io_module_lacks_heartbeat, io_module_supervision_heartbeat_timer);  };
-    a_io_module_is_online             { g_io_module_is_online = 1; ev_io_module_is_online;  };
-    a_io_module_is_offline            { g_io_module_is_online = 0; ev_io_module_is_offline; };
+    a_io_module_supervise_heartbeat   { start_timer ( 3 * NODE_HEARTBEAT_PERIOD * s, ev_io_module_lacks_heartbeat, io_module_supervision_heartbeat_timer );  };
+    a_io_module_is_online             { s_io_module_is_online = 1; ev_io_module_is_online;  };
+    a_io_module_is_offline            { s_io_module_is_online = 0; ev_io_module_is_offline; };
   };
 
   Transition  { Initial;        Offline;  };
@@ -155,9 +186,9 @@ Statemachine
   Actions
   {
     a_si_module_set_operational       { ev_si_module_set_operational; };
-    a_si_module_supervise_heartbeat   { start_timer(3*NODE_HEARTBEAT_PERIOD*s, ev_si_module_lacks_heartbeat, si_module_supervision_heartbeat_timer);  };
-    a_si_module_is_online             { g_si_module_is_online = 1; ev_si_module_is_online;  };
-    a_si_module_is_offline            { g_si_module_is_online = 0; ev_si_module_is_offline; };
+    a_si_module_supervise_heartbeat   { start_timer ( 3 * NODE_HEARTBEAT_PERIOD * s, ev_si_module_lacks_heartbeat, si_module_supervision_heartbeat_timer );  };
+    a_si_module_is_online             { s_si_module_is_online = 1; ev_si_module_is_online;  };
+    a_si_module_is_offline            { s_si_module_is_online = 0; ev_si_module_is_offline; };
   };
 
   Transition  { Initial;        Offline;  };
@@ -182,7 +213,7 @@ Statemachine
     a_heckverteiler_is_offline          { ev_heckverteiler_is_offline;                               HV_COMMUNICATION_INCIDENT = 1; };
     a_supervise_all_components
     {
-      print("HECKVERTEILER: start supervising all components \n");
+      print ( "HECKVERTEILER: start supervising all components \n" );
       ev_x_drive_start_supervision;
       ev_y_drive_start_supervision;
       ev_z_drive_start_supervision;
@@ -210,9 +241,9 @@ Statemachine
   Actions
   {
     a_usv1_set_operational      { ev_usv1_set_operational;  };
-    a_usv1_supervise_heartbeat  { start_timer(3*NODE_HEARTBEAT_PERIOD*s, ev_usv1_lacks_heartbeat, usv1_supervision_heartbeat_timer);  };
-    a_usv1_is_online            { g_usv1_is_online = 1; ev_usv1_is_online;  };
-    a_usv1_is_offline           { g_usv1_is_online = 0; ev_usv1_is_offline; };
+    a_usv1_supervise_heartbeat  { start_timer ( 3 * NODE_HEARTBEAT_PERIOD * s, ev_usv1_lacks_heartbeat, usv1_supervision_heartbeat_timer );  };
+    a_usv1_is_online            { s_usv1_is_online = 1; ev_usv1_is_online;  };
+    a_usv1_is_offline           { s_usv1_is_online = 0; ev_usv1_is_offline; };
   };
 
   Transition  { Initial;        Offline; };
@@ -235,9 +266,9 @@ Statemachine
   Actions
   {
     a_usv2_set_operational      { ev_usv2_set_operational;  };
-    a_usv2_supervise_heartbeat  { start_timer(3*NODE_HEARTBEAT_PERIOD*s, ev_usv2_lacks_heartbeat, usv2_supervision_heartbeat_timer);  };
-    a_usv2_is_online            { g_usv2_is_online = 1; ev_usv2_is_online;  };
-    a_usv2_is_offline           { g_usv2_is_online = 0; ev_usv2_is_offline; };
+    a_usv2_supervise_heartbeat  { start_timer ( 3 * NODE_HEARTBEAT_PERIOD * s, ev_usv2_lacks_heartbeat, usv2_supervision_heartbeat_timer );  };
+    a_usv2_is_online            { s_usv2_is_online = 1; ev_usv2_is_online;  };
+    a_usv2_is_offline           { s_usv2_is_online = 0; ev_usv2_is_offline; };
   };
 
   Transition  { Initial;        Offline;  };
@@ -280,20 +311,20 @@ Statemachine
   Actions
   {
     a_extbg_set_operational     { ev_extbg_set_operational; };
-    a_extbg_supervise_heartbeat { start_timer(3*NODE_HEARTBEAT_PERIOD*s, ev_extbg_lacks_heartbeat, extbg_supervision_heartbeat_timer);  };
-    a_extBG_start_data_timer    { start_periodic_timer(1*s                      , ev_extbg_send_data      , extbg_send_data_timer); };
-    a_extBG_is_online           { g_extBG_is_online = 1; extbg_is_online = 1; ev_extBG_is_online; print("ExtBG is online\n"); };
-    a_extBG_is_offline          { g_extBG_is_online = 0; extbg_is_online = 0; ev_extBG_is_offline;  };
+    a_extbg_supervise_heartbeat { start_timer ( 3 * NODE_HEARTBEAT_PERIOD * s, ev_extbg_lacks_heartbeat, extbg_supervision_heartbeat_timer );  };
+    a_extBG_start_data_timer    { start_periodic_timer ( 1 * s               , a_bag_fue_send_all_data_to_extbg, extbg_send_data_timer ); };
+    a_extBG_is_online           { s_extBG_is_online = 1; ev_extBG_is_online;   print ( "ExtBG is online\n" ); };
+    a_extBG_is_offline          { s_extBG_is_online = 0; ev_extBG_is_offline;  print ( "ExtBG is offline\n" ); };
+    a_extBG_stop_data_timer     { stop_timer ( extbg_send_data_timer );  };
   };
 
-  Transition  { Initial;        Offline;  };
-  Transition  { Offline;           Operational; ev_extbg_has_heartbeat;     g_extbg_payload_is_op;    a_extbg_supervise_heartbeat;  a_extBG_is_online; a_extBG_start_data_timer;  };
-//  Transition  { Offline;           Operational; ev_extbg_has_heartbeat;     g_extbg_payload_is_op;    a_extbg_supervise_heartbeat;  a_extBG_is_online;  };
+  Transition  { Initial;        Offline;        };
   Transition  { Offline;        PreOperational; ev_extbg_has_heartbeat;     g_extbg_payload_is_preop; a_extbg_supervise_heartbeat;  a_extbg_set_operational;  };
-  Transition  { PreOperational; Offline;        ev_extbg_lacks_heartbeat;                             a_extBG_is_offline; };
+  Transition  { Offline;           Operational; ev_extbg_has_heartbeat;     g_extbg_payload_is_op;    a_extbg_supervise_heartbeat;  a_extBG_is_online; a_extBG_start_data_timer;  };
+  Transition  { PreOperational; Offline;        ev_extbg_lacks_heartbeat;                             a_extBG_stop_data_timer;      a_extBG_is_offline; };
   Transition  { PreOperational;    Operational; ev_extbg_has_heartbeat;     g_extbg_payload_is_op;    a_extbg_supervise_heartbeat;  a_extBG_is_online;  };
   Transition  {    Operational;    Operational; ev_extbg_has_heartbeat;     g_extbg_payload_is_op;    a_extbg_supervise_heartbeat;  };
-  Transition  {    Operational; Offline;        ev_extbg_lacks_heartbeat;                             a_extBG_is_offline; };
+  Transition  {    Operational; Offline;        ev_extbg_lacks_heartbeat;                             a_extBG_stop_data_timer;      a_extBG_is_offline; };
 };
 
 // ------------------------------------------------------------------------
@@ -305,12 +336,12 @@ Statemachine
 
   Actions
   {
-    a_psm_supervise_traffic   { start_timer(10*PSM_TRAFFIC_PERIOD*s, ev_psm_lacks_traffic, psm_traffic_consumer_timer); };
+    a_psm_supervise_traffic   { start_timer ( 10 * PSM_TRAFFIC_PERIOD * s, ev_psm_lacks_traffic, psm_traffic_consumer_timer ); };
     a_psm_is_offline          { PSM_IS_OPERATIONAL = 0; };
     a_psm_is_operational      { PSM_IS_OPERATIONAL = 1; };
   };
 
-  Transition  { Initial;      Offline;  };
+  Transition  { Initial;      Offline;      };
   Transition  { Offline;      Operational;  ev_psm_start_supervision;     a_psm_supervise_traffic; a_psm_is_operational;  };
   Transition  { Offline;      Operational;  ev_message_from_psm;          a_psm_supervise_traffic; a_psm_is_operational;  };
   Transition  { Operational;  Operational;  ev_message_from_psm;          a_psm_supervise_traffic; a_psm_is_operational;  };
@@ -326,12 +357,12 @@ Statemachine
 
   Actions
   {
-    a_ivenet_supervise_traffic  { start_timer(10*IVENET_TRAFFIC_PERIOD*s, ev_ivenet_lacks_traffic, ivenet_traffic_consumer_timer);  };
+    a_ivenet_supervise_traffic  { start_timer ( 10 * IVENET_TRAFFIC_PERIOD * s, ev_ivenet_lacks_traffic, ivenet_traffic_consumer_timer );  };
     a_ivenet_incident           { IVENET_COMMUNICATION_INCIDENT = 1;  };
     a_ivenet_no_incident        { IVENET_COMMUNICATION_INCIDENT = 0;  };
   };
 
-  Transition  { Initial;      Offline;  };
+  Transition  { Initial;      Offline;      };
   Transition  { Offline;      Operational;  ev_ivenet_start_supervision;  a_ivenet_supervise_traffic; };
   Transition  { Offline;      Operational;  ev_message_from_ivenet;       a_ivenet_supervise_traffic; a_ivenet_no_incident; };
   Transition  { Operational;  Operational;  ev_message_from_ivenet;       a_ivenet_supervise_traffic; };

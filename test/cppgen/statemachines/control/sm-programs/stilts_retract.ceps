@@ -1,25 +1,37 @@
 Event ev_stilts_are_retracted, ev_stilt_left_is_retracted, ev_stilt_right_is_retracted, ev_stilts_retract_timeout;
 Event ev_stilts_stop_moving, ev_stilts_retract, ev_stilts_retract_is_starting, ev_stilts_locked_stilt_detected;
-Guard g_stilts_all_are_retracted, g_stilts_all_are_locked, g_kampfschalter_is_active, g_system_pressure_is_sufficient;
+
+Guard g_stilts_all_are_retracted, g_stilts_all_are_locked;
+Guard g_kampfschalter_is_active,  g_system_pressure_is_sufficient;
 
 Statemachine
 {
   id  { sm_Stilts_retract;  };
   description { "Stilts_retract";  };
-  States  { Initial;  Final;  Stilts_Retracting;  Error;  };
+  States  { Initial;  Final;  Start;  Stilts_Retracting;  Error;  };
   Actions
   {
-    a_stilts_retract      { ev_stilts_retract; ev_stilts_retract_is_starting; }; 
-    a_set_timeout_timer   { start_timer ( DEF_TIME_STUETZEN_FAHREN * s,  ev_stilts_retract_timeout, timer_stilts_retract );  };
-    a_finished            { ev_stilts_are_retracted; ev_stilts_stop_moving; };
-    a_stilts_retract_failure_stilt_locked         { ev_stilts_locked_stilt_detected;    ev_stilts_stop_moving; };
+    a_stilts_retract_not_needed                 { ev_stilts_are_retracted; };
+    a_stilts_retract_start                      { ev_stilts_retract;
+                                                  ev_stilts_retract_is_starting;
+                                                  start_timer ( DEF_TIME_STUETZEN_FAHREN * s,  ev_stilts_retract_timeout, timer_stilts_retract );
+                                                };
+    a_stilts_retract_finished                   { ev_stilts_are_retracted;            ev_stilts_stop_moving; };
+    a_stilts_retract_failure_stilt_locked       { ev_stilts_locked_stilt_detected;    ev_stilts_stop_moving; };
+    a_stilts_retract_timeout                    { ev_stilts_retract_interrupted; };
+    a_stilts_retract_stop_timer                 { stop_timer ( timer_stilts_retract ); };
   };
 
-  on_exit { stop_timer(timer_stilts_retract); };
+  on_exit
+  {
+    a_stilts_retract_stop_timer;
+  };
 
-  Transition  { Initial;            Final;                                            a_finished;                             g_stilts_all_are_retracted;  };
-  Transition  { Initial;            Error;                                            a_stilts_retract_failure_stilt_locked; !g_stilts_all_are_retracted && g_stilt_any_is_locked; };
-  Transition  { Initial;            Stilts_Retracting;                                a_stilts_retract; a_set_timeout_timer; !g_stilts_all_are_retracted && !g_stilts_all_are_locked && (g_kampfschalter_is_active || g_system_pressure_is_sufficient); };
-  Transition  { Stilts_Retracting;  Final;              ev_stilt_left_is_retracted;   a_finished;                             g_stilts_all_are_retracted;  };
-  Transition  { Stilts_Retracting;  Final;              ev_stilt_right_is_retracted;  a_finished;                             g_stilts_all_are_retracted;  };
+  Transition  { Initial;            Final;                                            a_stilts_retract_not_needed;                              g_stilts_all_are_retracted;   };
+  Transition  { Initial;            Start;                                                                                                     !g_stilts_all_are_retracted;   };
+  Transition  { Start;              Error;                                            a_stilts_retract_failure_stilt_locked;                    g_stilt_any_is_locked;        };
+  Transition  { Start;              Stilts_Retracting;                                a_stilts_retract_start;                                  !g_stilt_any_is_locked && (g_kampfschalter_is_active || g_system_pressure_is_sufficient); };
+  Transition  { Stilts_Retracting;  Final;              ev_stilt_left_is_retracted;   a_stilts_retract_finished;  a_stilts_retract_stop_timer;  g_stilts_all_are_retracted;   };
+  Transition  { Stilts_Retracting;  Final;              ev_stilt_right_is_retracted;  a_stilts_retract_finished;  a_stilts_retract_stop_timer;  g_stilts_all_are_retracted;   };
+  Transition  { Stilts_Retracting;  Error;              ev_stilts_retract_timeout;    a_stilts_retract_timeout;                                                               };
 };

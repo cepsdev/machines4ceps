@@ -1,15 +1,14 @@
 // SMUR - Stütze Magnet Unten Rechts  ( Stütze rechts voll ausgefahren )
 
 //  external events and guards
-Event ev_stilts_valve_state, ev_stilt_right_state_change;
+Event ev_stilts_right_position_changed, ev_stilt_endschalter_SMUR_change;
 
 //  local events and guards
-Guard g_SMUR_sim_goes_on, g_SMUR_sim_still_off;
+Guard g_SMUR_sim_goes_on;
 
 Globals 
 {
   g_SMUR_sim_goes_on    = ( Stilt_position_right  >=  STILTS_POSITION_MAX );
-  g_SMUR_sim_still_off  = ( Stilt_position_right  <   STILTS_POSITION_MAX );
 };
 
 Statemachine
@@ -20,13 +19,13 @@ Statemachine
 
   Actions
   {
-    a_StiltsState_right { ev_stilt_right_state_change;  };
-    a_Off               { SENSOR_SMUR  = 0; };
-    a_On                { SENSOR_SMUR  = 1; };
+    a_stilts_es_state_change  { ev_stilt_endschalter_SMUR_change;  };
+    a_stilts_es_SMUR_Off      { SENSOR_SMUR = 0;  print ( "SENSOR_SMUR = 0\n" );  };
+    a_stilts_es_SMUR_On       { SENSOR_SMUR = 1;  print ( "SENSOR_SMUR = 1\n" );  };
   };
 
-  Transition  { Initial;  Off;                        a_Off; !g_SMUR_sim_goes_on; };
-  Transition  { Initial;  On;                         a_On;   g_SMUR_sim_goes_on; };
-  Transition  { Off;      On;   a_StiltsState_right;  a_On;   g_SMUR_sim_goes_on; };
-  Transition  { On;       Off;  a_StiltsState_right;  a_Off;  g_SMUR_sim_still_off; };
+  Transition  { Initial;  Off;                                     !g_SMUR_sim_goes_on;   a_stilts_es_SMUR_Off;                           };
+  Transition  { Initial;  On;                                       g_SMUR_sim_goes_on;   a_stilts_es_SMUR_On;                            };
+  Transition  { Off;      On;   ev_stilts_right_position_changed;   g_SMUR_sim_goes_on;   a_stilts_es_SMUR_On;  a_stilts_es_state_change; };
+  Transition  { On;       Off;  ev_stilts_right_position_changed;  !g_SMUR_sim_goes_on;   a_stilts_es_SMUR_Off; a_stilts_es_state_change; };
 };

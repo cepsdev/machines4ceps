@@ -1,5 +1,5 @@
 //  local events
-Event ev_stilts_left_moving_time, ev_stilts_right_moving_time;
+Event ev_stilts_left_moving_time, ev_stilts_right_moving_time, ev_stilts_left_position_changed, ev_stilts_right_position_changed;
 
 Guard g_stilt_moveing_up, g_stilt_moveing_down;
 
@@ -18,15 +18,15 @@ Statemachine
   States  { Initial;  Stoped; Moving_up; Moving_down; };
   Actions
   {
-    a_start_moving_up
+    a_stilt_start_moving_up
     {
       start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_left_moving_time, timer_stilts_left_moving );
     };
-    a_start_moving_down
+    a_stilt_start_moving_down
     {
       start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_left_moving_time, timer_stilts_left_moving );
     };
-    a_moving_up
+    a_stilt_moving_up
     {
       if ( Stilt_position_left > STILTS_POSITION_MIN )
       {
@@ -37,8 +37,9 @@ Statemachine
         };
         print ( "--- dingo-sim --- Stilt_position_left: ", Stilt_position_left, " and move up/retracting\n" );
       };
+      ev_stilts_left_position_changed;
     };
-    a_moving_down
+    a_stilt_moving_down
     {
       if ( Stilt_position_left >= STILTS_POSITION_MAX )
       {
@@ -58,8 +59,9 @@ Statemachine
           print ( "--- dingo-sim --- Stilt_position_left: ", Stilt_position_left, " and ground contact\n" );
         };
       };
+      ev_stilts_left_position_changed;
     };
-    a_stop_moving
+    a_stilt_stop_moving
     {
       stop_timer ( timer_stilts_left_moving );
       print ( "--- dingo-sim --- Stilt_position_left: ", Stilt_position_left, " and stoped\n" );
@@ -67,16 +69,19 @@ Statemachine
   };
   on_exit
   {
-    stop_timer ( timer_stilts_left_moving );
+    if ( !in_state ( Stoped ) )
+    {
+      a_stilt_stop_moving;
+    };
   };
 
   Transition  { Initial;      Stoped; };
-  Transition  { Stoped;       Moving_up;                                  a_start_moving_up;    g_stilt_moveing_up;  };
-  Transition  { Stoped;       Moving_down;                                a_start_moving_down;  g_stilt_moveing_down; };
-  Transition  { Moving_up;    Moving_up;    ev_stilts_left_moving_time;   a_moving_up;          g_stilt_moveing_up;  };
-  Transition  { Moving_up;    Stoped;                                     a_stop_moving;       !g_stilt_moveing_up;  };
-  Transition  { Moving_down;  Moving_down;  ev_stilts_left_moving_time;   a_moving_down;        g_stilt_moveing_down;  };
-  Transition  { Moving_down;  Stoped;                                     a_stop_moving;       !g_stilt_moveing_down;  };
+  Transition  { Stoped;       Moving_up;                                  a_stilt_start_moving_up;    g_stilt_moveing_up;   };
+  Transition  { Stoped;       Moving_down;                                a_stilt_start_moving_down;  g_stilt_moveing_down; };
+  Transition  { Moving_up;    Moving_up;    ev_stilts_left_moving_time;   a_stilt_moving_up;          g_stilt_moveing_up;   };
+  Transition  { Moving_up;    Stoped;       ev_stilts_left_moving_time;   a_stilt_stop_moving;       !g_stilt_moveing_up;   };
+  Transition  { Moving_down;  Moving_down;  ev_stilts_left_moving_time;   a_stilt_moving_down;        g_stilt_moveing_down; };
+  Transition  { Moving_down;  Stoped;       ev_stilts_left_moving_time;   a_stilt_stop_moving;       !g_stilt_moveing_down; };
 };
 
 // ----------------------------------------------------------------------
@@ -87,15 +92,15 @@ Statemachine
   States  { Initial;  Stoped; Moving_up; Moving_down; };
   Actions
   {
-    a_start_moving_up
+    a_stilt_start_moving_up
     {
       start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_right_moving_time, timer_stilts_right_moving );
     };
-    a_start_moving_down
+    a_stilt_start_moving_down
     {
       start_periodic_timer ( SIM_STILT_MOVING_TIMER_PERIOD * s, ev_stilts_right_moving_time, timer_stilts_right_moving );
     };
-    a_moving_up
+    a_stilt_moving_up
     {
       if ( Stilt_position_right > STILTS_POSITION_MIN )
       {
@@ -106,8 +111,9 @@ Statemachine
         };
         print ( "--- dingo-sim --- Stilt_position_right: ", Stilt_position_right, " and move up/retracting\n" );
       };
+      ev_stilts_right_position_changed;
     };
-    a_moving_down
+    a_stilt_moving_down
     {
       if ( Stilt_position_right >= STILTS_POSITION_MAX )
       {
@@ -127,8 +133,9 @@ Statemachine
           print ( "--- dingo-sim --- Stilt_position_right: ", Stilt_position_right, " and ground contact\n" );
         };
       };
+      ev_stilts_right_position_changed;
     };
-    a_stop_moving
+    a_stilt_stop_moving
     {
       stop_timer ( timer_stilts_right_moving );
       print ( "--- dingo-sim --- Stilt_position_right: ", Stilt_position_right, " and stoped\n" );
@@ -136,15 +143,18 @@ Statemachine
   };
   on_exit
   {
-    stop_timer ( timer_stilts_right_moving );
+    if ( !in_state ( Stoped ) )
+    {
+      a_stilt_stop_moving;
+    };
   };
 
   Transition  { Initial;      Stoped; };
-  Transition  { Stoped;       Moving_up;                                  a_start_moving_up;    g_stilt_moveing_up;  };
-  Transition  { Stoped;       Moving_down;                                a_start_moving_down;  g_stilt_moveing_down; };
-  Transition  { Moving_up;    Moving_up;    ev_stilts_right_moving_time;  a_moving_up;          g_stilt_moveing_up;  };
-  Transition  { Moving_up;    Stoped;                                     a_stop_moving;       !g_stilt_moveing_up;  };
-  Transition  { Moving_down;  Moving_down;  ev_stilts_right_moving_time;  a_moving_down;        g_stilt_moveing_down;  };
-  Transition  { Moving_down;  Stoped;                                     a_stop_moving;       !g_stilt_moveing_down;  };
+  Transition  { Stoped;       Moving_up;                                  a_stilt_start_moving_up;    g_stilt_moveing_up;   };
+  Transition  { Stoped;       Moving_down;                                a_stilt_start_moving_down;  g_stilt_moveing_down; };
+  Transition  { Moving_up;    Moving_up;    ev_stilts_right_moving_time;  a_stilt_moving_up;          g_stilt_moveing_up;   };
+  Transition  { Moving_up;    Stoped;                                     a_stilt_stop_moving;       !g_stilt_moveing_up;   };
+  Transition  { Moving_down;  Moving_down;  ev_stilts_right_moving_time;  a_stilt_moving_down;        g_stilt_moveing_down; };
+  Transition  { Moving_down;  Stoped;                                     a_stilt_stop_moving;       !g_stilt_moveing_down; };
 };
 

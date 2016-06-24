@@ -1,22 +1,38 @@
-Event ev_flap_is_open, ev_flap_stop_moving, ev_flap_HVZS_close, ev_flap_open_finished, ev_flap_open_timeout, ev_flap_open_started, ev_flap_open_preconditions_not_are_not_met;
+Event ev_flap_open_started,   ev_flap_HVZS_close,   ev_flap_is_open,    ev_flap_stop_moving,  ev_flap_open_finished,  ev_flap_open_timeout;
+Event ev_flap_open_preconditions_not_are_not_met,   ev_flap_close_was_interrupted,  ev_flap_open_interrupted;
 
 Statemachine
 {
   id  { sm_Flap_open; };
   description { "Flap_open";  };
-  States  { Initial;  Final;  Flap_Opening; Error;  };
+  States  { Initial;  Final;  Start;  Flap_Opening; Error;  };
   Actions
   {
-    a_open_flap         { ev_flap_HVZS_close; ev_flap_open_started; };
-    a_set_timeout_timer { start_timer ( DEF_TIME_HAUBE_OEFFNEN * s, ev_flap_open_timeout, timer_flap_open ); };
-    a_stop_moving_flap  { ev_flap_stop_moving; ev_flap_open_finished; };
-    a_flap_open_error   { ev_flap_open_preconditions_not_are_not_met; };
+    a_flap_open_not_needed        { ev_flap_open_finished; };
+    a_flap_open_start             { ev_flap_HVZS_close;
+                                    ev_flap_open_started;
+                                    start_timer ( DEF_TIME_HAUBE_OEFFNEN * s, ev_flap_open_timeout, timer_flap_open );
+                                  };
+    a_flap_open_error             { ev_flap_open_preconditions_not_are_not_met; };
+    a_stop_moving_flap            { ev_flap_stop_moving;  ev_flap_open_finished;  };
+    a_flap_open_timeout           { ev_flap_stop_moving;  ev_flap_open_interrupted; };
+    a_flap_open_was_interrupted   { ev_flap_close_was_interrupted; };
+    a_flap_open_stop_timer        { stop_timer ( timer_flap_open ); };
   };
 
-  on_exit { stop_timer ( timer_flap_open );  };
+  on_exit
+  {
+    if ( !in_state ( Final, Error ) )
+    {
+      a_flap_open_stop_timer;
+      a_flap_open_was_interrupted;
+    };
+  };
 
-  Transition  { Initial;      Final;                                                                    g_flap_is_open; };
-  Transition  { Initial;      Flap_Opening;                   a_open_flap;        a_set_timeout_timer; !g_flap_is_open &&   g_flap_open_preconditions;  };
-  Transition  { Initial;      Error;                          a_flap_open_error;                        g_flap_is_wrong || !g_flap_open_preconditions;  };
-  Transition  { Flap_Opening; Final;        ev_flap_is_open;  a_stop_moving_flap; };
+  Transition  { Initial;      Final;                                a_flap_open_not_needed;                             g_flap_is_open;             };
+  Transition  { Initial;      Start;                                                                                   !g_flap_is_open;             };
+  Transition  { Start;        Flap_Opening;                         a_flap_open_start;                                  g_flap_open_preconditions;  };
+  Transition  { Start;        Error;                                a_flap_open_error;                                 !g_flap_open_preconditions;  };
+  Transition  { Flap_Opening; Final;        ev_flap_is_open;        a_stop_moving_flap;       a_flap_open_stop_timer;                               };
+  Transition  { Flap_Opening; Error;        ev_flap_open_timeout;   a_flap_open_timeout;                                                            };
 };

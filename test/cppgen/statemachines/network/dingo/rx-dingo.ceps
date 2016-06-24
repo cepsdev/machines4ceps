@@ -7,15 +7,15 @@ global_functions
   print_drive_control_
   {
     params{ _drive; _DriveName; };
-    print ( "========== RX-DINGO  - CONTROL ====================== ", _DriveName, "\n"
-          , "---------- ANTRIEB_MODE:           ", _drive.Control.ANTRIEB_MODE, "\n"
-          , "---------- ANTRIEB_ENABLE_IN:      ", _drive.Control.ANTRIEB_ENABLE_IN, "\n"
-          , "---------- BREAK_RELEASE:          ", _drive.Control.ANTRIEB_BREAK_RELEASE, "\n"
-          , "---------- RESET_FAULT:            ", _drive.Control.ANTRIEB_RESET_FAULT, "\n"
-          , "---------- SollPos    CAN / MKS :  ", _drive.CanSollPos,     " / ", _drive.SollPos,     "\n"
-          , "---------- SollGeschw CAN / MKS :  ", _drive.CanSollGeschw,  " / ", _drive.SollGeschw,  "\n"
-          , "---------- SollStrom  CAN / MKS :  ", _drive.CanSollStrom,   " / ", _drive.SollStrom,   " ( not used )\n"
-          , "=====================================================\n"
+    print ( "======== RX-DINGO  - CONTROL ====================== ", _DriveName, "\n"
+          , "-------- ANTRIEB_MODE:           ", _drive.Control.ANTRIEB_MODE, "\n"
+          , "-------- ANTRIEB_ENABLE_IN:      ", _drive.Control.ANTRIEB_ENABLE_IN, "\n"
+          , "-------- BRAKE_RELEASE:          ", _drive.Control.ANTRIEB_BRAKE_RELEASE, "\n"
+          , "-------- RESET_FAULT:            ", _drive.Control.ANTRIEB_RESET_FAULT, "\n"
+          , "-------- SollPos    CAN / MKS :  ", _drive.CanSollPos,     " / ", _drive.SollPos,     "\n"
+          , "-------- SollGeschw CAN / MKS :  ", _drive.CanSollGeschw,  " / ", _drive.SollGeschw,  "\n"
+          , "-------- SollStrom  CAN / MKS :  ", _drive.CanSollStrom,   " / ", _drive.SollStrom,   " ( not used )\n"
+          , "===================================================\n"
           );
   };
 //  on_luminance_request{
@@ -24,255 +24,159 @@ global_functions
 //     // event(payload);
 //  };
 
-//print ( "---------- RECEIVE ---------- ev_io_module_set_operational\n" );
+//print ( "-------- RECEIVE -------- ev_io_module_set_operational\n" );
 
 // ------------------------------------------------------------------------
 //                  DRIVES
 // ------------------------------------------------------------------------
 
+// -------------------------------------
+//                  X-Antrieb
+// -------------------------------------
   handler_drive_request_x
   {
-    print ( "---------- RX-DINGO  ---------- handler_drive_request_x\n" );
+    print ( "-------- RX-DINGO  -------- handler_drive_request_x\n" );
 
-    if ( changed ( "s_frame_drive_control_mode_xdrv_in" ) )
+    x_drive_can_ctrl = 0;
+    if ( changed ( "s_frame_drive_control_mode_xdrv_in" ) )             { x_drive_can_ctrl = 1; x_drive.Control.ANTRIEB_MODE          = s_frame_drive_control_mode_xdrv_in; };
+    if ( changed ( "s_frame_drive_target_pos_xdrv_in" ) )
     {
-      x_drive.Control.ANTRIEB_MODE          = s_frame_drive_control_mode_xdrv_in;
-
-      if ( x_drive.Control.ANTRIEB_MODE == DRIVE_OPERATIONAL_MODE_STOP )
-      {
-        print ( "---------- RX-DINGO  ---------- ev_x_drive_stop\n" );
-        ev_x_drive_stop;
-      };
-    };
-
-    if ( changed ( "s_frame_drive_target_pos_xdrv_in" ) ) 
-    {
-      x_drive.CanSollPos  = s_frame_drive_target_pos_xdrv_in;
-      x_drive.SollPos     = X_IstPosition_Berechnen ( x_drive.CanSollPos );
-      print ( "---------- RX-DINGO  ---------- x_drive.SollPos (CAN): ", x_drive.CanSollPos, ", (MKS): ", x_drive.SollPos, "\n" );
-      if ( x_drive.Control.ANTRIEB_ENABLE_IN == 1 )
-      {
-        ev_x_drive_move;
-      };
+      x_drive_can_ctrl = 1;
+      x_drive.CanSollPos                    = s_frame_drive_target_pos_xdrv_in;
+      x_drive.SollPos                       = X_IstPosition_Berechnen ( x_drive.CanSollPos );
+      print ( "-------- RX-DINGO  -------- x_drive.SollPos (CAN): ", x_drive.CanSollPos, ", (MKS): ", x_drive.SollPos, "\n" );
     };
 
     if ( changed ( "s_frame_drive_target_speed_xdrv_in" ) )
     {
-      x_drive.CanSollGeschw                 = s_frame_drive_target_speed_xdrv_in;
-      x_drive.SollGeschw                    = x_drive.CanSollGeschw;
-      x_drive.IstGeschw                     = x_drive.SollGeschw; //  just for simulation
+      x_drive_can_ctrl = 1;
+      x_drive.CanSollGeschw                 = 16 * s_frame_drive_target_speed_xdrv_in;
+      x_drive.SollGeschw                    = X_IstPosition_Berechnen ( x_drive.CanSollGeschw );
     };
 
     if ( changed ( "s_frame_drive_target_current_xdrv_in" ) )
     {
-      x_drive.CanSollStrom                  = s_frame_drive_target_current_xdrv_in;
-      x_drive.SollStrom                     = x_drive.CanSollStrom;
+      x_drive_can_ctrl = 1;
+      x_drive.CanSollStrom                  = 16 * s_frame_drive_target_current_xdrv_in;
+      x_drive.SollStrom                     = x_drive.CanSollStrom / 10.0;
       x_drive.IstStrom                      = x_drive.SollStrom;  //  just for simulation
     };
 
-    if ( changed ( "s_frame_drive_control_enable_xdrv_in" ) )
-    {
-      x_drive.Control.ANTRIEB_ENABLE_IN     = s_frame_drive_control_enable_xdrv_in;
+    if ( changed ( "s_frame_drive_control_enable_xdrv_in" ) )           { x_drive_can_ctrl = 1; x_drive.Control.ANTRIEB_ENABLE_IN     = s_frame_drive_control_enable_xdrv_in; };
+    if ( changed ( "s_frame_drive_control_brake_release_xdrv_in" ) )    { x_drive_can_ctrl = 1; x_drive.Control.ANTRIEB_BRAKE_RELEASE = s_frame_drive_control_brake_release_xdrv_in;  };
+    if ( changed ( "s_frame_drive_control_reset_fault_xdrv_in" ) )      { x_drive_can_ctrl = 1; x_drive.Control.ANTRIEB_RESET_FAULT   = s_frame_drive_control_reset_fault_xdrv_in;  };
+    if ( changed ( "s_frame_drive_control_calibrate_pos_xdrv_in" ) )    { x_drive_can_ctrl = 1; x_drive.Control.ANTRIEB_CALIBRATE_POS = s_frame_drive_control_calibrate_pos_xdrv_in;  };
 
-      if ( x_drive.Control.ANTRIEB_ENABLE_IN == 1 )
-      {
-        ev_x_drive_enable;
-//        ev_x_drive_move;  //  workaround ! because wrong order, please check for better solution
-      };
-    };
-
-    if ( changed ( "s_frame_drive_control_break_release_xdrv_in" ) )
+    if ( x_drive_can_ctrl == 1 )
     {
-      x_drive.Control.ANTRIEB_BREAK_RELEASE = s_frame_drive_control_break_release_xdrv_in;
-      x_drive.Status.ANTRIEB_BREAK_RELEASED = x_drive.Control.ANTRIEB_BREAK_RELEASE;
+      print_drive_control_ ( x_drive, "X_drive" );
+      ev_x_drive_sim_control;
     };
-
-    if ( changed ( "s_frame_drive_control_reset_fault_xdrv_in" ) )
-    {
-      x_drive.Control.ANTRIEB_RESET_FAULT   = s_frame_drive_control_reset_fault_xdrv_in;
-    };
-
-    if ( changed ( "s_frame_drive_control_calibrate_pos_xdrv_in" ) )
-    {
-      x_drive.Control.ANTRIEB_CALIBRATE_POS = s_frame_drive_control_calibrate_pos_xdrv_in;
-    };
-
-    if ( ( x_drive.Control.ANTRIEB_ENABLE_IN == 0 )
-      && ( x_drive.Control.ANTRIEB_BREAK_RELEASE == 0 )
-      )
-    {
-      ev_x_drive_disable;
-    };
-    print_drive_control_ ( x_drive, "X_drive" );
   };
 
+// -------------------------------------
+//                  Y-Antrieb
+// -------------------------------------
   handler_drive_request_y
   {
-    print ( "---------- RX-DINGO  ---------- handler_drive_request_y\n" );
+    print ( "-------- RX-DINGO  -------- handler_drive_request_y\n" );
 
-    if ( changed ( "s_frame_drive_control_mode_ydrv_in" ) )
+    y_drive_can_ctrl = 0;
+    if ( changed ( "s_frame_drive_control_mode_ydrv_in" ) )             { y_drive_can_ctrl = 1; y_drive.Control.ANTRIEB_MODE          = s_frame_drive_control_mode_ydrv_in; };
+    if ( changed ( "s_frame_drive_target_pos_ydrv_in" ) )
     {
-      y_drive.Control.ANTRIEB_MODE          = s_frame_drive_control_mode_ydrv_in;
-
-      if ( y_drive.Control.ANTRIEB_MODE == DRIVE_OPERATIONAL_MODE_STOP )
-      {
-        print ( "---------- RX-DINGO  ---------- ev_y_drive_stop\n" );
-        ev_y_drive_stop;
-      };
-    };
-
-    if ( changed ( "s_frame_drive_target_pos_ydrv_in" ) ) 
-    {
-      y_drive.CanSollPos  = s_frame_drive_target_pos_ydrv_in;
-      y_drive.SollPos     = Y_IstPosition_Berechnen ( y_drive.CanSollPos );
-      print ( "---------- RX-DINGO  ---------- y_drive.SollPos (CAN): ", y_drive.CanSollPos, ", (MKS): ", y_drive.SollPos, "\n" );
-      if ( y_drive.Control.ANTRIEB_ENABLE_IN == 1 )
-      {
-        ev_y_drive_move;
-      };
+      y_drive_can_ctrl = 1;
+      y_drive.CanSollPos                    = s_frame_drive_target_pos_ydrv_in;
+      y_drive.SollPos                       = Y_IstPosition_Berechnen ( y_drive.CanSollPos );
+      print ( "-------- RX-DINGO  -------- y_drive.SollPos (CAN): ", y_drive.CanSollPos, ", (MKS): ", y_drive.SollPos, "\n" );
     };
 
     if ( changed ( "s_frame_drive_target_speed_ydrv_in" ) )
     {
-      y_drive.CanSollGeschw                 = s_frame_drive_target_speed_ydrv_in;
-      y_drive.SollGeschw                    = y_drive.CanSollGeschw;
-      y_drive.IstGeschw                     = y_drive.SollGeschw; //  just for simulation
+      y_drive_can_ctrl = 1;
+      y_drive.CanSollGeschw                 = 16 * s_frame_drive_target_speed_ydrv_in;
+      y_drive.SollGeschw                    = Y_IstPosition_Berechnen ( y_drive.CanSollGeschw );
     };
 
     if ( changed ( "s_frame_drive_target_current_ydrv_in" ) )
     {
-      y_drive.CanSollStrom                  = s_frame_drive_target_current_ydrv_in;
-      y_drive.SollStrom                     = y_drive.CanSollStrom;
+      y_drive_can_ctrl = 1;
+      y_drive.CanSollStrom                  = 16 * s_frame_drive_target_current_ydrv_in;
+      y_drive.SollStrom                     = y_drive.CanSollStrom / 10.0;
       y_drive.IstStrom                      = y_drive.SollStrom;  //  just for simulation
     };
 
-    if ( changed ( "s_frame_drive_control_enable_ydrv_in" ) )
-    {
-      y_drive.Control.ANTRIEB_ENABLE_IN     = s_frame_drive_control_enable_ydrv_in;
+    if ( changed ( "s_frame_drive_control_enable_ydrv_in" ) )           { y_drive_can_ctrl = 1; y_drive.Control.ANTRIEB_ENABLE_IN     = s_frame_drive_control_enable_ydrv_in; };
+    if ( changed ( "s_frame_drive_control_brake_release_ydrv_in" ) )    { y_drive_can_ctrl = 1; y_drive.Control.ANTRIEB_BRAKE_RELEASE = s_frame_drive_control_brake_release_ydrv_in;  };
+    if ( changed ( "s_frame_drive_control_reset_fault_ydrv_in" ) )      { y_drive_can_ctrl = 1; y_drive.Control.ANTRIEB_RESET_FAULT   = s_frame_drive_control_reset_fault_ydrv_in;  };
+    if ( changed ( "s_frame_drive_control_calibrate_pos_ydrv_in" ) )    { y_drive_can_ctrl = 1; y_drive.Control.ANTRIEB_CALIBRATE_POS = s_frame_drive_control_calibrate_pos_ydrv_in;  };
 
-      if ( y_drive.Control.ANTRIEB_ENABLE_IN == 1 )
-      {
-        ev_y_drive_enable;
-//        ev_y_drive_move;  //  workaround ! because wrong order, please check for better solution
-      };
-    };
-
-    if ( changed ( "s_frame_drive_control_break_release_ydrv_in" ) )
+    if ( y_drive_can_ctrl == 1 )
     {
-      y_drive.Control.ANTRIEB_BREAK_RELEASE = s_frame_drive_control_break_release_ydrv_in;
-      y_drive.Status.ANTRIEB_BREAK_RELEASED = y_drive.Control.ANTRIEB_BREAK_RELEASE;
+      print_drive_control_ ( y_drive, "Y_drive" );
+      ev_y_drive_sim_control;
     };
-
-    if ( changed ( "s_frame_drive_control_reset_fault_ydrv_in" ) )
-    {
-      y_drive.Control.ANTRIEB_RESET_FAULT   = s_frame_drive_control_reset_fault_ydrv_in;
-    };
-
-    if ( changed ( "s_frame_drive_control_calibrate_pos_ydrv_in" ) )
-    {
-      y_drive.Control.ANTRIEB_CALIBRATE_POS = s_frame_drive_control_calibrate_pos_ydrv_in;
-    };
-
-    if ( ( y_drive.Control.ANTRIEB_ENABLE_IN == 0 )
-      && ( y_drive.Control.ANTRIEB_BREAK_RELEASE == 0 )
-      )
-    {
-      ev_y_drive_disable;
-    };
-    print_drive_control_ ( y_drive, "Y_drive" );
   };
 
+// -------------------------------------
+//                  Z-Antrieb
+// -------------------------------------
   handler_drive_request_z
   {
-    print ( "---------- RX-DINGO  ---------- handler_drive_request_z\n" );
+    print ( "-------- RX-DINGO  -------- handler_drive_request_z\n" );
 
-    if ( changed ( "s_frame_drive_control_mode_zdrv_in" ) )
+    z_drive_can_ctrl = 0;
+    if ( changed ( "s_frame_drive_control_mode_zdrv_in" ) )             { z_drive_can_ctrl = 1; z_drive.Control.ANTRIEB_MODE          = s_frame_drive_control_mode_zdrv_in; };
+    if ( changed ( "s_frame_drive_target_pos_zdrv_in" ) )
     {
-      z_drive.Control.ANTRIEB_MODE          = s_frame_drive_control_mode_zdrv_in;
-
-      if ( z_drive.Control.ANTRIEB_MODE == DRIVE_OPERATIONAL_MODE_STOP )
-      {
-        print ( "---------- RX-DINGO  ---------- ev_z_drive_stop\n" );
-        ev_z_drive_stop;
-      };
-    };
-
-    if ( changed ( "s_frame_drive_target_pos_zdrv_in" ) ) 
-//    if ( z_drive.Control.ANTRIEB_MODE != DRIVE_OPERATIONAL_MODE_STOP )  //  arki: brauch man das wirklich ?
-    {
-      z_drive.CanSollPos  = s_frame_drive_target_pos_zdrv_in;
-      z_drive.SollPos     = Z_IstPosition_Berechnen ( z_drive.CanSollPos );
-      print ( "---------- RX-DINGO  ---------- z_drive.SollPos (CAN): ", z_drive.CanSollPos, ", (MKS): ", z_drive.SollPos, "\n" );
-      if ( z_drive.Control.ANTRIEB_ENABLE_IN == 1 )
-      {
-        ev_z_drive_move;
-      };
+      z_drive_can_ctrl = 1;
+      z_drive.CanSollPos                    = s_frame_drive_target_pos_zdrv_in;
+      z_drive.SollPos                       = Z_IstPosition_Berechnen ( z_drive.CanSollPos );
+      print ( "-------- RX-DINGO  -------- z_drive.SollPos (CAN): ", z_drive.CanSollPos, ", (MKS): ", z_drive.SollPos, "\n" );
+      print ( "-------- RX-DINGO  -------- z_drive.IstPos  (CAN): ", z_drive.CanIstPos,  ", (MKS): ", z_drive.IstPos, "\n" );
     };
 
     if ( changed ( "s_frame_drive_target_speed_zdrv_in" ) )
     {
-      z_drive.CanSollGeschw                 = s_frame_drive_target_speed_zdrv_in;
-      z_drive.SollGeschw                    = z_drive.CanSollGeschw;
-      z_drive.IstGeschw                     = z_drive.SollGeschw; //  just for simulation
+      z_drive_can_ctrl = 1;
+      z_drive.CanSollGeschw                 = 16 * s_frame_drive_target_speed_zdrv_in;
+      z_drive.SollGeschw                    = Z_IstPosition_Berechnen ( z_drive.CanSollGeschw );
     };
 
     if ( changed ( "s_frame_drive_target_current_zdrv_in" ) )
     {
-      z_drive.CanSollStrom                  = s_frame_drive_target_current_zdrv_in;
-      z_drive.SollStrom                     = z_drive.CanSollStrom;
+      z_drive_can_ctrl = 1;
+      z_drive.CanSollStrom                  = 16 * s_frame_drive_target_current_zdrv_in;
+      z_drive.SollStrom                     = z_drive.CanSollStrom / 10.0;
       z_drive.IstStrom                      = z_drive.SollStrom;  //  just for simulation
     };
 
-    if ( changed ( "s_frame_drive_control_enable_zdrv_in" ) ) 
-    {
-      z_drive.Control.ANTRIEB_ENABLE_IN     = s_frame_drive_control_enable_zdrv_in;
+    if ( changed ( "s_frame_drive_control_enable_zdrv_in" ) )           { z_drive_can_ctrl = 1; z_drive.Control.ANTRIEB_ENABLE_IN     = s_frame_drive_control_enable_zdrv_in; };
+    if ( changed ( "s_frame_drive_control_brake_release_zdrv_in" ) )    { z_drive_can_ctrl = 1; z_drive.Control.ANTRIEB_BRAKE_RELEASE = s_frame_drive_control_brake_release_zdrv_in;  };
+    if ( changed ( "s_frame_drive_control_reset_fault_zdrv_in" ) )      { z_drive_can_ctrl = 1; z_drive.Control.ANTRIEB_RESET_FAULT   = s_frame_drive_control_reset_fault_zdrv_in;  };
+    if ( changed ( "s_frame_drive_control_calibrate_pos_zdrv_in" ) )    { z_drive_can_ctrl = 1; z_drive.Control.ANTRIEB_CALIBRATE_POS = s_frame_drive_control_calibrate_pos_zdrv_in;  };
 
-      if ( z_drive.Control.ANTRIEB_ENABLE_IN == 1 )
-      {
-        ev_z_drive_enable;
-//        ev_z_drive_move;  //  workaround ! because wrong order, please check for better solution
-      };
-    };
-
-    if ( changed ( "s_frame_drive_control_break_release_zdrv_in" ) )
+    if ( z_drive_can_ctrl == 1 )
     {
-      z_drive.Control.ANTRIEB_BREAK_RELEASE = s_frame_drive_control_break_release_zdrv_in;
-      z_drive.Status.ANTRIEB_BREAK_RELEASED = z_drive.Control.ANTRIEB_BREAK_RELEASE;
+      print_drive_control_ ( z_drive, "Z_drive" );
+      ev_z_drive_sim_control;
     };
-
-    if ( changed ( "s_frame_drive_control_reset_fault_zdrv_in" ) )
-    {
-      z_drive.Control.ANTRIEB_RESET_FAULT   = s_frame_drive_control_reset_fault_zdrv_in;
-    };
-
-    if ( changed ( "s_frame_drive_control_calibrate_pos_zdrv_in" ) )
-    {
-      z_drive.Control.ANTRIEB_CALIBRATE_POS = s_frame_drive_control_calibrate_pos_zdrv_in;
-    };
-
-    if ( ( z_drive.Control.ANTRIEB_ENABLE_IN == 0 )
-      && ( z_drive.Control.ANTRIEB_BREAK_RELEASE == 0 )
-      )
-    {
-      ev_z_drive_disable;
-    };
-    print_drive_control_ ( z_drive, "Z_drive" );
   };
 
-// ------------------------------------------------------------------------  
+// ------------------------------------------------------------------------
 //                  IO MODUL
 // ------------------------------------------------------------------------
   handler_io_modul_ansteuerung_ausgaenge
   {
-    print ( "---------- RX-DINGO  ---------- handler_io_modul_ansteuerung_ausgaenge\n" );
-// ------------------------------------------------------------------------
+//    print ( "-------- RX-DINGO  -------- handler_io_modul_ansteuerung_ausgaenge\n" );
+// -------------------------------------
 //                  STUETZEN 
-// ------------------------------------------------------------------------
+// -------------------------------------
     if ( changed ( "io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_in" ) )
     {
       VENTIL_SVK = io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_in;
 
-      print ( "---------- RX-DINGO  ---------- VENTIL_SVK: ", VENTIL_SVK, "\n" );
+      print ( "-------- RX-DINGO  -------- VENTIL_SVK: ", VENTIL_SVK, "\n" );
 
       if ( VENTIL_SVK )
       {
@@ -284,9 +188,6 @@ global_functions
       };
     };
 
-//    print ( "io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_in: ", io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_in, "\n" );
-//    print ( "io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_in: ", io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_in, "\n" );
-
     if ( changed ( "io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_in" )
       || changed ( "io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_in" )
       )
@@ -294,7 +195,7 @@ global_functions
       VENTIL_SVZE = io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_in;
       VENTIL_SVZA = io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_in;
 
-      print ( "---------- RX-DINGO  ---------- VENTIL_SVZE: ", VENTIL_SVZE, ", VENTIL_SVZA: ", VENTIL_SVZA, "\n" );
+      print ( "-------- RX-DINGO  -------- VENTIL_SVZE: ", VENTIL_SVZE, ", VENTIL_SVZA: ", VENTIL_SVZA, "\n" );
 
       if ( VENTIL_SVZA &&  VENTIL_SVZE )
       {
@@ -314,14 +215,14 @@ global_functions
       };
     };
 
-// ------------------------------------------------------------------------
+// -------------------------------------
 //                  STAUBAUSTRAG 
-// ------------------------------------------------------------------------
+// -------------------------------------
     if ( changed ( "io_modul_ansteuerung_ausgaenge_cs13_venturiventil_1_in" ) )
     {
       VENTIL_VV1 = io_modul_ansteuerung_ausgaenge_cs13_venturiventil_1_in;
 
-      print ( "---------- RX-DINGO  ---------- VENTIL_VV1: ", VENTIL_VV1, "\n" );
+      print ( "-------- RX-DINGO  -------- VENTIL_VV1: ", VENTIL_VV1, "\n" );
 
       if ( VENTIL_VV1 )
       {
@@ -334,9 +235,9 @@ global_functions
     };
 
 
-// ------------------------------------------------------------------------
+// -------------------------------------
 //                  ANTENNE VERZURRUNG 
-// ------------------------------------------------------------------------
+// -------------------------------------
     if ( changed ( "io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_in" )
       || changed ( "io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_in" )
       )
@@ -344,7 +245,7 @@ global_functions
       VENTIL_VZ1O = io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_in;
       VENTIL_VZ1V = io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_in;
 
-      print ( "---------- RX-DINGO  ---------- VENTIL_VZ1O: ", VENTIL_VZ1O, ", VENTIL_VZ1V: ", VENTIL_VZ1V, "\n" );
+      print ( "-------- RX-DINGO  -------- VENTIL_VZ1O: ", VENTIL_VZ1O, ", VENTIL_VZ1V: ", VENTIL_VZ1V, "\n" );
 
       if ( !VENTIL_VZ1O &&  VENTIL_VZ1V )
       {
@@ -364,14 +265,14 @@ global_functions
       };
     };
 
-// ------------------------------------------------------------------------
+// -------------------------------------
 //                  HAUBE 
-// ------------------------------------------------------------------------
+// -------------------------------------
     if ( changed ( "io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_in" ) )
     {
       VENTIL_HRO = io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_in;
 
-      print ( "---------- RX-DINGO  ---------- VENTIL_HRO: ", VENTIL_HRO, "\n" );
+      print ( "-------- RX-DINGO  -------- VENTIL_HRO: ", VENTIL_HRO, "\n" );
 
       if ( VENTIL_HRO )
       {
@@ -393,8 +294,8 @@ global_functions
       VENTIL_HVZON  = io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_nothalt_in;
       VENTIL_HVZSN  = io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_nothalt_in;
 
-      print ( "---------- RX-DINGO  ---------- VENTIL_HVZO:  ", VENTIL_HVZO,  ", VENTIL_HVZS:  ", VENTIL_HVZS,  "\n" );
-      print ( "---------- RX-DINGO  ---------- VENTIL_HVZON: ", VENTIL_HVZON, ", VENTIL_HVZSN: ", VENTIL_HVZSN, "\n" );
+      print ( "-------- RX-DINGO  -------- VENTIL_HVZO:  ", VENTIL_HVZO,  ", VENTIL_HVZS:  ", VENTIL_HVZS,  "\n" );
+      print ( "-------- RX-DINGO  -------- VENTIL_HVZON: ", VENTIL_HVZON, ", VENTIL_HVZSN: ", VENTIL_HVZSN, "\n" );
 
       if ( !VENTIL_HVZO && VENTIL_HVZS && VENTIL_HVZSN && VENTIL_HVZON )
       {
@@ -417,34 +318,38 @@ global_functions
 
   handler_io_modul_betriebsart
   {
-    print ( "---------- RX-DINGO  ---------- handler_io_modul_betriebsart\n" );
+    print ( "-------- RX-DINGO  -------- handler_io_modul_betriebsart\n" );
   };
 
   handler_io_modul_force_pdo_transmit_hv
   {
-    print ( "---------- RX-DINGO  ---------- handler_io_modul_force_pdo_transmit_hv\n" );
+    print ( "-------- RX-DINGO  -------- handler_io_modul_force_pdo_transmit_hv\n" );
+    if ( changed ( "io_modul_force_pdo_transmit_hv_change_counter_in" ) )
+    {
+      ev_force_pdo_transmit_hv;
+    };
   };
 
-// ------------------------------------------------------------------------  
+// ------------------------------------------------------------------------
 //                  SI MODUL
 // ------------------------------------------------------------------------
   handler_si_modul_ansteuerung_ausgaenge
   {
-    print ( "---------- RX-DINGO  ---------- handler_si_modul_ansteuerung_ausgaenge\n" );
+    print ( "-------- RX-DINGO  -------- handler_si_modul_ansteuerung_ausgaenge\n" );
   };
 
   handler_si_modul_betriebsart
   {
-    print ( "---------- RX-DINGO  ---------- handler_si_modul_betriebsart\n" );
+    print ( "-------- RX-DINGO  -------- handler_si_modul_betriebsart\n" );
   };
 
   handler_si_modul_force_pdo_transmit_hv
   {
-    print ( "---------- RX-DINGO  ---------- handler_si_modul_force_pdo_transmit_hv\n" );
+    print ( "-------- RX-DINGO  -------- handler_si_modul_force_pdo_transmit_hv\n" );
   };
 
 
-// ------------------------------------------------------------------------  
+// ------------------------------------------------------------------------
 //                  FUNKTIONSUEBERWACHUNG
 // ------------------------------------------------------------------------
   handler_set_operational 
@@ -465,22 +370,22 @@ global_functions
       } else
       if ( s_set_operational_node_id == NODE_ID_IO_MODULE )
       {
-        //print ( "---------- RX-DINGO ---------- ev_io_module_set_operational\n" );
+        //print ( "-------- RX-DINGO -------- ev_io_module_set_operational\n" );
         ev_io_module_set_operational;
       } else
       if ( s_set_operational_node_id == NODE_ID_SI_MODULE )
       {
-        //print ( "---------- RX-DINGO ---------- ev_si_module_set_operational\n" );
+        //print ( "-------- RX-DINGO -------- ev_si_module_set_operational\n" );
         ev_si_module_set_operational;
       } else
       if ( s_set_operational_node_id == NODE_ID_USV_1 )
       {
-        //print ( "---------- RX-DINGO ---------- ev_usv1_set_operational\n" );
+        //print ( "-------- RX-DINGO -------- ev_usv1_set_operational\n" );
         ev_usv1_set_operational;
       } else
       if ( s_set_operational_node_id == NODE_ID_USV_2 )
       {
-        //print ( "---------- RX-DINGO ---------- ev_usv2_set_operational\n" );
+        //print ( "-------- RX-DINGO -------- ev_usv2_set_operational\n" );
         ev_usv2_set_operational;
       } else
       if ( s_set_operational_node_id == NODE_ID_EXTBG )
@@ -489,7 +394,7 @@ global_functions
       };
     } else
     {
-      print ( "---------- ERROR  ---------- s_set_operational_payload  != OPERATIONAL_GENERIC_PAYLOAD\n" );
+      print ( "-------- RX-DINGO -------- ERROR  -------- s_set_operational_payload  != OPERATIONAL_GENERIC_PAYLOAD\n" );
     };
   };
 };

@@ -2,30 +2,37 @@ Statemachine
 {
   id  { sm_Platform_retract_preconditioning;  };
   description { "Platform_retract_preconditioning";  };
-  States  { Initial;  Final;  };
+  States  { Initial;  Final;  Error;  };
   join{Final;};
 
   thread
   {
-    States  { Initial;  Final;  };
+    States  { Initial;  Final;  Error;  };
     import  { sm_X_drive_to_indexposition;  };
     Transition  { Initial;                              sm_X_drive_to_indexposition;  };
     Transition  { sm_X_drive_to_indexposition.Final;    Final;  };
+    Transition  { sm_X_drive_to_indexposition.Error;    Error;  };
   };
 
   thread
   {
-    States  { Initial;  Final;  };
+    States  { Initial;  Final;  Error;  };
     import  { sm_Antenna_to_parking_position; };
     Transition  { Initial;                              sm_Antenna_to_parking_position;  };
     Transition  { sm_Antenna_to_parking_position.Final; Final;  };
+    Transition  { sm_Antenna_to_parking_position.Error; Error;  };
   };
 
   thread
   {
-    States  { Initial;  Final;  };
+    States  { Initial;  Final;  Error;  };
     import  { sm_Y_drive_to_arbeitsposition; };
     Transition  { Initial;                              sm_Y_drive_to_arbeitsposition; };
     Transition  { sm_Y_drive_to_arbeitsposition.Final;  Final;  };
+    Transition  { sm_Y_drive_to_arbeitsposition.Error;  Error;  };
   };
+
+  Transition  { thread_1.Error;   Error;  };
+  Transition  { thread_2.Error;   Error;  };
+  Transition  { thread_3.Error;   Error;  };
 };

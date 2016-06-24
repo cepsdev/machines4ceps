@@ -13,13 +13,13 @@ Statemachine
 
   Actions
   {
-    a_print_sensor_states { params{ _Add_String; }; print ( "----------- SENSOR_HZO: ", SENSOR_HZO, ", SENSOR_HZG: ", SENSOR_HZG, " ---------------", _Add_String, "\n" );  };
+    a_print_sensor_states { params{ _Add_String; }; print ( "---------- SENSOR_HZO: ", SENSOR_HZO, ", SENSOR_HZG: ", SENSOR_HZG, " ----------", _Add_String, "\n" );  };
     a_FlapIsOpen          { ev_flap_is_open;        a_print_sensor_states ( "" );  };
     a_FlapIsClosed        { ev_flap_is_closed;      a_print_sensor_states ( "" );  };
     a_FlapIsNotOpen       { ev_flap_is_not_open;    a_print_sensor_states ( "" );  };
     a_FlapIsNotClosed     { ev_flap_is_not_closed;  a_print_sensor_states ( "" );  };
     a_FlapIsWrong         { ev_flap_is_wrong;       a_print_sensor_states ( "" );  };
-    a_FlapInternalError   { a_print_sensor_states ( " unexpected ------------" );  };
+    a_FlapInternalError   { a_print_sensor_states ( " unexpected ----------" );  };
   };
 
   Transition  { Initial;      Unknown;  };

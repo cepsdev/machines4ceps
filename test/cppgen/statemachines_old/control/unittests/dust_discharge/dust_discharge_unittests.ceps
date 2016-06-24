@@ -1,0 +1,30 @@
+// <description>
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.1;
+};
+
+Dust_discharge_unittests {};
+
+Simulation
+{
+  TestCase{Dust_discharge_unittests;};Test{Initialization;};
+
+  Start { sm_Dust_discharge;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Not_yet_ready;};
+};
+
+
+Simulation
+{
+  TestCase{Dust_discharge_unittests;};Test{Not_yet_ready_to_ready_via_timeout;};
+
+  Start { sm_Dust_discharge;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Not_yet_ready;};
+  ev_dust_discharge_delay_timeout;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Dust_discharge.Ready;};
+};

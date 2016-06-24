@@ -14,4 +14,11 @@ x86/
 *.sdf
 *.opensdf
 *.so
+test/cppgen/x86
+playground/
+*.gz
+.launch*
+log.txt
+Makefile.orig
+
 

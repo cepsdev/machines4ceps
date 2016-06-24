@@ -104,11 +104,13 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 					ctxt.handler.push_back(std::make_pair(it_frame->second, it_func->second));
 				}
 				kmw::canbus_reader_exist = true;
-				comm_threads.push_back(new std::thread{ comm_receiver_kmw_multibus,
+				if (start_comm_threads()){
+				 comm_threads.push_back(new std::thread{ comm_receiver_kmw_multibus,
 					dispatcher_id,
 					can_bus, this });
 
-				running_as_node() = true;
+				 running_as_node() = true;
+				}
 			}
 			return true;
 #else
@@ -143,7 +145,10 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 				auto handlers = ns[all{ "on_msg" }];
 				if (handlers.empty()) fatal_(-1, "on_msg required in receiver definition.");
 				int dispatcher_id = -1;
-				auto& ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
+				auto ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
+				ctxt->id_=channel_id;
+				//std::cout <<"**************** "<< ctxt->id_ << std::endl;
+				//std::cout <<"++++++++++++++++ " <<this->get_dispatcher_thread_ctxt(ctxt->id_) << std::endl;
 				DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER (CAL="<< call_name << "][dispatcher_id=" << dispatcher_id << "]\n";
 				for (auto const & handler_ : handlers) {
 					auto const & handler = handler_["on_msg"];
@@ -161,14 +166,15 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 					if (it_frame == frame_generators().end()) fatal_(-1, "Receiver definition: on_msg : frame_id unknown.");
 					auto it_func = global_funcs().find(handler_id);
 					if (it_func == global_funcs().end()) fatal_(-1, "Receiver definition: on_msg : function unknown.");
-					ctxt.handler.push_back(std::make_pair(it_frame->second, it_func->second));
+					ctxt->handler.push_back(std::make_pair(it_frame->second, it_func->second));
 				}
-
-				comm_threads.push_back(new std::thread{ comm_receiver_socket_can,
+				if (start_comm_threads()){
+				 comm_threads.push_back(new std::thread{ comm_receiver_socket_can,
 					dispatcher_id,
 					can_bus, this, extended });
 
-				running_as_node() = true;
+				 running_as_node() = true;
+				}
 			}
 			return true;
 #endif
@@ -263,6 +269,10 @@ void comm_receiver_socket_can(int id,
 	auto current_smc = smc;
 	auto in_ctxt = smc->get_dispatcher_thread_ctxt(id);
 
+	DEBUG << "[comm_receiver_socket_can][ID="<< id << "][WAIT_FOR_START_REQUEST]\n";
+	in_ctxt->wait_for_start_request();
+	DEBUG << "[comm_receiver_socket_can][ID="<< id << "][START_REQUESTED]\n";
+
 	int ctr=1;
 	for (;;++ctr)
 	{
@@ -288,9 +298,20 @@ void comm_receiver_socket_can(int id,
 		}
 		std::vector<std::string> v1;
 		std::vector<ceps::ast::Nodebase_ptr> v2;
-		//std::cout <<  *((int*)can_msg) << std::endl;
-		//std::cout << (int) *((std::uint8_t*)(can_msg+sizeof(std::uint32_t)) ) << std::endl;
-		for (auto handler_info : in_ctxt.handler) {
+
+		if (in_ctxt->get_native_handler().size()){
+			for(auto fc :  in_ctxt->get_native_handler()){
+				if (!fc->match_chunk(can_msg,extended_can_id? can_message.can_dlc + 5 : can_message.can_dlc + 2)) continue;
+				fc->read_chunk(can_msg,extended_can_id? can_message.can_dlc + 5 : can_message.can_dlc + 2);
+				auto clone = fc->clone();
+				State_machine_simulation_core::event_t ev;
+				ev.id_ = "@@framecontext";
+				ev.frmctxt_ = clone;
+				current_smc->enqueue_event(ev);
+				break;
+			}
+		}
+		else for (auto handler_info : in_ctxt->handler) {
 
 			/**
 			 * Trigger recomputation of message size to get the header length

@@ -852,7 +852,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 			DEBUG << "[comm_generic_tcp_in_thread_fn][DATA_READ][SIZE="<<new_size<<"]"<< "\n";
 			std::vector<std::string> v1;
 			std::vector<ceps::ast::Nodebase_ptr> v2;
-			for(auto handler_info: ctxt.handler){
+			for(auto handler_info: ctxt->handler){
 				auto match = handler_info.first->read_msg(buffer,new_size,smc,v1,v2);
 				if (!match) continue;
 				DEBUG << "[comm_generic_tcp_in_thread_fn][MATCH_FOUND]\n";

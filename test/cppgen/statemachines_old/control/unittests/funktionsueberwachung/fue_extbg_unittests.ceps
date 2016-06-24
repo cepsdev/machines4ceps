@@ -1,0 +1,142 @@
+// <description>
+
+Funktionsueberwachung_ExtBG_unittests {};
+
+Event EXIT, ev_plug_extbg;
+
+Globals
+{
+  // Redefinition for test acceleration
+  NODE_HEARTBEAT_PERIOD = 0.01; 
+};
+
+global_functions
+{
+  a_stop_extbg_timers
+  {
+    stop_timer(extbg_supervision_heartbeat_timer);
+    stop_timer(extbg_heartbeat_timer);
+    EXIT;
+  };
+
+  a_start_extbg
+  {
+    Start { sm_ExtBG; };
+  };
+
+  a_stop_extbg
+  {
+    stop(sm_ExtBG);
+  };
+};
+
+Statemachine
+{
+  id  { sm_Ctrl;  };
+  import  { sm_ExtBG; };
+  States  { Initial;  };
+  Transition  { Initial;  sm_ExtBG;  ev_plug_extbg;  };
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{Funktionsueberwachung_ExtBG_unittests;};Test{ExtBG_becoming_Operational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(2*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG.Operational;};
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{Funktionsueberwachung_ExtBG_unittests;};Test{ExtBG_is_already_Operational;};
+
+  Start { sm_ExtBG; };
+  ev_extbg_set_operational;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_ExtBG.Operational;};
+
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(2*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG.Operational;};
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{Funktionsueberwachung_ExtBG_unittests;};Test{ExtBG_is_started_with_delay;};
+
+  Start { sm_Ctrl;  };
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(5  *NODE_HEARTBEAT_PERIOD*s, ev_plug_extbg);
+  start_timer(7.5*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_Ctrl.sm_ExtBG.Operational;};
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{Funktionsueberwachung_ExtBG_unittests;};Test{ExtBG_lacks_multiple_heartbeats_when_being_preoperational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  stop(sm_ExtBG);
+  start_timer(3*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.PreOperational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{Funktionsueberwachung_ExtBG_unittests;};Test{ExtBG_fails_when_being_preoperational;};
+
+  g_extbg_is_functional = 0;
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(4*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS_NOT{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{Funktionsueberwachung_ExtBG_unittests;};Test{ExtBG_lacks_multiple_heartbeats_when_being_operational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  start_timer(2*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+  start_timer(5*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Operational;};
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{Funktionsueberwachung_ExtBG_unittests;};Test{ExtBG_fails_when_being_operational;};
+
+  Start { sm_ExtBG; };
+  Start { sm_ExtBG_operational_state; };
+
+  stop(sm_ExtBG);
+  start_timer(6*NODE_HEARTBEAT_PERIOD*s, a_stop_extbg_timers);
+
+  ASSERT_END_STATES_CONTAINS{sm_ExtBG_operational_state.Offline;};
+};

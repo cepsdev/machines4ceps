@@ -8,19 +8,20 @@
 
 val io_module_node_id = 0x48;
 
-val cob_io_modul_ansteuerung_ausgaenge =  io_module_node_id + 0x280;
-val cob_io_modul_betriebsart = io_module_node_id + 0x180;
-val cob_io_modul_force_pdo_transmit_hv = 0;
-val cob_io_modul_geraetestatus = io_module_node_id + 0x200;
-val cob_io_modul_zustand_heckverteiler_1 = io_module_node_id + 0x300;
-val cob_io_modul_zustand_heckverteiler_2 = io_module_node_id + 0x400;
-val cob_io_modul_sensordaten = io_module_node_id + 0x500;
-val cob_io_modul_fahrzeugwinkel = io_module_node_id + 1 + 0x200;
-val cob_io_modul_luftdruck_pneumatiktank = io_module_node_id + 1 + 0x300;
-val cob_io_modul_software_version = io_module_node_id + 1 + 0x400;
-val cob_io_modul_fehler = io_module_node_id + 1 + 0x500;
-val cob_io_modul_rueckmeldung_ios = io_module_node_id + 2 + 0x200;
-val cob_io_modul_sensordaten_windmesser = io_module_node_id + 2 + 0x300;
+val cob_io_modul_ansteuerung_ausgaenge    = io_module_node_id + 0x280;
+val cob_io_modul_betriebsart              = io_module_node_id + 0x180;
+val cob_io_modul_force_pdo_transmit_hv    = io_module_node_id + 0x380;
+val cob_io_modul_geraetestatus            = io_module_node_id + 0x200;
+val cob_io_modul_zustand_heckverteiler_1  = io_module_node_id + 0x300;
+val cob_io_modul_zustand_heckverteiler_2  = io_module_node_id + 0x400;
+val cob_io_modul_talin_daten_1            = io_module_node_id + 0x500;
+val cob_io_modul_fahrzeugwinkel           = io_module_node_id + 1 + 0x200;
+val cob_io_modul_luftdruck_pneumatiktank  = io_module_node_id + 1 + 0x300;
+val cob_io_modul_software_version         = io_module_node_id + 1 + 0x400;
+val cob_io_modul_fehler                   = io_module_node_id + 1 + 0x500;
+val cob_io_modul_rueckmeldung_ios         = io_module_node_id + 2 + 0x200;
+val cob_io_modul_sensordaten_windmesser   = io_module_node_id + 2 + 0x300;
+val cob_io_modul_talin_daten_2            = io_module_node_id + 2 + 0x400;
 
 
 val rtr_io_modul_ansteuerung_ausgaenge = 0;
@@ -29,13 +30,14 @@ val rtr_io_modul_force_pdo_transmit_hv = 0;
 val rtr_io_modul_geraetestatus = 0;
 val rtr_io_modul_zustand_heckverteiler_1 = 0;
 val rtr_io_modul_zustand_heckverteiler_2 = 0;
-val rtr_io_modul_sensordaten = 0;
+val rtr_io_modul_talin_daten_1 = 0;
 val rtr_io_modul_fahrzeugwinkel = 0;
 val rtr_io_modul_luftdruck_pneumatiktank = 0;
 val rtr_io_modul_software_version = 0;
 val rtr_io_modul_fehler = 0;
 val rtr_io_modul_rueckmeldung_ios = 0;
 val rtr_io_modul_sensordaten_windmesser = 0;
+val rtr_io_modul_talin_daten_2 = 0;
 
 
 Systemstate io_modul_betriebsart_out;
@@ -305,10 +307,10 @@ Systemstate io_modul_zustand_heckverteiler_2_cs11_errorcode_7_out;
 Systemstate io_modul_zustand_heckverteiler_2_cs11_errorcode_7_in;
 
 
-Systemstate io_modul_sensordaten_x_plattform_talin_out;
-Systemstate io_modul_sensordaten_x_plattform_talin_in;
-Systemstate io_modul_sensordaten_y_plattform_talin_out;
-Systemstate io_modul_sensordaten_y_plattform_talin_in;
+Systemstate io_modul_talin_daten_1_x_plattform_talin_out;
+Systemstate io_modul_talin_daten_1_x_plattform_talin_in;
+Systemstate io_modul_talin_daten_1_y_plattform_talin_out;
+Systemstate io_modul_talin_daten_1_y_plattform_talin_in;
 
 
 Systemstate io_modul_fahrzeugwinkel_talin_data_valid_out;
@@ -467,6 +469,14 @@ Systemstate io_modul_sensordaten_windmesser_gueltig_out;
 Systemstate io_modul_sensordaten_windmesser_gueltig_in;
 Systemstate io_modul_sensordaten_windmesser_windstaerke_out;
 Systemstate io_modul_sensordaten_windmesser_windstaerke_in;
+
+
+Systemstate io_modul_talin_daten_2_heading_talin_out;
+Systemstate io_modul_talin_daten_2_heading_talin_in;
+Systemstate io_modul_talin_daten_2_attitude_valid_out;
+Systemstate io_modul_talin_daten_2_attitude_valid_in;
+Systemstate io_modul_talin_daten_2_zupt_in_progress_out;
+Systemstate io_modul_talin_daten_2_zupt_in_progress_in;
 
 
 // --------------------------------------------
@@ -689,14 +699,14 @@ Globals
   io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_passiv_in = 0;
   io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_passiv_out = 0;
   io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_in = 0;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_out                  = SENSOR_SMOL;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_in                   = SENSOR_SMOL;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_out                 = SENSOR_SMUL;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_in                  = SENSOR_SMUL;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_out       = SENSOR_SEKOL;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_in        = SENSOR_SEKOL;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_out = SENSOR_SEKGL;
+  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_in  = SENSOR_SEKGL;
 
   io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_passiv_out = 0;
   io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_passiv_in = 0;
@@ -706,14 +716,14 @@ Globals
   io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_passiv_in = 0;
   io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_passiv_out = 0;
   io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_in = 0;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_out                 = SENSOR_SMOR;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_in                  = SENSOR_SMOR;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_out                = SENSOR_SMUR;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_in                 = SENSOR_SMUR;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_out      = SENSOR_SEKOR;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_in       = SENSOR_SEKOR;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_out= SENSOR_SEKGR;
+  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_in = SENSOR_SEKGR;
 
   io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_passiv_out = 0;
   io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_passiv_in = 0;
@@ -749,10 +759,10 @@ Globals
   io_modul_zustand_heckverteiler_2_cs11_errorcode_7_out = 0;
   io_modul_zustand_heckverteiler_2_cs11_errorcode_7_in = 0;
 
-  io_modul_sensordaten_x_plattform_talin_out = 0;
-  io_modul_sensordaten_x_plattform_talin_in = 0;
-  io_modul_sensordaten_y_plattform_talin_out = 0;
-  io_modul_sensordaten_y_plattform_talin_in = 0;
+  io_modul_talin_daten_1_x_plattform_talin_out = 0;
+  io_modul_talin_daten_1_x_plattform_talin_in = 0;
+  io_modul_talin_daten_1_y_plattform_talin_out = 0;
+  io_modul_talin_daten_1_y_plattform_talin_in = 0;
 
   io_modul_fahrzeugwinkel_talin_data_valid_out = 0;
   io_modul_fahrzeugwinkel_talin_data_valid_in = 0;
@@ -906,204 +916,13 @@ Globals
   io_modul_sensordaten_windmesser_windstaerke_out = 0;
   io_modul_sensordaten_windmesser_windstaerke_in = 0;
 
-  io_modul_zustand_heckverteiler_1_cs0_radar_power_bite_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_radar_power_bite_in = 0;
-  io_modul_zustand_heckverteiler_1_cs0_radaranlage_power_warnung_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_radaranlage_power_warnung_in = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_in = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_1_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_1_in = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_1_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_1_in = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_2_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_2_in = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_3_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_3_in = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_4_out = 0;
-  io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_4_in = 0;
+  io_modul_talin_daten_2_heading_talin_out = 0;
+  io_modul_talin_daten_2_heading_talin_in = 0;
+  io_modul_talin_daten_2_attitude_valid_out = 0;
+  io_modul_talin_daten_2_attitude_valid_in = 0;
+  io_modul_talin_daten_2_zupt_in_progress_out = 0;
+  io_modul_talin_daten_2_zupt_in_progress_in = 0;
 
-  io_modul_zustand_heckverteiler_1_cs1_in_parkposition_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_in_parkposition_in = 0;
-  io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs1_rueckwaertsgang_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_rueckwaertsgang_in = 0;
-  io_modul_zustand_heckverteiler_1_cs1_in_neutral_gangstellung_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_in_neutral_gangstellung_in = 0;
-  io_modul_zustand_heckverteiler_1_cs1_feststellbremse_betaetigt_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_feststellbremse_betaetigt_in = 0;
-  io_modul_zustand_heckverteiler_1_cs1_serviceschalter_betaetigt_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_serviceschalter_betaetigt_in = 0;
-  io_modul_zustand_heckverteiler_1_cs1_reserve_sicherheit_in_out = 0;
-  io_modul_zustand_heckverteiler_1_cs1_reserve_sicherheit_in_in = 0;
-
-  io_modul_zustand_heckverteiler_1_cs2_antrieb_x_enable_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_antrieb_x_enable_in = 0;
-  io_modul_zustand_heckverteiler_1_cs2_antrieb_y_enable_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_antrieb_y_enable_in = 0;
-  io_modul_zustand_heckverteiler_1_cs2_antrieb_z_enable_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_antrieb_z_enable_in = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_sicherheitskreis_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_sicherheitskreis_in = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_1_optokoppler_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_1_optokoppler_in = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_2_optokoppler_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_2_optokoppler_in = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_3_optokoppler_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_3_optokoppler_in = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_4_optokoppler_out = 0;
-  io_modul_zustand_heckverteiler_1_cs2_in_reserve_4_optokoppler_in = 0;
-
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_aktiv_in = 0;
-
-  io_modul_zustand_heckverteiler_1_cs4_index_position_z_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs4_index_position_z_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_aktiv_in = 0;
-
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_aktiv_in = 0;
-
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_aktiv_in = 0;
-
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_passiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_passiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_aktiv_in = 0;
-
-
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_out                  = SENSOR_SMOL;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_in                   = SENSOR_SMOL;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_out                 = SENSOR_SMUL;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_in                  = SENSOR_SMUL;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_out       = SENSOR_SEKOL;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_in        = SENSOR_SEKOL;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_out = SENSOR_SEKGL;
-  io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_in  = SENSOR_SEKGL;
-
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_out                 = SENSOR_SMOR;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_in                  = SENSOR_SMOR;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_out                = SENSOR_SMUR;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_in                 = SENSOR_SMUR;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_out      = SENSOR_SEKOR;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_in       = SENSOR_SEKOR;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_out= SENSOR_SEKGR;
-  io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_in = SENSOR_SEKGR;
-
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_passiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_passiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_aktiv_in = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_aktiv_out = 0;
-  io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_aktiv_in = 0;
-
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_0_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_0_in = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_1_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_1_in = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_2_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_2_in = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_3_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_3_in = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_4_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_4_in = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_5_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_5_in = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_6_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_6_in = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_7_out = 0;
-  io_modul_zustand_heckverteiler_2_cs11_errorcode_7_in = 0;
 };
 
 
@@ -1147,21 +966,21 @@ frame
     {
       bit
       {
-        out { io_modul_ansteuerung_ausgaenge_cs11_radar_power_on_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_radar_power_on_out; };    //  bit 0
         in  { io_modul_ansteuerung_ausgaenge_cs11_radar_power_on_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_1_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_1_out; };         //  bit 1
         in  { io_modul_ansteuerung_ausgaenge_cs11_reserve_1_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_2_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_2_out; };         //  bit 2
         in  { io_modul_ansteuerung_ausgaenge_cs11_reserve_2_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_1_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_1_out; };  //  bit 3
         in  { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_1_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_2_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_2_out; };  //  bit 4
         in  { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_2_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_1_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_1_out; };  //  bit 5
         in  { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_1_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_2_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_2_out; };  //  bit 6
         in  { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_2_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_3_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_3_out; };  //  bit 7
         in  { io_modul_ansteuerung_ausgaenge_cs11_reserve_io_out_gegentakt_3_in; };
       };
       bit
@@ -1185,39 +1004,39 @@ frame
       };
       bit
       {
-        any;
-        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_out; };
+        any;                                                                                //  bit 0
+        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_out; };     //  bit 1
         in  { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_oeffnen_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_out; };  //  bit 2
         in  { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_1_schliessen_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_2_oeffnen_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_2_oeffnen_out; };     //  bit 3
         in  { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_2_oeffnen_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_2_schliessen_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_2_schliessen_out; };  //  bit 4
         in  { io_modul_ansteuerung_ausgaenge_cs13_verzurrung_zylinder_2_schliessen_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_1_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_1_out; };                   //  bit 5
         in  { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_1_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_2_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_2_out; };                   //  bit 6
         in  { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_2_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_3_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_3_out; };                   //  bit 7
         in  { io_modul_ansteuerung_ausgaenge_cs13_venturiventil_3_in; };
       };
       bit
       {
-        out { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_out; };         //  bit 0
         in  { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_ausfahren_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_out; };         //  bit 1
         in  { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_zylinder_einfahren_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_out; };                   //  bit 2
         in  { io_modul_ansteuerung_ausgaenge_cs14_stuetze_ventil_klemmung_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_out; };          //  bit 3
         in  { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_out; };             //  bit 4
         in  { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_nothalt_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_nothalt_out; };  //  bit 5
         in  { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_schliessen_nothalt_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_nothalt_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_nothalt_out; };     //  bit 6
         in  { io_modul_ansteuerung_ausgaenge_cs14_haube_ventil_zylinder_oeffnen_nothalt_in; };
-        out { io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_out; };
+        out { io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_out; };                      //  bit 7
         in  { io_modul_ansteuerung_ausgaenge_cs14_haube_riegel_oeffnen_in; };
       };
     };
@@ -1284,153 +1103,153 @@ frame
     payload
     {
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs0_radar_power_bite_out; };
+      { //  byte 0
+        out { io_modul_zustand_heckverteiler_1_cs0_radar_power_bite_out; };           //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs0_radar_power_bite_in; };
-        out { io_modul_zustand_heckverteiler_1_cs0_radaranlage_power_warnung_out; };
+        out { io_modul_zustand_heckverteiler_1_cs0_radaranlage_power_warnung_out; };  //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs0_radaranlage_power_warnung_in; };
-        out { io_modul_zustand_heckverteiler_1_cs0_reserve_out; };
+        out { io_modul_zustand_heckverteiler_1_cs0_reserve_out; };                    //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs0_reserve_in; };
-        out { io_modul_zustand_heckverteiler_1_cs0_reserve_1_out; };
+        out { io_modul_zustand_heckverteiler_1_cs0_reserve_1_out; };                  //  bit 3
         in  { io_modul_zustand_heckverteiler_1_cs0_reserve_1_in; };
-        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_1_out; };
+        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_1_out; };            //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_1_in; };
-        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_2_out; };
+        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_2_out; };            //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_2_in; };
-        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_3_out; };
+        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_3_out; };            //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_3_in; };
-        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_4_out; };
+        out { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_4_out; };            //  bit 7
         in  { io_modul_zustand_heckverteiler_1_cs0_reserve_io_in_4_in; };
       };
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs1_in_parkposition_out; };
+      { //  byte 1
+        out { io_modul_zustand_heckverteiler_1_cs1_in_parkposition_out; };                //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs1_in_parkposition_in; };
-        out { io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_passiv_out; }; //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_aktiv_out; };  //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs1_kampfschalter_betaetigt_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs1_rueckwaertsgang_out; };
+        out { io_modul_zustand_heckverteiler_1_cs1_rueckwaertsgang_out; };                //  bit 3
         in  { io_modul_zustand_heckverteiler_1_cs1_rueckwaertsgang_in; };
-        out { io_modul_zustand_heckverteiler_1_cs1_in_neutral_gangstellung_out; };
+        out { io_modul_zustand_heckverteiler_1_cs1_in_neutral_gangstellung_out; };        //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs1_in_neutral_gangstellung_in; };
-        out { io_modul_zustand_heckverteiler_1_cs1_feststellbremse_betaetigt_out; };
+        out { io_modul_zustand_heckverteiler_1_cs1_feststellbremse_betaetigt_out; };      //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs1_feststellbremse_betaetigt_in; };
-        out { io_modul_zustand_heckverteiler_1_cs1_serviceschalter_betaetigt_out; };
+        out { io_modul_zustand_heckverteiler_1_cs1_serviceschalter_betaetigt_out; };      //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs1_serviceschalter_betaetigt_in; };
-        out { io_modul_zustand_heckverteiler_1_cs1_reserve_sicherheit_in_out; };
+        out { io_modul_zustand_heckverteiler_1_cs1_reserve_sicherheit_in_out; };          //  bit 7
         in  { io_modul_zustand_heckverteiler_1_cs1_reserve_sicherheit_in_in; };
       };
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs2_antrieb_x_enable_out; };
+      { //  byte 2
+        out { io_modul_zustand_heckverteiler_1_cs2_antrieb_x_enable_out; };           //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs2_antrieb_x_enable_in; };
-        out { io_modul_zustand_heckverteiler_1_cs2_antrieb_y_enable_out; };
+        out { io_modul_zustand_heckverteiler_1_cs2_antrieb_y_enable_out; };           //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs2_antrieb_y_enable_in; };
-        out { io_modul_zustand_heckverteiler_1_cs2_antrieb_z_enable_out; };
+        out { io_modul_zustand_heckverteiler_1_cs2_antrieb_z_enable_out; };           //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs2_antrieb_z_enable_in; };
-        out { io_modul_zustand_heckverteiler_1_cs2_in_sicherheitskreis_out; };
+        out { io_modul_zustand_heckverteiler_1_cs2_in_sicherheitskreis_out; };        //  bit 3
         in  { io_modul_zustand_heckverteiler_1_cs2_in_sicherheitskreis_in; };
-        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_1_optokoppler_out; };
+        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_1_optokoppler_out; };   //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs2_in_reserve_1_optokoppler_in; };
-        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_2_optokoppler_out; };
+        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_2_optokoppler_out; };   //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs2_in_reserve_2_optokoppler_in; };
-        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_3_optokoppler_out; };
+        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_3_optokoppler_out; };   //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs2_in_reserve_3_optokoppler_in; };
-        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_4_optokoppler_out; };
+        out { io_modul_zustand_heckverteiler_1_cs2_in_reserve_4_optokoppler_out; };   //  bit 7
         in  { io_modul_zustand_heckverteiler_1_cs2_in_reserve_4_optokoppler_in; };
       };
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_passiv_out; };
+      { //  byte 3
+        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_passiv_out; };   //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_passiv_out; };   //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_passiv_out; };   //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_passiv_in; };
-        any;
-        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_aktiv_out; };
+        any;                                                                            //  bit 3
+        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_aktiv_out; };    //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_aktiv_out; };    //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_aktiv_out; };    //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_aktiv_in; };
-        any;
+        any;                                                                            //  bit 7
       };
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs4_index_position_z_passiv_out; };
+      { //  byte 4
+        out { io_modul_zustand_heckverteiler_1_cs4_index_position_z_passiv_out; };          //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs4_index_position_z_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_passiv_out; };       //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_passiv_out; };        //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_passiv_out; }; //  bit 3
         in  { io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs4_in_index_position_z_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs4_in_index_position_z_aktiv_out; };        //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs4_in_index_position_z_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_aktiv_out; };        //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_aktiv_out; };         //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_aktiv_out; };  //  bit 7
         in  { io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_aktiv_in; };
       };
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_passiv_out; };
+      { //  byte 5
+        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_passiv_out; };         //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_passiv_out; };          //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_passiv_out; };  //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_passiv_out; };  //  bit 3
         in  { io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_aktiv_out; };          //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs5_endanschlag_unten_2_z_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_aktiv_out; };           //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs5_endanschlag_oben_2_z_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_aktiv_out; };   //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs5_reserve_2_eingang_umschalter_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_aktiv_out; };   //  bit 7
         in  { io_modul_zustand_heckverteiler_1_cs5_reserve_3_eingang_umschalter_aktiv_in; };
       };
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_passiv_out; };
+      { //  byte 6
+        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_passiv_out; };          //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_passiv_out; };    //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_passiv_out; };      //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_passiv_out; };  //  bit 3
         in  { io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_aktiv_out; };           //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_aktiv_out; };     //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_aktiv_out; };       //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs6_zentrier_teleskop_stange_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_aktiv_out; };   //  bit 7
         in  { io_modul_zustand_heckverteiler_1_cs6_reserve_1_eingang_umschalter_aktiv_in; };
       };
       bit
-      {
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_passiv_out; };
+      { //  byte 7
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_passiv_out; }; //  bit 0
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_passiv_out; };      //  bit 1
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_passiv_out; }; //  bit 2
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_passiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_passiv_out; };      //  bit 3
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_passiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_aktiv_out; };  //  bit 4
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_aktiv_out; };       //  bit 5
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_aktiv_out; };  //  bit 6
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_aktiv_out; };       //  bit 7
         in  { io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_aktiv_in; };
       };
     };
@@ -1453,59 +1272,59 @@ frame
     {
       bit
       {
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_passiv_out; };   //  bit 0
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_passiv_out; };  //  bit 1
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_passiv_out; };        //  bit 2
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_passiv_out; };  //  bit 3
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_out; };    //  bit 4
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_out; };   //  bit 5
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_out; };         //  bit 6
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_out; };   //  bit 7
         in  { io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_in; };
       };
       bit
       {
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_passiv_out; };  //  bit 0
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_passiv_out; }; //  bit 1
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_passiv_out; };       //  bit 2
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_passiv_out; }; //  bit 3
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_out; };   //  bit 4
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_out; };  //  bit 5
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_out; };        //  bit 6
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_out; };  //  bit 7
         in  { io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_in; };
       };
       bit
       {
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_passiv_out; };  //  bit 0
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_passiv_out; };       //  bit 1
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_passiv_out; };  //  bit 2
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_passiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_passiv_out; };       //  bit 3
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_passiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_aktiv_out; };   //  bit 4
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_aktiv_out; };        //  bit 5
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_aktiv_out; };   //  bit 6
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_verriegelt_aktiv_in; };
-        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_aktiv_out; };
+        out { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_aktiv_out; };        //  bit 7
         in  { io_modul_zustand_heckverteiler_2_cs10_verzurrung_2_offen_aktiv_in; };
       };
       bit
@@ -1533,26 +1352,58 @@ frame
 
 frame
 {
-  id { io_modul_sensordaten; };
+  id { io_modul_talin_daten_1; };
   data
   {
     header
     {
-      cob_id { uint11 { cob_io_modul_sensordaten; }; };
-      rtr { bit { rtr_io_modul_sensordaten; }; };
+      cob_id { uint11 { cob_io_modul_talin_daten_1; }; };
+      rtr { bit { rtr_io_modul_talin_daten_1; }; };
       data_length { uint4 { __current_frame_size; }; };
     };
     payload
     {
       int32
       {
-        out { io_modul_sensordaten_x_plattform_talin_out; };
-        in  { io_modul_sensordaten_x_plattform_talin_in; };
+        out { io_modul_talin_daten_1_x_plattform_talin_out; };
+        in  { io_modul_talin_daten_1_x_plattform_talin_in; };
       };
       int32
       {
-        out { io_modul_sensordaten_y_plattform_talin_out; };
-        in  { io_modul_sensordaten_y_plattform_talin_in; };
+        out { io_modul_talin_daten_1_y_plattform_talin_out; };
+        in  { io_modul_talin_daten_1_y_plattform_talin_in; };
+      };
+    };
+  };
+};
+
+frame
+{
+  id { io_modul_talin_daten_2; };
+  data
+  {
+    header
+    {
+      cob_id { uint11 { cob_io_modul_talin_daten_2; }; };
+      rtr { bit { rtr_io_modul_talin_daten_1; }; };
+      data_length { uint4 { __current_frame_size; }; };
+    };
+    payload
+    {
+      int32
+      {
+        out { io_modul_talin_daten_2_heading_talin_out; };
+        in  { io_modul_talin_daten_2_heading_talin_in; };
+      };
+      uint8
+      {
+        out { io_modul_talin_daten_2_attitude_valid_out; };
+        in  { io_modul_talin_daten_2_attitude_valid_in; };
+      };
+      uint8
+      {
+        out { io_modul_talin_daten_2_zupt_in_progress_out; };
+        in  { io_modul_talin_daten_2_zupt_in_progress_in; };
       };
     };
   };
@@ -1660,27 +1511,27 @@ frame
     {
       bit
       {
-        out { io_modul_fehler_kampfschalter_out; };
+        out { io_modul_fehler_kampfschalter_out; }; //  bit 0
         in  { io_modul_fehler_kampfschalter_in; };
-        out { io_modul_fehler_index_position_x_out; };
+        out { io_modul_fehler_index_position_x_out; };  //  bit 1
         in  { io_modul_fehler_index_position_x_in; };
-        out { io_modul_fehler_index_position_y_out; };
+        out { io_modul_fehler_index_position_y_out; };  //  bit 2
         in  { io_modul_fehler_index_position_y_in; };
-        out { io_modul_fehler_arbeitsbereich_y_out; };
+        out { io_modul_fehler_arbeitsbereich_y_out; };  //  bit 3
         in  { io_modul_fehler_arbeitsbereich_y_in; };
-        out { io_modul_fehler_mast_indexposition_z_out; };
+        out { io_modul_fehler_mast_indexposition_z_out; };  //  bit 4
         in  { io_modul_fehler_mast_indexposition_z_in; };
-        out { io_modul_fehler_mast_endanschlag_unten_z_out; };
+        out { io_modul_fehler_mast_endanschlag_unten_z_out; };  //  bit 5
         in  { io_modul_fehler_mast_endanschlag_unten_z_in; };
-        out { io_modul_fehler_mast_endanschlag_oben_z_out; };
+        out { io_modul_fehler_mast_endanschlag_oben_z_out; }; //  bit 6
         in  { io_modul_fehler_mast_endanschlag_oben_z_in; };
-        out { io_modul_fehler_mast_untere_betriebsposition_z_out; };
+        out { io_modul_fehler_mast_untere_betriebsposition_z_out; };  //  bit 7
         in  { io_modul_fehler_mast_untere_betriebsposition_z_in; };
-        out { io_modul_fehler_haube_riegel_1_verriegelt_out; };
+        out { io_modul_fehler_haube_riegel_1_verriegelt_out; }; //  bit 8
         in  { io_modul_fehler_haube_riegel_1_verriegelt_in; };
-        out { io_modul_fehler_haube_riegel_1_offen_out; };
+        out { io_modul_fehler_haube_riegel_1_offen_out; };  //  bit 9
         in  { io_modul_fehler_haube_riegel_1_offen_in; };
-        out { io_modul_fehler_haube_riegel_2_verriegelt_out; };
+        out { io_modul_fehler_haube_riegel_2_verriegelt_out; }; //  bit 10
         in  { io_modul_fehler_haube_riegel_2_verriegelt_in; };
         out { io_modul_fehler_haube_riegel_2_offen_out; };
         in  { io_modul_fehler_haube_riegel_2_offen_in; };

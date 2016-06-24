@@ -1,9 +1,13 @@
+//  BAG cant known the position of flap during movement
+Event ev_flap_position_changed;
+
 //  local events
 Event ev_flap_moving_time;
 
 Guard g_flap_opening, g_flap_closeing;
 
 val   SIM_FLAP_MOVING_TIMER_PERIOD = 0.2; //  sec
+
 Globals
 {
   g_flap_opening    = g_flap_lock_HR1_is_open && g_flap_lock_HR2_is_open && g_valves_are_in_opening_flap_position;
@@ -18,15 +22,15 @@ Statemachine
   States  { Initial;  Flap_Stoped; Flap_Opening; Flap_Closing; };
   Actions
   {
-    a_start_opening
+    a_flap_opening_start
     {
       start_periodic_timer ( SIM_FLAP_MOVING_TIMER_PERIOD * s, ev_flap_moving_time, timer_flap_moving );
     };
-    a_start_closeing
+    a_flap_closeing_start
     {
       start_periodic_timer ( SIM_FLAP_MOVING_TIMER_PERIOD * s, ev_flap_moving_time, timer_flap_moving );
     };
-    a_opening
+    a_flap_opening
     {
       if ( Flap_position < FLAP_POSITION_MAX )
       {
@@ -36,9 +40,10 @@ Statemachine
           Flap_position = FLAP_POSITION_MAX;
         };
         print ( "--- dingo-sim --- Flap_position: ", Flap_position, " and opening\n" );
+        ev_flap_position_changed;
       };
     };
-    a_closeing
+    a_flap_closeing
     {
       if ( Flap_position > FLAP_POSITION_MIN )
       {
@@ -48,9 +53,10 @@ Statemachine
           Flap_position = FLAP_POSITION_MIN;
         };
         print ( "--- dingo-sim --- Flap_position: ", Flap_position, " and closeing\n" );
+        ev_flap_position_changed;
       };
     };
-    a_stop_moving
+    a_flap_moving_stop
     {
       stop_timer ( timer_flap_moving );
       print ( "--- dingo-sim --- Flap_position: ", Flap_position, " and stoped\n" );
@@ -58,16 +64,21 @@ Statemachine
   };
   on_exit
   {
-    stop_timer ( timer_flap_moving );
+    if ( !in_state ( Flap_Stoped ) )
+    {
+      a_flap_moving_stop;
+    };
   };
 
-  Transition  { Initial;      Flap_Stoped; };
-  Transition  { Flap_Stoped;  Flap_Opening;                         a_start_opening;    g_flap_opening;  };
-  Transition  { Flap_Stoped;  Flap_Closing;                         a_start_closeing;   g_flap_closeing; };
-  Transition  { Flap_Opening; Flap_Opening;   ev_flap_moving_time;  a_opening;          g_flap_opening;  };
-  Transition  { Flap_Opening; Flap_Stoped;                          a_stop_moving;     !g_flap_opening;  };
-  Transition  { Flap_Closing; Flap_Closing;   ev_flap_moving_time;  a_closeing;         g_flap_closeing;  };
-  Transition  { Flap_Closing; Flap_Stoped;                          a_stop_moving;     !g_flap_closeing;  };
+  Transition  { Initial;      Flap_Stoped;    };
+  Transition  { Flap_Stoped;  Flap_Opening;                         a_flap_opening_start;   g_flap_opening;   };
+  Transition  { Flap_Stoped;  Flap_Closing;                         a_flap_closeing_start;  g_flap_closeing;  };
+
+  Transition  { Flap_Opening; Flap_Opening;   ev_flap_moving_time;  a_flap_opening;         g_flap_opening;   };
+  Transition  { Flap_Opening; Flap_Stoped;    ev_flap_moving_time;  a_flap_moving_stop;    !g_flap_opening;   };
+
+  Transition  { Flap_Closing; Flap_Closing;   ev_flap_moving_time;  a_flap_closeing;        g_flap_closeing;  };
+  Transition  { Flap_Closing; Flap_Stoped;    ev_flap_moving_time;  a_flap_moving_stop;    !g_flap_closeing;  };
 };
 
 // ----------------------------------------------------------------------

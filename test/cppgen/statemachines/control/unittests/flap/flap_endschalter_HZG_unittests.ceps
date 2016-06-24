@@ -29,11 +29,11 @@ Simulation
 
   Flap_position = FLAP_POSITION_MIN;
 
-  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ev_flap_position_changed;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_endschalter_HZG.On;};
 
   Flap_position = FLAP_POSITION_MAX;
 
-  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ev_flap_position_changed;
   ASSERT_END_STATES_CONTAINS{sm_Flap_endschalter_HZG.Off;};
 };

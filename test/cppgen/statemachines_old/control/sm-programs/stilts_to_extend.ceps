@@ -1,0 +1,52 @@
+Event ev_stilts_are_preconditioned,   ev_stilts_are_locked,   ev_stilts_are_unlocked;
+Event ev_stilts_have_ground_contact,  ev_stilts_extended_stilt_detected;
+Event ev_stilts_to_extend_started,    ev_stilts_to_extend_started_stilts_extend,  ev_stilts_to_extend_preconditions_are_not_met;
+Event ev_stilts_to_extend_finished,   ev_stilts_to_extend_started_stilts_unlock,  ev_stilts_to_extend_was_interrupted;
+Event ev_stilts_to_extend_timeout,    ev_stilts_to_extend_started_stilts_lock,    ev_stilts_to_extend_failed_no_ground;
+
+Guard g_stilt_any_is_extended, g_stilts_all_have_ground_contact;
+
+Statemachine
+{
+  id  { sm_Stilts_to_extend;  };
+  description { "Stilts_to_extend"; };
+  States  { Initial;  Final;  };
+
+  import  { sm_Stilts_preconditioning;  };
+  import  { sm_Stilts_unlock; };
+  import  { sm_Stilts_extend; };
+  import  { sm_Stilts_lock; };
+
+  Actions
+  {
+    a_stilts_to_extend_finished                   { ev_stilts_to_extend_finished; }; 
+    a_stilts_to_extend_started                    { ev_stilts_to_extend_started;  }; 
+    a_stilts_to_extend_started_stilts_unlock      { ev_stilts_to_extend_started_stilts_unlock;  }; //  only for display of progress on extBg
+    a_stilts_to_extend_started_stilts_extend      { ev_stilts_to_extend_started_stilts_extend;  }; //  only for display of progress on extBg
+    a_stilts_to_extend_started_stilts_lock        { ev_stilts_to_extend_started_stilts_lock;  };   //  only for display of progress on extBg
+    a_stilts_to_extend_failed                     { ev_stilts_to_extend_failed_no_ground; }; 
+    a_stilts_to_extend_exit_timer                 { start_timer ( DEF_TIME_STUETZEN_FAHREN * s, ev_stilts_to_extend_timeout, timer_stilts_to_extend ); };
+    a_preconditions_are_not_met                   { ev_stilts_to_extend_preconditions_are_not_met;  };
+    a_was_interrupted                             { ev_stilts_to_extend_was_interrupted;  };
+  };
+
+  on_exit
+  {
+    stop_timer ( timer_stilts_to_extend );
+    if ( !in_state ( Final ) )
+    {
+      a_was_interrupted;
+    };
+  };
+
+  Transition  { Initial;                    Final;                                                          a_stilts_to_extend_failed;                                    g_stilt_any_is_extended; };
+  Transition  { Initial;                    sm_Stilts_preconditioning;                                      a_stilts_to_extend_exit_timer;  a_stilts_to_extend_started;  !g_stilt_any_is_extended; };
+  Transition  { sm_Stilts_preconditioning;  sm_Stilts_unlock;           ev_stilts_are_preconditioned;       a_stilts_to_extend_started_stilts_unlock; };
+  Transition  { sm_Stilts_unlock;           sm_Stilts_extend;           ev_stilts_are_unlocked;             a_stilts_to_extend_started_stilts_extend; };
+  Transition  { sm_Stilts_extend;           sm_Stilts_lock;             ev_stilts_have_ground_contact;      a_stilts_to_extend_started_stilts_lock; };
+  Transition  { sm_Stilts_extend;           Final;                      ev_stilts_extended_stilt_detected;  a_stilts_to_extend_failed;  };
+  Transition  { sm_Stilts_lock;             Final;                      ev_stilts_are_locked;               a_stilts_to_extend_finished;  };
+};
+
+//  comment:  following transition is not helpfull, because before preconditioning stilts are not under pressure and therefore detection of contact to the ground is not possible!
+//  Transition  { Initial;                    Final;                                                          a_stilts_to_extend_finished;    g_stilts_all_have_ground_contact; };

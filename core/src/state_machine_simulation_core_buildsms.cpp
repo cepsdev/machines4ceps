@@ -154,6 +154,10 @@ int compute_state_ids(State_machine_simulation_core* smp,std::map<std::string,St
 }
 
 void State_machine_simulation_core::register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id){
+	if (ctxt == nullptr) return;
+	auto thrd_ctxt = this->get_dispatcher_thread_ctxt(receiver_id);
+	if(thrd_ctxt ==nullptr) this->fatal_(-1,"State_machine_simulation_core::register_frame_ctxt: unknown receiver id '"+receiver_id+"'");
+	thrd_ctxt->get_native_handler().push_back(ctxt);
 
 }
 
@@ -184,6 +188,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	auto all_receiver = ns[all{"receiver"}];
 	auto unique_event_declarations = ns["unique"];
 	auto no_transitions_declarations = ns["no_transitions"];
+
+	start_comm_threads() = !generate_cpp_code();
 
 
 	//handle unique definitions
@@ -537,8 +543,10 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		 descr.frame_id_ = frame_id;
 		 descr.frame_queue_ = new threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>;
 
-		 comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
-		 running_as_node() = true;
+		 if (start_comm_threads()){
+		  comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
+		  running_as_node() = true;
+		 }
 
 		 event_triggered_sender().push_back(descr);
 		} else if (!condition_defined && !emit_defined && channel_id.length()){
@@ -546,8 +554,9 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 				   <<"\n";
 			 auto channel = new threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>;
 			 this->set_out_channel(channel_id,channel);
-			 running_as_node() = true;
-			 comm_threads.push_back(
+			 if (start_comm_threads()){
+			  running_as_node() = true;
+			  comm_threads.push_back(
 					 new std::thread{comm_sender_generic_tcp_out_thread,
 				                     channel,
 				                     this,
@@ -558,6 +567,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 				                     sock_name,
 				                     reuse_sock,
 				                     reg_socket });
+			 }
 		} else {
             warn_(-1,"Sender definition incomplete, will be ignored.");
 		}
@@ -673,7 +683,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 			auto gen = it->second;
 
-			comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
+			if (start_comm_threads()){
+			 comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
 												   -1,
 												   gen,
 												   ev_id,
@@ -686,13 +697,14 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 												   sock_name,reg_sock,reuse_sock,
 												   comm_generic_tcp_in_thread_fn });
 			running_as_node() = true;
+			}
 		} else {
 			DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER]" <<"[ip="<< ip << "]" <<  "[port=" << port <<"]" <<"\n";
 			auto handlers = receiver[all{"on_msg"}];
 			if (handlers.empty()) fatal_(-1,"on_msg required in receiver definition.");
 
 			int dispatcher_id=-1;
-			auto& ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
+			auto ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
 			DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER]" <<"[dispatcher_id="<< dispatcher_id << "]\n";
 
 			for(auto const & handler_ : handlers){
@@ -711,10 +723,10 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 				if (it_frame == frame_generators().end()) fatal_(-1,"Receiver definition: on_msg : frame_id unknown.");
 				auto it_func = global_funcs().find(handler_id);
 				if (it_func == global_funcs().end()) fatal_(-1,"Receiver definition: on_msg : function unknown.");
-				ctxt.handler.push_back(std::make_pair(it_frame->second,it_func->second));
+				ctxt->handler.push_back(std::make_pair(it_frame->second,it_func->second));
 			}
-
-			comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
+			if (start_comm_threads()){
+			 comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
 												   dispatcher_id,
 												   nullptr,
 												   "",
@@ -726,7 +738,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 												   eof,
 												   sock_name,reg_sock,reuse_sock,
 												   comm_generic_tcp_in_thread_fn });
-			running_as_node() = true;
+			 running_as_node() = true;
+			}
 
 		}
 	}
@@ -749,8 +762,10 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		DEBUG << "[LOG4CEPS][Trace log 'trace.bin' initialized.]\n";
 	}
 
+
+
 	if(generate_cpp_code()){
-		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards);
+		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
 	}
 
 

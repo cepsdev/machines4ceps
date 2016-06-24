@@ -9,17 +9,13 @@ Globals
 Flap_close_unittests
 {
   SENSOR_KAMPFSCHALTER_A            = 0;
-//  g_flap_is_closed                = 0;
   SENSOR_HZO  = 0;  //  HaubeRiegelOffen
   SENSOR_HZG  = 0;  //  HaubeRiegelGeschlossen
   g_mast_is_not_blocking_flap     = 1;
-//  g_flap_is_unlocked              = 1;
-//  g_flap_is_open                  = 1;
   SENSOR_HR1O = 1;  //  HaubeRiegel1_Offen
   SENSOR_HR1V = 0;  //  HaubeRiegel1_Verriegelt
   SENSOR_HR2O = 1;  //  HaubeRiegel2_Offen
   SENSOR_HR2V = 0;  //  HaubeRiegel2_Verriegelt
-//  g_system_pressure_is_sufficient = 1;
   Pneumatics.system_pressure      = DEFAULT_SYSTEM_PRESSURE;
 };
 
@@ -36,8 +32,6 @@ Simulation
 {
   TestCase{Flap_close_unittests;};Test{Initialization_given_objective_already_reached;};
 
-//  g_flap_is_closed   = 1;
-//  g_flap_is_open     = 0;
   SENSOR_HZG  = 1;  //  HaubeRiegelGeschlossen
 
   Start { sm_Flap_close;  };
@@ -50,13 +44,12 @@ Simulation
 {
   TestCase{Flap_close_unittests;};Test{Initialization_given_flap_is_locked;};
 
-//  g_flap_is_unlocked   = 0;
   SENSOR_HR1O = 0;  //  HaubeRiegel1_Offen
   SENSOR_HR2O = 0;  //  HaubeRiegel2_Offen
 
   Start { sm_Flap_close;  };
 
-  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_close.Initial;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_close.Error;};
 };
 
 
@@ -64,12 +57,11 @@ Simulation
 {
   TestCase{Flap_close_unittests;};Test{Initialization_given_air_pressure_not_sufficient_and_kampfschalter_not_active;};
 
-//  g_system_pressure_is_sufficient = 0;
   Pneumatics.system_pressure      = 0.0;
 
   Start { sm_Flap_close;  };
 
-  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_close.Initial;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_close.Error;};
 };
 
 
@@ -77,7 +69,6 @@ Simulation
 {
   TestCase{Flap_close_unittests;};Test{Initialization_given_air_pressure_not_sufficient_but_kampfschalter_active;};
 
-//  g_system_pressure_is_sufficient = 0;
   Pneumatics.system_pressure      = 0.0;
   SENSOR_KAMPFSCHALTER_A            = 1;
 
@@ -95,7 +86,7 @@ Simulation
 
   Start { sm_Flap_close;  };
 
-  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_close.Initial;};
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Flap_close.Error;};
 };
 
 

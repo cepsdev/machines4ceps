@@ -1,0 +1,8 @@
+Trace{
+ Timestamp{ "Wed Jun  1 14:23:00.763392662 2016" ; };
+ Current_states{ "S2" ;"S2.a" ; };
+};
+Trace{
+ Timestamp{ "Wed Jun  1 14:23:00.763414108 2016" ; };
+ Current_states{ "S2" ;"S2.b" ; };
+};

@@ -1,0 +1,30 @@
+// <description>
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.01;
+};
+
+Z_drive_disable_unittests {};
+
+Simulation
+{
+  TestCase{Z_drive_disable_unittests;};Test{Initialization;};
+
+  Start { sm_Z_drive_disable; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Disabling;};
+};
+
+
+Simulation
+{
+  TestCase{Z_drive_disable_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Z_drive_disable; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Disabling;};
+  ev_z_drive_is_disabled;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Final;};
+};

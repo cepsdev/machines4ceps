@@ -1,0 +1,90 @@
+// <description>
+
+FUE_io_module_unittests {};
+
+Event EXIT;
+
+// Redefinition for test acceleration
+val NODE_HEARTBEAT_PERIOD = 1.0; 
+
+global_functions
+{
+  a_stop_io_timers
+  {
+    stop_timer(io_module_supervision_heartbeat_timer);
+    stop_timer(io_module_heartbeat_timer);
+    EXIT;
+  };
+
+  a_stop_io_module
+  {
+    stop(sm_IO_module);
+  };
+};
+
+// ------------------------------------------------------------------------  
+Simulation
+{
+  TestCase{FUE_io_module_unittests;};Test{IO_module_becoming_Operational;};
+
+  Start { sm_IO_module; };
+  Start { sm_IO_module_operational_state; };
+
+//  start_timer(2*NODE_HEARTBEAT_PERIOD*s, a_stop_io_timers);
+  
+//  ASSERT_END_STATES_CONTAINS{sm_IO_module.Operational;};
+//  ASSERT_END_STATES_CONTAINS{sm_IO_module_operational_state.Operational;};
+};
+
+// // ------------------------------------------------------------------------  
+// Simulation{
+//   TestCase{FUE_io_module_unittests;};Test{IO_module_lacks_multiple_heartbeats_when_being_preoperational;};
+//  
+//   Start{sm_IO_module;};
+//   Start{sm_IO_module_operational_state;};
+// 
+//   stop(sm_IO_module);
+//   start_timer(3*NODE_HEARTBEAT_PERIOD*s, a_stop_io_timers);
+//   
+//   ASSERT_END_STATES_CONTAINS{sm_IO_module_operational_state.PreOperational;};
+// };
+// 
+// // ------------------------------------------------------------------------  
+// Simulation{
+//   TestCase{FUE_io_module_unittests;};Test{IO_module_fails_when_being_preoperational;};
+//  
+//   g_io_module_is_functional = 0;
+//   
+//   Start{sm_IO_module;};
+//   Start{sm_IO_module_operational_state;};
+// 
+//   start_timer(4*NODE_HEARTBEAT_PERIOD*s, a_stop_io_timers);
+// 
+//   ASSERT_END_STATES_CONTAINS_NOT{sm_IO_module_operational_state.Operational;};
+// };
+// 
+// // ------------------------------------------------------------------------  
+// Simulation{
+//   TestCase{FUE_io_module_unittests;};Test{IO_module_lacks_multiple_heartbeats_when_being_operational;};
+//  
+//   Start{sm_IO_module;};
+//   Start{sm_IO_module_operational_state;};
+// 
+//   start_timer(2*NODE_HEARTBEAT_PERIOD*s, a_stop_io_timers);
+//   start_timer(5*NODE_HEARTBEAT_PERIOD*s, a_stop_io_module);
+//   
+//   ASSERT_END_STATES_CONTAINS{sm_IO_module_operational_state.Operational;};
+// };
+// 
+// // ------------------------------------------------------------------------  
+// Simulation{
+//   TestCase{FUE_io_module_unittests;};Test{IO_module_fails_when_being_operational;};
+//  
+//   Start{sm_IO_module;};
+//   Start{sm_IO_module_operational_state;};
+// 
+//   stop(sm_IO_module);
+//   start_timer(6*NODE_HEARTBEAT_PERIOD*s, a_stop_io_timers);
+// 
+//   ASSERT_END_STATES_CONTAINS{sm_IO_module_operational_state.Offline;};
+// };

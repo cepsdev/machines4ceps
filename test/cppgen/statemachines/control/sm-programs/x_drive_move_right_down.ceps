@@ -1,0 +1,45 @@
+Event ev_x_drive_move_right_down_starts,      ev_x_drive_move_right_down_moving,  ev_x_drive_move_right_down_preconditions_are_not_met;
+Event ev_x_drive_move_right_down_interrupted, ev_x_drive_move_right_down_timeout, ev_x_drive_move_right_down_finished;
+Event ev_x_drive_move_init;
+
+Statemachine
+{
+  id  { sm_X_drive_move_right_down; };
+  description { "X_drive_move_right_down"; };
+  States  { Initial;  Final;  Start;  Error;  };
+  import  { sm_X_drive_move;  };
+  Actions
+  {
+    a_x_drive_move_right_down_start                     { ev_x_drive_move_right_down_starts;
+                                                          ev_x_drive_move_init ( MODE_GIVEN_SPEED, 1 );
+                                                          start_timer ( DEF_TIME_X_FAHREN * s, ev_x_drive_move_right_down_timeout,  timer_x_drive_move_right_down_timeout );
+                                                        };
+    a_x_drive_move_right_down_preconditions_are_not_met { ev_x_drive_move_right_down_preconditions_are_not_met; };
+    a_x_drive_move_right_down_moving                    { ev_x_drive_move_right_down_moving;      };
+    a_x_drive_move_right_down_timeout                   { ev_x_drive_move_right_down_interrupted; };
+    a_x_drive_move_right_down_interrupted               { ev_x_drive_move_right_down_interrupted; };
+    a_x_drive_stop_timout_timer                         { stop_timer ( timer_x_drive_move_right_down_timeout ); };
+  };
+
+  on_enter
+  {
+    x_drive.SollPos     = x_drive.ARBEITSBEREICH_MAX;
+//    x_drive.SollGeschw  = x_drive.SPEED_DEFAULT;
+//    print ( "---------- sm_X_drive_move_right_down  ---------- on_enter, argv(1): ", argv(1), ", argv(2): ", argv(2), "\n" );
+
+    print ( "sm_X_drive_move_right_down.on_enter --- x_drive.SollGeschw:", x_drive.SollGeschw, "\n" );
+  };
+
+  on_exit
+  {
+    a_x_drive_stop_timout_timer;
+  };
+
+  Transition  { Initial;                Start;                                                a_x_drive_move_right_down_start;                                      g_x_drive_move_right_down_preconditions; };
+  Transition  { Initial;                Error;                                                a_x_drive_move_right_down_preconditions_are_not_met;                 !g_x_drive_move_right_down_preconditions; };
+  Transition  { Start;                  sm_X_drive_move;  ev_x_drive_move_init;               a_x_drive_move_right_down_moving;                                   };
+  Transition  { sm_X_drive_move.Final;  Final;                                                a_x_drive_stop_timout_timer;                                        };
+  Transition  { sm_X_drive_move;        Error;            ev_x_drive_move_right_down_timeout; a_x_drive_move_right_down_timeout;                                  };
+  Transition  { sm_X_drive_move.Error;  Error;                                                a_x_drive_move_right_down_interrupted; a_x_drive_stop_timout_timer; };
+};
+

@@ -1,0 +1,38 @@
+// <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
+
+X_drive_endschalter_IP_X
+{
+  x_drive.IstPos = -100;
+};
+
+Simulation
+{
+  TestCase{X_drive_endschalter_IP_X;};Test{Initialization;};
+
+  Start { sm_X_drive_endschalter_IP_X;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_endschalter_IP_X.Off;};
+};
+
+
+Simulation
+{
+  TestCase{X_drive_endschalter_IP_X;};Test{Visit_all_states;};
+
+  Start { sm_X_drive_endschalter_IP_X;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_endschalter_IP_X.Off;};
+
+  x_drive.IstPos = x_drive.INDEXPOSITION;
+
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_endschalter_IP_X.On;};
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_endschalter_IP_X.On;};
+
+  x_drive.IstPos = x_drive.MAX_POS;
+
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_endschalter_IP_X.Off;};
+};

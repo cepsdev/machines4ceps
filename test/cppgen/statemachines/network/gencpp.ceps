@@ -1,0 +1,38 @@
+unique
+{
+  ev_x_drive_actual_values;
+  ev_y_drive_actual_values;
+  ev_z_drive_actual_values;
+  ev_send_message_to_ivenet;
+  ev_message_from_ivenet;
+
+  ev_vehicle_inclination_x_changed;
+  ev_vehicle_inclination_y_changed;
+  ev_antenna_alignment_changed;
+  ev_wind_speed_changed;
+  ev_current_drives_changed;
+  ev_current_others_changed;
+  ev_current_pneumatic_changed;
+  ev_current_radar_changed;
+
+  ev_io_module_contol_AA;
+};
+no_transitions
+{
+  ev_x_drive_actual_values;
+  ev_z_drive_actual_values;
+
+  ev_x_drive_can_control;
+  ev_y_drive_can_control;
+  ev_z_drive_can_control;
+
+  ev_io_module_contol_AA;
+};
+
+Event EXIT;
+
+Simulation
+{
+  //EXIT;
+};
+

@@ -12,15 +12,16 @@
 # context validation
 #################################################################
 if [ $# -lt 3 ]; then
-    echo "call this script with {x86; arm} {can; vcan} {dingo; bag} [NO_GUI]"
+    echo "call this script with {x86; arm} {can; vcan} {dingo; bag} [NO_GUI|GEN]"
     exit
 fi
 
+TRGS_ROOT="/home/tprerovs/projects/sm4ceps/test/cppgen"
 
 if [ $1 == "x86" ]; then
     if [ -z ${TRGS_ROOT+x} ]; then 
         echo "TRGS_ROOT is unset"
-        exit
+        exit;
     else 
         echo -e "Environment variable 'TRGS_ROOT' is set to '$TRGS_ROOT'"
     fi
@@ -61,6 +62,12 @@ if [ $# -gt 3 ]; then
           $EXE/sm 
           $BASE_DEFS/base_defs.ceps"
     fi
+    if [ $4 == "GEN" ]; then
+        echo -e "Generating C++ Code ..\n"
+        BAG_DEFINITIONS="
+           $TRGS_ROOT/x86/sm  --cppgen 
+           $BASE_DEFS/base_defs.ceps"
+    fi    
 else
     BAG_DEFINITIONS="
       $PATH_TO_BAG_EXE/$EXECUTABLE 
@@ -71,26 +78,36 @@ fi
 BAG_SMS=" 
   $PROGRAMS/x_drive_disable.ceps
   $PROGRAMS/x_drive_enable.ceps
+  $PROGRAMS/x_drive_brake_release.ceps
+  $PROGRAMS/x_drive_brake_apply.ceps
   $PROGRAMS/x_drive_move.ceps
   $PROGRAMS/x_drive_reset_fault_antrieb.ceps
   $PROGRAMS/x_drive_to_indexposition.ceps
   $PROGRAMS/x_drive_to_target_position.ceps
+  $PROGRAMS/x_drive_move_left_down.ceps
+  $PROGRAMS/x_drive_move_right_down.ceps
   $PROGRAMS/y_drive_disable.ceps
   $PROGRAMS/y_drive_enable.ceps
+  $PROGRAMS/y_drive_brake_release.ceps
+  $PROGRAMS/y_drive_brake_apply.ceps
   $PROGRAMS/y_drive_move.ceps
   $PROGRAMS/y_drive_reset_fault_antrieb.ceps
   $PROGRAMS/y_drive_to_arbeitsposition.ceps
   $PROGRAMS/y_drive_to_indexposition.ceps
   $PROGRAMS/y_drive_to_target_position.ceps
+  $PROGRAMS/y_drive_move_front_down.ceps
+  $PROGRAMS/y_drive_move_rear_down.ceps
   $PROGRAMS/z_drive_disable.ceps
   $PROGRAMS/z_drive_enable.ceps
+  $PROGRAMS/z_drive_brake_release.ceps
+  $PROGRAMS/z_drive_brake_apply.ceps
   $PROGRAMS/z_drive_move.ceps
   $PROGRAMS/z_drive_reset_fault_antrieb.ceps
   $PROGRAMS/z_drive_to_index_position.ceps
   $PROGRAMS/z_drive_to_lashing_position.ceps
   $PROGRAMS/z_drive_to_target_position.ceps
-  $PROGRAMS/mast_move_down.ceps
-  $PROGRAMS/mast_move_up.ceps
+  $PROGRAMS/z_drive_move_down.ceps
+  $PROGRAMS/z_drive_move_up.ceps
   $PROGRAMS/ctrl.ceps
   $PROGRAMS/dispatch.ceps
   $PROGRAMS/antenna_lashing_lock.ceps
@@ -126,11 +143,13 @@ BAG_SMS="
   $STATE/antenna_lashing.ceps
   $STATE/drives_state.ceps
   $STATE/dust_discharge.ceps
+  $STATE/extbg_progress_indicator.ceps
   $STATE/extbg_error_evaluator.ceps
   $STATE/flap.ceps
   $STATE/flap_lock_one.ceps
   $STATE/flap_lock_two.ceps
   $STATE/funktionsueberwachung.ceps
+  $STATE/io_module_controler.ceps
   $STATE/ivenet_state.ceps
   $STATE/pneumatic_cylinder_pressure.ceps
   $STATE/stilt_left.ceps
@@ -139,6 +158,9 @@ BAG_SMS="
   $STATE/stilts_vk_right.ceps
   $STATE/user_buttons.ceps
   $STATE/warning_mast_operations.ceps
+  $STATE/x_drive_fault_state.ceps
+  $STATE/y_drive_fault_state.ceps
+  $STATE/z_drive_fault_state.ceps
   $DINGO_PATH/talin.ceps"
 
 ## ------------------------------------------------------------------------
@@ -173,6 +195,7 @@ if  [ "$4" == "quiet" ]; then
 elif [ "$4" == "debug" ]; then
   OPTIONS=" --debug " #" --quiet " #" --debug"
 else
+##  OPTIONS=" --quiet" #" --quiet " #" --debug"
   OPTIONS=" " #" --quiet " #" --debug"
 fi
 
@@ -180,9 +203,22 @@ fi
 IGNITOR_BAG="
   $NETWORK/complete_activator_bag.ceps"
   
+
+  
+  
+  
+if [ $# -gt 3 ]; then
+    if [ $4 == "GEN" ]; then
+IGNITOR_BAG=" $NETWORK/gencpp.ceps"
+    fi    
+fi  
 ## ------------------------------------------------------------------------
 PLUGIN=" --plugin$C_FUNCTIONS_4_CEPS/libc_functions.so"
-
+if [ $# -gt 3 ]; then
+    if [ $4 == "GEN" ]; then
+PLUGIN=" "
+    fi    
+fi
 ## ------------------------------------------------------------------------
 if [ $2 == "can" ]; then
     BAG=$BAG_DEFINITIONS$BAG_SMS$MESSAGES$NETWORK_LAYER_BAG_RX_TX$NETWORK_LAYER_BAG_CAN$IGNITOR_BAG$OPTIONS$PLUGIN
@@ -223,6 +259,7 @@ DINGO_SMS="
   $DINGO_PATH/flap_valve_HVZS.ceps
   $DINGO_PATH/flap_valve_HVZSN.ceps
   $DINGO_PATH/funktionsueberwachung.ceps
+  $DINGO_PATH/io_module_sim.ceps
   $DINGO_PATH/mast_endschalter_EU_Z.ceps
   $DINGO_PATH/mast_endschalter_EO_Z.ceps
   $DINGO_PATH/mast_endschalter_IP_Z.ceps
@@ -241,9 +278,10 @@ DINGO_SMS="
   $DINGO_PATH/stilts_valve_SVZA.ceps
   $DINGO_PATH/stilts_valve_SVZE.ceps
   $DINGO_PATH/talin.ceps
-  $DINGO_PATH/x_drive.ceps
-  $DINGO_PATH/y_drive.ceps
-  $DINGO_PATH/z_drive.ceps
+  $DINGO_PATH/vehicle_sim.ceps
+  $DINGO_PATH/x_drive_sim.ceps
+  $DINGO_PATH/y_drive_sim.ceps
+  $DINGO_PATH/z_drive_sim.ceps
   $DINGO_PATH/x_drive_endschalter_IP_X.ceps
   $DINGO_PATH/y_drive_endschalter_AB_Y.ceps
   $DINGO_PATH/y_drive_endschalter_IP_Y.ceps"

@@ -2,23 +2,22 @@
 // CS4
 //#define SENSOR_IP_Z	0x10
 
-Event ev_z_drive_position_changed, ev_z_drive_endschalter_NIP_Z, ev_z_drive_endschalter_shows_indexposition;
+Event ev_z_drive_position_changed, ev_z_drive_endschalter_IP_Z_changed;
 
 Statemachine
 {
   id  { sm_Mast_endschalter_IP_Z; };
-  description { "Mast Indexposition"; };
+  description { "Mast-Index-Position"; };
   States  { Initial;  On; Off;  };
 
   Actions
   {
-    a_not_at_index_position { ev_z_drive_endschalter_NIP_Z; };
-    a_at_index_position     { ev_z_drive_endschalter_shows_indexposition; };
-    a_Off                   { SENSOR_IP_Z = 0;  };
-    a_On                    { SENSOR_IP_Z = 1;  };
+    a_mast_state_change { ev_z_drive_endschalter_IP_Z_changed;  };
+    a_mast_es_IP_Z_Off  { SENSOR_IP_Z = 0;  print ( "SENSOR_IP_Z = 0\n" );  };
+    a_mast_es_IP_Z_On   { SENSOR_IP_Z = 1;  print ( "SENSOR_IP_Z = 0\n" );  };
   };
 
-  Transition  { Initial;  Off;  };
-  Transition  { On;       Off;  ev_z_drive_position_changed;  g_mast_height_is_lt_indexposition;  a_not_at_index_position;  a_Off;  };
-  Transition  { Off;      On;   ev_z_drive_position_changed;  g_mast_height_is_ge_indexposition;  a_at_index_position;      a_On; };
+  Transition  { Initial;  Off;                                                        a_mast_es_IP_Z_Off;                       };
+  Transition  { Off;      On;   ev_z_drive_position_changed;    g_sensor_IP_z_drive;  a_mast_es_IP_Z_On;  a_mast_state_change;  };
+  Transition  { On;       Off;  ev_z_drive_position_changed;   !g_sensor_IP_z_drive;  a_mast_es_IP_Z_Off; a_mast_state_change;  };
 };

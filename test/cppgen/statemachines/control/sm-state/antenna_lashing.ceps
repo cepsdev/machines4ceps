@@ -16,28 +16,28 @@ Statemachine
 
   Transition  { Initial;   Unknown; };
 
-  Transition  { Unknown;      Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked;  };
-  Transition  { Unknown;        Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;    };
-  Transition  { Unknown;      Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor; };
-  Transition  { Unknown;      Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;  };
+  Transition  { Unknown;      Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked; };
+  Transition  { Unknown;        Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;   };
+  Transition  { Unknown;      Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor;                             };
+  Transition  { Unknown;      Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;    };
 
-  Transition  { Unlocked;     Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked;  };
-  Transition  { Unlocked;       Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;    };
-  Transition  { Unlocked;     Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor; };
-  Transition  { Unlocked;     Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;  };
+  Transition  { Unlocked;     Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked; };
+  Transition  { Unlocked;       Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;   };
+  Transition  { Unlocked;     Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor;                             };
+  Transition  { Unlocked;     Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;    };
 
-  Transition  {   Locked;     Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked;  };
-  Transition  {   Locked;       Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;    };
-  Transition  {   Locked;     Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor; };
-  Transition  {   Locked;     Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;  };
+  Transition  {   Locked;     Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked; };
+  Transition  {   Locked;       Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;   };
+  Transition  {   Locked;     Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor;                             };
+  Transition  {   Locked;     Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;    };
 
-  Transition  { Neither_Nor;  Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked;  };
-  Transition  { Neither_Nor;    Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;    };
-  Transition  { Neither_Nor;  Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor; };
-  Transition  { Neither_Nor;  Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;  };
+  Transition  { Neither_Nor;  Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked; };
+  Transition  { Neither_Nor;    Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;   };
+  Transition  { Neither_Nor;  Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor;                             };
+  Transition  { Neither_Nor;  Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;    };
 
-  Transition  { Wrong;        Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked;  };
-  Transition  { Wrong;          Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;    };
-  Transition  { Wrong;        Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor; };
-  Transition  { Wrong;        Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;  };
+  Transition  { Wrong;        Unlocked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_unlocked;    a_AntennaLashingIsUnlocked; };
+  Transition  { Wrong;          Locked;     ev_antenna_lashing_state_change;  g_antenna_lashing_is_locked;      a_AntennaLashingIsLocked;   };
+  Transition  { Wrong;        Neither_Nor;  ev_antenna_lashing_state_change;  g_antenna_lashing_is_neither_nor;                             };
+  Transition  { Wrong;        Wrong;        ev_antenna_lashing_state_change;  g_antenna_lashing_is_wrong;       a_AntennaLashingIsWrong;    };
 };

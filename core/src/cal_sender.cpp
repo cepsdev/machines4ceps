@@ -111,13 +111,15 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 
 			auto channel = new threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>;
 			this->set_out_channel(channel_id, channel);
-			running_as_node() = true;
+			if (!start_comm_threads()){
+			 running_as_node() = true;
 
-			comm_threads.push_back(
+			 comm_threads.push_back(
 				new std::thread{ comm_sender_kmw_multibus,
 				channel,
 				can_bus,
 				this});
+			}
 		}
 		return true;
 #else
@@ -139,13 +141,16 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 
 		auto channel = new threadsafe_queue< std::tuple<char*, size_t,size_t>, std::queue<std::tuple<char*, size_t,size_t> >>;
 		this->set_out_channel(channel_id, channel);
-		running_as_node() = true;
 
-		comm_threads.push_back(
-			new std::thread{ comm_sender_socket_can,
-			channel,
-			can_bus,
-			this});
+		if (start_comm_threads()){
+			running_as_node() = true;
+
+			comm_threads.push_back(
+				new std::thread{ comm_sender_socket_can,
+				channel,
+				can_bus,
+				this});
+		}
 
 
 		return true;

@@ -1,4 +1,4 @@
-Event ev_z_drive_move, ev_z_drive_moving_timeout, ev_z_drive_enable_timeout;
+Event ev_z_drive_move_init, ev_z_drive_enable_timeout, ev_z_drive_disable_timeout;
 // <description>
 
 Globals
@@ -20,105 +20,153 @@ Statemachine
   States  { Initial;  Final;  Error;  };
   Actions
   {
-    a_report_enable_timeout { print("\n\n--- ENABLE TIMEOUT DETECTED ---\n\n"); };
-    a_report_moving_timeout { print("\n\n--- MOVING TIMEOUT DETECTED ---\n\n"); };
+    a_report_enable_timeout         { print ( "\n\n--- ENABLE TIMEOUT DETECTED ---\n\n" ); };
+    a_report_disable_timeout        { print ( "\n\n--- DISABLE TIMEOUT DETECTED ---\n\n" ); };
+    a_report_brake_release_timeout  { print ( "\n\n--- BRAKE RELEASE TIMEOUT DETECTED ---\n\n" ); };
+    a_report_brake_apply_timeout    { print ( "\n\n--- BRAKE APPLY TIMEOUT DETECTED ---\n\n" ); };
   };
-  Transition  { Initial;          sm_Z_drive_move;  ev_z_drive_move;  };
+  Transition  { Initial;          sm_Z_drive_move;  ev_z_drive_move_init;  };
   Transition  { sm_Z_drive_move;  Final;            ev_z_drive_movement_stopped;  };
-  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_enable_timeout;  };
-  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_moving_timeout;  a_report_moving_timeout;  };
+  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_enable_timeout;          a_report_enable_timeout;  };
+  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_disable_timeout;         a_report_disable_timeout; };
+  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_brake_release_timeout;   a_report_brake_release_timeout;  };
+  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_brake_apply_timeout;     a_report_brake_apply_timeout; };
 };
 
 Simulation
 {
   TestCase{Mast_movement_feature_unittests;};Test{Move_up_to_target_position;};
 
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
   z_drive.IstPos      = 0;
   z_drive.SollGeschw  = 5.0;
 
   Start { sm_Ctrl;  };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive;};
+  Start { sm_Z_drive_sim; };
 
   // activate Z_drive_move
-  ev_z_drive_move(MODE_TO_TARGET,  5, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT);
+  ev_z_drive_move_init ( MODE_TO_TARGET,  5 );
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Prepare_Talin;};
 
   // pretend that TALIN is prepared
   ev_talin_is_ready_to_be_moved;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Moving;};
 
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  z_drive.Status.ANTRIEB_INPOS    = 1;
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };
 
 Simulation
 {
   TestCase{Mast_movement_feature_unittests;};Test{Move_down_to_target_position;};
 
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
   z_drive.IstPos      = 20;
   z_drive.SollGeschw  = 5.0;
 
   Start { sm_Ctrl;  };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_sim; };
 
   // activate Z_drive_move
-  ev_z_drive_move(MODE_TO_TARGET, 15, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT);
+  ev_z_drive_move_init ( MODE_TO_TARGET, 15 );
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Prepare_Talin;};
 
   // pretend that TALIN is prepared
   ev_talin_is_ready_to_be_moved;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Moving;};
 
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  z_drive.Status.ANTRIEB_INPOS    = 1;
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };
 
 Simulation
 {
   TestCase{Mast_movement_feature_unittests;};Test{Move_up_given_speed;};
 
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
   Start { sm_Ctrl;  };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_sim; };
 
   z_drive.IstPos      = 0;
 
   // activate Z_drive_move
-  ev_z_drive_move(MODE_GIVEN_SPEED,  2, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT);
+  ev_z_drive_move_init ( MODE_GIVEN_SPEED,  2 );
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Prepare_Talin;};
 
   // pretend that TALIN is prepared
   ev_talin_is_ready_to_be_moved;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Moving;};
 
+  z_drive.Status.ANTRIEB_INPOS    = 1;
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
   start_timer(2.0*s,  ev_z_drive_stop);
 
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };
 
 Simulation
 {
   TestCase{Mast_movement_feature_unittests;};Test{Move_down_given_speed;};
 
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
   z_drive.IstPos      = 20;
 
   Start { sm_Ctrl;  };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_sim; };
 
   // activate Z_drive_move
-  ev_z_drive_move(MODE_GIVEN_SPEED, -2, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT);
+  ev_z_drive_move_init ( MODE_GIVEN_SPEED, -2 );
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Prepare_Talin;};
 
   // pretend that TALIN is prepared
   ev_talin_is_ready_to_be_moved;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_move.Moving;};
 
+  z_drive.Status.ANTRIEB_INPOS    = 1;
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
   start_timer(2.0*s,  ev_z_drive_stop);
 
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };

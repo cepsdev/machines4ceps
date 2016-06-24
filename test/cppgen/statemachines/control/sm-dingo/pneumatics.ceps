@@ -1,6 +1,5 @@
 Event ev_set_system_pressure_low, ev_set_system_pressure_normal;
-Event ev_stilt_left_state_change;
-Event ev_stilt_right_state_change;
+Event ev_stilt_left_state_change, ev_stilt_right_state_change, ev_pneumatic_pressure_change;
 
 
 Guard g_stilt_moveing_down_ground_contact_left, g_stilt_moveing_down_ground_contact_right;
@@ -30,6 +29,7 @@ Statemachine
       Pneumatics.stilt_left_pressure = inPressure; 
       Stilt_left_pressure = inPressure;
       print ( "--- dingo-sim --- set Stilt_left_pressure: ", Stilt_left_pressure, "\n" );
+      ev_pneumatic_pressure_change;
     };
     a_ground_contact          { set_stilt_left_pressure ( STILT_PRESSURE_ON_GROUND ); ev_stilt_left_state_change;  };
     a_normal                  { set_stilt_left_pressure ( START_SYSTEM_PRESSURE ); };
@@ -67,6 +67,7 @@ Statemachine
       Pneumatics.stilt_right_pressure = inPressure; 
       Stilt_right_pressure = inPressure;
       print ( "--- dingo-sim --- set Stilt_right_pressure: ", Stilt_right_pressure, "\n" );
+      ev_pneumatic_pressure_change;
     };
     a_ground_contact          { set_stilt_right_pressure ( STILT_PRESSURE_ON_GROUND ); ev_stilt_right_state_change;  };
     a_normal                  { set_stilt_right_pressure ( START_SYSTEM_PRESSURE ); };
@@ -99,12 +100,14 @@ Statemachine
       System_pressure = LOW_SYSTEM_PRESSURE;
       Pneumatics.system_pressure  = System_pressure;
       print ( "--- dingo-sim --- set System_pressure: ", System_pressure, " (low)\n" );
+      ev_pneumatic_pressure_change;
     };
     a_normal
     {
       System_pressure = DEFAULT_SYSTEM_PRESSURE;
       Pneumatics.system_pressure  = System_pressure;
       print ( "--- dingo-sim --- set System_pressure: ", System_pressure, " (default)\n" );
+      ev_pneumatic_pressure_change;
     };
   };
   Transition  { Initial;  Low;  };

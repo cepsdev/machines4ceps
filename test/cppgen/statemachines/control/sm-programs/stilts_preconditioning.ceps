@@ -14,7 +14,7 @@ Statemachine
       ev_stilts_prepare_moving;
       start_timer ( DEF_TIME_STUETZEN_DRUCKAUFBAU * s, ev_stilts_preconditioning_timeout, timer_stilts_preconditioning );
     };
-    a_was_interrupted                 { ev_stilts_preconditioning_was_interrupted;  };
+    a_was_interrupted                 { stop_timer ( timer_stilts_preconditioning );  ev_stilts_preconditioning_was_interrupted;  };
     a_stilts_preconditioning_finished { ev_stilts_are_preconditioned; };
     a_stilts_extend_failure_low_system_pressure { ev_system_pressure_is_low;  };
   };
@@ -23,12 +23,11 @@ Statemachine
   {
     if ( !in_state ( Final ) )
     {
-      stop_timer ( timer_stilts_preconditioning );
       a_was_interrupted;
     };
   };
 
   Transition  { Initial;                Stilts_Preconditioning;                                     a_precondition_stilts;                        ( g_system_pressure_is_sufficient || g_kampfschalter_is_active ) ; };
-  Transition  { Initial;                Error;                                                      a_stilts_extend_failure_low_system_pressure; !g_system_pressure_is_sufficient; };
+  Transition  { Initial;                Error;                                                      a_stilts_extend_failure_low_system_pressure; !( g_system_pressure_is_sufficient || g_kampfschalter_is_active ); };
   Transition  { Stilts_Preconditioning; Final;                  ev_stilts_preconditioning_timeout;  a_stilts_preconditioning_finished;  };
 };

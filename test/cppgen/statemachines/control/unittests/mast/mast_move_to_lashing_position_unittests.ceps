@@ -1,4 +1,4 @@
-Event ev_z_drive_move, ev_mast_move_to_lashing_position;
+Event ev_mast_move_to_lashing_position;
 
 Mast_move_to_lashing_position_unittests
 {
@@ -8,11 +8,16 @@ Mast_move_to_lashing_position_unittests
 
 Statemachine
 {
- id { sm_Ctrl;  };
- import { sm_Z_drive_to_lashing_position; };
- States { Initial;  Final;  };
- Transition { Initial;                        sm_Z_drive_to_lashing_position;   ev_mast_move_to_lashing_position;   };
- Transition { sm_Z_drive_to_lashing_position; Final;                            ev_z_drive_is_in_lashing_position;  };
+  id { sm_Ctrl;  };
+  import { sm_Z_drive_to_lashing_position; };
+  States { Initial; Final;  Error;  };
+  Actions
+  {
+    a_report_error  { print ( "\n\n--- ERROR DETECTED ---\n\n" ); };
+  };
+  Transition { Initial;                               sm_Z_drive_to_lashing_position;   ev_mast_move_to_lashing_position; };
+  Transition { sm_Z_drive_to_lashing_position.Final;  Final;                            };
+  Transition { sm_Z_drive_to_lashing_position.Error;  Error;                                                              a_report_error; };
 };
 
 Simulation
@@ -23,8 +28,8 @@ Simulation
   z_drive.SollGeschw  = 50.0;
 
   Start { sm_Talin;  };
-  Start { sm_Z_drive; };
   Start { sm_Z_drive_state; };
+  Start { sm_Z_drive_sim; };
   Start { sm_Ctrl;  };
 
   // activate Z_drive_to_lashing_position
@@ -51,7 +56,7 @@ Simulation
   Start { sm_Ctrl;  };
   Start { sm_Talin; };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_sim; };
 
   // activate Z_drive_to_lashing_position
   ev_mast_move_to_lashing_position;

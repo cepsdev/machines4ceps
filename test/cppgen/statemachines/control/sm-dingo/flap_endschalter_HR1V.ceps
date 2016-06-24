@@ -1,5 +1,5 @@
 // HR1V: Haube Riegel 1 Verschlossen
-Event ev_flap_lock_state_change;
+Event ev_flap_endschalter_HR1V_changed;
 
 //  local events
 Event ev_flap_HR1V_is_open, ev_flap_HR1V_is_close;
@@ -12,22 +12,22 @@ Statemachine
 
   Actions
   {
-    a_endschalter_is_opening     { start_timer ( DELAY_HR1V_OPEN * s,   ev_flap_HR1V_is_open,  timer_flap_HR1V_is_open ); };
-    a_endschalter_is_closing     { start_timer ( DELAY_HR1V_CLOSE * s,  ev_flap_HR1V_is_close, timer_flap_HR1V_is_close );  };
-    a_stop_endschalter_opening   { stop_timer ( timer_flap_HR1V_is_open );  };
-    a_stop_endschalter_closing   { stop_timer ( timer_flap_HR1V_is_close ); };
-    a_FlapLockState { ev_flap_lock_state_change;  };
-    a_Off           { SENSOR_HR1V = 0;  };
-    a_On            { SENSOR_HR1V = 1;  };
+    a_endschalter_is_opening    { start_timer ( DELAY_HR1V_OPEN * s,   ev_flap_HR1V_is_open,  timer_flap_HR1V_is_open ); };
+    a_endschalter_is_closing    { start_timer ( DELAY_HR1V_CLOSE * s,  ev_flap_HR1V_is_close, timer_flap_HR1V_is_close );  };
+    a_stop_endschalter_opening  { stop_timer ( timer_flap_HR1V_is_open );  };
+    a_stop_endschalter_closing  { stop_timer ( timer_flap_HR1V_is_close ); };
+    a_flap_lock_state_change    { ev_flap_endschalter_HR1V_changed;  };
+    a_flap_es_HR1V_Off          { SENSOR_HR1V = 0;  print ( "SENSOR_HR1V = 0\n" );  };
+    a_flap_es_HR1V_On           { SENSOR_HR1V = 1;  print ( "SENSOR_HR1V = 1\n" );  };
   };
 
-  Transition  { Initial;  On; };
+  Transition  { Initial;  On;                                                           a_flap_es_HR1V_On;                                    };
   Transition  { On;       Opening;                         !g_flap_lock_HR1_is_closed;                              a_endschalter_is_opening; };
   Transition  { Opening;  Closing;                          g_flap_lock_HR1_is_closed;  a_stop_endschalter_opening; a_endschalter_is_closing; };
-  Transition  { Opening;  Off;      ev_flap_HR1V_is_open;                               a_Off;                      a_FlapLockState;  };
+  Transition  { Opening;  Off;      ev_flap_HR1V_is_open;                               a_flap_es_HR1V_Off;         a_flap_lock_state_change; };
 
   Transition  { Off;      Closing;                          g_flap_lock_HR1_is_closed;                              a_endschalter_is_closing; };
   Transition  { Closing;  Opening;                         !g_flap_lock_HR1_is_closed;  a_stop_endschalter_closing; a_endschalter_is_opening; };
-  Transition  { Closing;  On;       ev_flap_HR1V_is_close;                              a_On;                       a_FlapLockState;  };
+  Transition  { Closing;  On;       ev_flap_HR1V_is_close;                              a_flap_es_HR1V_On;          a_flap_lock_state_change; };
 };
 

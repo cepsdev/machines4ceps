@@ -3,18 +3,34 @@
 Globals
 {
   // Redefinition for test acceleration
-  TIMER_ACTIVATION = 0.01;
+  TIMER_ACTIVATION = 0.1;
 };
 
-X_drive_disable_unittests {};
+X_drive_disable_unittests
+{
+  x_drive.Status.ANTRIEB_ENABLE_OUT = 1;
+};
 
 Simulation
 {
-  TestCase{X_drive_disable_unittests;};Test{Initialization;};
+  TestCase{X_drive_disable_unittests;};Test{Initialization_given_no_antrieb_fault;};
 
   Start { sm_X_drive_disable; };
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_disable.Disabling;};
+};
+
+
+Simulation
+{
+  TestCase{X_drive_disable_unittests;};Test{Timeout;};
+
+  Start { sm_X_drive_disable; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_disable.Disabling;};
+
+  ev_x_drive_disable_timeout;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_disable.Error;};
 };
 
 
@@ -25,6 +41,8 @@ Simulation
   Start { sm_X_drive_disable; };
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_disable.Disabling;};
-  ev_x_drive_is_disabled;
+
+  x_drive.Status.ANTRIEB_ENABLE_OUT = 0;
+  ev_x_drive_can_state_response;
   ASSERT_CURRENT_STATES_CONTAINS{sm_X_drive_disable.Final;};
 };

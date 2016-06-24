@@ -17,11 +17,11 @@ receiver
 
   transport
   {
-    som { 2; }; 
-    eom { 3; }; 
+    som { 2; };
+    eom { 3; };
     generic_tcp_in
     {
-      port { "1303"; }; 
+      port { "1303"; };
       ip { "127.0.0.1"; };
     };
   };
@@ -35,7 +35,7 @@ sender
   transport
   {
     som { 2; };
-    eom { 3; }; 
+    eom { 3; };
     use { channel_ivenet_receiver; };
   };
 };
@@ -59,8 +59,8 @@ receiver
   id { channel_can_0_in; };
   //transport { generic_tcp_in { port { "4005"; }; }; };
   //transport { canbus { bus_id { "vcan0"; }; }; };
-  transport { canbus { bus_id { "vcan1"; }; }; };
-  //transport { canbus { extended; bus_id { "can0"; }; }; };
+//  transport { canbus { extended; bus_id { "can0"; }; }; };  //  config für das BAG
+  transport { canbus { bus_id { "vcan1"; }; }; };         //  config für den PC
 
   on_msg { frame_id { frame_GPM_13; }; handler { handler_GPM_13; }; };
   on_msg { frame_id { frame_GPM_14; }; handler { handler_GPM_14; }; };
@@ -78,8 +78,8 @@ sender
   //transport { generic_tcp_out { port { "4006"; }; ip { "127.0.0.1"; }; }; };
   //transport { generic_tcp_out { port { "4006"; }; ip { "192.168.1.7"; }; }; };
   //transport { canbus { bus_id { "vcan1"; }; }; };
-  //transport { canbus { bus_id { "can1"; }; }; };
-  transport { canbus { bus_id { "can0"; }; }; };
+//  transport { canbus { bus_id { "can1"; }; }; };  //  config für das BAG
+  transport { canbus { bus_id { "can0"; }; }; };  //  config für den PC
 };
 
 // ------------------------------------------------------------------------
@@ -90,8 +90,8 @@ receiver
   id { channel_can_1_in; };
   //transport { generic_tcp_in { port { "4005"; }; }; };
   //transport { canbus { bus_id { "vcan1"; }; }; };
-  //transport { canbus { bus_id { "can1"; }; }; };
-  transport { canbus { bus_id { "can0"; }; }; };
+//  transport { canbus { bus_id { "can1"; }; }; };  //  config für das BAG
+  transport { canbus { bus_id { "can0"; }; }; };  //  config für den PC
 
   on_msg { frame_id { frame_heartbeat_x_drive; };                     handler { handler_heartbeat_x_drive; }; };
   on_msg { frame_id { frame_heartbeat_y_drive; };                     handler { handler_heartbeat_y_drive; }; };
@@ -106,7 +106,8 @@ receiver
   on_msg { frame_id { io_modul_fahrzeugwinkel; };                     handler { handler_io_modul_fahrzeugwinkel; }; };
   on_msg { frame_id { io_modul_luftdruck_pneumatiktank; };            handler { handler_io_modul_pneumatiktank; }; };
   on_msg { frame_id { io_modul_rueckmeldung_ios; };                   handler { handler_io_modul_rueckmeldung_ios; }; };
-  on_msg { frame_id { io_modul_sensordaten; };                        handler { handler_io_modul_sensordaten; }; };
+  on_msg { frame_id { io_modul_talin_daten_1; };                      handler { handler_io_modul_talin_daten_1; }; };
+  on_msg { frame_id { io_modul_talin_daten_2; };                      handler { handler_io_modul_talin_daten_2; }; };
   on_msg { frame_id { io_modul_sensordaten_windmesser; };             handler { handler_io_modul_sensordaten_windmesser; }; };
   on_msg { frame_id { io_modul_software_version; };                   handler { handler_io_modul_software_version; }; };
   on_msg { frame_id { io_modul_zustand_heckverteiler_1; };            handler { handler_io_modul_zustand_heckverteiler_1; }; };
@@ -128,7 +129,7 @@ receiver
   on_msg { frame_id { frame_extbg_x_drive_sollwerte; };               handler { handler_extbg_x_drive_sollwerte; }; };
   on_msg { frame_id { frame_extbg_y_drive_sollwerte; };               handler { handler_extbg_y_drive_sollwerte; }; };
   on_msg { frame_id { frame_extbg_z_drive_sollwerte; };               handler { handler_extbg_z_drive_sollwerte; }; };
-  on_msg { frame_id { frame_force_bag_pdo_transmit; };                handler { handler_force_bag_pdo_transmit; }; };
+  on_msg { frame_id { frame_extbg_force_bag_pdo_transmit; };          handler { handler_extbg_force_bag_pdo_transmit; }; };
 
   on_msg { frame_id { frame_x_drive_response; };                      handler { handler_x_drive_response; }; };
   on_msg { frame_id { frame_y_drive_response; };                      handler { handler_y_drive_response; }; };

@@ -10,7 +10,7 @@ Statemachine
 {
   id  { sm_Stilts_to_extend;  };
   description { "Stilts_to_extend"; };
-  States  { Initial;  Final;  };
+  States  { Initial;  Final;  Error;  };
 
   import  { sm_Stilts_preconditioning;  };
   import  { sm_Stilts_unlock; };
@@ -28,6 +28,8 @@ Statemachine
     a_stilts_to_extend_exit_timer                 { start_timer ( DEF_TIME_STUETZEN_FAHREN * s, ev_stilts_to_extend_timeout, timer_stilts_to_extend ); };
     a_preconditions_are_not_met                   { ev_stilts_to_extend_preconditions_are_not_met;  };
     a_was_interrupted                             { ev_stilts_to_extend_was_interrupted;  };
+    a_stilts_to_extend_timeout                    { ev_stilts_to_extend_was_interrupted;  };
+    a_stilts_to_extend_interrupted                { ev_stilts_to_extend_was_interrupted;  };
   };
 
   on_exit
@@ -41,11 +43,18 @@ Statemachine
 
   Transition  { Initial;                    Final;                                                          a_stilts_to_extend_failed;                                    g_stilt_any_is_extended; };
   Transition  { Initial;                    sm_Stilts_preconditioning;                                      a_stilts_to_extend_exit_timer;  a_stilts_to_extend_started;  !g_stilt_any_is_extended; };
-  Transition  { sm_Stilts_preconditioning;  sm_Stilts_unlock;           ev_stilts_are_preconditioned;       a_stilts_to_extend_started_stilts_unlock; };
-  Transition  { sm_Stilts_unlock;           sm_Stilts_extend;           ev_stilts_are_unlocked;             a_stilts_to_extend_started_stilts_extend; };
-  Transition  { sm_Stilts_extend;           sm_Stilts_lock;             ev_stilts_have_ground_contact;      a_stilts_to_extend_started_stilts_lock; };
-  Transition  { sm_Stilts_extend;           Final;                      ev_stilts_extended_stilt_detected;  a_stilts_to_extend_failed;  };
-  Transition  { sm_Stilts_lock;             Final;                      ev_stilts_are_locked;               a_stilts_to_extend_finished;  };
+  Transition  { sm_Stilts_preconditioning;  sm_Stilts_unlock;           ev_stilts_are_preconditioned;       a_stilts_to_extend_started_stilts_unlock;           };
+  Transition  { sm_Stilts_preconditioning;  Error;                      ev_stilts_to_extend_timeout;        a_stilts_to_extend_timeout;                         };
+  Transition  { sm_Stilts_unlock.Final;     sm_Stilts_extend;           ev_stilts_are_unlocked;             a_stilts_to_extend_started_stilts_extend;           };
+  Transition  { sm_Stilts_unlock;           Error;                      ev_stilts_to_extend_timeout;        a_stilts_to_extend_timeout;                         };
+  Transition  { sm_Stilts_unlock.Error;     Error;                                                          a_stilts_to_extend_interrupted;                     };
+  Transition  { sm_Stilts_extend;           sm_Stilts_lock;             ev_stilts_have_ground_contact;      a_stilts_to_extend_started_stilts_lock;             };
+  Transition  { sm_Stilts_extend;           Final;                      ev_stilts_extended_stilt_detected;  a_stilts_to_extend_failed;                          };  //  arki: Final ???
+  Transition  { sm_Stilts_extend;           Error;                      ev_stilts_to_extend_timeout;        a_stilts_to_extend_timeout;                         };
+  Transition  { sm_Stilts_extend.Error;     Error;                                                          a_stilts_to_extend_interrupted;                     };
+  Transition  { sm_Stilts_lock.Final;       Final;                      ev_stilts_are_locked;               a_stilts_to_extend_finished;                        };
+  Transition  { sm_Stilts_lock;             Error;                      ev_stilts_to_extend_timeout;        a_stilts_to_extend_timeout;                         };
+  Transition  { sm_Stilts_lock.Error;       Error;                                                          a_stilts_to_extend_interrupted;                     };
 };
 
 //  comment:  following transition is not helpfull, because before preconditioning stilts are not under pressure and therefore detection of contact to the ground is not possible!

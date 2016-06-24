@@ -138,8 +138,6 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/flap_open.ceps \
 # $PROGRAMS/flap_close.ceps \
 # $PROGRAMS/flap_lock.ceps \
-# $PROGRAMS/mast_move_up.ceps \
-# $PROGRAMS/mast_move_down.ceps \
 # $PROGRAMS/stilts_to_extend.ceps \
 # $PROGRAMS/stilts_extend.ceps \
 # $PROGRAMS/stilts_to_retract.ceps \
@@ -150,6 +148,8 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
+# $PROGRAMS/z_drive_move_up.ceps \
+# $PROGRAMS/z_drive_move_down.ceps \
 # $DINGO/flap_endschalter_HZG.ceps \
 # $DINGO/flap_endschalter_HZO.ceps \
 # $DINGO/flap_valve_HVZO.ceps \
@@ -180,11 +180,6 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/antenna_lashing_lock.ceps \
 # $PROGRAMS/antenna_lock_preconditioning.ceps \
 # $PROGRAMS/dust_discharge_to_do.ceps \
-# $PROGRAMS/mast_move_up.ceps \
-# $PROGRAMS/mast_move_down.ceps \
-# $PROGRAMS/z_drive_enable.ceps \
-# $PROGRAMS/z_drive_disable.ceps \
-# $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/flap_to_open.ceps \
 # $PROGRAMS/flap_to_close.ceps \
 # $PROGRAMS/flap_precondition.ceps \
@@ -208,8 +203,11 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/system_retract.ceps \
 # $PROGRAMS/x_drive_enable.ceps \
 # $PROGRAMS/y_drive_enable.ceps \
+# $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/x_drive_disable.ceps \
 # $PROGRAMS/y_drive_disable.ceps \
+# $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/x_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/y_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/y_drive_to_arbeitsposition.ceps \
@@ -223,6 +221,8 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/x_drive_move.ceps \
 # $PROGRAMS/y_drive_move.ceps \
 # $PROGRAMS/z_drive_move.ceps \
+# $PROGRAMS/z_drive_move_up.ceps \
+# $PROGRAMS/z_drive_move_down.ceps \
 # $DINGO/flap_endschalter_HZG.ceps \
 # $DINGO/flap_endschalter_HZO.ceps \
 # $DINGO/flap_valve_HVZO.ceps \
@@ -319,8 +319,8 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $DINGO/stilts_endschalter_SMOL.ceps \
 # $DINGO/stilts_endschalter_SMOR.ceps \
 # $DINGO/talin.ceps \
-# $DINGO/y_drive.ceps \
-# $DINGO/z_drive.ceps \
+# $DINGO/y_drive_sim.ceps \
+# $DINGO/z_drive_sim.ceps \
 # $TESTS/system_and_platform/system_extend_unittests.ceps
 # #$TESTS/system_and_platform/platform_extend_unittests.ceps
 
@@ -349,8 +349,8 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $STATE/z_drive_state.ceps \
 # $PROGRAMS/ctrl.ceps \
 # $PROGRAMS/dispatch.ceps \
-# $PROGRAMS/mast_move_up.ceps \
-# $PROGRAMS/mast_move_down.ceps \
+# $PROGRAMS/z_drive_move_up.ceps \
+# $PROGRAMS/z_drive_move_down.ceps \
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
@@ -371,43 +371,52 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 #    drives-integration
 #########################################
 
-# # X drive to index position unittests
+# ## X drive to index position unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
 # $STATE/drives_state.ceps \
+# $STATE/x_drive_fault_state.ceps \
 # $PROGRAMS/x_drive_move.ceps \
 # $PROGRAMS/x_drive_enable.ceps \
 # $PROGRAMS/x_drive_disable.ceps \
+# $PROGRAMS/x_drive_brake_apply.ceps \
+# $PROGRAMS/x_drive_brake_release.ceps \
 # $PROGRAMS/x_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/x_drive_to_indexposition.ceps \
-# $DINGO/x_drive.ceps \
+# $DINGO/x_drive_sim.ceps \
 # $TESTS/drives/x_drive_to_indexposition_unittests.ceps
 
 # ## X drive to target position unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $STATE/drives_state.ceps \
+# $STATE/x_drive_fault_state.ceps \
 # $PROGRAMS/x_drive_move.ceps \
 # $PROGRAMS/x_drive_enable.ceps \
 # $PROGRAMS/x_drive_disable.ceps \
+# $PROGRAMS/x_drive_brake_apply.ceps \
+# $PROGRAMS/x_drive_brake_release.ceps \
 # $PROGRAMS/x_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/x_drive_to_target_position.ceps \
-# $DINGO/x_drive.ceps \
+# $DINGO/x_drive_sim.ceps \
 # $TESTS/drives/x_drive_to_target_position_unittests.ceps
 
-# # Y drive to index position unittests
+# ## Y drive to index position unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
 # $STATE/drives_state.ceps \
+# $STATE/y_drive_fault_state.ceps \
 # $PROGRAMS/y_drive_move.ceps \
 # $PROGRAMS/y_drive_enable.ceps \
 # $PROGRAMS/y_drive_disable.ceps \
+# $PROGRAMS/y_drive_brake_apply.ceps \
+# $PROGRAMS/y_drive_brake_release.ceps \
 # $PROGRAMS/y_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/y_drive_to_indexposition.ceps \
 # $DINGO/funktionsueberwachung.ceps \
-# $DINGO/y_drive.ceps \
+# $DINGO/y_drive_sim.ceps \
 # $TESTS/drives/y_drive_to_indexposition_unittests.ceps
 
 # ## Y drive to target position unittests
@@ -415,25 +424,31 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
 # $STATE/drives_state.ceps \
+# $STATE/y_drive_fault_state.ceps \
 # $PROGRAMS/y_drive_move.ceps \
 # $PROGRAMS/y_drive_enable.ceps \
 # $PROGRAMS/y_drive_disable.ceps \
+# $PROGRAMS/y_drive_brake_apply.ceps \
+# $PROGRAMS/y_drive_brake_release.ceps \
 # $PROGRAMS/y_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/y_drive_to_target_position.ceps \
-# $DINGO/y_drive.ceps \
+# $DINGO/y_drive_sim.ceps \
 # $TESTS/drives/y_drive_to_target_position_unittests.ceps
 
-# # Y drive to arbeitsposition unittests
+# ## Y drive to arbeitsposition unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
 # $STATE/drives_state.ceps \
+# $STATE/y_drive_fault_state.ceps \
 # $PROGRAMS/y_drive_move.ceps \
 # $PROGRAMS/y_drive_enable.ceps \
 # $PROGRAMS/y_drive_disable.ceps \
+# $PROGRAMS/y_drive_brake_apply.ceps \
+# $PROGRAMS/y_drive_brake_release.ceps \
 # $PROGRAMS/y_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/y_drive_to_arbeitsposition.ceps \
-# $DINGO/y_drive.ceps \
+# $DINGO/y_drive_sim.ceps \
 # $TESTS/drives/y_drive_to_arbeitsposition_unittests.ceps
 
 #########################################
@@ -442,23 +457,65 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
-# $PROGRAMS/y_drive_enable.ceps \
-# $PROGRAMS/y_drive_reset_fault_antrieb.ceps \
-# $TESTS/drives/y_drive_enable_unittests.ceps
-
-# $EXE/sm2plantuml \
-# $BASE_DEFS/base_defs.ceps \
 # $PROGRAMS/x_drive_enable.ceps \
-# $PROGRAMS/x_drive_reset_fault_antrieb.ceps \
 # $TESTS/drives/x_drive_enable_unittests.ceps
 
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/y_drive_enable.ceps \
+# $TESTS/drives/y_drive_enable_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
-# $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $TESTS/drives/z_drive_enable_unittests.ceps
 
-## x_drive reset fault antrieb unittests
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/x_drive_disable.ceps \
+# $TESTS/drives/x_drive_disable_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/y_drive_disable.ceps \
+# $TESTS/drives/y_drive_disable_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/z_drive_disable.ceps \
+# $TESTS/drives/z_drive_disable_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/x_drive_brake_release.ceps \
+# $TESTS/drives/x_drive_brake_release_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/y_drive_brake_release.ceps \
+# $TESTS/drives/y_drive_brake_release_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
+# $TESTS/drives/z_drive_brake_release_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/x_drive_brake_apply.ceps \
+# $TESTS/drives/x_drive_brake_apply_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/y_drive_brake_apply.ceps \
+# $TESTS/drives/y_drive_brake_apply_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $TESTS/drives/z_drive_brake_apply_unittests.ceps
+
+# ## x_drive reset fault antrieb unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $PROGRAMS/x_drive_reset_fault_antrieb.ceps \
@@ -475,21 +532,6 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $BASE_DEFS/base_defs.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $TESTS/drives/z_drive_reset_fault_antrieb_unittests.ceps
-
-# $EXE/sm2plantuml \
-# $BASE_DEFS/base_defs.ceps \
-# $PROGRAMS/z_drive_disable.ceps \
-# $TESTS/drives/z_drive_disable_unittests.ceps
-
-# $EXE/sm2plantuml \
-# $BASE_DEFS/base_defs.ceps \
-# $PROGRAMS/y_drive_disable.ceps \
-# $TESTS/drives/y_drive_disable_unittests.ceps
-
-# $EXE/sm2plantuml \
-# $BASE_DEFS/base_defs.ceps \
-# $PROGRAMS/x_drive_disable.ceps \
-# $TESTS/drives/x_drive_disable_unittests.ceps
 
 #########################################
 #    drives-state
@@ -527,8 +569,20 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
-# $DINGO/z_drive.ceps \
-# $TESTS/drives/z_drive_unittests.ceps
+# $DINGO/x_drive_sim.ceps \
+# $TESTS/drives/x_drive_sim_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $BASE_DEFS/dingo_definitions.ceps \
+# $DINGO/y_drive_sim.ceps \
+# $TESTS/drives/y_drive_sim_unittests.ceps
+
+# $EXE/sm2plantuml \
+# $BASE_DEFS/base_defs.ceps \
+# $BASE_DEFS/dingo_definitions.ceps \
+# $DINGO/z_drive_sim.ceps \
+# $TESTS/drives/z_drive_sim_unittests.ceps
 
 #########################################
 #    antenna
@@ -588,6 +642,10 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/y_drive_enable.ceps \
 # $PROGRAMS/x_drive_disable.ceps \
 # $PROGRAMS/y_drive_disable.ceps \
+# $PROGRAMS/x_drive_brake_apply.ceps \
+# $PROGRAMS/y_drive_brake_apply.ceps \
+# $PROGRAMS/x_drive_brake_release.ceps \
+# $PROGRAMS/y_drive_brake_release.ceps \
 # $PROGRAMS/x_drive_to_indexposition.ceps \
 # $PROGRAMS/y_drive_to_arbeitsposition.ceps \
 # $PROGRAMS/x_drive_reset_fault_antrieb.ceps \
@@ -604,6 +662,10 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/x_drive_disable.ceps \
 # $PROGRAMS/y_drive_enable.ceps \
 # $PROGRAMS/y_drive_disable.ceps \
+# $PROGRAMS/x_drive_brake_apply.ceps \
+# $PROGRAMS/y_drive_brake_apply.ceps \
+# $PROGRAMS/x_drive_brake_release.ceps \
+# $PROGRAMS/y_drive_brake_release.ceps \
 # $PROGRAMS/x_drive_to_indexposition.ceps \
 # $PROGRAMS/y_drive_to_indexposition.ceps \
 # $PROGRAMS/y_drive_reset_fault_antrieb.ceps \
@@ -686,26 +748,30 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
 # $STATE/drives_state.ceps \
-# $PROGRAMS/mast_move_up.ceps \
+# $PROGRAMS/z_drive_move_up.ceps \
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
-# $DINGO/z_drive.ceps \
-# $TESTS/mast/mast_move_up_unittests.ceps
+# $DINGO/z_drive_sim.ceps \
+# $TESTS/mast/z_drive_move_up_unittests.ceps
 
 # ## mast move down
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
 # $STATE/drives_state.ceps \
-# $PROGRAMS/mast_move_down.ceps \
+# $PROGRAMS/z_drive_move_down.ceps \
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
-# $DINGO/z_drive.ceps \
-# $TESTS/mast/mast_move_down_unittests.ceps
+# $DINGO/z_drive_sim.ceps \
+# $TESTS/mast/z_drive_move_down_unittests.ceps
 
 # ## mast movement feature unittests
 # $EXE/sm2plantuml \
@@ -715,15 +781,17 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
-# $DINGO/z_drive.ceps \
+# $DINGO/z_drive_sim.ceps \
 # $TESTS/mast/mast_movement_feature_unittests.ceps
 
 #########################################
 #    mast-programs
 #########################################
 
-## mast move to indexposition unittests
+# ## mast move to indexposition unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
@@ -731,9 +799,11 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/z_drive_to_index_position.ceps \
-# $DINGO/z_drive.ceps \
+# $DINGO/z_drive_sim.ceps \
 # $DINGO/talin.ceps \
 # $DINGO/funktionsueberwachung.ceps \
 # $TESTS/mast/mast_move_to_indexposition_unittests.ceps
@@ -742,14 +812,17 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \
+# $STATE/drives_state.ceps \
+# $PROGRAMS/z_drive_move_down.ceps \
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
-# $PROGRAMS/mast_move_down.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
 # $PROGRAMS/z_drive_to_target_position.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $DINGO/talin.ceps \
-# $DINGO/z_drive.ceps \
+# $DINGO/z_drive_sim.ceps \
 # $DINGO/funktionsueberwachung.ceps \
 # $TESTS/mast/mast_move_to_target_unittests.ceps
 
@@ -761,9 +834,11 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/z_drive_to_index_position.ceps \
-# $DINGO/z_drive.ceps \
+# $DINGO/z_drive_sim.ceps \
 # $TESTS/mast/mast_move_to_indexposition_unittests.ceps
 
 # ## mast move to lashing position unittests
@@ -774,9 +849,11 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $PROGRAMS/z_drive_move.ceps \
 # $PROGRAMS/z_drive_enable.ceps \
 # $PROGRAMS/z_drive_disable.ceps \
+# $PROGRAMS/z_drive_brake_apply.ceps \
+# $PROGRAMS/z_drive_brake_release.ceps \
 # $PROGRAMS/z_drive_reset_fault_antrieb.ceps \
 # $PROGRAMS/z_drive_to_lashing_position.ceps \
-# $DINGO/z_drive.ceps \
+# $DINGO/z_drive_sim.ceps \
 # $DINGO/talin.ceps \
 # $DINGO/funktionsueberwachung.ceps \
 # $TESTS/mast/mast_move_to_lashing_position_unittests.ceps
@@ -1137,7 +1214,7 @@ TESTS=$TRGS_ROOT/statemachines/control/unittests
 # $DINGO/flap_valve_HVZSN.ceps \
 # $TESTS/flap/flap_valves_and_es_unittests.ceps
 
-# # flap locks unittests
+# ## flap locks unittests
 # $EXE/sm2plantuml \
 # $BASE_DEFS/base_defs.ceps \
 # $BASE_DEFS/dingo_definitions.ceps \

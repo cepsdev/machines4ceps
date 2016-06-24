@@ -89,6 +89,8 @@ namespace sm4ceps_plugin_int{
    virtual bool match_chunk(void*,size_t) = 0;
    glob_handler_t get_handler() {return handler;}
    void set_handler(glob_handler_t h) {handler = h;}
+   virtual Framecontext* clone() = 0;
+   virtual ~Framecontext(){}
  };
 
 

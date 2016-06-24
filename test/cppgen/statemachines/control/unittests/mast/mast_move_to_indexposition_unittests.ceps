@@ -1,4 +1,4 @@
-Event ev_z_drive_move, ev_mast_move_to_indexposition;
+Event ev_mast_move_to_indexposition;
 
 Mast_move_to_indexposition_unittests
 {
@@ -8,75 +8,94 @@ Mast_move_to_indexposition_unittests
 
 Statemachine
 {
- id { sm_Ctrl; };
- import { sm_Z_drive_to_indexposition;  };
- States { Initial;  Final;  };
- Transition { Initial;                      sm_Z_drive_to_indexposition;  ev_mast_move_to_indexposition;  };
- Transition { sm_Z_drive_to_indexposition;  Final;                        ev_z_drive_is_in_indexposition; };
+  id { sm_Ctrl; };
+  import { sm_Z_drive_to_indexposition;  };
+  States { Initial; Final;  Error;  };
+  Actions
+  {
+    a_report_error  { print ( "\n\n--- ERROR DETECTED ---\n\n" ); };
+  };
+  Transition { Initial;                           sm_Z_drive_to_indexposition;  ev_mast_move_to_indexposition;  };
+  Transition { sm_Z_drive_to_indexposition.Final; Final;                        };
+  Transition { sm_Z_drive_to_indexposition.Error; Error;                                                        a_report_error; };
 };
 
 Simulation
 {
   TestCase{Mast_move_to_indexposition_unittests;};Test{Run_given_ist_masthoehe_is_lower_than_soll_pos;};
 
-  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION - 17;
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
+  z_drive.IstPos      = z_drive.INDEXPOSITION - 17;
   z_drive.SollGeschw  = 50.0;
 
   Start { sm_Ctrl;  };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_sim; };
 
   // activate Z_drive_to_indexposition
   ev_mast_move_to_indexposition;
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_to_indexposition.sm_Z_drive_move.Prepare_Talin;};
-  
+
   // pretend that TALIN is prepared
   ev_talin_is_ready_to_be_moved;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_to_indexposition.sm_Z_drive_move.Moving;};
 
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  z_drive.Status.ANTRIEB_INPOS    = 1;
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };
 
 Simulation
 {
   TestCase{Mast_move_to_indexposition_unittests;};Test{Run_given_ist_masthoehe_is_higher_than_soll_pos;};
 
-  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION + 42;
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
+  z_drive.IstPos      = z_drive.INDEXPOSITION + 42;
   z_drive.SollGeschw  = 50.0;
 
   Start { sm_Ctrl;  };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_sim; };
 
   // activate Z_drive_to_indexposition
   ev_mast_move_to_indexposition;
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_to_indexposition.sm_Z_drive_move.Prepare_Talin;};
-  
+
   // pretend that TALIN is prepared
   ev_talin_is_ready_to_be_moved;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Z_drive_to_indexposition.sm_Z_drive_move.Moving;};
-
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
 };
 
 Simulation
 {
   TestCase{Mast_move_to_indexposition_unittests;};Test{Run_given_mast_is_in_indexposition_already;};
 
-  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
+  z_drive.IstPos      = z_drive.INDEXPOSITION;
   z_drive.SollGeschw  = 50.0;
 
   Start { sm_Ctrl;  };
   Start { sm_Z_drive_state; };
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_sim; };
 
   // activate Z_drive_to_indexposition
   ev_mast_move_to_indexposition;
 
   ev_talin_is_ready_to_be_moved;
-
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
 };

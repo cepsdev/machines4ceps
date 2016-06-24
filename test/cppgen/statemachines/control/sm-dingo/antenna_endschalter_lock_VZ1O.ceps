@@ -2,7 +2,7 @@
 // VZ1O - Antenne Verzurrung 1 Offen
 //  comment: normaly the initial state is unknown and it could only work with sufficient system pressure
 
-Event ev_antenna_lashing_state_change, ev_antenna_valve_lock_state_change;
+Event ev_antenna_lashing_state_change,  ev_antenna_valve_lock_state_change;
 
 Statemachine
 {
@@ -12,13 +12,13 @@ Statemachine
 
   Actions
   {
-    a_AntennaLockState  { ev_antenna_lashing_state_change;  };
-    a_Off               { SENSOR_VZ1O = 0;  };
-    a_On                { SENSOR_VZ1O = 1;  };
+    a_antenna_lashing_state_change  { ev_antenna_lashing_state_change;  };
+    a_antenna_es_VZ1O_Off           { SENSOR_VZ1O = 0;  print ( "SENSOR_VZ1O = 0\n" );  };
+    a_antenna_es_VZ1O_On            { SENSOR_VZ1O = 1;  print ( "SENSOR_VZ1O = 1\n" );  };
   };
 
-  Transition  { Initial;  Off;                                       !g_antenna_valve_lock_is_in_unlocking_position;  a_Off;                      };
-  Transition  { Initial;  On;                                         g_antenna_valve_lock_is_in_unlocking_position;  a_On;                       };
-  Transition  { On;       Off;  ev_antenna_valve_lock_state_change;   g_antenna_valve_lock_is_in_locking_position;    a_Off;  a_AntennaLockState; };
-  Transition  { Off;      On;   ev_antenna_valve_lock_state_change;   g_antenna_valve_lock_is_in_unlocking_position;  a_On;   a_AntennaLockState; };
+  Transition  { Initial;  Off;                                       !g_antenna_valve_lock_is_in_unlocking_position;  a_antenna_es_VZ1O_Off;                                  };
+  Transition  { Initial;  On;                                         g_antenna_valve_lock_is_in_unlocking_position;  a_antenna_es_VZ1O_On;                                   };
+  Transition  { On;       Off;  ev_antenna_valve_lock_state_change;   g_antenna_valve_lock_is_in_locking_position;    a_antenna_es_VZ1O_Off;  a_antenna_lashing_state_change; };
+  Transition  { Off;      On;   ev_antenna_valve_lock_state_change;   g_antenna_valve_lock_is_in_unlocking_position;  a_antenna_es_VZ1O_On;   a_antenna_lashing_state_change; };
 };

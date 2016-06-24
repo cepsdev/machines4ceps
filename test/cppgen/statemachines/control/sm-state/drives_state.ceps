@@ -1,6 +1,7 @@
 Event ev_x_drive_position_changed, ev_x_drive_stop, ev_x_drive_has_antrieb_fault;
 Event ev_y_drive_position_changed, ev_y_drive_stop, ev_y_drive_has_antrieb_fault;
 Event ev_z_drive_position_changed, ev_z_drive_stop, ev_z_drive_has_antrieb_fault;
+Guard g_x_drive_has_antrieb_fault, g_y_drive_has_antrieb_fault, g_z_drive_has_antrieb_fault;
 
 // X_drive_state
 Statemachine
@@ -69,7 +70,7 @@ Statemachine
     a_has_antrieb_fault     { ev_z_drive_has_antrieb_fault; };
   };
 
-  Transition  { Initial;      Idle;};
+  Transition  { Initial;      Idle; };
   Transition  { Idle;         Error;                                      g_z_drive_has_antrieb_fault;  a_has_antrieb_fault;  };
   Transition  { Idle;         Moving_up;    ev_z_drive_position_changed;  g_z_drive_is_moving_up;       a_z_drive_starts_moving;  };
   Transition  { Idle;         Moving_down;  ev_z_drive_position_changed;  g_z_drive_is_moving_down;     a_z_drive_starts_moving;  };
@@ -80,3 +81,5 @@ Statemachine
   Transition  { Moving_up;    Moving_down;  ev_z_drive_position_changed;  g_z_drive_is_moving_down;     a_z_drive_starts_moving;  };
   Transition  { Moving_down;  Moving_up;    ev_z_drive_position_changed;  g_z_drive_is_moving_up;       a_z_drive_starts_moving;  };
 };
+
+

@@ -1,0 +1,31 @@
+Event ev_z_drive_prepares_to_move, ev_z_drive_movement_stopped, ev_talin_is_ready_to_be_moved, ev_z_drive_is_disabled, ev_antenna_is_levelled_out;
+
+Statemachine
+{
+  id  { sm_Talin; };
+  States  { Initial;  Ready; Not_Ready; };
+
+  Actions
+  {
+    a_feedback
+    {
+      Talin_state.axis_x = 2.7; 
+      Talin_state.axis_y = 3.9;
+      ev_talin_is_ready_to_be_moved;
+    };
+    a_talin_antenna_is_levelled_out
+    {
+      Talin_state.axis_x = 0.0; 
+      Talin_state.axis_y = 0.0;
+      ev_antenna_alignment_changed;
+    };
+  };
+
+  Transition  { Initial;    Not_Ready;  };
+  Transition  { Not_Ready;      Ready;  ev_z_drive_prepares_to_move;  a_feedback; };
+  Transition  {     Ready;  Not_Ready;  ev_z_drive_movement_stopped;  };
+  Transition  {     Ready;  Not_Ready;  ev_z_drive_is_disabled; };
+
+  Transition  { Not_Ready;  Not_Ready;  ev_antenna_is_levelled_out;   a_talin_antenna_is_levelled_out;  };
+  Transition  {     Ready;      Ready;  ev_antenna_is_levelled_out;   a_talin_antenna_is_levelled_out;  };
+};

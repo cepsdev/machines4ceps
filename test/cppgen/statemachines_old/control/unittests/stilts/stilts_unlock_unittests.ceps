@@ -1,0 +1,61 @@
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.1;
+};
+
+Stilts_unlock_unittests
+{
+  //g_stilts_all_are_unlocked = 0;
+  SENSOR_SEKOL  = 0;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 1;  //  StützeEndlageKlemmungGeschlossenLinks
+  SENSOR_SEKOR  = 0;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 1;  //  StützeEndlageKlemmungGeschlossenRechts
+  SENSOR_KAMPFSCHALTER_A            = 0;
+  Pneumatics.system_pressure  = DEFAULT_SYSTEM_PRESSURE;
+};
+
+Simulation
+{
+  TestCase{Stilts_unlock_unittests;};Test{Initialization;};
+
+  Start { sm_Stilts_unlock; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_unlock.Unlocking;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_unlock_unittests;};Test{Initialization_given_objective_already_reached;};
+
+  //g_stilts_all_are_unlocked = 1;
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  Start { sm_Stilts_unlock; };
+
+  ASSERT_END_STATES_CONTAINS{sm_Stilts_unlock.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_unlock_unittests;};Test{Unlocking_with_objective_is_reached;};
+
+  Start { sm_Stilts_unlock; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_unlock.Unlocking;};
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  ev_stilts_lock_left_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_unlock.Unlocking;};
+  //g_stilts_all_are_unlocked = 1;
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  ev_stilts_lock_right_is_unlocked;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_unlock.Final;};
+};
+

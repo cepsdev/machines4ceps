@@ -1,32 +1,31 @@
 // SMUL - Stütze Magnet Unten Links   ( Stütze links voll ausgefahren )
 
 //  external events and guards
-Event ev_stilts_valve_state, ev_stilt_left_state_change;
+Event ev_stilts_left_position_changed,  ev_stilt_endschalter_SMUL_change;
 
 //  local events and guards
-Guard g_SMUL_sim_goes_on, g_SMUL_sim_still_off;
+Guard g_SMUL_sim_goes_on;
 
-Globals 
+Globals
 {
   g_SMUL_sim_goes_on    = ( Stilt_position_left   >=  STILTS_POSITION_MAX );
-  g_SMUL_sim_still_off  = ( Stilt_position_left   <   STILTS_POSITION_MAX );
 };
 
 Statemachine
 {
   id  { sm_Stilts_endschalter_SMUL; };
-  description { "Endschalter Stütze Magnet Unten Links"; };
+  description { "Endschalter Stütze Magnet Unten Links";  };
   States  { Initial;  On; Off;  };
 
   Actions
   {
-    a_StiltsState_left  { ev_stilt_left_state_change; };
-    a_Off               { SENSOR_SMUL  = 0; };
-    a_On                { SENSOR_SMUL  = 1; };
+    a_stilts_es_state_change  { ev_stilt_endschalter_SMUL_change; };
+    a_stilts_es_SMUL_Off      { SENSOR_SMUL = 0;  print ( "SENSOR_SMUL = 0\n" );  };
+    a_stilts_es_SMUL_On       { SENSOR_SMUL = 1;  print ( "SENSOR_SMUL = 1\n" );  };
   };
 
-  Transition  { Initial;  Off;                        a_Off; !g_SMUL_sim_goes_on; };
-  Transition  { Initial;  On;                         a_On;   g_SMUL_sim_goes_on; };
-  Transition  { Off;      On;   a_StiltsState_left;   a_On;   g_SMUL_sim_goes_on; };
-  Transition  { On;       Off;  a_StiltsState_left;   a_Off;  g_SMUL_sim_still_off; };
+  Transition  { Initial;  Off;                                     !g_SMUL_sim_goes_on;   a_stilts_es_SMUL_Off;                           };
+  Transition  { Initial;  On;                                       g_SMUL_sim_goes_on;   a_stilts_es_SMUL_On;                            };
+  Transition  { Off;      On;   ev_stilts_left_position_changed;    g_SMUL_sim_goes_on;   a_stilts_es_SMUL_On;  a_stilts_es_state_change; };
+  Transition  { On;       Off;  ev_stilts_left_position_changed;   !g_SMUL_sim_goes_on;   a_stilts_es_SMUL_Off; a_stilts_es_state_change; };
 };

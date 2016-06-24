@@ -1,20 +1,37 @@
 // <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
 
 Globals
 {
   // Redefinition for test acceleration
-  TIMER_ACTIVATION = 0.01;
+  TIMER_ACTIVATION = 0.1;
 };
 
-Z_drive_disable_unittests {};
+Z_drive_disable_unittests
+{
+  z_drive.Status.ANTRIEB_ENABLE_OUT = 1;
+};
 
 Simulation
 {
-  TestCase{Z_drive_disable_unittests;};Test{Initialization;};
+  TestCase{Z_drive_disable_unittests;};Test{Initialization_given_no_antrieb_fault;};
 
   Start { sm_Z_drive_disable; };
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Disabling;};
+};
+
+
+Simulation
+{
+  TestCase{Z_drive_disable_unittests;};Test{Timeout;};
+
+  Start { sm_Z_drive_disable; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Disabling;};
+
+  ev_z_drive_disable_timeout;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Error;};
 };
 
 
@@ -25,6 +42,8 @@ Simulation
   Start { sm_Z_drive_disable; };
 
   ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Disabling;};
-  ev_z_drive_is_disabled;
+
+  z_drive.Status.ANTRIEB_ENABLE_OUT = 0;
+  ev_z_drive_can_state_response;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_disable.Final;};
 };

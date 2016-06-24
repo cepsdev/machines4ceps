@@ -2,7 +2,7 @@
 
 ExtBG_unittests
 {
-  g_extBG_is_online = 1;
+  s_extBG_is_online = 1;
 };
 
 

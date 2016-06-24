@@ -2,22 +2,22 @@
 // CS3
 //#define SENSOR_IP_X                             0x10
 
-Event ev_x_drive_endschalter_shows_indexposition;
+Event ev_x_drive_position_changed,  ev_x_drive_endschalter_IP_X_changed;
 
 Statemachine
 {
   id  { sm_X_drive_endschalter_IP_X;  };
-  description { "Index position X"; };
+  description { "Index-Position X"; };
   States  { Initial;  On; Off;  };
 
   Actions
   {
-    a_stateChange { ev_x_drive_endschalter_shows_indexposition; };
-    a_Off         { SENSOR_IP_X  = 0; };
-    a_On          { SENSOR_IP_X  = 1; };
+    a_x_drive_es_state_change { ev_x_drive_endschalter_IP_X_changed; };
+    a_x_drive_es_IP_X_Off     { SENSOR_IP_X = 0;  print ( "SENSOR_IP_X = 0\n" );  };
+    a_x_drive_es_IP_X_On      { SENSOR_IP_X = 1;  print ( "SENSOR_IP_X = 1\n" );  };
   };
 
-  Transition  { Initial;  Off;  };
-  Transition  { Off;      On;     g_sensor_IP_x_drive;  a_On;   a_stateChange;  };
-  Transition  { On;       Off;   !g_sensor_IP_x_drive;  a_Off;  a_stateChange;  };
+  Transition  { Initial;  Off;                                                        a_x_drive_es_IP_X_Off;  };
+  Transition  { Off;      On;   ev_x_drive_position_changed;    g_sensor_IP_x_drive;  a_x_drive_es_IP_X_On;   a_x_drive_es_state_change;  };
+  Transition  { On;       Off;  ev_x_drive_position_changed;   !g_sensor_IP_x_drive;  a_x_drive_es_IP_X_Off;  a_x_drive_es_state_change;  };
 };

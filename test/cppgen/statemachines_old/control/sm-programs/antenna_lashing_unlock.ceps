@@ -1,0 +1,34 @@
+Event ev_antenna_lashing_is_unlocked, ev_antenna_lashing_unlock_timeout, ev_antenna_lashing_unlock_starts, ev_antenna_lashing_unlock_was_interrupted;
+Event ev_antenna_lock_is_preconditioned, ev_antenna_unlock, ev_antenna_is_unlocked, ev_antenna_lashing_unlock_preconditions_are_not_met;
+
+Statemachine
+{
+  id  { sm_Antenna_lashing_unlock;  };
+  description { "Antenna_lashing_unlock"; };
+  States  { Initial;  Final;  Unlocking;  Error;  };
+
+  import  { sm_Antenna_lock_preconditioning;  };
+
+  Actions
+  {
+    a_set_timeout_timer                   { start_timer ( TIME_VERZURRUNG * s, ev_antenna_lashing_unlock_timeout, timer_antenna_lashing_unlock );  };
+    a_preconditions_are_not_met           { ev_antenna_lashing_unlock_preconditions_are_not_met;  };
+    a_was_interrupted                     { ev_antenna_lashing_unlock_was_interrupted;  };
+    a_antenna_unlock                      { ev_antenna_unlock;  };
+    a_antenna_lashing_unlock_starts       { ev_antenna_lashing_unlock_starts; };
+    a_antenna_is_unlocked                 { ev_antenna_is_unlocked; };
+  };
+
+  on_exit
+  {
+    stop_timer ( timer_antenna_lashing_unlock );
+    if ( !in_state ( Final, Error ) ) a_was_interrupted;
+  };
+
+  Transition  { Initial;                          Final;                                                                a_antenna_is_unlocked;             g_antenna_lashing_is_unlocked; };
+  Transition  { Initial;                          sm_Antenna_lock_preconditioning;                                      a_antenna_lashing_unlock_starts;  !g_antenna_lashing_is_unlocked &&  g_antenna_lashing_unlock_preconditions;  };
+  Transition  { Initial;                          Error;                                                                a_preconditions_are_not_met;      !g_antenna_lashing_is_unlocked && !g_antenna_lashing_unlock_preconditions;  };
+  Transition  { sm_Antenna_lock_preconditioning;  Unlocking;                        ev_antenna_lock_is_preconditioned;  a_antenna_unlock; };
+  Transition  { Unlocking;                        Final;                            ev_antenna_lashing_is_unlocked;     a_antenna_is_unlocked;  };
+};
+

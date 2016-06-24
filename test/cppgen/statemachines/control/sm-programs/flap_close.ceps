@@ -1,21 +1,39 @@
-Event ev_flap_HVZO_close, ev_flap_is_closed, ev_flap_close_finished, ev_flap_close_timeout, ev_flap_stop_moving, ev_flap_close_started;
+Event ev_flap_close_started,  ev_flap_HVZO_close,   ev_flap_is_closed,  ev_flap_stop_moving,  ev_flap_close_finished, ev_flap_close_timeout;
+Event ev_flap_close_preconditions_not_are_not_met,  ev_flap_close_was_interrupted,  ev_flap_close_interrupted;
 
 Statemachine
 {
   id  { sm_Flap_close;  };
-  States  { Initial; Final;  Flap_Closing;  };
+  description { "Flap_close"; };
+  States  { Initial;  Final;  Start;  Flap_Closing; Error;  };
   Actions
   {
-    a_close_flap        { ev_flap_HVZO_close;  ev_flap_close_started; }; 
-    a_set_timeout_timer { start_timer(DEF_TIME_HAUBE_SCHLIESSEN*s, ev_flap_close_timeout, timer_flap_close);  };
-    a_stop_moving_flap  { ev_flap_stop_moving; ev_flap_close_finished;  };
+    a_flap_close_not_needed       { ev_flap_close_finished; };
+    a_flap_close_start            { ev_flap_HVZO_close;
+                                    ev_flap_close_started;
+                                    start_timer ( DEF_TIME_HAUBE_SCHLIESSEN * s, ev_flap_close_timeout, timer_flap_close );
+                                  };
+    a_flap_close_error            { ev_flap_close_preconditions_not_are_not_met; };
+    a_stop_moving_flap            { ev_flap_stop_moving;  ev_flap_close_finished;  };
+    a_flap_close_timeout          { ev_flap_stop_moving;  ev_flap_close_interrupted; };
+    a_flap_close_was_interrupted  { ev_flap_close_was_interrupted; };
+    a_flap_close_stop_timer       { stop_timer ( timer_flap_close ); };
   };
 
-  on_exit { stop_timer(timer_flap_close); };
+  on_exit
+  {
+    if ( !in_state ( Final, Error ) )
+    {
+      a_flap_close_stop_timer;
+      a_flap_close_was_interrupted;
+    };
+  };
 
-  Transition  { Initial;      Flap_Closing;                     a_close_flap; a_set_timeout_timer;   !g_flap_is_closed && g_flap_close_preconditions; };
-  Transition  { Flap_Closing; Final;        ev_flap_is_closed;  a_stop_moving_flap;};
-  Transition  { Initial;      Final;                                                                  g_flap_is_closed; };
-
+  Transition  { Initial;      Final;                                a_flap_close_not_needed;                            g_flap_is_closed;           };
+  Transition  { Initial;      Start;                                                                                   !g_flap_is_closed;           };
+  Transition  { Start;        Flap_Closing;                         a_flap_close_start;                                 g_flap_close_preconditions; };
+  Transition  { Start;        Error;                                a_flap_close_start;                                !g_flap_close_preconditions; };
+  Transition  { Flap_Closing; Final;        ev_flap_is_closed;      a_stop_moving_flap;       a_flap_close_stop_timer;                              };
+  Transition  { Flap_Closing; Error;        ev_flap_close_timeout;  a_flap_close_timeout;                                                           };
 };
 

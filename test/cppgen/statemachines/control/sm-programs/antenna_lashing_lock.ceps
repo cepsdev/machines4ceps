@@ -1,34 +1,46 @@
-Event ev_antenna_lashing_is_locked, ev_antenna_lashing_lock_timeout, ev_antenna_lashing_lock_preconditions_are_not_met, ev_antenna_lock;
-Event ev_antenna_lock_is_preconditioned, ev_antenna_lashing_lock_starts, ev_antenna_is_locked, ev_antenna_lashing_lock_was_interrupted;
+Event ev_antenna_lashing_is_locked,     ev_antenna_lashing_lock_timeout,    ev_antenna_lashing_lock_preconditions_are_not_met,    ev_antenna_lashing_lock_was_interrupted;
+Event ev_antenna_lashing_lock_starts,   ev_antenna_lock,    ev_antenna_is_locked, ev_antenna_lashing_lock_interrupted, ev_antenna_lashing_lock_not_needed;
 
 Statemachine
 {
   id  { sm_Antenna_lashing_lock;  };
   description { "Antenna_lashing_lock"; };
-  States  { Initial;  Final;  Error;  Locking;  };
+  States  { Initial;  Final;  Start;  Error;  Locking;  };
 
   import  { sm_Antenna_lock_preconditioning;  };
 
   Actions 
   {
-    a_set_timeout_timer                   { start_timer ( TIME_VERZURRUNG * s, ev_antenna_lashing_lock_timeout, timer_antenna_lashing_lock );  }; 
+    a_antenna_lashing_lock_not_needed     { ev_antenna_lashing_lock_not_needed; };
     a_preconditions_are_not_met           { ev_antenna_lashing_lock_preconditions_are_not_met;  };
+    a_antenna_lashing_lock_starts         { ev_antenna_lashing_lock_starts;
+                                            start_timer ( DEF_TIME_VERZURRUNG * s, ev_antenna_lashing_lock_timeout, timer_antenna_lashing_lock );
+                                          };
     a_was_interrupted                     { ev_antenna_lashing_lock_was_interrupted;  };
     a_antenna_lock                        { ev_antenna_lock;  };
-    a_antenna_lashing_lock_starts         { ev_antenna_lashing_lock_starts; };
     a_antenna_is_locked                   { ev_antenna_is_locked; };
+    a_antenna_lashing_lock_timeout        { ev_antenna_lashing_lock_interrupted;  };
+    a_antenna_lashing_lock_interrupted    { ev_antenna_lashing_lock_interrupted;  };
+    a_stop_timout_timer                   { stop_timer ( timer_antenna_lashing_lock ); };
   };
 
   on_exit
   {
-    stop_timer ( timer_antenna_lashing_lock );
-    if ( !in_state ( Final, Error ) ) a_was_interrupted;
+    if ( !in_state ( Final, Error ) )
+    {
+      a_stop_timout_timer;
+      a_was_interrupted;
+    };
   };
 
-  Transition  { Initial;                          sm_Antenna_lock_preconditioning;                                     !g_antenna_lashing_is_locked &&  g_antenna_lashing_lock_preconditions;  a_antenna_lashing_lock_starts; };
-  Transition  { Initial;                          Error;                                                               !g_antenna_lashing_is_locked && !g_antenna_lashing_lock_preconditions;  a_preconditions_are_not_met; };
-  Transition  { sm_Antenna_lock_preconditioning;  Locking;                          ev_antenna_lock_is_preconditioned;                                                                          a_antenna_lock; };
-  Transition  { Locking;                          Final;                            ev_antenna_lashing_is_locked;                                                                               a_antenna_is_locked;  };
-  Transition  { Initial;                          Final;                                                                g_antenna_lashing_is_locked;                                           a_antenna_is_locked; };
+  Transition  { Initial;                                Final;                                                                a_antenna_lashing_lock_not_needed;    g_antenna_lashing_is_locked;  };
+  Transition  { Initial;                                Start;                                                                                                     !g_antenna_lashing_is_locked;  };
+  Transition  { Start;                                  Error;                                                                a_preconditions_are_not_met;         !g_antenna_lashing_lock_preconditions;   };
+  Transition  { Start;                                  sm_Antenna_lock_preconditioning;                                      a_antenna_lashing_lock_starts;        g_antenna_lashing_lock_preconditions;   };
+  Transition  { sm_Antenna_lock_preconditioning.Final;  Locking;                                                              a_antenna_lock;                       };
+  Transition  { sm_Antenna_lock_preconditioning;        Error;                            ev_antenna_lashing_lock_timeout;    a_antenna_lashing_lock_timeout;       };
+  Transition  { sm_Antenna_lock_preconditioning.Error;  Error;                                                                a_antenna_lashing_lock_interrupted; a_stop_timout_timer;  };
+  Transition  { Locking;                                Final;                            ev_antenna_lashing_is_locked;       a_antenna_is_locked;                a_stop_timout_timer;  };
+  Transition  { Locking;                                Error;                            ev_antenna_lashing_lock_timeout;    a_antenna_lashing_lock_timeout;       };
 };
 

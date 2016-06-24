@@ -1,0 +1,35 @@
+// // raising antenna means: move Y-drive to 90°
+Event ev_y_drive_is_in_arbeitsposition, ev_y_drive_to_arbeitsposition_timeout;
+Event ev_antenna_to_rise_was_interrupted, ev_antenna_to_raise_starts, ev_antenna_is_risen, ev_antenna_to_rise_preconditions_are_not_met, ev_antenna_to_rise_timeout;
+
+Statemachine
+{
+  id  { sm_Antenna_to_raise;  };
+  description { "Antenna_to_raise"; };
+  States  { Initial;  Final;  Error;  };
+
+  import  { sm_Y_drive_to_arbeitsposition; };
+
+  Actions
+  {
+    a_preconditions_are_not_met { ev_antenna_to_rise_preconditions_are_not_met; };
+    a_was_interrupted           { ev_antenna_to_rise_was_interrupted; };
+    a_antenna_to_rise_timeout   { ev_antenna_to_rise_timeout; };
+    a_antenna_is_risen          { ev_antenna_is_risen;  };
+    a_antenna_to_rise_starts    { ev_antenna_to_raise_starts; };
+  };
+
+  on_exit
+  {
+    if ( !in_state ( Final, Error ) )
+    {
+      a_was_interrupted;
+    };
+  };
+
+  Transition  { Initial;                        sm_Y_drive_to_arbeitsposition;                                          g_antenna_to_rise_preconditions; a_antenna_to_rise_starts; };
+  Transition  { Initial;                        Error;                                                                 !g_antenna_to_rise_preconditions; a_preconditions_are_not_met;  };
+  Transition  { sm_Y_drive_to_arbeitsposition;  Error;                          ev_y_drive_to_arbeitsposition_timeout;                                   a_antenna_to_rise_timeout;  };
+  Transition  { sm_Y_drive_to_arbeitsposition;  Final;                          ev_y_drive_is_in_arbeitsposition;                                        a_antenna_is_risen; };
+};
+

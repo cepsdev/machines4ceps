@@ -1,38 +1,42 @@
 // System
 Event ev_system_extend, ev_platform_extend_is_finished, ev_system_retract, ev_platform_retract_is_finished;
 // Mast
-Event ev_mast_move_up, ev_mast_move_down, ev_z_drive_stop, ev_mast_anfahren, ev_z_drive_movement_stopped; 
+Event ev_z_drive_move_up, ev_z_drive_move_down, ev_mast_anfahren; 
 // X-Drive
-Event ev_x_drive_to_indexposition, ev_x_drive_is_in_indexposition, ev_y_drive_is_disabled;
+Event ev_x_drive_to_indexposition, ev_x_drive_to_target_position, ev_x_drive_move_left_down, ev_x_drive_move_right_down;
 // Y-Drive
-Event ev_y_drive_to_indexposition, ev_y_drive_is_in_indexposition, ev_y_drive_to_arbeitsposition, ev_y_drive_is_in_arbeitsposition, ev_y_drive_is_disabled;
+Event ev_y_drive_to_indexposition, ev_y_drive_to_arbeitsposition, ev_y_drive_to_target_position, ev_y_drive_move_front_down, ev_y_drive_move_rear_down;
 // Z-Drive
-Event ev_mast_ausfahren, ev_mast_einfahren, ev_z_drive_is_in_indexposition, ev_z_drive_is_in_lashing_position, ev_z_drive_is_disabled;
+Event ev_mast_ausfahren, ev_mast_einfahren;
 // Stilts
-Event ev_stilts_to_extend, ev_stilts_to_retract, ev_stilts_to_extend_finished, ev_stilts_to_retract_finished, ev_stilts_are_locked, ev_stilts_lock, ev_stilts_are_unlocked, ev_stilts_unlock, ev_stilts_retract, ev_stilts_extend, ev_stilts_are_retracted, ev_stilts_have_ground_contact;
+Event ev_stilts_to_extend, ev_stilts_to_retract, ev_stilts_to_extend_finished, ev_stilts_to_retract_finished, ev_stilts_lock, ev_stilts_unlock, ev_stilts_retract, ev_stilts_extend;
 // Flap
 Event ev_flap_lock_finished, ev_flap_to_open, ev_flap_to_open_finished, ev_flap_to_close, ev_flap_to_close_finished, ev_flap_unlock_finished, ev_flap_unlock, ev_flap_lock, ev_flap_lock_finished, ev_flap_close, ev_flap_open, ev_flap_open_finished, ev_flap_close_finished;
 // Antenna
-Event ev_antenna_to_level_out, ev_antenna_is_levelled_out, ev_antenna_lashing_unlock, ev_antenna_lashing_lock, ev_antenna_is_unlocked, ev_antenna_is_locked, ev_antenna_to_raise, ev_antenna_is_risen, ev_antenna_to_hinge_down, ev_antenna_is_hinged_down;
+Event ev_antenna_to_level_out, ev_antenna_lashing_unlock, ev_antenna_lashing_lock, ev_antenna_to_raise, ev_antenna_to_hinge_down;
 // Dust Discharge
 Event ev_dust_discharge_done, ev_dust_discharge_to_do;
-
+Event ev_current_action_is_finished;
 
 Statemachine
 {
   id  { sm_Dispatch;  };
   description { "Dispatcher";  };
 
-  import  { sm_System_extend;   };
-  import  { sm_System_retract;  };
-  import  { sm_Mast_move_up;    };
-  import  { sm_Mast_move_down;  };
+  import  { sm_System_extend;     };
+  import  { sm_System_retract;    };
+  import  { sm_Z_drive_move_up;   };
+  import  { sm_Z_drive_move_down; };
   import  { sm_Z_drive_to_target_position;  };
   import  { sm_Z_drive_to_indexposition;    };
   import  { sm_Z_drive_to_lashing_position; };
   import  { sm_X_drive_to_indexposition;    };
+  import  { sm_X_drive_move_left_down;      };
+  import  { sm_X_drive_move_right_down;     };
   import  { sm_Y_drive_to_indexposition;    };
   import  { sm_Y_drive_to_arbeitsposition;  };
+  import  { sm_Y_drive_move_front_down;     };
+  import  { sm_Y_drive_move_rear_down;      };
   import  { sm_Stilts_lock;       };
   import  { sm_Stilts_unlock;     };
   import  { sm_Stilts_extend;     };
@@ -60,81 +64,127 @@ Statemachine
     {
       g_kampfschalter_was_active = g_kampfschalter_is_active;
     };
+    a_finished  { ev_current_action_is_finished;  };
   };
+  on_exit { a_finished; };
 
-  Transition  { Initial;                        Idle; };
+  Transition  { Initial;                              Idle; };
 
   // system
-  Transition  { Idle;                           sm_System_extend;               ev_system_extend;                   a_kampfschalter_history;  };
-  Transition  { sm_System_extend;               Idle;                           ev_platform_extend_is_finished;     a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_System_retract;              ev_system_retract;                  a_kampfschalter_history;  };
-  Transition  { sm_System_retract;              Idle;                           ev_platform_retract_is_finished;    a_kampfschalter_history;  };
-
-  // mast
-  Transition  { Idle;                           sm_Mast_move_up;                ev_mast_move_up;                    a_kampfschalter_history;  };
-  Transition  { sm_Mast_move_up;                Idle;                           ev_z_drive_movement_stopped;        a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Mast_move_down;              ev_mast_move_down;                  a_kampfschalter_history;  };
-  Transition  { sm_Mast_move_down;              Idle;                           ev_z_drive_movement_stopped;        a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Z_drive_to_target_position;  ev_mast_anfahren;                   a_kampfschalter_history;  };
-  Transition  { sm_Z_drive_to_target_position;  Idle;                           ev_z_drive_movement_stopped;        a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_System_extend;               ev_system_extend;                               a_kampfschalter_history;  };
+  Transition  { sm_System_extend.Final;               Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_System_extend.Error;               Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_System_retract;              ev_system_retract;                              a_kampfschalter_history;  };
+  Transition  { sm_System_retract.Final;              Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_System_retract.Error;              Idle;                                                               a_finished; a_kampfschalter_history;  };
 
   // x-drive
-  Transition  { Idle;                           sm_X_drive_to_indexposition;    ev_x_drive_to_indexposition;        a_kampfschalter_history;  };
-  Transition  { sm_X_drive_to_indexposition;    Idle;                           ev_x_drive_is_in_indexposition;     a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_X_drive_to_indexposition;    ev_x_drive_to_indexposition;                    a_kampfschalter_history;  };
+  Transition  { sm_X_drive_to_indexposition.Final;    Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_X_drive_to_indexposition.Error;    Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_X_drive_to_target_position;  ev_x_drive_to_target_position;                  a_kampfschalter_history;  };
+  Transition  { sm_X_drive_to_target_position.Final;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_X_drive_to_target_position.Error;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_X_drive_move_left_down;      ev_x_drive_move_left_down;                      a_kampfschalter_history;  };
+  Transition  { sm_X_drive_move_left_down.Final;      Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_X_drive_move_left_down.Error;      Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_X_drive_move_right_down;     ev_x_drive_move_right_down;                     a_kampfschalter_history;  };
+  Transition  { sm_X_drive_move_right_down.Final;     Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_X_drive_move_right_down.Error;     Idle;                                                               a_finished; a_kampfschalter_history;  };
 
   // y-drive
-  Transition  { Idle;                           sm_Y_drive_to_indexposition;    ev_y_drive_to_indexposition;        a_kampfschalter_history;  };
-  Transition  { sm_Y_drive_to_indexposition;    Idle;                           ev_y_drive_is_in_indexposition;     a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Y_drive_to_arbeitsposition;  ev_y_drive_to_arbeitsposition;      a_kampfschalter_history;  };
-  Transition  { sm_Y_drive_to_arbeitsposition;  Idle;                           ev_y_drive_is_in_arbeitsposition;   a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Y_drive_to_indexposition;    ev_y_drive_to_indexposition;                    a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_to_indexposition.Final;    Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_to_indexposition.Error;    Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Y_drive_to_arbeitsposition;  ev_y_drive_to_arbeitsposition;                  a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_to_arbeitsposition.Final;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_to_arbeitsposition.Error;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Y_drive_to_target_position;  ev_y_drive_to_target_position;                  a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_to_target_position.Final;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_to_target_position.Error;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Y_drive_move_front_down;     ev_y_drive_move_front_down;                     a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_move_front_down.Final;     Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_move_front_down.Error;     Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Y_drive_move_rear_down;      ev_y_drive_move_rear_down;                      a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_move_rear_down.Final;      Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Y_drive_move_rear_down.Error;      Idle;                                                               a_finished; a_kampfschalter_history;  };
 
   // z-drive
-  Transition  { Idle;                           sm_Z_drive_to_indexposition;    ev_mast_ausfahren;                  a_kampfschalter_history;  };
-  Transition  { sm_Z_drive_to_indexposition;    Idle;                           ev_z_drive_is_in_indexposition;     a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Z_drive_to_lashing_position; ev_mast_einfahren;                  a_kampfschalter_history;  };
-  Transition  { sm_Z_drive_to_lashing_position; Idle;                           ev_z_drive_is_in_lashing_position;  a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Z_drive_to_indexposition;    ev_mast_ausfahren;                              a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_to_indexposition.Final;    Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_to_indexposition.Error;    Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Z_drive_to_lashing_position; ev_mast_einfahren;                              a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_to_lashing_position.Final; Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_to_lashing_position.Error; Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Z_drive_to_target_position;  ev_mast_anfahren;                               a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_to_target_position.Final;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_to_target_position.Error;  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Z_drive_move_up;             ev_z_drive_move_up;                             a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_move_up.Final;             Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_move_up.Error;             Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Z_drive_move_down;           ev_z_drive_move_down;                           a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_move_down.Final;           Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Z_drive_move_down.Error;           Idle;                                                               a_finished; a_kampfschalter_history;  };
 
   // stilts
-  Transition  { Idle;                           sm_Stilts_retract;              ev_stilts_retract;                  a_kampfschalter_history;  };
-  Transition  { sm_Stilts_retract;              Idle;                           ev_stilts_are_retracted;            a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Stilts_extend;               ev_stilts_extend;                   a_kampfschalter_history;  };
-  Transition  { sm_Stilts_extend;               Idle;                           ev_stilts_have_ground_contact;      a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Stilts_unlock;               ev_stilts_unlock;                   a_kampfschalter_history;  };
-  Transition  { sm_Stilts_unlock;               Idle;                           ev_stilts_are_unlocked;             a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Stilts_lock;                 ev_stilts_lock;                     a_kampfschalter_history;  };
-  Transition  { sm_Stilts_lock;                 Idle;                           ev_stilts_are_locked;               a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Stilts_to_extend;            ev_stilts_to_extend;                a_kampfschalter_history;  };
-  Transition  { sm_Stilts_to_extend;            Idle;                           ev_stilts_to_extend_finished;       a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Stilts_to_retract;           ev_stilts_to_retract;               a_kampfschalter_history;  };
-  Transition  { sm_Stilts_to_retract;           Idle;                           ev_stilts_to_retract_finished;      a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Stilts_retract;              ev_stilts_retract;                              a_kampfschalter_history;  };
+  Transition  { sm_Stilts_retract.Final;              Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Stilts_retract.Error;              Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Stilts_extend;               ev_stilts_extend;                               a_kampfschalter_history;  };
+  Transition  { sm_Stilts_extend.Final;               Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Stilts_extend.Error;               Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Stilts_unlock;               ev_stilts_unlock;                               a_kampfschalter_history;  };
+  Transition  { sm_Stilts_unlock.Final;               Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Stilts_unlock.Error;               Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Stilts_lock;                 ev_stilts_lock;                                 a_kampfschalter_history;  };
+  Transition  { sm_Stilts_lock.Final;                 Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Stilts_lock.Error;                 Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Stilts_to_extend;            ev_stilts_to_extend;                            a_kampfschalter_history;  };
+  Transition  { sm_Stilts_to_extend.Final;            Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Stilts_to_extend.Error;            Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Stilts_to_retract;           ev_stilts_to_retract;                           a_kampfschalter_history;  };
+  Transition  { sm_Stilts_to_retract.Final;           Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Stilts_to_retract.Error;           Idle;                                                               a_finished; a_kampfschalter_history;  };
 
   // flap
-  Transition  { Idle;                           sm_Flap_open;                   ev_flap_open;                       a_kampfschalter_history;  };
-  Transition  { sm_Flap_open;                   Idle;                           ev_flap_open_finished;              a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Flap_close;                  ev_flap_close;                      a_kampfschalter_history;  };
-  Transition  { sm_Flap_close;                  Idle;                           ev_flap_close_finished;             a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Flap_lock;                   ev_flap_lock;                       a_kampfschalter_history;  };
-  Transition  { sm_Flap_lock;                   Idle;                           ev_flap_lock_finished;              a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Flap_unlock;                 ev_flap_unlock;                     a_kampfschalter_history;  };
-  Transition  { sm_Flap_unlock;                 Idle;                           ev_flap_unlock_finished;            a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Flap_to_open;                ev_flap_to_open;                    a_kampfschalter_history;  };
-  Transition  { sm_Flap_to_open;                Idle;                           ev_flap_to_open_finished;           a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Flap_to_close;               ev_flap_to_close;                   a_kampfschalter_history;  };
-  Transition  { sm_Flap_to_close;               Idle;                           ev_flap_to_close_finished;          a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Flap_open;                   ev_flap_open;                                   a_kampfschalter_history;  };
+  Transition  { sm_Flap_open.Final;                   Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Flap_open.Error;                   Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Flap_close;                  ev_flap_close;                                  a_kampfschalter_history;  };
+  Transition  { sm_Flap_close.Final;                  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Flap_close.Error;                  Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Flap_lock;                   ev_flap_lock;                                   a_kampfschalter_history;  };
+  Transition  { sm_Flap_lock.Final;                   Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Flap_lock.Error;                   Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Flap_unlock;                 ev_flap_unlock;                                 a_kampfschalter_history;  };
+  Transition  { sm_Flap_unlock.Final;                 Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Flap_unlock.Error;                 Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Flap_to_open;                ev_flap_to_open;                                a_kampfschalter_history;  };
+  Transition  { sm_Flap_to_open.Final;                Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Flap_to_open.Error;                Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Flap_to_close;               ev_flap_to_close;                               a_kampfschalter_history;  };
+  Transition  { sm_Flap_to_close.Final;               Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Flap_to_close.Error;               Idle;                                                               a_finished; a_kampfschalter_history;  };
 
   // antenna
-  Transition  { Idle;                           sm_Antenna_lashing_unlock;      ev_antenna_lashing_unlock;          a_kampfschalter_history;  };
-  Transition  { sm_Antenna_lashing_unlock;      Idle;                           ev_antenna_is_unlocked;             a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Antenna_lashing_lock;        ev_antenna_lashing_lock;            a_kampfschalter_history;  };
-  Transition  { sm_Antenna_lashing_lock;        Idle;                           ev_antenna_is_locked;               a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Antenna_to_raise;            ev_antenna_to_raise;                a_kampfschalter_history;  };
-  Transition  { sm_Antenna_to_raise;            Idle;                           ev_antenna_is_risen;                a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Antenna_to_hinge_down;       ev_antenna_to_hinge_down;           a_kampfschalter_history;  };
-  Transition  { sm_Antenna_to_hinge_down;       Idle;                           ev_antenna_is_hinged_down;          a_kampfschalter_history;  };
-  Transition  { Idle;                           sm_Antenna_to_level_out;        ev_antenna_to_level_out;            a_kampfschalter_history;  };
-  Transition  { sm_Antenna_to_level_out;        Idle;                           ev_antenna_is_levelled_out;         a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Antenna_lashing_unlock;      ev_antenna_lashing_unlock;                      a_kampfschalter_history;  };
+  Transition  { sm_Antenna_lashing_unlock.Final;      Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Antenna_lashing_unlock.Error;      Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Antenna_lashing_lock;        ev_antenna_lashing_lock;                        a_kampfschalter_history;  };
+  Transition  { sm_Antenna_lashing_lock.Final;        Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Antenna_lashing_lock.Error;        Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Antenna_to_raise;            ev_antenna_to_raise;                            a_kampfschalter_history;  };
+  Transition  { sm_Antenna_to_raise.Final;            Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Antenna_to_raise.Error;            Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Antenna_to_hinge_down;       ev_antenna_to_hinge_down;                       a_kampfschalter_history;  };
+  Transition  { sm_Antenna_to_hinge_down.Final;       Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Antenna_to_hinge_down.Error;       Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Antenna_to_level_out;        ev_antenna_to_level_out;                        a_kampfschalter_history;  };
+  Transition  { sm_Antenna_to_level_out.Final;        Idle;                                                               a_finished; a_kampfschalter_history;  };
+  Transition  { sm_Antenna_to_level_out.Error;        Idle;                                                               a_finished; a_kampfschalter_history;  };
 
   // dust discharge to do
-  Transition  { Idle;                           sm_Dust_discharge_to_do;        ev_dust_discharge_to_do;            a_kampfschalter_history;  };
-  Transition  { sm_Dust_discharge_to_do;        Idle;                           ev_dust_discharge_done;             a_kampfschalter_history;  };
+  Transition  { Idle;                                 sm_Dust_discharge_to_do;        ev_dust_discharge_to_do;                        a_kampfschalter_history;  };
+  Transition  { sm_Dust_discharge_to_do;              Idle;                           ev_dust_discharge_done;             a_finished; a_kampfschalter_history;  };
 };
+

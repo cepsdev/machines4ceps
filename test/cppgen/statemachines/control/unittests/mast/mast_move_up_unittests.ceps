@@ -10,32 +10,104 @@ Mast_move_up_unittests
 
 Statemachine
 {
- id { sm_Ctrl;  };
- import { sm_Mast_move_up;  };
- States { Initial;  Final;  };
- Transition { Initial;          sm_Mast_move_up;  ev_mast_move_up; };
- Transition { sm_Mast_move_up;  Final;            ev_z_drive_movement_stopped;  };
+  id { sm_Ctrl;  };
+  import { sm_Mast_move_up;  };
+  States { Initial; Final;  Error;  };
+  Actions
+  {
+    a_report_error  { print ( "\n\n--- ERROR DETECTED ---\n\n" ); };
+  };
+  Transition { Initial;               sm_Mast_move_up;  ev_mast_move_up; };
+  Transition { sm_Mast_move_up.Final; Final;            };
+  Transition { sm_Mast_move_up.Error; Error;                              a_report_error; };
 };
 
 Simulation
 {
   TestCase{Mast_move_up_unittests;};Test{Initialization;};
 
-  z_drive.IstPos  = 200;
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+
+  z_drive.IstPos        = 200;
+//  z_drive.CanIstPos     = Z_SollPosition_Berechnen ( z_drive.IstPos );
+  z_drive.CanIstPos     = 200000;
 
   Start { sm_Ctrl;  };
-  Start { sm_Z_drive; };
   Start { sm_Z_drive_state;  };
+  Start { sm_Z_drive_sim; };
 
+  z_drive.SollGeschw    = 10.0;
+  z_drive.CanSollGeschw = 10000;
   ev_mast_move_up(10);
+
+  ev_z_drive_sim_control; //  enable dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Mast_move_up.sm_Z_drive_move.Prepare_Talin;};
 
   // pretend that TALIN is prepared
   ev_talin_is_ready_to_be_moved;
+
+  ev_z_drive_sim_control; //  brake release dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
   ASSERT_CURRENT_STATES_CONTAINS{sm_Ctrl.sm_Mast_move_up.sm_Z_drive_move.Moving;};
 
-  start_timer(0.5*s,  ev_z_drive_stop);
+  ev_z_drive_sim_control; //  drive-mode  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response;
 
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Idle;};
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ASSERT(z_drive.CanIstGeschw == 10000);
+
+//  start_timer(2*s,  ev_z_drive_stop);
+  ev_z_drive_stop;
+  z_drive.CanSollGeschw = 0;  //  dummy
+  ev_z_drive_sim_control; //  drive-mode dummy - simulate send CAN-msg
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ASSERT(z_drive.CanIstGeschw == 0);
+  ev_z_drive_can_state_response; //  speed dummy - simulate receive CAN-msg
+
+  ev_z_drive_sim_control; //  brake apply dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_sim_control; //  disable dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };

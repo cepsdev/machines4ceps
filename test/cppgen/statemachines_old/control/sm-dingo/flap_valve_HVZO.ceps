@@ -1,0 +1,35 @@
+// HVZO - Haube Ventil Zylinder Oeffnen
+
+Event ev_flap_HVZO_close, ev_flap_prepare_moving, ev_flap_stop_moving, ev_flap_valve_state_change;
+
+//  local events
+Event ev_flap_HVZO_is_open, ev_flap_HVZO_is_close;
+
+Statemachine
+{
+  id  { sm_Flap_valve_HVZO; };
+  description { "Haube Ventil Zylinder Oeffnen"; };
+  States  { Initial;  Opening;  Open; Closing;  Closed; };
+
+  Actions
+  {
+    a_valve_is_opening    { start_timer ( DELAY_HVZO_OPEN * s,  ev_flap_HVZO_is_open,   timer_flap_HVZO_is_open );  };
+    a_valve_is_closing    { start_timer ( DELAY_HVZO_CLOSE * s, ev_flap_HVZO_is_close,  timer_flap_HVZO_is_close );  };
+    a_stop_valve_opening  { stop_timer ( timer_flap_HVZO_is_open );  };
+    a_stop_valve_closing  { stop_timer ( timer_flap_HVZO_is_close );  };
+    a_FlapValveState  { ev_flap_valve_state_change; };
+  };
+  on_exit
+  {
+    if ( in_state ( Opening ) ) a_stop_valve_opening;
+    if ( in_state ( Closing ) ) a_stop_valve_closing;
+  };
+
+  Transition  { Initial;  Closed; };
+  Transition  { Closed;   Opening;  ev_flap_prepare_moving; a_FlapValveState; a_valve_is_opening; };
+  Transition  { Opening;  Open;     ev_flap_HVZO_is_open;   a_FlapValveState; };
+
+  Transition  { Open;     Closing;  ev_flap_HVZO_close;     a_FlapValveState; a_valve_is_closing; };
+  Transition  { Open;     Closing;  ev_flap_stop_moving;    a_FlapValveState; a_valve_is_closing; };
+  Transition  { Closing;  Closed;   ev_flap_HVZO_is_close;  a_FlapValveState; };
+};

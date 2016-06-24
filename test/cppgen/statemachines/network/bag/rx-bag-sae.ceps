@@ -1,4 +1,5 @@
 Event ev_vehicle_gear_changed, ev_vehicle_brake_position_changed;
+Event ev_message_from_psm;
 
 // ------------------------------------------------------------------------  
 //                  RECEPTION of Vehicle data via CAN SAE
@@ -7,9 +8,9 @@ Event ev_vehicle_gear_changed, ev_vehicle_brake_position_changed;
 global_functions
 {
 //  on_luminance_request{
-// //   if(changed("luminance_request_target_value_in"))
-//     luminance_target_value_changed(luminance_request_target_value_in);
-//     // event(payload);
+// //   if ( changed ( "luminance_request_target_value_in" ) )
+//     luminance_target_value_changed ( luminance_request_target_value_in );
+//     // event ( payload );
 //  };
 
 // ------------------------------------------------------------------------  
@@ -17,28 +18,30 @@ global_functions
 // ------------------------------------------------------------------------
   handler_GPM_13
   {
-    print("RX-BAG GPM_13 - ev_message_from_psm\n");
+    //print ( "-------- RX-BAG GPM_13 - ev_message_from_psm\n" );
     // Funktionsueberwachung
     ev_message_from_psm;
 
     // Feststellbremse
-    if(changed("s_frame_parking_brake_in")) 
+    if ( changed ( "s_frame_parking_brake_in" ) )
     {
       Vehicle.Brake = s_frame_parking_brake_in;
+      print ( "-------- RX-BAG GPM_13 - Vehicle.Brake: ", Vehicle.Brake, "\n" );
 
-      ev_vehicle_brake_position_changed(Vehicle.Brake);
+      ev_vehicle_brake_position_changed ( Vehicle.Brake );
     };
 
     // Engine Speed
-    if(changed("s_frame_motor_speed_in")) 
+    if ( changed ( "s_frame_motor_speed_in" ) )
     {
       Vehicle.Engine_rpm = s_frame_motor_speed_in;
     };
 
     // Vehicle Speed
-    if(changed("s_frame_vehicle_speed_in")) 
+    if ( changed ( "s_frame_vehicle_speed_in" ) )
     {
       Vehicle.Speed = s_frame_vehicle_speed_in;
+      print ( "-------- RX-BAG GPM_13 - Vehicle.Speed: ", Vehicle.Speed, "\n" );
     };
   };
 
@@ -47,16 +50,17 @@ global_functions
 // ------------------------------------------------------------------------
   handler_GPM_14
   {
-    print("RX-BAG GPM_14 - ev_message_from_psm\n");
+    //print ( "-------- RX-BAG GPM_14 - ev_message_from_psm\n" );
     // Funktionsueberwachung
     ev_message_from_psm;
 
     // Gangstellung
-    if(changed("s_frame_current_gear_in")) 
+    if ( changed ( "s_frame_current_gear_in" ) )
     {
       Vehicle.Gear = s_frame_current_gear_in;
+      print ( "-------- RX-BAG GPM_14 - Vehicle.Gear:  ", Vehicle.Gear, "\n" );
 
-      ev_vehicle_gear_changed(Vehicle.Gear);
+      ev_vehicle_gear_changed ( Vehicle.Gear );
     };
   };
 
@@ -65,12 +69,12 @@ global_functions
 // ------------------------------------------------------------------------
   handler_GPM_16
   {
-    print("RX-BAG GPM_16 - ev_message_from_psm\n");
+    //print ( "-------- RX-BAG GPM_16 - ev_message_from_psm\n" );
     // Funktionsueberwachung
     ev_message_from_psm;
 
     // Aussentemperatur
-    if(changed("s_frame_ambient_air_temp_in")) 
+    if ( changed ( "s_frame_ambient_air_temp_in" ) )
     {
       Vehicle.Ambient_Temperature = s_frame_ambient_air_temp_in;
     };

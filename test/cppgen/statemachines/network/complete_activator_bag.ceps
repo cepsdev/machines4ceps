@@ -1,12 +1,124 @@
-unique         {ev_x_drive_actual_values; ev_y_drive_actual_values; ev_z_drive_actual_values; ev_send_message_to_ivenet;  ev_message_from_ivenet;};
-no_transitions {ev_x_drive_actual_values;                           ev_z_drive_actual_values;};
+unique
+{
+  ev_x_drive_actual_values;
+  ev_y_drive_actual_values;
+  ev_z_drive_actual_values;
+  ev_send_message_to_ivenet;
+  ev_message_from_ivenet;
+
+  ev_vehicle_inclination_x_changed;
+  ev_vehicle_inclination_y_changed;
+  ev_antenna_alignment_changed;
+  ev_wind_speed_changed;
+  ev_current_drives_changed;
+  ev_current_others_changed;
+  ev_current_pneumatic_changed;
+  ev_current_radar_changed;
+
+  ev_io_module_contol_AA;
+};
+no_transitions
+{
+  ev_x_drive_actual_values;
+  ev_z_drive_actual_values;
+
+  ev_x_drive_can_control;
+  ev_y_drive_can_control;
+  ev_z_drive_can_control;
+
+  ev_io_module_contol_AA;
+};
 
 
-Event EXIT;
-
-Globals{g_is_Abbruch_active=0;TIME_VERZURRUNG=0;};
 Simulation
 {
- EXIT;
+  // Watchdog
+  Start { sm_Ctrl;  };
+
+  // Drives
+  Start { sm_X_drive_operational_state; };
+  Start { sm_Y_drive_operational_state; };
+  Start { sm_Z_drive_operational_state; };
+  Start { sm_X_drive_state; };
+  Start { sm_Y_drive_state; };
+  Start { sm_Z_drive_state; };
+  Start { sm_X_drive_fault_state; };
+  Start { sm_Y_drive_fault_state; };
+  Start { sm_Z_drive_fault_state; };
+  Start { sm_Warning_mast_operations; };
+
+  // Antenna
+  Start { sm_Antenna_alignment; };
+  Start { sm_Antenna_lashing; };
+
+  // EXTBG
+  Start { sm_ExtBG_progress_indicator; };
+  Start { sm_ExtBG_error_evaluator; };
+
+  // FUE
+  Start { sm_BAG_heartbeat; };
+  Start { sm_IO_module_operational_state; };
+  Start { sm_SI_module_operational_state; };
+  Start { sm_Heckverteiler_operational_state; };
+  Start { sm_USV1_operational_state;  };
+  Start { sm_USV2_operational_state;  };
+  Start { sm_USV_operational_state; };
+  Start { sm_ExtBG_operational_state; };
+  Start { sm_PSM_operational_state; };
+  Start { sm_iVeNet_operational_state;  };
+
+  // Stilts
+  Start { sm_Stilt_left;  };
+  Start { sm_Stilt_right; };
+  Start { sm_Stilts_VK_left;  };
+  Start { sm_Stilts_VK_right; };
+
+  // Flap
+  Start { sm_Flap;  };
+  Start { sm_Flap_lock_one; };
+  Start { sm_Flap_lock_two; };
+
+  // IVENET 
+  Start { sm_Ivenet_notification; };
+  Start { sm_Ivenet_mast_state; };
+  Start { sm_Azimuth_change_detector; };
+  Start { sm_Antenna_parkposition_detector; };
+  Start { sm_Slide_detector;  };
+  Start { sm_Y_drive_tracker; };
+
+  // Pneumatics
+  Start { sm_Pneumatic_system_pressure; };
+
+  // Dust Discharge 
+  Start { sm_Dust_discharge;  };
+
+  // IO-module-control
+  Start { sm_IO_module_controler; };
+
+  // User Buttons
+  Start { sm_Kampfschalter; };
+  Start { sm_Not_Aus; };
+  Start { sm_Stilts_checker;  };
+
+  // Talin
+  Start { sm_Talin; };  //  arki: i expect this only in dingo simulation
+
+//   //HAUBE
+//   start_timer(4*s, ev_flap_to_open);  
+//   start_timer(8*s, ev_flap_to_close);  
+//
+//   //MAST auf indexposition
+//   start_timer(2*s, ev_mast_ausfahren);
+//
+//   //MAST UP
+//   start_timer(3*s, ev_z_drive_move_up);  
+//   start_timer(6*s, ev_z_drive_stop);  
+//   
+//   //MAST DOWN
+//   start_timer(15*s,  ev_z_drive_move_down);  
+//   start_timer(21*s,  ev_z_drive_stop); 
+
+    // SYSTEM
+//     start_timer(3*s, ev_system_extend);  
 };
 

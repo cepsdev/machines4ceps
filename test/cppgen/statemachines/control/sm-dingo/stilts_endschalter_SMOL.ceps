@@ -1,32 +1,31 @@
 // SMOL - Stütze Magnet Oben Links  ( Stütze Links voll Eingefahren )
 
 //  external events and guards
-Event ev_stilts_valve_state, ev_stilt_left_state_change;
+Event ev_stilts_left_position_changed,  ev_stilt_endschalter_SMOL_change;
 
 //  local events and guards
-Guard g_SMOL_sim_goes_on, g_SMOL_sim_still_off;
+Guard g_SMOL_sim_goes_on;
 
-Globals 
+Globals
 {
   g_SMOL_sim_goes_on    = ( Stilt_position_left   <=  STILTS_POSITION_MIN );
-  g_SMOL_sim_still_off  = ( Stilt_position_left   >   STILTS_POSITION_MIN );
 };
 
 Statemachine
 {
   id  { sm_Stilts_endschalter_SMOL; };
-  description { "Endschalter Stütze Magnet Oben Links"; };
+  description { "Endschalter Stütze Magnet Oben Links";   };
   States  { Initial;  On; Off;  };
 
   Actions
   {
-    a_StiltsState_left  { ev_stilt_left_state_change;  };
-    a_Off               { SENSOR_SMOL  = 0; };
-    a_On                { SENSOR_SMOL  = 1; };
+    a_stilts_es_state_change  { ev_stilt_endschalter_SMOL_change; };
+    a_stilts_es_SMOL_Off      { SENSOR_SMOL = 0;  print ( "SENSOR_SMOL = 0\n" );  };
+    a_stilts_es_SMOL_On       { SENSOR_SMOL = 1;  print ( "SENSOR_SMOL = 1\n" );  };
   };
 
-  Transition  { Initial;  Off;                        a_Off; !g_SMOL_sim_goes_on; };
-  Transition  { Initial;  On;                         a_On;   g_SMOL_sim_goes_on; };
-  Transition  { Off;      On;   a_StiltsState_left;   a_On;   g_SMOL_sim_goes_on; };
-  Transition  { On;       Off;  a_StiltsState_left;   a_Off;  g_SMOL_sim_still_off; };
+  Transition  { Initial;  Off;                                     !g_SMOL_sim_goes_on;   a_stilts_es_SMOL_Off;                           };
+  Transition  { Initial;  On;                                       g_SMOL_sim_goes_on;   a_stilts_es_SMOL_On;                            };
+  Transition  { Off;      On;   ev_stilts_left_position_changed;    g_SMOL_sim_goes_on;   a_stilts_es_SMOL_On;  a_stilts_es_state_change; };
+  Transition  { On;       Off;  ev_stilts_left_position_changed;   !g_SMOL_sim_goes_on;   a_stilts_es_SMOL_Off; a_stilts_es_state_change; };
 };

@@ -1,0 +1,100 @@
+Event ev_y_drive_move_to_arbeitsposition;
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.1;
+};
+
+Y_drive_to_arbeitsposition_unittests
+{
+  g_y_drive_has_antrieb_fault     = 0;
+  g_y_drive_is_operational        = 1;
+  SENSOR_KAMPFSCHALTER_A            = 0;
+};
+
+Statemachine
+{
+  id  { sm_Ctrl;  };
+  import  { sm_Y_drive_to_arbeitsposition; };
+  States  { Initial;  Final;  };
+
+  Transition  { Initial;                        sm_Y_drive_to_arbeitsposition;  ev_y_drive_move_to_arbeitsposition; };
+  Transition  { sm_Y_drive_to_arbeitsposition;  Final;                          ev_y_drive_is_in_arbeitsposition;  };
+};
+
+Simulation
+{
+  TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_below_range_of_arbeitsposition;};
+
+  y_drive.IstPos       = 87.3;
+  y_drive.SollGeschw   = 50.0;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Idle;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Moving_up;};
+
+  Start { sm_Ctrl;  };
+  Start { sm_Y_drive_state; };
+  Start { sm_Y_drive; };
+
+  ev_y_drive_move_to_arbeitsposition;
+};
+
+Simulation
+{
+  TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_above_range_of_arbeitsposition;};
+
+  y_drive.IstPos       = 90.9;
+  y_drive.SollGeschw   = 50.0;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Idle;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Moving_down;};
+
+  Start { sm_Ctrl;  };
+  Start { sm_Y_drive_state; };
+  Start { sm_Y_drive; };
+
+  ev_y_drive_move_to_arbeitsposition;
+};
+
+Simulation
+{
+  TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_in_range_of_arbeitsposition_in_tolerance;};
+
+  y_drive.IstPos       = 89.9;
+  y_drive.SollGeschw   = 50.0;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
+
+  Start { sm_Ctrl;  };
+  Start { sm_Y_drive_state; };
+  Start { sm_Y_drive; };
+
+  ev_y_drive_move_to_arbeitsposition;
+};
+
+Simulation
+{
+  TestCase{Y_drive_to_arbeitsposition_unittests;};Test{Initialization_given_y_drive_IstWinkel_is_also_in_range_of_arbeitsposition_in_tolerance;};
+
+  y_drive.IstPos       = 90.1;
+  y_drive.SollGeschw   = 50.0;
+
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive.Disabled;};
+  ASSERT_EVENTUALLY_VISIT_STATES{sm_Y_drive_state.Idle;};
+
+  Start { sm_Ctrl;  };
+  Start { sm_Y_drive_state; };
+  Start { sm_Y_drive; };
+
+  ev_y_drive_move_to_arbeitsposition;
+};

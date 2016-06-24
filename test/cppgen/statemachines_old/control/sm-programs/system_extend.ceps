@@ -1,0 +1,28 @@
+Guard g_system_extend_with_stilts;
+
+Statemachine
+{
+  id  { sm_System_extend; };
+  description { "System_extend";  };
+  States  { Initial;  Final;  };
+  join{Final;};
+
+  thread
+  {
+    States  { Initial;  Final;  };
+    import  { sm_Stilts_to_extend;  };
+
+    Transition  { Initial;                    sm_Stilts_to_extend;  g_system_extend_with_stilts;  };
+    Transition  { Initial;                    Final;               !g_system_extend_with_stilts;  };
+    Transition  { sm_Stilts_to_extend.Final;  Final;  };
+  };
+
+  thread
+  {
+    States  { Initial;  Final;  };
+    import  { sm_Platform_extend; };
+    Transition  { Initial;                    sm_Platform_extend; };
+    Transition  { sm_Platform_extend.Final;   Final;  };
+  };
+};
+

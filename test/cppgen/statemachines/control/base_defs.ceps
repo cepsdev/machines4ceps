@@ -12,14 +12,16 @@ Guard g_antenna_lashing_is_unlocked,  g_antenna_lashing_unlock_preconditions, g_
 Guard g_antenna_is_hinged_down,   g_antenna_to_hinge_down_preconditions;
 Guard g_antenna_is_levelled_out,  g_antenna_to_rise_preconditions;
 Guard g_antenna_x_correction_is_possible, g_antenna_y_correction_is_possible, g_antenna_correction_is_possible;
-Guard g_antenna_is_in_parking_position;
+Guard g_antenna_is_in_parking_position, g_antenna_in_working_range;
 Guard g_dust_discharge_preconditions,   g_dust_discharge_is_ready;
 Guard g_flap_is_locked,   g_flap_is_open,   g_flap_is_neither_nor,  g_flap_open_preconditions,  g_flap_to_open_preconditions;
 Guard g_flap_is_unlocked, g_flap_is_closed, g_flap_is_wrong,        g_flap_close_preconditions, g_flap_to_close_preconditions;
-Guard g_flap_lock_one_is_unlocked, g_flap_lock_two_is_unlocked, g_flap_unlock_preconditions, g_flap_lock_one_is_locked, g_flap_lock_two_is_locked;
-Guard g_ivenet_sees_antenna_in_parkpos, g_io_module_sees_antenna_in_parkpos;
+Guard g_flap_unlock_preconditions;
+Guard g_flap_lock_one_is_unlocked, g_flap_lock_one_is_locked, g_flap_lock_one_is_wrong;
+Guard g_flap_lock_two_is_unlocked, g_flap_lock_two_is_locked, g_flap_lock_two_is_wrong;
+Guard g_ivenet_sees_antenna_in_parkpos, g_io_module_sees_antenna_in_parkpos,  g_sees_antenna_in_parkpos;
 Guard g_mast_is_not_blocking_flap;
-Guard g_mast_move_up_preconditions, g_mast_move_down_preconditions;
+Guard g_z_drive_move_up_preconditions,  g_z_drive_move_down_preconditions;
 Guard g_mast_height_is_le_min_position, g_mast_height_is_gt_min_position;
 Guard g_mast_height_is_lt_min_position, g_mast_height_is_lt_max_position, g_mast_height_is_lt_indexposition;
 Guard g_mast_height_is_ge_min_position, g_mast_height_is_ge_max_position, g_mast_height_is_ge_indexposition;
@@ -30,12 +32,13 @@ Guard g_stilt_left_is_locked,   g_stilt_left_is_unlocked,   g_stilt_left_is_exte
 Guard g_stilt_right_is_locked,  g_stilt_right_is_unlocked,  g_stilt_right_is_extended,  g_stilt_right_is_retracted, g_stilt_right_has_ground_contact, g_stilt_right_is_neither_nor;
 Guard g_stilt_any_is_locked,    g_stilt_any_is_unlocked,    g_stilt_any_is_extended,    g_stilts_all_are_retracted, g_stilts_all_have_ground_contact;
 Guard g_stilts_all_are_locked,  g_stilts_all_are_unlocked;
-Guard g_stilts_unlock_preconditions, g_stilts_to_retract_preconditions, g_platform_extend_preconditions;
+Guard g_stilts_unlock_preconditions, g_stilts_to_retract_preconditions, g_stilts_extend_preconditions;
+Guard g_platform_extend_preconditions;
 Guard g_system_extend_with_stilts;
+Guard g_system_pressure_is_sufficient;
 Guard g_talin_data_is_valid;
 Guard g_vehicle_brake_is_active,  g_vehicle_does_not_drive,       g_vehicle_inclination_x_is_tolerable;
 Guard g_vehicle_gear_is_neutral,  g_vehicle_slide_preconditions,  g_vehicle_inclination_y_is_tolerable;
-Guard g_system_pressure_is_sufficient;
 Guard g_psm_is_operational;
 Guard g_extBG_is_online,      g_extbg_payload_is_preop,     g_extbg_payload_is_op;
 Guard g_io_module_is_online,  g_io_module_payload_is_preop, g_io_module_payload_is_op;
@@ -45,21 +48,24 @@ Guard g_usv2_is_online,       g_usv2_payload_is_preop,      g_usv2_payload_is_op
 Guard g_x_drive_is_online,    g_x_drive_payload_is_preop,   g_x_drive_payload_is_op;
 Guard g_y_drive_is_online,    g_y_drive_payload_is_preop,   g_y_drive_payload_is_op;
 Guard g_z_drive_is_online,    g_z_drive_payload_is_preop,   g_z_drive_payload_is_op;
+Guard g_x_drive_is_enabled,   g_x_drive_brake_is_released,  g_x_drive_reach_inpos,  g_x_drive_is_slow_down;
+Guard g_y_drive_is_enabled,   g_y_drive_brake_is_released,  g_y_drive_reach_inpos,  g_y_drive_is_slow_down;
+Guard g_z_drive_is_enabled,   g_z_drive_brake_is_released,  g_z_drive_reach_inpos,  g_z_drive_is_slow_down;
 Guard g_x_drive_is_moving_up, g_x_drive_is_moving_down,     g_x_drive_is_not_moving;
 Guard g_y_drive_is_moving_up, g_y_drive_is_moving_down,     g_y_drive_is_not_moving;
 Guard g_z_drive_is_moving_up, g_z_drive_is_moving_down,     g_z_drive_is_not_moving;
-Guard g_x_drive_is_in_indexposition,  g_x_drive_is_in_target_position,  g_x_drive_has_antrieb_fault;
-Guard g_y_drive_is_in_indexposition,  g_y_drive_is_in_target_position,  g_y_drive_has_antrieb_fault;
-Guard g_z_drive_is_in_indexposition,  g_z_drive_is_in_target_position,  g_z_drive_has_antrieb_fault;
+Guard g_x_drive_is_in_indexposition,  g_x_drive_is_in_target_position,  g_x_drive_is_in_soll_position,  g_x_drive_has_antrieb_fault;
+Guard g_y_drive_is_in_indexposition,  g_y_drive_is_in_target_position,  g_y_drive_is_in_soll_position,  g_y_drive_has_antrieb_fault;
+Guard g_z_drive_is_in_indexposition,  g_z_drive_is_in_target_position,  g_z_drive_is_in_soll_position,  g_z_drive_has_antrieb_fault;
+Guard g_x_drive_move_left_down_preconditions,   g_y_drive_move_front_down_preconditions;
+Guard g_x_drive_move_right_down_preconditions,  g_y_drive_move_rear_down_preconditions;
 Guard g_x_drive_is_in_range;
 Guard g_y_drive_is_in_arbeitsbereich,   g_y_drive_is_in_arbeitsposition,  g_y_drive_preconditions_to_move_to_arbeitsposition;
-Guard g_z_drive_is_in_lashing_position, g_z_drive_to_target_position_preconditions;
+Guard g_z_drive_is_in_arbeitsbereich,   g_z_drive_is_in_lashing_position, g_z_drive_to_target_position_preconditions, g_z_drive_in_stop_mode;
 Guard g_x_drive_is_levelled_out, g_x_drive_levelling_out_was_successful;
 Guard g_y_drive_is_levelled_out, g_y_drive_levelling_out_was_successful;
-Guard g_z_drive_may_be_enabled;
-Guard g_z_drive_is_enabled;
-
-Systemstate TIME_VERZURRUNG;
+Guard g_z_drive_arbeitsbereich_higher_limit;
+Guard g_z_drive_arbeitsbereich_lower_limit;
 
 // --------------------------------------------
 // ----------- SYSTEM CONSTANTS ---------------
@@ -90,11 +96,12 @@ Systemparameter TIMER_ACTIVATION       ;
 
 Globals
 {
+  TIMER_ACTIVATION              = 1.0;    //  with -1.0 all timers disabled  
+
   NODE_HEARTBEAT_PERIOD         = 1.0; // s
-  DRIVES_HEARTBEAT_PERIOD       = 0.5; // s
+  DRIVES_HEARTBEAT_PERIOD       = 1.0; // s
   PSM_TRAFFIC_PERIOD            = 1.0; // s
   IVENET_TRAFFIC_PERIOD         = 1.0; // s
-  TIMER_ACTIVATION              = 1.0;    //  with -1.0 all timers disabled  
 };
 
 val PRE_OPERATIONAL_PAYLOAD       = 0x7F;
@@ -112,10 +119,6 @@ val START_SYSTEM_PRESSURE         = 0.0;
 val DEFAULT_STILT_PRESSURE        = 0.0;
 val STILT_PRESSURE_GROUND_CONTACT = 1.0;
 
-
-// TIMEOUTS
-// These are taken from a former Dingo generation (Dingo-BÜR)
-val DEF_TIME_500MS                = 0.5*TIMER_ACTIVATION;
 
 // --------------------------------------------
 // --------------- ANTRIEBE ------------------
@@ -163,11 +166,17 @@ val CAN_ID_EXTBG     = 0x700 + NODE_ID_EXTBG;
 val OPERATIONAL_GENERIC_PAYLOAD = 0x01;
 // ------------------------------------------------------------------------
 
-val DEF_ANTRIEBE_PERIODE              = 0.5;
+// TIMEOUTS
+// These are taken from a former Dingo generation (Dingo-BÜR)
+val DEF_TIME_500MS                    = 0.5 * TIMER_ACTIVATION;
+val DEF_TIME_1S                       =  1 * TIMER_ACTIVATION;
+
+val DEF_ANTRIEBE_PERIODE              = 0.5 * TIMER_ACTIVATION;
 val DEF_TIME_RUCKMLD_ANTRIEBE         =  2 * TIMER_ACTIVATION;
 val DEF_TIME_X_IN_IP                  = 10 * TIMER_ACTIVATION;
 val DEF_TIME_X_FAHREN                 = 10 * TIMER_ACTIVATION;
 val DEF_TIME_Y_FAHREN                 = 10 * TIMER_ACTIVATION;
+val DEF_TIME_Z_FAHREN                 = 180 * TIMER_ACTIVATION;
 
 val DEF_TIME_STUETZEN_DRUCKAUFBAU     =  5 * TIMER_ACTIVATION;
 val DEF_TIME_STUETZEN_FAHREN          = 80 * TIMER_ACTIVATION;
@@ -178,25 +187,19 @@ val DEF_TIME_VV1                      =  3 * TIMER_ACTIVATION;
 val DEF_TIME_STAUBAUSTRAG             = 20 * TIMER_ACTIVATION;
 // Haube / Flap
 val DEF_TIME_HAUBE_DRUCKAUFBAU        =  3 * TIMER_ACTIVATION;
-val DEF_TIME_HAUBE_ENTRIEGELN         = 10 * TIMER_ACTIVATION;
-val DEF_TIME_HAUBE_VERRIEGELN         = 10 * TIMER_ACTIVATION;
+val DEF_TIME_HAUBE_ENTRIEGELN         =  1 * TIMER_ACTIVATION;  //  arki: old value : 10
+val DEF_TIME_HAUBE_VERRIEGELN         =  1 * TIMER_ACTIVATION;  //  arki: old value : 10
 val DEF_TIME_HAUBE_OEFFNEN            = 40 * TIMER_ACTIVATION;
 val DEF_TIME_HAUBE_SCHLIESSEN         = 40 * TIMER_ACTIVATION;
 // Antenne
 val DEF_TIME_VERZURRUNG               = 20 * TIMER_ACTIVATION;
-val DEF_TIME_1S                       =  1 * TIMER_ACTIVATION;
-val DEF_TIME_ANT_AUFRICHTEN           = 10 * TIMER_ACTIVATION;
-val DEF_TIME_ANT_ABKLAPPEN            = 10 * TIMER_ACTIVATION;
+val DEF_TIME_ANT_AUFRICHTEN           = 1.1 * DEF_TIME_Y_FAHREN;
+val DEF_TIME_ANT_ABKLAPPEN            = 1.1 * DEF_TIME_Y_FAHREN;
 val DEF_TIME_IN_PARKPOS               = 20 * TIMER_ACTIVATION;
 val DEF_TIME_KORREKTURWINKEL          = 10 * TIMER_ACTIVATION;
 // Mast
-val DEF_TIME_MAST_FAHREN              = 180 * TIMER_ACTIVATION;
 val MODE_TO_TARGET                    = 0;
 val MODE_GIVEN_SPEED                  = 1;
-val WITH_ENABLE_TIMEOUT               = 0;
-val WITHOUT_ENABLE_TIMEOUT            = 1;
-val WITH_MOVING_TIMEOUT               = 1;
-val WITHOUT_MOVING_TIMEOUT            = 0;
 
 // drives
 val DRIVE_OPERATIONAL_MODE_STOP             = 0;
@@ -235,6 +238,8 @@ val IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_VEHICLE_MOVEMENT = 3;
 val IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_MAST_MOVEMENT    = 4;
 val IVENET_PLATFORM_GENERAL_MALFUNCTION                    = 5;
 
+val IVENET_TOLERANCE_AZIMUTH                  = 28; //  == 5' in 1/100 grad
+
 // --------------------------------------------
 // ----------------- TYPEDEFS -----------------
 typedef
@@ -249,11 +254,11 @@ typedef
 
 typedef
 {
-  t_Control
+  t_drive_control
   {
     ANTRIEB_MODE            { DRIVE_OPERATIONAL_MODE_STOP; };
     ANTRIEB_ENABLE_IN       { 0;  };
-    ANTRIEB_BREAK_RELEASE   { 0;  };
+    ANTRIEB_BRAKE_RELEASE   { 0;  };
     ANTRIEB_RESET_FAULT     { 0;  }; 
     ANTRIEB_CALIBRATE_POS   { 0;  };
     ANTRIEB_REMOTE_OUTPUT   { 0;  };
@@ -263,16 +268,41 @@ typedef
 
 typedef
 {
-  t_Status
+  t_drive_status
   {
     ANTRIEB_READY               { 0;  };
     ANTRIEB_ENABLE_OUT          { 0;  };
     ANTRIEB_INPOS               { 0;  };
     ANTRIEB_LIMIT_SWITCH_CW     { 0;  };
     ANTRIEB_LIMIT_SWITCH_CCW    { 0;  };
-    ANTRIEB_BREAK_RELEASED      { 0;  };
+    ANTRIEB_BRAKE_RELEASED      { 0;  };
     ANTRIEB_REMOTE_OUTPUT_STATUS{ 0;  };
     ANTRIEB_FAULT               { 0;  };
+  };
+};
+
+typedef
+{
+  t_drive_emcy
+  {
+    emergency_error_code              { 0;  };
+    error_register                    { 0;  };
+    resolver_encoder_error            { 0;  };
+    over_under_voltage_power_stage    { 0;  }; 
+    over_temerature_motor             { 0;  };
+    over_temerature_power_stage       { 0;  };
+    over_current                      { 0;  };
+    driver_fault                      { 0;  };
+    external_hardware_enable_missing  { 0;  };
+    absolute_position_limit_reached   { 0;  };
+    reserved_for_bus_error            { 0;  };
+    reserved_for_earth_fault          { 0;  };
+    short_circuit_phase_u             { 0;  };
+    short_circuit_phase_v             { 0;  };
+    short_circuit_phase_w             { 0;  };
+    reserved_for_io_module_error      { 0;  };
+    stop_because_external_hw_brake_release_was_cleared  { 0;  };
+    security_loop                     { 0;  };
   };
 };
 
@@ -284,19 +314,25 @@ typedef
   {
     //  Limits
     MIN_POS                 { 0; };
-    MAX_POS                 { 3280; };
-    MAST_INDEXPOSITION      { 1050; };
+    MAX_POS                 { 2985; };
+    INDEXPOSITION           { 1315; };
     MAST_ZURRPOSITION       { 0; };
-    MAST_MINHOEHE           { 800; };
+    MAST_MINHOEHE           { 930; };
     POSITION_TOLERANCE      { 0.3; };
     SPEED_MAX               { 255; };
     SPEED_DEFAULT           { 100; };
+
+    //  Limits  for simulation
+    CAN_SPEED_MAX           { 32767; };   //  2^15-1 because of signed 16bit
+    CAN_SPEED_DEFAULT       { 10000; };   //  approximated - only used in simulation
+    CAN_ACCELERATION_MAX    { 1000; };    //  approximated - only used in simulation
 
     //  (Mess-)Werte vom Antrieb (CAN)
     CanIstPos               { 0; };
     CanIstGeschw            { 0; };
     CanIstStrom             { 0; };
     Status                  { 0; };
+    EMCY                    { 0; };
 
     //  berechnete (Mess-)Werte vom Antrieb
     IstPos                  { 0.0; }; //  IstMasthoehe
@@ -310,10 +346,12 @@ typedef
     Control                 { 0; };
 
     //  berechnete Vorgaben  zum Antrieb
-    SollPos                 { 0; };
-    SollGeschw              { 0; };
-    SollStrom               { 0; };
-    SollGeschwAbsolut       { 40; };
+    SollPos                 { 0.0; };
+    SollGeschw              { 0.0; };
+    SollStrom               { 0.0; };
+    SollGeschwAbsolut       { 40.0; };
+    TargetPosition          { 0.0; };
+    VorzeichenSpeed         { 0; };
   };
 };
 
@@ -334,12 +372,19 @@ typedef
     SPEED_DEFAULT           { 40; };
     ANGLE_TOLERANCE         { 0.3; };
     TOLERANZ_HORIZONTIERUNG { 0.2; };
+    TOLERANZ_TALIN          { 0.3; };
+
+    //  Limits  for simulation
+    CAN_SPEED_MAX           { 32767; };   //  2^15-1 because of signed 16bit
+    CAN_SPEED_DEFAULT       { 10000; };   //  approximated - only used in simulation
+    CAN_ACCELERATION_MAX    { 1000; };    //  approximated - only used in simulation
 
     //  (Mess-)Werte vom Antrieb (CAN)
     CanIstPos               { 0; };
     CanIstGeschw            { 0; };
     CanIstStrom             { 0; };
     Status                  { 0; };
+    EMCY                    { 0; };
 
     //  berechnete (Mess-)Werte vom Antrieb
     IstPos                  { 0.0; }; //  IstWinkel
@@ -356,6 +401,9 @@ typedef
     SollPos                 { 0.0; };
     SollGeschw              { 0.0; };
     SollStrom               { 0.0; };
+    SollGeschwAbsolut       { 40.0; };
+    TargetPosition          { 0.0; };
+    VorzeichenSpeed         { 0; };
   };
 };
 
@@ -374,14 +422,21 @@ typedef
     ARBEITSBEREICH_MAX      { 8.0; };
     SPEED_MAX               { 255; };
     SPEED_DEFAULT           { 40; };
-    ANGLE_TOLERANCE         { 0.1; };
+    ANGLE_TOLERANCE         { 0.3; };
     TOLERANZ_HORIZONTIERUNG { 0.2; };
+    TOLERANZ_TALIN          { 0.3; };
+
+    //  Limits  for simulation
+    CAN_SPEED_MAX           { 32767; };   //  2^15-1 because of signed 16bit
+    CAN_SPEED_DEFAULT       { 10000; };   //  approximated - only used in simulation
+    CAN_ACCELERATION_MAX    { 1000; };    //  approximated - only used in simulation
 
     //  (Mess-)Werte vom Antrieb (CAN)
     CanIstPos               { 0; };
     CanIstGeschw            { 0; };
     CanIstStrom             { 0; };
     Status                  { 0; };
+    EMCY                    { 0; };
 
     //  berechnete (Mess-)Werte vom Antrieb
     IstPos                  { 0.0; }; //  IstWinkel
@@ -398,6 +453,9 @@ typedef
     SollPos                 { 0.0; };
     SollGeschw              { 0.0; };
     SollStrom               { 0.0; };
+    SollGeschwAbsolut       { 40.0; };
+    TargetPosition          { 0.0; };
+    VorzeichenSpeed         { 0; };
   };
 };
 
@@ -408,12 +466,12 @@ typedef
 {
   t_heckverteiler_data
   {
-      current_radar         {0;};   // [A]
-      current_drives        {0;};   // [A]
-      current_pneumatic     {0;};   // [A]
-      current_others        {0;};   // [A]
-      wind_gueltig          {0;};   // 1 / 0
-      wind_speed            {0;};   // [Bft]
+      current_radar         { 0; };   // [A]
+      current_drives        { 0; };   // [A]
+      current_pneumatic     { 0; };   // [A]
+      current_others        { 0; };   // [A]
+      wind_gueltig          { 0; };   // 1 / 0
+      wind_speed            { 0; };   // [Bft]
   };
 };
 
@@ -423,14 +481,14 @@ typedef
 {
   t_vehicle_data
   {
-    Speed               {0.0;};
-    angle_x             {0.0;};
-    angle_y             {0.0;};
-    Gear                {-1;};
-    Brake               {-1;};
-    Engine_rpm          {0;};
-    Ambient_Temperature {0.0;};
-    tension_bordnet     {0.0;};  // [0.1 V]
+    Speed               { 0.0; };
+    angle_x             { 0.0; };
+    angle_y             { 0.0; };
+    Gear                { -1; };
+    Brake               { -1; };
+    Engine_rpm          { 0; };
+    Ambient_Temperature { 0.0; };
+    tension_bordnet     { 0.0; };  // [0.1 V]
   };
 };
 
@@ -439,11 +497,14 @@ typedef
 {
   t_Talin_data
   {
-    isValid         {1;};
-    axis_x          {0.0;};
-    axis_x_previous {0.0;};
-    axis_y          {0.0;};
-    axis_y_previous {0.0;};
+    isValid           { 1; };   //  arki: check again - default was 0
+    axis_x            { 0.0; };
+    axis_x_previous   { 0.0; };
+    axis_y            { 0.0; };
+    axis_y_previous   { 0.0; };
+    talin_zupt_in_progress {0;};
+    heading {0;};
+    attitude_valid {0;};
   };
 };
 
@@ -453,8 +514,8 @@ typedef
 {
   t_ivenet_own_vehicle_position
   {
-    isValid_in {0;};
-    isValid_out{0;};
+    isValid_in        { 0; };
+    isValid_out       { 0; };
     coordinate;
   };
 };
@@ -463,9 +524,9 @@ typedef
 {
   t_ivenet_coordinate
   {
-    latitude          {0.0;}; // {-90.0;  +90.0 }
-    longitude         {0.0;}; // {-180.0; +180.0}
-    altitude          {-999;};// {-999;   +99999}, -999 being 'invalid'
+    latitude          { 0.0; }; // {-90.0;  +90.0 }
+    longitude         { 0.0; }; // {-180.0; +180.0}
+    altitude          { -999; };// {-999;   +99999}, -999 being 'invalid'
   };
 };
 
@@ -473,10 +534,10 @@ typedef
 {
   t_ivenet_own_vehicle_alignment
   {
-    isValid_in        {0;};
-    hasChanged        {0;};
-    azimuth_current   {0;};     // {0;       35999}
-    azimuth_previous  {0;};     // {0;       35999}
+    isValid_in        { 0; };
+    hasChanged        { 0; };
+    azimuth_current   { 0; };     // {0;       35999}
+    azimuth_previous  { 0; };     // {0;       35999}
   };
 };
 
@@ -484,10 +545,10 @@ typedef
 {
   t_ivenet_mast_state
   {
-    isValid_in  { 1;  };
-    isValid_out { 1;  };
-    value_in    { IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;  };
-    value_out   { IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;  };
+    isValid_in        { 1;  };
+    isValid_out       { 1;  };
+    value_in          { IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;  };
+    value_out         { IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;  };
   };
 };
 
@@ -495,8 +556,8 @@ typedef
 {
   t_ivenet_platform_alignment_state
   {
-    isValid_out { 1;  };
-    value       { IVENET_PLATFORM_IS_NOT_ALIGNED; };
+    isValid_out       { 1;  };
+    value             { IVENET_PLATFORM_IS_NOT_ALIGNED; };
   };
 };
 
@@ -504,8 +565,8 @@ typedef
 {
   t_ivenet_radar_enabled_state
   {
-    isValid_out           {1;}; // [Boolean]
-    isRadarWorkingEnabled {0;}; // [Boolean]
+    isValid_out           { 1; }; // [Boolean]
+    isRadarWorkingEnabled { 0; }; // [Boolean]
   };
 };
 
@@ -513,8 +574,8 @@ typedef
 {
   t_ivenet_radar_parkposition_request_state
   {
-    isValid_out           {1;}; // [Boolean]
-    isRequestActive       {0;}; // [Boolean]
+    isValid_out           { 1; }; // [Boolean]
+    isRequestActive       { 0; }; // [Boolean]
   };
 };
 
@@ -522,23 +583,26 @@ typedef
 {
   t_ivenet_radar_position_state
   {
-    isValid_in            {0;};
-    isRadarInParkposition {0;}; // [Boolean]
+    isValid_in            { 0; };
+    isRadarInParkposition { 0; }; // [Boolean]
   };
 };
 
 // --------------------------------------------
 // ----------------- STATES -------------------
 // --------------------------------------------
-Systemstate x_drive, y_drive, z_drive;
 
 // --------------------------------------------
 // ---------------- ANTENNA -------------------
 Systemstate SENSOR_VZ1V;  //  VerzurrungAntenneVerriegelt
 Systemstate SENSOR_VZ1O;  //  VerzurrungAntenneOffen
 Systemstate SENSOR_IN_PARKPOS;
-Systemstate EVAL_ANTENNA_IS_IN_PARKPOS;
 
+// Ansteuerung CS 13
+Systemstate VENTIL_VZ1O;  //  Ventil Verzurrung Zylinder 1 Oeffnen
+Systemstate VENTIL_VZ1V;  //  Ventil Verzurrung Zylinder 1 Verriegeln
+
+Systemstate EVAL_ANTENNA_IS_IN_PARKPOS;
 Systemstate EVAL_ANTENNA_IS_LEVELLED_OUT;
 Systemstate ANTENNA_ALIGNMENT_STATUS;
 
@@ -551,24 +615,42 @@ Systemstate SENSOR_HR1V;  //  HaubeRiegel1_Verriegelt
 Systemstate SENSOR_HR2O;  //  HaubeRiegel2_Offen
 Systemstate SENSOR_HR2V;  //  HaubeRiegel2_Verriegelt
 
+// Ansteuerung CS 13
+Systemstate VENTIL_HRS;
+
+// Ansteuerung CS 14
+Systemstate VENTIL_HVZO;
+Systemstate VENTIL_HVZON;
+Systemstate VENTIL_HVZS;
+Systemstate VENTIL_HVZSN;
+Systemstate VENTIL_HRO;
+
 // --------------------------------------------
 // -------------- X ANTRIEB -------------------
+Systemstate x_drive;
+Systemstate x_drive_rsp_req;
+Systemstate x_drive_emcy_req;
 Systemstate SENSOR_IP_X;
 
 // --------------------------------------------
 // -------------- Y ANTRIEB -------------------
+Systemstate y_drive;
+Systemstate y_drive_rsp_req;
+Systemstate y_drive_emcy_req;
 Systemstate SENSOR_IP_Y;
 Systemstate SENSOR_AB_Y;  //  Arbeitsbereich_Y_drive
 Systemstate EVAL_AB_Y;
 
 // --------------------------------------------
 // -------------- Z ANTRIEB -------------------
+Systemstate z_drive;
+Systemstate z_drive_rsp_req;
+Systemstate z_drive_emcy_req;
 Systemstate SENSOR_EO_Z;
 Systemstate SENSOR_EU_Z;
 Systemstate SENSOR_ENABLE_Z;
 Systemstate SENSOR_UB_Z;
 Systemstate SENSOR_IP_Z;
-Systemstate SOLL_POS;
 Systemstate MAST_STATUS;
 
 // --------------------------------------------
@@ -588,6 +670,10 @@ Systemstate TASTE_E_ABBRUCH;
 Systemstate TASTE_NOT_AUS;
 Systemstate STILTS_ARE_CHECKED;
 Systemstate is_system_time_to_be_set;
+Systemstate s_dust_discharge_is_ready;
+
+// Ansteuerung CS 13
+Systemstate VENTIL_VV1;   //  Venturi-Ventil
 
 // --------------------------------------------
 // ---------- FUNKTIONSUEBERWACHUNG -----------
@@ -600,6 +686,13 @@ Systemstate s_z_drive_heartbeat_payload;
 Systemstate s_usv1_heartbeat_payload;
 Systemstate s_usv2_heartbeat_payload;
 Systemstate s_extbg_heartbeat_payload;
+Systemstate s_io_module_is_online;
+Systemstate s_si_module_is_online;
+Systemstate s_usv1_is_online;
+Systemstate s_usv2_is_online;
+Systemstate s_x_drive_is_online;
+Systemstate s_y_drive_is_online;
+Systemstate s_z_drive_is_online;
 
 // --------------------------------------------
 // --------------- STUETZEN -------------------
@@ -615,10 +708,14 @@ Systemstate SENSOR_SMOL;  //  StützenMagnetObenLinks
 Systemstate SENSOR_SMUR;  //  StützenMagnetUntenRechts
 Systemstate SENSOR_SMOR;  //  StützenMagnetObenRechts
 
+// Ansteuerung CS 14
+Systemstate VENTIL_SVZA;
+Systemstate VENTIL_SVZE;
+Systemstate VENTIL_SVK;
 
 // --------------------------------------------
 // ------------------ EXTBG -------------------
-Systemstate extbg_is_online;
+Systemstate s_extBG_is_online;
 Systemstate extbg_error_0;
 Systemstate extbg_error_1;
 Systemstate extbg_error_2;
@@ -646,44 +743,73 @@ Systemstate ivenet_radar_parkposition_request_state;
 Systemstate ivenet_radar_position_state;
 Systemstate ivenet_time_source_out;
 Systemstate ivenet_time_source_in;
-Systemstate IS_ENABLE_TIMER_ON;
-Systemstate IS_MOVE_TIMER_ON;
-Systemstate vorzeichen_speed;
+
+
+// --------------------------------------------
+// ------------------ IO Module ---------------
+Systemstate s_iom_force_pdo_transmit_counter;
+
+Guard g_is_Abbruch_active;
+Systemstate si_modul_analoger_eingang_strom_other_verstaerkt_in;
+Systemstate si_modul_analoger_eingang_pneumatik_switched_in;
+Systemstate x_drive_emcy_req;
+Systemstate x_drive_rsp_req;
+Systemstate y_drive_emcy_req;
+Systemstate y_drive_rsp_req;
+Systemstate z_drive_emcy_req;
+Systemstate z_drive_rsp_req;
+
+Event ev_Y_drive_to_target_position;
+
+
 
 // --------------------------------------------
 // ----------------- GLOBALS ------------------
 Globals
 {
-IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
+
+g_is_Abbruch_active = 0;
+si_modul_analoger_eingang_strom_other_verstaerkt_in = 0;
+si_modul_analoger_eingang_pneumatik_switched_in = 0;
+x_drive_emcy_req = 0;
+x_drive_rsp_req = 0;
+y_drive_emcy_req = 0;
+y_drive_rsp_req = 0;
+z_drive_emcy_req = 0;
+z_drive_rsp_req = 0;
+
+
 // --------------------------------------------
 // ---------------- ANTRIEBE ------------------
-  SENSOR_IP_X = DEF_SYS_INIT_INT_0;
+  SENSOR_IP_X = DEF_SYS_INIT_INT_0; //  Index-Position X_drive
 
-  SENSOR_IP_Y = DEF_SYS_INIT_INT_0;
+  SENSOR_IP_Y = DEF_SYS_INIT_INT_0; //  Index-Position Y_drive
   SENSOR_AB_Y = DEF_SYS_INIT_INT_0; //  Arbeitsbereich_Y_drive
   EVAL_AB_Y   = DEF_SYS_INIT_INT_0;
 
   SENSOR_IP_Z = DEF_SYS_INIT_INT_0;
   SENSOR_EO_Z = DEF_SYS_INIT_INT_0;
-  SENSOR_EU_Z = DEF_SYS_INIT_INT_0;
+  SENSOR_EU_Z = DEF_SYS_INIT_INT_1; //  normal ist 1
   SENSOR_UB_Z = DEF_SYS_INIT_INT_0;
 
-  SOLL_POS    = DEF_SYS_INIT_INT_0;
   MAST_STATUS = DEF_SYS_INIT_INT_0;
 
   x_drive = t_X_drive;
   y_drive = t_Y_drive;
   z_drive = t_Z_drive;
 
-  x_drive.Control = t_Control;
-  y_drive.Control = t_Control;
-  z_drive.Control = t_Control;
+  x_drive.Control = t_drive_control;
+  y_drive.Control = t_drive_control;
+  z_drive.Control = t_drive_control;
 
-  x_drive.Status  = t_Status;
-  y_drive.Status  = t_Status;
-  z_drive.Status  = t_Status;
+  x_drive.Status  = t_drive_status;
+  y_drive.Status  = t_drive_status;
+  z_drive.Status  = t_drive_status;
 
- 
+  x_drive.EMCY    = t_drive_emcy;
+  y_drive.EMCY    = t_drive_emcy;
+  z_drive.EMCY    = t_drive_emcy;
+
 // --------------------------------------------
 // ---------- FUNKTIONSUEBERWACHUNG -----------
   s_bag_heartbeat_payload       = -1;
@@ -695,11 +821,18 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   s_usv1_heartbeat_payload      = -1;
   s_usv2_heartbeat_payload      = -1;
   s_extbg_heartbeat_payload     = -1;
+  s_io_module_is_online         = 0;
+  s_si_module_is_online         = 0;
+  s_usv1_is_online              = 0;
+  s_usv2_is_online              = 0;
+  s_x_drive_is_online           = 0;
+  s_y_drive_is_online           = 0;
+  s_z_drive_is_online           = 0;
 
 // --------------------------------------------
 // ------------------ EXTBG -------------------
-  extbg_is_online       = DEF_SYS_INIT_INT_0;
-  NO_ERROR              = 0xFF;ERROR_ID = 0;
+  s_extBG_is_online     = DEF_SYS_INIT_INT_0;
+  NO_ERROR              = 0xFF;
   ERROR_ID              = NO_ERROR;
   extbg_error_0         = NO_ERROR;
   extbg_error_1         = NO_ERROR;
@@ -708,11 +841,11 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   extbg_error_4         = NO_ERROR;
   extbg_error_counter   = DEF_SYS_INIT_INT_0;
 
-  X_DRIVE_COMMUNICATION_INCIDENT = 0;
-  Y_DRIVE_COMMUNICATION_INCIDENT = 0;
-  Z_DRIVE_COMMUNICATION_INCIDENT = 0;
-   IVENET_COMMUNICATION_INCIDENT = 0;
-       HV_COMMUNICATION_INCIDENT = 0;
+  X_DRIVE_COMMUNICATION_INCIDENT = 1;
+  Y_DRIVE_COMMUNICATION_INCIDENT = 1;
+  Z_DRIVE_COMMUNICATION_INCIDENT = 1;
+   IVENET_COMMUNICATION_INCIDENT = 1;
+       HV_COMMUNICATION_INCIDENT = 1;
 
 // --------------------------------------------
 // ------------------- FLAP -------------------
@@ -724,23 +857,37 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   SENSOR_HZO  = DEF_SYS_INIT_INT_0;
   SENSOR_HZG  = DEF_SYS_INIT_INT_0;
 
+  // Ansteuerung CS 13
+  VENTIL_HRS   = 0;
+  VENTIL_VZ1O  = 0; //  Ventil Verzurrung Zylinder 1 Oeffnen
+  VENTIL_VZ1V  = 0; //  Ventil Verzurrung Zylinder 1 Verriegeln
+  VENTIL_VV1   = 0; //  Venturi-Ventil
+
+  // Ansteuerung CS 14
+  VENTIL_HVZO  = 0; //  Haube Ventil Zylinder Oeffnen
+  VENTIL_HVZON = 0; //  Haube Ventil Zylinder Oeffnen Nothalt
+  VENTIL_HVZS  = 0; //  Haube Ventil Zylinder Schliessen
+  VENTIL_HVZSN = 0; //  Haube Ventil Zylinder Schliessen Nothalt
+  VENTIL_HRO   = 0; //  Haube Riegel Oeffnen
+
 // --------------------------------------------
 // ------ VEHICLE, HECKVERTEILER, TALIN -------
-  Vehicle                = t_vehicle_data;
-  Talin_state            = t_Talin_data;
-  Heckverteiler_state    = t_heckverteiler_data;
+  Vehicle                   = t_vehicle_data;
+  Talin_state               = t_Talin_data;
+  Heckverteiler_state       = t_heckverteiler_data;
 
 // --------------------------------------------
 // ----------------- SYSTEM -------------------
-  Pneumatics               = t_Pneumatics;  
-  Betriebsmodus            = MODUS_AUTOMATIKBETRIEB;
-  PSM_IS_OPERATIONAL       = DEF_SYS_INIT_INT_0;
-  SENSOR_KAMPFSCHALTER_A   = DEF_SYS_INIT_INT_0;
-  TASTE_A_ABBRUCH          = DEF_SYS_INIT_INT_0;
-  TASTE_E_ABBRUCH          = DEF_SYS_INIT_INT_0;
-  TASTE_NOT_AUS            = DEF_SYS_INIT_INT_0;
-  STILTS_ARE_CHECKED       = DEF_SYS_INIT_INT_1;
-  is_system_time_to_be_set = DEF_SYS_INIT_INT_1;
+  Pneumatics                = t_Pneumatics;
+  Betriebsmodus             = MODUS_AUTOMATIKBETRIEB;
+  PSM_IS_OPERATIONAL        = DEF_SYS_INIT_INT_0;
+  SENSOR_KAMPFSCHALTER_A    = DEF_SYS_INIT_INT_0;
+  TASTE_A_ABBRUCH           = DEF_SYS_INIT_INT_0;
+  TASTE_E_ABBRUCH           = DEF_SYS_INIT_INT_0;
+  TASTE_NOT_AUS             = DEF_SYS_INIT_INT_0;
+  STILTS_ARE_CHECKED        = DEF_SYS_INIT_INT_1;
+  is_system_time_to_be_set  = DEF_SYS_INIT_INT_1;
+  s_dust_discharge_is_ready = DEF_SYS_INIT_INT_1;
 
 // --------------------------------------------
 // --------------- STUETZEN -------------------
@@ -754,6 +901,11 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   SENSOR_SMUR  = DEF_SYS_INIT_INT_0; //  StützenMagnetUntenRechts
   SENSOR_SMOR  = DEF_SYS_INIT_INT_0; //  StützenMagnetObenRechts
 
+  // Ansteuerung CS 14
+  VENTIL_SVZA  = 0; //  Stuetze Ventil Zylinder Ausfahren
+  VENTIL_SVZE  = 0; //  Stuetze Ventil Zylinder Einfahren
+  VENTIL_SVK   = 0; //  Stuetze Ventil Klemmung
+
 // --------------------------------------------
 // ---------------- ANTENNA -------------------
   SENSOR_VZ1V                  = DEF_SYS_INIT_INT_0;  //  VerzurrungAntenneVerriegelt
@@ -761,7 +913,7 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   SENSOR_IN_PARKPOS            = DEF_SYS_INIT_INT_1;
   EVAL_ANTENNA_IS_IN_PARKPOS   = DEF_SYS_INIT_INT_1;
   EVAL_ANTENNA_IS_LEVELLED_OUT = DEF_SYS_INIT_INT_0;
-  ANTENNA_ALIGNMENT_STATUS     = DEF_SYS_INIT_INT_0;
+  ANTENNA_ALIGNMENT_STATUS     = ANTENNA_DONT_CARE;
 
 // --------------------------------------------
 // ----------------- IVENET -------------------
@@ -774,142 +926,205 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   ivenet_radar_parkposition_request_state = t_ivenet_radar_parkposition_request_state;
   ivenet_radar_position_state             = t_ivenet_radar_position_state;
 
+// --------------------------------------------
+// ------------------ IO Module ---------------
+  s_iom_force_pdo_transmit_counter  = 0;
+
 
 // --------------------------------------------
 // -------------- SYSTEM GUARDS ---------------
-  g_psm_is_operational             = PSM_IS_OPERATIONAL;
-  g_extBG_is_online                = extbg_is_online;
-  g_extbg_payload_is_preop         = (s_extbg_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD);
-  g_extbg_payload_is_op            = (s_extbg_heartbeat_payload ==     OPERATIONAL_PAYLOAD);
-  g_is_NotAus_active               = TASTE_NOT_AUS;
-  g_is_Taste_A_Abbruch_active      = TASTE_A_ABBRUCH;
-  g_is_Taste_E_Abbruch_active      = TASTE_E_ABBRUCH;
-  g_kampfschalter_is_active        = SENSOR_KAMPFSCHALTER_A;
-  g_kampfschalter_was_active       = DEF_SYS_INIT_INT_0;
+  g_psm_is_operational                  = PSM_IS_OPERATIONAL;
+  g_extBG_is_online                     = ( 0 != s_extBG_is_online );
+  g_extbg_payload_is_preop              = (s_extbg_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD);
+  g_extbg_payload_is_op                 = (s_extbg_heartbeat_payload ==     OPERATIONAL_PAYLOAD);
+  g_is_NotAus_active                    = TASTE_NOT_AUS;
+  g_is_Taste_A_Abbruch_active           = TASTE_A_ABBRUCH;
+  g_is_Taste_E_Abbruch_active           = TASTE_E_ABBRUCH;
+  g_kampfschalter_is_active             = SENSOR_KAMPFSCHALTER_A;
+  g_kampfschalter_was_active            = DEF_SYS_INIT_INT_0;
 
-  g_system_pressure_is_sufficient  = Pneumatics.system_pressure >= MINIMUM_SYSTEM_PRESSURE; 
-  g_platform_extend_preconditions  = z_drive.IstPos <  z_drive.MAST_INDEXPOSITION;   //g_kampfschalter_is_active || (!g_is_NotAus_active && g_vehicle_does_not_drive && g_vehicle_gear_is_neutral && g_vehicle_brake_is_active && g_system_pressure_is_sufficient);
-  g_platform_retract_preconditions = z_drive.IstPos >= (z_drive.MAST_ZURRPOSITION + 5);//g_kampfschalter_is_active || (!g_is_NotAus_active && g_vehicle_does_not_drive && g_vehicle_gear_is_neutral && g_vehicle_brake_is_active && g_system_pressure_is_sufficient);
+  g_system_pressure_is_sufficient       = Pneumatics.system_pressure >= MINIMUM_SYSTEM_PRESSURE; 
+  g_platform_extend_preconditions       = ( ( z_drive.IstPos <  z_drive.INDEXPOSITION ) || !g_y_drive_is_in_arbeitsposition )
+                                        &&  ( g_kampfschalter_is_active || ( !g_is_NotAus_active && g_system_pressure_is_sufficient ) );
+  g_platform_retract_preconditions      = !g_z_drive_is_in_lashing_position
+                                        &&  ( g_kampfschalter_is_active || ( !g_is_NotAus_active && g_system_pressure_is_sufficient ) );
 
-  g_system_extend_with_stilts      = STILTS_ARE_CHECKED;
+  g_system_extend_with_stilts           = STILTS_ARE_CHECKED;
+
+  g_is_NotAus_or_Abbruch                = g_is_NotAus_active || g_is_Abbruch_active;
 
 // --------------------------------------------
 // ------------- VEHICLE GUARDS ---------------
   g_vehicle_does_not_drive              = (Vehicle.Speed == 0.0);
   g_vehicle_gear_is_neutral             = Vehicle.Gear  == GEAR_IS_DC_NEUTRAL;
   g_vehicle_brake_is_active             = Vehicle.Brake == BRAKE_IS_ACTIVE;
-  g_vehicle_inclination_x_is_tolerable  = Vehicle.angle_x <= 8.0;
-  g_vehicle_inclination_y_is_tolerable  = Vehicle.angle_y <= 8.0;
-  g_mast_operations_are_reasonable      =   g_vehicle_inclination_x_is_tolerable 
-                                        &&  g_vehicle_inclination_y_is_tolerable 
-                                        &&  g_vehicle_gear_is_neutral 
-                                        &&  g_vehicle_brake_is_active 
+  g_vehicle_inclination_x_is_tolerable  = abs ( Vehicle.angle_x ) <= x_drive.ARBEITSBEREICH_MAX;
+  g_vehicle_inclination_y_is_tolerable  = abs ( Vehicle.angle_y ) <= y_drive.ARBEITSBEREICH_MAX;
+  g_mast_operations_are_reasonable      =   g_vehicle_inclination_x_is_tolerable
+                                        &&  g_vehicle_inclination_y_is_tolerable
+                                        &&  g_vehicle_gear_is_neutral
+                                        &&  g_vehicle_brake_is_active
                                         &&  g_psm_is_operational;
 
-  g_mast_operations_are_possible        =   g_x_drive_is_online 
-                                        &&  g_y_drive_is_online 
+  g_mast_operations_are_possible        =   g_x_drive_is_online
+                                        &&  g_y_drive_is_online
                                         &&  g_z_drive_is_online;
 
-  g_vehicle_slide_preconditions         = ( ( abs ( ivenet_own_vehicle_alignment.azimuth_previous   - ivenet_own_vehicle_alignment.azimuth_current  ) > 28  )
-                                        ||  ( abs ( Talin_state.axis_x_previous                     - Talin_state.axis_x  )                           > 0.3 )
-                                        ||  ( abs ( Talin_state.axis_y_previous                     - Talin_state.axis_y  )                           > 0.3 )
+  g_vehicle_slide_preconditions         = ( ( abs ( ivenet_own_vehicle_alignment.azimuth_previous   - ivenet_own_vehicle_alignment.azimuth_current  ) > IVENET_TOLERANCE_AZIMUTH  )
+                                        ||  ( abs ( Talin_state.axis_x_previous                     - Talin_state.axis_x  )                           > x_drive.TOLERANZ_TALIN )
+                                        ||  ( abs ( Talin_state.axis_y_previous                     - Talin_state.axis_y  )                           > y_drive.TOLERANZ_TALIN )
                                           );
 
 // --------------------------------------------
 // ---------------- FLAP GUARDS ---------------
-  g_flap_is_open                        =   SENSOR_HZO &&  !SENSOR_HZG;
-  g_flap_is_closed                      =  !SENSOR_HZO &&   SENSOR_HZG;
+  g_flap_is_open                        =   SENSOR_HZO                ;
+  g_flap_is_closed                      =                   SENSOR_HZG;
   g_flap_is_neither_nor                 =  !SENSOR_HZO &&  !SENSOR_HZG;
   g_flap_is_wrong                       =   SENSOR_HZO &&   SENSOR_HZG;
 
-  g_flap_lock_one_is_unlocked           =  SENSOR_HR1O && !SENSOR_HR1V;
-  g_flap_lock_one_is_locked             = !SENSOR_HR1O &&  SENSOR_HR1V;
-  g_flap_lock_two_is_unlocked           =  SENSOR_HR2O && !SENSOR_HR2V;
-  g_flap_lock_two_is_locked             = !SENSOR_HR2O &&  SENSOR_HR2V;
+  g_flap_lock_one_is_unlocked           =  SENSOR_HR1O                ;
+  g_flap_lock_one_is_locked             =                  SENSOR_HR1V;
+  g_flap_lock_one_is_wrong              =  SENSOR_HR1O &&  SENSOR_HR1V;
+  g_flap_lock_two_is_unlocked           =  SENSOR_HR2O                ;
+  g_flap_lock_two_is_locked             =                  SENSOR_HR2V;
+  g_flap_lock_two_is_wrong              =  SENSOR_HR2O &&  SENSOR_HR2V;
   g_flap_is_locked                      =  g_flap_lock_one_is_locked   && g_flap_lock_two_is_locked;
   g_flap_is_unlocked                    =  g_flap_lock_one_is_unlocked && g_flap_lock_two_is_unlocked;
 
-  g_flap_open_preconditions             = g_kampfschalter_is_active ||  ( g_flap_is_unlocked && g_system_pressure_is_sufficient && g_mast_is_not_blocking_flap );
-  g_flap_to_close_preconditions         = g_kampfschalter_is_active ||  ( g_system_pressure_is_sufficient && g_mast_is_not_blocking_flap );
+  g_flap_open_preconditions             = g_kampfschalter_is_active ||  ( g_system_pressure_is_sufficient &&  g_mast_is_not_blocking_flap &&  g_flap_is_unlocked  );
+  g_flap_close_preconditions            = g_kampfschalter_is_active ||  ( g_system_pressure_is_sufficient &&  g_mast_is_not_blocking_flap &&  g_flap_is_unlocked  );
+  g_flap_to_close_preconditions         = g_kampfschalter_is_active ||  ( g_system_pressure_is_sufficient &&  g_mast_is_not_blocking_flap );
+  g_flap_to_open_preconditions          = g_kampfschalter_is_active ||  ( g_system_pressure_is_sufficient &&  g_mast_is_not_blocking_flap );
 
   g_flap_unlock_preconditions           = g_kampfschalter_is_active ||  g_system_pressure_is_sufficient;
 
-  g_flap_close_preconditions            = g_kampfschalter_is_active ||  ( g_flap_is_unlocked && g_system_pressure_is_sufficient && g_mast_is_not_blocking_flap );
-
-  g_flap_to_open_preconditions          = g_kampfschalter_is_active ||  ( g_system_pressure_is_sufficient &&  g_mast_is_not_blocking_flap );
 
 // --------------------------------------------
 // --------------- DRIVE GUARDS ---------------
-  g_x_drive_is_online                   = 0;
+  g_x_drive_is_online                   = s_x_drive_is_online;
   g_x_drive_payload_is_preop            = ( s_x_drive_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD );
   g_x_drive_payload_is_op               = ( s_x_drive_heartbeat_payload ==     OPERATIONAL_PAYLOAD );
-  g_x_drive_has_antrieb_fault           = x_drive.Status.ANTRIEB_FAULT;
+  g_x_drive_has_antrieb_fault           = ( 0 !=  x_drive.Status.ANTRIEB_FAULT );
+  g_x_drive_reach_inpos                 = ( 0 !=  x_drive.Status.ANTRIEB_INPOS );
+  g_x_drive_is_enabled                  = ( 0 !=  x_drive.Status.ANTRIEB_ENABLE_OUT );
+  g_x_drive_brake_is_released           = ( 0 !=  x_drive.Status.ANTRIEB_BRAKE_RELEASED );
+
   g_x_drive_is_in_indexposition         = SENSOR_IP_X ||  ( ( x_drive.IstPos >=  x_drive.INDEXPOSITION - x_drive.ANGLE_TOLERANCE )
                                                         &&  ( x_drive.IstPos <=  x_drive.INDEXPOSITION + x_drive.ANGLE_TOLERANCE )
                                                           );
-  g_x_drive_is_in_target_position       =   ( x_drive.IstPos <=  ( x_drive.SollPos + x_drive.ANGLE_TOLERANCE  ) ) 
-                                        &&  ( x_drive.IstPos >=  ( x_drive.SollPos - x_drive.ANGLE_TOLERANCE  ) );
+  g_x_drive_is_in_target_position       =   ( x_drive.IstPos <=  ( x_drive.TargetPosition + x_drive.ANGLE_TOLERANCE  ) )
+                                        &&  ( x_drive.IstPos >=  ( x_drive.TargetPosition - x_drive.ANGLE_TOLERANCE  ) );
+
+  g_x_drive_is_in_soll_position         =   ( x_drive.IstPos <= x_drive.SollPos + x_drive.ANGLE_TOLERANCE )
+                                        &&  ( x_drive.IstPos >= x_drive.SollPos - x_drive.ANGLE_TOLERANCE );
+
+  g_x_drive_move_left_down_preconditions  = ( x_drive.IstPos > x_drive.ARBEITSBEREICH_MIN ) &&  g_z_drive_is_in_arbeitsbereich;
+  g_x_drive_move_right_down_preconditions = ( x_drive.IstPos < x_drive.ARBEITSBEREICH_MAX ) &&  g_z_drive_is_in_arbeitsbereich;
+
   g_x_drive_is_moving_up                =     x_drive.IstPos < ( x_drive.SollPos - x_drive.ANGLE_TOLERANCE );
   g_x_drive_is_moving_down              =     x_drive.IstPos > ( x_drive.SollPos + x_drive.ANGLE_TOLERANCE );
   g_x_drive_is_not_moving               = !g_x_drive_is_moving_up && !g_x_drive_is_moving_down;
 
-  g_y_drive_is_online                   = 0;
+  g_x_drive_is_slow_down                =   ( x_drive.IstGeschw <=  ( 0 + x_drive.ANGLE_TOLERANCE  ) )
+                                        &&  ( x_drive.IstGeschw >=  ( 0 - x_drive.ANGLE_TOLERANCE  ) );
+
+// --------------- Y-DRIVE GUARDS -------------
+  g_y_drive_is_online                   = s_y_drive_is_online;
   g_y_drive_payload_is_preop            = ( s_y_drive_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD );
   g_y_drive_payload_is_op               = ( s_y_drive_heartbeat_payload ==     OPERATIONAL_PAYLOAD );
-  g_y_drive_has_antrieb_fault           = y_drive.Status.ANTRIEB_FAULT;
-  g_y_drive_is_in_target_position       =   ( y_drive.IstPos <= y_drive.SollPos + y_drive.ANGLE_TOLERANCE  )
-                                        &&  ( y_drive.IstPos >= y_drive.SollPos - y_drive.ANGLE_TOLERANCE  );
+  g_y_drive_has_antrieb_fault           = ( 0 !=  y_drive.Status.ANTRIEB_FAULT );
+  g_y_drive_reach_inpos                 = ( 0 !=  y_drive.Status.ANTRIEB_INPOS );
+  g_y_drive_is_enabled                  = ( 0 !=  y_drive.Status.ANTRIEB_ENABLE_OUT );
+  g_y_drive_brake_is_released           = ( 0 !=  y_drive.Status.ANTRIEB_BRAKE_RELEASED );
+
+  g_y_drive_is_in_target_position       =   ( y_drive.IstPos <= y_drive.TargetPosition + y_drive.ANGLE_TOLERANCE  )
+                                        &&  ( y_drive.IstPos >= y_drive.TargetPosition - y_drive.ANGLE_TOLERANCE  );
+
+  g_y_drive_is_in_soll_position         =   ( y_drive.IstPos <= y_drive.SollPos + y_drive.ANGLE_TOLERANCE )
+                                        &&  ( y_drive.IstPos >= y_drive.SollPos - y_drive.ANGLE_TOLERANCE );
+
   g_y_drive_is_in_arbeitsbereich        = SENSOR_AB_Y;
   g_y_drive_is_in_arbeitsposition       = ( ( y_drive.IstPos >=  y_drive.ARBEITSPOSITION - y_drive.ANGLE_TOLERANCE )
                                         &&  ( y_drive.IstPos <=  y_drive.ARBEITSPOSITION + y_drive.ANGLE_TOLERANCE )
                                           );
-  g_y_drive_is_in_indexposition         = SENSOR_IP_Y ||  ( ( y_drive.IstPos >=  y_drive.INDEXPOSITION - y_drive.ANGLE_TOLERANCE )
-                                                        &&  ( y_drive.IstPos <=  y_drive.INDEXPOSITION + y_drive.ANGLE_TOLERANCE )
-                                                          );
+  g_y_drive_is_in_indexposition         = ( 0 !=  SENSOR_IP_Y )
+                                        ||  ( ( y_drive.IstPos >=  ( y_drive.INDEXPOSITION - y_drive.ANGLE_TOLERANCE ) )
+                                          &&  ( y_drive.IstPos <=  ( y_drive.INDEXPOSITION + y_drive.ANGLE_TOLERANCE ) )
+                                            );
+
+  g_y_drive_move_front_down_preconditions =   ( y_drive.IstPos < ( y_drive.ARBEITSPOSITION + y_drive.ARBEITSBEREICH_MAX + y_drive.ANGLE_TOLERANCE ) )
+                                          &&  g_z_drive_is_in_arbeitsbereich;
+//  g_y_drive_move_rear_down_preconditions  = ( y_drive.IstPos > ( y_drive.ARBEITSPOSITION - y_drive.ARBEITSBEREICH_MIN - y_drive.ANGLE_TOLERANCE ) );
+  g_y_drive_move_rear_down_preconditions  =   ( y_drive.IstPos > ( y_drive.INDEXPOSITION - y_drive.ANGLE_TOLERANCE ) )
+                                          &&  g_z_drive_is_in_arbeitsbereich;
+
   g_y_drive_is_moving_up                = y_drive.IstPos < ( y_drive.SollPos - y_drive.ANGLE_TOLERANCE );
   g_y_drive_is_moving_down              = y_drive.IstPos > ( y_drive.SollPos + y_drive.ANGLE_TOLERANCE );
   g_y_drive_is_not_moving               = !g_y_drive_is_moving_up && !g_y_drive_is_moving_down;
   g_y_drive_preconditions_to_move_to_arbeitsposition = !g_y_drive_is_in_arbeitsbereich && g_z_drive_is_in_indexposition;
 
-  g_z_drive_is_online                   = 0;
+  g_y_drive_is_slow_down                =   ( y_drive.IstGeschw <=  ( 0 + y_drive.ANGLE_TOLERANCE  ) )
+                                        &&  ( y_drive.IstGeschw >=  ( 0 - y_drive.ANGLE_TOLERANCE  ) );
+
+// --------------- Z-DRIVE GUARDS -------------
+  g_z_drive_is_online                   = s_z_drive_is_online;
   g_z_drive_payload_is_preop            = ( s_z_drive_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD );
   g_z_drive_payload_is_op               = ( s_z_drive_heartbeat_payload ==     OPERATIONAL_PAYLOAD );
-  g_z_drive_has_antrieb_fault           = z_drive.Status.ANTRIEB_FAULT;
-  g_z_drive_is_in_indexposition         = SENSOR_IP_Z;
-  g_z_drive_is_in_target_position       =   ( z_drive.IstPos <= z_drive.SollPos + z_drive.POSITION_TOLERANCE )
+  g_z_drive_in_stop_mode                = ( DRIVE_OPERATIONAL_MODE_STOP == z_drive.Control.ANTRIEB_MODE );
+  g_z_drive_has_antrieb_fault           = ( 0 !=  z_drive.Status.ANTRIEB_FAULT );
+  g_z_drive_reach_inpos                 = ( 0 !=  z_drive.Status.ANTRIEB_INPOS );
+  g_z_drive_is_enabled                  = ( 0 !=  z_drive.Status.ANTRIEB_ENABLE_OUT );
+  g_z_drive_brake_is_released           = ( 0 !=  z_drive.Status.ANTRIEB_BRAKE_RELEASED );
+
+  g_z_drive_is_in_indexposition         = ( 0 !=  SENSOR_IP_Z );
+  g_z_drive_is_in_target_position       =   ( z_drive.IstPos <= z_drive.TargetPosition + z_drive.POSITION_TOLERANCE )
+                                        &&  ( z_drive.IstPos >= z_drive.TargetPosition - z_drive.POSITION_TOLERANCE );
+
+  g_z_drive_is_in_soll_position         =   ( z_drive.IstPos <= z_drive.SollPos + z_drive.POSITION_TOLERANCE )
                                         &&  ( z_drive.IstPos >= z_drive.SollPos - z_drive.POSITION_TOLERANCE );
-  g_mast_move_up_preconditions          =   ( z_drive.IstPos >= z_drive.MAST_MINHOEHE ) || g_flap_is_open;
-  g_mast_move_down_preconditions        = g_mast_move_up_preconditions;
+
+  g_z_drive_is_not_moving               =   ( abs ( z_drive.CanIstGeschw ) <= ( 2*16 ) );
+
+  g_z_drive_move_up_preconditions       =   ( g_z_drive_arbeitsbereich_lower_limit || g_flap_is_open )
+                                        &&  g_z_drive_arbeitsbereich_higher_limit;
+
+  g_z_drive_move_down_preconditions     = g_z_drive_move_up_preconditions;
+
+  g_z_drive_arbeitsbereich_lower_limit  =   ( z_drive.IstPos >= ( z_drive.MAST_MINHOEHE - z_drive.POSITION_TOLERANCE ) );
+  g_z_drive_arbeitsbereich_higher_limit =   ( z_drive.IstPos <= ( z_drive.MAX_POS + z_drive.POSITION_TOLERANCE ) );
+  g_z_drive_is_in_arbeitsbereich        =   g_z_drive_arbeitsbereich_lower_limit  &&  g_z_drive_arbeitsbereich_higher_limit;
   g_z_drive_to_target_position_preconditions  = (   g_flap_is_closed 
                                                 &&  ( z_drive.SollPos <= z_drive.MAX_POS  )
                                                 &&  ( z_drive.SollPos >= z_drive.MAST_MINHOEHE  )
-                                                &&  ( y_drive.IstPos >= 77.0 )
-                                                &&  ( z_drive.IstPos <= 3310  )
-                                                &&  ( z_drive.IstPos >= z_drive.MAST_MINHOEHE )
+                                                &&  g_y_drive_is_in_arbeitsbereich
+                                                &&  g_z_drive_is_in_arbeitsbereich
                                                 );
-  g_z_drive_is_moving_up                = z_drive.IstPos  < ( z_drive.IstPos - z_drive.POSITION_TOLERANCE );
-  g_z_drive_is_moving_down              = z_drive.IstPos  > ( z_drive.IstPos + z_drive.POSITION_TOLERANCE );
+  g_z_drive_is_moving_up                = z_drive.IstPos  < ( z_drive.SollPos - z_drive.POSITION_TOLERANCE );
+  g_z_drive_is_moving_down              = z_drive.IstPos  > ( z_drive.SollPos + z_drive.POSITION_TOLERANCE );
   g_z_drive_is_not_moving               = !g_z_drive_is_moving_up && !g_z_drive_is_moving_down;
 
-  g_mast_height_is_lt_max_position      = (!SENSOR_EO_Z) || ( z_drive.IstPos <  z_drive.MAX_POS );
-  g_mast_height_is_ge_max_position      =   SENSOR_EO_Z  || ( z_drive.IstPos >= z_drive.MAX_POS );
+  g_z_drive_is_slow_down                =   ( z_drive.IstGeschw <=  ( 0 + z_drive.POSITION_TOLERANCE  ) )
+                                        &&  ( z_drive.IstGeschw >=  ( 0 - z_drive.POSITION_TOLERANCE  ) );
 
-  g_mast_height_is_gt_min_position      = (!SENSOR_EU_Z) || ( z_drive.IstPos >  0.0 );
-  g_mast_height_is_le_min_position      =   SENSOR_EU_Z  || ( z_drive.IstPos <= 0.0 );
+  g_mast_height_is_ge_max_position      = ( 0 !=  SENSOR_EO_Z ) ||  ( z_drive.IstPos >= z_drive.MAX_POS );
 
-  g_mast_height_is_ge_indexposition     = ( z_drive.IstPos  >=  ( z_drive.MAST_INDEXPOSITION - 1 ) );
-  g_mast_height_is_lt_indexposition     = ( z_drive.IstPos  <   ( z_drive.MAST_INDEXPOSITION - 1 ) );
+  g_mast_height_is_gt_min_position      = ( 0 ==  SENSOR_EU_Z ) ||  ( z_drive.IstPos >  0.0 );
+  g_mast_height_is_le_min_position      = ( 0 !=  SENSOR_EU_Z ) ||  ( z_drive.IstPos <= 0.0 );
+
+  g_mast_height_is_ge_indexposition     = ( z_drive.IstPos  >=  ( z_drive.INDEXPOSITION - z_drive.POSITION_TOLERANCE ) );
 
   g_mast_height_ge_lower_working_position = SENSOR_UB_Z;
 
-  g_mast_is_not_blocking_flap           = ( ( z_drive.IstPos  <= z_drive.MAST_ZURRPOSITION + 5 ) || ( g_y_drive_is_in_arbeitsbereich && g_z_drive_is_in_indexposition ) );
-  g_z_drive_is_in_lashing_position      =     z_drive.IstPos  <= z_drive.MAST_ZURRPOSITION;
+  g_mast_is_not_blocking_flap           = ( g_z_drive_is_in_lashing_position || ( g_y_drive_is_in_arbeitsbereich && g_z_drive_is_in_indexposition ) );
+  g_z_drive_is_in_lashing_position      =   ( z_drive.IstPos  <= ( z_drive.MAST_ZURRPOSITION + 5 ) );
 
-  g_z_drive_is_enabled                  = z_drive.Status.ANTRIEB_ENABLE_OUT;
 // --------------------------------------------
 // ------------- ANTENNA GUARDS ---------------
   g_ivenet_sees_antenna_in_parkpos        =  ( ivenet_radar_position_state.isValid_in > 0 ) && ( ivenet_radar_position_state.isRadarInParkposition > 0 );
   g_io_module_sees_antenna_in_parkpos     =  SENSOR_IN_PARKPOS;
+  g_sees_antenna_in_parkpos               =   ( ( 0 != IVENET_COMMUNICATION_INCIDENT )  || g_ivenet_sees_antenna_in_parkpos )
+                                          &&  ( ( 0 == s_io_module_is_online )          || g_io_module_sees_antenna_in_parkpos )
+                                          &&  ( ( 0 == IVENET_COMMUNICATION_INCIDENT )  || ( 0 != s_io_module_is_online ) );  //  one of both should be ok
   g_antenna_is_in_parking_position        =  EVAL_ANTENNA_IS_IN_PARKPOS;
   g_antenna_lashing_is_locked             = !SENSOR_VZ1O &&  SENSOR_VZ1V; // !VerzurrungAntenneOffen  &&  VerzurrungAntenneVerriegelt
   g_antenna_lashing_is_unlocked           =  SENSOR_VZ1O && !SENSOR_VZ1V; //  VerzurrungAntenneOffen  && !VerzurrungAntenneVerriegelt
@@ -917,7 +1132,7 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   g_antenna_lashing_is_wrong              =  SENSOR_VZ1O &&  SENSOR_VZ1V; //  VerzurrungAntenneOffen  &&  VerzurrungAntenneVerriegelt
 
   g_antenna_is_hinged_down                = g_y_drive_is_in_indexposition;
-  g_antenna_to_hinge_down_preconditions   = g_kampfschalter_is_active || ( g_z_drive_is_in_indexposition && g_flap_is_open );
+  g_antenna_to_hinge_down_preconditions   = g_kampfschalter_is_active || ( g_z_drive_is_in_indexposition && ( g_flap_is_open || g_flap_is_closed ) );
 
   g_antenna_to_rise_preconditions         = g_kampfschalter_is_active || g_z_drive_is_in_indexposition;
 
@@ -925,16 +1140,18 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   g_antenna_lashing_lock_preconditions    = g_kampfschalter_is_active || ( g_system_pressure_is_sufficient && !g_is_NotAus_active );
 
   g_x_drive_is_in_range                   = abs ( x_drive.IstPos ) <= x_drive.ARBEITSBEREICH_MAX;
-  g_x_drive_is_levelled_out               = abs ( Talin_state.axis_x ) <= x_drive.TOLERANZ_HORIZONTIERUNG;
-  g_x_drive_levelling_out_was_successful  = abs ( x_drive.IstPos - x_drive.SollPos ) <= 0.5;
-  g_y_drive_is_levelled_out               = abs ( Talin_state.axis_y ) <= y_drive.TOLERANZ_HORIZONTIERUNG;
-  g_y_drive_levelling_out_was_successful  = abs ( y_drive.IstPos - y_drive.SollPos ) <= 0.5;
+  g_x_drive_is_levelled_out               = abs ( Talin_state.axis_x ) <= x_drive.TOLERANZ_TALIN;
+  g_x_drive_levelling_out_was_successful  = abs ( x_drive.IstPos - x_drive.SollPos ) <= x_drive.TOLERANZ_HORIZONTIERUNG;
+  g_y_drive_is_levelled_out               = abs ( Talin_state.axis_y ) <= y_drive.TOLERANZ_TALIN;
+  g_y_drive_levelling_out_was_successful  = abs ( y_drive.IstPos - y_drive.SollPos ) <= y_drive.TOLERANZ_HORIZONTIERUNG;
   g_antenna_is_levelled_out               = g_x_drive_is_levelled_out && g_y_drive_is_levelled_out;
 
   g_antenna_x_correction_is_possible      = abs ( x_drive.IstPos + Talin_state.axis_x ) <= x_drive.ARBEITSBEREICH_MAX;
   g_antenna_y_correction_is_possible      =   ( ( y_drive.IstPos + Talin_state.axis_y ) <= ( y_drive.ARBEITSPOSITION + y_drive.ARBEITSBEREICH_MAX ) )
                                           &&  ( ( y_drive.IstPos + Talin_state.axis_y ) >= ( y_drive.ARBEITSPOSITION + y_drive.ARBEITSBEREICH_MIN ) );
   g_antenna_correction_is_possible        = g_antenna_x_correction_is_possible && g_antenna_y_correction_is_possible;
+
+  g_antenna_in_working_range              = g_mast_height_ge_lower_working_position && g_y_drive_is_in_arbeitsbereich;
 
 // --------------------------------------------
 // -------------- STILTS GUARDS ---------------
@@ -963,40 +1180,39 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
   g_stilt_right_has_ground_contact      = !SENSOR_SMOR && ( Pneumatics.stilt_right_pressure <= STILT_PRESSURE_GROUND_CONTACT );
   g_stilts_all_have_ground_contact      = g_stilt_left_has_ground_contact && g_stilt_right_has_ground_contact;
 
-
-  g_is_NotAus_or_Abbruch                = g_is_NotAus_active || g_is_Abbruch_active;
-
   g_stilts_unlock_preconditions         = g_kampfschalter_is_active || g_system_pressure_is_sufficient;
   g_stilts_to_retract_preconditions     = g_kampfschalter_is_active || g_system_pressure_is_sufficient;
 
+  g_stilts_extend_preconditions         = ( g_kampfschalter_is_active || g_system_pressure_is_sufficient ) && !g_stilts_all_have_ground_contact && !g_stilt_any_is_extended && !g_stilt_any_is_locked;
+
 // --------------------------------------------
 // -------- DUST DISCHARGE GUARDS -------------
-  g_dust_discharge_is_ready             = 1; // arki: todo ??? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!!!!!!!!!!!!!!!!!!!
+  g_dust_discharge_is_ready             = s_dust_discharge_is_ready;
   g_dust_discharge_preconditions        = g_kampfschalter_is_active || ( g_system_pressure_is_sufficient && g_dust_discharge_is_ready );
 
 // --------------------------------------------
 // --------------- USV GUARDS -----------------
   g_usv1_payload_is_preop               = ( s_usv1_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD );
   g_usv1_payload_is_op                  = ( s_usv1_heartbeat_payload ==     OPERATIONAL_PAYLOAD );
-  g_usv1_is_online                      = 0;
+  g_usv1_is_online                      = s_usv1_is_online;
 
   g_usv2_payload_is_preop               = ( s_usv2_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD );
   g_usv2_payload_is_op                  = ( s_usv2_heartbeat_payload ==     OPERATIONAL_PAYLOAD );
-  g_usv2_is_online                      = 0;
+  g_usv2_is_online                      = s_usv2_is_online;
 
 // --------------------------------------------
 // ------- FUNKTIONSUEBERWACHUNG GUARDS -------
   g_io_module_payload_is_preop          = ( s_io_module_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD );
   g_io_module_payload_is_op             = ( s_io_module_heartbeat_payload ==     OPERATIONAL_PAYLOAD );
-  g_io_module_is_online                 = 0;
+  g_io_module_is_online                 = s_io_module_is_online;
 
   g_si_module_payload_is_preop          = ( s_si_module_heartbeat_payload == PRE_OPERATIONAL_PAYLOAD );
   g_si_module_payload_is_op             = ( s_si_module_heartbeat_payload ==     OPERATIONAL_PAYLOAD );
-  g_si_module_is_online                 = 0;
+  g_si_module_is_online                 = s_si_module_is_online;
 
 // --------------------------------------------
 // --------------- TALIN GUARDS ---------------
-  g_talin_data_is_valid                 = ( Talin_state.isValid > 0 );
+  g_talin_data_is_valid                 = ( 0 != Talin_state.isValid );
 
   /*  template
     a_print_g_debug
@@ -1015,169 +1231,3 @@ IS_ENABLE_TIMER_ON=0;IS_MOVE_TIMER_ON=0;vorzeichen_speed=0;
 };
 
 
-// --------------------------------------------
-// ----------------- MELDUNGEN ----------------
-
-// --- Fortschrittsanzeigen an ExtBG --- //
-val FA_Keine_Meldung                            =  0;
-val FA_Plattform_Aus_Gestartet                  =  1;
-val FA_Plattform_Aus_Abgeschlossen              =  2;
-val FA_Plattform_Ein_Gestartet                  =  3;
-val FA_Plattform_Ein_Abgeschlossen              =  4;
-/* Haube entriegeln */
-val FA_Haube_Entriegeln_Gestartet               =  5;
-val FA_Haube_Entriegeln                         =  6;
-val FA_Haube_Entriegeln_Abgebrochen             =  7;
-val FA_Haube_Entriegeln_Abgeschlossen           =  8;
-/* Haube verriegeln */
-val FA_Haube_Verriegeln_Gestartet               =  9;
-val FA_Haube_Verriegeln                         = 10;
-val FA_Haube_Verriegeln_Abgebrochen             = 11;
-val FA_Haube_Verriegeln_Abgeschlossen           = 12;
-/* Haube Zylinderdruck */
-val FA_Haube_Zylinderdruck                      = 13;
-val FA_Haube_Zylinderdruck_Abgebrochen          = 14;
-val FA_Haube_Zylinderdruck_Abgeschlossen        = 15;
-/* Haube öffnen */
-val FA_Haube_Oeffnen_Gestartet                  = 16;
-val FA_Haube_Oeffnen                            = 17;
-val FA_Haube_Oeffnen_Abgebrochen                = 18;
-val FA_Haube_Oeffnen_Abgeschlossen              = 19;
-/* Haube schliessen */
-val FA_Haube_Schliessen_Gestartet               = 20;
-val FA_Haube_Schliessen                         = 21;
-val FA_Haube_Schliessen_Abgebrochen             = 22;
-val FA_Haube_Schliessen_Abgeschlossen           = 23;
-/* Zurrung Antenne Druckaufbau */
-val FA_Zurrung_Warten                           = 24;
-val FA_Zurrung_Warten_Abgebrochen               = 25;
-/* Zurrung Antenne Oeffnen */
-val FA_Zurrung_Ant_Oeffnen_Gestartet            = 26;
-val FA_Zurrung_Ant_Oeffnen                      = 27;
-val FA_Zurrung_Ant_Oeffnen_Abgebrochen          = 28;
-val FA_Zurrung_Ant_Oeffnen_Abgeschlossen        = 29;
-/* Zurrung Antenne schliessen */
-val FA_Zurrung_Ant_Schliessen_Gestartet         = 30;
-val FA_Zurrung_Ant_Schliessen                   = 31;
-val FA_Zurrung_Ant_Schliessen_Abgebrochen       = 32;
-val FA_Zurrung_Ant_Schliessen_Abgeschlossen     = 33;
-/* Zurrung Zentrierstange öffnen */
-val FA_Zurrung_Stange_Oeffnen_Gestartet         = 34;
-val FA_Zurrung_Stange_Oeffnen                   = 35;
-val FA_Zurrung_Stange_Oeffnen_Abgebrochen       = 36;
-val FA_Zurrung_Stange_Oeffnen_Abgeschlossen     = 37;
-/* Zurrung Zentrierstange schliessen */
-val FA_Zurrung_Stange_Schliessen_Gestartet      = 38;
-val FA_Zurrung_Stange_Schliessen                = 39;
-val FA_Zurrung_Stange_Schliessen_Abgebrochen    = 40;
-val FA_Zurrung_Stange_Schliessen_Abgeschlossen  = 41;
-/* Mast auf Indexposition */
-val FA_MastAufIndexpos_Gestartet                = 42;
-val FA_MastAufIndexpos_Fahren                   = 43;
-val FA_MastAufIndexpos_Erreicht                 = 44;
-val FA_MastAufIndexpos_Abgebrochen              = 45;
-val FA_MastAufIndexpos_Abgeschlossen            = 46;
-/* Mast auf Zurrposition */
-val FA_MastAufZurrpos_Gestartet                 = 47;
-val FA_MastAufZurrpos_Fahren                    = 48;
-val FA_MastAufZurrpos_Erreicht                  = 49;
-val FA_MastAufZurrpos_Abgebrochen               = 50;
-val FA_MastAufZurrpos_Abgeschlossen             = 51;
-/* Mast auf Sollposition */
-val FA_MastAufSollpos_Gestartet                 = 52;
-val FA_MastAufSollpos_Fahren                    = 53;
-val FA_MastAufSollpos_Erreicht                  = 54;
-val FA_MastAufSollpos_Abgebrochen               = 55;
-val FA_MastAufSollpos_Abgeschlossen             = 56;
-/* X in Null/Indexposition (0 Grad) */
-val FA_X_In_Nullpos_Gestartet                   = 57;
-val FA_X_In_Nullpos_Fahren                      = 58;
-val FA_X_In_Nullpos_Erreicht                    = 59;
-val FA_X_In_Nullpos_Abgebrochen                 = 60;
-val FA_X_In_Nullpos_Abgeschlossen               = 61;
-/* Antenne aufrichten */
-val FA_Antenne_Aufrichten_Gestartet             = 62;
-val FA_Antenne_Aufrichten                       = 63;
-val FA_Antenne_Hat_SollPosition_Erreicht        = 64;
-val FA_Antenne_Aufrichten_Abgebrochen           = 65;
-val FA_Antenne_Aufrichten_Abgeschlossen         = 66;
-/* Antenne abklappen */
-val FA_Antenne_Abklappen_Gestartet              = 67;
-val FA_Antenne_Abklappen                        = 68;
-val FA_Antenne_Abklappen_Erreicht               = 69;
-val FA_Antenne_Abklappen_Abgebrochen            = 70;
-val FA_Antenne_Abklappen_Abgeschlossen          = 71;
-/* Antenne in Parkposition */
-val FA_Parkposition_Anfordern                   = 72;
-val FA_Parkposition_Anfordern_Abgebrochen       = 73;
-val FA_Parkposition_Erreicht                    = 74;
-/* Stützen Druckaufbau */
-val FA_Klemmung_Zylinderdruck                   = 75;
-val FA_Klemmung_Zylinderdruck_Abgebrochen       = 76;
-val FA_Klemmung_Zylinderdruck_Abgeschlossen     = 77;
-/* Stützen Klemmung öffnen */
-val FA_Klemmung_Oeffnen_Gestartet               = 78;
-val FA_Klemmung_Oeffnen                         = 79;
-val FA_Klemmung_Oeffnen_Abgebrochen             = 80;
-val FA_Klemmung_Oeffnen_Abgeschlossen           = 81;
-/* Stützen Klemmung schliessen */
-val FA_Klemmung_Schliessen_Gestartet            = 82;
-val FA_Klemmung_Schliessen                      = 83;
-val FA_Klemmung_Schliessen_Abgebrochen          = 84;
-val FA_Klemmung_Schliessen_Abgeschlossen        = 85;
-/* Stützen ausfahren */
-val FA_Stuetzen_Ausfahren_Gestartet             = 86;
-val FA_Stuetzen_Ausfahren                       = 87;
-val FA_Stuetzen_Ausfahren_Abgebrochen           = 88;
-val FA_Stuetzen_Ausfahren_Abgeschlossen         = 89;
-/* Stützen einfahren */
-val FA_Stuetzen_Einfahren_Gestartet             = 90;
-val FA_Stuetzen_Einfahren                       = 91;
-val FA_Stuetzen_Einfahren_Abgebrochen           = 92;
-val FA_Stuetzen_Einfahren_Abgeschlossen         = 93;
-/* Horizontierung */
-val FA_Horizontierung_Gestartet                 = 94;
-val FA_Horizontierung_Nicht_Notwendig           = 95;
-val FA_Horizontierung_Im_Arbeitsbereich         = 96;
-val FA_Horizontierung_X_Fahren_Gestartet        = 97;
-val FA_Horizontierung_X_Fahren                  = 98;
-val FA_Horizontierung_X_Erreicht                = 99;
-val FA_Horizontierung_Y_Fahren_Gestartet        =100;
-val FA_Horizontierung_Y_Fahren                  =101;
-val FA_Horizontierung_Y_Erreicht                =102;
-val FA_Horizontierung_Abgeschlossen             =103;
-/* Staubaustragseinrichtung */
-val FA_Staubaustrag_Gestartet                   =104;
-val FA_VV1_Aktivieren                           =105;
-val FA_VV1_Aktiviert                            =106;
-val FA_VV1_Deaktivieren                         =107;
-val FA_VV1_Deaktiviert                          =108;
-val FA_VV2_Aktivieren                           =109;
-val FA_VV2_Aktiviert                            =110;
-val FA_VV2_Deaktivieren                         =111;
-val FA_VV2_Deaktiviert                          =112;
-val FA_VV3_Aktivieren                           =113;
-val FA_VV3_Aktiviert                            =114;
-val FA_VV3_Deaktivieren                         =115;
-val FA_VV3_Deaktiviert                          =116;
-val FA_Staubaustrag_Abgeschlossen               =117;
-/* Antrieb X */
-val FA_X_Aktivieren                             =118;
-val FA_X_Aktiviert                              =119;
-val FA_X_Deaktivieren                           =120;
-val FA_X_Deaktiviert                            =121;
-/* Antrieb Y */
-val FA_Y_Aktivieren                             =122;
-val FA_Y_Aktiviert                              =123;
-val FA_Y_Deaktivieren                           =124;
-val FA_Y_Deaktiviert                            =125;
-/* Antrieb Z */
-val FA_Z_Aktivieren                             =126;
-val FA_Z_Aktiviert                              =127;
-val FA_Z_Deaktivieren                           =128;
-val FA_Z_Deaktiviert                            =129;
-/* Drehzahlerhöhung */
-val FA_Drehzahl_Gestartet                       =130;
-val FA_Drehzahl_Erhoehen                        =131;
-val FA_Drehzahl_Leerlauf                        =132;
-val FA_Drehzahl_Abgeschlossen                   =133;

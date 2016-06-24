@@ -5,27 +5,27 @@
 post_event_processing
 {
 
-//   if((argv(0) == "ev_antenna_to_raise_starts") && (irgendwas_anderes))
+//   if ( ( argv ( 0 ) == "ev_xyz_starts" ) && ( irgendwas_anderes ) )
 //     send();
 
-//   if(DEBUG) //print("post_event_processing\n", "Event = ", argv(0), "\n");
-//   if (changed("luminance_request_target_value")){
-//      //print("Value of 'luminance_request_target_value' changed", "\n");
-//      send(luminance_request, out_channel);
+//   if(DEBUG) //print ( "post_event_processing\n", "Event = ", argv(0), "\n" );
+//   if ( changed ( "luminance_request_target_value" ) ){
+//      //print ( "Value of 'luminance_request_target_value' changed", "\n" );
+//      send ( luminance_request, out_channel );
 //    }
 
-//     //print("---------- NETWORK ---------- ev_io_module_has_heartbeat\n");
-//     //print("---------- NETWORK ---------- s_heartbeat_can_id  ", s_heartbeat_can_id, "\n");
-//     //print("---------- NETWORK ---------- s_heartbeat_payload_out ", s_heartbeat_payload_out, "\n");
+//     //print ( "---------- NETWORK ---------- ev_xyz_has_heartbeat\n" );
+//     //print ( "---------- NETWORK ---------- s_heartbeat_can_id  ", s_heartbeat_can_id, "\n" );
+//     //print ( "---------- NETWORK ---------- s_heartbeat_payload_out ", s_heartbeat_payload_out, "\n" );
 
 
 // ------------------------------------------------------------------------  
 //                  PSM via CAN SAE
 // ------------------------------------------------------------------------
-  if(argv(0) == "ev_message_from_psm")
+  if ( argv ( 0 ) == "ev_message_from_psm" )
   {
-//      print("TX-DINGO - ev_message_from_psm\n");
+//      print ( "-------- TX-DINGO - ev_message_from_psm\n" );
         s_frame_ambient_air_temp_out = 21;
-    send(frame_GPM_16, channel_can_0_out);
+    send ( frame_GPM_16, channel_can_0_out );
   };
 };

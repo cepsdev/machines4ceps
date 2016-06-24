@@ -1,0 +1,143 @@
+// <description>
+
+Globals 
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.001;
+};
+
+Stilts_extend_unittests
+{
+//  g_stilt_left_has_ground_contact  = 0;
+  Pneumatics.stilt_left_pressure  = DEFAULT_SYSTEM_PRESSURE;
+//  g_stilt_right_has_ground_contact = 0;
+  Pneumatics.stilt_right_pressure = DEFAULT_SYSTEM_PRESSURE;
+
+//  g_stilt_left_is_extended  = 0;
+  SENSOR_SMUL = 0;  //  StützenMagnetUntenLinks
+//  g_stilt_right_is_extended = 0;
+  SENSOR_SMUR = 0;  //  StützenMagnetUntenRechts
+
+  SENSOR_SMOL = 0;  //  StützenMagnetObenLinks
+  SENSOR_SMOR = 0;  //  StützenMagnetObenRechts
+
+//  g_stilt_any_is_locked     = 0;
+//  g_stilts_all_are_locked   = 0;
+  SENSOR_SEKOL  = 1;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 0;  //  StützeEndlageKlemmungGeschlossenLinks
+  SENSOR_SEKOR  = 1;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 0;  //  StützeEndlageKlemmungGeschlossenRechts
+  SENSOR_KAMPFSCHALTER_A            = 0;
+//  g_system_pressure_is_sufficient = 1;
+  Pneumatics.system_pressure      = DEFAULT_SYSTEM_PRESSURE;
+};
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Initialization_given_preconditions_are_fulfilled;};
+
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Stilts_Extending;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Initialization_given_stilts_are_locked;};
+
+//  g_stilt_any_is_locked   = 1;
+  SENSOR_SEKOL  = 0;  //  StützeEndlageKlemmungOffenLinks
+  SENSOR_SEKGL  = 1;  //  StützeEndlageKlemmungGeschlossenLinks
+  SENSOR_SEKOR  = 0;  //  StützeEndlageKlemmungOffenRechts
+  SENSOR_SEKGR  = 1;  //  StützeEndlageKlemmungGeschlossenRechts
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Error;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Initialization_given_not_enough_air_pressure_and_no_kampfschalter;};
+
+//  g_system_pressure_is_sufficient = 0;
+  Pneumatics.system_pressure      = 0;
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Error;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Initialization_given_stilts_are_extended;};
+
+//  g_stilt_left_is_extended  = 1;
+//  g_stilt_right_is_extended = 1;
+  SENSOR_SMUL = 1;  //  StützenMagnetUntenLinks
+  SENSOR_SMUR = 1;  //  StützenMagnetUntenRechts
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Error;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Initialization_given_stilts_have_ground_contact_already;};
+
+//  g_stilt_left_has_ground_contact  = 1;
+  Pneumatics.stilt_left_pressure  = STILT_PRESSURE_GROUND_CONTACT;
+//  g_stilt_right_has_ground_contact = 1;
+  Pneumatics.stilt_right_pressure = STILT_PRESSURE_GROUND_CONTACT;
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Stilts_extending_with_objective_is_reached;};
+
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Stilts_Extending;};
+//  g_stilt_left_has_ground_contact = 1;
+  Pneumatics.stilt_left_pressure  = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_left_is_not_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Stilts_Extending;};
+//  g_stilt_right_has_ground_contact = 1;
+  Pneumatics.stilt_right_pressure = STILT_PRESSURE_GROUND_CONTACT;
+  ev_stilt_right_is_not_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Stilts_extending_given_left_stilt_is_extended;};
+
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Stilts_Extending;};
+//  g_stilt_left_is_extended  = 1;
+  SENSOR_SMUL = 1;  //  StützenMagnetUntenLinks
+  ev_stilt_left_is_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Stilts_extend_unittests;};Test{Stilts_extending_given_right_stilt_is_extended;};
+
+  Start { sm_Stilts_extend; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Stilts_Extending;};
+//  g_stilt_right_is_extended  = 1;
+  SENSOR_SMUR = 1;  //  StützenMagnetUntenRechts
+  ev_stilt_right_is_extended;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Stilts_extend.Final;};
+};

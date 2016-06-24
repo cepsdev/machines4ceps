@@ -1,0 +1,41 @@
+// ------------------------------------------------------------------------
+//      SEND LOGIC FOR TRGS/BAG
+// ------------------------------------------------------------------------
+
+post_event_processing
+{
+
+//   if((argv(0) == "ev_antenna_to_raise_starts") && (irgendwas_anderes))
+//     send();
+  
+//   if(DEBUG) print("post_event_processing\n", "Event = ", argv(0), "\n");
+//   if (changed("luminance_request_target_value")){
+//      print("Value of 'luminance_request_target_value' changed", "\n");
+//      send(luminance_request, out_channel);
+//    }
+
+// ------------------------------------------------------------------------  
+//                  HECKVERTEILER
+// ------------------------------------------------------------------------
+  if(changed("ivenet_mast_state.value_out") || changed("ivenet_mast_state.isValid_out"))
+  {
+    ev_send_message_to_ivenet;
+  };
+
+  if(changed("ivenet_radar_enabled_state.isRadarWorkingEnabled"))
+  {
+    ivenet_radar_enabled_state.isValid_out = 1;
+  };
+
+  if(changed("ivenet_platform_alignment_state.value"))
+  {
+    ivenet_platform_alignment_state.isValid_out = 1;
+    ev_send_message_to_ivenet;
+  };
+
+  if(changed("ivenet_radar_parkposition_request_state.isRequestActive"))
+  {
+    ivenet_radar_parkposition_request_state.isValid_out = 1;
+    ev_send_message_to_ivenet;
+  };
+};

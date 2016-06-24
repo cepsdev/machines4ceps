@@ -10,15 +10,16 @@ Statemachine
 {
   id  { sm_Stilts_unlock;};
   description { "Stilts_unlock";  };
-  States  { Initial;  Final;  Error;  Unlocking;  };
+  States  { Initial;  Final;  Start;  Error;  Unlocking;  };
   Actions
   {
     a_stilts_unlocking          { ev_stilts_unlock; };
-    a_finished                  { ev_stilts_are_unlocked; };
+    a_stilts_unlock_finished    { ev_stilts_are_unlocked; };
     a_was_interrupted           { ev_stilts_unlock_was_interrupted; };
     a_preconditions_are_not_met { ev_stilts_unlock_preconditions_are_not_met; };
-    a_set_timeout_timer         { start_timer ( DEF_TIME_STUETZEN_KLEMMUNG * s, ev_stilts_unlock_timeout, timer_stilts_unlock ); };
+    a_set_timeout_timer         { start_timer ( DEF_TIME_STUETZEN_KLEMMUNG * s,       ev_stilts_unlock_timeout, timer_stilts_unlock ); };
     a_set_check_delay           { start_timer ( DEF_TIME_STUETZEN_KLEMMUNG_CHECK * s, ev_stilts_check_unlocked, timer_stilts_check_unlocked ); };
+    a_stilts_unlock_timeout     { ev_stilts_unlock_was_interrupted; };
   };
 
   on_exit
@@ -32,9 +33,11 @@ Statemachine
   };
 
   Transition  { Initial;    Unlocking;                                    a_stilts_unlocking; a_set_check_delay;    g_stilts_all_are_unlocked;  };
-  Transition  { Initial;    Unlocking;                                    a_stilts_unlocking; a_set_timeout_timer; !g_stilts_all_are_unlocked &&  g_stilts_unlock_preconditions; };
-  Transition  { Initial;    Error;                                        a_preconditions_are_not_met;             !g_stilts_all_are_unlocked && !g_stilts_unlock_preconditions; };
-  Transition  { Unlocking;  Final;      ev_stilts_check_unlocked;         a_finished;                               g_stilts_all_are_unlocked;  };
-  Transition  { Unlocking;  Final;      ev_stilts_lock_left_is_unlocked;  a_finished;                               g_stilts_all_are_unlocked;  };
-  Transition  { Unlocking;  Final;      ev_stilts_lock_right_is_unlocked; a_finished;                               g_stilts_all_are_unlocked;  };
+  Transition  { Initial;    Start;                                                                                 !g_stilts_all_are_unlocked; };
+  Transition  { Start;      Unlocking;                                    a_stilts_unlocking; a_set_timeout_timer;  g_stilts_unlock_preconditions; };
+  Transition  { Start;      Error;                                        a_preconditions_are_not_met;             !g_stilts_unlock_preconditions; };
+  Transition  { Unlocking;  Final;      ev_stilts_check_unlocked;         a_stilts_unlock_finished;                 g_stilts_all_are_unlocked;  };
+  Transition  { Unlocking;  Final;      ev_stilts_lock_left_is_unlocked;  a_stilts_unlock_finished;                 g_stilts_all_are_unlocked;  };
+  Transition  { Unlocking;  Final;      ev_stilts_lock_right_is_unlocked; a_stilts_unlock_finished;                 g_stilts_all_are_unlocked;  };
+  Transition  { Unlocking;  Error;      ev_stilts_unlock_timeout;         a_stilts_unlock_timeout;                  };
 };

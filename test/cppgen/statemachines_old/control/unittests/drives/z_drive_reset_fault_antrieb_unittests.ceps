@@ -1,0 +1,39 @@
+// <description>
+
+Globals
+{
+  // Redefinition for test acceleration
+  TIMER_ACTIVATION = 0.1;
+};
+
+Z_reset_fault_antrieb_unittests
+{
+  g_z_drive_has_antrieb_fault = 0;
+};
+
+Simulation
+{
+  TestCase{Z_reset_fault_antrieb_unittests;};Test{Initialization_given_no_antrieb_fault;};
+
+  Start { sm_Z_drive_reset_fault_antrieb; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_reset_fault_antrieb.Final;};
+};
+
+
+Simulation
+{
+  TestCase{Z_reset_fault_antrieb_unittests;};Test{Initialization_given_antrieb_fault;};
+
+  g_z_drive_has_antrieb_fault = 1;
+  Start { sm_Z_drive_reset_fault_antrieb; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_reset_fault_antrieb.first_set;};
+  ev_z_drive_fault_timer_one;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_reset_fault_antrieb.first_reset;};
+  ev_z_drive_fault_timer_one;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_reset_fault_antrieb.second_set;};
+  g_z_drive_has_antrieb_fault = 0;
+  ev_z_drive_fault_timer_two;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Z_drive_reset_fault_antrieb.Final;};
+};

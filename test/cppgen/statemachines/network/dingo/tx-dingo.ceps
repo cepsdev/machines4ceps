@@ -7,35 +7,148 @@ global_functions
   print_drive_state_
   {
     params{ _drive; _DriveName; };
-    print ( "========== TX-DINGO  - STATUS  ====================== ", _DriveName, "\n"
-          , "---------- ANTRIEB_READY:         ", _drive.Status.ANTRIEB_READY, "\n"
-          , "---------- ANTRIEB_ENABLE_OUT:    ", _drive.Status.ANTRIEB_ENABLE_OUT, "\n"
-          , "---------- ANTRIEB_INPOS:         ", _drive.Status.ANTRIEB_INPOS, "\n"
-          , "---------- LIMIT_SWITCH_CW:       ", _drive.Status.ANTRIEB_LIMIT_SWITCH_CW, "\n"
-          , "---------- LIMIT_SWITCH_CCW:      ", _drive.Status.ANTRIEB_LIMIT_SWITCH_CCW, "\n"
-          , "---------- BREAK_RELEASED:        ", _drive.Status.ANTRIEB_BREAK_RELEASED, "\n"
-          , "---------- REMOTE_OUTPUT_STATUS:  ", _drive.Status.ANTRIEB_REMOTE_OUTPUT_STATUS, "\n"
-          , "---------- ANTRIEB_FAULT:         ", _drive.Status.ANTRIEB_FAULT, "\n"
-          , "---------- IstPos    CAN / MKS :  ", _drive.CanIstPos,     " / ", _drive.IstPos,     "\n"
-          , "---------- IstGeschw CAN / MKS :  ", _drive.CanIstGeschw,  " / ", _drive.IstGeschw,  "\n"
-          , "---------- IstStrom  CAN / MKS :  ", _drive.CanIstStrom,   " / ", _drive.IstStrom,   " ( not used )\n"
-          , "=====================================================\n"
+    print ( "======== TX-DINGO  - STATUS  ====================== ", _DriveName, "\n"
+          , "-------- ANTRIEB_READY:         ", _drive.Status.ANTRIEB_READY, "\n"
+          , "-------- ANTRIEB_ENABLE_OUT:    ", _drive.Status.ANTRIEB_ENABLE_OUT, "\n"
+          , "-------- ANTRIEB_INPOS:         ", _drive.Status.ANTRIEB_INPOS, "\n"
+          , "-------- LIMIT_SWITCH_CW:       ", _drive.Status.ANTRIEB_LIMIT_SWITCH_CW, "\n"
+          , "-------- LIMIT_SWITCH_CCW:      ", _drive.Status.ANTRIEB_LIMIT_SWITCH_CCW, "\n"
+          , "-------- BRAKE_RELEASED:        ", _drive.Status.ANTRIEB_BRAKE_RELEASED, "\n"
+          , "-------- REMOTE_OUTPUT_STATUS:  ", _drive.Status.ANTRIEB_REMOTE_OUTPUT_STATUS, "\n"
+          , "-------- ANTRIEB_FAULT:         ", _drive.Status.ANTRIEB_FAULT, "\n"
+          , "-------- IstPos    CAN / MKS :  ", _drive.CanIstPos,     " / ", _drive.IstPos,     "\n"
+          , "-------- IstGeschw CAN / MKS :  ", _drive.CanIstGeschw,  " / ", _drive.IstGeschw,  "\n"
+          , "-------- IstStrom  CAN / MKS :  ", _drive.CanIstStrom,   " / ", _drive.IstStrom,   " ( not used )\n"
+          , "===================================================\n"
           );
   };
-  assemble_frame_xdrive_response_and_send
+  print_changed_states_ZHV1
+  {
+    //                  ANTRIEBE ENDSCHALTER 
+    if ( changed ( "SENSOR_IP_X" ) )        { print ( "-------- TX-DINGO -------- SENSOR_IP_X  : ", SENSOR_IP_X, "\n" );  };
+    if ( changed ( "SENSOR_AB_Y" ) )        { print ( "-------- TX-DINGO -------- SENSOR_AB_Y  : ", SENSOR_AB_Y, "\n" );  };
+    if ( changed ( "SENSOR_IP_Y" ) )        { print ( "-------- TX-DINGO -------- SENSOR_IP_Y  : ", SENSOR_IP_Y, "\n" );  };
+    if ( changed ( "SENSOR_EO_Z" ) )        { print ( "-------- TX-DINGO -------- SENSOR_EO_Z  : ", SENSOR_EO_Z, "\n" );  };
+    if ( changed ( "SENSOR_EU_Z" ) )        { print ( "-------- TX-DINGO -------- SENSOR_EU_Z  : ", SENSOR_EU_Z, "\n" );  };
+    if ( changed ( "SENSOR_IP_Z" ) )        { print ( "-------- TX-DINGO -------- SENSOR_IP_Z  : ", SENSOR_IP_Z, "\n" );  };
+    if ( changed ( "SENSOR_UB_Z" ) )        { print ( "-------- TX-DINGO -------- SENSOR_UB_Z  : ", SENSOR_UB_Z, "\n" );  };
+    if ( changed ( "SENSOR_IN_PARKPOS" ) )  { print ( "-------- TX-DINGO -------- SENSOR_IN_PARKPOS: ", SENSOR_IN_PARKPOS, "\n" );    };
+    //                  HAUBE
+    if ( changed ( "SENSOR_HZO" ) )         { print ( "-------- TX-DINGO -------- SENSOR_HZO   : ", SENSOR_HZO,  "\n" ); };
+    if ( changed ( "SENSOR_HZG" ) )         { print ( "-------- TX-DINGO -------- SENSOR_HZG   : ", SENSOR_HZG,  "\n" ); };
+    if ( changed ( "SENSOR_HR1V" ) )        { print ( "-------- TX-DINGO -------- SENSOR_HR1V  : ", SENSOR_HR1V, "\n" ); };
+    if ( changed ( "SENSOR_HR1O" ) )        { print ( "-------- TX-DINGO -------- SENSOR_HR1O  : ", SENSOR_HR1O, "\n" ); };
+    if ( changed ( "SENSOR_HR2V" ) )        { print ( "-------- TX-DINGO -------- SENSOR_HR2V  : ", SENSOR_HR2V, "\n" ); };
+    if ( changed ( "SENSOR_HR2O" ) )        { print ( "-------- TX-DINGO -------- SENSOR_HR2O  : ", SENSOR_HR2O, "\n" ); };
+  };
+  print_changed_states_ZHV2
+  {
+    //                  STUETZEN 
+    if ( changed ( "SENSOR_SEKOL" ) )       { print ( "-------- TX-DINGO -------- SENSOR_SEKOL : ", SENSOR_SEKOL, "\n" ); };
+    if ( changed ( "SENSOR_SEKGL" ) )       { print ( "-------- TX-DINGO -------- SENSOR_SEKGL : ", SENSOR_SEKGL, "\n" ); };
+    if ( changed ( "SENSOR_SEKOR" ) )       { print ( "-------- TX-DINGO -------- SENSOR_SEKOR : ", SENSOR_SEKOR, "\n" ); };
+    if ( changed ( "SENSOR_SEKGR" ) )       { print ( "-------- TX-DINGO -------- SENSOR_SEKGR : ", SENSOR_SEKGR, "\n" ); };
+    if ( changed ( "SENSOR_SMUL" ) )        { print ( "-------- TX-DINGO -------- SENSOR_SMUL  : ", SENSOR_SMUL,  "\n" ); };
+    if ( changed ( "SENSOR_SMOL" ) )        { print ( "-------- TX-DINGO -------- SENSOR_SMOL  : ", SENSOR_SMOL,  "\n" ); };
+    if ( changed ( "SENSOR_SMUR" ) )        { print ( "-------- TX-DINGO -------- SENSOR_SMUR  : ", SENSOR_SMUR,  "\n" ); };
+    if ( changed ( "SENSOR_SMOR" ) )        { print ( "-------- TX-DINGO -------- SENSOR_SMOR  : ", SENSOR_SMOR,  "\n" ); };
+    //                  ANTENNE VERZURRUNG 
+    if ( changed ( "SENSOR_VZ1O" ) )        { print ( "-------- TX-DINGO -------- SENSOR_VZ1O  : ", SENSOR_VZ1O,  "\n" ); };
+    if ( changed ( "SENSOR_VZ1V" ) )        { print ( "-------- TX-DINGO -------- SENSOR_VZ1V  : ", SENSOR_VZ1V,  "\n" ); };
+  };
+  print_changed_states_fahrzeugwinkel
+  {
+    print ( "======== TX-DINGO  - STATUS  Fahrzeugwinkel =======\n"
+          , "-------- Neigung X / Y : ", Vehicle.angle_x, " / ", Vehicle.angle_y, "\n"
+          , "===================================================\n"
+          );
+  };
+  assemble_frame_iom_luftdruck_and_send
+  {
+    io_modul_luftdruck_pneumatiktank_druck_stuetze_links_out  = Set_Pressure ( 2 * Stilt_left_pressure );
+    io_modul_luftdruck_pneumatiktank_druck_stuetze_rechts_out = Set_Pressure ( 2 * Stilt_right_pressure );
+    io_modul_luftdruck_pneumatiktank_systemdruck_out          = Set_Pressure ( 2 * System_pressure );
+
+    print ( "-------- TX-DINGO -------- pressure System / Left / Right : ", System_pressure, " / ", Stilt_left_pressure, " / ", Stilt_right_pressure, "\n" );
+
+    send ( io_modul_luftdruck_pneumatiktank, channel_can_1_out );
+  };
+  assemble_frame_iom_fahrzeugwinkel_and_send
+  {
+    // -----------------------------------------------
+    //                  Fahrzeugwinkel 
+    // -----------------------------------------------
+    io_modul_fahrzeugwinkel_x_achse_vom_neigungsgeber_out   = Set_Vehicle_Angle ( Vehicle.angle_x );
+    io_modul_fahrzeugwinkel_y_achse_vom_neigungsgeber_out   = Set_Vehicle_Angle ( Vehicle.angle_y );
+
+    send ( io_modul_fahrzeugwinkel, channel_can_1_out );
+  };
+  assemble_frame_iom_zustand_heckverteiler_1_and_send
+  {
+    // -----------------------------------------------
+    //                  ANTRIEBE ENDSCHALTER 
+    // -----------------------------------------------
+    io_modul_zustand_heckverteiler_1_cs1_in_parkposition_out                  = SENSOR_IN_PARKPOS;
+
+    io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_aktiv_out        = SENSOR_IP_X;
+    io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_aktiv_out        = SENSOR_AB_Y;
+    io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_aktiv_out        = SENSOR_IP_Y;
+
+    io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_aktiv_out         = SENSOR_EO_Z;
+    io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_aktiv_out        = SENSOR_EU_Z;
+    io_modul_zustand_heckverteiler_1_cs4_in_index_position_z_aktiv_out        = SENSOR_IP_Z;
+    io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_aktiv_out  = SENSOR_UB_Z;
+
+    // -----------------------------------------------
+    //                  HAUBE
+    // -----------------------------------------------
+    io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_aktiv_out       = SENSOR_HZO;
+    io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_aktiv_out = SENSOR_HZG;
+
+    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_aktiv_out  = SENSOR_HR1V;
+    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_aktiv_out       = SENSOR_HR1O;
+    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_aktiv_out  = SENSOR_HR2V;
+    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_aktiv_out       = SENSOR_HR2O;
+
+    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
+  };
+  assemble_frame_iom_zustand_heckverteiler_2_and_send
+  {
+    // -----------------------------------------------
+    //                  STUETZEN 
+    // -----------------------------------------------
+    io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_out         = SENSOR_SEKOL;
+    io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_out   = SENSOR_SEKGL;
+    io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_out   = SENSOR_SMUL;
+    io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_out    = SENSOR_SMOL;
+
+    io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_out        = SENSOR_SEKOR;
+    io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_out  = SENSOR_SEKGR;
+    io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_out  = SENSOR_SMUR;
+    io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_out   = SENSOR_SMOR;
+
+    // -----------------------------------------------
+    //                  ANTENNE VERZURRUNG 
+    // -----------------------------------------------
+    io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_aktiv_out          = SENSOR_VZ1O;
+    io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_aktiv_out     = SENSOR_VZ1V;
+
+    send ( io_modul_zustand_heckverteiler_2, channel_can_1_out );
+  };
+  assemble_frame_x_drive_response_and_send
   {
     params{ _drive; };
 
     s_frame_drive_actual_pos_xdrv_out               = _drive.CanIstPos;
-    s_frame_drive_actual_speed_xdrv_out             = _drive.CanIstGeschw;
-    s_frame_drive_actual_current_xdrv_out           = _drive.CanIstStrom;
+    s_frame_drive_actual_speed_xdrv_out             = _drive.CanIstGeschw / 16;
+    s_frame_drive_actual_current_xdrv_out           = _drive.CanIstStrom / 16;
 
     s_frame_drive_status_ready_xdrv_out             = _drive.Status.ANTRIEB_READY;
     s_frame_drive_status_enable_xdrv_out            = _drive.Status.ANTRIEB_ENABLE_OUT;
     s_frame_drive_status_inpos_xdrv_out             = _drive.Status.ANTRIEB_INPOS;
     s_frame_drive_status_limit_switch_cw_xdrv_out   = _drive.Status.ANTRIEB_LIMIT_SWITCH_CW;
     s_frame_drive_status_limit_switch_ccw_xdrv_out  = _drive.Status.ANTRIEB_LIMIT_SWITCH_CCW;
-    s_frame_drive_status_break_released_xdrv_out    = _drive.Status.ANTRIEB_BREAK_RELEASED;
+    s_frame_drive_status_brake_released_xdrv_out    = _drive.Status.ANTRIEB_BRAKE_RELEASED;
     s_frame_drive_status_fault_xdrv_out             = _drive.Status.ANTRIEB_FAULT;
 
     print_drive_state_ ( _drive, "X_drive" );
@@ -43,20 +156,20 @@ global_functions
     send ( frame_x_drive_response, channel_can_1_out );
   };
 
-  assemble_frame_ydrive_response_and_send
+  assemble_frame_y_drive_response_and_send
   {
     params{ _drive; };
 
     s_frame_drive_actual_pos_ydrv_out               = _drive.CanIstPos;
-    s_frame_drive_actual_speed_ydrv_out             = _drive.CanIstGeschw;
-    s_frame_drive_actual_current_ydrv_out           = _drive.CanIstStrom;
+    s_frame_drive_actual_speed_ydrv_out             = _drive.CanIstGeschw / 16;
+    s_frame_drive_actual_current_ydrv_out           = _drive.CanIstStrom / 16;
 
     s_frame_drive_status_ready_ydrv_out             = _drive.Status.ANTRIEB_READY;
     s_frame_drive_status_enable_ydrv_out            = _drive.Status.ANTRIEB_ENABLE_OUT;
     s_frame_drive_status_inpos_ydrv_out             = _drive.Status.ANTRIEB_INPOS;
     s_frame_drive_status_limit_switch_cw_ydrv_out   = _drive.Status.ANTRIEB_LIMIT_SWITCH_CW;
     s_frame_drive_status_limit_switch_ccw_ydrv_out  = _drive.Status.ANTRIEB_LIMIT_SWITCH_CCW;
-    s_frame_drive_status_break_released_ydrv_out    = _drive.Status.ANTRIEB_BREAK_RELEASED;
+    s_frame_drive_status_brake_released_ydrv_out    = _drive.Status.ANTRIEB_BRAKE_RELEASED;
     s_frame_drive_status_fault_ydrv_out             = _drive.Status.ANTRIEB_FAULT;
 
     print_drive_state_ ( _drive, "Y_drive" );
@@ -64,20 +177,20 @@ global_functions
     send ( frame_y_drive_response, channel_can_1_out );
   };
 
-  assemble_frame_zdrive_response_and_send
+  assemble_frame_z_drive_response_and_send
   {
     params{ _drive; };
 
     s_frame_drive_actual_pos_zdrv_out               = _drive.CanIstPos;
-    s_frame_drive_actual_speed_zdrv_out             = _drive.CanIstGeschw;
-    s_frame_drive_actual_current_zdrv_out           = _drive.CanIstStrom;
+    s_frame_drive_actual_speed_zdrv_out             = _drive.CanIstGeschw / 16;
+    s_frame_drive_actual_current_zdrv_out           = _drive.CanIstStrom / 16;
 
     s_frame_drive_status_ready_zdrv_out             = _drive.Status.ANTRIEB_READY;
     s_frame_drive_status_enable_zdrv_out            = _drive.Status.ANTRIEB_ENABLE_OUT;
     s_frame_drive_status_inpos_zdrv_out             = _drive.Status.ANTRIEB_INPOS;
     s_frame_drive_status_limit_switch_cw_zdrv_out   = _drive.Status.ANTRIEB_LIMIT_SWITCH_CW;
     s_frame_drive_status_limit_switch_ccw_zdrv_out  = _drive.Status.ANTRIEB_LIMIT_SWITCH_CCW;
-    s_frame_drive_status_break_released_zdrv_out    = _drive.Status.ANTRIEB_BREAK_RELEASED;
+    s_frame_drive_status_brake_released_zdrv_out    = _drive.Status.ANTRIEB_BRAKE_RELEASED;
     s_frame_drive_status_fault_zdrv_out             = _drive.Status.ANTRIEB_FAULT;
 
     print_drive_state_ ( _drive, "Z_drive" );
@@ -87,13 +200,13 @@ global_functions
   event_logging
   {
     params{ inEvent; };
-    print ( "---------- TX-DINGO  ---------- Event = ", inEvent, "\n" );
+    print ( "-------- TX-DINGO  -------- Event = ", inEvent, "\n" );
   };
 };
 
 post_event_processing
 {
-//   if((argv ( 0 ) == "ev_antenna_to_raise_starts" ) && (irgendwas_anderes) )
+//   if((argv ( 0 ) == "ev_xyz_starts" ) && (irgendwas_anderes) )
 //     send();
   
 //   if(DEBUG) //print ( "post_event_processing\n", "Event = ", argv ( 0 ), "\n" );
@@ -102,308 +215,139 @@ post_event_processing
 //      send(luminance_request, out_channel);
 //    }
   
-//     //print ( "---------- NETWORK ---------- ev_io_module_has_heartbeat\n" );
-//     //print ( "---------- NETWORK ---------- s_heartbeat_can_id  ", s_heartbeat_can_id, "\n" );
-//     //print ( "---------- NETWORK ---------- s_heartbeat_payload_out ", s_heartbeat_payload_out, "\n" );
+//     //print ( "-------- NETWORK -------- ev_xyz_has_heartbeat\n" );
+//     //print ( "-------- NETWORK -------- s_heartbeat_can_id  ", s_heartbeat_can_id, "\n" );
+//     //print ( "-------- NETWORK -------- s_heartbeat_payload_out ", s_heartbeat_payload_out, "\n" );
 
-  
+
 // ------------------------------------------------------------------------  
 //                  PNEUMATICS
 // ------------------------------------------------------------------------
-  if ( changed ( "Stilt_left_pressure" )
-    || changed ( "Stilt_right_pressure" )
-    || changed ( "System_pressure" )
-    )
+  if ( argv ( 0 ) == "ev_io_module_send_can_bus_message_PNEU" )
   {
-    io_modul_luftdruck_pneumatiktank_druck_stuetze_links_out  = Set_Pressure ( 2 * Stilt_left_pressure );
-    io_modul_luftdruck_pneumatiktank_druck_stuetze_rechts_out = Set_Pressure ( 2 * Stilt_right_pressure );
-    io_modul_luftdruck_pneumatiktank_systemdruck_out          = Set_Pressure ( 2 * System_pressure );
-
-    print ( "---------- TX-DINGO ---------- pressure System / Left / Right : ", System_pressure, " / ", Stilt_left_pressure, " / ", Stilt_right_pressure, "\n" );
-
-    send ( io_modul_luftdruck_pneumatiktank, channel_can_1_out );
-  };
+    assemble_frame_iom_luftdruck_and_send;
+  } else
 
 // ------------------------------------------------------------------------
 //                  IO MODUL
 // ------------------------------------------------------------------------
 
-// -----------------------------------------------
-//                  ANTRIEBE ENDSCHALTER 
-// -----------------------------------------------
-  if ( changed ( "SENSOR_IP_X" ) )
+  if ( argv ( 0 ) == "ev_io_module_send_can_bus_message_ZHV1" )
   {
-    print ( "---------- TX-DINGO ---------- SENSOR_IP_X: ", SENSOR_IP_X, "\n" );
-    io_modul_zustand_heckverteiler_1_cs3_in_index_position_x_aktiv_out = SENSOR_IP_X;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
+    print_changed_states_ZHV1;
 
-  if ( changed ( "SENSOR_AB_Y" ) )
+    assemble_frame_iom_zustand_heckverteiler_1_and_send;
+  } else
+
+  if ( argv ( 0 ) == "ev_io_module_send_can_bus_message_ZHV2" )
   {
-    print ( "---------- TX-DINGO ---------- SENSOR_AB_Y :", SENSOR_AB_Y, "\n" );
-    io_modul_zustand_heckverteiler_1_cs3_im_arbeitsbereich_y_aktiv_out = SENSOR_AB_Y;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
+    print_changed_states_ZHV2;
 
-  if ( changed ( "SENSOR_IP_Y" ) )
+    assemble_frame_iom_zustand_heckverteiler_2_and_send;
+  } else
+  if ( argv ( 0 ) == "ev_io_module_send_can_bus_message_FW" )
   {
-    print ( "---------- TX-DINGO ---------- SENSOR_IP_Y: ", SENSOR_IP_Y, "\n" );
-    io_modul_zustand_heckverteiler_1_cs3_in_index_position_y_aktiv_out = SENSOR_IP_Y;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
+    print_changed_states_fahrzeugwinkel;
 
-  if ( changed ( "SENSOR_EO_Z" ) )
+    assemble_frame_iom_fahrzeugwinkel_and_send;
+  } else
+// ------------------------------------------------------------------------
+  if ( argv ( 0 ) == "ev_io_module_state_update" )
   {
-    print ( "---------- TX-DINGO ---------- SENSOR_EO_Z: ", SENSOR_EO_Z, "\n" );
-    io_modul_zustand_heckverteiler_1_cs4_endanschlag_oben_z_aktiv_out = SENSOR_EO_Z;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
+//    event_logging ( argv ( 0 ) );
+    io_modul_zustand_heckverteiler_1_cs1_in_parkposition_out = 1;
 
-  if ( changed ( "SENSOR_EU_Z" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_EU_Z: ", SENSOR_EU_Z, "\n" );
-    io_modul_zustand_heckverteiler_1_cs4_endanschlag_unten_z_aktiv_out = SENSOR_EU_Z;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
+    assemble_frame_iom_zustand_heckverteiler_1_and_send;
+    assemble_frame_iom_zustand_heckverteiler_2_and_send;
+//    assemble_frame_iom_fahrzeugwinkel_and_send;
+    assemble_frame_iom_luftdruck_and_send;
+  } else
 
-  if ( changed ( "SENSOR_IP_Z" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_IP_Z: ", SENSOR_IP_Z, " ( IstPos: ", z_drive.IstPos, " )\n" );
-    io_modul_zustand_heckverteiler_1_cs4_in_index_position_z_aktiv_out = SENSOR_IP_Z;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
-
-  if ( changed ( "SENSOR_UB_Z" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_UB_Z: ", SENSOR_UB_Z, "\n" );
-    io_modul_zustand_heckverteiler_1_cs4_untere_betriebsposition_z_aktiv_out = SENSOR_UB_Z;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
-
-  if ( changed ( "SENSOR_IN_PARKPOS" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_IN_PARKPOS: ", SENSOR_IN_PARKPOS, "\n" );
-    io_modul_zustand_heckverteiler_1_cs1_in_parkposition_out = SENSOR_IN_PARKPOS;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
-
-// -----------------------------------------------
-//                  STUETZEN 
-// -----------------------------------------------
-  if ( changed ( "SENSOR_SEKOL" ) || changed ( "SENSOR_SEKGL" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_SEKOL / SENSOR_SEKGL : ", SENSOR_SEKOL, " / ", SENSOR_SEKGL, "\n" );
-    io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_offen_links_aktiv_out       = SENSOR_SEKOL;
-    io_modul_zustand_heckverteiler_2_cs8_stuetze_endlage_klemmung_geschlossen_links_aktiv_out = SENSOR_SEKGL;
-    send ( io_modul_zustand_heckverteiler_2, channel_can_1_out );
-  };
-
-  if ( changed ( "SENSOR_SEKOR" ) || changed ( "SENSOR_SEKGR" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_SEKOR / SENSOR_SEKGR : ", SENSOR_SEKOR, " / ", SENSOR_SEKGR, "\n" );
-    io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_offen_rechts_aktiv_out       = SENSOR_SEKOR;
-    io_modul_zustand_heckverteiler_2_cs9_stuetze_endlage_klemmung_geschlossen_rechts_aktiv_out = SENSOR_SEKGR;
-    send ( io_modul_zustand_heckverteiler_2, channel_can_1_out );
-  };
-
-  if ( changed ( "SENSOR_SMUL" ) || changed ( "SENSOR_SMOL" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_SMUL / SENSOR_SMOL : ", SENSOR_SMUL, " / ", SENSOR_SMOL, "\n" );
-    io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_unten_links_aktiv_out = SENSOR_SMUL;
-    io_modul_zustand_heckverteiler_2_cs8_stuetze_magnet_oben_links_aktiv_out  = SENSOR_SMOL;
-    send ( io_modul_zustand_heckverteiler_2, channel_can_1_out );
-  };
-
-  if ( changed ( "SENSOR_SMUR" ) || changed ( "SENSOR_SMOR" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_SMUR / SENSOR_SMOR : ", SENSOR_SMUR, " / ", SENSOR_SMOR, "\n" );
-    io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_unten_rechts_aktiv_out = SENSOR_SMUR;
-    io_modul_zustand_heckverteiler_2_cs9_stuetze_magnet_oben_rechts_aktiv_out  = SENSOR_SMOR;
-    send ( io_modul_zustand_heckverteiler_2, channel_can_1_out );
-  };
-
-// -----------------------------------------------
-//                  ANTENNE VERZURRUNG 
-// -----------------------------------------------
-  if ( changed ( "SENSOR_VZ1O" ) || changed ( "SENSOR_VZ1V" ) )
-  {
-    print ( "------------------- TX-DINGO ---------- SENSOR_VZ1O / SENSOR_VZ1V : ", SENSOR_VZ1O, " / ", SENSOR_VZ1V, "\n" );
-    io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_offen_aktiv_out      = SENSOR_VZ1O;
-    io_modul_zustand_heckverteiler_2_cs10_verzurrung_1_verriegelt_aktiv_out = SENSOR_VZ1V;
-    send ( io_modul_zustand_heckverteiler_2, channel_can_1_out );
-  };
-
-
-// -----------------------------------------------
-//                  HAUBE
-// -----------------------------------------------
-  if ( changed ( "SENSOR_HZO" ) || changed ( "SENSOR_HZG" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_HZO / SENSOR_HZG : ", SENSOR_HZO, " / ", SENSOR_HZG, "\n" );
-    io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_offen_aktiv_out       = SENSOR_HZO;
-    io_modul_zustand_heckverteiler_1_cs6_haubenzylinder_geschlossen_aktiv_out = SENSOR_HZG;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
-
-  if ( changed ( "SENSOR_HR1V" ) || changed ( "SENSOR_HR1O" ) || changed ( "SENSOR_HR2V" ) || changed ( "SENSOR_HR2O" ) )
-  {
-    print ( "---------- TX-DINGO ---------- SENSOR_HR1V / SENSOR_HR1O : ", SENSOR_HR1V, " / ", SENSOR_HR1O, "\n" );
-    print ( "---------- TX-DINGO ---------- SENSOR_HR2V / SENSOR_HR2O : ", SENSOR_HR2V, " / ", SENSOR_HR2O, "\n" );
-    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_verriegelt_aktiv_out = SENSOR_HR1V;
-    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_1_offen_aktiv_out      = SENSOR_HR1O;
-    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_verriegelt_aktiv_out = SENSOR_HR2V;
-    io_modul_zustand_heckverteiler_1_cs7_haube_riegel_2_offen_aktiv_out      = SENSOR_HR2O;
-    send ( io_modul_zustand_heckverteiler_1, channel_can_1_out );
-  };
 
 
 // ------------------------------------------------------------------------
 //                  DRIVES
 // ------------------------------------------------------------------------
+/*
   if ( argv ( 0 ) == "ev_x_drive_is_enabled" )
   {
     event_logging ( argv ( 0 ) );
-    x_drive.Status.ANTRIEB_READY          = 1;
-    x_drive.Status.ANTRIEB_ENABLE_OUT     = 1;
-    x_drive.Status.ANTRIEB_FAULT          = 0;
-    x_drive.Status.ANTRIEB_INPOS          = 0;
-//    x_drive.Status.ANTRIEB_BREAK_RELEASED = 0;
 
     x_drive.CanIstPos                     = X_SollPosition_Berechnen ( _drive.IstPos );
     x_drive.CanIstGeschw                  = X_Set_Speed ( truncate ( _drive.IstGeschw ) );
 
     assemble_frame_xdrive_response_and_send ( x_drive );
   } else
-
-  if ( argv ( 0 ) == "ev_x_drive_stop" )
-  {
-    event_logging ( argv ( 0 ) );
-    x_drive.Status.ANTRIEB_INPOS          = 1;
-
-    x_drive.CanIstPos                     = X_SollPosition_Berechnen ( _drive.IstPos );
-    x_drive.CanIstGeschw                  = X_Set_Speed ( truncate ( _drive.IstGeschw ) );
-
-    assemble_frame_xdrive_response_and_send ( x_drive );
-  } else
-
-  if ( argv ( 0 ) == "ev_x_drive_is_disabled" )
-  {
-    event_logging ( argv ( 0 ) );
-    x_drive.Status.ANTRIEB_READY          = 1;
-    x_drive.Status.ANTRIEB_ENABLE_OUT     = 0;
-    x_drive.Status.ANTRIEB_FAULT          = 0;
-//    x_drive.Status.ANTRIEB_BREAK_RELEASED = 0;
-
-    x_drive.CanIstPos                     = X_SollPosition_Berechnen ( _drive.IstPos );
-    x_drive.CanIstGeschw                  = X_Set_Speed ( truncate ( _drive.IstGeschw ) );
-
-    assemble_frame_xdrive_response_and_send ( x_drive );
-  } else
-
+*/
   if ( argv ( 0 ) == "ev_x_drive_position_changed" )
   {
-    x_drive.CanIstPos                     = X_SollPosition_Berechnen ( _drive.IstPos );
-    x_drive.CanIstGeschw                  = X_Set_Speed ( truncate ( _drive.IstGeschw ) );
-
-    assemble_frame_xdrive_response_and_send ( x_drive );
+    x_drive.IstPos                        = X_IstPosition_Berechnen ( x_drive.CanIstPos );
+    x_drive.IstGeschw                     = X_IstPosition_Berechnen ( x_drive.CanIstGeschw );
+    x_drive.IstStrom                      = x_drive.CanIstStrom / 10.0;  //  just for test - up to now unknown calculation
+//    assemble_frame_xdrive_response_and_send ( x_drive );
   } else
 
+  if ( argv ( 0 ) == "ev_x_drive_sim_state_response" )
+  {
+    x_drive.IstPos                        = X_IstPosition_Berechnen ( x_drive.CanIstPos );
+    x_drive.IstGeschw                     = X_IstPosition_Berechnen ( x_drive.CanIstGeschw );
+    x_drive.IstStrom                      = x_drive.CanIstStrom / 10.0;  //  just for test - up to now unknown calculation
+    assemble_frame_x_drive_response_and_send ( x_drive );
+  } else
+
+/*
   if ( argv ( 0 ) == "ev_y_drive_is_enabled" )
   {
     event_logging ( argv ( 0 ) );
-    y_drive.Status.ANTRIEB_READY          = 1;
-    y_drive.Status.ANTRIEB_ENABLE_OUT     = 1;
-    y_drive.Status.ANTRIEB_FAULT          = 0;
-    y_drive.Status.ANTRIEB_INPOS          = 0;
-//    y_drive.Status.ANTRIEB_BREAK_RELEASED = 0;
 
     y_drive.CanIstPos                     = Y_SollPosition_Berechnen ( y_drive.IstPos );
     y_drive.CanIstGeschw                  = Y_Set_Speed ( truncate ( y_drive.IstGeschw ) );
 
     assemble_frame_ydrive_response_and_send ( y_drive );
   } else
-
-  if ( argv ( 0 ) == "ev_y_drive_stop" )
-  {
-    event_logging ( argv ( 0 ) );
-    y_drive.Status.ANTRIEB_INPOS          = 1;
-
-    y_drive.CanIstPos                     = Y_SollPosition_Berechnen ( y_drive.IstPos );
-    y_drive.CanIstGeschw                  = Y_Set_Speed ( truncate ( y_drive.IstGeschw ) );
-
-    assemble_frame_ydrive_response_and_send ( y_drive );
-  } else
-
-  if ( argv ( 0 ) == "ev_y_drive_is_disabled" )
-  {
-    event_logging ( argv ( 0 ) );
-    y_drive.Status.ANTRIEB_READY          = 1;
-    y_drive.Status.ANTRIEB_ENABLE_OUT     = 0;
-    y_drive.Status.ANTRIEB_FAULT          = 0;
-//    y_drive.Status.ANTRIEB_BREAK_RELEASED = 0;
-
-    y_drive.CanIstPos                     = Y_SollPosition_Berechnen ( y_drive.IstPos );
-    y_drive.CanIstGeschw                  = Y_Set_Speed ( truncate ( y_drive.IstGeschw ) );
-
-    assemble_frame_ydrive_response_and_send ( y_drive );
-  } else
-
+*/
   if ( argv ( 0 ) == "ev_y_drive_position_changed" )
   {
     event_logging ( argv ( 0 ) );
 
-    y_drive.CanIstPos                     = Y_SollPosition_Berechnen ( y_drive.IstPos );
-    y_drive.CanIstGeschw                  = Y_Set_Speed ( truncate ( y_drive.IstGeschw ) );
-
-    assemble_frame_ydrive_response_and_send ( y_drive );
+    y_drive.IstPos                        = Y_IstPosition_Berechnen ( y_drive.CanIstPos );
+    y_drive.IstGeschw                     = Y_IstPosition_Berechnen ( y_drive.CanIstGeschw );
+    y_drive.IstStrom                      = y_drive.CanIstStrom / 10.0;  //  just for test - up to now unknown calculation
+//    assemble_frame_ydrive_response_and_send ( y_drive );
   } else
 
+  if ( argv ( 0 ) == "ev_y_drive_sim_state_response" )
+  {
+    y_drive.IstPos                        = Y_IstPosition_Berechnen ( y_drive.CanIstPos );
+    y_drive.IstGeschw                     = Y_IstPosition_Berechnen ( y_drive.CanIstGeschw );
+    y_drive.IstStrom                      = y_drive.CanIstStrom / 10.0;  //  just for test - up to now unknown calculation
+    assemble_frame_y_drive_response_and_send ( y_drive );
+  } else
+/*
   if ( argv ( 0 ) == "ev_z_drive_is_enabled" )
   {
     event_logging ( argv ( 0 ) );
-    z_drive.Status.ANTRIEB_READY          = 1;
-    z_drive.Status.ANTRIEB_ENABLE_OUT     = 1;
-    z_drive.Status.ANTRIEB_FAULT          = 0;
-    z_drive.Status.ANTRIEB_INPOS          = 0;
-//    z_drive.Status.ANTRIEB_BREAK_RELEASED = 0;
 
     z_drive.CanIstPos                     = Z_SollPosition_Berechnen ( z_drive.IstPos );
     z_drive.CanIstGeschw                  = Z_Set_Speed ( truncate ( z_drive.IstGeschw ) );
 
     assemble_frame_zdrive_response_and_send ( z_drive );
   } else
-
-  if ( argv ( 0 ) == "ev_z_drive_stop" )
-  {
-    event_logging ( argv ( 0 ) );
-    z_drive.Status.ANTRIEB_INPOS          = 1;
-
-    z_drive.CanIstPos                     = Z_SollPosition_Berechnen ( z_drive.IstPos );
-    z_drive.CanIstGeschw                  = Z_Set_Speed ( truncate ( z_drive.IstGeschw ) );
-
-    assemble_frame_zdrive_response_and_send ( z_drive );
-  } else
-
-  if ( argv ( 0 ) == "ev_z_drive_is_disabled" )
-  {
-    event_logging ( argv ( 0 ) );
-    z_drive.Status.ANTRIEB_READY          = 1;
-    z_drive.Status.ANTRIEB_ENABLE_OUT     = 0;
-    z_drive.Status.ANTRIEB_FAULT          = 0;
-//    z_drive.Status.ANTRIEB_BREAK_RELEASED = 0;
-
-    z_drive.CanIstPos                     = Z_SollPosition_Berechnen ( z_drive.IstPos );
-    z_drive.CanIstGeschw                  = Z_Set_Speed ( truncate ( z_drive.IstGeschw ) );
-
-    assemble_frame_zdrive_response_and_send ( z_drive );
-  } else
-
+*/
   if ( argv ( 0 ) == "ev_z_drive_position_changed" )
-  {
-    z_drive.CanIstPos                     = Z_SollPosition_Berechnen ( z_drive.IstPos );
-    z_drive.CanIstGeschw                  = Z_Set_Speed ( truncate ( z_drive.IstGeschw ) );
+  { //  need for sensors
+    z_drive.IstPos                        = Z_IstPosition_Berechnen ( z_drive.CanIstPos );
+    z_drive.IstGeschw                     = Z_IstPosition_Berechnen ( z_drive.CanIstGeschw );
+    z_drive.IstStrom                      = z_drive.CanIstStrom / 10.0;  //  just for test - up to now unknown calculation
+//    assemble_frame_z_drive_response_and_send ( z_drive );
+  } else
 
-    assemble_frame_zdrive_response_and_send ( z_drive );
+  if ( argv ( 0 ) == "ev_z_drive_sim_state_response" )
+  {
+    z_drive.IstPos                        = Z_IstPosition_Berechnen ( z_drive.CanIstPos );
+    z_drive.IstGeschw                     = Z_IstPosition_Berechnen ( z_drive.CanIstGeschw );
+    z_drive.IstStrom                      = z_drive.CanIstStrom / 10.0;  //  just for test - up to now unknown calculation
+    assemble_frame_z_drive_response_and_send ( z_drive );
   } else
 
 // ------------------------------------------------------------------------

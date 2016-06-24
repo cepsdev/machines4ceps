@@ -1,18 +1,16 @@
-Event ev_y_drive_stop, ev_y_drive_is_enabled, ev_y_drive_is_disabled;
+Event ev_y_drive_stop;
 Event ev_y_drive_movement_stopped, ev_y_drive_reset, ev_y_drive_move_up;
-Event ev_talin_is_ready_to_be_moved, ev_y_drive_prepares_to_move;
-Event ev_y_drive_enable_timeout, ev_y_drive_moving_timeout, ev_y_drive_move, ev_y_drive_enable_starting, ev_y_drive_disable_starting;
+Event ev_y_drive_prepares_to_move;
+Event ev_y_drive_move;
+Event ev_y_drive_can_control, ev_y_drive_can_state_response;
 
-Systemstate y_drive;
-Systemstate IS_ENABLE_TIMER_ON, IS_MOVE_TIMER_ON;
-Systemstate given_speed;
 
 global_functions
 {
-  y_drive_set_target_position 
+  y_drive_set_soll_position
   {
     params{ inSollPos; inSollGeschw; };
-    print ( "-------- y_drive_set_target_position --------\n" );
+    print ( "-------- y_drive_set_soll_position -------- inSollPos: ", inSollPos, ", inSollGeschw: ", inSollGeschw, "\n" );
     y_drive.Control.ANTRIEB_MODE_DEFAULT  = DRIVE_OPERATIONAL_MODE_POSITION;
 
     if ( inSollPos > y_drive.MAX_POS )
@@ -32,26 +30,28 @@ global_functions
     print ( "-------------------------------- Y_drive_move.SollPos:    ", y_drive.SollPos, ", SollGeschw: ", y_drive.SollGeschw, "\n" );
   };
 
-  y_drive_set_target_speed 
+  y_drive_set_target_speed
   {
     params{ inSollGeschw; };
-    print ( "-------- y_drive_set_target_speed --------\n" );
+    print ( "-------- y_drive_set_target_speed -------- inSollGeschw: ", inSollGeschw, "\n" );
     y_drive.Control.ANTRIEB_MODE_DEFAULT  = DRIVE_OPERATIONAL_MODE_SPEED;
 
     if ( inSollGeschw >= 0 )
     {
       y_drive.SollPos = y_drive.MAX_POS;
+      y_drive.VorzeichenSpeed = 1;
     };
     if ( inSollGeschw < 0 )
     {
       y_drive.SollPos = y_drive.MIN_POS;
+      y_drive.VorzeichenSpeed = -1;
     };
     if ( inSollGeschw == 0 )
     {
       y_drive.SollGeschw = y_drive.SPEED_MAX;
     } else
     {
-      y_drive.SollGeschw = abs ( inSollGeschw );
+      y_drive.SollGeschw = y_drive.VorzeichenSpeed * y_drive.SollGeschwAbsolut;
     };
   };
 };
@@ -60,80 +60,86 @@ Statemachine
 {
   val MOVEMENT_SELECTION_IDX          = 1;
   val TARGET_VALUE_IDX                = 2;
-  val ENABLE_TIMER_IDX                = 3;
-  val MOVE_TIMER_IDX                  = 4;
 
   id  { sm_Y_drive_move;  };
   description { "Y_drive_move"; };
-  States  { Initial;  Final;  Moving; Prepare_Talin;  };
+  States  { Initial;  Final;  Error;  Moving; SlowDown;  };
 
   import  { sm_Y_drive_enable;  };
   import  { sm_Y_drive_disable; };
+  import  { sm_Y_drive_brake_release; };
+  import  { sm_Y_drive_brake_apply; };
 
   Actions
   {
-    a_y_drive_enable_starting     { ev_y_drive_enable_starting; };
-    a_y_drive_disable_starting    { ev_y_drive_disable_starting;  };
-    a_y_drive_movement_stopped    { ev_y_drive_movement_stopped;  };
+    a_y_drive_movement_stopped
+    {
+      //print("-------- ev_y_drive_movement_stopped --------\n");
+
+      ev_y_drive_movement_stopped;
+    };
     a_y_drive_movement_start
     {
       print ( "-------- ev_y_drive_move --------\n" );
 
-      ivenet_mast_state.value_out = IVENET_MAST_IS_MOVING_ANTENNA_DEPLOYMENT;
+      y_drive.Control.ANTRIEB_MODE          = y_drive.Control.ANTRIEB_MODE_DEFAULT;
+
+      ev_y_drive_can_control;
       ev_y_drive_move;
     };
-    a_y_drive_set_enable_timeout  { if ( IS_ENABLE_TIMER_ON ) { start_timer ( DEF_TIME_RUCKMLD_ANTRIEBE * s,  ev_y_drive_enable_timeout,  y_drive_enable_timeout_timer ); }; };
-    a_y_drive_set_moving_timeout  { if ( IS_MOVE_TIMER_ON   ) { start_timer ( DEF_TIME_Y_FAHREN * s,          ev_y_drive_moving_timeout,  y_drive_moving_timeout_timer ); }; };
-    a_y_drive_stop_enable_timeout { stop_timer ( y_drive_enable_timeout_timer ); };
-    a_y_drive_stop_moving_timeout { stop_timer ( y_drive_moving_timeout_timer ); };
-//    a_y_drive_move                { ev_y_drive_move;  };
+    a_y_drive_stop_moving
+    {
+      y_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+      ev_y_drive_can_control;
+    };
+    a_y_drive_slow_down
+    {
+      print ( "-------- a_y_drive_slow_down --------\n" );
+      y_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_SPEED;
+      y_drive.SollGeschw = 0;
+      ev_y_drive_can_control;
+    };
   };
 
   on_enter
   {
-    if ( argv ( MOVEMENT_SELECTION_IDX ) == MODE_TO_TARGET )
+    if ( argc() < 2 )
     {
-      y_drive_set_target_position ( argv ( TARGET_VALUE_IDX ), y_drive.SPEED_DEFAULT );
-    } else
-    if ( argv ( MOVEMENT_SELECTION_IDX ) == MODE_GIVEN_SPEED )
-    {
-      y_drive_set_target_speed ( argv ( TARGET_VALUE_IDX ) );
-    };
-
-    if ( argv ( ENABLE_TIMER_IDX ) == WITH_ENABLE_TIMEOUT )
-    {
-      IS_ENABLE_TIMER_ON = 1;
+      print ( "---------------------------------------- Too few arguments for start of 'sm_Y_drive_move' \n" );
     } else
     {
-      IS_ENABLE_TIMER_ON  = 0;
+      if ( argv ( MOVEMENT_SELECTION_IDX ) == MODE_TO_TARGET )
+      {
+        y_drive_set_soll_position ( argv ( TARGET_VALUE_IDX ), y_drive.SPEED_DEFAULT );
+      } else
+      if ( argv ( MOVEMENT_SELECTION_IDX ) == MODE_GIVEN_SPEED )
+      {
+        y_drive_set_target_speed ( argv ( TARGET_VALUE_IDX ) );
+      };
     };
-
-    if ( argv ( MOVE_TIMER_IDX ) == WITH_MOVING_TIMEOUT )
-    {
-      IS_MOVE_TIMER_ON = 1;
-    } else
-    {
-      IS_MOVE_TIMER_ON  = 0;
-    };
+    y_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
   };
 
   on_exit
   {
-    ev_y_drive_stop; 
-    if ( IS_ENABLE_TIMER_ON )
-    {
-      stop_timer ( y_drive_enable_timeout_timer );
-    };
-    if ( IS_MOVE_TIMER_ON )
-    {
-      stop_timer ( y_drive_moving_timeout_timer );
-    };
-    y_drive.Control.ANTRIEB_MODE_DEFAULT  = DRIVE_OPERATIONAL_MODE_STOP;
+    y_drive.Control.ANTRIEB_MODE          = DRIVE_OPERATIONAL_MODE_STOP;
+    ev_y_drive_stop;
+    ev_y_drive_can_control;
   };
 
-  Transition  { Initial;            sm_Y_drive_enable;                          a_y_drive_set_enable_timeout;   a_y_drive_enable_starting;  };
-  Transition  { sm_Y_drive_enable;  Moving;             ev_y_drive_is_enabled;  a_y_drive_stop_enable_timeout;  a_y_drive_movement_start;   a_y_drive_set_moving_timeout; };
-  Transition  { Moving;             sm_Y_drive_disable; ev_y_drive_stop;        a_y_drive_stop_moving_timeout;  a_y_drive_disable_starting; };
-  Transition  { sm_Y_drive_disable; Final;              ev_y_drive_is_disabled; a_y_drive_movement_stopped; };
+  Transition  { Initial;                        sm_Y_drive_enable;                                                                          };
+  Transition  { sm_Y_drive_enable.Final;        sm_Y_drive_brake_release;                                                                   };
+  Transition  { sm_Y_drive_enable.Error;        Error;                                                                                      };
+  Transition  { sm_Y_drive_brake_release.Final; Moving;                                                     a_y_drive_movement_start;       };
+  Transition  { sm_Y_drive_brake_release.Error; Error;                                                                                      };
+  Transition  { Moving;                         sm_Y_drive_brake_apply;     ev_y_drive_can_state_response;  a_y_drive_stop_moving;          g_y_drive_reach_inpos;    };
+  Transition  { Moving;                         SlowDown;                   ev_y_drive_can_state_response;  a_y_drive_slow_down;           !g_y_drive_reach_inpos &&  g_y_drive_is_in_soll_position;  };
+  Transition  { Moving;                         Error;                      ev_y_drive_can_state_response;                                 !g_y_drive_reach_inpos && !g_y_drive_is_in_soll_position && g_y_drive_is_not_moving;  };
+  Transition  { Moving;                         SlowDown;                   ev_y_drive_stop;                a_y_drive_slow_down;            };
+  Transition  { SlowDown;                       sm_Y_drive_brake_apply;     ev_y_drive_can_state_response;  a_y_drive_stop_moving;          g_y_drive_is_slow_down;   };
+  Transition  { sm_Y_drive_brake_apply.Final;   sm_Y_drive_disable;                                                                         };
+  Transition  { sm_Y_drive_brake_apply.Error;   Error;                                                                                      };
+  Transition  { sm_Y_drive_disable.Final;       Final;                                                      a_y_drive_movement_stopped;     };
+  Transition  { sm_Y_drive_disable.Error;       Error;                                                                                      };
 };
 

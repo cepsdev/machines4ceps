@@ -1,4 +1,4 @@
-Event ev_z_drive_move, ev_mast_move_up, ev_mast_move_down, ev_mast_anfahren;
+Event ev_z_drive_move_up, ev_z_drive_move_down, ev_mast_anfahren;
 
 Mast_move_to_target_unittests
 {
@@ -22,27 +22,47 @@ Statemachine
   id  { sm_Ctrl;  };
   import  { sm_Z_drive_to_target_position; };
   States  { Initial;  Final;  Error;  };
-  Transition  { Initial;                        sm_Z_drive_to_target_position;  ev_mast_anfahren; };
-  Transition  { sm_Z_drive_to_target_position;  Final;                          ev_z_drive_is_in_target_position; };
-  Transition  { sm_Z_drive_to_target_position;  Error;                          ev_z_drive_to_target_position_preconditions_are_not_met;  };
+  Actions
+  {
+    a_report_error  { print ( "\n\n--- ERROR DETECTED ---\n\n" ); };
+  };
+  Transition  { Initial;                              sm_Z_drive_to_target_position;  ev_mast_anfahren; };
+  Transition  { sm_Z_drive_to_target_position.Final;  Final;                          };
+  Transition  { sm_Z_drive_to_target_position.Error;  Error;                                            a_report_error; };
 };
 
 Simulation
 {
   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_all_preconditions_and_mast_in_indexposition;};
 
-  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+  z_drive.IstPos      = z_drive.INDEXPOSITION;
   z_drive.SollGeschw  = 50;
 
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Final;};
-  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive.Disabled;};
+//  ASSERT_EVENTUALLY_VISIT_STATES{sm_Z_drive_state.Disabled;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Talin.Not_Ready;};
 
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_state; };
+  Start { sm_Z_drive_sim; };
   Start { sm_Talin; };
   Start { sm_Ctrl;  };
 
-  ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+  ev_mast_anfahren(z_drive.INDEXPOSITION + 10.0);
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };
 
 Simulation
@@ -51,29 +71,44 @@ Simulation
 
   g_flap_is_open      = 1;
   g_flap_is_closed    = 0;
-  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+  z_drive.IstPos      = z_drive.INDEXPOSITION;
   z_drive.SollGeschw  = 50;
 
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.sm_Z_drive_to_target_position.Error;};
 
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_state; };
+  Start { sm_Z_drive_sim; };
   Start { sm_Talin; };
   Start { sm_Ctrl;  };
 
-  ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+  ev_mast_anfahren(z_drive.INDEXPOSITION + 10);  
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };
 
 // Simulation{
 //   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_target_position_is_too_high;};
 // 
-//   z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+//   z_drive.IstPos      = z_drive.INDEXPOSITION;
 //   z_drive.SollGeschw  = 50;
 //   
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
 //   
-//   Start{sm_Z_drive;};
+//   Start{sm_Z_drive_state;};
 //   Start{sm_Talin;};
 //   Start{sm_Ctrl;};
 // 
@@ -83,13 +118,13 @@ Simulation
 // Simulation{
 //   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_target_position_is_too_low;};
 // 
-//   z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+//   z_drive.IstPos      = z_drive.INDEXPOSITION;
 //   z_drive.SollGeschw  = 50;
 //   
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
 //   
-//   Start{sm_Z_drive;};
+//   Start{sm_Z_drive_state;};
 //   Start{sm_Talin;};
 //   Start{sm_Ctrl;};
 // 
@@ -101,17 +136,32 @@ Simulation
   TestCase{Mast_move_to_target_unittests;};Test{Mast_move_to_target_position_given_y_drive_not_in_position;};
 
   y_drive.IstPos      = 76.0;
-  z_drive.IstPos      = z_drive.MAST_INDEXPOSITION;
+  z_drive.IstPos      = z_drive.INDEXPOSITION;
   z_drive.SollGeschw  = 50;
 
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.sm_Z_drive_to_target_position.Error;};
 
-  Start { sm_Z_drive; };
+  Start { sm_Z_drive_state; };
+  Start { sm_Z_drive_sim; };
   Start { sm_Talin; };
   Start { sm_Ctrl;  };
 
-  ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+  ev_mast_anfahren(z_drive.INDEXPOSITION + 10);  
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+  ev_z_drive_periodic_moving_timer;
+
+  ev_z_drive_can_control; //  dummy - simulate send CAN-msg
+  ev_z_drive_can_state_response; //  dummy - simulate receive CAN-msg
+
+  //  finish test
+  stop_timer ( timer_z_drive_sim_state_response );
 };
 
 // Simulation{
@@ -123,11 +173,11 @@ Simulation
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
 //   
-//   Start{sm_Z_drive;};
+//   Start{sm_Z_drive_state;};
 //   Start{sm_Talin;};
 //   Start{sm_Ctrl;};
 // 
-//   ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+//   ev_mast_anfahren(z_drive.INDEXPOSITION + 10);  
 // };
 
 // Simulation{
@@ -139,9 +189,9 @@ Simulation
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Error;};
 //   ASSERT_EVENTUALLY_VISIT_STATES{sm_Ctrl.Z_drive_to_target_position.Error;};
 //   
-//   Start{sm_Z_drive;};
+//   Start{sm_Z_drive_state;};
 //   Start{sm_Talin;};
 //   Start{sm_Ctrl;};
 // 
-//   ev_mast_anfahren(z_drive.MAST_INDEXPOSITION + 10);  
+//   ev_mast_anfahren(z_drive.INDEXPOSITION + 10);  
 // };

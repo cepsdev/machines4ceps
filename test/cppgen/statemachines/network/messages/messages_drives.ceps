@@ -30,8 +30,8 @@ Systemstate s_frame_drive_control_mode_xdrv_out;
 Systemstate s_frame_drive_control_mode_xdrv_in;
 Systemstate s_frame_drive_control_enable_xdrv_out;
 Systemstate s_frame_drive_control_enable_xdrv_in;
-Systemstate s_frame_drive_control_break_release_xdrv_out;
-Systemstate s_frame_drive_control_break_release_xdrv_in;
+Systemstate s_frame_drive_control_brake_release_xdrv_out;
+Systemstate s_frame_drive_control_brake_release_xdrv_in;
 Systemstate s_frame_drive_control_reset_fault_xdrv_out;
 Systemstate s_frame_drive_control_reset_fault_xdrv_in;
 Systemstate s_frame_drive_control_calibrate_pos_xdrv_out;
@@ -43,8 +43,8 @@ Systemstate s_frame_drive_control_mode_ydrv_out;
 Systemstate s_frame_drive_control_mode_ydrv_in;
 Systemstate s_frame_drive_control_enable_ydrv_out;
 Systemstate s_frame_drive_control_enable_ydrv_in;
-Systemstate s_frame_drive_control_break_release_ydrv_out;
-Systemstate s_frame_drive_control_break_release_ydrv_in;
+Systemstate s_frame_drive_control_brake_release_ydrv_out;
+Systemstate s_frame_drive_control_brake_release_ydrv_in;
 Systemstate s_frame_drive_control_reset_fault_ydrv_out;
 Systemstate s_frame_drive_control_reset_fault_ydrv_in;
 Systemstate s_frame_drive_control_calibrate_pos_ydrv_out;
@@ -56,8 +56,8 @@ Systemstate s_frame_drive_control_mode_zdrv_out;
 Systemstate s_frame_drive_control_mode_zdrv_in;
 Systemstate s_frame_drive_control_enable_zdrv_out;
 Systemstate s_frame_drive_control_enable_zdrv_in;
-Systemstate s_frame_drive_control_break_release_zdrv_out;
-Systemstate s_frame_drive_control_break_release_zdrv_in;
+Systemstate s_frame_drive_control_brake_release_zdrv_out;
+Systemstate s_frame_drive_control_brake_release_zdrv_in;
 Systemstate s_frame_drive_control_reset_fault_zdrv_out;
 Systemstate s_frame_drive_control_reset_fault_zdrv_in;
 Systemstate s_frame_drive_control_calibrate_pos_zdrv_out;
@@ -85,8 +85,8 @@ Systemstate s_frame_drive_status_limit_switch_cw_xdrv_out;
 Systemstate s_frame_drive_status_limit_switch_cw_xdrv_in;
 Systemstate s_frame_drive_status_limit_switch_ccw_xdrv_out;
 Systemstate s_frame_drive_status_limit_switch_ccw_xdrv_in;
-Systemstate s_frame_drive_status_break_released_xdrv_out;
-Systemstate s_frame_drive_status_break_released_xdrv_in;
+Systemstate s_frame_drive_status_brake_released_xdrv_out;
+Systemstate s_frame_drive_status_brake_released_xdrv_in;
 Systemstate s_frame_drive_status_remote_output_status_xdrv_out;
 Systemstate s_frame_drive_status_remote_output_status_xdrv_in;
 Systemstate s_frame_drive_status_fault_xdrv_out;
@@ -108,8 +108,8 @@ Systemstate s_frame_drive_status_limit_switch_cw_ydrv_out;
 Systemstate s_frame_drive_status_limit_switch_cw_ydrv_in;
 Systemstate s_frame_drive_status_limit_switch_ccw_ydrv_out;
 Systemstate s_frame_drive_status_limit_switch_ccw_ydrv_in;
-Systemstate s_frame_drive_status_break_released_ydrv_out;
-Systemstate s_frame_drive_status_break_released_ydrv_in;
+Systemstate s_frame_drive_status_brake_released_ydrv_out;
+Systemstate s_frame_drive_status_brake_released_ydrv_in;
 Systemstate s_frame_drive_status_remote_output_status_ydrv_out;
 Systemstate s_frame_drive_status_remote_output_status_ydrv_in;
 Systemstate s_frame_drive_status_fault_ydrv_out;
@@ -131,8 +131,8 @@ Systemstate s_frame_drive_status_limit_switch_cw_zdrv_out;
 Systemstate s_frame_drive_status_limit_switch_cw_zdrv_in;
 Systemstate s_frame_drive_status_limit_switch_ccw_zdrv_out;
 Systemstate s_frame_drive_status_limit_switch_ccw_zdrv_in;
-Systemstate s_frame_drive_status_break_released_zdrv_out;
-Systemstate s_frame_drive_status_break_released_zdrv_in;
+Systemstate s_frame_drive_status_brake_released_zdrv_out;
+Systemstate s_frame_drive_status_brake_released_zdrv_in;
 Systemstate s_frame_drive_status_remote_output_status_zdrv_out;
 Systemstate s_frame_drive_status_remote_output_status_zdrv_in;
 Systemstate s_frame_drive_status_fault_zdrv_out;
@@ -287,8 +287,8 @@ Globals
   s_frame_drive_control_mode_xdrv_in = 0;
   s_frame_drive_control_enable_xdrv_out = 0;
   s_frame_drive_control_enable_xdrv_in = 0;
-  s_frame_drive_control_break_release_xdrv_out = 0;
-  s_frame_drive_control_break_release_xdrv_in = 0;
+  s_frame_drive_control_brake_release_xdrv_out = 0;
+  s_frame_drive_control_brake_release_xdrv_in = 0;
   s_frame_drive_control_reset_fault_xdrv_out = 0;
   s_frame_drive_control_reset_fault_xdrv_in = 0;
   s_frame_drive_control_calibrate_pos_xdrv_out = 0;
@@ -300,8 +300,8 @@ Globals
   s_frame_drive_control_mode_ydrv_in = 0;
   s_frame_drive_control_enable_ydrv_out = 0;
   s_frame_drive_control_enable_ydrv_in = 0;
-  s_frame_drive_control_break_release_ydrv_out = 0;
-  s_frame_drive_control_break_release_ydrv_in = 0;
+  s_frame_drive_control_brake_release_ydrv_out = 0;
+  s_frame_drive_control_brake_release_ydrv_in = 0;
   s_frame_drive_control_reset_fault_ydrv_out = 0;
   s_frame_drive_control_reset_fault_ydrv_in = 0;
   s_frame_drive_control_calibrate_pos_ydrv_out = 0;
@@ -313,8 +313,8 @@ Globals
   s_frame_drive_control_mode_zdrv_in = 0;
   s_frame_drive_control_enable_zdrv_out = 0;
   s_frame_drive_control_enable_zdrv_in = 0;
-  s_frame_drive_control_break_release_zdrv_out = 0;
-  s_frame_drive_control_break_release_zdrv_in = 0;
+  s_frame_drive_control_brake_release_zdrv_out = 0;
+  s_frame_drive_control_brake_release_zdrv_in = 0;
   s_frame_drive_control_reset_fault_zdrv_out = 0;
   s_frame_drive_control_reset_fault_zdrv_in = 0;
   s_frame_drive_control_calibrate_pos_zdrv_out = 0;
@@ -340,8 +340,8 @@ Globals
   s_frame_drive_status_limit_switch_cw_xdrv_in = 0;
   s_frame_drive_status_limit_switch_ccw_xdrv_out = 0;
   s_frame_drive_status_limit_switch_ccw_xdrv_in = 0;
-  s_frame_drive_status_break_released_xdrv_out = 0;
-  s_frame_drive_status_break_released_xdrv_in = 0;
+  s_frame_drive_status_brake_released_xdrv_out = 0;
+  s_frame_drive_status_brake_released_xdrv_in = 0;
   s_frame_drive_status_remote_output_status_xdrv_out = 0;
   s_frame_drive_status_remote_output_status_xdrv_in = 0; 
   s_frame_drive_status_fault_xdrv_out = 0;
@@ -363,8 +363,8 @@ Globals
   s_frame_drive_status_limit_switch_cw_ydrv_in = 0;
   s_frame_drive_status_limit_switch_ccw_ydrv_out = 0;
   s_frame_drive_status_limit_switch_ccw_ydrv_in = 0;
-  s_frame_drive_status_break_released_ydrv_out = 0;
-  s_frame_drive_status_break_released_ydrv_in = 0;
+  s_frame_drive_status_brake_released_ydrv_out = 0;
+  s_frame_drive_status_brake_released_ydrv_in = 0;
   s_frame_drive_status_remote_output_status_ydrv_out = 0;
   s_frame_drive_status_remote_output_status_ydrv_in = 0; 
   s_frame_drive_status_fault_ydrv_out = 0;
@@ -386,8 +386,8 @@ Globals
   s_frame_drive_status_limit_switch_cw_zdrv_in = 0;
   s_frame_drive_status_limit_switch_ccw_zdrv_out = 0;
   s_frame_drive_status_limit_switch_ccw_zdrv_in = 0;
-  s_frame_drive_status_break_released_zdrv_out = 0;
-  s_frame_drive_status_break_released_zdrv_in = 0;
+  s_frame_drive_status_brake_released_zdrv_out = 0;
+  s_frame_drive_status_brake_released_zdrv_in = 0;
   s_frame_drive_status_remote_output_status_zdrv_out = 0;
   s_frame_drive_status_remote_output_status_zdrv_in = 0; 
   s_frame_drive_status_fault_zdrv_out = 0;
@@ -528,17 +528,17 @@ frame
     };
     payload
     {
-      uint32
+      int32
       {
         out { s_frame_drive_target_pos_xdrv_out; };
         in  { s_frame_drive_target_pos_xdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_target_speed_xdrv_out; };
         in  { s_frame_drive_target_speed_xdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_target_current_xdrv_out; };
         in  { s_frame_drive_target_current_xdrv_in; };
@@ -552,8 +552,8 @@ frame
       {
         out { s_frame_drive_control_enable_xdrv_out; };
         in  { s_frame_drive_control_enable_xdrv_in; };
-        out { s_frame_drive_control_break_release_xdrv_out; };
-        in  { s_frame_drive_control_break_release_xdrv_in; };
+        out { s_frame_drive_control_brake_release_xdrv_out; };
+        in  { s_frame_drive_control_brake_release_xdrv_in; };
         out { s_frame_drive_control_reset_fault_xdrv_out; };
         in  { s_frame_drive_control_reset_fault_xdrv_in; };
         out { s_frame_drive_control_calibrate_pos_xdrv_out; };
@@ -578,17 +578,17 @@ frame
     };
     payload
     {
-      uint32
+      int32
       {
         out { s_frame_drive_target_pos_ydrv_out; };
         in  { s_frame_drive_target_pos_ydrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_target_speed_ydrv_out; };
         in  { s_frame_drive_target_speed_ydrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_target_current_ydrv_out; };
         in  { s_frame_drive_target_current_ydrv_in; };
@@ -602,8 +602,8 @@ frame
       {
         out { s_frame_drive_control_enable_ydrv_out; };
         in  { s_frame_drive_control_enable_ydrv_in; };
-        out { s_frame_drive_control_break_release_ydrv_out; };
-        in  { s_frame_drive_control_break_release_ydrv_in; };
+        out { s_frame_drive_control_brake_release_ydrv_out; };
+        in  { s_frame_drive_control_brake_release_ydrv_in; };
         out { s_frame_drive_control_reset_fault_ydrv_out; };
         in  { s_frame_drive_control_reset_fault_ydrv_in; };
         out { s_frame_drive_control_calibrate_pos_ydrv_out; };
@@ -628,17 +628,17 @@ frame
     };
     payload
     {
-      uint32
+      int32
       {
         out { s_frame_drive_target_pos_zdrv_out; };
         in  { s_frame_drive_target_pos_zdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_target_speed_zdrv_out; };
         in  { s_frame_drive_target_speed_zdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_target_current_zdrv_out; };
         in  { s_frame_drive_target_current_zdrv_in; };
@@ -652,8 +652,8 @@ frame
       {
         out { s_frame_drive_control_enable_zdrv_out; };
         in  { s_frame_drive_control_enable_zdrv_in; };
-        out { s_frame_drive_control_break_release_zdrv_out; };
-        in  { s_frame_drive_control_break_release_zdrv_in; };
+        out { s_frame_drive_control_brake_release_zdrv_out; };
+        in  { s_frame_drive_control_brake_release_zdrv_in; };
         out { s_frame_drive_control_reset_fault_zdrv_out; };
         in  { s_frame_drive_control_reset_fault_zdrv_in; };
         out { s_frame_drive_control_calibrate_pos_zdrv_out; };
@@ -680,17 +680,17 @@ frame
     };
     payload
     {
-      uint32
+      int32
       {
         out { s_frame_drive_actual_pos_xdrv_out; };
         in  { s_frame_drive_actual_pos_xdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_actual_speed_xdrv_out; };
         in  { s_frame_drive_actual_speed_xdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_actual_current_xdrv_out; };
         in  { s_frame_drive_actual_current_xdrv_in; };
@@ -707,8 +707,8 @@ frame
         in  { s_frame_drive_status_limit_switch_cw_xdrv_in; };
         out { s_frame_drive_status_limit_switch_ccw_xdrv_out; };
         in  { s_frame_drive_status_limit_switch_ccw_xdrv_in; };
-        out { s_frame_drive_status_break_released_xdrv_out; };
-        in  { s_frame_drive_status_break_released_xdrv_in; };
+        out { s_frame_drive_status_brake_released_xdrv_out; };
+        in  { s_frame_drive_status_brake_released_xdrv_in; };
         out { s_frame_drive_status_remote_output_status_xdrv_out; };
         in  { s_frame_drive_status_remote_output_status_xdrv_in; };
         out { s_frame_drive_status_fault_xdrv_out; };
@@ -731,17 +731,17 @@ frame
     };
     payload
     {
-      uint32
+      int32
       {
         out { s_frame_drive_actual_pos_ydrv_out; };
         in  { s_frame_drive_actual_pos_ydrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_actual_speed_ydrv_out; };
         in  { s_frame_drive_actual_speed_ydrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_actual_current_ydrv_out; };
         in  { s_frame_drive_actual_current_ydrv_in; };
@@ -758,8 +758,8 @@ frame
         in  { s_frame_drive_status_limit_switch_cw_ydrv_in; };
         out { s_frame_drive_status_limit_switch_ccw_ydrv_out; };
         in  { s_frame_drive_status_limit_switch_ccw_ydrv_in; };
-        out { s_frame_drive_status_break_released_ydrv_out; };
-        in  { s_frame_drive_status_break_released_ydrv_in; };
+        out { s_frame_drive_status_brake_released_ydrv_out; };
+        in  { s_frame_drive_status_brake_released_ydrv_in; };
         out { s_frame_drive_status_remote_output_status_ydrv_out; };
         in  { s_frame_drive_status_remote_output_status_ydrv_in; };
         out { s_frame_drive_status_fault_ydrv_out; };
@@ -782,17 +782,17 @@ frame
     };
     payload
     {
-      uint32
+      int32
       {
         out { s_frame_drive_actual_pos_zdrv_out; };
         in  { s_frame_drive_actual_pos_zdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_actual_speed_zdrv_out; };
         in  { s_frame_drive_actual_speed_zdrv_in; };
       };
-      uint12
+      int12
       {
         out { s_frame_drive_actual_current_zdrv_out; };
         in  { s_frame_drive_actual_current_zdrv_in; };
@@ -809,8 +809,8 @@ frame
         in  { s_frame_drive_status_limit_switch_cw_zdrv_in; };
         out { s_frame_drive_status_limit_switch_ccw_zdrv_out; };
         in  { s_frame_drive_status_limit_switch_ccw_zdrv_in; };
-        out { s_frame_drive_status_break_released_zdrv_out; };
-        in  { s_frame_drive_status_break_released_zdrv_in; };
+        out { s_frame_drive_status_brake_released_zdrv_out; };
+        in  { s_frame_drive_status_brake_released_zdrv_in; };
         out { s_frame_drive_status_remote_output_status_zdrv_out; };
         in  { s_frame_drive_status_remote_output_status_zdrv_in; };
         out { s_frame_drive_status_fault_zdrv_out; };

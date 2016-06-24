@@ -3,19 +3,33 @@ Guard g_mast_height_is_ge_lower_working_position;
 Guard g_stilts_valve_SVK_is_in_locking_position,  g_stilts_valve_SVK_is_in_unlocking_position;
 Guard g_stilts_valve_is_in_retracting_position,   g_stilts_valve_is_in_extending_position;
 Guard g_stilts_valve_is_in_prepare_position,      g_stilts_valves_are_in_closed_position;
-Guard g_x_drive_is_operational, g_y_drive_is_operational, g_z_drive_is_operational;
+Guard g_x_drive_is_operational, g_y_drive_is_operational, g_z_drive_is_operational, g_io_module_is_operational;
 Guard g_sensor_IP_x_drive,  g_sensor_AB_y_drive,  g_sensor_IP_y_drive;
+Guard g_sensor_IP_z_drive,  g_sensor_EU_z_drive,  g_sensor_EO_z_drive,  g_sensor_UB_z_drive;
 Guard g_io_module_is_functional, g_usv1_is_functional, g_x_drive_is_functional, g_y_drive_is_functional;
 Guard g_si_module_is_functional, g_usv2_is_functional, g_z_drive_is_functional, g_extbg_is_functional;
 Guard g_flap_valve_HR_is_closed, g_flap_valve_HR_is_open;
 Guard g_flap_lock_HR1_is_closed, g_flap_lock_HR1_is_open;
 Guard g_flap_lock_HR2_is_closed, g_flap_lock_HR2_is_open;
 Guard g_valves_are_in_closing_flap_position, g_valves_are_in_opening_flap_position;
+Guard g_stilts_have_ground_contact_both,  g_stilt_left_have_ground_contact, g_stilt_right_have_ground_contact;
 
 
 // --------------------------------------------
 // ----------------- STATES -------------------
 // --------------------------------------------
+
+// --------------------------------------------
+// -------------- X ANTRIEB -------------------
+Systemstate x_drive_can_ctrl;
+
+// --------------------------------------------
+// -------------- Y ANTRIEB -------------------
+Systemstate y_drive_can_ctrl;
+
+// --------------------------------------------
+// -------------- Z ANTRIEB -------------------
+Systemstate z_drive_can_ctrl;
 
 // --------------------------------------------
 // ------------------- FLAP -------------------
@@ -38,22 +52,6 @@ val DELAY_HVZO_OPEN   = 0.05;
 val DELAY_HVZO_CLOSE  = 0.06;
 val DELAY_HVZS_OPEN   = 0.05;
 val DELAY_HVZS_CLOSE  = 0.06;
-
-// Ansteuerung CS 13
-Systemstate VENTIL_HRS;
-Systemstate VENTIL_VZ1O;  //  Ventil Verzurrung Zylinder 1 Oeffnen
-Systemstate VENTIL_VZ1V;  //  Ventil Verzurrung Zylinder 1 Verriegeln
-Systemstate VENTIL_VV1;
-
-// Ansteuerung CS 14
-Systemstate VENTIL_SVZA;
-Systemstate VENTIL_SVZE;
-Systemstate VENTIL_SVK;
-Systemstate VENTIL_HVZO;
-Systemstate VENTIL_HVZON;
-Systemstate VENTIL_HVZS;
-Systemstate VENTIL_HVZSN;
-Systemstate VENTIL_HRO;
 
 Systemstate Flap_position;
 val FLAP_POSITION_MIN       =   0.0;
@@ -95,6 +93,7 @@ val STILTS_POSITION_GROUND_DEFAULT_RIGHT  = STILTS_POSITION_MAX - 20.0;
 Systemparameter STILTS_POSITION_GROUND_LEFT;
 Systemparameter STILTS_POSITION_GROUND_RIGHT;
 
+
 // --------------------------------------------
 // ----------------- GLOBALS ------------------
 // --------------------------------------------
@@ -103,22 +102,6 @@ Globals
 // --------------------------------------------
 // ------------------- FLAP -------------------
   Flap_position = FLAP_POSITION_DEFAULT;
-
-  // Ansteuerung CS 13
-  VENTIL_HRS   = 0;
-  VENTIL_VZ1O  = 0; //  Ventil Verzurrung Zylinder 1 Oeffnen
-  VENTIL_VZ1V  = 0; //  Ventil Verzurrung Zylinder 1 Verriegeln
-  VENTIL_VV1   = 0;
-
-  // Ansteuerung CS 14
-  VENTIL_SVZA  = 0;
-  VENTIL_SVZE  = 0;
-  VENTIL_SVK   = 0;
-  VENTIL_HVZO  = 0;
-  VENTIL_HVZON = 0;
-  VENTIL_HVZS  = 0;
-  VENTIL_HVZSN = 0;
-  VENTIL_HRO   = 0;
 
 // --------------------------------------------
 // ---------------- PRESSURE ------------------
@@ -159,6 +142,10 @@ Globals
   g_stilts_valve_is_in_prepare_position           =   in_state ( sm_Stilts_valve_SVZE.Open )    &&  in_state ( sm_Stilts_valve_SVZA.Open );
   g_stilts_valves_are_in_closed_position          =   in_state ( sm_Stilts_valve_SVZE.Closed )  &&  in_state ( sm_Stilts_valve_SVZA.Closed );
 
+  g_stilt_left_have_ground_contact                =   ( Stilt_left_pressure   <= STILT_PRESSURE_ON_GROUND );
+  g_stilt_right_have_ground_contact               =   ( Stilt_right_pressure  <= STILT_PRESSURE_ON_GROUND );
+  g_stilts_have_ground_contact_both               =   g_stilt_left_have_ground_contact  &&  g_stilt_right_have_ground_contact;
+
   g_mast_height_is_ge_lower_working_position      =   ( z_drive.IstPos  >= z_drive.MAST_MINHOEHE );
 
   g_sensor_IP_x_drive                             =   ( x_drive.IstPos  >=  ( x_drive.INDEXPOSITION - x_drive.ANGLE_TOLERANCE ) )
@@ -170,11 +157,24 @@ Globals
   g_sensor_IP_y_drive                             =   ( y_drive.IstPos  >=  ( y_drive.INDEXPOSITION - y_drive.ANGLE_TOLERANCE  ) )
                                                   &&  ( y_drive.IstPos  <=  ( y_drive.INDEXPOSITION + y_drive.ANGLE_TOLERANCE  ) );
 
+  g_sensor_EU_z_drive                             =   ( z_drive.IstPos  <=  z_drive.POSITION_TOLERANCE );
+
+  g_sensor_UB_z_drive                             =   ( z_drive.IstPos  >=  z_drive.MAST_MINHOEHE );
+
+  g_sensor_EO_z_drive                             =   ( z_drive.IstPos  >=  z_drive.MAX_POS );
+
+  g_sensor_IP_z_drive                             =   ( z_drive.IstPos  >=  ( z_drive.INDEXPOSITION - 1 ) );
+
 // --------------------------------------------
 // ----------------- DRIVES -------------------
   g_x_drive_is_operational                        =   in_state ( sm_X_drive_fue.Operational );
   g_y_drive_is_operational                        =   in_state ( sm_Y_drive_fue.Operational );
   g_z_drive_is_operational                        =   in_state ( sm_Z_drive_fue.Operational );
+
+// --------------------------------------------
+// ----------------- IO_MODULE ----------------
+  g_io_module_is_operational                      =   in_state ( sm_IO_module_fue.Operational );
+
 // --------------------------------------------
 // ------------------ DEBUG -------------------
   g_io_module_is_functional                       = 1;

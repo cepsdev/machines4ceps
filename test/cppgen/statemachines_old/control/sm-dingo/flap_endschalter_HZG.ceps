@@ -1,0 +1,34 @@
+// see ZustandCS6
+// Endschalter
+// HZG - Haube Zylinder Geschlossen, Bit 5
+
+Event ev_flap_state_change, ev_flap_valve_state_change;
+
+//  local events and guards
+Guard g_HZG_sim_goes_on, g_HZG_sim_still_off;
+
+Globals 
+{
+  g_HZG_sim_goes_on    = ( Flap_position   <=  FLAP_POSITION_MIN );
+  g_HZG_sim_still_off  = ( Flap_position   >   FLAP_POSITION_MIN );
+};
+
+Statemachine
+{
+  id  { sm_Flap_endschalter_HZG; };
+  description { "Endschalter Haube Zylinder Geschlossen"; };
+  States  { Initial;  On; Off;  };
+
+  Actions
+  {
+    a_FlapState       { ev_flap_state_change; };
+    a_Off             { SENSOR_HZG = 0; };
+    a_On              { SENSOR_HZG = 1; };
+  };
+
+  Transition  { Initial;  Off;                a_Off; !g_HZG_sim_goes_on; };
+  Transition  { Initial;  On;                 a_On;   g_HZG_sim_goes_on; };
+  Transition  { Off;      On;   a_FlapState;  a_On;   g_HZG_sim_goes_on; };
+  Transition  { On;       Off;  a_FlapState;  a_Off;  g_HZG_sim_still_off; };
+};
+

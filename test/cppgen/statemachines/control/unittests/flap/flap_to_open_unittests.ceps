@@ -20,7 +20,7 @@ Flap_to_open_unittests
   SENSOR_HZO  = 0;  //  HaubeRiegelOffen
   SENSOR_HZG  = 0;  //  HaubeRiegelGeschlossen
   y_drive.IstPos                  = y_drive.ARBEITSPOSITION;
-  z_drive.IstPos                  = z_drive.MAST_INDEXPOSITION;
+  z_drive.IstPos                  = z_drive.INDEXPOSITION;
   Pneumatics.system_pressure      = DEFAULT_SYSTEM_PRESSURE;
 };
 

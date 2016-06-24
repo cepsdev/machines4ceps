@@ -1,0 +1,809 @@
+// <description>
+Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
+
+Y_drive_sim_unittests
+{
+  g_y_drive_fault = 0;
+  g_y_drive_has_antrieb_fault = 0;
+  g_y_drive_is_operational  = 0;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 0;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 0;
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Initialization_fault;};
+
+  g_y_drive_fault = 1;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.NotReady;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Initialization_ready;};
+
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_fault_and_ready_again;};
+
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable;};
+  g_y_drive_fault = 1;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.NotReady;};
+  g_y_drive_fault = 0;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_enable_and_disable;};
+
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.Initial;};
+  g_y_drive_is_operational  = 1;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.Disabled;};
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake;};
+  y_drive.Control.ANTRIEB_ENABLE_IN = 0;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.Disabled;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_brake_release_and_apply;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.Applied;};
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move;};
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 0;
+  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.Applied;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_and_stop_speed_mode_start_by_zero;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos     = 0;
+  y_drive.CanIstGeschw  = 0;
+  y_drive.CanSollGeschw = 5300;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_SPEED;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingSpeed;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 5300);
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_and_stop_speed_mode_start_by_positiv_speed;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos     = 10000;
+  y_drive.CanIstGeschw  = 5300;
+  y_drive.CanSollGeschw = 9000;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_SPEED;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingSpeed;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 9000);
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_and_stop_speed_mode_start_with_negativ_speed;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN  = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos     = 10000;
+  y_drive.CanIstGeschw  = -2200;
+  y_drive.CanSollGeschw = 3100;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_SPEED;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingSpeed;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 3100);
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_down_and_stop_speed_mode_start_by_zero;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos     = 100000;
+  y_drive.CanIstGeschw  = 0;
+  y_drive.CanSollGeschw = -5400;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_SPEED;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingSpeed;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == -5400);
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_down_and_stop_speed_mode_start_with_positiv_speed;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos     = 100000;
+  y_drive.CanIstGeschw  = 1200;
+  y_drive.CanSollGeschw = -4100;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_SPEED;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingSpeed;};
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ASSERT(y_drive.CanIstGeschw == -4100);
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_down_and_stop_speed_mode_start_with_negativ_speed;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos     = 100000;
+  y_drive.CanIstGeschw  = -4100;
+  y_drive.CanSollGeschw = -9500;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_SPEED;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingSpeed;};
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ASSERT(y_drive.CanIstGeschw == -9500);
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 0;
+  y_drive.CanIstGeschw  = 0;
+  y_drive.CanSollPos = 121000;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 121000);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+//  ASSERT_END_STATES_CONTAINS, ASSERT_EVENTUALLY_VISIT_STATES
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_higher_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 100100;
+  y_drive.CanIstGeschw  = 0;
+  y_drive.CanSollPos = 222200;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 222200);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+//  ASSERT_END_STATES_CONTAINS, ASSERT_EVENTUALLY_VISIT_STATES
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_too_fast_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 0;
+  y_drive.CanIstGeschw  = 10000;
+  y_drive.CanSollPos = 10100;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 10100);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+//  ASSERT_END_STATES_CONTAINS, ASSERT_EVENTUALLY_VISIT_STATES
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_higher_too_fast_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 100000;
+  y_drive.CanIstGeschw  = 10000;
+  y_drive.CanSollPos = 110200;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 110200);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+//  ASSERT_END_STATES_CONTAINS, ASSERT_EVENTUALLY_VISIT_STATES
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_up_invert_start_dir_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 100000;
+  y_drive.CanIstGeschw  = -10000;
+  y_drive.CanSollPos = 111100;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 111100);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+//  ASSERT_END_STATES_CONTAINS, ASSERT_EVENTUALLY_VISIT_STATES
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_down_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 67800;
+  y_drive.CanIstGeschw  = 0;
+  y_drive.CanSollPos = 12300;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 12300);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_down_too_fast_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 67800;
+  y_drive.CanIstGeschw  = -10000;
+  y_drive.CanSollPos = 56700;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 56700);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};
+
+Simulation
+{
+  TestCase{Y_drive_sim_unittests;};Test{Drive_move_down_invert_start_dir_and_stop_position_mode;};
+
+  g_y_drive_is_operational  = 1;
+  y_drive.Control.ANTRIEB_ENABLE_IN = 1;
+  y_drive.Control.ANTRIEB_BRAKE_RELEASE = 1;
+  y_drive.CanIstPos  = 56700;
+  y_drive.CanIstGeschw  = 10000;
+  y_drive.CanSollPos = 45600;
+  Start { sm_Y_drive_sim; };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_POSITION;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.MovingPosition;};
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+  ev_y_drive_periodic_moving_timer;
+
+  ASSERT(y_drive.CanIstGeschw == 0);
+  ASSERT(y_drive.CanIstPos == 45600);
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Inpos;};
+  y_drive.Control.ANTRIEB_MODE = DRIVE_OPERATIONAL_MODE_STOP;
+  ev_y_drive_sim_control;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_sim.sm_Y_drive_sim_enable.sm_Y_drive_sim_brake.sm_Y_drive_sim_move.Stoped;};
+
+  //  finish test
+  stop_timer ( timer_y_drive_sim_state_response );
+};

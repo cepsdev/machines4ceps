@@ -1,0 +1,28 @@
+Event ev_y_drive_disable, ev_y_drive_disable_timeout, ev_y_drive_is_disabled, ev_y_drive_disable_was_interrupted;
+
+Statemachine
+{
+  id  { sm_Y_drive_disable; };
+  description { "Y_drive_disable";  };
+  States  { Initial;  Final;  Disabling;  };
+
+  Actions
+  {
+    a_y_drive_set_timeout_timer { start_timer ( DEF_TIME_RUCKMLD_ANTRIEBE * s, ev_y_drive_disable_timeout, timer_y_drive_disable );  };
+    a_y_drive_disable           { ev_y_drive_disable; };
+    a_y_drive_was_interrupted   { ev_y_drive_disable_was_interrupted; };
+  };
+
+  on_exit
+  {
+    stop_timer ( timer_y_drive_disable );
+    if ( !in_state ( Final ) )
+    {
+      a_y_drive_was_interrupted;
+    }
+  };
+
+  Transition  { Initial;    Disabling;                          a_y_drive_set_timeout_timer;  a_y_drive_disable;  };
+  Transition  { Disabling;  Final;      ev_y_drive_is_disabled; };
+};
+

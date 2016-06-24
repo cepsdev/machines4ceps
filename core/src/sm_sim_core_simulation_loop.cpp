@@ -57,6 +57,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 	}
 
 
+	request_start_for_all_dispatchers();
+
+
 	log()<< "[SIMULATION STARTED]\n";	//log()<<"[START STATES] " ;	print_info(states);
 	if (user_supplied_global_init() != nullptr)
 		user_supplied_global_init()();

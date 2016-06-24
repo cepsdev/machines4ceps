@@ -113,7 +113,12 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
 
 	bool logtrace_ = false;
 
+	bool start_comm_threads_ = true;
+
 public:
+
+	bool& start_comm_threads(){return start_comm_threads_;}
+	bool start_comm_threads() const {return start_comm_threads_;}
 
 	bool& logtrace() {return logtrace_;}
 	bool logtrace() const {return logtrace_;}
@@ -165,6 +170,7 @@ public:
 		std::vector<ceps::ast::Nodebase_ptr> payload_;
 		std::vector<sm4ceps_plugin_int::Variant> payload_native_;
 		bool unique_= false;
+		sm4ceps_plugin_int::Framecontext* frmctxt_ = nullptr;
 		event_t() = default;
 		event_t(const event_t &) = default;
 		event_t& operator = (const event_t &) = default;
@@ -440,13 +446,32 @@ public:
 
 	struct dispatcher_thread_ctxt_t{
 		 std::vector<std::pair<Rawframe_generator*,ceps::ast::Nodebase_ptr>> handler;
+		 std::vector<sm4ceps_plugin_int::Framecontext*> native_handler;
+		 std::string id_;
+		 std::mutex m_;
+		 std::condition_variable cv_;
+		 bool start_ = false;
+		 std::string& id(){return id_;}
+		 std::string const & id() const {return id_;}
+		 dispatcher_thread_ctxt_t() = default;
+
+		 void request_start() {
+			std::lock_guard<std::mutex> lk(m_);
+			start_ = true;
+			cv_.notify_one();
+		 }
+		 void wait_for_start_request(){
+			 std::unique_lock<std::mutex> lk(m_);
+		 	 cv_.wait(lk, [this]{return start_; });
+		 }
+		 decltype(native_handler)& get_native_handler() {return native_handler;}
 	};
 private:
 	std::map<std::string,int> registered_sockets_;
 	std::recursive_mutex registered_sockets_mtx_;
 	std::set<state_rep_t> assert_not_in_end_states_;
 	std::set<state_rep_t> assert_in_end_states_;
-	std::vector<dispatcher_thread_ctxt_t> dispatcher_thread_ctxt_;
+	std::vector<dispatcher_thread_ctxt_t*> dispatcher_thread_ctxt_;
 	bool generate_cpp_code_ = false;
 public:
 	bool generate_cpp_code() const {return generate_cpp_code_;}
@@ -454,13 +479,22 @@ public:
 
 	std::recursive_mutex& get_reg_sock_mtx(){return registered_sockets_mtx_;}
 	std::map<std::string,int>& get_reg_socks(){return registered_sockets_;}
-	dispatcher_thread_ctxt_t& allocate_dispatcher_thread_ctxt(int & i) {
-		i = dispatcher_thread_ctxt_.size();dispatcher_thread_ctxt_.push_back(dispatcher_thread_ctxt_t());
+	dispatcher_thread_ctxt_t* allocate_dispatcher_thread_ctxt(int & i) {
+		i = dispatcher_thread_ctxt_.size();dispatcher_thread_ctxt_.push_back(new dispatcher_thread_ctxt_t{});
 		return dispatcher_thread_ctxt_[dispatcher_thread_ctxt_.size()-1];
 	}
-	dispatcher_thread_ctxt_t get_dispatcher_thread_ctxt(int i) {return dispatcher_thread_ctxt_[i];}
+	dispatcher_thread_ctxt_t* get_dispatcher_thread_ctxt(int i) {return dispatcher_thread_ctxt_[i];}
+	dispatcher_thread_ctxt_t* get_dispatcher_thread_ctxt(std::string name) {
+		//std::cout << "lookup "<< name << std::endl;
+		for(auto  e: dispatcher_thread_ctxt_)
+			if (e->id() == name) return e;
+		return nullptr;
+	}
+	void request_start_for_all_dispatchers(){
+		for(auto & e: dispatcher_thread_ctxt_) e->request_start();
+	}
 
-	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards);
+	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards,Result_process_cmd_line const& result_cmd_line);
 
 	//CAL (Sender)
 

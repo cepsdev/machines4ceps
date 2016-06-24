@@ -1,0 +1,28 @@
+Event ev_z_drive_to_indexposition_timeout, ev_mast_move, ev_z_drive_is_in_indexposition;
+Event ev_z_drive_enable_timeout, ev_z_drive_moving_timeout, ev_z_drive_movement_stopped, ev_z_drive_move_to_indexposition_starts;
+
+Statemachine
+{
+  id  { sm_Z_drive_to_indexposition;  };
+  description { "Z_drive_to_indexposition"; };
+  States  { Initial;  Start;  Final;  Error;  };
+  import  { sm_Z_drive_move;  };
+  Actions
+  {
+    a_z_drive_start                     { ev_z_drive_move_to_indexposition_starts;  };
+    a_z_drive_move_to_indexposition     { ev_mast_move ( MODE_TO_TARGET, z_drive.MAST_INDEXPOSITION, WITH_ENABLE_TIMEOUT, WITH_MOVING_TIMEOUT );  };
+    a_z_drive_is_in_indexposition       { ev_z_drive_is_in_indexposition; };
+    a_z_drive_to_indexposition_timeout  { ev_z_drive_to_indexposition_timeout;  };
+  };
+
+  //on_enter {};
+  //on_exit{};
+
+  Transition  { Initial;          Final;                                          a_z_drive_is_in_indexposition;                     g_z_drive_is_in_indexposition; };
+  Transition  { Initial;          Start;                                          a_z_drive_move_to_indexposition; a_z_drive_start; !g_z_drive_is_in_indexposition; };
+  Transition  { Start;            sm_Z_drive_move;  ev_mast_move; };
+  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_enable_timeout;    a_z_drive_to_indexposition_timeout; };
+  Transition  { sm_Z_drive_move;  Error;            ev_z_drive_moving_timeout;    a_z_drive_to_indexposition_timeout; };
+  Transition  { sm_Z_drive_move;  Final;            ev_z_drive_movement_stopped;  a_z_drive_is_in_indexposition;      };
+};
+

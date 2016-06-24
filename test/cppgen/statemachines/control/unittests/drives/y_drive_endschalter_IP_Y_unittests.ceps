@@ -1,5 +1,4 @@
 // <description>
-Event ev_total_nonsence;  //  arki: only needet to force transitions in statemachines
 
 Y_drive_endschalter_IP_Y
 {
@@ -26,13 +25,13 @@ Simulation
 
   y_drive.IstPos = y_drive.INDEXPOSITION;
 
-  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ev_y_drive_position_changed;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_endschalter_IP_Y.On;};
-  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ev_y_drive_position_changed;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_endschalter_IP_Y.On;};
 
   y_drive.IstPos = y_drive.ARBEITSPOSITION;
 
-  ev_total_nonsence;  //  arki: workaround to just force a tansition in the statemachine
+  ev_y_drive_position_changed;
   ASSERT_CURRENT_STATES_CONTAINS{sm_Y_drive_endschalter_IP_Y.Off;};
 };

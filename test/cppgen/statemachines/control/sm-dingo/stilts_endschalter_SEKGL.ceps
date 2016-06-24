@@ -1,6 +1,6 @@
 // SEKGL - Stütze Endschalter Klemmung Geschlossen Links
 
-Event ev_stilts_valve_lock_left_state, ev_stilt_left_lock_state_change;
+Event ev_stilts_valve_lock_left_state,  ev_stilt_left_lock_state_change;
 
 Statemachine
 {
@@ -10,13 +10,13 @@ Statemachine
 
   Actions
   {
-    a_StiltsLockState { ev_stilt_left_lock_state_change; };
-    a_No              { SENSOR_SEKGL  = 0;  };
-    a_Yes             { SENSOR_SEKGL  = 1;  };
+    a_stilts_es_state_change  { ev_stilt_left_lock_state_change;  };
+    a_stilts_es_SEKGL_No      { SENSOR_SEKGL  = 0;  print ( "SENSOR_SEKGL = 0\n" );  };
+    a_stilts_es_SEKGL_Yes     { SENSOR_SEKGL  = 1;  print ( "SENSOR_SEKGL = 1\n" );  };
   };
 
-  Transition  { Initial;  No;                                    !g_stilts_valve_SVK_is_in_locking_position;  a_No;   };
-  Transition  { Initial;  Yes;                                    g_stilts_valve_SVK_is_in_locking_position;  a_Yes;  };
-  Transition  { Yes;      No;   ev_stilts_valve_lock_left_state; !g_stilts_valve_SVK_is_in_locking_position;  a_No;   a_StiltsLockState;  };
-  Transition  { No;       Yes;  ev_stilts_valve_lock_left_state;  g_stilts_valve_SVK_is_in_locking_position;  a_Yes;  a_StiltsLockState;  };
+  Transition  { Initial;  No;                                      !g_stilts_valve_SVK_is_in_locking_position;  a_stilts_es_SEKGL_No;                             };
+  Transition  { Initial;  Yes;                                      g_stilts_valve_SVK_is_in_locking_position;  a_stilts_es_SEKGL_Yes;                            };
+  Transition  { Yes;      No;   ev_stilts_valve_lock_left_state;   !g_stilts_valve_SVK_is_in_locking_position;  a_stilts_es_SEKGL_No;   a_stilts_es_state_change; };
+  Transition  { No;       Yes;  ev_stilts_valve_lock_left_state;    g_stilts_valve_SVK_is_in_locking_position;  a_stilts_es_SEKGL_Yes;  a_stilts_es_state_change; };
 };

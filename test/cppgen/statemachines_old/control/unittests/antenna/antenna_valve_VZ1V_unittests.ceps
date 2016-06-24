@@ -1,0 +1,32 @@
+// <description>
+
+Antenna_valve_VZ1V_unittests {};
+
+Simulation
+{
+  TestCase{Antenna_valve_VZ1V_unittests;};Test{Initialization;};
+
+  Start { sm_Antenna_valve_VZ1V;  };
+
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_valve_VZ1V.Closed;};
+};
+
+
+Simulation
+{
+  TestCase{Antenna_valve_VZ1V_unittests;};Test{Visit_all_states;};
+
+  Start { sm_Antenna_valve_VZ1V;  };
+
+  ev_antenna_prepare_usage;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_valve_VZ1V.Open;};
+
+  ev_antenna_stop_using_lock;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_valve_VZ1V.Closed;};
+
+  ev_antenna_prepare_usage;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_valve_VZ1V.Open;};
+
+  ev_antenna_unlock;
+  ASSERT_CURRENT_STATES_CONTAINS{sm_Antenna_valve_VZ1V.Closed;};
+};

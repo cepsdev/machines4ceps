@@ -1,22 +1,7 @@
-Event ev_y_drive_set_antrieb_reset_fault, ev_y_drive_reset_antrieb_reset_fault, ev_y_drive_fault_timer_one;
-Event ev_y_drive_fault_timer_two, ev_y_drive_fault_antrieb_is_reset, ev_y_drive_reset_error;
+Event ev_y_drive_can_control, ev_y_drive_fault_timer_one;
+Event ev_y_drive_fault_timer_two, ev_y_drive_fault_antrieb_is_reset, ev_y_drive_reset_error, ev_y_drive_has_antrieb_fault;
 Guard g_y_drive_has_antrieb_fault;
 
-// // Pseudocode
-// // E := Error
-// // C := Control Bit
-// while(Error)
-// {
-//   C=1; sleep(500ms);
-//   C=0; sleep(500ms);
-//   C=1; sleep(5   s);
-//   if(!E)
-//   {
-//     C=0;
-//     break;
-//   }
-// }
-// Fahre_Antrieb();
 
 Statemachine
 {
@@ -26,18 +11,20 @@ Statemachine
 
   Actions
   {
-    a_set_timer_one             { start_timer ( DEF_TIME_500MS * s,            ev_y_drive_fault_timer_one ); };
-    a_set_timer_two             { start_timer ( DEF_TIME_RUCKMLD_ANTRIEBE * s, ev_y_drive_fault_timer_two ); };
-    a_set_error_fault_antrieb   { ev_y_drive_set_antrieb_reset_fault; };
-    a_reset_error_fault_antrieb { ev_y_drive_reset_antrieb_reset_fault; };
-    a_reset_error               { ev_y_drive_reset_error; };
+    a_set_timer_one               { start_timer ( DEF_TIME_500MS * s,            ev_y_drive_fault_timer_one,  timer_y_drive_fault_one );  };
+    a_set_timer_two               { start_timer ( DEF_TIME_RUCKMLD_ANTRIEBE * s, ev_y_drive_fault_timer_two,  timer_y_drive_fault_two );  };
+    a_set_error_fault_antrieb     { y_drive.Control.ANTRIEB_RESET_FAULT     = 1; ev_y_drive_can_control;    };
+    a_reset_error_fault_antrieb   { y_drive.Control.ANTRIEB_RESET_FAULT     = 0; ev_y_drive_can_control;  };
+    a_reset_error_fault_antrieb_2 { a_reset_error_fault_antrieb; ev_y_drive_fault_antrieb_is_reset;  };  // Fehlerbit wurde erfolgreich rueckgesetzt
+    a_reset_error_fault_antrieb_3 { a_reset_error_fault_antrieb; ev_y_drive_has_antrieb_fault;       };  // Fehlerbit konnte nicht rueckgesetzt werden -> Fehlermeldung
+    a_reset_error                 { ev_y_drive_reset_error; };
   };
 
   Transition  { Initial;      Final;                                                                                   !g_y_drive_has_antrieb_fault;  };
   Transition  { Initial;      first_set;                                a_set_error_fault_antrieb;    a_set_timer_one;  g_y_drive_has_antrieb_fault;  };
   Transition  { first_set;    first_reset;  ev_y_drive_fault_timer_one; a_reset_error_fault_antrieb;  a_set_timer_one;  };
   Transition  { first_reset;  second_set;   ev_y_drive_fault_timer_one; a_set_error_fault_antrieb;    a_set_timer_two;  };
-  Transition  { second_set;   first_set;    ev_y_drive_fault_timer_two; a_set_error_fault_antrieb;    a_set_timer_one;  g_y_drive_has_antrieb_fault;  a_reset_error;  };
-  Transition  { second_set;   Final;        ev_y_drive_fault_timer_two; a_reset_error_fault_antrieb;                   !g_y_drive_has_antrieb_fault;  };
+  Transition  { second_set;   Final;                                    a_reset_error_fault_antrieb_2;                 !g_y_drive_has_antrieb_fault;  };
+  Transition  { second_set;   Final;        ev_y_drive_fault_timer_two; a_reset_error_fault_antrieb_3;                  };
 };
 

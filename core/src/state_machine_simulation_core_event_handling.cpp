@@ -80,6 +80,17 @@ do{
 			 main_event_queue().data().pop();
 			 lk.unlock();
 
+			 if (eev.frmctxt_ !=nullptr){
+				 eev.frmctxt_->update_sysstates();
+				 if ( nullptr != eev.frmctxt_->get_handler()){
+					 eev.frmctxt_->get_handler()();
+					 delete eev.frmctxt_;
+				 }
+				 continue;
+			 }
+
+
+
 			 ev.sid_ = eev.id_;
 			 ev.payload_ = eev.payload_;
 			 ev.payload_native_ = eev.payload_native_;

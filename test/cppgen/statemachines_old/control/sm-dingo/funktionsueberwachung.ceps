@@ -1,0 +1,226 @@
+// Dingo - Ueberwachte Komponenten
+
+//X Antrieb          0x10
+//Y Antrieb          0x20
+//Z Antrieb          0x30
+//IO Karte           0x48
+//SI Karte           0x50
+//USV 1              0x70
+//USV 2              0x78
+//ExtBG              0x60
+
+Event ev_x_drive_set_operational,   ev_x_drive_has_heartbeat;
+Event ev_y_drive_set_operational,   ev_y_drive_has_heartbeat;
+Event ev_z_drive_set_operational,   ev_z_drive_has_heartbeat;
+Event ev_io_module_set_operational, ev_io_module_has_heartbeat;
+Event ev_si_module_set_operational, ev_si_module_has_heartbeat;
+Event ev_usv1_set_operational,      ev_usv1_has_heartbeat;
+Event ev_usv2_set_operational,      ev_usv2_has_heartbeat;
+Event ev_extbg_set_operational,     ev_extbg_has_heartbeat;
+Event ev_message_from_psm, ev_psm_stop, ev_psm_restart;
+Event ev_message_from_ivenet, ev_ivenet_stop, ev_ivenet_restart;
+Event ev_set_system_pressure_normal,  ev_time_for_normal_system_pressure;
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_X_drive_fue; };
+  States  { Initial;  PreOperational; Operational; };
+
+  Actions
+  {
+    a_x_drive_send_heartbeat      { start_periodic_timer(DRIVES_HEARTBEAT_PERIOD*s, ev_x_drive_has_heartbeat, x_drive_fue_heartbeat_timer); };
+    a_set_preop_payload           { s_x_drive_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD;  };
+    a_set____op_payload           { s_x_drive_heartbeat_payload =     OPERATIONAL_PAYLOAD;  };
+  };
+
+  on_exit { stop_timer(x_drive_fue_heartbeat_timer);  };
+
+  Transition  { Initial;        PreOperational;                                                       a_set_preop_payload; a_x_drive_send_heartbeat;  };
+  Transition  { PreOperational;    Operational; ev_x_drive_set_operational; g_x_drive_is_functional;  a_set____op_payload;  };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Y_drive_fue; };
+  States  { Initial;  PreOperational; Operational; };
+
+  Actions
+  {
+    a_y_drive_send_heartbeat      { start_periodic_timer(DRIVES_HEARTBEAT_PERIOD*s, ev_y_drive_has_heartbeat, y_drive_fue_heartbeat_timer); };
+    a_set_preop_payload           { s_y_drive_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD;  };
+    a_set____op_payload           { s_y_drive_heartbeat_payload =     OPERATIONAL_PAYLOAD;  };
+  };
+
+  on_exit { stop_timer(y_drive_fue_heartbeat_timer);  };
+
+  Transition  { Initial;        PreOperational;                                                       a_set_preop_payload; a_y_drive_send_heartbeat;  };
+  Transition  { PreOperational;    Operational; ev_y_drive_set_operational; g_y_drive_is_functional;  a_set____op_payload;  };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_Z_drive_fue; };
+  States  { Initial;  PreOperational; Operational; };
+
+  Actions
+  {
+    a_z_drive_send_heartbeat      { start_periodic_timer(DRIVES_HEARTBEAT_PERIOD*s, ev_z_drive_has_heartbeat, z_drive_fue_heartbeat_timer); };
+    a_set_preop_payload           { s_z_drive_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD;  };
+    a_set____op_payload           { s_z_drive_heartbeat_payload =     OPERATIONAL_PAYLOAD;  };
+  };
+
+  on_exit { stop_timer(z_drive_fue_heartbeat_timer);  };
+
+  Transition  { Initial;        PreOperational;                                                       a_set_preop_payload; a_z_drive_send_heartbeat;  };
+  Transition  { PreOperational;    Operational; ev_z_drive_set_operational; g_z_drive_is_functional;  a_set____op_payload;  };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_IO_module; };
+  States  { Initial; PreOperational; Operational; };
+
+  Actions
+  {
+    a_io_module_send_heartbeat    { start_periodic_timer(NODE_HEARTBEAT_PERIOD*s, ev_io_module_has_heartbeat,  io_module_heartbeat_timer);  };
+    a_set_preop_payload           { s_io_module_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD;  };
+    a_set____op_payload           { s_io_module_heartbeat_payload =     OPERATIONAL_PAYLOAD;  };
+    a_process_system_pesssure     { start_timer(0.5*s, ev_time_for_normal_system_pressure, timer_for_normal_system_pressure); };  //  half second afer start trigger a can-mesage with level of system pressure
+    a_set_system_pressure_normal  { ev_set_system_pressure_normal; };
+  };
+
+  on_exit { stop_timer(io_module_heartbeat_timer);  };
+
+  Transition  { Initial;        PreOperational;                                                           a_set_preop_payload;  a_io_module_send_heartbeat; };
+  Transition  { PreOperational;    Operational; ev_io_module_set_operational; g_io_module_is_functional;  a_set____op_payload;  a_process_system_pesssure; };
+  Transition  {    Operational;    Operational; ev_time_for_normal_system_pressure;                       a_set_system_pressure_normal; };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_SI_module; };
+  States  { Initial; PreOperational; Operational; };
+
+  Actions
+  {
+    a_si_module_send_heartbeat    { start_periodic_timer(NODE_HEARTBEAT_PERIOD*s, ev_si_module_has_heartbeat,  si_module_heartbeat_timer);  };
+    a_set_preop_payload           { s_si_module_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD;  };
+    a_set____op_payload           { s_si_module_heartbeat_payload =     OPERATIONAL_PAYLOAD;  };
+  };
+
+  on_exit { stop_timer(si_module_heartbeat_timer); };
+
+  Transition  { Initial;        PreOperational;                                                           a_set_preop_payload; a_si_module_send_heartbeat;  };
+  Transition  { PreOperational;    Operational; ev_si_module_set_operational; g_si_module_is_functional;  a_set____op_payload;  };
+};
+
+// ------------------------------------------------------------------------
+
+
+Statemachine
+{
+  id  { sm_USV1;  };
+  States  { Initial; PreOperational; Operational; };
+
+  Actions
+  {
+    a_usv1_send_heartbeat         { start_periodic_timer(NODE_HEARTBEAT_PERIOD*s, ev_usv1_has_heartbeat,  usv1_heartbeat_timer);  };
+    a_set_preop_payload           { s_usv1_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD; };
+    a_set____op_payload           { s_usv1_heartbeat_payload =     OPERATIONAL_PAYLOAD; };
+  };
+
+  on_exit { stop_timer(usv1_heartbeat_timer); };
+
+  Transition  { Initial;        PreOperational;                                                   a_set_preop_payload; a_usv1_send_heartbeat; };
+  Transition  { PreOperational;    Operational; ev_usv1_set_operational;  g_usv1_is_functional;   a_set____op_payload; };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_USV2;  };
+  States  { Initial; PreOperational; Operational; };
+
+  Actions
+  {
+    a_usv2_send_heartbeat         { start_periodic_timer(NODE_HEARTBEAT_PERIOD*s, ev_usv2_has_heartbeat,  usv2_heartbeat_timer);  };
+    a_set_preop_payload           { s_usv2_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD; };
+    a_set____op_payload           { s_usv2_heartbeat_payload =     OPERATIONAL_PAYLOAD; };
+  };
+
+  on_exit { stop_timer(usv2_heartbeat_timer); };
+
+  Transition{Initial;         PreOperational;                                                   a_set_preop_payload; a_usv2_send_heartbeat; };
+  Transition{PreOperational;     Operational; ev_usv2_set_operational;  g_usv2_is_functional;   a_set____op_payload;  };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_ExtBG; };
+  States  { Initial; PreOperational; Operational; };
+
+  Actions
+  {
+    a_extbg_send_heartbeat        { start_periodic_timer(NODE_HEARTBEAT_PERIOD*s, ev_extbg_has_heartbeat,  extbg_heartbeat_timer);  };
+    a_set_preop_payload           { s_extbg_heartbeat_payload = PRE_OPERATIONAL_PAYLOAD;  };
+    a_set____op_payload           { s_extbg_heartbeat_payload =     OPERATIONAL_PAYLOAD;  };
+  };
+
+  on_exit { stop_timer(extbg_heartbeat_timer);  };
+
+  Transition  { Initial;        PreOperational;                             g_extbg_is_functional;  a_set_preop_payload; a_extbg_send_heartbeat; };
+  Transition  { PreOperational;    Operational; ev_extbg_set_operational;   g_extbg_is_functional;  a_set____op_payload; };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_PSM; };
+  States  { Initial; Active; InActive;  };
+
+  Actions
+  {
+    a_psm_generate_traffic        { start_periodic_timer(PSM_TRAFFIC_PERIOD*s, ev_message_from_psm, psm_traffic_producer_timer);  };
+    a_psm_stop_traffic            { stop_timer(psm_traffic_timer);  };
+  };
+
+  on_exit { stop_timer(psm_traffic_producer_timer); };
+
+  Transition  { Initial;    Active;                 a_psm_generate_traffic;  };
+  Transition  { Active;   InActive; ev_psm_stop;    a_psm_stop_traffic;      };
+  Transition  { InActive;   Active; ev_psm_restart; a_psm_generate_traffic;  };
+};
+
+// ------------------------------------------------------------------------
+
+Statemachine
+{
+  id  { sm_iVeNet;  };
+  States  { Initial; Active; InActive;  };
+
+  Actions
+  {
+    a_ivenet_generate_traffic     { start_periodic_timer(IVENET_TRAFFIC_PERIOD*s, ev_message_from_ivenet, ivenet_traffic_producer_timer); };
+    a_ivenet_stop_traffic         { stop_timer(ivenet_traffic_timer); };
+  };
+
+  on_exit { stop_timer(ivenet_traffic_producer_timer);  };
+
+  Transition  { Initial;    Active;                     a_ivenet_generate_traffic;  };
+  Transition  { Active;   InActive; ev_ivenet_stop;     a_ivenet_stop_traffic;      };
+  Transition  { InActive;   Active; ev_ivenet_restart;  a_ivenet_generate_traffic;  };
+};
