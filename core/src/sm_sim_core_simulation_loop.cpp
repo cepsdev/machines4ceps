@@ -104,8 +104,13 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 					 if (print_debug_info_)log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
 					 auto it = sm->find_action("on_enter");
 					 if (it == nullptr) continue;
-					 if (it->body_ == nullptr) continue;
-					 execute_action_seq(sm,it->body());
+                                         if (it->native_func()){
+                                           current_smp() = it->associated_sm_;
+                                           it->native_func()();
+                                         } else{
+                                          if (it->body_ == nullptr) continue;
+                                          execute_action_seq(sm,it->body());
+                                         }
 				 }//for
 			   }
 
@@ -267,7 +272,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				if (it == nullptr) continue;
 				if (it->native_func()){
 				 current_smp() = it->associated_sm_;
-			     it->native_func()();
+                                 it->native_func()();
 				 continue;
 				}
 				if (it->body_ == nullptr) continue;
