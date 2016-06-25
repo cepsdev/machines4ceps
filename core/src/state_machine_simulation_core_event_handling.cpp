@@ -94,6 +94,7 @@ do{
 			 ev.sid_ = eev.id_;
 			 ev.payload_ = eev.payload_;
 			 ev.payload_native_ = eev.payload_native_;
+			 ev.glob_func_ = eev.glob_func_;
 
 			 if (!eev.already_sent_to_out_queues_)
 				 for(auto oq : out_event_queues_)oq->push(eev);

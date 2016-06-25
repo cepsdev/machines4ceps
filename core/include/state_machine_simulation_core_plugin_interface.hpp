@@ -22,6 +22,7 @@ namespace sm4ceps_plugin_int{
  struct ev{
    std::string name_;
    std::vector<Variant> args_;
+   ev() = default;
    ev(std::string name):name_(name){}
    ev(std::string name,std::vector<Variant> const & args):name_(name),args_(args){}
 
@@ -104,10 +105,13 @@ public:
  virtual void start_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id) = 0;
  virtual void start_periodic_timer(double,sm4ceps_plugin_int::ev) = 0;
  virtual void start_periodic_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id) = 0;
+ virtual void start_periodic_timer(double,sm4ceps_plugin_int::Variant (*fp)()) = 0;
+ virtual void start_periodic_timer(double,sm4ceps_plugin_int::Variant (*fp)(),sm4ceps_plugin_int::id) = 0;
  virtual void stop_timer(sm4ceps_plugin_int::id) = 0;
  virtual void send_raw_frame(void*,size_t,size_t,std::string const &) = 0;
  virtual void register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id) = 0;
-
+ virtual bool in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids) = 0;
+ virtual void register_global_function(std::string name,sm4ceps_plugin_int::Variant (*fp)()) = 0;
 };
 
 #endif

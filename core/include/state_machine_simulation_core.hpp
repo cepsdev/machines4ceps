@@ -110,12 +110,15 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
 	void call_states_visitors() {
 		for(auto & e : states_vistors) e.first(current_states_,this,e.second);
 	}
-
 	bool logtrace_ = false;
-
 	bool start_comm_threads_ = true;
-
+	State_machine* current_smp_ = nullptr;
+	std::map<std::string,sm4ceps_plugin_int::glob_handler_t> glob_funcs_;
 public:
+
+	decltype(glob_funcs_)& glob_funcs(){return glob_funcs_;}
+	decltype(current_smp_)& current_smp(){return current_smp_;}
+	decltype(current_smp_) current_smp() const {return current_smp_;}
 
 	bool& start_comm_threads(){return start_comm_threads_;}
 	bool start_comm_threads() const {return start_comm_threads_;}
@@ -171,15 +174,12 @@ public:
 		std::vector<sm4ceps_plugin_int::Variant> payload_native_;
 		bool unique_= false;
 		sm4ceps_plugin_int::Framecontext* frmctxt_ = nullptr;
+		sm4ceps_plugin_int::Variant (*glob_func_)()  = nullptr;
 		event_t() = default;
 		event_t(const event_t &) = default;
 		event_t& operator = (const event_t &) = default;
-
 		event_t(std::string const & id,std::vector<ceps::ast::Nodebase_ptr> const & payload = {}):id_(id),payload_(payload) {}
-		bool operator < (event_t const & rhs) const
-		{
-
-
+		bool operator < (event_t const & rhs) const {
 			return id_ < rhs.id_;
 		}
 		bool is_epsilon() const {return id_ == "";}
@@ -259,6 +259,7 @@ private:
 								int thread_ctr,
 								bool is_thread = false);
 	state_rep_t resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
+	state_rep_t resolve_state_qualified_id(std::string compound_id, State_machine* parent);
 	event_rep_t resolve_event_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
 	void process_simulation(ceps::ast::Nodeset& sim,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 	void eval_guard_assign(ceps::ast::Binary_operator & root);
@@ -334,7 +335,7 @@ public:
 
 	void process_event_from_remote(nmp_header,char* data);
 	void exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool);
-	bool exec_action_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id,bool periodic_timer);
+	bool exec_action_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id,bool periodic_timer,sm4ceps_plugin_int::Variant (*fp)() = nullptr);
 	bool is_global_event(std::string const & ev_name);
 
 
@@ -553,6 +554,8 @@ public:
 	decltype(user_supplied_guards) const & get_user_supplied_guards() const {return user_supplied_guards;}
 
 
+
+
 	//Userdefined functions (will be replaced by variadic templates)
 
 	void regfn(std::string name, int(*fn) ());
@@ -581,9 +584,13 @@ public:
 	void start_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id);
 	void start_periodic_timer(double,sm4ceps_plugin_int::ev);
 	void start_periodic_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id);
+	void start_periodic_timer(double,sm4ceps_plugin_int::Variant (*fp)());
+	void start_periodic_timer(double,sm4ceps_plugin_int::Variant (*fp)(),sm4ceps_plugin_int::id);
 	void stop_timer(sm4ceps_plugin_int::id);
 	void send_raw_frame(void*,size_t,size_t,std::string const &);
 	void register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id);
+	bool in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids);
+	void register_global_function(std::string name,sm4ceps_plugin_int::Variant (*fp)());
 
 
 	private:

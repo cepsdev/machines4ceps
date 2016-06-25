@@ -16,7 +16,7 @@ if [ $# -lt 3 ]; then
     exit
 fi
 
-TRGS_ROOT="/home/tprerovs/projects/sm4ceps/test/cppgen"
+TRGS_ROOT="/home/tomas/projects/sm4ceps/test/cppgen"
 
 if [ $1 == "x86" ]; then
     if [ -z ${TRGS_ROOT+x} ]; then 
@@ -59,7 +59,7 @@ if [ $# -gt 3 ]; then
     if [ $4 == "NO_GUI" ]; then
         echo -e "Launching statemachines without GUI ..\n"
         BAG_DEFINITIONS="
-          $EXE/sm 
+          $TRGS_ROOT/x86/sm 
           $BASE_DEFS/base_defs.ceps"
     fi
     if [ $4 == "GEN" ]; then
@@ -213,7 +213,14 @@ IGNITOR_BAG=" $NETWORK/gencpp.ceps"
     fi    
 fi  
 ## ------------------------------------------------------------------------
-PLUGIN=" --plugin$C_FUNCTIONS_4_CEPS/libc_functions.so"
+
+PLUGIN=" --plugin$TRGS_ROOT/statemachines/lib.so "
+#PLUGIN=" --plugin$C_FUNCTIONS_4_CEPS/libc_functions.so "
+
+if  [ "$3" == "dingo" ]; then
+ PLUGIN=" --plugin$C_FUNCTIONS_4_CEPS/libc_functions.so "
+fi
+
 if [ $# -gt 3 ]; then
     if [ $4 == "GEN" ]; then
 PLUGIN=" "
@@ -232,7 +239,7 @@ fi
 ## ------------------------------------------------------------------------
 
 DINGO_DEFINITIONS="
-  $EXE/sm 
+  $TRGS_ROOT/x86/sm 
   $BASE_DEFS/base_defs.ceps
   $BASE_DEFS/dingo_definitions.ceps
   $NETWORK/events.ceps"
@@ -325,7 +332,7 @@ elif [ "$3" == "bag" ]; then
   echo "Starting .."
   echo $BAG 
   echo
-  $BAG
+  $BAG --quiet
 else
     echo "call this script with {x86; arm} {dingo; bag} [NO_GUI]"
     exit

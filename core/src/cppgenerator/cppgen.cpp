@@ -120,6 +120,8 @@ const std::string out_hpp_global_functions_prefix = R"(
  extern void start_periodic_timer(double,sm4ceps_plugin_int::ev);
  extern void start_periodic_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id);
  extern void stop_timer(sm4ceps_plugin_int::id);
+ void start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)(),sm4ceps_plugin_int::id id_);
+ void start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)());
  size_t argc();
  sm4ceps_plugin_int::Variant argv(size_t);
  extern bool send(systemstates::id,systemstates::id);
@@ -467,6 +469,8 @@ static int guard_ctr = 0;
 class Cppgenerator{
 	std::map<std::string,sysstate> sysstates_;
 	std::vector<raw_frame_t> raw_frames_;
+	std::set<std::string> glob_funcs_;
+
 	void write_cpp_expr_impl(State_machine_simulation_core* smp,
 				                 Indent& indent,
 								 std::ostream& os,
@@ -507,7 +511,7 @@ public:
 
 	raw_frames_t& raw_frames() {return raw_frames_;}
 	raw_frames_t const & raw_frames() const {return raw_frames_;}
-
+	decltype(glob_funcs_)& glob_funcs(){return glob_funcs_;}
 	void write_cpp_expr(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
 	bool write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
 	bool write_raw_frame_declaration(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,raw_frame_t const & raw_frame);
@@ -644,6 +648,43 @@ public:
 		}
 		os << "\n\n";
 	}
+	void write_cpp_glob_func_decl(std::ostream& os, std::string prefix, ceps::ast::Struct & func,std::vector<std::string>& parameters){
+		auto params = ceps::ast::Nodeset(func.children())["params"];
+		if(params.size()){
+		  std::vector<std::string> typeparams;
+		  std::vector<std::string> args;
+
+	      for(size_t i = 0; i != params.nodes().size();++i){
+	    	  if (params.nodes()[i]->kind() != Ast_node_kind::identifier) continue;
+	    	  typeparams.push_back("T"+std::to_string(i));
+	    	  args.push_back(name(as_id_ref(params.nodes()[i])));
+	      }
+	      os << "template<";
+	      for(size_t i = 0; i != typeparams.size(); ++i){
+	    	  os << "typename " << typeparams[i];
+	    	  if (i+1 < typeparams.size()) os << ",";
+	      }
+	      os << "> ";
+
+	      os << "systemstates::Variant ";
+	      os << prefix << ceps::ast::name(func);
+	      os << "(";
+	      for(size_t i = 0; i != typeparams.size(); ++i){
+	    	  os << typeparams[i]; os << " "; os << args[i];
+	    	  if (i+1 < typeparams.size()) os << ",";
+	      }
+	      os << ")";
+	      parameters = args;
+		} else	{
+			glob_funcs().insert(ceps::ast::name(func));
+			os << "systemstates::Variant " << prefix << ceps::ast::name(func)  << "()";
+		}
+	}
+
+	void write_cpp_glob_func_decl(std::ostream& os, std::string prefix, ceps::ast::Struct & func){
+		std::vector<std::string> parameters;
+		write_cpp_glob_func_decl(os,prefix,func,parameters);
+	}
 };
 
 template<typename F> void for_all_nodes(State_machine_simulation_core* smp, Nodeset& ns,F f){
@@ -749,40 +790,6 @@ std::pair<std::string,std::string> cpp_templatized_decl(ceps::ast::Struct & func
 	return std::make_pair(std::string{},std::string{});
 }
 
-void write_cpp_glob_func_decl(std::ostream& os, std::string prefix, ceps::ast::Struct & func,std::vector<std::string>& parameters){
-	auto params = ceps::ast::Nodeset(func.children())["params"];
-	if(params.size()){
-	  std::vector<std::string> typeparams;
-	  std::vector<std::string> args;
-
-      for(size_t i = 0; i != params.nodes().size();++i){
-    	  if (params.nodes()[i]->kind() != Ast_node_kind::identifier) continue;
-    	  typeparams.push_back("T"+std::to_string(i));
-    	  args.push_back(name(as_id_ref(params.nodes()[i])));
-      }
-      os << "template<";
-      for(size_t i = 0; i != typeparams.size(); ++i){
-    	  os << "typename " << typeparams[i];
-    	  if (i+1 < typeparams.size()) os << ",";
-      }
-      os << "> ";
-
-      os << "systemstates::Variant ";
-      os << prefix << ceps::ast::name(func);
-      os << "(";
-      for(size_t i = 0; i != typeparams.size(); ++i){
-    	  os << typeparams[i]; os << " "; os << args[i];
-    	  if (i+1 < typeparams.size()) os << ",";
-      }
-      os << ")";
-      parameters = args;
-	} else	os << "systemstates::Variant " << prefix << ceps::ast::name(func)  << "()";
-}
-
-void write_cpp_glob_func_decl(std::ostream& os, std::string prefix, ceps::ast::Struct & func){
-	std::vector<std::string> parameters;
-	write_cpp_glob_func_decl(os,prefix,func,parameters);
-}
 
 
 std::string get_cpp_action_name(std::string prefix,State_machine::Transition::Action const & a){
@@ -911,7 +918,10 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 					os << compound_id; if (is_compound) os << ".value()"; return;
 				}
 			}
-			os << sysstates_namespace<<"::"<< "id{\"" << compound_id << "\"}";
+
+			if (glob_funcs().find(compound_id) != glob_funcs().end() )
+				os << compound_id;
+			else os << sysstates_namespace<<"::"<< "id{\"" << compound_id << "\"}";
 		}
 	} else if (p->kind() == Ast_node_kind::binary_operator){
 		auto& binop = as_binop_ref(p);
@@ -1588,7 +1598,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		if(p->kind() != Ast_node_kind::structdef) return;
 		auto& str = as_struct_ref(p);
 		indent_hpp.print_indentation(o_hpp);
-		write_cpp_glob_func_decl(o_hpp,"",str);
+		cppgenerator.write_cpp_glob_func_decl(o_hpp,"",str);
 		o_hpp << ";\n";
 	});
 
@@ -1668,7 +1678,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 			auto& str = as_struct_ref(p);
 			indent_cpp.print_indentation(o_cpp);
 			std::vector<std::string> parameters;
-			write_cpp_glob_func_decl(o_cpp,global_functions_namespace+"::",str,parameters);
+			cppgenerator.write_cpp_glob_func_decl(o_cpp,global_functions_namespace+"::",str,parameters);
 			o_cpp << "{\n";
 			indent_cpp.indent_incr();
 			auto & func_body = as_struct_ref(p);
@@ -1708,6 +1718,11 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		}
 	}
 
+	//Register global functions without parameters
+
+	for(auto const & e : cppgenerator.glob_funcs())
+		init_plugin_content << "smcore_interface->register_global_function(\""<<e<<"\",globfuncs::"<<e<<");\n";
+
 
 	init_plugin_content << "}\n";
 
@@ -1743,7 +1758,10 @@ void globfuncs::start_timer(double t,sm4ceps_plugin_int::ev ev_){ smcore_interfa
 void globfuncs::start_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_){smcore_interface->start_timer(t,ev_,id_);}
 void globfuncs::start_periodic_timer(double t ,sm4ceps_plugin_int::ev ev_){smcore_interface->start_periodic_timer(t,ev_);}
 void globfuncs::start_periodic_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_){smcore_interface->start_periodic_timer(t,ev_,id_);}
+void globfuncs::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)(),sm4ceps_plugin_int::id id_){smcore_interface->start_periodic_timer(t,fp,id_);}
+void globfuncs::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)()){smcore_interface->start_periodic_timer(t,fp);}
 void globfuncs::stop_timer(sm4ceps_plugin_int::id id_){smcore_interface->stop_timer(id_);}
+bool in_state(std::initializer_list<systemstates::id> state_ids){return smcore_interface->in_state(state_ids);}
 )~";
 
 

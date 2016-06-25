@@ -295,10 +295,13 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 
 }
 
-bool State_machine_simulation_core::exec_action_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_,bool periodic_timer){
+bool State_machine_simulation_core::exec_action_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_,bool periodic_timer,sm4ceps_plugin_int::Variant (*fp)()){
 
 	if (t < 0) return true;
 	std::string ev_id = ev_.name_;
+	if (fp != nullptr){
+			ev_id = "@@queued_action";
+	}
 	std::string timer_id;
 
 	if (id_.name_.length())
@@ -315,9 +318,10 @@ bool State_machine_simulation_core::exec_action_timer(double t,sm4ceps_plugin_in
 	event_t ev_to_send(ev_id);
 	ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
 	ev_to_send.already_sent_to_out_queues_ = false;
-
+	ev_to_send.glob_func_ = fp;
 	if (ev_.args_.size())
 		ev_to_send.payload_native_ = ev_.args_;
+
 	int timer_thread_id = -1;
 	{
 	 std::lock_guard<std::mutex> lk(timer_threads_m);
@@ -362,7 +366,34 @@ void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin
 void State_machine_simulation_core::stop_timer(sm4ceps_plugin_int::id id_){
 	kill_named_timer(id_.name_);
 }
+void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)()){
+	exec_action_timer(t,sm4ceps_plugin_int::ev{},sm4ceps_plugin_int::id{},true,fp);
+}
+void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)(),sm4ceps_plugin_int::id id_){
+	exec_action_timer(t,sm4ceps_plugin_int::ev{},id_,true,fp);
+}
+bool State_machine_simulation_core::in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids){
 
+	bool found = false;
+	for(auto p : state_ids){
+		auto state = resolve_state_qualified_id(p.name_,current_smp());
+		if(!state.valid())
+		{
+		 std::stringstream ss;
+		 ss << p.name_;
+		 fatal_(-1,"in_state : illformed argument, unknown state: "+ss.str());
+		}
+		for(auto s:current_states())
+		{
+			if (s == state) {found = true; break;}
+		}
+		if(found) break;
+	}
+	return found;
+}
+void State_machine_simulation_core::register_global_function(std::string name,sm4ceps_plugin_int::Variant (*fp)()){
+	glob_funcs()[name] = fp;
+}
 
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,

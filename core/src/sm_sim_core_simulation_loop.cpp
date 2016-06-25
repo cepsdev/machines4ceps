@@ -72,6 +72,15 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 	//start_processing_init_script(sim,pos,states);
 
+	sm4ceps_plugin_int::Variant (*post_proc_native)() = nullptr;
+
+	{
+		auto it = glob_funcs().find("post_event_processing");
+		if (it != glob_funcs().end()){
+			post_proc_native = it->second;
+		}
+	}
+
 	for(;!quit && !shutdown();)
 	{
 		bool ev_read = false;
@@ -112,10 +121,14 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		 } else {
 			 if (ev.sid_ == "@@queued_action")
 			 {
-				 ceps::ast::Scope scope;
-				 scope.children() = ev.payload_;scope.owns_children() = false;
-				 execute_action_seq(nullptr,&scope);
-				 scope.children().clear();
+				 if (ev.glob_func_ != nullptr){
+					 ev.glob_func_();
+				 } else {
+				  ceps::ast::Scope scope;
+				  scope.children() = ev.payload_;scope.owns_children() = false;
+				  execute_action_seq(nullptr,&scope);
+				  scope.children().clear();
+				 }
 				 continue;
 			 }
 			 ev_read = true;
@@ -252,6 +265,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				log() << "[ON_EXIT]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) <<"\n";
 				auto it = sm->find_action("on_exit");
 				if (it == nullptr) continue;
+				if (it->native_func()){
+				 current_smp() = it->associated_sm_;
+			     it->native_func()();
+				 continue;
+				}
 				if (it->body_ == nullptr) continue;
 				execute_action_seq(sm,it->body());
 			}
@@ -266,6 +284,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				if (print_debug_info_)log() << "[EXECUTE ACTION][ID="<< act_it->id_ <<"]"  << "\n";
 				if (act_it->native_func()){
 					if (print_debug_info_)log() << "[EXECUTE NATIVE ACTION]\n";
+					current_smp() = act_it->associated_sm_;
 					act_it->native_func()();
 					continue;
 				}
@@ -291,6 +310,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		 for(auto const & a : on_enter_sm_derived_action_list)
 		 {
 			 if (print_debug_info_)log() << "[EXECUTE ACTION:on_enter_sm_derived_action_list][ID="<< a.id_ <<"]"  << "\n";
+			 if (a.native_func()){
+			  current_smp() = a.associated_sm_;
+			  a.native_func()();
+			  continue;
+			 }
 			if (a.body() == nullptr) continue;
 			execute_action_seq(a.associated_sm_,a.body());
 		 }
@@ -303,11 +327,14 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		 states = new_states;
 		}//if(!ignore_ev)
 
-		if (ev_read && !post_event_processing().empty()){
-			ceps::ast::Scope scope;
-			scope.owns_children() = false;
-			scope.children() = post_event_processing().nodes();
-			execute_action_seq(nullptr,&scope);
+		if (ev_read){
+			if (post_proc_native) post_proc_native();
+			else if (!post_event_processing().empty()){
+			 ceps::ast::Scope scope;
+			 scope.owns_children() = false;
+			 scope.children() = post_event_processing().nodes();
+			 execute_action_seq(nullptr,&scope);
+			}
 		}
 
 		//Call CALL
