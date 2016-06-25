@@ -183,7 +183,6 @@ bool State_machine_simulation_core::register_action_impl(std::string state_machi
 	if (parent == nullptr){
 		auto it = State_machine::statemachines.find(base);
 		if (it == State_machine::statemachines.end()) {
-			for(auto & s : State_machine::statemachines) std::cout << " ?"<< s.second->id_ << std::endl;
 			return false;
 		}
 		return register_action_impl(rest,action,fn,it->second);

@@ -618,10 +618,12 @@ std::string State_machine_simulation_core::get_full_qualified_id(State_machine::
 state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::string compound_id, State_machine* parent)
 {
 	DEBUG_FUNC_PROLOGUE
+	//std::cout << "resolve_state_qualified_id:"<<(parent?parent->id():"") << "/" <<compound_id <<std::endl;
+
 	using namespace ceps::ast;
 	if (compound_id.length() == 0) return state_rep_t{};
 
-	if (compound_id.find_first_of('.') != std::string::npos){
+	if (compound_id.find_first_of('.') == std::string::npos){
 		std::string id = compound_id;
 		if (parent == nullptr) {
 			auto it = State_machine::statemachines.find(id);

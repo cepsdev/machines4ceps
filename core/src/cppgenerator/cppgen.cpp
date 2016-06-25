@@ -114,7 +114,7 @@ const std::string out_hpp_guards_prefix = R"(
 )";
 
 const std::string out_hpp_global_functions_prefix = R"(
- extern bool in_state(std::initializer_list<systemstates::id>);
+ extern bool in_state(std::initializer_list<sm4ceps_plugin_int::id>);
  extern void start_timer(double,sm4ceps_plugin_int::ev);
  extern void start_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id);
  extern void start_periodic_timer(double,sm4ceps_plugin_int::ev);
@@ -1764,7 +1764,7 @@ void globfuncs::start_periodic_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps
 void globfuncs::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)(),sm4ceps_plugin_int::id id_){smcore_interface->start_periodic_timer(t,fp,id_);}
 void globfuncs::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)()){smcore_interface->start_periodic_timer(t,fp);}
 void globfuncs::stop_timer(sm4ceps_plugin_int::id id_){smcore_interface->stop_timer(id_);}
-bool in_state(std::initializer_list<systemstates::id> state_ids){return smcore_interface->in_state(state_ids);}
+bool globfuncs::in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids){return smcore_interface->in_state(state_ids);}
 )~";
 
 
