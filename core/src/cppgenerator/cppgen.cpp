@@ -152,6 +152,9 @@ struct raw_frame_t{
 		std::string base_type = "";
 		std::string name = "";
 		ceps::ast::Nodebase_ptr expr = nullptr;
+		raw_frame_entry() = default;
+		raw_frame_entry(int width_,std::string base_type_,std::string name_,ceps::ast::Nodebase_ptr expr_):
+		 width(width_),base_type(base_type_),name(name_),expr(expr_){}
 	};
 	std::vector<raw_frame_entry> entries_in;
 	std::vector<raw_frame_entry> entries_out;
@@ -177,7 +180,7 @@ struct raw_frame_t{
 			return;
 		}
 		std::vector<raw_frame_entry>* pentries= in ? &entries_in:&entries_out;
-		pentries->push_back(raw_frame_entry{width,create_basetype(width,signd),"pos_"+std::to_string(pentries->size()+1),nullptr});
+		pentries->push_back(raw_frame_entry(width,create_basetype(width,signd),"pos_"+std::to_string(pentries->size()+1),nullptr));
 	}
 	void create_entry(ceps::ast::Nodebase_ptr expr,int width, bool signd,bool in,bool out){
 		if (!in && !out) return;
@@ -187,7 +190,7 @@ struct raw_frame_t{
 			return;
 		}
 		std::vector<raw_frame_entry>* pentries= in ? &entries_in:&entries_out;
-		pentries->push_back(raw_frame_entry{width,create_basetype(width,signd),"pos_"+std::to_string(pentries->size()+1),expr});
+		pentries->push_back(raw_frame_entry(width,create_basetype(width,signd),"pos_"+std::to_string(pentries->size()+1),expr));
 	}
 
 };
