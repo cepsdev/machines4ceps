@@ -152,6 +152,63 @@ int compute_state_ids(State_machine_simulation_core* smp,std::map<std::string,St
 
 	 return ctr;
 }
+bool State_machine_simulation_core::register_action_impl(std::string state_machine_id,
+		                                                 std::string action,
+														 void(*fn)(),State_machine* parent){
+	if (state_machine_id.length() == 0)
+	{
+		if (parent == nullptr) return false;
+		bool r = false;
+		for(auto & a : parent->actions()){
+			if (a.id_ != action) continue;
+			a.native_func() = fn;
+			r = true;
+		}
+		for(auto & t: parent->transitions()){
+			for (auto & a : t.actions()){
+				if (a.id_ != action) continue;
+				a.native_func() = fn;
+				r = true;
+			}
+		}
+		return r;
+	}
+
+	auto i = state_machine_id.find_first_of('.');
+	std::string base;
+	std::string rest;
+
+	if (i == std::string::npos) base = state_machine_id;
+	else {base = state_machine_id.substr(0,i);rest =  state_machine_id.substr(i+1);}
+	if (parent == nullptr){
+		auto it = State_machine::statemachines.find(base);
+		if (it == State_machine::statemachines.end()) {
+			for(auto & s : State_machine::statemachines) std::cout << " ?"<< s.second->id_ << std::endl;
+			return false;
+		}
+		return register_action_impl(rest,action,fn,it->second);
+	}
+
+	for(auto smp: parent->children()){
+		if (smp->id() == base)
+			return register_action_impl(rest,action,fn,smp);
+	}
+
+	for(auto s: parent->states()){
+		if(!s->is_sm_) continue;
+		if (s->id() == base)
+			return register_action_impl(rest,action,fn,s->smp_);
+	}
+	return false;
+}
+
+bool State_machine_simulation_core::register_action(std::string state_machine_id,std::string action, void(*fn)()){
+	auto r = register_action_impl(state_machine_id,action,fn,nullptr);
+	if (!r)
+			this->fatal_(-1,"Failed to register native implementation for '"+state_machine_id+"."+action+"'");
+	return true;
+}
+
 
 void State_machine_simulation_core::register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id){
 	if (ctxt == nullptr) return;

@@ -1,0 +1,58 @@
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+
+Systemstate s1,s2,s3;
+Statemachine
+{id{S;};
+ States{Initial;};
+ Actions{
+    a5{print("S:a5 (interpreted section)\n");};
+  };
+ Transition{Initial;Initial;G;a5;};
+};
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Statemachine
+ {
+  id{S2;}; 
+  States{Initial;Final;a;b;c;d;e;};
+  import{S;};
+  Actions{
+    a3{print("S1:S2:a3 (interpreted section)\n");};
+    a4{print("S1:S2:a4 (interpreted section)\n");};
+  };
+  Transition{Initial;S;};
+  Transition{Initial;a;};
+  Transition{a;a;G;a3;};
+  Transition{a;a;H;a4;};
+ };
+
+ Actions{
+    a1{print("S1:a1 (interpreted section)\n");};
+    a2{print("S1:a2 (interpreted section)\n");};
+ };
+ Transition{Initial;S2;};
+ Transition{Initial;a;};
+ Transition{a;a;E;a1;};
+ Transition{a;a;F;a2;};
+};
+
+Globals{
+ s1 = 0;s2 = 0;s3 = 0;
+};
+Simulation
+{
+ Start{S1;};
+ E;
+ F;
+ G;
+ H;
+};
+
+
+

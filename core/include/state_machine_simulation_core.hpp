@@ -502,37 +502,8 @@ public:
 	bool handle_userdefined_sender_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 	bool handle_userdefined_receiver_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 
-	virtual bool register_action(std::string state_machine_id,std::string action, void(*fn)()){
-		auto i = state_machine_id.find_first_of('.');
-		State_machine* sm = nullptr;
-		if (i == std::string::npos){
-			auto it = State_machine::statemachines.find(state_machine_id);
-			if (it == State_machine::statemachines.end()) return false;
-			sm = it->second;
-		} else {
-			auto prefix = state_machine_id.substr(0,i);
-			auto rest =  state_machine_id.substr(i+1);
-			auto it = State_machine::statemachines.find(prefix);
-			if (it == State_machine::statemachines.end()) return false;
-			auto srep = it->second->find(rest);
-			if (!srep.valid_ || srep.smp_ == nullptr || !srep.is_sm_) return false;
-			sm = srep.smp_;
-		}
-		bool r = false;
-		for(auto & a : sm->actions()){
-			if (a.id_ != action) continue;
-			a.native_func() = fn;
-			r = true;
-		}
-		for(auto & t: sm->transitions()){
-			for (auto & a : t.actions()){
-				if (a.id_ != action) continue;
-				a.native_func() = fn;
-				r = true;
-			}
-		}
-		return r;
-	}
+	bool register_action(std::string state_machine_id,std::string action, void(*fn)());
+	bool register_action_impl(std::string state_machine_id,std::string action, void(*fn)(),State_machine* parent);
 
 	using global_init_t = void (*)();
 	global_init_t global_init = nullptr;
