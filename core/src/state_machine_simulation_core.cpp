@@ -1110,8 +1110,13 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 				auto sm  = t.to_.smp_;
 				active_sms.insert(sm);
 				auto it = sm->find_action("on_enter");
-				if (it != nullptr && it->body_ != nullptr ){
+				if (nullptr != it && nullptr != it->native_func()){
+				   current_smp() = it->associated_sm_;
+				   it->native_func()();
+				} else{
+				 if (it != nullptr && it->body_ != nullptr ){
 					execute_action_seq(sm,it->body());
+				 }
 				}
 			}
 
