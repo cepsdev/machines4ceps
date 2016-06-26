@@ -291,6 +291,7 @@ void comm_receiver_socket_can(int id,
 		 *(can_msg + 1) |= (can_message.can_dlc+2) << 4;
 		 memcpy(can_msg + 2, can_message.data, can_message.can_dlc);
 		} else {
+		 can_message.can_id &= 0x1FFFFFFF;
 		 *((std::uint32_t*)can_msg) = can_message.can_id;
 		 *((std::uint8_t*)(can_msg+sizeof(std::uint32_t)) ) = can_message.can_dlc+5;
 		 memcpy(can_msg + sizeof(std::uint32_t) + sizeof(std::uint8_t), can_message.data, can_message.can_dlc);
