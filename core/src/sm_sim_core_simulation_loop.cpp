@@ -275,7 +275,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				auto it = sm->find_action("on_exit");
 				if (it == nullptr) continue;
 				if (it->native_func()){
-				 current_smp() = it->associated_sm_;
+                                 current_smp() = sm;
                                  it->native_func()();
 				 continue;
 				}
