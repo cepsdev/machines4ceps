@@ -32,7 +32,7 @@ extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_
 				auto idx = value(as_int_ref(args[0]));
 				if (idx == 0){ v.push_back(new ceps::ast::String(smc->current_event().id_,nullptr,nullptr,nullptr)); return;}
 				else if (idx > 0 && idx-1 < (int)smc->current_event().payload_.size() ) { v.push_back(smc->current_event().payload_[idx-1]);return;}
-				else {v.push_back(new ceps::ast::Int(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr)); return;}
+                                else {smc->fatal_(-1," Access to argv: Out of bounds.");}
 
 			}
 		}
@@ -411,6 +411,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 				return new ceps::ast::String(current_event().id_,nullptr,nullptr,nullptr);
 			else if (idx > 0 && idx-1 < (int)current_event().payload_.size() )
 				return current_event().payload_[idx-1];
+                        fatal_(-1,"Access to argv: Out of bounds.");
 		}
 	} else if (id == "argc")
 	{

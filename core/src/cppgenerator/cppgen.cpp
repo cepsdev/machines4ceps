@@ -88,7 +88,16 @@ const std::string out_hpp_systemstates_prefix = R"(
  }
 
  
- State<int>& set_value(State<int>& lhs, Variant const & rhs){lhs.set_changed(lhs.value() != rhs.iv_); lhs.value() = rhs.iv_; return lhs;}
+ State<int>& set_value(State<int>& lhs, Variant const & rhs){
+  if (rhs.what_ == sm4ceps_plugin_int::Variant::Double) {
+    int v = rhs.dv_;
+    lhs.set_changed(lhs.value() != v); lhs.value() = v;
+  } else if (rhs.what_ == sm4ceps_plugin_int::Variant::Int) {
+   lhs.set_changed(lhs.value() != rhs.iv_); lhs.value() = rhs.iv_;
+  }
+  return lhs;
+ }
+
  State<int>& set_value(State<int>& lhs, int rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
  State<double>& set_value(State<double>& lhs, double rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
  State<double>& set_value(State<double>& lhs, Variant const & rhs){
@@ -1110,7 +1119,7 @@ void Cppgenerator::write_raw_frame_send(State_machine_simulation_core* smp,
 		indent.print_indentation(os);
 		os << "out." << entry.name << " = ";
 		this->write_cpp_expr(smp,indent,os,entry.expr,cur_sm,parameters);
-		if (entry.width == 1) os << " != 0";
+                if (entry.width == 1) os << " != 0";
 		os << ";\n";
 	}
 	indent.print_indentation(os);
