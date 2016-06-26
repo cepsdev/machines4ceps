@@ -244,6 +244,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	auto all_receiver = ns[all{"receiver"}];
 	auto unique_event_declarations = ns["unique"];
 	auto no_transitions_declarations = ns["no_transitions"];
+	auto exported_events = ns["export"];
 
 	start_comm_threads() = !generate_cpp_code();
 
@@ -798,6 +799,15 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 			}
 
 		}
+	}
+
+	for(auto p: exported_events.nodes()){
+	 if (p->kind() != ceps::ast::Ast_node_kind::symbol || ceps::ast::kind(ceps::ast::as_symbol_ref(p)) != "Event"){
+	   std::stringstream ss;
+	   ss << *p;
+	   fatal_(-1,"export section: '"+ss.str()+"' is not an event.");
+	  }
+	  exported_events_.insert(ceps::ast::name(ceps::ast::as_symbol_ref(p)));
 	}
 	
 	if (logtrace()){

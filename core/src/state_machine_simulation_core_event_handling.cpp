@@ -92,6 +92,21 @@ do{
 
 
 			 ev.sid_ = eev.id_;
+
+                         if (map_ceps_payload_to_native_ && eev.payload_.size()){
+                           eev.payload_native_.clear();
+                           for(auto v : eev.payload_){
+                             if (v->kind() == ceps::ast::Ast_node_kind::int_literal)
+                              eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_int_ref(v))));
+                             else if (v->kind() == ceps::ast::Ast_node_kind::float_literal)
+                              eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_double_ref(v))));
+                             else if (v->kind() == ceps::ast::Ast_node_kind::string_literal)
+                              eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_string_ref(v))));
+                             if (delete_ceps_payload_) delete v;
+                           }
+                           eev.payload_.clear();
+                         }
+
 			 ev.payload_ = eev.payload_;
 			 ev.payload_native_ = eev.payload_native_;
 			 ev.glob_func_ = eev.glob_func_;

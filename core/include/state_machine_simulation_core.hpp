@@ -114,7 +114,12 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
 	bool start_comm_threads_ = true;
 	State_machine* current_smp_ = nullptr;
 	std::map<std::string,sm4ceps_plugin_int::glob_handler_t> glob_funcs_;
+        std::unordered_set<std::string> exported_events_;
+        bool map_ceps_payload_to_native_=false;
+        bool delete_ceps_payload_=false;
+
 public:
+        bool is_export_event(std::string const & ev_id) const {return exported_events_.find(ev_id) != exported_events_.end();}
 
 	decltype(glob_funcs_)& glob_funcs(){return glob_funcs_;}
 	decltype(current_smp_)& current_smp(){return current_smp_;}

@@ -57,28 +57,24 @@ const std::string out_hpp_systemstates_prefix = R"(
 
  template<typename T> class State{
    T v_;
-   bool changed_ = true;
-   bool default_constructed_ = true;
+   bool changed_ = false;
  public:
    State() = default; 
-   State(T const & v):v_{v},default_constructed_{false} {}
+   State(T const & v) { v_ = v;}
    State& operator = (State const & rhs){
-     if (!changed_ && !default_constructed_) changed_ = v_ != rhs.v_;
-     else if (default_constructed_) {default_constructed_ = false;changed_ = true;}
+     changed_ = v_ != rhs.v_;
      v_ = rhs.v_;
      return *this;
    }
    State& operator = (T const & rhs){
-     if (!changed_ && !default_constructed_) changed_ = v_ != rhs;
-     else if (default_constructed_) {changed_ = true; default_constructed_=false;}
+     changed_ = v_ != rhs;
      v_ = rhs;
      return *this;
    }
    bool changed() {auto t = changed_;changed_=false;return t;}
-
+   void set_changed(bool t){changed_=t;}
    T& value() {return v_;}
-   T value() const {return v_;}
- 
+   T value() const {return v_;} 
   };
 
  std::ostream& operator << (std::ostream& o, State<int> & v){
@@ -92,10 +88,10 @@ const std::string out_hpp_systemstates_prefix = R"(
  }
 
  
- State<int>& set_value(State<int>& lhs, Variant const & rhs){lhs.value() = rhs.iv_; return lhs;}
- State<int>& set_value(State<int>& lhs, int rhs){lhs.value() = rhs; return lhs;}
- State<double>& set_value(State<double>& lhs, double rhs){lhs.value() = rhs; return lhs;}
- State<std::string>& set_value(State<std::string>& lhs, std::string rhs){lhs.value() = rhs; return lhs;}
+ State<int>& set_value(State<int>& lhs, Variant const & rhs){lhs.set_changed(lhs.value() != rhs.iv_); lhs.value() = rhs.iv_; return lhs;}
+ State<int>& set_value(State<int>& lhs, int rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
+ State<double>& set_value(State<double>& lhs, double rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
+ State<std::string>& set_value(State<std::string>& lhs, std::string rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
 
  
 

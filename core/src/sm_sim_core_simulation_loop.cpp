@@ -61,8 +61,12 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 
 	log()<< "[SIMULATION STARTED]\n";	//log()<<"[START STATES] " ;	print_info(states);
-	if (user_supplied_global_init() != nullptr)
+        if (user_supplied_global_init() != nullptr){
+                map_ceps_payload_to_native_=true;
+                delete_ceps_payload_=true;
+
 		user_supplied_global_init()();
+        }
 
 	int pos = 0;	int loop_ctr = 0;	bool quit = false;
 
@@ -344,7 +348,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 		//Call CALL
 
-	    if (ev_read) for(auto p: event_triggered_sender()){
+		if (ev_read) for(auto p: event_triggered_sender()){
 			if (p.event_id_ != current_event().id_) continue;
 			size_t data_size;
 			char* data = (char*)p.frame_gen_->gen_msg(this,data_size);
@@ -352,7 +356,21 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length()));
 		 }
 
-		 if (ev_read && global_event_call_back_fn_) {
+		 if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_)) {
+                        //std::cout << ">>" << current_event().id_ << std::endl;
+			if (current_event().payload_native_.size()){
+                         for(auto & v : current_event().payload_native_){
+                          if (v.what_ == sm4ceps_plugin_int::Variant::Int)
+                            current_event().payload_.push_back(new ceps::ast::Int(v.iv_,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+                          else if (v.what_ == sm4ceps_plugin_int::Variant::Double)
+                            current_event().payload_.push_back(new ceps::ast::Double(v.dv_,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+                          else if (v.what_ == sm4ceps_plugin_int::Variant::String)
+                            current_event().payload_.push_back(new ceps::ast::String(v.sv_,nullptr, nullptr, nullptr));
+			 }
+                         global_event_call_back_fn_(current_event());
+                         for(auto v : current_event().payload_) delete v;
+                         current_event().payload_.clear();
+			} else
 			global_event_call_back_fn_(current_event());
 		 }
 
