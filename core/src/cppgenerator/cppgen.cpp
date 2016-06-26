@@ -91,6 +91,15 @@ const std::string out_hpp_systemstates_prefix = R"(
  State<int>& set_value(State<int>& lhs, Variant const & rhs){lhs.set_changed(lhs.value() != rhs.iv_); lhs.value() = rhs.iv_; return lhs;}
  State<int>& set_value(State<int>& lhs, int rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
  State<double>& set_value(State<double>& lhs, double rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
+ State<double>& set_value(State<double>& lhs, Variant const & rhs){
+  if (rhs.what_ == sm4ceps_plugin_int::Variant::Int) {
+   lhs.set_changed(lhs.value() != rhs.iv_); lhs.value() = rhs.iv_;}
+  else if  (rhs.what_ == sm4ceps_plugin_int::Variant::Double){
+   lhs.set_changed(lhs.value() != rhs.dv_); lhs.value() = rhs.dv_;}
+
+  return lhs;
+ }
+
  State<std::string>& set_value(State<std::string>& lhs, std::string rhs){lhs.set_changed(lhs.value() != rhs);lhs.value() = rhs; return lhs;}
 
  
@@ -1027,12 +1036,14 @@ void Cppgenerator::write_cpp_expr(State_machine_simulation_core* smp,Indent& ind
 }
 
 bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters){
-	if(smp->is_assignment_op(p)){
+        std::set<std::string> params_set;
+        for(auto p :parameters) params_set.insert(p);
+        if(smp->is_assignment_op(p)){
 		std::string lhs_id;
 		auto& binop = as_binop_ref(p);
 		if(smp->is_assignment_to_state(binop, lhs_id)) {
          //if (is_compound_id(lhs_id))
-	     if (binop.right()->kind() != Ast_node_kind::identifier) {
+             if (binop.right()->kind() != Ast_node_kind::identifier || params_set.find(name(as_id_ref(binop.right()))) != params_set.end()) {
 	    	 indent.print_indentation(os); os <<"set_value("<< sysstates_namespace << "::" << lhs_id <<" , ";
 	    	 write_cpp_expr(smp,indent,os,binop.right(),cur_sm,parameters);
 	    	 os << ")";
