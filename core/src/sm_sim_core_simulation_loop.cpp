@@ -113,7 +113,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
                                            it->native_func()();
                                          } else{
                                           if (it->body_ == nullptr) continue;
-                                          execute_action_seq(sm,it->body());
+                                          if (enforce_native())
+                                            fatal_(-1,"Expecting native implementation (--enforce_native) (on_enter_1):"+it->id());
+                                            execute_action_seq(sm,it->body());
                                          }
 				 }//for
 			   }
@@ -133,6 +135,10 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				 if (ev.glob_func_ != nullptr){
 					 ev.glob_func_();
 				 } else {
+
+                                  if (enforce_native())
+                                    fatal_(-1,"Expecting native implementation (--enforce_native):@@queued_action");
+
 				  ceps::ast::Scope scope;
 				  scope.children() = ev.payload_;scope.owns_children() = false;
 				  execute_action_seq(nullptr,&scope);
@@ -278,8 +284,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
                                  current_smp() = sm;
                                  it->native_func()();
 				 continue;
-				}
+                                }
 				if (it->body_ == nullptr) continue;
+                                if (enforce_native())
+                                 fatal_(-1,"Expecting native implementation (--enforce_native)(on_exit_1):"+it->id());
+
 				execute_action_seq(sm,it->body());
 			}
 		}
@@ -298,6 +307,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 					continue;
 				}
 				if (act_it->body() == nullptr) continue;
+                                if ( enforce_native())
+                                 fatal_(-1,"Expecting native implementation (--enforce_native)(act_1):"+act_it->id());
+
 				execute_action_seq(act_it->associated_sm_,act_it->body());
 			}
 		}
@@ -325,6 +337,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			  continue;
 			 }
 			if (a.body() == nullptr) continue;
+                        if (enforce_native())
+                                 fatal_(-1,"Expecting native implementation (--enforce_native)(derived_1):"+a.id());
+
 			execute_action_seq(a.associated_sm_,a.body());
 		 }
 
@@ -339,6 +354,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		if (ev_read){
 			if (post_proc_native) post_proc_native();
 			else if (!post_event_processing().empty()){
+                         if (enforce_native())
+                                 fatal_(-1,"Expecting native implementation (--enforce_native):post_processing");
+
 			 ceps::ast::Scope scope;
 			 scope.owns_children() = false;
 			 scope.children() = post_event_processing().nodes();

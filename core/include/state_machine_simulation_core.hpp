@@ -117,8 +117,10 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
         std::unordered_set<std::string> exported_events_;
         bool map_ceps_payload_to_native_=false;
         bool delete_ceps_payload_=false;
+        bool enforce_native_ = false;
 
 public:
+        bool& enforce_native(){return enforce_native_;}
         bool is_export_event(std::string const & ev_id) const {return exported_events_.find(ev_id) != exported_events_.end();}
 
 	decltype(glob_funcs_)& glob_funcs(){return glob_funcs_;}

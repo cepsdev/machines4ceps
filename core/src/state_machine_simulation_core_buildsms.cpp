@@ -165,11 +165,24 @@ bool State_machine_simulation_core::register_action_impl(std::string state_machi
 			r = true;
 		}
 		for(auto & t: parent->transitions()){
+		  if(t.orig_parent() != nullptr && parent != t.orig_parent())//transition was moved
+		    continue;
 			for (auto & a : t.actions()){
 				if (a.id_ != action) continue;
 				a.native_func() = fn;
 				r = true;
 			}
+		}
+		for(auto foreign_smp: parent->smps_containing_moved_transitions()){
+		 for(auto & t: foreign_smp->transitions()){
+		  if(t.orig_parent() !=  parent )//transition was moved
+		    continue;
+			for (auto & a : t.actions()){
+				if (a.id_ != action) continue;
+				a.native_func() = fn;
+				r = true;
+			}
+		 }
 		}
 		return r;
 	}
@@ -222,6 +235,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	using namespace ceps::ast;
 	using namespace std;
 	DEBUG_FUNC_PROLOGUE;
+
+	this->enforce_native() = result_cmd_line.enforce_native;
 
 	regfn("sm4ceps_version_major",get_sm4ceps_ver_maj);
 	regfn("sm4ceps_version_minor", get_sm4ceps_ver_minor);
@@ -414,15 +429,17 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		if (it == sm->transitions().end()) continue;
 
 		std::for_each(it,sm->transitions().end(),
-				[&](State_machine::Transition & t) {
-					DEBUG << "[TRANSITION_MOVE(PRE)][FROM="<< get_full_qualified_id(t.from_) << "][TO=" << get_full_qualified_id(t.to_) << "]\n";
-					auto parent = t.from_.parent();t.from_.parent_=nullptr;t.from_.q_id_.clear();
-					if(!t.from_.is_sm_)t.from_.smp_ = parent;
-					assert(sm != parent);
-					parent->transitions().push_back(t);
-					DEBUG << "[TRANSITION_MOVE(POST)][FROM="<< get_full_qualified_id(t.from_) << "][TO=" << get_full_qualified_id(t.to_) << "]\n";
+		 [&](State_machine::Transition & t) {
+			DEBUG << "[TRANSITION_MOVE(PRE)][FROM="<< get_full_qualified_id(t.from_) << "][TO=" << get_full_qualified_id(t.to_) << "]\n";
+			auto parent = t.from_.parent();t.from_.parent_=nullptr;t.from_.q_id_.clear();
+			if(!t.from_.is_sm_)t.from_.smp_ = parent;
+			assert(sm != parent);
+			t.orig_parent() = sm;
+			parent->transitions().push_back(t);
+			sm->smps_containing_moved_transitions().push_back(parent);
 
-				}
+			DEBUG << "[TRANSITION_MOVE(POST)][FROM="<< get_full_qualified_id(t.from_) << "][TO=" << get_full_qualified_id(t.to_) << "]\n";
+			}
 		);
 		sm->transitions().erase(it,sm->transitions().end());
 	}
@@ -830,9 +847,6 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 
 
-	if(generate_cpp_code()){
-		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
-	}
 
 
 #ifdef __gnu_linux__
@@ -862,6 +876,47 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		init_fn(smc, register_plugin);
 	}*/
 #endif
+
+	if(enforce_native()){
+	 std::vector<State_machine*> smsv;
+	 std::vector<std::string> r;
+	 auto tt = this;
+
+	 for(auto sm :State_machine::statemachines) smsv.push_back(sm.second);
+
+	 traverse_sms(smsv,[&r,&tt](State_machine* cur_sm){
+		for(auto it = cur_sm->actions().begin(); it != cur_sm->actions().end(); ++it) {
+		 auto& act = *it;
+		 if(act.body() != nullptr && act.native_func() == nullptr){
+		  state_rep_t st;
+		  st.is_sm_ = true;st.smp_=cur_sm;st.valid_=true;st.sid_=cur_sm->id();
+		  r.push_back(tt->get_fullqualified_id(st)+"."+act.id());
+		  }
+		}
+		for(auto const & t : cur_sm->transitions()){
+		  for(auto it = t.actions().begin(); it != t.actions().end(); ++it) {
+		    auto& act = *it;
+		    if(act.body() != nullptr && act.native_func() == nullptr){
+		      state_rep_t st;
+		      st.is_sm_ = true;st.smp_=cur_sm;st.valid_=true;st.sid_=cur_sm->id();
+		      r.push_back(tt->get_fullqualified_id(st)+"."+act.id()+" (action referred to in transition)");
+		   }
+		  }
+		}
+	    });
+
+	 if(r.size()){
+	  std::string s = "No native implementation for following state machines registered:\n";
+	  for(auto & e:r){
+	   s+= "  "; s+= e; s+="\n";
+	  }
+	  this->fatal_(-1,s);
+
+	 }
+	}
+	if(generate_cpp_code()){
+		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
+	}
 
 	auto simulations = ns[all{"Simulation"}];
 	if (simulations.size())

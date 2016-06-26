@@ -148,7 +148,8 @@ public:
     State from_,to_;
     using Nonleafbase_ptr = ceps::ast::Nonleafbase* ;
     std::string guard_ ;
-
+    State_machine* orig_parent_=nullptr;
+    decltype(orig_parent_)& orig_parent(){return orig_parent_;}
     Transition() = default;
     Transition(State from , State to):from_(from),to_(to){}
     State const & from() const {return from_;}
@@ -317,7 +318,8 @@ public:
   std::vector<std::vector<Transition>> threads_;
   std::vector<Transition> transitions_;
   std::set<State*> states_;
-
+  std::vector<State_machine*> smps_containing_moved_transitions_;
+  decltype(smps_containing_moved_transitions_)& smps_containing_moved_transitions(){return smps_containing_moved_transitions_;}
   std::set<State*>& states() {return states_;};
   std::set<State*>const& states() const {return states_;};
 
