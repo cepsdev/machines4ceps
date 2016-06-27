@@ -7,7 +7,7 @@
 #include <set>
 #include <unordered_set>
 
-
+ 
 using namespace ceps::ast;
 
 static std::string sysstates_namespace = "systemstates";
@@ -519,9 +519,12 @@ class Cppgenerator{
     		 traverse_inorder_expr(unop.children()[0],f);
     	} else f(p);
     }
+       bool inside_start_timer_fn_ = false;
 public:
 	using sysstates_t = decltype(sysstates_);
 	using raw_frames_t = decltype(raw_frames_);
+        decltype(inside_start_timer_fn_)& inside_start_timer_fn(){return inside_start_timer_fn_;}
+        decltype(inside_start_timer_fn_) inside_start_timer_fn() const {return inside_start_timer_fn_;}
 
 	sysstates_t& sysstates() {return sysstates_;}
 	sysstates_t const & sysstates() const {return sysstates_;}
@@ -936,9 +939,10 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 				}
 			}
 
-			if (glob_funcs().find(compound_id) != glob_funcs().end() )
-				os << compound_id;
-			else os << sysstates_namespace<<"::"<< "id{\"" << compound_id << "\"}";
+                        if (glob_funcs().find(compound_id) != glob_funcs().end() ){
+                                os << global_functions_namespace << "::" << compound_id  << (inside_start_timer_fn()?"":"()");
+                         }
+                        else os << sysstates_namespace<<"::"<< "id{\"" << compound_id << "\"}";
 		}
 	} else if (p->kind() == Ast_node_kind::binary_operator){
 		auto& binop = as_binop_ref(p);
@@ -1025,12 +1029,14 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 			return;
 		}
 		else os << name(id) << "(";
-
-		for(size_t i = 0; i != args.size();++i){
-			write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
-			if (i + 1 != args.size()) os << " , ";
-		}
-		os << ")";
+                auto t = inside_start_timer_fn();
+                inside_start_timer_fn() = "start_periodic_timer" == name(id) || "start_timer" == name(id);
+                for(size_t i = 0; i != args.size();++i){
+                        write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
+                        if (i + 1 != args.size()) os << " , ";
+                }
+                inside_start_timer_fn() = t;
+                os << ")";
 
 	} else if (p->kind() == Ast_node_kind::unary_operator){
 		 ceps::ast::Unary_operator& unop = *dynamic_cast<ceps::ast::Unary_operator*>(p);
