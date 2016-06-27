@@ -388,7 +388,7 @@ do{
 	//std::cout << timed_events_pending() << std::endl;
 	if (pos >= (int)sim.nodes().size()){
 		if (running_as_node() || timed_events_pending()){
-			DEBUG << "[FETCH_EVENT_LOOP][WAIT_FOR_DATA]\n";
+			//DEBUG << "[FETCH_EVENT_LOOP][WAIT_FOR_DATA]\n";
 			this->main_event_queue().wait_for_data();
 		}
 	}
