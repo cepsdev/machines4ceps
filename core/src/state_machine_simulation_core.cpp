@@ -1089,12 +1089,12 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 		}
 		bool trans_found = false;
 		State_machine* containing_smp = s_from.smp_;
-		assert(s_from.smp_ != nullptr);
-		assert(containing_smp != nullptr);
+		//assert(s_from.smp_ != nullptr);
+		//assert(containing_smp != nullptr);
 
 		bool ff = false;
 		for(auto m : State_machine::statemachines) if (m.second == containing_smp) {ff = true;break;}
-		assert(ff);
+		//assert(ff);
 		if (s_from.is_sm_ && s_from.smp_->parent_ ) containing_smp = s_from.smp_->parent_;
         #ifdef PRINT_DEBUG
 		 DEBUG << "[CHECKING][STATE="<< s_from.sid_ <<"]" << "\n";
@@ -1113,10 +1113,10 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 
 		for(auto  & t : containing_smp->transitions())
 		{
-			assert(!t.from().unresolved());
-			assert(!t.to().unresolved());
-			assert(t.from().id_.size() > 0);
-			assert(t.to().id_.size() > 0);
+			//assert(!t.from().unresolved());
+			//assert(!t.to().unresolved());
+			//assert(t.from().id_.size() > 0);
+			//assert(t.to().id_.size() > 0);
             #ifdef PRINT_DEBUG
 			 DEBUG << "[CHECKING TRANSITION]["<<t.from().id_ << "=>"<< t.to().id_ <<"]" << "\n";
             #endif
@@ -1243,7 +1243,7 @@ void State_machine_simulation_core::enter_sm(bool triggered_by_immediate_child_s
 		}
 
 
-		assert(t.to_.is_sm_ || t.to_.smp_);
+		//assert(t.to_.is_sm_ || t.to_.smp_);
 		new_states_set.insert(state_rep_t(true,t.to_.is_sm_,t.to_.smp_,t.to_.id()));
 		in_initial_state = false;
 		for(auto& dd :t.action_ ) dd.associated_sm_ = smp;
