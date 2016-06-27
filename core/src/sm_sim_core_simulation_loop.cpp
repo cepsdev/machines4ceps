@@ -5,8 +5,9 @@
 
 void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
-
+#endif
 
 	current_event().id_= {};
 	assert_in_end_states_.clear();
@@ -89,7 +90,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 	{
 		bool ev_read = false;
 		current_event().id_= {};
-		if (print_debug_info_)log()<< "[SIMULATION_LOOP][" << ++loop_ctr << "]\n";
+        #ifdef PRINT_LOG_SIM_LOOP
+		 if (print_debug_info_)log()<< "[SIMULATION_LOOP][" << ++loop_ctr << "]\n";
+        #endif
 
 		event_rep_t ev;
 		bool fetch_made_states_update = false;
@@ -105,7 +108,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				{
 				 for(auto const & sm : on_enter_seq){
 				 	 //Handle on_enter
-					 if (print_debug_info_)log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
+                     #ifdef PRINT_LOG_SIM_LOOP
+					  if (print_debug_info_)log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
+                     #endif
 					 auto it = sm->find_action("on_enter");
 					 if (it == nullptr) continue;
                                          if (it->native_func()){
@@ -126,7 +131,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			   taking_epsilon_transitions = true;
 			   continue;
 		     } else {
+               #ifdef PRINT_LOG_SIM_LOOP
 		    	 if (print_debug_info_)log()<< "[NO EVENT FOUND => COMPUTATION COMPLETE]\n";
+               #endif
 			  break;
 			 }
 		 } else {
@@ -149,7 +156,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			 ev_read = true;
 		 }
 		 current_event() = ev;
-		 log()<< "[FETCHED_EVENT][" << ev.sid_ << "]\n";
+         #ifdef PRINT_LOG_SIM_LOOP
+		  log()<< "[FETCHED_EVENT][" << ev.sid_ << "]\n";
+         #endif
 		}
 
 
@@ -162,9 +171,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		if (active_states_logger()){
 			std::lock_guard<std::recursive_mutex> g (this->active_states_logger_mutex_);
 			std::vector<int> v;
-			//for(auto & s: states){
-				//if (s.is_sm_) v.push_back(s.smp_->idx_) else
-			//}
+
 			++active_states_logger_ctr_;
 		}
 
@@ -195,11 +202,13 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		 }
 		 if (taking_epsilon_transitions)
 		 {
-			 if (print_debug_info_)log() <<"[EPSILON TRANSITIONS FOUND]\n";
+             #ifdef PRINT_LOG_SIM_LOOP
+			  if (print_debug_info_)log() <<"[EPSILON TRANSITIONS FOUND]\n";
+             #endif
 		 }
-
-		 if (print_debug_info_){DEBUG <<"[INITIAL KERNEL STATES]"; print_info(triggered_kernel_states);DEBUG <<"\n";}
-
+         #ifdef PRINT_DEBUG
+		  if (print_debug_info_){DEBUG <<"[INITIAL KERNEL STATES]"; print_info(triggered_kernel_states);DEBUG <<"\n";}
+         #endif
 		 std::set<State_machine*> sms_exited;
 		 std::vector<State_machine*> on_exit_seq;
 		 std::vector<State_machine*> on_enter_seq;
@@ -240,10 +249,10 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			//if (sms_exited.find(s.smp_) != sms_exited.end()) continue;
 			sms_entered.insert(pred[s].containing_sm());
 		 }
-
-		 if(print_debug_info_) { DEBUG <<  "[new_states_triggered_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_triggered_set.begin(),new_states_triggered_set.end() )); DEBUG << "\n";}
-		 if(print_debug_info_) { DEBUG << "[new_states_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() )); DEBUG << "\n";}
-
+         #ifdef PRINT_DEBUG
+		  if(print_debug_info_) { DEBUG <<  "[new_states_triggered_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_triggered_set.begin(),new_states_triggered_set.end() )); DEBUG << "\n";}
+		  if(print_debug_info_) { DEBUG << "[new_states_set (before enter_sm())]"; print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() )); DEBUG << "\n";}
+         #endif
 
 		 for(auto const& s : new_states_triggered_set)
 		 {
@@ -260,24 +269,29 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			for(auto rit = path_of_sms.rbegin(); rit != path_of_sms.rend();++rit )
 				enter_sm(false,*rit,sms_entered,on_enter_seq,new_states_set,on_enter_sm_derived_action_list,states);
 
-			assert(s.is_sm_ || s.smp_ != nullptr);
 			enter_sm(!s.is_sm_,s.smp_,sms_entered,on_enter_seq,new_states_set,on_enter_sm_derived_action_list,states);
 		 }
-
-		if(print_debug_info_) { DEBUG << "[new_states_set (after enter_sm())]";
-		print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() )); DEBUG << "\n";}
-
+        #ifdef PRINT_DEBUG
+		 if(print_debug_info_) { DEBUG << "[new_states_set (after enter_sm())]";
+		 print_info(std::vector<state_rep_t>(new_states_set.begin(),new_states_set.end() )); DEBUG << "\n";}
+        #endif
 
 
 		auto new_states = states_t(new_states_set.begin(),new_states_set.end());
+        #ifdef PRINT_LOG_SIM_LOOP
+		 if(print_debug_info_)print_info(states,new_states,new_states_triggered_set,std::set<state_rep_t>(  states_without_transition.begin(),states_without_transition.end()) );
+        #endif
 
-		if(print_debug_info_)print_info(states,new_states,new_states_triggered_set,std::set<state_rep_t>(  states_without_transition.begin(),states_without_transition.end()) );
+        #ifdef PRINT_LOG_SIM_LOOP
+		 if(new_states_triggered_set.size() == 0) if(print_debug_info_)log() << "[NO TRANSITIONS]\n";
+        #endif
 
-		if(new_states_triggered_set.size() == 0) if(print_debug_info_)log() << "[NO TRANSITIONS]\n";
 		if (on_exit_seq.size())
 		{
 			for(auto const & sm : on_exit_seq){
-				log() << "[ON_EXIT]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) <<"\n";
+                #ifdef PRINT_LOG_SIM_LOOP
+				 log() << "[ON_EXIT]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) <<"\n";
+                #endif
 				auto it = sm->find_action("on_exit");
 				if (it == nullptr) continue;
 				if (it->native_func()){
@@ -299,9 +313,14 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			if (it == associated_kernerl_states_action.end()) continue;
 			for(auto act_it = it->second.begin(); act_it != it->second.end();++act_it)
 			{
-				if (print_debug_info_)log() << "[EXECUTE ACTION][ID="<< act_it->id_ <<"]"  << "\n";
-				if (act_it->native_func()){
-					if (print_debug_info_)log() << "[EXECUTE NATIVE ACTION]\n";
+                #ifdef PRINT_LOG_SIM_LOOP
+				 if (print_debug_info_)log() << "[EXECUTE ACTION][ID="<< act_it->id_ <<"]"  << "\n";
+                #endif
+
+				 if (act_it->native_func()){
+                    #ifdef PRINT_LOG_SIM_LOOP
+					 if (print_debug_info_)log() << "[EXECUTE NATIVE ACTION]\n";
+                    #endif
 					current_smp() = act_it->associated_sm_;
 					act_it->native_func()();
 					continue;
@@ -314,23 +333,12 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			}
 		}
 
-/*
-		if (on_enter_seq.size())
-		{
-			for(auto const & sm : on_enter_seq)
-			{
-				//Handle on_enter
-				log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
-				auto it = sm->actions_.find(State_machine::Transition::Action("on_enter"));
-				if (it == sm->actions_.end()) continue;
-				if (it->body_ == nullptr) continue;
-				execute_action_seq(sm,it->body());
-			}
-		}
-*/
 		 for(auto const & a : on_enter_sm_derived_action_list)
 		 {
-			 if (print_debug_info_)log() << "[EXECUTE ACTION:on_enter_sm_derived_action_list][ID="<< a.id_ <<"]"  << "\n";
+             #ifdef PRINT_LOG_SIM_LOOP
+			  if (print_debug_info_)log() << "[EXECUTE ACTION:on_enter_sm_derived_action_list][ID="<< a.id_ <<"]"  << "\n";
+             #endif
+
 			 if (a.native_func()){
 			  current_smp() = a.associated_sm_;
 			  a.native_func()();
@@ -344,7 +352,8 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		 }
 
 
-		 update_asserts(states);update_asserts(new_states);
+		 if (!enforce_native())
+		  {update_asserts(states);update_asserts(new_states);}
 
 		 if(ev_read && ev.sid_ == "EXIT") quit = true;
 
@@ -370,12 +379,13 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 			if (p.event_id_ != current_event().id_) continue;
 			size_t data_size;
 			char* data = (char*)p.frame_gen_->gen_msg(this,data_size);
-			DEBUG << "[State_machine_simulation_core::simulate][PUSH_FRAME_TO_SENDER_QUEUE]\n";
+            #ifdef PRINT_DEBUG
+			 DEBUG << "[State_machine_simulation_core::simulate][PUSH_FRAME_TO_SENDER_QUEUE]\n";
+            #endif
 			if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length()));
 		 }
 
 		 if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_)) {
-                        //std::cout << ">>" << current_event().id_ << std::endl;
 			if (current_event().payload_native_.size()){
                          for(auto & v : current_event().payload_native_){
                           if (v.what_ == sm4ceps_plugin_int::Variant::Int)
@@ -394,7 +404,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 
 
 		taking_epsilon_transitions = true;//Next loop starts with epsilon transitions
-		{log() << "[ACTIVE_STATES] "; print_info(states);}
+		{
+            #ifdef PRINT_LOG_SIM_LOOP
+			 log() << "[ACTIVE_STATES] "; print_info(states);
+            #endif
+		}
 		if (logtrace()){
 			clock_gettime(CLOCK_REALTIME, &log4kmw::get_value<0>(log4kmw_states::Timestamp));
 
@@ -406,7 +420,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		}
 	}
 
+    #ifdef PRINT_LOG_SIM_LOOP
 	{log() << "[ACTIVE_STATES(After Termination)] "; print_info(states);}
+    #endif
 
 	if (active_asserts_.size())
 	{
@@ -456,7 +472,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 				}
 			}
 		}
-	log()<< "[SIMULATION TERMINATED]\n\n";
+    #ifdef PRINT_LOG_SIM_LOOP
+	 log()<< "[SIMULATION TERMINATED]\n\n";
+    #endif
 	step_handler_ = nullptr;
 
 }

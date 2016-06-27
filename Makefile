@@ -3,7 +3,8 @@
 #
 
 includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src" -I"../log4kmw/include" -I"core/src_gen/logging"
-cflags := -O0 -g3 -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall 
+cflags := -O2 -s -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
+cflags_profile := -g3 -pg  -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
 TARGET :=
 OBJDIR := bin/$(TARGET)
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
@@ -52,7 +53,7 @@ $(TARGET)/state_machine_simulation_core_event_handling.o: core/src/state_machine
 $(TARGET)/state_machine_simulation_core_guard_handling.o: core/src/state_machine_simulation_core_guard_handling.cpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) core/src/state_machine_simulation_core_guard_handling.cpp -c -o $(TARGET)/state_machine_simulation_core_guard_handling.o
 $(TARGET)/sm_sim_core_simulation_loop.o: core/src/sm_sim_core_simulation_loop.cpp core/include/state_machine_simulation_core.hpp
-	$(CXX)   $(cflags) $(includes) core/src/sm_sim_core_simulation_loop.cpp -c -o $(TARGET)/sm_sim_core_simulation_loop.o
+	$(CXX)   $(cflags)  $(includes) core/src/sm_sim_core_simulation_loop.cpp -c -o $(TARGET)/sm_sim_core_simulation_loop.o
 $(TARGET)/cppgen.o: core/src/cppgenerator/cppgen.cpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) core/src/cppgenerator/cppgen.cpp -c -o $(TARGET)/cppgen.o
 $(TARGET)/sm_sim_core_asserts.o: core/src/sm_sim_core_asserts.cpp core/include/state_machine_simulation_core.hpp

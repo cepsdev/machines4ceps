@@ -64,7 +64,19 @@ public:
 	std::mutex& data_mutex() const {return m_;}
 };
 
+namespace std{
+template <>
+ struct hash<state_rep_t>
+ {
+   std::size_t operator()(const state_rep_t& k) const
+   {
 
+     return ((hash<string>()(k.sid_)
+              ^ (hash<void*>()(k.smp_) << 1)) >> 1)
+              ;
+   }
+ };
+}
 
 
 class State_machine_simulation_core:public IUserdefined_function_registry, Ism4ceps_plugin_interface
@@ -114,10 +126,10 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
 	bool start_comm_threads_ = true;
 	State_machine* current_smp_ = nullptr;
 	std::map<std::string,sm4ceps_plugin_int::glob_handler_t> glob_funcs_;
-        std::unordered_set<std::string> exported_events_;
-        bool map_ceps_payload_to_native_=false;
-        bool delete_ceps_payload_=false;
-        bool enforce_native_ = false;
+    std::unordered_set<std::string> exported_events_;
+    bool map_ceps_payload_to_native_=false;
+    bool delete_ceps_payload_=false;
+    bool enforce_native_ = false;
 
 public:
         bool& enforce_native(){return enforce_native_;}

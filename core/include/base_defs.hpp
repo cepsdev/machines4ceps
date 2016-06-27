@@ -80,6 +80,7 @@ extern bool PRINT_DEBUG_INFO;
 #define ERRORLOG (std::lock_guard<std::recursive_mutex>(debuglog.mtx_),debuglog << "[ERROR]", debuglog)
 #define DEBUG_FUNC_PROLOGUE2 	Debuglogger debuglog(__funcname__,PRINT_DEBUG_INFO);
 
+#define NODEBUG_PRINT
 
 
 

@@ -168,7 +168,9 @@ void State_machine_simulation_core::process_statemachine_helper_handle_transitio
 					int& guard_ctr)
 {
  using namespace std;
+#ifdef PRINT_DEBUG
  DEBUG_FUNC_PROLOGUE
+#endif
 
  int t_ctr=0;
 
@@ -188,7 +190,9 @@ void State_machine_simulation_core::process_statemachine_helper_handle_transitio
 
         string s1 = name(as_id_ref(transition.nodes()[0]));
         string s2 = name(as_id_ref(transition.nodes()[1]));
-        DEBUG << "[INSERT LOCAL TRANSITION]" <<  s1 <<"==>"<<s2 << "\n";
+        #ifdef PRINT_DEBUG
+         DEBUG << "[INSERT LOCAL TRANSITION]" <<  s1 <<"==>"<<s2 << "\n";
+        #endif
         from.id_ = s1; to.id_=s2;
         if (!current_statemachine->lookup(from))
         	fatal_(-1,"Statemachine '"+id+"': "+ s1+" is not a state (or statemachine).");
@@ -202,8 +206,9 @@ void State_machine_simulation_core::process_statemachine_helper_handle_transitio
     	r = read_qualified_id(to_state_orig,q_to_id );
     	if (!r) fatal_(-1,"State machine '"+ id +"', transition #" + std::to_string(t_ctr) + ": illformed destination state");
     	//std::cerr << "*******\n";debug_print_qualified_id(q_from_id); std::cerr << "\n"; debug_print_qualified_id(q_to_id);std::cerr << "\n";
-
-    	DEBUG << "[INSERT TRANSITION WITH AT LEAST ONE FULLY QUALIFID STATE]" << qualified_id_to_str(q_from_id) <<"==>"<< qualified_id_to_str(q_to_id) << "\n";
+        #ifdef PRINT_DEBUG
+    	 DEBUG << "[INSERT TRANSITION WITH AT LEAST ONE FULLY QUALIFID STATE]" << qualified_id_to_str(q_from_id) <<"==>"<< qualified_id_to_str(q_to_id) << "\n";
+        #endif
     	from = State_machine::State(q_from_id);
     	to = State_machine::State(q_to_id);
     }
@@ -266,9 +271,9 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 {
   using namespace std;
   using namespace ceps::ast;
-
+#ifdef PRINT_DEBUG
   DEBUG_FUNC_PROLOGUE
-
+#endif
 
   if (fatal_ == nullptr || warn_ == nullptr){
 	  std::cerr << "***** Fatal Error: Errorhandler not defined (fatal_ and/or warn_ not initialized)." << std::endl;
@@ -307,9 +312,9 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 		  fatal_(-1,"Statemachine definition: illformed id, expect an IDENTIFIER.");
 	  sm_name = name(as_id_ref(id_.nodes()[0])); id = prefix+name(as_id_ref(id_.nodes()[0]));
   }
-
+#ifdef PRINT_DEBUG
   DEBUG << "[PROCESSING CONTENT OF SM="<< id << "]\n";
-
+#endif
 
   auto& current_statemachine = State_machine::statemachines[id];
   if (current_statemachine == nullptr)
@@ -323,9 +328,9 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   if (parent != nullptr) parent->add_child(current_statemachine);
 
   //INVARIANT: current_statemachine non null points to correct machine
-
+#ifdef PRINT_DEBUG
   DEBUG <<"[PROCESS SM("<< id <<")]"<< "[HANDLING_IMPORTS]\n";
-
+#endif
   std::set<std::string> unresolved_imports_set;
   for(auto it =  current_statemachine->unresolved_imports().begin(); it != current_statemachine->unresolved_imports().end(); ++it)
 	  unresolved_imports_set.insert(get<1>(*it));
@@ -432,7 +437,9 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 	  auto join_state = join_state_.nodes()[0];
 	  if (join_state->kind() == ceps::ast::Ast_node_kind::identifier ){
         string s1 = name(as_id_ref(join_state));
-        DEBUG << "[INSERT LOCAL JOIN]" <<  s1 << "\n";
+        #ifdef PRINT_DEBUG
+         DEBUG << "[INSERT LOCAL JOIN]" <<  s1 << "\n";
+        #endif
         current_statemachine->join() = true;
         current_statemachine->join_state().id_ = s1;
         if (!current_statemachine->lookup(current_statemachine->join_state()))
@@ -442,7 +449,9 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 
 	    bool r = read_qualified_id(join_state,q_join_state_id );
 	    if (!r) fatal_(-1,"State machine '"+ id +"', join: illformed state id.\n");
-	   	DEBUG << "[INSERT GLOBAL JOIN]" << qualified_id_to_str(q_join_state_id) << "\n";
+        #ifdef PRINT_DEBUG
+	   	 DEBUG << "[INSERT GLOBAL JOIN]" << qualified_id_to_str(q_join_state_id) << "\n";
+        #endif
 	    current_statemachine->join() = true;
 	    current_statemachine->join_state() = State_machine::State(q_join_state_id);
 	  }
@@ -453,13 +462,19 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 bool resolve_imports(State_machine & sm, void* context)
 {
 	auto THIS = static_cast<State_machine_simulation_core*>(context);
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE2
+#endif
 	for (auto & sub_machine : sm.children_)
 	{
-
+        #ifdef PRINT_DEBUG
 		DEBUG << "[PROCESS_SUB_MACHINE_START][(REL)ID = "<<  sub_machine->id_ << "]\n";
+        #endif
+
 		if (sub_machine->definition_complete()) continue;
+        #ifdef PRINT_DEBUG
 		DEBUG << "[SUBMACHINE_NOT_COMPLETE][(REL)ID = "<<  sub_machine->id_ << "]\n";
+        #endif
 
 		State_machine::unresolve_import_t import_clause;
 		bool bfound = false;
@@ -467,7 +482,12 @@ bool resolve_imports(State_machine & sm, void* context)
 		{
 			if (std::get<2>(e) == sub_machine){import_clause=e;bfound = true;break;}
 		}
-		if(!bfound) {DEBUG << "[PROCESS_SUB_MACHINE_END_IMPORT_CLAUSE_NOT_MATCHED][(REL)ID = "<<  sub_machine->id_ << "]\n";return false;}
+		if(!bfound) {
+            #ifdef PRINT_DEBUG
+			 DEBUG << "[PROCESS_SUB_MACHINE_END_IMPORT_CLAUSE_NOT_MATCHED][(REL)ID = "<<  sub_machine->id_ << "]\n";
+            #endif
+			return false;
+		}
 
 		auto template_sm = State_machine::statemachines[std::get<1>(import_clause)];
 		if (template_sm == nullptr) {
@@ -478,13 +498,17 @@ bool resolve_imports(State_machine & sm, void* context)
 		{
 
 		} else resolve_imports(*template_sm,context);
+        #ifdef PRINT_DEBUG
 		DEBUG << "[CLONE_FROM(1)]\n";
+        #endif
 		auto rr = THIS->get_qualified_id(sub_machine);
 		assert(rr.first);
 		sub_machine->clone_from(template_sm,State_machine_simulation_core::SM_COUNTER,rr.second,resolve_imports,context);
 		sub_machine->definition_complete() = true;
+        #ifdef PRINT_DEBUG
 		DEBUG << "[CLONE_FROM(2)]\n";
 		DEBUG << "[PROCESS_SUB_MACHINE_END][(REL)ID = "<<  sub_machine->id_ << "]\n";
+        #endif
 	}
 	sm.definition_complete() = true;
 
@@ -493,15 +517,18 @@ bool resolve_imports(State_machine & sm, void* context)
 
 bool State_machine_simulation_core::resolve_imports(State_machine & sm)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
+#endif
 	return ::resolve_imports(sm,this);
 }
 
 bool State_machine_simulation_core::resolve_q_id(State_machine* smp,
 		std::vector<std::string> const & q_id, State_machine::State & s)
 {
-
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
+#endif
 	assert(smp != nullptr);
 	State_machine* current_parent = smp;
 	int start_pos = 0;
@@ -617,7 +644,9 @@ std::string State_machine_simulation_core::get_full_qualified_id(State_machine::
 
 state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::string compound_id, State_machine* parent)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
+#endif
 	//std::cout << "resolve_state_qualified_id:"<<(parent?parent->id():"") << "/" <<compound_id <<std::endl;
 
 	using namespace ceps::ast;
@@ -667,7 +696,9 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::strin
 }
 state_rep_t State_machine_simulation_core::resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
+#endif
 	using namespace ceps::ast;
 	if (p == nullptr) return state_rep_t{};
 	if (p->kind() == ceps::ast::Ast_node_kind::identifier){
@@ -696,7 +727,12 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(ceps::ast:
 		auto root = ceps::ast::as_binop_ptr(p);
 		auto l_ = root->left();
 		auto l = resolve_state_qualified_id(l_,nullptr);
-		if (!l.valid()){DEBUG<<"[INVALID_STATE_REP]\n"; return l;}
+		if (!l.valid()){
+            #ifdef PRINT_DEBUG
+			 DEBUG<<"[INVALID_STATE_REP]\n";
+            #endif
+			return l;
+		}
 		if(!l.is_sm_) return state_rep_t{};
 		return resolve_state_qualified_id(root->right(),l.smp_);
 	}
@@ -813,7 +849,9 @@ void State_machine_simulation_core::eval_guard_assign(ceps::ast::Binary_operator
 void define_a_struct(State_machine_simulation_core* smc,
 		ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE2
+#endif
 
 	if (sp->children().size() == 0){
 		auto it = vars.find(prefix);
@@ -856,8 +894,10 @@ extern ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_co
 
 void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator & root,std::string const & lhs_id)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
 	DEBUG << "[STATE_ASSIGNMENT][LHS=" << lhs_id << "]\n";
+#endif
 	std::lock_guard<std::recursive_mutex>g(states_mutex());
 
 	if (root.right()->kind() == ceps::ast::Ast_node_kind::identifier)
@@ -877,8 +917,9 @@ void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator
 	if (pp) global_states_prev_[lhs_id] = pp;
 	get_global_states()[lhs_id] = rhs;
 	if(!pp) global_states_prev_[lhs_id] = rhs;
-
+#ifdef PRINT_DEBUG
 	DEBUG << "[STATE_ASSIGNMENT_DONE][LHS=" << lhs_id << "]\n";
+#endif
 }
 
 void State_machine_simulation_core::add(states_t& states, state_rep_t s)
@@ -916,7 +957,9 @@ std::string State_machine_simulation_core::get_fullqualified_id(state_rep_t cons
 void State_machine_simulation_core::print_info(states_t& states_from, states_t& states_to,std::set<state_rep_t> const& new_states_triggered_set,
 		std::set<state_rep_t> const& states_with_no_transition)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
+#endif
 	log() << "[";
 	auto n1 = states_from.size();
 
@@ -1003,8 +1046,9 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 												 std::set<state_rep_t> & removed_states)
 {
 	using namespace ceps::ast;
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
-
+#endif
 	associated_actions.clear();states_without_transition.clear();pred.clear();
 	std::set<state_rep_t> states_from(states.begin(),states.end());
 	std::set<state_rep_t> states_to;
@@ -1025,33 +1069,21 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			if (it == states_from.end()){all_threads_in_final=false;break;}
 		}
 		if (all_threads_in_final) {
-			DEBUG << "[JOIN ACTIVE]["<< s.smp_->id() <<"]" << "\n";
+            #ifdef PRINT_DEBUG
+			 DEBUG << "[JOIN ACTIVE]["<< s.smp_->id() <<"]" << "\n";
+            #endif
 			threaded_sm_with_all_threads_in_final.insert(s.smp_);
 		}
 	}
 
 	bool transition_taken = false;
 
-	//std::cout << "*******************KERNEL\n";
-
-	/*if (!remove_states.empty()){
-		for(auto & st : remove_states) {
-
-			std::cout << st.is_sm_ << "/" << st.sid_ << "/" << (void*) st.smp_ << std::endl;
-		}
-	}
-	std::cout << "*******************\n";*/
-
 	for(auto const & s_from : states_from)
 	{
-		//std::cout << remove_states.size() << std::endl;
-		//std::cout <<"s_from: " << s_from.is_sm_ << "/" << s_from.sid_ << "/" << (void*) s_from.smp_ << std::endl;
-		//std::cout << "Found: " << (remove_states.find(s_from) != remove_states.end()) << std::endl;
 		if (remove_states.find(s_from) != remove_states.end()) { removed_states.insert(s_from); continue;}
 		if (!s_from.is_sm_) {
 		 state_rep_t srep(true,true,s_from.containing_sm(),s_from.smp_->id_ );
 		 bool ff = remove_states.find(srep) != remove_states.end();
-		 //std::cout << "Found: " << ff << std::endl;
 
 		 if (ff) {removed_states.insert(s_from);continue;}
 		}
@@ -1064,7 +1096,9 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 		for(auto m : State_machine::statemachines) if (m.second == containing_smp) {ff = true;break;}
 		assert(ff);
 		if (s_from.is_sm_ && s_from.smp_->parent_ ) containing_smp = s_from.smp_->parent_;
-		DEBUG << "[CHECKING][STATE="<< s_from.sid_ <<"]" << "\n";
+        #ifdef PRINT_DEBUG
+		 DEBUG << "[CHECKING][STATE="<< s_from.sid_ <<"]" << "\n";
+        #endif
 		if(s_from.sid_ == "Final" && containing_smp->is_thread() &&
 		   threaded_sm_with_all_threads_in_final.find(containing_smp->parent_) != threaded_sm_with_all_threads_in_final.end())
 		{
@@ -1072,7 +1106,9 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			states_to.insert(state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_));
 			transition_taken=trans_found=true;
 			pred[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = s_from;
-			DEBUG << "[JOIN TAKEN][JOIN_STATE='"<<to_state.id_ <<"']" << "\n";
+            #ifdef PRINT_DEBUG
+			 DEBUG << "[JOIN TAKEN][JOIN_STATE='"<<to_state.id_ <<"']" << "\n";
+            #endif
 		}
 
 		for(auto  & t : containing_smp->transitions())
@@ -1081,7 +1117,10 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			assert(!t.to().unresolved());
 			assert(t.from().id_.size() > 0);
 			assert(t.to().id_.size() > 0);
-			DEBUG << "[CHECKING TRANSITION]["<<t.from().id_ << "=>"<< t.to().id_ <<"]" << "\n";
+            #ifdef PRINT_DEBUG
+			 DEBUG << "[CHECKING TRANSITION]["<<t.from().id_ << "=>"<< t.to().id_ <<"]" << "\n";
+            #endif
+
 			bool valid = false;
 			if(t.from().is_initial() && s_from.initial()) valid = true;
 			if(!valid && t.from().is_final() && s_from.final()) valid = true;
@@ -1104,8 +1143,10 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			}
 
 			if (!triggered) continue;
-			DEBUG << "[TRIGGERED STATE]" << "\n";
 
+			#ifdef PRINT_DEBUG
+			 DEBUG << "[TRIGGERED STATE]" << "\n";
+            #endif
 
 			if(t.to_.is_sm_ && t.to_.smp_ && active_sms.find(t.to_.smp_) ==  active_sms.end() )
 			{
@@ -1170,7 +1211,9 @@ void State_machine_simulation_core::enter_sm(bool triggered_by_immediate_child_s
 											 std::vector<State_machine::Transition::Action>& on_enter_sm_derived_action_list,
 											 states_t const& current_states)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
+#endif
 	if(smp == nullptr) return;
 	if(sms_entered.find(smp) != sms_entered.end()) return;// state machine already visited
 	sms_entered.insert(smp);
@@ -1214,7 +1257,9 @@ void State_machine_simulation_core::enter_sm(bool triggered_by_immediate_child_s
 
 void State_machine_simulation_core::start_processing_init_script(ceps::ast::Nodeset& sim,int& pos,states_t states)
 {
+#ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
+#endif
 	using namespace ceps::ast;
 	event_rep_t ev;
 	bool dummy;
