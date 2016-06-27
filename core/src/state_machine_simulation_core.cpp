@@ -1137,9 +1137,15 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			if(!triggered) continue;
 
 			// evaluate guard
-			if (t.has_guard())
+			if (t.guard_native_) triggered = (*t.guard_native_)();
+			else if (t.has_guard())
 			{
-				triggered = eval_guard(ceps_env,t.guard(),states);
+				auto it =  get_user_supplied_guards().find(t.guard());
+				 if (it !=  get_user_supplied_guards().end()){
+					 t.guard_native_ = it->second;
+					 triggered = (*t.guard_native_)();
+				 } else
+				  triggered = eval_guard(ceps_env,t.guard(),states);
 			}
 
 			if (!triggered) continue;

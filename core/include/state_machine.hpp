@@ -149,6 +149,7 @@ public:
     using Nonleafbase_ptr = ceps::ast::Nonleafbase* ;
     std::string guard_ ;
     State_machine* orig_parent_=nullptr;
+    bool(**guard_native_)() = nullptr;
     decltype(orig_parent_)& orig_parent(){return orig_parent_;}
     Transition() = default;
     Transition(State from , State to):from_(from),to_(to){}
