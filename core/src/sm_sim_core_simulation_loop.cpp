@@ -86,6 +86,8 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		}
 	}
 
+	ev_short_circuit_vec_.resize(this->free_entries_in_short_circuit_vec_);
+
 	for(;!quit && !shutdown();)
 	{
 		bool ev_read = false;

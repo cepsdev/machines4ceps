@@ -493,6 +493,11 @@ private:
 	std::set<state_rep_t> assert_in_end_states_;
 	std::vector<dispatcher_thread_ctxt_t*> dispatcher_thread_ctxt_;
 	bool generate_cpp_code_ = false;
+
+	std::vector<std::pair<bool,event_t>> ev_short_circuit_vec_;
+	size_t free_entries_in_short_circuit_vec_ = 32;
+
+
 public:
 	bool generate_cpp_code() const {return generate_cpp_code_;}
 	bool& generate_cpp_code() {return generate_cpp_code_;}
