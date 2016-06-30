@@ -9,15 +9,7 @@ void State_machine_simulation_core::queue_event(std::string ev_name,std::initial
 	ev.already_sent_to_out_queues_ = false;
 	ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
 	ev.payload_native_.insert(ev.payload_native_.cbegin(),vl.begin(),vl.end());
-	if (ev_short_circuit_vec_.size() > free_entries_in_short_circuit_vec_){
-		for(auto & e : ev_short_circuit_vec_){
-			if (e.first) continue;
-			e.second = ev;
-			e.first = true;
-			--free_entries_in_short_circuit_vec_;
-			return;
-		}
-	}
+
 
 	enqueue_event(ev,true);
 }
@@ -82,17 +74,7 @@ do{
 	pending_timed_event = timed_events_pending();
 	if (!ignore_ev_queue)
 	{
-		if (ev_short_circuit_vec_.size() != free_entries_in_short_circuit_vec_){
-		 for(auto & e : ev_short_circuit_vec_){
-		 	if (!e.first) continue;
-		 	e.first = false;
-		 	ev.sid_ = e.second.id_;
-			ev.payload_native_ = e.second.payload_native_;
-			ev.glob_func_ = e.second.glob_func_;
-			++free_entries_in_short_circuit_vec_;
-			return true;
-		 }
-		}
+
 		std::unique_lock<std::mutex> lk(main_event_queue().data_mutex());
 		if (!main_event_queue().data().empty()) {
 			 auto eev = main_event_queue().data().front();
@@ -112,19 +94,19 @@ do{
 
 			 ev.sid_ = eev.id_;
 
-                         if (map_ceps_payload_to_native_ && eev.payload_.size()){
-                           eev.payload_native_.clear();
-                           for(auto v : eev.payload_){
-                             if (v->kind() == ceps::ast::Ast_node_kind::int_literal)
-                              eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_int_ref(v))));
-                             else if (v->kind() == ceps::ast::Ast_node_kind::float_literal)
-                              eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_double_ref(v))));
-                             else if (v->kind() == ceps::ast::Ast_node_kind::string_literal)
-                              eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_string_ref(v))));
-                             if (delete_ceps_payload_) delete v;
-                           }
-                           eev.payload_.clear();
-                         }
+             if (map_ceps_payload_to_native_ && eev.payload_.size()){
+                eev.payload_native_.clear();
+               for(auto v : eev.payload_){
+                 if (v->kind() == ceps::ast::Ast_node_kind::int_literal)
+                     eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_int_ref(v))));
+                 else if (v->kind() == ceps::ast::Ast_node_kind::float_literal)
+                     eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_double_ref(v))));
+                 else if (v->kind() == ceps::ast::Ast_node_kind::string_literal)
+                     eev.payload_native_.push_back(sm4ceps_plugin_int::Variant(value(as_string_ref(v))));
+                 if (delete_ceps_payload_) delete v;
+                 }
+                 eev.payload_.clear();
+             }
 
 			 ev.payload_ = eev.payload_;
 			 ev.payload_native_ = eev.payload_native_;

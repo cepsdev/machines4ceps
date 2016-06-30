@@ -2,8 +2,14 @@
 
 #include "core/include/base_defs.hpp"
 
+#define PRINT_DEBUG
+#define PRINT_LOG_SIM_LOOP
 
-void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe)
+
+void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
+		                                     states_t& states_in,
+		                                     ceps::Ceps_Environment& ceps_env,
+		                                     ceps::ast::Nodeset& universe)
 {
 #ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
@@ -86,7 +92,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,states_t& st
 		}
 	}
 
-	ev_short_circuit_vec_.resize(this->free_entries_in_short_circuit_vec_);
+
 
 	for(;!quit && !shutdown();)
 	{

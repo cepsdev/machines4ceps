@@ -166,6 +166,7 @@ public:
     struct Event
     {
     	std::string id_;
+    	int evid_ = 0;
     	Event() = default;
     	Event(std::string id): id_(id) {}
     	std::string const & id() const {return id_;}

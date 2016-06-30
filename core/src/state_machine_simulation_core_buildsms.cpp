@@ -26,6 +26,7 @@
 #include <cassert>
 #include <algorithm>
 #include <unordered_set>
+#include <list>
 
 
 typedef void (*init_plugin_t)(IUserdefined_function_registry*);
@@ -111,16 +112,18 @@ template<typename F, typename T> void traverse_sms(T const & sms, F f){
 	}	
 }
 
-int compute_state_ids(State_machine_simulation_core* smp,std::map<std::string,State_machine*> sms,std::map<std::string,int>& map_fullqualified_sm_id_to_computed_idx){
+int compute_state_and_event_ids(State_machine_simulation_core* smp,std::map<std::string,State_machine*> sms,std::map<std::string,int>& map_fullqualified_sm_id_to_computed_idx){
 	using namespace ceps::ast;
 	using namespace std;
 	DEBUG_FUNC_PROLOGUE;
 	
 	std::vector<State_machine*> smsv;
+	std::map<std::string,int> ev_to_id;
 	
 
 	for(auto sm : sms) smsv.push_back(sm.second);
-	int ctr = 0;
+	int ctr = 1;
+	int ev_ctr = 1;
 	traverse_sms(smsv,[&ctr](State_machine* cur_sm){
 		cur_sm->idx_ = ctr++;
 		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
@@ -129,6 +132,10 @@ int compute_state_ids(State_machine_simulation_core* smp,std::map<std::string,St
 		 if (!state->is_sm_) continue;
 		 state->smp_->idx_ = state->idx_;
 		}	
+
+		/*for(auto e : cur_sm->events()){
+			e.
+		}*/
 	 } 
 	);
 
@@ -829,7 +836,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	
 	if (logtrace()){
 		std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
-		auto number_of_states = compute_state_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+		auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
 		std::string fout("mfqsmid.ceps");
 		std::ofstream o(fout);
 		if(!o) fatal_(-1,"Couldn't write '"+fout+"'");
@@ -843,9 +850,13 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		log4kmw::get_value<0>(log4kmw_states::Current_states) = log4kmw::Dynamic_bitset(number_of_states);
 		log4kmw_loggers::logger_Trace.logger().init(log4kmw::persistence::memory_mapped_file("trace.bin", 1024*1024*8, true));
 		DEBUG << "[LOG4CEPS][Trace log 'trace.bin' initialized.]\n";
+	} else {
+		std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
+		auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+		for(auto e : map_fullqualified_sm_id_to_computed_idx){
+		 //std::cout <<" " << e.second <<";" << "\"" << e.first << "\";\n";
+		}
 	}
-
-
 
 
 
