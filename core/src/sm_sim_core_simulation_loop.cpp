@@ -2,8 +2,8 @@
 
 #include "core/include/base_defs.hpp"
 
-#define PRINT_DEBUG
-#define PRINT_LOG_SIM_LOOP
+#define DONT_PRINT_DEBUG
+#define DONT_PRINT_LOG_SIM_LOOP
 
 
 void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
@@ -22,6 +22,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
 
 	states_t states;
 	trans_hull_of_containment_rel(states_in,states);
+	//std::cout << "states_in.size()="<< states.size() << std::endl;
 	std::string testcase;
 	std::string testname;
 
@@ -92,8 +93,176 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
 		}
 	}
 
+	//std::cout << "states.size()="<< states.size() << std::endl;
+	for(auto const & s : states){
+	  executionloop_context().current_states.push_back(s.id_);
+    }
+
+	int ccc = 0;
+	int max_ccc = 10;
+
+	executionloop_context().current_states.resize(executionloop_context().number_of_states);
+    auto new_states = executionloop_context().current_states;
+
+    std::memset(executionloop_context().current_states.data(),0,executionloop_context().number_of_states*sizeof(int));
+
+    std::vector<int> triggered_transitions;
+    triggered_transitions.resize(1000);
 
 
+    int current_states_end = 0;
+    int new_states_end = 0;
+    auto & execution_ctxt = executionloop_context();
+
+
+	for(;!quit && !shutdown();)
+	{
+
+		bool ev_read = false;int ev_id = 0;
+		//std::cout << current_event().id_ << std::endl;
+
+		current_event().id_= {};
+        #ifdef PRINT_LOG_SIM_LOOP
+		 if (print_debug_info_)log()<< "[SIMULATION_LOOP][" << ++loop_ctr << "]\n";
+        #endif
+
+		event_rep_t ev;
+		bool fetch_made_states_update = false;
+
+		if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
+		{
+			ev_read = true;
+			ev_id   = execution_ctxt.front_ev_sync_queue();
+			execution_ctxt.pop_ev_sync_queue();
+		} else if(!taking_epsilon_transitions) {
+
+		 if (step_handler_) quit = step_handler_();
+		 std::vector<State_machine*> on_enter_seq;
+		 states_t new_states_fetch;
+
+		 if (!fetch_event(ev,sim,pos,new_states_fetch,fetch_made_states_update,on_enter_seq)) {
+			 //std::cout << "new_states.size()="<< new_states.size() << std::endl;
+			 if (fetch_made_states_update)
+			 {
+
+			  for(auto const & s : new_states_fetch){
+				  execution_ctxt.current_states[s.id_] = 1;
+				  current_states_end = std::max(current_states_end,s.id_+1);
+			  }
+
+			  if (on_enter_seq.size())
+				{
+				 for(auto const & sm : on_enter_seq){
+				 	 //Handle on_enter
+                     #ifdef PRINT_LOG_SIM_LOOP
+					  if (print_debug_info_)log() << "[ON_ENTER]"<<get_fullqualified_id(state_rep_t(true,true,sm,sm->id()) ) << "\n";
+                     #endif
+					 auto it = sm->find_action("on_enter");
+					 if (it == nullptr) continue;
+                    if (it->native_func()){
+                      current_smp() = it->associated_sm_;
+                      it->native_func()();
+                    } else{
+                      if (it->body_ == nullptr) continue;
+                      if (enforce_native())
+                        fatal_(-1,"Expecting native implementation (--enforce_native) (on_enter_1):"+it->id());
+                      execute_action_seq(sm,it->body());
+                    }
+				 }//for
+			   }
+			   taking_epsilon_transitions = true;
+			   continue;
+			 } else if (!remove_states_.empty()){
+			   taking_epsilon_transitions = true;
+			   continue;
+		     } else {
+               #ifdef PRINT_LOG_SIM_LOOP
+		    	 if (print_debug_info_)log()<< "[NO EVENT FOUND => COMPUTATION COMPLETE]\n";
+               #endif
+			  break;
+			 }
+		 } else {
+			 if (ev.sid_ == "@@queued_action")
+			 {
+				 if (ev.glob_func_ != nullptr){
+					 ev.glob_func_();
+				 } else {
+
+                                  if (enforce_native())
+                                    fatal_(-1,"Expecting native implementation (--enforce_native):@@queued_action");
+
+				  ceps::ast::Scope scope;
+				  scope.children() = ev.payload_;scope.owns_children() = false;
+				  execute_action_seq(nullptr,&scope);
+				  scope.children().clear();
+				 }
+				 continue;
+			 }
+			 ev_read = true;
+		 }
+		 current_event() = ev;
+		 if (ev_read) ev_id = execution_ctxt.ev_to_id[current_event().id_];
+         #ifdef PRINT_LOG_SIM_LOOP
+		  log()<< "[FETCHED_EVENT][" << ev.sid_ << "]\n";
+         #endif
+		}
+
+		/*std::cout << "states = ";
+		for(int z = 0; z != current_states_end; ++z){
+			if (!executionloop_context().current_states[z]) continue;
+			std::cout << z << " ";
+		}
+		std::cout << std::endl;*/
+
+
+
+		//std::cout << "event_id=" <<ev_id << std::endl;
+		std::memset(triggered_transitions.data(),0,triggered_transitions.size()*sizeof(int));
+		std::memset(new_states.data(),0,new_states.size()*sizeof(int));
+		new_states_end = 0;
+
+		int triggered_transitions_end = 0;
+		for (int j = 0; j != current_states_end;++j){
+			if (execution_ctxt.current_states[j] == 0) continue;
+			auto s = j;
+
+			int i = execution_ctxt.state_to_first_transition[s];
+			int smp = execution_ctxt.transitions[i].smp;
+
+			bool triggered = false;
+			for(;i != execution_ctxt.transitions.size();++i){
+				auto const & t = execution_ctxt.transitions[i];
+				if (t.smp != smp) break;
+				if (t.ev == ev_id && t.from == s)
+					if (!t.guard || (t.guard && (*t.guard)()))  {
+						triggered_transitions[triggered_transitions_end++]=i;triggered=true;
+					}
+			}
+			if (!triggered) {new_states[s] = 1; new_states_end = std::max(s+1,new_states_end); }
+		}
+
+		std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
+		auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
+
+		for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
+			auto t = *p;
+			auto a1 = execution_ctxt.transitions[t].a1;
+			auto a2 = execution_ctxt.transitions[t].a2;
+			auto a3 = execution_ctxt.transitions[t].a3;
+			if (a1) a1();
+			if (a2) a2();
+			if (a3) a3();
+			new_states[execution_ctxt.transitions[t].to]=1;
+			new_states_end = std::max(execution_ctxt.transitions[t].to+1,new_states_end);
+		}
+
+		memcpy(execution_ctxt.current_states.data(),new_states.data(),new_states_end*4);
+		current_states_end = new_states_end;
+		taking_epsilon_transitions = false;
+	}
+
+	return;
+#if 0
 	for(;!quit && !shutdown();)
 	{
 		bool ev_read = false;
@@ -484,5 +653,6 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
 	 log()<< "[SIMULATION TERMINATED]\n\n";
     #endif
 	step_handler_ = nullptr;
+#endif
 
 }

@@ -10,7 +10,20 @@ Statemachine
  id{S1;};
  States{Initial;Final;a;b;c;d;e;};
  Actions{
-    a1{/*print(s1,"\n");*/ if (s1<100000000) {E;}; };
+    a1{/*print(s1,"\n");*/ if (s1<10000000) {E;}; };
+    a2{s1=s1+1;F;};
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;b;E;a2;};
+ Transition{b;a;F;a1;};
+};
+
+Statemachine
+{
+ id{S2;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    a1{/*print(s1,"\n");*/ if (s1<10000000) {E;}; };
     a2{s1=s1+1;F;};
  };
  Transition{Initial;a;a1;};

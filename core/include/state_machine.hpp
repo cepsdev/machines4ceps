@@ -23,8 +23,8 @@ struct state_rep_t {
 
 	bool valid() const {return valid_;}
 	state_rep_t() = default;
-	state_rep_t(bool valid, bool is_sm,State_machine* smp, std::string const & sid) : valid_(valid),is_sm_(is_sm),smp_(smp),sid_(sid)
-	{ assert(!valid || is_sm || smp != nullptr);}
+	state_rep_t(bool valid, bool is_sm,State_machine* smp, std::string const & sid,int idn) : valid_(valid),is_sm_(is_sm),smp_(smp),sid_(sid),id_(idn)
+	{ /*assert(!valid || is_sm || smp != nullptr);*/}
 	bool initial() const {return sid_ == "initial" || sid_ == "Initial";}
 	bool final() const {return sid_ == "final" || sid_ == "Final";}
 	int id();
@@ -346,16 +346,16 @@ public:
 	  else {prefix = compound_id.substr(0,i);rest=compound_id.substr(i+1);}
 	  for(auto& s:states()){
 		  if (s->id_ != prefix) continue;
-		  if (rest.length()==0 && !s->is_sm_) return state_rep_t{true,false,this,s->id_};
+		  if (rest.length()==0 && !s->is_sm_) return state_rep_t{true,false,this,s->id_,s->idx_};
 		  if (rest.length()!=0 && s->is_sm_) return s->smp()->find(rest);
 	  }
 
-	  if (rest.length() == 0) return state_rep_t{false,false,nullptr,""};
+	  if (rest.length() == 0) return state_rep_t{false,false,nullptr,"",-1};
 	  for(auto smp: children()){
 		  if(smp->id_ != prefix) continue;
 		  return smp->find(rest);
 	  }
-	  return state_rep_t{false,false,nullptr,""};
+	  return state_rep_t{false,false,nullptr,"",-1};
   }
 
 };

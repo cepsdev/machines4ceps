@@ -78,6 +78,56 @@ template <>
  };
 }
 
+class executionloop_context_t{
+public:
+	executionloop_context_t(){
+		ev_sync_queue.resize(1024);
+	}
+
+	void push_ev_sync_queue(int ev_id){
+		ev_sync_queue[ev_sync_queue_end] = ev_id;
+		++ev_sync_queue_end;
+		if (ev_sync_queue_end == ev_sync_queue.size()) ev_sync_queue_end = 0;
+		if (ev_sync_queue_end == ev_sync_queue_start) {
+			++ev_sync_queue_start;
+			if (ev_sync_queue_start == ev_sync_queue.size()) ev_sync_queue_start = 0;
+		}
+	}
+
+	int front_ev_sync_queue(){
+		return ev_sync_queue[ev_sync_queue_start];
+	}
+
+	bool ev_sync_queue_empty() {
+		return ev_sync_queue_start == ev_sync_queue_end;
+	}
+
+	bool pop_ev_sync_queue(){
+		if (ev_sync_queue_empty()) return false;
+		++ev_sync_queue_start;
+		if (ev_sync_queue_start == ev_sync_queue.size())
+			ev_sync_queue_start = 0;
+	}
+
+	int number_of_states = 0;
+	std::map<std::string,int> ev_to_id;
+	class transition_t{
+		public:
+		int smp = 0,from = 0, to = 0, ev = 0;
+		bool(**guard)() = nullptr;
+		void(* a1)() = nullptr;
+		void(* a2)() = nullptr;
+		void(* a3)() = nullptr;
+		transition_t() = default;
+		bool start() const {return smp != 0 && from == 0 && to == 0;}
+	};
+	std::vector<transition_t> transitions;
+	std::vector<int> current_states;
+	std::unordered_map<int,int> state_to_first_transition;
+	std::vector<int> ev_sync_queue;
+	size_t ev_sync_queue_start = 0;
+	size_t ev_sync_queue_end = 0;
+};
 
 class State_machine_simulation_core:public IUserdefined_function_registry, Ism4ceps_plugin_interface
 {
@@ -130,10 +180,12 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
     bool map_ceps_payload_to_native_=false;
     bool delete_ceps_payload_=false;
     bool enforce_native_ = false;
+    executionloop_context_t executionloop_context_;
 
 public:
-        bool& enforce_native(){return enforce_native_;}
-        bool is_export_event(std::string const & ev_id) const {return exported_events_.find(ev_id) != exported_events_.end();}
+    decltype(executionloop_context_)& executionloop_context() {return executionloop_context_;}
+    bool& enforce_native(){return enforce_native_;}
+    bool is_export_event(std::string const & ev_id) const {return exported_events_.find(ev_id) != exported_events_.end();}
 
 	decltype(glob_funcs_)& glob_funcs(){return glob_funcs_;}
 	decltype(current_smp_)& current_smp(){return current_smp_;}
@@ -573,6 +625,7 @@ public:
 
 	Ism4ceps_plugin_interface* get_plugin_interface() {return this;}
 	void queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl = {});
+	void sync_queue_event(int ev_id);
 	size_t argc();
 	sm4ceps_plugin_int::Variant argv(size_t);
 	void start_timer(double,sm4ceps_plugin_int::ev);

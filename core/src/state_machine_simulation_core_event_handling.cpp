@@ -5,6 +5,14 @@
 #include "cepsparserdriver.hh"
 
 void State_machine_simulation_core::queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl){
+	if (vl.size() == 0){
+		auto& ctxt = executionloop_context();
+		auto evid = ctxt.ev_to_id[ev_name];
+		if (evid > 0){
+			ctxt.push_ev_sync_queue(evid);
+			return;
+		}
+	}
 	event_t ev(ev_name);
 	ev.already_sent_to_out_queues_ = false;
 	ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
@@ -13,6 +21,12 @@ void State_machine_simulation_core::queue_event(std::string ev_name,std::initial
 
 	enqueue_event(ev,true);
 }
+
+
+void State_machine_simulation_core::sync_queue_event(int ev_id){
+	executionloop_context().push_ev_sync_queue(ev_id);
+}
+
 
 size_t State_machine_simulation_core::argc(){
 	return std::max(current_event().payload_.size(),current_event().payload_native_.size());

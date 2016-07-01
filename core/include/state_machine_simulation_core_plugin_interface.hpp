@@ -99,6 +99,7 @@ namespace sm4ceps_plugin_int{
 class Ism4ceps_plugin_interface{
 public:
  virtual void queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl = {}) = 0;
+ virtual void sync_queue_event(int ev_id) = 0;
  virtual size_t argc() = 0;
  virtual sm4ceps_plugin_int::Variant argv(size_t) = 0;
  virtual void start_timer(double,sm4ceps_plugin_int::ev) = 0;

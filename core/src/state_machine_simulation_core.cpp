@@ -657,12 +657,12 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::strin
 		if (parent == nullptr) {
 			auto it = State_machine::statemachines.find(id);
 			if (it == State_machine::statemachines.end()) return state_rep_t{};
-			return state_rep_t(true,true,it->second,it->second->id_);
+			return state_rep_t(true,true,it->second,it->second->id_,it->second->idx_);
 		} else
 		{
 			for(auto const & c : parent->children())
 			{
-				if (c->id_ == id) return state_rep_t(true,true,c,c->id_);
+				if (c->id_ == id) return state_rep_t(true,true,c,c->id_,c->idx_);
 			}
 			State_machine::State s(id);
 
@@ -671,7 +671,7 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::strin
 				if (p->id() == id) {it = p;break;}
 			}
 			if (it == /*parent->states.end()*/nullptr) return state_rep_t{};
-			return state_rep_t(true,false,parent,it->id_);
+			return state_rep_t(true,false,parent,it->id_,it->idx_);
 		}
 
 	} else  {
@@ -706,12 +706,12 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(ceps::ast:
 		if (parent == nullptr) {
 			auto it = State_machine::statemachines.find(id);
 			if (it == State_machine::statemachines.end()) return state_rep_t{};
-			return state_rep_t(true,true,it->second,it->second->id_);
+			return state_rep_t(true,true,it->second,it->second->id_,it->second->idx_);
 		} else
 		{
 			for(auto const & c : parent->children())
 			{
-				if (c->id_ == id) return state_rep_t(true,true,c,c->id_);
+				if (c->id_ == id) return state_rep_t(true,true,c,c->id_,c->idx_);
 			}
 			State_machine::State s(id);
 
@@ -720,7 +720,7 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(ceps::ast:
 				if (p->id() == id) {it = p;break;}
 			}
 			if (it == /*parent->states.end()*/nullptr) return state_rep_t{};
-			return state_rep_t(true,false,parent,it->id_);
+			return state_rep_t(true,false,parent,it->id_,it->idx_);
 		}
 
 	} else if (p->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(p)) == '.') {
@@ -1020,14 +1020,17 @@ void State_machine_simulation_core::trans_hull_of_containment_rel(states_t& stat
 														state_rep_t(true,
 																	true,
 																	state.smp_->parent_,
-																	state.smp_->parent_->id_));
+																	state.smp_->parent_->id_,state.smp_->parent_->idx_));
 									}//insert possible parent
 			if (state.smp_ && state.is_sm_ && state.smp_->has_initial_state()) {
-				if (sms_which_contain_at_least_one_state_in_s.find(state.smp_) == sms_which_contain_at_least_one_state_in_s.end() )
-					s.insert(state_rep_t(true,false,state.smp_,"Initial"));
+				if (sms_which_contain_at_least_one_state_in_s.find(state.smp_) == sms_which_contain_at_least_one_state_in_s.end() ){
+					int idx = -1;
+					for (auto s : state.smp_->states()) if (s->id_ == "Initial"){idx = s->idx_;break;}
+					s.insert(state_rep_t(true,false,state.smp_,"Initial",idx));
+				}
 			}
 			if(state.is_sm_ && state.smp_->contains_threads())
-				for(auto p : state.smp_->children()) if (p->is_thread()) {s.insert(state_rep_t(true,true,p,p->id()));}
+				for(auto p : state.smp_->children()) if (p->is_thread()) {s.insert(state_rep_t(true,true,p,p->id(),p->idx_));}
 		}
 	}
 	states_out = states_t(s.begin(),s.end());
@@ -1065,7 +1068,7 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 		for(auto th: s.smp_->children())
 		{
 			if (!th->is_thread()) continue;
-			auto it = states_from.find(state_rep_t(true,false,th,"Final"));
+			auto it = states_from.find(state_rep_t(true,false,th,"Final",-1));
 			if (it == states_from.end()){all_threads_in_final=false;break;}
 		}
 		if (all_threads_in_final) {
@@ -1082,7 +1085,7 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 	{
 		if (remove_states.find(s_from) != remove_states.end()) { removed_states.insert(s_from); continue;}
 		if (!s_from.is_sm_) {
-		 state_rep_t srep(true,true,s_from.containing_sm(),s_from.smp_->id_ );
+		 state_rep_t srep(true,true,s_from.containing_sm(),s_from.smp_->id_ ,s_from.id_);
 		 bool ff = remove_states.find(srep) != remove_states.end();
 
 		 if (ff) {removed_states.insert(s_from);continue;}
@@ -1103,9 +1106,9 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 		   threaded_sm_with_all_threads_in_final.find(containing_smp->parent_) != threaded_sm_with_all_threads_in_final.end())
 		{
 			auto to_state = containing_smp->parent_->join_state();
-			states_to.insert(state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_));
+			states_to.insert(state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_,to_state.idx_));
 			transition_taken=trans_found=true;
-			pred[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = s_from;
+			pred[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_,to_state.idx_)] = s_from;
             #ifdef PRINT_DEBUG
 			 DEBUG << "[JOIN TAKEN][JOIN_STATE='"<<to_state.id_ <<"']" << "\n";
             #endif
@@ -1172,16 +1175,16 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 			}
 
 			auto const & to_state = t.to_;
-			states_to.insert(state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_));
+			states_to.insert(state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_,to_state.idx_));
 			trans_found=true;transition_taken=true;
-			pred[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = s_from;
+			pred[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_,to_state.idx_)] = s_from;
 
 			for(auto & temp: t.actions()) temp.associated_sm_ = containing_smp;
 			//if (t.actions().size()) associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)] = t.actions();
 			if (t.actions().size()){
 				//std::cout << "t.actions().size()" << t.actions().size() << std::endl;
 				//std::cout << containing_smp->id_ << ":" << t.from_.id_ << "->" << t.to_.id_ << std::endl;
-				auto & v = associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_)];
+				auto & v = associated_actions[state_rep_t(true,to_state.is_sm_,to_state.smp_,to_state.id_,to_state.idx_)];
 				v.insert(v.end(),t.actions().begin(), t.actions().end());
 
 			}
@@ -1231,7 +1234,7 @@ void State_machine_simulation_core::enter_sm(bool triggered_by_immediate_child_s
 		for(auto child : smp->children())
 		{
 			if(!child->is_thread()) continue;
-			new_states_set.insert(state_rep_t(true,true,child,child->id()));
+			new_states_set.insert(state_rep_t(true,true,child,child->id(),child->idx_));
 			enter_sm(false,child,sms_entered,on_enter_seq,new_states_set,on_enter_sm_derived_action_list,current_states);
 		}
 	}
@@ -1250,14 +1253,14 @@ void State_machine_simulation_core::enter_sm(bool triggered_by_immediate_child_s
 
 
 		//assert(t.to_.is_sm_ || t.to_.smp_);
-		new_states_set.insert(state_rep_t(true,t.to_.is_sm_,t.to_.smp_,t.to_.id()));
+		new_states_set.insert(state_rep_t(true,t.to_.is_sm_,t.to_.smp_,t.to_.id(),t.to_.idx_));
 		in_initial_state = false;
 		for(auto& dd :t.action_ ) dd.associated_sm_ = smp;
 		if (t.action_.size()) on_enter_sm_derived_action_list.insert( on_enter_sm_derived_action_list.end(),t.action_.begin(),t.action_.end());
 		if (!t.to_.is_sm_) continue;
 		enter_sm(false,t.to_.smp_,sms_entered,on_enter_seq,new_states_set,on_enter_sm_derived_action_list,current_states);
 	}
-	if(in_initial_state) { assert(smp != nullptr); new_states_set.insert(state_rep_t(true,false,smp,"Initial"));}
+	if(in_initial_state) { assert(smp != nullptr); new_states_set.insert(state_rep_t(true,false,smp,"Initial",-1));}
 }
 
 

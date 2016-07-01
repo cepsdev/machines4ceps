@@ -112,19 +112,25 @@ template<typename F, typename T> void traverse_sms(T const & sms, F f){
 	}	
 }
 
-int compute_state_and_event_ids(State_machine_simulation_core* smp,std::map<std::string,State_machine*> sms,std::map<std::string,int>& map_fullqualified_sm_id_to_computed_idx){
+int compute_state_and_event_ids(State_machine_simulation_core* smp,
+		                        std::map<std::string,State_machine*> sms,
+								std::map<std::string,int>& map_fullqualified_sm_id_to_computed_idx){
 	using namespace ceps::ast;
 	using namespace std;
 	DEBUG_FUNC_PROLOGUE;
 	
+	smp->executionloop_context().transitions.clear();
+	smp->executionloop_context().state_to_first_transition.clear();
+
+
 	std::vector<State_machine*> smsv;
-	std::map<std::string,int> ev_to_id;
+	auto & ev_to_id = smp->executionloop_context().ev_to_id;
 	
 
 	for(auto sm : sms) smsv.push_back(sm.second);
 	int ctr = 1;
 	int ev_ctr = 1;
-	traverse_sms(smsv,[&ctr](State_machine* cur_sm){
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id](State_machine* cur_sm){
 		cur_sm->idx_ = ctr++;
 		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
 		 auto state = *it;
@@ -132,15 +138,72 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,std::map<std:
 		 if (!state->is_sm_) continue;
 		 state->smp_->idx_ = state->idx_;
 		}	
+	 }
+	);
 
-		/*for(auto e : cur_sm->events()){
-			e.
-		}*/
+	smp->executionloop_context().number_of_states = ctr;
+
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id](State_machine* cur_sm){
+	  for(auto & t : cur_sm->transitions()){
+
+		for(auto e : t.events()){
+		 if(ev_to_id.find(e.id_) != ev_to_id.end()) continue;
+		 ev_to_id[e.id_] = ev_ctr;
+		 ++ev_ctr;
+		}
+	  }
 	 } 
 	);
 
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id](State_machine* cur_sm){
+		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
+		 auto state = *it;
+		 for(auto & t : cur_sm->transitions()){
+			if (t.from_.is_sm_) {t.from_.idx_ = t.from_.smp_->idx_;assert(t.from_.idx_>0);}
+			else if (t.from_.id_ == state->id_) {t.from_.idx_ = state->idx_;assert(t.from_.idx_>0);}
+			if (t.to_.is_sm_) {t.to_.idx_ = t.to_.smp_->idx_;assert(t.to_.idx_>0);}
+			else if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_;assert(t.to_.idx_>0);}
+		 }//for
+		}
+	 }
+	);
+
+
+
+	auto& ctx = smp->executionloop_context();
+	//Build loop execution context
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+		executionloop_context_t::transition_t t;
+		t.smp = cur_sm->idx_;
+		assert(t.smp > 0);
+		ctx.transitions.push_back(t);
+		ctx.state_to_first_transition[t.smp] = ctx.transitions.size()-1;
+		for(auto const & t : cur_sm->transitions()){
+		 executionloop_context_t::transition_t tt;
+	     tt.smp = cur_sm->idx_;
+	     tt.from = t.from_.idx_;
+	     assert(tt.from > 0);
+	     tt.to = t.to_.idx_;
+	     assert(tt.to > 0);
+	     for(auto  const &  ev : t.events())
+	     {
+	    	 tt.ev = ev_to_id[ev.id_];
+	    	 assert(tt.ev > 0);
+	    	 break;
+	     }
+	     tt.guard = t.guard_native_;
+	     if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
+	     if (t.action_.size() >= 2) tt.a1 = t.action_[1].native_func_;
+	     if (t.action_.size() >= 3) tt.a1 = t.action_[2].native_func_;
+	     ctx.transitions.push_back(tt);
+	     if(ctx.state_to_first_transition.find(tt.from) != ctx.state_to_first_transition.end()) continue;
+	     ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;
+		}
+	 }
+	);
+
 	traverse_sms(smsv,[&map_fullqualified_sm_id_to_computed_idx,&smp](State_machine* cur_sm){
-		state_rep_t srep(true,true,cur_sm,cur_sm->id());
+		state_rep_t srep(true,true,cur_sm,cur_sm->id(),cur_sm->idx_);
 		//std::string t1;
 		map_fullqualified_sm_id_to_computed_idx[ smp->get_fullqualified_id(srep)]=cur_sm->idx_;
 		
@@ -152,12 +215,12 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,std::map<std:
 	 } 
 	);
 	
-	 DEBUG << "[LOG4CEPS][GLOBAL_STATE_COUNT=" << ctr <<"]\n";
-	 for(auto e : map_fullqualified_sm_id_to_computed_idx){
-		 DEBUG << "[LOG4CEPS]["<< e.first << " => " << e.second <<"]\n";
-	 }
+	DEBUG << "[LOG4CEPS][GLOBAL_STATE_COUNT=" << ctr <<"]\n";
+	for(auto e : map_fullqualified_sm_id_to_computed_idx){
+	 DEBUG << "[LOG4CEPS]["<< e.first << " => " << e.second <<"]\n";
+	}
 
-	 return ctr;
+	return ctr;
 }
 bool State_machine_simulation_core::register_action_impl(std::string state_machine_id,
 		                                                 std::string action,
@@ -834,29 +897,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	  exported_events_.insert(ceps::ast::name(ceps::ast::as_symbol_ref(p)));
 	}
 	
-	if (logtrace()){
-		std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
-		auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
-		std::string fout("mfqsmid.ceps");
-		std::ofstream o(fout);
-		if(!o) fatal_(-1,"Couldn't write '"+fout+"'");
-		o << "map{\n";
-		for(auto e : map_fullqualified_sm_id_to_computed_idx){
-		 o <<" " << e.second <<";" << "\"" << e.first << "\";\n";
-		}
-		o << "};";
 
-		DEBUG << "[LOG4CEPS][Mapping file'" << fout <<"' written.]\n";
-		log4kmw::get_value<0>(log4kmw_states::Current_states) = log4kmw::Dynamic_bitset(number_of_states);
-		log4kmw_loggers::logger_Trace.logger().init(log4kmw::persistence::memory_mapped_file("trace.bin", 1024*1024*8, true));
-		DEBUG << "[LOG4CEPS][Trace log 'trace.bin' initialized.]\n";
-	} else {
-		std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
-		auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
-		for(auto e : map_fullqualified_sm_id_to_computed_idx){
-		 //std::cout <<" " << e.second <<";" << "\"" << e.first << "\";\n";
-		}
-	}
 
 
 
@@ -887,6 +928,45 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		init_fn(smc, register_plugin);
 	}*/
 #endif
+
+	if (logtrace()){
+			std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
+			auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+			std::string fout("mfqsmid.ceps");
+			std::ofstream o(fout);
+			if(!o) fatal_(-1,"Couldn't write '"+fout+"'");
+			o << "map{\n";
+			for(auto e : map_fullqualified_sm_id_to_computed_idx){
+			 o <<" " << e.second <<";" << "\"" << e.first << "\";\n";
+			}
+			o << "};";
+
+			DEBUG << "[LOG4CEPS][Mapping file'" << fout <<"' written.]\n";
+			log4kmw::get_value<0>(log4kmw_states::Current_states) = log4kmw::Dynamic_bitset(number_of_states);
+			log4kmw_loggers::logger_Trace.logger().init(log4kmw::persistence::memory_mapped_file("trace.bin", 1024*1024*8, true));
+			DEBUG << "[LOG4CEPS][Trace log 'trace.bin' initialized.]\n";
+	} else {
+			std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
+			auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+			for(auto e : map_fullqualified_sm_id_to_computed_idx)
+			 std::cout <<" " << e.second <<";" << "\"" << e.first << "\";\n";
+
+			for(auto e:executionloop_context().ev_to_id)
+				 std::cout <<" " << e.second <<";" << "\"" << e.first << "\";\n";
+
+			int j = 0;
+			for(auto const & t : executionloop_context().transitions){
+			 std::cout << j++ << " ";
+             std::cout << t.smp << ": ";
+             if (t.start())
+            	 std::cout << "START\n";
+             else std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2) << std::endl;
+			}
+			for(auto const & s : executionloop_context().state_to_first_transition){
+				std::cout << "first("<< s.first<<") == "<< s.second << std::endl;
+			}
+	 }
+
 
 	if(enforce_native()){
 	 std::vector<State_machine*> smsv;

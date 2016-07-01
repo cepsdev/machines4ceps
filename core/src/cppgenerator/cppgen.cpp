@@ -924,7 +924,7 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 			if (cur_sm != nullptr){
 				for(auto a : cur_sm->actions_){
 				 if (a.id_ != compound_id) continue;
-				 state_rep_t srep(true,true,cur_sm,cur_sm->id());
+				 state_rep_t srep(true,true,cur_sm,cur_sm->id(),cur_sm->idx_);
 				 auto fname = get_cpp_action_name(smp->get_fullqualified_id(srep,"__"),a);
 				 os << fname << "()";
 				 return;
@@ -978,7 +978,7 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 		if (cur_sm != nullptr){
 			for(auto a : cur_sm->actions_){
 				if (a.id_ != name(id)) continue;
-				state_rep_t srep(true,true,cur_sm,cur_sm->id());
+				state_rep_t srep(true,true,cur_sm,cur_sm->id(),cur_sm->idx_);
 				auto fname = get_cpp_action_name(smp->get_fullqualified_id(srep,"__"),a);
 				os <<  fname << "(";
 				for(size_t i = 0; i != args.size();++i){
@@ -1202,7 +1202,7 @@ void process_guard_rhs(std::set<std::string>& named_guards,State_machine_simulat
 		for(auto sm : State_machine::statemachines) smsv.push_back(sm.second);
 		State_machine_simulation_core* smp = smc;
 		traverse_sms(smsv,[smp,store_guard_rhs_in_guard_assignment,smc](State_machine* cur_sm){
-			state_rep_t srep(true,true,cur_sm,cur_sm->id());
+			state_rep_t srep(true,true,cur_sm,cur_sm->id(),cur_sm->idx_);
 			for(auto & a: cur_sm->actions_){
 					auto & func_body = as_struct_ref(a.body_);
 					auto ns = Nodeset(func_body.children() );
@@ -1635,7 +1635,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		for(auto sm : State_machine::statemachines) smsv.push_back(sm.second);
 		State_machine_simulation_core* smp = this;
 		traverse_sms(smsv,[smp,&o_hpp,&indent_hpp,&init_plugin_content](State_machine* cur_sm){
-			state_rep_t srep(true,true,cur_sm,cur_sm->id());
+			state_rep_t srep(true,true,cur_sm,cur_sm->id(),cur_sm->idx_);
 			for(auto & a: cur_sm->actions_){
 				bool register_action = !action_func_has_parameters(a);
 				indent_hpp.print_indentation(o_hpp);
@@ -1681,7 +1681,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 		for(auto sm : State_machine::statemachines) smsv.push_back(sm.second);
 		State_machine_simulation_core* smp = this;
 		traverse_sms(smsv,[smp,&o_cpp,&indent_cpp,&cppgenerator](State_machine* cur_sm){
-			state_rep_t srep(true,true,cur_sm,cur_sm->id());
+			state_rep_t srep(true,true,cur_sm,cur_sm->id(),cur_sm->idx_);
 			for(auto & a: cur_sm->actions_){
 				indent_cpp.print_indentation(o_cpp);
 				std::vector<std::string> parameters;
