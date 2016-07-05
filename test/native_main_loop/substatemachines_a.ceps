@@ -1,0 +1,90 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+Event A,B,C,D,E,F;
+
+Statemachine{
+ id{S1;};
+ States{Initial;};
+ //S1a
+ Statemachine{
+  id{S1a;};
+  States{Initial;};
+  Statemachine{
+    id{S1aa;};
+    States{Initial;};
+    //Actions S1aa
+    on_enter{print("S1::S1a::S1aa::on_enter\n");}; 
+    on_exit{print("S1::S1a::S1aa::on_exit\n");}; 
+  };
+  Statemachine{
+    id{S1ab;};
+    States{Initial;};
+    //Actions S1ab
+    on_enter{print("S1::S1a::S1ab::on_enter\n");}; 
+    on_exit{print("S1::S1a::S1ab::on_exit\n");}; 
+  };
+  Statemachine{
+    id{S1ac;};
+    States{Initial;};
+    //Actions S1aa
+    on_enter{print("S1::S1a::S1ac::on_enter\n");}; 
+    on_exit{print("S1::S1a::S1ac::on_exit\n");}; 
+  };
+  //Actions S1a
+  on_enter{print("S1::S1a::on_enter\n");}; 
+  on_exit{print("S1::S1a::on_exit\n");}; 
+  //Transitions S1a
+  Transition{Initial;S1aa;B;};
+  Transition{Initial;Initial;B;};
+  Transition{S1aa;S1ab;C;};
+ };
+ //S1b
+ Statemachine{
+  id{S1b;};
+  States{Initial;};
+  Statemachine{
+   id{S1ba;};
+   States{Initial;};
+  };
+  Statemachine{
+   id{S1bb;};
+   States{Initial;};
+  };
+  Statemachine{
+   id{S1bc;};
+   States{Initial;};
+  };
+ };
+ //S1c;
+ Statemachine{
+  id{S1c;};
+  States{Initial;};
+  Statemachine{
+   id{S1ca;};
+   States{Initial;};
+  };
+  Statemachine{
+   id{S1cb;};
+   States{Initial;};
+  };
+  Statemachine{
+   id{S1cc;};
+   States{Initial;};
+  };
+ };
+ //Actions S1
+ on_enter{print("S1::on_enter\n");}; 
+ on_exit{print("S1::on_exit\n");}; 
+
+ //Transitions S1
+ Transition{Initial;S1a;A;};
+ Transition{Initial;Initial;A;};
+};
+
+
+Simulation{
+ Start{S1;};
+ A;B;C;
+};
+

@@ -74,7 +74,7 @@ Globals{
 };
 Simulation
 {
- Start{S1;};
+ Start{S2;};
 };
 
 
