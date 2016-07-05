@@ -3,14 +3,14 @@ kind Systemstate;
 
 Event E,F,G,H;
 
-Systemstate duration_timer_1,duration_timer_2,s1;
+Systemstate s1,s2;
 
 Statemachine
 {
  id{S1;};
  States{Initial;Final;a;b;c;d;e;};
  Actions{
-    a1{/*print(s1,"\n");*/ if (s1<10000000) {E;}; };
+    a1{/*print("s1=",s1,"\n");*/ if (s1<10000000) {E;}; };
     a2{s1=s1+1;F;};
  };
  Transition{Initial;a;a1;};
@@ -23,8 +23,8 @@ Statemachine
  id{S2;};
  States{Initial;Final;a;b;c;d;e;};
  Actions{
-    a1{/*print(s1,"\n");*/ if (s1<10000000) {E;}; };
-    a2{s1=s1+1;F;};
+    a1{/*print("s2=",s2,"\n");*/ if (s2<10000000) {G;}; };
+    a2{s2=s2+1;H;};
  };
  Transition{Initial;a;a1;};
  Transition{a;b;E;a2;};
@@ -32,11 +32,12 @@ Statemachine
 };
 
 Globals{
- s1 = 0;
+ s1 = 0;s2 = 0;
 };
 Simulation
 {
- Start{S1;};
+ Start{S1;S2;};
+
 };
 
 

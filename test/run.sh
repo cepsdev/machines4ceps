@@ -48,6 +48,8 @@ echo
   cat basic_example_2_cppgen_step.log
   echo -e "\e[0m"
  else
+  cp out.cpp basic_example_2.cpp
+  cp out.hpp basic_example_2.hpp
   g++ -fPIC -shared -std=c++11 out.cpp -I"../" -I"../../../" -o basic_example_2.so > basic_example_2_buildso_step.log 2> basic_example_2_buildso_step.log
   if [ $? -ne 0 ]; then
    echo -e "\e[38;5;196m failed (build shared library step)"

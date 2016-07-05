@@ -14,6 +14,7 @@ Statemachine{id{S;};
  Transition{Initial;s1;g1;A;OnAs1;};
  Transition{Initial;s2;g2;A;OnAs2;};
  Transition{Initial;s2;!g1;A;OnAs2;};
+ Transition{s4;s4;dummy;};
 };
 
 Globals{

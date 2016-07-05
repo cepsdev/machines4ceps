@@ -696,7 +696,7 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 			     bool reg_socket)
 {
 	DEBUG_FUNC_PROLOGUE2
-	int cfd;
+	int cfd = -1;
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	auto q = frames;
@@ -941,7 +941,7 @@ void comm_generic_tcp_in_thread_fn(int id,
 
 	for(;!smc->shutdown() && frame_size;)
 	{
-		char *data;
+		char *data = nullptr;
 		try
 		{
 			DEBUG << "[comm_generic_tcp_in_thread_fn][READING_DATA]\n";
@@ -1019,7 +1019,7 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 
 	struct addrinfo hints;
 	struct addrinfo* result, * rp;
-	int lfd;
+	int lfd = -1;
 
 	memset(&hints,0,sizeof(struct addrinfo));
 	hints.ai_canonname = nullptr;

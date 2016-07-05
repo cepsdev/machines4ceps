@@ -58,6 +58,7 @@ struct Result_process_cmd_line
 
 	std::string timeout;
 	std::string port;
+	bool print_transition_tables = false;
 
 	bool ignore_unresolved_state_id_in_directives = false;
 	bool cppgen = false;

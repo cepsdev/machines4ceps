@@ -141,7 +141,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	 }
 	);
 
-	smp->executionloop_context().number_of_states = ctr;
+	smp->executionloop_context().number_of_states = ctr-1;
 
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id](State_machine* cur_sm){
 	  for(auto & t : cur_sm->transitions()){
@@ -201,6 +201,39 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		}
 	 }
 	);
+
+	//Set parent information
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+		ctx.set_inf(cur_sm->idx_,executionloop_context_t::SM,true);
+		for(auto s : cur_sm->states()){
+			ctx.set_parent(s->idx_,cur_sm->idx_);
+			ctx.set_inf(s->idx_,executionloop_context_t::INIT,s->is_initial());
+			ctx.set_inf(s->idx_,executionloop_context_t::FINAL,s->is_final());
+			if (s->is_initial()) ctx.set_initial_state(cur_sm->idx_,s->idx_);
+			if (s->is_final()) ctx.set_final_state(cur_sm->idx_,s->idx_);
+		}
+		for(auto s : cur_sm->children()){
+			ctx.set_parent(s->idx_,cur_sm->idx_);
+		}
+	});
+
+	//Set on_enter / on_exit information
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+		for(auto a : cur_sm->actions()){
+			if (a.id_ == "on_enter") ctx.set_on_enter(cur_sm->idx_,a.native_func_);
+			else if (a.id_ == "on_exit") ctx.set_on_exit(cur_sm->idx_,a.native_func_);
+		}
+	});
+
+	//Set children information
+	ctx.init_state_to_children();
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+		ctx.state_to_children[cur_sm->idx_] = ctx.children.size();
+		ctx.children.push_back(cur_sm->idx_);
+		for(auto s : cur_sm->states())ctx.children.push_back(s->idx_);
+		ctx.children.push_back(0);
+	});
+
 
 	traverse_sms(smsv,[&map_fullqualified_sm_id_to_computed_idx,&smp](State_machine* cur_sm){
 		state_rep_t srep(true,true,cur_sm,cur_sm->id(),cur_sm->idx_);
@@ -945,27 +978,43 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 			log4kmw::get_value<0>(log4kmw_states::Current_states) = log4kmw::Dynamic_bitset(number_of_states);
 			log4kmw_loggers::logger_Trace.logger().init(log4kmw::persistence::memory_mapped_file("trace.bin", 1024*1024*8, true));
 			DEBUG << "[LOG4CEPS][Trace log 'trace.bin' initialized.]\n";
-	} else {
-			std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
-			auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
-			for(auto e : map_fullqualified_sm_id_to_computed_idx)
-			 std::cout <<" " << e.second <<";" << "\"" << e.first << "\";\n";
+	} else if (enforce_native()) {
+	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
+	 auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
 
-			for(auto e:executionloop_context().ev_to_id)
-				 std::cout <<" " << e.second <<";" << "\"" << e.first << "\";\n";
+	 if (result_cmd_line.print_transition_tables){
+	  for(auto e : map_fullqualified_sm_id_to_computed_idx){
+	   std::cout <<" " << e.second <<";" << "\"" << e.first << "\";";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<"initial state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<"final state";
+	   std::cout << "\n";
+	  }
 
-			int j = 0;
-			for(auto const & t : executionloop_context().transitions){
-			 std::cout << j++ << " ";
-             std::cout << t.smp << ": ";
-             if (t.start())
-            	 std::cout << "START\n";
-             else std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2) << std::endl;
-			}
-			for(auto const & s : executionloop_context().state_to_first_transition){
-				std::cout << "first("<< s.first<<") == "<< s.second << std::endl;
-			}
-	 }
+	  for(auto e:executionloop_context().ev_to_id){
+	   std::cout <<" " << e.second <<";" << "\"" << e.first;
+ 	   std::cout << "\";\n";
+	  }
+	  int j = 0;
+	  for(auto const & t : executionloop_context().transitions){
+	   std::cout << j++ << " ";
+       std::cout << t.smp << ": ";
+       if (t.start())
+      	 std::cout << "START\n";
+       else std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2) << std::endl;
+	  }
+	  for(auto const & s : executionloop_context().state_to_first_transition){
+		std::cout << "first("<< s.first<<") == "<< s.second << std::endl;
+	  }
+	  for(int i = 1; i <= executionloop_context().number_of_states;++i){
+	 	std::cout << "parent("<< i <<") == "<< executionloop_context().get_parent(i) << std::endl;
+	  }
+	  std::cout << "children-vector:\n";
+	  for(auto s : executionloop_context().children ) {
+		  std::cout << s <<";";
+	  }
+	  std::cout << "\n";
+	 }//print transition tables
+   }
 
 
 	if(enforce_native()){

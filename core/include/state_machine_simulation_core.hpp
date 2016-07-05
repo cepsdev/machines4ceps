@@ -109,6 +109,63 @@ public:
 			ev_sync_queue_start = 0;
 	}
 
+	int get_parent(int state){
+		return parent_vec[state];
+	}
+
+	void set_parent(int child, int state){
+		if ((size_t)number_of_states > parent_vec.size())
+			parent_vec.resize(number_of_states+1,0);
+		parent_vec[child] = state;
+	}
+
+	void current_states_init_and_clear(){
+		if (current_states.size() != (size_t)number_of_states+1) current_states.resize(number_of_states+1);
+		std::memset(current_states.data(),0,(number_of_states+1)*sizeof(int));
+	}
+
+	void set_inf(int state,unsigned int what,bool value){
+		if ((size_t)number_of_states > inf_vec.size())
+			inf_vec.resize(number_of_states+1,0);
+		if (value) inf_vec[state] |=  1 << what;
+		else inf_vec[state] &=  ~ (1 << what);
+	}
+
+	bool get_inf(int state, unsigned int what){
+		unsigned int r = (inf_vec[state] & (1 << what));
+		return r != 0;
+	}
+
+	void set_on_enter(int state,void(*fn)()){
+		if ((size_t)number_of_states > on_enter.size())
+			on_enter.resize(number_of_states+1,0);
+		on_enter[state] = fn;
+	}
+	void set_on_exit(int state,void(*fn)()){
+		if ((size_t)number_of_states > on_exit.size())
+			on_exit.resize(number_of_states+1,0);
+		on_exit[state] = fn;
+	}
+
+	void set_initial_state(int state,int initial){
+		if ((size_t)number_of_states > initial_state.size())
+			initial_state.resize(number_of_states+1,0);
+		initial_state[state] = initial;
+	}
+	void set_final_state(int state,int final){
+		if ((size_t)number_of_states > final_state.size())
+			final_state.resize(number_of_states+1,0);
+		final_state[state] = final;
+	}
+
+	void init_state_to_children(){
+		state_to_children.resize(number_of_states+1);
+	}
+
+	bool is_sm(int state){
+		return get_inf(state, SM);
+	}
+
 	int number_of_states = 0;
 	std::map<std::string,int> ev_to_id;
 	class transition_t{
@@ -125,6 +182,25 @@ public:
 	std::vector<int> current_states;
 	std::unordered_map<int,int> state_to_first_transition;
 	std::vector<int> ev_sync_queue;
+	std::vector<int> parent_vec;
+	std::vector<int> inf_vec;
+	std::vector<void(*)()> on_enter;
+	std::vector<void(*)()> on_exit;
+	std::vector<int> initial_state;
+	std::vector<int> final_state;
+	std::vector<int> children;
+	std::vector<int> state_to_children;
+
+
+	static constexpr unsigned int INIT = 0;
+	static constexpr unsigned int FINAL = 1;
+	static constexpr unsigned int SM = 2;
+	static constexpr unsigned int EXIT = 4;
+	static constexpr unsigned int ENTER = 8;
+	static constexpr unsigned int VISITED = 16;
+	static constexpr unsigned int VISITING = 32;
+
+
 	size_t ev_sync_queue_start = 0;
 	size_t ev_sync_queue_end = 0;
 };
@@ -501,7 +577,10 @@ public:
 	bool fetch_event(event_rep_t& ev,ceps::ast::Nodeset& sim,int& pos,states_t& states,
 			bool& states_updated, std::vector<State_machine*>& on_enter_seq,bool ignore_handler = true, bool ignore_ev_queue =  false,bool exit_if_start_found = false);
 	void simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
-
+	void simulate_purly_native(ceps::ast::Nodeset sim,
+			                                     states_t& states_in,
+			                                     ceps::Ceps_Environment& ceps_env,
+			                                     ceps::ast::Nodeset& universe);
 	bool print_debug_info(bool b) {bool t = print_debug_info_; print_debug_info_ = b;return t;}
 	bool resolve_q_id(State_machine* smp, std::vector<std::string> const & q_id, State_machine::State & s);
 	bool kill_named_timer(std::string const & timer_id);

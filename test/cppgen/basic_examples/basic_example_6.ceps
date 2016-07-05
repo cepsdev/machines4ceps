@@ -10,7 +10,7 @@ Statemachine
  id{S1;};
  States{Initial;Final;a;b;c;d;e;};
  Actions{
-    a1{/*print(s1,"\n");*/ if (s1<100000000) {E;}; };
+    a1{print(s1,"\n"); if (s1<10000000) {E;}; };
     a2{s1=s1+1;F;};
  };
  Transition{Initial;a;a1;};
@@ -18,12 +18,63 @@ Statemachine
  Transition{b;a;F;a1;};
 };
 
+Statemachine{
+ id{S3;};
+ };
+ 
+Statemachine{
+ id{S2;};
+ Actions{
+    a1{print(s1,"\n"); if (s1<10000000) {E;}; };
+ };
+ on_exit{print("S2::on_exit\n");};
+ on_enter{print("S2::on_enter!\n");};
+  
+ States{Initial;a;};
+ Transition{Initial;a;a1;};
+ Transition{a;S3;E;};
+ 
+ };
+
+Statemachine{
+ id{S3;};
+ Actions{
+    a1{s1=s1+1;F;};
+ };
+ on_exit{print("S3::on_exit\n");};
+ on_enter{print("S3::on_enter\n");};
+  
+ States{Initial;a;};
+ Transition{Initial;a;a1;};
+ Transition{a;S2;F;};
+ };
+
+/*
+Statemachine{
+ id{S6;};
+};
+
+Statemachine{
+ id{S4;};
+ import{S6;};
+ Statemachine{
+  id{S4_1;};
+  States{Initial;};
+ };
+ Statemachine{
+  id{S4_2;};
+  States{Initial;};
+ };
+
+};*/
+
+
 Globals{
  s1 = 0;
 };
 Simulation
 {
- Start{S1;};
+ Start{S2;};
 };
 
 

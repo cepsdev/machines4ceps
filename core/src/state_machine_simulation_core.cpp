@@ -795,7 +795,8 @@ void State_machine_simulation_core::process_simulation(ceps::ast::Nodeset& sim,c
 		if (!state.valid()) fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
 		states.push_back(state);
 	}//for*/
-	simulate(sim,states,ceps_env,universe);
+	if(enforce_native()) simulate_purly_native(sim,states,ceps_env,universe);
+	else simulate(sim,states,ceps_env,universe);
 }
 
 bool State_machine_simulation_core::is_assignment_op(ceps::ast::Nodebase_ptr n)
@@ -1095,8 +1096,8 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 		//assert(s_from.smp_ != nullptr);
 		//assert(containing_smp != nullptr);
 
-		bool ff = false;
-		for(auto m : State_machine::statemachines) if (m.second == containing_smp) {ff = true;break;}
+		//bool ff = false;
+		//for(auto m : State_machine::statemachines) if (m.second == containing_smp) {ff = true;break;}
 		//assert(ff);
 		if (s_from.is_sm_ && s_from.smp_->parent_ ) containing_smp = s_from.smp_->parent_;
         #ifdef PRINT_DEBUG
