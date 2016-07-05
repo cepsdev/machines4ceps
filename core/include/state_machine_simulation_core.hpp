@@ -166,6 +166,32 @@ public:
 		return get_inf(state, SM);
 	}
 
+	void do_enter_impl(int sms,std::vector<int> const & v);
+	void do_enter(int* sms,int n,std::vector<int> const & v);
+	void do_exit_impl(int sms,std::vector<int> const & v);
+	void do_exit(int* sms,int n,std::vector<int> const & v);
+
+	void remove_children(int sms,std::vector<int> & v){
+		auto child_idx = state_to_children[sms]+1;
+		for(int child;child = children[child_idx];++child_idx){
+			if (!is_sm(child)) continue;
+			set_inf(child,VISITED,true);
+			v[child] = 0;
+			remove_children(child,v);
+		}
+	}
+
+	bool empty(int sms,std::vector<int> const & v ){
+	  auto child_idx = state_to_children[sms]+1;
+	  bool active_sub_states = false;
+	  for(int child;child=children[child_idx];++child_idx){
+		 if (v[child]){active_sub_states = true;break;}
+	  }
+	  if (active_sub_states) return false;
+	  return true;
+	}
+
+
 	int number_of_states = 0;
 	std::map<std::string,int> ev_to_id;
 	class transition_t{

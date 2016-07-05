@@ -6,6 +6,48 @@
 #define PRINT_LOG_SIM_LOOP
 
 
+void executionloop_context_t::do_enter_impl(int sms,std::vector<int> const & v){
+		if (get_inf(sms,executionloop_context_t::VISITED)) return;
+		set_inf(sms,executionloop_context_t::VISITED,true);
+		if (!v[sms]) return;
+
+		for(auto i = state_to_children[sms]+1;children[i];++i){
+			if (!is_sm(children[i])) continue;
+			do_enter_impl(children[i],v);
+		}
+		if (!current_states[sms] && on_enter[sms]) on_enter[sms]();
+	}
+void executionloop_context_t::do_enter(int* sms,int n,std::vector<int> const & v){
+
+		if (n){
+			//std::cout << "do_enter() n="<<n<<" sms[0] == "<< sms[0] << "\n";
+			for(int i = 0;i != number_of_states+1;++i) set_inf(i,executionloop_context_t::VISITED,false);
+			for(int j = 0; j != n;++j) do_enter_impl(*(sms+j),v);
+		}
+	}
+
+
+void executionloop_context_t::do_exit_impl(int sms,std::vector<int> const & v){
+		if (get_inf(sms,executionloop_context_t::VISITED)) return;
+		set_inf(sms,executionloop_context_t::VISITED,true);
+		if (!current_states[sms]) return;
+
+		for(auto i = state_to_children[sms]+1;children[i];++i){
+			if (!is_sm(children[i])) continue;
+			do_exit_impl(children[i],v);
+		}
+		if (on_exit[sms]) on_exit[sms]();
+	}
+void executionloop_context_t::do_exit(int* sms,int n,std::vector<int> const & v){
+
+		if (n){
+			//std::cout << "do_enter() n="<<n<<" sms[0] == "<< sms[0] << "\n";
+			for(int i = 0;i != number_of_states+1;++i) set_inf(i,executionloop_context_t::VISITED,false);
+			for(int j = 0; j != n;++j) do_exit_impl(*(sms+j),v);
+		}
+	}
+
+
 void State_machine_simulation_core::simulate_purly_native(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
@@ -89,17 +131,20 @@ for(auto const & s : states){
 executionloop_context().current_states.resize(executionloop_context().number_of_states+1);
 auto new_states = executionloop_context().current_states;
 auto temp = executionloop_context().current_states;
-auto sms_temp = executionloop_context().current_states;
+auto entering_sms = executionloop_context().current_states;
+auto exiting_sms = executionloop_context().current_states;
+
 
 std::vector<int> triggered_transitions;
 triggered_transitions.resize(1000);
 
 
-int current_states_end = executionloop_context().number_of_states;
-int new_states_end = executionloop_context().number_of_states;
+
 auto & execution_ctxt = executionloop_context();
 
 execution_ctxt.current_states_init_and_clear();
+
+int cur_states_size = execution_ctxt.current_states.size();
 
 for(;!quit && !shutdown();)
 {
@@ -107,8 +152,7 @@ for(;!quit && !shutdown();)
  bool ev_read = false;int ev_id = 0;
  //std::cout << current_event().id_ << std::endl;
 
- current_event().id_= {};
- event_rep_t ev;
+
  bool fetch_made_states_update = false;
 
  if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
@@ -120,7 +164,8 @@ for(;!quit && !shutdown();)
 	 if (step_handler_) quit = step_handler_();
 	 std::vector<State_machine*> on_enter_seq;
 	 states_t new_states_fetch;
-
+	 current_event().id_= {};
+	 event_rep_t ev;
 	 if (!fetch_event(ev,sim,pos,new_states_fetch,fetch_made_states_update,on_enter_seq)) {
 		 if (fetch_made_states_update)
 		 {
@@ -177,25 +222,27 @@ for(;!quit && !shutdown();)
 	 if (ev_read) ev_id = execution_ctxt.ev_to_id[current_event().id_];
     }
 
-	std::cout << "states = ";
+	/*std::cout << "states = ";
 	for(int z = 0; z != current_states_end; ++z){
 	 if (!executionloop_context().current_states[z]) continue;
 	 std::cout << z << " ";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
 
 
 	//std::cout << "event_id=" <<ev_id << std::endl;
 	std::memset(triggered_transitions.data(),0,triggered_transitions.size()*sizeof(int));
-	std::memset(new_states.data(),0,new_states.size()*sizeof(int));
-	memcpy(temp.data(),executionloop_context().current_states.data(),current_states_end*4);
+	//std::memset(new_states.data(),0,new_states.size()*sizeof(int));
+	memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*4);
 
 
+	//std::cout << "Computing triggered transitions.\n";
+	//std::cout << "ev_id == " << ev_id << std::endl;
 	int triggered_transitions_end = 0;
-	for (int j = 0; j != current_states_end;++j){
-		if (execution_ctxt.current_states[j] == 0) continue;
-		auto s = j;
+	for (int s = 0; s != cur_states_size;++s){
+		if (execution_ctxt.current_states[s] == 0) continue;
+
 
 		int i = execution_ctxt.state_to_first_transition[s];
 		int smp = execution_ctxt.transitions[i].smp;
@@ -209,25 +256,41 @@ for(;!quit && !shutdown();)
 					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
 				}
 		}
-		if (!triggered) {new_states[s] = 1;}
+		if (!triggered) {temp[s] = 1;}
 	}
+
+
+	if (triggered_transitions_end == 0){
+		//std::cout << "No triggered transitions found!\n";
+		taking_epsilon_transitions = !taking_epsilon_transitions;continue;
+	}
+
+	if(ev_read) taking_epsilon_transitions = true;
 
 	std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
 	auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
+
+	/*std::cout << "Triggered transitions:\n";
+	for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
+		auto t = *p;
+		auto const & trans = execution_ctxt.transitions[t];
+		std::cout << trans.from << " -> " << trans.to << std::endl;
+	}*/
 
 	bool possible_exit_occured = false;
 
 	for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 		auto t = *p;
-		if (!possible_exit_occured && (execution_ctxt.get_parent(execution_ctxt.transitions[t].to) != execution_ctxt.get_parent(execution_ctxt.transitions[t].from)))
+		auto const & trans = execution_ctxt.transitions[t];
+
+		if (!possible_exit_occured && (execution_ctxt.get_parent(trans.to) != execution_ctxt.get_parent(trans.from)))
 			possible_exit_occured = true;
-		temp[execution_ctxt.transitions[t].to] = new_states[execution_ctxt.transitions[t].to]=1;
-		temp[execution_ctxt.transitions[t].from] = 0;
+		temp[trans.from] = 0;temp[trans.to] = 1;
 	}
 
-	std::cout << "possible_exit_occured="<< possible_exit_occured << std::endl;
-	std::cout << "temp states = ";
-	for(int z = 0; z != new_states_end; ++z){
+	/*std::cout << "possible_exit_occured="<< possible_exit_occured << std::endl;
+	std::cout << "temp states (before enter)= ";
+	for(int z = 0; z !=  temp.size(); ++z){
 		 if (!temp[z]) continue;
 		 std::cout << z << " ";
 	}
@@ -238,44 +301,128 @@ for(;!quit && !shutdown();)
 		 if (!new_states[z]) continue;
 		 std::cout << z << " ";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
 	if (!possible_exit_occured){
 		for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 			auto t = *p;
-			auto a1 = execution_ctxt.transitions[t].a1;
-			auto a2 = execution_ctxt.transitions[t].a2;
-			auto a3 = execution_ctxt.transitions[t].a3;
+			auto const & trans = execution_ctxt.transitions[t];
+
+			auto a1 = trans.a1;
+			auto a2 = trans.a2;
+			auto a3 = trans.a3;
 			if (a1) a1();
 			if (a2) a2();
 			if (a3) a3();
 		}
-		memcpy(execution_ctxt.current_states.data(),temp.data(),current_states_end*4);
+		memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*4);
 	} else{
+
+	 //Compute transitively entered states
+
 	 for(int i = 0; i != execution_ctxt.number_of_states+1;++i) {
-		execution_ctxt.set_inf(i,executionloop_context_t::ENTER,false);
-		execution_ctxt.set_inf(i,executionloop_context_t::EXIT,false);
 		execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
-		execution_ctxt.set_inf(i,executionloop_context_t::VISITING,false);
-	 }
-	 std::memset(sms_temp.data(),0,sms_temp.size()*sizeof(int));
-
-	 int sms_next = 0;
-	 for(int i = 0; i!=execution_ctxt.number_of_states+1;++i){
-		 if (temp[i] && execution_ctxt.is_sm(i)) sms_temp[sms_next++] = i;
-		 else if (temp[i] && execution_ctxt.get_parent(i) != 0 && !temp[execution_ctxt.get_parent(i)] ) sms_temp[sms_next++] = i;
 	 }
 
+	 std::memset(entering_sms.data(),0,entering_sms.size()*sizeof(int));
+	 int entering_sms_next = 0;
+	 for(auto state = 0; state != temp.size();++state ){
+		 if (execution_ctxt.get_inf(state,executionloop_context_t::VISITED)) continue;
+		 if(!temp[state] || execution_ctxt.current_states[state]) continue;
+		 execution_ctxt.set_inf(state,executionloop_context_t::VISITED,true);
+
+		 //Newly added state
+		 if(execution_ctxt.is_sm(state)){
+			temp[state] = 1;
+			if (execution_ctxt.initial_state[state] != 0) {
+				temp[execution_ctxt.initial_state[state]] = 1;
+				execution_ctxt.set_inf(execution_ctxt.initial_state[state],executionloop_context_t::VISITED,true);
+			}
+		 } else {
+		   if (execution_ctxt.current_states[execution_ctxt.get_parent(state)]) continue;
+		   temp[execution_ctxt.current_states[execution_ctxt.get_parent(state)]] = 1;
+		   execution_ctxt.set_inf(execution_ctxt.get_parent(state),executionloop_context_t::VISITED,true);
+		 }
+		 auto p = state;
+		 for(;execution_ctxt.get_parent(p) != 0 && !execution_ctxt.current_states[execution_ctxt.get_parent(p)];){
+			 p = execution_ctxt.get_parent(p);
+			 temp[p] = 1;execution_ctxt.set_inf(p,executionloop_context_t::VISITED,true);
+			 if (execution_ctxt.initial_state[p] != 0){
+				 temp[execution_ctxt.initial_state[p]] = 1;
+				 execution_ctxt.set_inf(execution_ctxt.initial_state[p],executionloop_context_t::VISITED,true);
+			 }
+		 }
+		 entering_sms[entering_sms_next++] = p;
+	 }
+
+
+
+	 //Compute transitively exit states
+
+	 for(int i = 0; i != execution_ctxt.number_of_states+1;++i) {
+		execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
+	 }
+
+	 std::memset(exiting_sms.data(),0,exiting_sms.size()*sizeof(int));
+	 int exiting_sms_next = 0;
+	 for(auto state = 0; state != temp.size();++state ){
+		 if (!execution_ctxt.is_sm(state)) continue;
+		 if (execution_ctxt.get_inf(state,executionloop_context_t::VISITED)) continue;
+		 execution_ctxt.set_inf(state,executionloop_context_t::VISITED,true);
+
+		 if(temp[state]){
+		  if (!execution_ctxt.empty(state,temp)) continue;
+		  temp[state] = 0;
+		 } else {
+		   execution_ctxt.remove_children(state,temp);
+		 }
+
+		 auto p = state;
+		 for(;execution_ctxt.get_parent(p) != 0 && execution_ctxt.current_states[execution_ctxt.get_parent(p)];){
+			 p = execution_ctxt.get_parent(p);
+			 if (!execution_ctxt.empty(p,temp)) break;
+			 temp[p] = 0;
+		 }
+		 exiting_sms[exiting_sms_next++] = p;
+	 }
+
+
+	 /*std::cout << "temp states (after enter)= ";
+	 for(int z = 0; z != temp.size(); ++z){
+		 if (!temp[z]) continue;
+		 std::cout << z << " ";
+	 }
+	 std::cout << std::endl;*/
+	 //Compute transitively exit states
+
+	 execution_ctxt.do_exit(exiting_sms.data(),exiting_sms_next,temp);
+
+	 for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
+	 			auto t = *p;
+	 			auto const & trans = execution_ctxt.transitions[t];
+
+	 			auto a1 = trans.a1;
+	 			auto a2 = trans.a2;
+	 			auto a3 = trans.a3;
+	 			if (a1) a1();
+	 			if (a2) a2();
+	 			if (a3) a3();
+	 }
+
+	 execution_ctxt.do_enter(entering_sms.data(),entering_sms_next,temp);
+	 memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*4);
 	}
 
 
-
-	taking_epsilon_transitions = false;
-
-
-
+	/*std::cout << "current states = ";
+		for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
+			 if (!execution_ctxt.current_states[z]) continue;
+			 std::cout << z << " ";
+		}
+	std::cout << std::endl;
+	std::cout << "taking_epsilon_transitions == " << taking_epsilon_transitions << std::endl;
+   */
  }
-
 }
 
 
