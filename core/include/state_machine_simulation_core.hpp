@@ -174,9 +174,9 @@ public:
 	void remove_children(int sms,std::vector<int> & v){
 		auto child_idx = state_to_children[sms]+1;
 		for(int child;child = children[child_idx];++child_idx){
-			if (!is_sm(child)) continue;
-			set_inf(child,VISITED,true);
 			v[child] = 0;
+			set_inf(child,VISITED,true);
+			if (!is_sm(child)) continue;
 			remove_children(child,v);
 		}
 	}

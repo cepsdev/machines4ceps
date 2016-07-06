@@ -1,0 +1,212 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Guard g_system_extend_with_stilts;
+Event ev_antenna_to_raise,ev_mast_ausfahren,ev_platform_extend_is_starting,ev_platform_extend_is_finished,ev_platform_extend_preconditions_are_not_met;
+Guard g_platform_extend_preconditions;
+Event ev_stilts_to_extend_finished,ev_stilts_to_extend_started,ev_stilts_to_extend_started_stilts_unlock,ev_stilts_to_extend_started_stilts_extend,
+ev_stilts_to_extend_started_stilts_lock,ev_stilts_to_extend_failed_no_ground,ev_stilts_to_extend_timeout,ev_stilts_to_extend_preconditions_are_not_met,
+ev_stilts_to_extend_was_interrupted,ev_stilts_are_preconditioned,ev_stilts_are_unlocked,ev_stilts_have_ground_contact,ev_stilts_extended_stilt_detected,
+ev_stilts_are_locked,ev_system_extend,ev_err;
+
+Statemachine
+{
+  id  { sm_Platform_retract_ftc_and_all;  };
+  States{Initial;Final;Err;};
+};
+
+Statemachine
+{
+  id  { sm_Antenna_to_level_out;  };
+  States{Initial;Final;Err;};
+};
+
+Statemachine
+{
+  id  { sm_Antenna_to_raise;  };
+  States{Initial;Final;Err;};
+};
+
+Statemachine
+{
+  id  { sm_Z_drive_to_indexposition;  };
+  States{Initial;Final;Err;};
+};
+
+Statemachine
+{
+  id  { sm_Platform_extend_fto_and_alu;  };
+  States{Initial;Final;Err;};
+};
+
+
+Statemachine
+{
+  id  { sm_Platform_extend; };
+  description { "Platform_extend";  };
+  States  { Initial;  Final;  Error;  };
+  join{Final;};
+
+  import  { sm_Platform_extend_fto_and_alu; };    // Flap_to_open and Antenna_lock_unlock
+  import  { sm_Z_drive_to_indexposition;  };
+  import  { sm_Antenna_to_raise;  };
+  import  { sm_Antenna_to_level_out;  };
+  import  { sm_Platform_retract_ftc_and_all;  };   // Flap_to_close and Antenna_lock_lock
+
+  Actions
+  {
+    a_antenna_to_raise_is_starting              { ev_antenna_to_raise;  };
+    a_z_drive_to_indexposition_is_starting      { ev_mast_ausfahren;  };
+    a_platform_extend_is_starting
+    {
+      ev_platform_extend_is_starting;
+    };
+    a_platform_extend_is_finished
+    {
+      ev_platform_extend_is_finished;
+    };
+    a_platform_extend_preconditions_are_not_met { ev_platform_extend_preconditions_are_not_met; };
+  };
+
+  Transition  { Initial;                                sm_Platform_extend_fto_and_alu;   g_platform_extend_preconditions;  a_platform_extend_is_starting;  };
+  Transition  { Initial;                                Error;                           !g_platform_extend_preconditions;  a_platform_extend_preconditions_are_not_met;  };
+  Transition  { sm_Platform_extend_fto_and_alu.Final;   sm_Z_drive_to_indexposition;                                        a_z_drive_to_indexposition_is_starting; };
+  Transition  { sm_Z_drive_to_indexposition.Final;      sm_Antenna_to_raise;                                                a_antenna_to_raise_is_starting; };
+  Transition  { sm_Antenna_to_raise.Final;              sm_Platform_retract_ftc_and_all;  };
+  Transition  { sm_Platform_retract_ftc_and_all.Final;  sm_Antenna_to_level_out;  };
+  Transition  { sm_Antenna_to_level_out.Final;          Final;                                                              a_platform_extend_is_finished;  };
+};
+
+
+Statemachine
+{
+  id  { sm_Stilts_preconditioning;  };
+  States{Initial;Final;Err;};
+};
+ 
+Statemachine
+{
+  id  { sm_Stilts_unlock;  };
+  States{Initial;Final;Err;};
+};
+
+Statemachine
+{
+  id  { sm_Stilts_extend;  };
+  States{Initial;Final;Err;};
+};
+
+
+Statemachine
+{
+  id  { sm_Stilts_lock;  };
+  States{Initial;Final;Err;};
+};
+
+val DEF_TIME_STUETZEN_FAHREN = 1.0;
+
+Statemachine
+{
+  id  { sm_Stilts_to_extend;  };
+  description { "Stilts_to_extend"; };
+  States  { Initial;  Final;  };
+
+  import  { sm_Stilts_preconditioning;  };
+  import  { sm_Stilts_unlock; };
+  import  { sm_Stilts_extend; };
+  import  { sm_Stilts_lock; };
+
+  Actions
+  {
+    a_stilts_to_extend_finished                   { ev_stilts_to_extend_finished; }; 
+    a_stilts_to_extend_started                    { ev_stilts_to_extend_started;  }; 
+    a_stilts_to_extend_started_stilts_unlock      { ev_stilts_to_extend_started_stilts_unlock;  }; //  only for display of progress on extBg
+    a_stilts_to_extend_started_stilts_extend      { ev_stilts_to_extend_started_stilts_extend;  }; //  only for display of progress on extBg
+    a_stilts_to_extend_started_stilts_lock        { ev_stilts_to_extend_started_stilts_lock;  };   //  only for display of progress on extBg
+    a_stilts_to_extend_failed                     { ev_stilts_to_extend_failed_no_ground; }; 
+    a_stilts_to_extend_exit_timer                 { start_timer ( DEF_TIME_STUETZEN_FAHREN * s, ev_stilts_to_extend_timeout, timer_stilts_to_extend ); };
+    a_preconditions_are_not_met                   { ev_stilts_to_extend_preconditions_are_not_met;  };
+    a_was_interrupted                             { ev_stilts_to_extend_was_interrupted;  };
+  };
+
+  on_exit
+  {
+    stop_timer ( timer_stilts_to_extend );
+    if ( !in_state ( Final ) )
+    {
+      a_was_interrupted;
+    };
+  };
+
+  Transition  { Initial;                    Final;                                                          a_stilts_to_extend_failed;                                    g_stilt_any_is_extended; };
+  Transition  { Initial;                    sm_Stilts_preconditioning;                                      a_stilts_to_extend_exit_timer;  a_stilts_to_extend_started;  !g_stilt_any_is_extended; };
+  Transition  { sm_Stilts_preconditioning;  sm_Stilts_unlock;           ev_stilts_are_preconditioned;       a_stilts_to_extend_started_stilts_unlock; };
+  Transition  { sm_Stilts_unlock;           sm_Stilts_extend;           ev_stilts_are_unlocked;             a_stilts_to_extend_started_stilts_extend; };
+  Transition  { sm_Stilts_extend;           sm_Stilts_lock;             ev_stilts_have_ground_contact;      a_stilts_to_extend_started_stilts_lock; };
+  Transition  { sm_Stilts_extend;           Final;                      ev_stilts_extended_stilt_detected;  a_stilts_to_extend_failed;  };
+  Transition  { sm_Stilts_lock;             Final;                      ev_stilts_are_locked;               a_stilts_to_extend_finished;  };
+};
+
+Statemachine
+{
+  id  { sm_System_extend; };
+  States  { Initial;  Final;  };
+  join{Final;};
+
+  thread
+  {
+    States  { Initial;  Final;  };
+    import  { sm_Stilts_to_extend;  };
+
+    Transition  { Initial;                    sm_Stilts_to_extend;  g_system_extend_with_stilts;  };
+    Transition  { Initial;                    Final;               !g_system_extend_with_stilts;  };
+    Transition  { sm_Stilts_to_extend.Final;  Final;  };
+  };
+
+  thread
+  {
+    States  { Initial;  Final;  };
+    import  { sm_Platform_extend; };
+    Transition  { Initial;                    sm_Platform_extend; };
+    Transition  { sm_Platform_extend.Final;   Final;  };
+  };
+};
+
+Statemachine
+{
+  id  { sm_Dispatch;  };
+  import  { sm_System_extend;   };
+
+  States  { Initial;  Idle; };
+
+  Actions
+  {
+    a1{
+      print("sm_Dispatch::a1()\n");
+    };
+  };
+
+  Transition  { Initial;                        Idle; };
+  Transition  { Idle;                           sm_System_extend;               ev_system_extend;                   a1;  };
+  Transition  { sm_System_extend;               Idle;                           ev_platform_extend_is_finished;     a1;  };
+};
+
+Statemachine
+{
+  id  { sm_Ctrl;  };
+  import  { sm_Dispatch;  };
+  States  { Initial;  Idle; };
+
+  Transition  { Initial;      Idle; };
+  Transition  { Idle;         sm_Dispatch; };
+
+  Transition  { sm_Dispatch;  Idle; ev_err;};
+};
+
+
+Simulation{
+ Start{sm_Ctrl;};
+ ev_system_extend;
+
+};

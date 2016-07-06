@@ -9,11 +9,7 @@ Statemachine{
  on_enter{print("S2::on_enter\n");};
  on_exit{print("S2::on_enter\n");};
 };
- 
-Statemachine{
- id{S1;};
- States{Initial;state_a;};
- //S1a
+
  Statemachine{
   id{S1a;};
   States{Initial;};
@@ -56,6 +52,12 @@ Statemachine{
   Transition{S1ab;S1ac;D;t4;};
   Transition{S1ac;S1aa;E;t5;};
  };
+ 
+Statemachine{
+ id{S1;};
+ States{Initial;state_a;};
+ //S1a
+ import{S1a;};
  //S1b
  Statemachine{
   id{S1b;};

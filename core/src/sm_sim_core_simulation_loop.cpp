@@ -146,6 +146,7 @@ auto & execution_ctxt = executionloop_context();
 execution_ctxt.current_states_init_and_clear();
 
 int cur_states_size = execution_ctxt.current_states.size();
+constexpr bool PRINT_DEBUG = false;
 
 for(;!quit && !shutdown();)
 {
@@ -239,7 +240,7 @@ for(;!quit && !shutdown();)
 
 
 	//std::cout << "Computing triggered transitions.\n";
-	std::cout << "ev_id == " << ev_id << std::endl;
+	if (PRINT_DEBUG) std::cout << "ev_id == " << ev_id << std::endl;
 	int triggered_transitions_end = 0;
 	for (int s = 0; s != cur_states_size && max_number_of_active_transitions != triggered_transitions_end;++s){
 		if (execution_ctxt.current_states[s] == 0) continue;
@@ -262,7 +263,7 @@ for(;!quit && !shutdown();)
 
 
 	if (triggered_transitions_end == 0){
-		std::cout << "No triggered transitions found!\n";
+		if (PRINT_DEBUG)std::cout << "No triggered transitions found!\n";
 		taking_epsilon_transitions = !taking_epsilon_transitions;continue;
 	}
 
@@ -271,12 +272,12 @@ for(;!quit && !shutdown();)
 	std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
 	auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
 
-	std::cout << "Triggered transitions:\n";
+	if (PRINT_DEBUG){std::cout << "Triggered transitions:\n";
 	for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 		auto t = *p;
 		auto const & trans = execution_ctxt.transitions[t];
 		std::cout << trans.from << " -> " << trans.to << std::endl;
-	}
+	}}
 
 	bool possible_exit_or_enter_occured = false;
 
@@ -290,7 +291,7 @@ for(;!quit && !shutdown();)
 		temp[trans.from] = 0;temp[trans.to] = 1;
 	}
 
-	std::cout << "possible_exit_occured="<< possible_exit_or_enter_occured << std::endl;
+	if (PRINT_DEBUG)std::cout << "possible_exit_occured="<< possible_exit_or_enter_occured << std::endl;
 	/*std::cout << "temp states (before enter)= ";
 	for(int z = 0; z !=  temp.size(); ++z){
 		 if (!temp[z]) continue;
@@ -321,14 +322,14 @@ for(;!quit && !shutdown();)
 	} else{
 
 	 //Compute transitively entered states
-
+		if (PRINT_DEBUG){
 		 std::cout << "temp states (before computation entered states)= ";
 		 for(int z = 0; z != temp.size(); ++z){
 			 if (!temp[z]) continue;
 			 std::cout << z << " ";
 		 }
 		 std::cout << std::endl;
-
+		}
 	 for(int i = 0; i != execution_ctxt.number_of_states+1;++i) {
 		execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
 	 }
@@ -364,12 +365,13 @@ for(;!quit && !shutdown();)
 		 entering_sms[entering_sms_next++] = p;
 	 }
 
+	 if (PRINT_DEBUG){
 	 std::cout << "temp states (after computation entered states)= ";
 	 for(int z = 0; z != temp.size(); ++z){
 		 if (!temp[z]) continue;
 		 std::cout << z << " ";
 	 }
-	 std::cout << std::endl;
+	 std::cout << std::endl;}
 
 
 	 //Compute transitively exit states
@@ -387,18 +389,36 @@ for(;!quit && !shutdown();)
 
 		 if(temp[state]){
 		  if (!execution_ctxt.empty(state,temp)) continue;
-		  std::cout << "!!!!" << state << "\n";
+
 		  temp[state] = 0;
 		 } else {
-		   if (execution_ctxt.current_states[state]) execution_ctxt.remove_children(state,temp);
-		   continue;
+		   if (execution_ctxt.current_states[state]) {
+			   if (PRINT_DEBUG){
+				   std::cout << "Exit: Removing children from state == " << state << std::endl;
+			   }
+			   execution_ctxt.remove_children(state,temp);
+			   if (PRINT_DEBUG){
+				   std::cout << " ";
+				   for(int z = 0; z != temp.size(); ++z){
+				  		 if (!temp[z]) continue;
+				  		 std::cout << z << " ";
+				  	 }
+				   std::cout << std::endl;
+			 }
+		   }
+		   else continue;
 		 }
 
 		 auto p = state;
 		 for(;execution_ctxt.get_parent(p) != 0 && execution_ctxt.current_states[execution_ctxt.get_parent(p)];){
-			 p = execution_ctxt.get_parent(p);
-			 if (!execution_ctxt.empty(p,temp)) break;
-			 temp[p] = 0;
+			 auto pp = execution_ctxt.get_parent(p);
+			 if (PRINT_DEBUG) std::cout << "Exit:Computing exit sms: checking "<< pp <<std::endl;
+			 if (!execution_ctxt.empty(pp,temp)) break;
+			 if (PRINT_DEBUG) std::cout << "Exit:Computing exit sms: "<< pp << " is empty. " <<std::endl;
+			 temp[p = pp] = 0;
+		 }
+		 if (PRINT_DEBUG){
+		   std::cout << "Exit: sms to exit == " << p  << std::endl;
 		 }
 		 exiting_sms[exiting_sms_next++] = p;
 	 }
@@ -430,13 +450,13 @@ for(;!quit && !shutdown();)
 	 memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*4);
 	}
 
-
+	if (PRINT_DEBUG){
 	std::cout << "**** current states = ";
 		for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
 			 if (!execution_ctxt.current_states[z]) continue;
 			 std::cout << z << " ";
 		}
-	std::cout << std::endl;
+	std::cout << std::endl;}
 	/*std::cout << "taking_epsilon_transitions == " << taking_epsilon_transitions << std::endl;
    */
  }

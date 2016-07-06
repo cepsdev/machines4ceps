@@ -172,33 +172,51 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 	auto& ctx = smp->executionloop_context();
 	//Build loop execution context
-	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv](State_machine* cur_sm){
 		executionloop_context_t::transition_t t;
 		t.smp = cur_sm->idx_;
 		assert(t.smp > 0);
 		ctx.transitions.push_back(t);
 		ctx.state_to_first_transition[t.smp] = ctx.transitions.size()-1;
-		for(auto const & t : cur_sm->transitions()){
-		 executionloop_context_t::transition_t tt;
-	     tt.smp = cur_sm->idx_;
-	     tt.from = t.from_.idx_;
-	     assert(tt.from > 0);
-	     tt.to = t.to_.idx_;
-	     assert(tt.to > 0);
-	     for(auto  const &  ev : t.events())
-	     {
-	    	 tt.ev = ev_to_id[ev.id_];
-	    	 assert(tt.ev > 0);
-	    	 break;
-	     }
-	     tt.guard = t.guard_native_;
-	     if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
-	     if (t.action_.size() >= 2) tt.a1 = t.action_[1].native_func_;
-	     if (t.action_.size() >= 3) tt.a1 = t.action_[2].native_func_;
-	     ctx.transitions.push_back(tt);
-	     if(ctx.state_to_first_transition.find(tt.from) != ctx.state_to_first_transition.end()) continue;
-	     ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;
-		}
+
+		auto insert_transitions = [&ctx,&ev_to_id](State_machine* sm_from, State_machine* sm_to){
+			 for(auto const & t : sm_from->transitions()){
+			  if (sm_from != sm_to){
+			   if (!t.from_.is_sm_) continue;
+			   if (t.from_.smp_ != sm_to) continue;
+			  } else {
+			   if (t.from_.is_sm_) continue;
+			   if (t.from_.parent_!= nullptr && t.from_.parent_ != sm_from) continue;
+			  }
+			  executionloop_context_t::transition_t tt;
+			  tt.smp = sm_to->idx_;
+			  tt.from = t.from_.idx_;
+			  assert(tt.from > 0);
+			  tt.to = t.to_.idx_;
+			  assert(tt.to > 0);
+			  for(auto  const &  ev : t.events())
+			  {
+				tt.ev = ev_to_id[ev.id_];
+				assert(tt.ev > 0);
+				break;
+			  }
+			  tt.guard = t.guard_native_;
+			  if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
+			  if (t.action_.size() >= 2) tt.a1 = t.action_[1].native_func_;
+			  if (t.action_.size() >= 3) tt.a1 = t.action_[2].native_func_;
+			  ctx.transitions.push_back(tt);
+			  if(ctx.state_to_first_transition.find(tt.from) != ctx.state_to_first_transition.end()) continue;
+			  ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;
+			 }
+		};
+
+
+		//Fetch foreign transitions i.e. transitions with from == cur_sm
+		traverse_sms(smsv,[&ctx,&cur_sm,&ev_to_id,insert_transitions](State_machine* sm){
+			if (sm != cur_sm) insert_transitions(sm,cur_sm);
+		});
+
+		insert_transitions(cur_sm,cur_sm);
 	 }
 	);
 
