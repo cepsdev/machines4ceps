@@ -1,0 +1,27 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Event A,B,C,D;
+
+Statemachine{
+ id{S;};
+ States{Initial;Final;};
+ join{Final;};
+ 
+ thread{
+  States{Initial;a;b;c;Final;};
+  Transition{Initial;a;A;};
+  Transition{a;Final;B;};
+ };
+ thread{
+  States{Initial;a;b;c;Final;};
+  Transition{Initial;a;A;};
+  Transition{a;Final;C;};
+ };
+};
+
+Simulation{
+ Start{S;};
+ A;B;C;
+};

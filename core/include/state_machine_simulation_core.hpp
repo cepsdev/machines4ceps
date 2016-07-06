@@ -191,6 +191,17 @@ public:
 	  return true;
 	}
 
+	void set_join_state(int state,int join){
+		if ((size_t)number_of_states > join_states.size())
+			join_states.resize(number_of_states+1,0);
+		join_states[state] = join;
+	}
+
+	int get_join_state(int state){
+		if ((size_t)number_of_states > join_states.size())
+			join_states.resize(number_of_states+1,0);
+		return join_states[state];
+	}
 
 	int number_of_states = 0;
 	std::map<std::string,int> ev_to_id;
@@ -216,15 +227,19 @@ public:
 	std::vector<int> final_state;
 	std::vector<int> children;
 	std::vector<int> state_to_children;
+	std::vector<int> join_states;
 
 
 	static constexpr unsigned int INIT = 0;
 	static constexpr unsigned int FINAL = 1;
 	static constexpr unsigned int SM = 2;
-	static constexpr unsigned int EXIT = 4;
-	static constexpr unsigned int ENTER = 8;
-	static constexpr unsigned int VISITED = 16;
-	static constexpr unsigned int VISITING = 32;
+	static constexpr unsigned int EXIT = 3;
+	static constexpr unsigned int ENTER = 4;
+	static constexpr unsigned int VISITED = 5;
+	static constexpr unsigned int VISITING = 6;
+	static constexpr unsigned int THREAD = 7;
+	static constexpr unsigned int JOIN = 8;
+
 
 
 	size_t ev_sync_queue_start = 0;

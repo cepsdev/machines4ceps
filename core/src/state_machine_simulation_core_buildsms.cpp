@@ -223,6 +223,16 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	//Set parent information
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::SM,true);
+		ctx.set_inf(cur_sm->idx_,executionloop_context_t::THREAD,cur_sm->is_thread_);
+		ctx.set_inf(cur_sm->idx_,executionloop_context_t::JOIN,cur_sm->join_);
+		if (cur_sm->join_) {
+			for(auto s : cur_sm->states()){
+				if(s->id_ !=cur_sm->join_state_.id_) continue;
+				ctx.set_join_state(cur_sm->idx_,s->idx_);
+				break;
+			}
+
+		}
 		for(auto s : cur_sm->states()){
 			ctx.set_parent(s->idx_,cur_sm->idx_);
 			ctx.set_inf(s->idx_,executionloop_context_t::INIT,s->is_initial());
@@ -238,8 +248,14 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	//Set on_enter / on_exit information
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
 		for(auto a : cur_sm->actions()){
-			if (a.id_ == "on_enter") ctx.set_on_enter(cur_sm->idx_,a.native_func_);
-			else if (a.id_ == "on_exit") ctx.set_on_exit(cur_sm->idx_,a.native_func_);
+			if (a.id_ == "on_enter") {
+			 ctx.set_on_enter(cur_sm->idx_,a.native_func_);
+			 ctx.set_inf(cur_sm->idx_,executionloop_context_t::ENTER,true);
+			}
+			else if (a.id_ == "on_exit") {
+			 ctx.set_on_exit(cur_sm->idx_,a.native_func_);
+			 ctx.set_inf(cur_sm->idx_,executionloop_context_t::EXIT,true);
+			}
 		}
 	});
 
@@ -1003,8 +1019,16 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	 if (result_cmd_line.print_transition_tables){
 	  for(auto e : map_fullqualified_sm_id_to_computed_idx){
 	   std::cout <<" " << e.second <<";" << "\"" << e.first << "\";";
-	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<"initial state";
-	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<"final state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::THREAD))std::cout <<" thread";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::JOIN)){
+		   std::cout <<" join="<< executionloop_context().get_join_state(e.second);
+	   }
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::EXIT))std::cout <<" on_exit";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::ENTER))std::cout <<" on_enter";
+
 	   std::cout << "\n";
 	  }
 
