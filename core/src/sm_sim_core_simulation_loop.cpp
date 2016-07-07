@@ -159,12 +159,13 @@ for(;!quit && !shutdown();)
 
 
  bool fetch_made_states_update = false;
-
-  if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
+ execution_ctxt.current_ev_id = 0;
+ if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
   {
 	ev_read = true;
 	ev_id   = execution_ctxt.front_ev_sync_queue();
 	execution_ctxt.pop_ev_sync_queue();
+	execution_ctxt.current_ev_id = ev_id;
   } else if(!taking_epsilon_transitions) {
 	if (step_handler_) quit = step_handler_();
 	std::vector<State_machine*> on_enter_seq;

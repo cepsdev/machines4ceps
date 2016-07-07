@@ -5,7 +5,7 @@
 #include "cepsparserdriver.hh"
 
 void State_machine_simulation_core::queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl){
-	if (vl.size() == 0){
+	if (vl.size() == 0 && enforce_native()){
 		auto& ctxt = executionloop_context();
 		auto evid = ctxt.ev_to_id[ev_name];
 		if (evid > 0){
@@ -29,11 +29,16 @@ void State_machine_simulation_core::sync_queue_event(int ev_id){
 
 
 size_t State_machine_simulation_core::argc(){
+	if (enforce_native() && executionloop_context().current_ev_id != 0) return 0;
 	return std::max(current_event().payload_.size(),current_event().payload_native_.size());
 }
 
 sm4ceps_plugin_int::Variant State_machine_simulation_core::argv(size_t j){
- if (0 == j) return sm4ceps_plugin_int::Variant{current_event().id_};
+ if (0 == j) {
+	 if (enforce_native() && executionloop_context().current_ev_id != 0)
+		 return sm4ceps_plugin_int::Variant{executionloop_context().id_to_ev[executionloop_context().current_ev_id]};
+	 return sm4ceps_plugin_int::Variant{current_event().id_};
+ }
  auto i = j - 1;
  if (std::max(current_event().payload_.size(),current_event().payload_native_.size()) <= i )
 	 fatal_(-1,"Access to argv: Out of bounds.");

@@ -373,7 +373,6 @@ void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin
 	exec_action_timer(t,sm4ceps_plugin_int::ev{},id_,true,fp);
 }
 bool State_machine_simulation_core::in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids){
-
 	bool found = false;
 	for(auto p : state_ids){
 		auto state = resolve_state_qualified_id(p.name_,current_smp());
@@ -383,6 +382,10 @@ bool State_machine_simulation_core::in_state(std::initializer_list<sm4ceps_plugi
 		 ss << p.name_;
 		 fatal_(-1,"in_state : illformed argument, unknown state: "+ss.str());
 		}
+		if (enforce_native()){
+			auto& ctxt = executionloop_context();
+			found = ctxt.current_states[state.id_];
+		} else
 		for(auto s:current_states())
 		{
 			if (s == state) {found = true; break;}
@@ -391,6 +394,7 @@ bool State_machine_simulation_core::in_state(std::initializer_list<sm4ceps_plugi
 	}
 	return found;
 }
+
 void State_machine_simulation_core::register_global_function(std::string name,sm4ceps_plugin_int::Variant (*fp)()){
 	glob_funcs()[name] = fp;
 }

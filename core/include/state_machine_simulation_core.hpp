@@ -204,6 +204,7 @@ public:
 	}
 
 	int number_of_states = 0;
+	int current_ev_id = 0;
 	std::map<std::string,int> ev_to_id;
 	std::map<int,std::string> id_to_ev;
 	class transition_t{
