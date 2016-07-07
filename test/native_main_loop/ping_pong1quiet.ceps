@@ -1,0 +1,81 @@
+kind Event;
+kind Systemstate;
+
+Event E,F,G,H;
+
+Systemstate duration_timer_1,duration_timer_2,s1;
+
+Statemachine
+{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+    a1{ if (s1<10000000) {E;}; };
+    a2{s1=s1+1;F;};
+ };
+ Transition{Initial;a;a1;};
+ Transition{a;b;E;a2;};
+ Transition{b;a;F;a1;};
+};
+
+Statemachine{
+ id{S3;};
+ };
+ 
+Statemachine{
+ id{S2;};
+ Actions{
+    a1{ if (s1<10000000) {E;}; };
+ };
+ on_exit{};
+ on_enter{};
+  
+ States{Initial;a;};
+ Transition{Initial;a;a1;};
+ Transition{a;S3;E;};
+ 
+ };
+
+Statemachine{
+ id{S3;};
+ Actions{
+    a1{s1=s1+1;F;};
+ };
+ on_exit{};
+ on_enter{};
+  
+ States{Initial;a;};
+ Transition{Initial;a;a1;};
+ Transition{a;S2;F;};
+ };
+
+/*
+Statemachine{
+ id{S6;};
+};
+
+Statemachine{
+ id{S4;};
+ import{S6;};
+ Statemachine{
+  id{S4_1;};
+  States{Initial;};
+ };
+ Statemachine{
+  id{S4_2;};
+  States{Initial;};
+ };
+
+};*/
+
+
+Globals{
+ s1 = 0;
+};
+Simulation
+{
+ Start{S1;};
+};
+
+
+

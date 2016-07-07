@@ -244,6 +244,8 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		}
 		for(auto s : cur_sm->children()){
 			ctx.set_parent(s->idx_,cur_sm->idx_);
+			if (s->is_thread_)
+				ctx.set_inf(cur_sm->idx_,executionloop_context_t::REGION,true);
 		}
 	});
 
@@ -1026,6 +1028,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::THREAD))std::cout <<" thread";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::IN_THREAD))std::cout <<" in_thread";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::REGION))std::cout <<" orthogonal_regions";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::JOIN)){
 		   std::cout <<" join="<< executionloop_context().get_join_state(e.second);
 	   }

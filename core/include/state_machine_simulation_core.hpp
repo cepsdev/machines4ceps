@@ -243,6 +243,7 @@ public:
 	static constexpr unsigned int THREAD = 7;
 	static constexpr unsigned int JOIN = 8;
 	static constexpr unsigned int IN_THREAD = 9;
+	static constexpr unsigned int REGION = 10;
 
 
 

@@ -48,6 +48,8 @@ void executionloop_context_t::do_exit(int* sms,int n,std::vector<int> const & v)
 	}
 
 
+constexpr bool PRINT_DEBUG = false;
+
 void State_machine_simulation_core::simulate_purly_native(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
@@ -70,17 +72,17 @@ auto const& testname_ = sim["Test"];
 if (testcase_.size()==1 && testname_.size()==1 &&
 	testcase_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier && testname_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier )
 {
-	log() << "[TESTCASE]";
-	log() << "[" << (testcase = name(ceps::ast::as_id_ref(testcase_.nodes()[0]))) <<"]\n";
-	log() << "[TEST]";
-    log() << "[" << (testname = name(ceps::ast::as_id_ref(testname_.nodes()[0]))) <<"]\n";
+	if (PRINT_DEBUG) log() << "[TESTCASE]";
+	if (PRINT_DEBUG) log() << "[" << (testcase = name(ceps::ast::as_id_ref(testcase_.nodes()[0]))) <<"]\n";
+	if (PRINT_DEBUG) log() << "[TEST]";
+	if (PRINT_DEBUG) log() << "[" << (testname = name(ceps::ast::as_id_ref(testname_.nodes()[0]))) <<"]\n";
 }
 
 
 auto fixture = universe[testcase];
 if (!fixture.empty())
 {
-	log()<< "[FIXTURE(S) FOUND]\n";
+	if (PRINT_DEBUG) log()<< "[FIXTURE(S) FOUND]\n";
 	sim.nodes().insert(sim.nodes().begin(),fixture.nodes().begin(),fixture.nodes().end());
 }
 
@@ -101,7 +103,7 @@ if (user_supplied_global_init() == nullptr){
 request_start_for_all_dispatchers();
 
 
-log()<< "[SIMULATION STARTED]\n";	//log()<<"[START STATES] " ;	print_info(states);
+if (PRINT_DEBUG)log()<< "[SIMULATION STARTED]\n";
 if (user_supplied_global_init() != nullptr){
       map_ceps_payload_to_native_=true;
       delete_ceps_payload_=true;
@@ -109,7 +111,7 @@ if (user_supplied_global_init() != nullptr){
 	user_supplied_global_init()();
 }
 
-int pos = 0;	int loop_ctr = 0;	bool quit = false;
+int pos = 0;bool quit = false;
 
 //Each simulation step starts with a phase where only epsilon transitions are taken until no further transitions are found,
 //followed by the consumption of an event.
@@ -147,7 +149,7 @@ auto & execution_ctxt = executionloop_context();
 execution_ctxt.current_states_init_and_clear();
 
 int cur_states_size = execution_ctxt.current_states.size();
-constexpr bool PRINT_DEBUG = true;
+
 
 for(;!quit && !shutdown();)
 {
@@ -175,12 +177,12 @@ for(;!quit && !shutdown();)
 		execution_ctxt.current_states[s.id_] = 1;
 	  }
 	  if (PRINT_DEBUG){
-	   std::cout << "[ACTIVE STATES] ";
+	   log() << "[ACTIVE STATES] ";
 	   for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
 		if (!execution_ctxt.current_states[z]) continue;
-		std::cout << execution_ctxt.idx_to_state_id[z] << " ";
+		log() << execution_ctxt.idx_to_state_id[z] << " ";
 	   }
-	   std::cout << std::endl;
+	   log() << "\n";
 	  }
 
 	  if (on_enter_seq.size()){
@@ -231,23 +233,8 @@ for(;!quit && !shutdown();)
 	 if (ev_read) ev_id = execution_ctxt.ev_to_id[current_event().id_];
     }
 
-	/*std::cout << "states = ";
-	for(int z = 0; z != current_states_end; ++z){
-	 if (!executionloop_context().current_states[z]) continue;
-	 std::cout << z << " ";
-	}
-	std::cout << std::endl;*/
-
-
-
-	//std::cout << "event_id=" <<ev_id << std::endl;
-	//std::memset(triggered_transitions.data(),0,triggered_transitions.size()*sizeof(int));
-	//std::memset(new_states.data(),0,new_states.size()*sizeof(int));
 	memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*4);
-
-
-	//std::cout << "Computing triggered transitions.\n";
-	if (PRINT_DEBUG) std::cout << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << std::endl;
+	if (PRINT_DEBUG) log() << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << "\n";
 	int triggered_transitions_end = 0;
 	auto triggered_thread_regions_end = triggered_transitions_end;
 
@@ -272,8 +259,10 @@ for(;!quit && !shutdown();)
 
 
 	if (triggered_transitions_end == 0){
-		if (PRINT_DEBUG)std::cout << "[NO TRANSITIONS TRIGGERED]\n" << "[ITERATION END]\n";
-		taking_epsilon_transitions = !taking_epsilon_transitions;continue;
+		if (PRINT_DEBUG)log() << "[NO TRANSITIONS TRIGGERED]\n" << "[ITERATION END]\n";
+		taking_epsilon_transitions = !taking_epsilon_transitions;
+		if(ev_read && post_proc_native) post_proc_native();
+		continue;
 	}
 
 	if(ev_read) taking_epsilon_transitions = true;
@@ -281,11 +270,11 @@ for(;!quit && !shutdown();)
 	std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
 	auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
 
-	if (PRINT_DEBUG){std::cout << "[TRIGGERED TRANSITIONS]\n";
+	if (PRINT_DEBUG){log() << "[TRIGGERED TRANSITIONS]\n";
 	for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 		auto t = *p;
 		auto const & trans = execution_ctxt.transitions[t];
-		std::cout << " " <<  execution_ctxt.idx_to_state_id[trans.from] << " => " << execution_ctxt.idx_to_state_id[trans.to] << std::endl;
+		log() << " " <<  execution_ctxt.idx_to_state_id[trans.from] << " => " << execution_ctxt.idx_to_state_id[trans.to] << "\n";
 	}}
 
 	bool possible_exit_or_enter_occured = false;
@@ -312,20 +301,20 @@ for(;!quit && !shutdown();)
 			auto region = triggered_thread_regions[i];
 			if (!execution_ctxt.get_inf(region,executionloop_context_t::JOIN)) continue;
 			if (execution_ctxt.join_states[region] == 0) continue;
-			if (PRINT_DEBUG) std::cout << "[THREAD_REGION_CHECK_FOR_JOIN] Statemachine==\""<< execution_ctxt.idx_to_state_id[region] << "\"\n";
+			if (PRINT_DEBUG) log() << "[THREAD_REGION_CHECK_FOR_JOIN] Statemachine==\""<< execution_ctxt.idx_to_state_id[region] << "\"\n";
 			bool all_threads_in_final = true;
 			for(auto j = execution_ctxt.state_to_children[region]+1;execution_ctxt.children[j];++j){
 				int child;
 				if (!execution_ctxt.is_sm(child = execution_ctxt.children[j])) continue;
 				if (!execution_ctxt.get_inf(child,executionloop_context_t::THREAD)) continue;
-				if (PRINT_DEBUG) std::cout << "[THREAD_REGION_CHECK_FOR_JOIN][CHECK_THREAD] thread==\""<< execution_ctxt.idx_to_state_id[child] << "\"\n";
+				if (PRINT_DEBUG) log() << "[THREAD_REGION_CHECK_FOR_JOIN][CHECK_THREAD] thread==\""<< execution_ctxt.idx_to_state_id[child] << "\"\n";
 				if (execution_ctxt.final_state[child] == 0){all_threads_in_final = false; break;}
-				if (PRINT_DEBUG) std::cout << "[THREAD_REGION_CHECK_FOR_JOIN][CHECK_FINAL_OF_THREAD] final==\""<< execution_ctxt.idx_to_state_id[execution_ctxt.final_state[child]] << "\"\n";
+				if (PRINT_DEBUG) log() << "[THREAD_REGION_CHECK_FOR_JOIN][CHECK_FINAL_OF_THREAD] final==\""<< execution_ctxt.idx_to_state_id[execution_ctxt.final_state[child]] << "\"\n";
 				if (!temp[execution_ctxt.final_state[child]]){all_threads_in_final = false; break;}
 			}
 
 			if (all_threads_in_final){
-				if (PRINT_DEBUG) std::cout << "[THREAD_JOIN] join state==\"" << execution_ctxt.idx_to_state_id[execution_ctxt.join_states[region]] << "\"\n";
+				if (PRINT_DEBUG) log() << "[THREAD_JOIN] join state==\"" << execution_ctxt.idx_to_state_id[execution_ctxt.join_states[region]] << "\"\n";
 				for(auto j = execution_ctxt.state_to_children[region]+1;execution_ctxt.children[j];++j){
 					int child;
 					if (!execution_ctxt.is_sm(child = execution_ctxt.children[j])) continue;
@@ -337,21 +326,6 @@ for(;!quit && !shutdown();)
 			}
 		}
 	}
-
-	//if (PRINT_DEBUG)std::cout << "possible_exit_occured="<< possible_exit_or_enter_occured << std::endl;
-	/*std::cout << "temp states (before enter)= ";
-	for(int z = 0; z !=  temp.size(); ++z){
-		 if (!temp[z]) continue;
-		 std::cout << z << " ";
-	}
-	std::cout << std::endl;
-
-	std::cout << "new states = ";
-	for(int z = 0; z != new_states_end; ++z){
-		 if (!new_states[z]) continue;
-		 std::cout << z << " ";
-	}
-	std::cout << std::endl;*/
 
 	if (!possible_exit_or_enter_occured){
 		for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
@@ -370,18 +344,17 @@ for(;!quit && !shutdown();)
 
 	 //Compute transitively entered states
 	 if (PRINT_DEBUG){
-	  std::cout << "[KERNEL_STATES][BEFORE_ENTER_CLOSURE] ";
+	  log() << "[KERNEL_STATES][BEFORE_ENTER_CLOSURE] ";
 	  for(int z = 0; z != temp.size(); ++z){
 	 	 if (!temp[z]) continue;
-		 std::cout << execution_ctxt.idx_to_state_id[z] << " ";
+	 	log() << execution_ctxt.idx_to_state_id[z] << " ";
 	   }
-	   std::cout << std::endl;
+	  log() << "\n";
 	 }
 	 for(int i = 0; i != execution_ctxt.number_of_states+1;++i) {
 		execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
 	 }
 
-	 //std::memset(entering_sms.data(),0,entering_sms.size()*sizeof(int));
 	 int entering_sms_next = 0;
 	 for(auto state = 0; state != temp.size();++state ){
 		 if (execution_ctxt.get_inf(state,executionloop_context_t::VISITED)) continue;
@@ -391,18 +364,35 @@ for(;!quit && !shutdown();)
 		 //Newly added state
 		 if(execution_ctxt.is_sm(state)){
 			temp[state] = 1;
-			if (execution_ctxt.initial_state[state] != 0) {
-				temp[execution_ctxt.initial_state[state]] = 1;
-				execution_ctxt.set_inf(execution_ctxt.initial_state[state],executionloop_context_t::VISITED,true);
+			int init_state = execution_ctxt.initial_state[state];
+			if ( init_state ) {
+				temp[init_state ] = 1;
+				execution_ctxt.set_inf(init_state ,executionloop_context_t::VISITED,true);
+			}
+			if (execution_ctxt.get_inf(state,executionloop_context_t::REGION)){
+				for(auto ti =execution_ctxt.state_to_children[state]+1;execution_ctxt.children[ti];++ti){
+					int thread;
+					if (!execution_ctxt.is_sm(thread = execution_ctxt.children[ti])) continue;
+					if (!execution_ctxt.get_inf(thread,executionloop_context_t::THREAD)) continue;
+					temp[thread] = 1;
+					execution_ctxt.set_inf(thread,executionloop_context_t::VISITED,true);
+					if(execution_ctxt.initial_state[thread] != 0){
+						temp[execution_ctxt.initial_state[thread]] = 1;
+						execution_ctxt.set_inf(execution_ctxt.initial_state[thread],executionloop_context_t::VISITED,true);
+					}
+				}
 			}
 		 } else {
-		   if (execution_ctxt.current_states[execution_ctxt.get_parent(state)]) continue;
-		   temp[execution_ctxt.current_states[execution_ctxt.get_parent(state)]] = 1;
-		   execution_ctxt.set_inf(execution_ctxt.get_parent(state),executionloop_context_t::VISITED,true);
+		   auto prnt = execution_ctxt.get_parent(state);
+		   if (execution_ctxt.current_states[prnt]) continue;
+		   temp[prnt] = 1;
+		   execution_ctxt.set_inf(prnt,executionloop_context_t::VISITED,true);
 		 }
 		 auto p = state;
-		 for(;execution_ctxt.get_parent(p) != 0 && !execution_ctxt.current_states[execution_ctxt.get_parent(p)];){
-			 p = execution_ctxt.get_parent(p);
+		 for(;;){
+			 auto prnt = execution_ctxt.get_parent(p);
+			 if (prnt == 0 || execution_ctxt.current_states[prnt] == 0) break;
+			 p = prnt;
 			 temp[p] = 1;execution_ctxt.set_inf(p,executionloop_context_t::VISITED,true);
 			 if (execution_ctxt.initial_state[p] != 0){
 				 temp[execution_ctxt.initial_state[p]] = 1;
@@ -413,12 +403,12 @@ for(;!quit && !shutdown();)
 	 }
 
 	 if (PRINT_DEBUG){
-	 std::cout << "[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] ";
-	 for(int z = 0; z != temp.size(); ++z){
+	  log() << "[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] ";
+	  for(int z = 0; z != temp.size(); ++z){
 		 if (!temp[z]) continue;
-		 std::cout << execution_ctxt.idx_to_state_id[z] << " ";
-	 }
-	 std::cout << std::endl;}
+		 log() << execution_ctxt.idx_to_state_id[z] << " ";
+	  }
+	  log() <<"\n";}
 
 
 	 //Compute transitively exit states
@@ -427,7 +417,6 @@ for(;!quit && !shutdown();)
 		execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
 	 }
 
-	 //std::memset(exiting_sms.data(),0,exiting_sms.size()*sizeof(int));
 	 int exiting_sms_next = 0;
 	 for(auto state = 0; state != temp.size();++state ){
 		 if (!execution_ctxt.is_sm(state)) continue;
@@ -441,16 +430,16 @@ for(;!quit && !shutdown();)
 		 } else {
 		   if (execution_ctxt.current_states[state]) {
 			   if (PRINT_DEBUG){
-				   std::cout << "[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] \"" << execution_ctxt.idx_to_state_id[state] << "\": ";
+				   log() << "[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] \"" << execution_ctxt.idx_to_state_id[state] << "\": ";
 			   }
 			   execution_ctxt.remove_children(state,temp);
 			   if (PRINT_DEBUG){
-				   std::cout << " ";
+				   log() << " ";
 				   for(int z = 0; z != temp.size(); ++z){
 				  		 if (!temp[z]) continue;
-				  		 std::cout << execution_ctxt.idx_to_state_id[z] << " ";
+				  		log() << execution_ctxt.idx_to_state_id[z] << " ";
 				  	 }
-				   std::cout << std::endl;
+				   log() << "\n";
 			 }
 		   }
 		   else continue;
@@ -459,23 +448,23 @@ for(;!quit && !shutdown();)
 		 auto p = state;
 		 for(;execution_ctxt.get_parent(p) != 0 && execution_ctxt.current_states[execution_ctxt.get_parent(p)];){
 			 auto pp = execution_ctxt.get_parent(p);
-			 if (PRINT_DEBUG) std::cout << "[ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] \""<< execution_ctxt.idx_to_state_id[pp] <<"\"\n";
+			 if (PRINT_DEBUG) log() << "[ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] \""<< execution_ctxt.idx_to_state_id[pp] <<"\"\n";
 			 if (!execution_ctxt.empty(pp,temp)) break;
-			 if (PRINT_DEBUG) std::cout << "[ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][IS_EMPTY] \""<< execution_ctxt.idx_to_state_id[pp] << "\"\n";
+			 if (PRINT_DEBUG) log() << "[ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][IS_EMPTY] \""<< execution_ctxt.idx_to_state_id[pp] << "\"\n";
 			 temp[p = pp] = 0;
 		 }
-		 if (PRINT_DEBUG) std::cout << "[ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] \""<< execution_ctxt.idx_to_state_id[p] << "\"\n";
+		 if (PRINT_DEBUG) log() << "[ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] \""<< execution_ctxt.idx_to_state_id[p] << "\"\n";
 		 exiting_sms[exiting_sms_next++] = p;
 	 }
 
 
 	 if (PRINT_DEBUG){
-	 std::cout << "[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] ";
-	 for(int z = 0; z != temp.size(); ++z){
+	  log() << "[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] ";
+	  for(int z = 0; z != temp.size(); ++z){
 		 if (!temp[z]) continue;
-		 std::cout << execution_ctxt.idx_to_state_id[z] << " ";
-	 }
-	 std::cout << std::endl;}
+		 log() << execution_ctxt.idx_to_state_id[z] << " ";
+	  }
+	  log() << "\n";}
 
 	 execution_ctxt.do_exit(exiting_sms.data(),exiting_sms_next,temp);
 
@@ -495,17 +484,17 @@ for(;!quit && !shutdown();)
 	 memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*4);
 	}
 
+	if(ev_read && post_proc_native) post_proc_native();
+
 	if (PRINT_DEBUG){
-	 std::cout << "[ACTIVE STATES] ";
+	 log() << "[ACTIVE STATES] ";
 	 for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
-			 if (!execution_ctxt.current_states[z]) continue;
-			 std::cout << execution_ctxt.idx_to_state_id[z] << " ";
+	  if (!execution_ctxt.current_states[z]) continue;
+	  log() << execution_ctxt.idx_to_state_id[z] << " ";
 	 }
-	 std::cout << std::endl;
-	 std::cout << "[ITERATION END]\n";
+	 log() << "\n";
+	 log() << "[ITERATION END]\n";
 	}
-	/*std::cout << "taking_epsilon_transitions == " << taking_epsilon_transitions << std::endl;
-   */
  }
 }
 
