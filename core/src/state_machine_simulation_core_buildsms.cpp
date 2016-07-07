@@ -222,8 +222,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 	//Set parent information
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+		bool inside_thread = false;
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::SM,true);
-		ctx.set_inf(cur_sm->idx_,executionloop_context_t::THREAD,cur_sm->is_thread_);
+		ctx.set_inf(cur_sm->idx_,executionloop_context_t::THREAD,inside_thread = cur_sm->is_thread_);
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::JOIN,cur_sm->join_);
 		if (cur_sm->join_) {
 			for(auto s : cur_sm->states()){
@@ -237,6 +238,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			ctx.set_parent(s->idx_,cur_sm->idx_);
 			ctx.set_inf(s->idx_,executionloop_context_t::INIT,s->is_initial());
 			ctx.set_inf(s->idx_,executionloop_context_t::FINAL,s->is_final());
+			ctx.set_inf(s->idx_,executionloop_context_t::IN_THREAD,inside_thread);
 			if (s->is_initial()) ctx.set_initial_state(cur_sm->idx_,s->idx_);
 			if (s->is_final()) ctx.set_final_state(cur_sm->idx_,s->idx_);
 		}
@@ -265,6 +267,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		ctx.state_to_children[cur_sm->idx_] = ctx.children.size();
 		ctx.children.push_back(cur_sm->idx_);
 		for(auto s : cur_sm->states())ctx.children.push_back(s->idx_);
+		for(auto s : cur_sm->children_)ctx.children.push_back(s->idx_);
 		ctx.children.push_back(0);
 	});
 
@@ -1015,14 +1018,14 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	} else if (enforce_native()) {
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
 	 auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
-
 	 if (result_cmd_line.print_transition_tables){
 	  for(auto e : map_fullqualified_sm_id_to_computed_idx){
 	   std::cout <<" " << e.second <<";" << "\"" << e.first << "\";";
-	   if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound state";
-	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial state";
-	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound_state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial_state";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::THREAD))std::cout <<" thread";
+	   if (executionloop_context().get_inf(e.second,executionloop_context_t::IN_THREAD))std::cout <<" in_thread";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::JOIN)){
 		   std::cout <<" join="<< executionloop_context().get_join_state(e.second);
 	   }
@@ -1056,6 +1059,12 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	  }
 	  std::cout << "\n";
 	 }//print transition tables
+     for(auto e: executionloop_context().ev_to_id) executionloop_context().id_to_ev[e.second] = e.first;
+     executionloop_context().id_to_ev[0] = "null";
+	 for(auto e : map_fullqualified_sm_id_to_computed_idx){
+		 executionloop_context().idx_to_state_id[e.second] = e.first;
+	 }
+	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
    }
 
 

@@ -205,6 +205,7 @@ public:
 
 	int number_of_states = 0;
 	std::map<std::string,int> ev_to_id;
+	std::map<int,std::string> id_to_ev;
 	class transition_t{
 		public:
 		int smp = 0,from = 0, to = 0, ev = 0;
@@ -228,6 +229,8 @@ public:
 	std::vector<int> children;
 	std::vector<int> state_to_children;
 	std::vector<int> join_states;
+	std::map<std::string,int> state_id_to_idx;
+	std::map<int,std::string> idx_to_state_id;
 
 
 	static constexpr unsigned int INIT = 0;
@@ -239,6 +242,7 @@ public:
 	static constexpr unsigned int VISITING = 6;
 	static constexpr unsigned int THREAD = 7;
 	static constexpr unsigned int JOIN = 8;
+	static constexpr unsigned int IN_THREAD = 9;
 
 
 

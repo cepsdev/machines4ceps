@@ -19,6 +19,8 @@ Statemachine{
   Transition{Initial;a;A;};
   Transition{a;Final;C;};
  };
+ 
+ Statemachine{id{X;}; States{Initial;Final;};};
 };
 
 Simulation{
