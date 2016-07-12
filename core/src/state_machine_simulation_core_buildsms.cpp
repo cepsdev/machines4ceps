@@ -161,8 +161,19 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		 for(auto & t : cur_sm->transitions()){
 			if (t.from_.is_sm_) {t.from_.idx_ = t.from_.smp_->idx_;assert(t.from_.idx_>0);}
 			else if (t.from_.id_ == state->id_) {t.from_.idx_ = state->idx_;assert(t.from_.idx_>0);}
-			if (t.to_.is_sm_) {t.to_.idx_ = t.to_.smp_->idx_;assert(t.to_.idx_>0);}
-			else if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_;assert(t.to_.idx_>0);}
+			if (t.orig_parent_ != nullptr && t.orig_parent_ != cur_sm){
+				if (t.to_.is_sm_) {t.to_.idx_ = t.to_.smp_->idx_;assert(t.to_.idx_>0);}
+				else {
+					for(auto it = t.orig_parent_->states().begin(); it != t.orig_parent_->states().end(); ++it){
+						auto state = *it;
+						if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_;}
+					}
+					assert(t.to_.idx_>0);
+				}
+			} else{
+			 if (t.to_.is_sm_) {t.to_.idx_ = t.to_.smp_->idx_;assert(t.to_.idx_>0);}
+			 else if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_;assert(t.to_.idx_>0);}
+			}
 		 }//for
 		}
 	 }
@@ -189,6 +200,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			   if (t.from_.parent_!= nullptr && t.from_.parent_ != sm_from) continue;
 			  }
 			  executionloop_context_t::transition_t tt;
+
 			  tt.smp = sm_to->idx_;
 			  tt.from = t.from_.idx_;
 			  assert(tt.from > 0);

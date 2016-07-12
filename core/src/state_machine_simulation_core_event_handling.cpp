@@ -75,6 +75,58 @@ void State_machine_simulation_core::enqueue_event(event_t ev, bool update_out_qu
 	}
 }
 
+std::string compose_err_msg_assert(State_machine_simulation_core* smp, state_rep_t state, State_machine_simulation_core::states_t& states){
+	std::stringstream ss;
+	ss << "\nExpected to be in state " << smp->get_fullqualified_id(state) <<", current states are:\n";
+	if (smp->enforce_native()){
+	 for(int i = 0;i!=smp->executionloop_context().current_states.size();++i)
+		 if (smp->executionloop_context().current_states[i]) ss << " " << smp->executionloop_context().idx_to_state_id[i] << "\n";
+	} else{
+	 for(auto const & s : states)
+	 {
+		ss << " " << smp->get_fullqualified_id(s) << "\n";
+	 }
+	}
+	ss <<".";
+	return ss.str();
+}
+
+template <typename F> void handle_current_states_assertion(ceps::ast::Nodebase_ptr node_raw,
+		                             State_machine_simulation_core* smp,
+									 State_machine_simulation_core::states_t& states,
+									 std::string what, F f){
+
+ ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
+ for(auto const& n: assert->children())
+ {
+  if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
+  if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
+  auto state = smp->resolve_state_qualified_id(n,nullptr);
+  if (!state.valid()) {
+	std::stringstream ss; ss << ceps::ast::Nodeset(n);
+	if (smp->conf_ignore_unresolved_state_id_in_directives())
+		smp->log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
+		else smp->fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
+		return;
+  }
+  bool found = false;
+  if (smp->enforce_native()){
+		found = smp->executionloop_context().current_states[state.id_];
+  } else{
+	 for(auto const & s : states)
+	 {
+		if (s == state) {found = true; break;}
+	 }
+  }
+  if (f(found)) {
+	auto err_msg = compose_err_msg_assert(smp,  state,  states);
+	std::cout << std::endl;
+    smp->fatal_(-1,"\nASSERTION not satisfied ("+what+"): "+err_msg);
+  }
+ }//for
+}
+
+
 bool State_machine_simulation_core::fetch_event(event_rep_t& ev,
 												ceps::ast::Nodeset& sim,
 												int& pos,
@@ -85,7 +137,6 @@ bool State_machine_simulation_core::fetch_event(event_rep_t& ev,
 												bool ignore_ev_queue,
 												bool exit_if_start_found)
 {
-	DEBUG_FUNC_PROLOGUE
 	using namespace ceps::ast;
 	bool pending_timed_event;
 	states_updated = false;
@@ -108,8 +159,6 @@ do{
 				 }
 				 continue;
 			 }
-
-
 
 			 ev.sid_ = eev.id_;
 
@@ -164,12 +213,12 @@ do{
 		  if (exit_if_start_found){++pos; return false;}
 		  else
 		  {
-			  DEBUG << "[START_FOUND]\n";
+
 			  states_t new_states;
 			  std::set<State_machine*> new_sms;
 			  for(auto const& n: ceps::ast::as_struct_ref(node_raw).children())
 			  	{
-				    DEBUG << "[START_FOUND][INSERT_STATE]\n";
+
 			  		if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 			  		if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 			  		auto state = resolve_state_qualified_id(n,nullptr);
@@ -184,6 +233,7 @@ do{
 			  		new_states.push_back(state);
 			  		new_sms.insert(state.smp_);
 			  	}//for
+			  on_enter_seq.clear();
 			  on_enter_seq.insert(on_enter_seq.end(),new_sms.begin(),new_sms.end());
 			  ++pos;
 			  states_updated = true;
@@ -209,7 +259,7 @@ do{
 			{
 				if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 				if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-				DEBUG <<"[PRE][resolve_state_qualified_id]\n";
+
 				auto state = resolve_state_qualified_id(n,nullptr);
 				if (!state.valid()) {
 					std::stringstream ss; ss << ceps::ast::Nodeset(n);
@@ -218,9 +268,9 @@ do{
 					else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
 					continue;
 				}
-				DEBUG <<"[POST][resolve_state_qualified_id]\n";
+
 				ass.states_.push_back(state);
-				DEBUG << "[ASSERT_EVENTUALLY_VISIT_STATES]["<<get_fullqualified_id(state)<<"\n" ;
+
 			}
 			active_asserts_.push_back(ass);
 		} else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef &&
@@ -236,7 +286,7 @@ do{
 			{
 				if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 				if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-				DEBUG <<"[PRE][resolve_state_qualified_id]\n";
+
 				auto state = resolve_state_qualified_id(n,nullptr);
 				if (!state.valid()) {
 					std::stringstream ss; ss << ceps::ast::Nodeset(n);
@@ -245,9 +295,9 @@ do{
 					else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
 					continue;
 				}
-				DEBUG <<"[POST][resolve_state_qualified_id]\n";
+
 				ass.states_.push_back(state);
-				DEBUG << "[ASSERT_EVENTUALLY_VISIT_STATES]["<<get_fullqualified_id(state)<<"\n" ;
+
 			}
 			active_asserts_.push_back(ass);
 		} else if (node_raw->kind() ==
@@ -299,79 +349,29 @@ do{
 		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef
 				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS")
 		{
-			ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
+			handle_current_states_assertion(node_raw,
+					                        this,
+											states,
+											"ASSERT_CURRENT_STATES_CONTAINS",
+											[](bool found){return !found;} );
 
-			for(auto const& n: assert->children())
-				{
-					if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
-					if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-					auto state = resolve_state_qualified_id(n,nullptr);
-					if (!state.valid()) {
-						std::stringstream ss; ss << ceps::ast::Nodeset(n);
-						if (conf_ignore_unresolved_state_id_in_directives())
-							log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
-						else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
-						continue;
-					}
-					bool found = false;
-					for(auto const & s : states)
-					{
-						if (s == state) {found = true; break;}
-					}
-					if (!found) {
-						std::stringstream ss;
-						ss << "\nExpected to be in state " << get_fullqualified_id(state) <<", current states are:\n";
-						for(auto const & s : states)
-						{
-							ss << " " << get_fullqualified_id(s) << "\n";
-						}
-						ss <<".";
-						fatal_(-1,"\nASSERTION not satisfied (ASSERT_CURRENT_STATES_CONTAINS): "+ss.str());
-					}
-					//states.push_back(state);
-				}//for
 
 		} else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef
 				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "ASSERT_CURRENT_STATES_CONTAINS_NOT")
 		{
-
-			ceps::ast::Struct_ptr assert = ceps::ast::as_struct_ptr(node_raw);
-
-			for(auto const& n: assert->children())
-				{
-					if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
-					if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-					auto state = resolve_state_qualified_id(n,nullptr);
-					if (!state.valid()) {
-						std::stringstream ss; ss << ceps::ast::Nodeset(n);
-						if (conf_ignore_unresolved_state_id_in_directives())
-							log() << "****Warning: Expression doesn't evaluate to an existing state: "<<ss.str();
-						else fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
-						continue;
-					}
-					bool found = false;
-					for(auto const & s : states)
-					{
-						if (s == state) {found = true; break;}
-					}
-					if (found) {
-						std::stringstream ss;
-						ss << "\nExpected NOT to be in state " << get_fullqualified_id(state) <<", current states are:\n";
-						for(auto const & s : states)
-						{
-							ss << " " << get_fullqualified_id(s) << "\n";
-						}
-						ss <<".";
-						fatal_(-1,"\nASSERTION not satisfied (ASSERT_CURRENT_STATES_CONTAINS_NOT): "+ss.str());
-					}
-					//states.push_back(state);
-				}//for
-
+			handle_current_states_assertion(node_raw,
+					                        this,
+											states,
+											"ASSERT_CURRENT_STATES_CONTAINS",
+											[](bool found){return found;} );
 		}
-		auto cev = resolve_event_qualified_id(sim.nodes()[pos],nullptr);
-		if (!cev.valid() || cev.sid_.length() == 0) {
-			ceps::ast::Scope scope(node_raw);scope.owns_children() = false;
-                        if (enforce_native())
+		else {
+		 auto cev = resolve_event_qualified_id(sim.nodes()[pos],nullptr);
+		 if ( (!cev.valid() || cev.sid_.length() == 0) ) {
+		  ceps::ast::Scope scope(node_raw);scope.owns_children() = false;
+		  std::cout << scope << std::endl;
+
+		  if (enforce_native())
                                  fatal_(-1,"Expecting native implementation (--enforce_native):fetch_event");
 
 			execute_action_seq(nullptr,&scope);
@@ -386,9 +386,6 @@ do{
 					ignore_handler,
 					ignore_ev_queue,
 					exit_if_start_found);
-
-			/*pending_timed_event = true;
-			continue;*/
 		}
 		ev = cev;
 		if (running_as_node()) {
@@ -401,6 +398,7 @@ do{
 		}
 		++pos;
 		return true;
+	   }//else
 	}
 
 

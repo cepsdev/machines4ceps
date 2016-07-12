@@ -254,8 +254,10 @@ public:
 
 class State_machine_simulation_core:public IUserdefined_function_registry, Ism4ceps_plugin_interface
 {
+public:
 	typedef std::chrono::steady_clock clock_type;
-
+	using states_t = std::vector<state_rep_t>;
+private:
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
 	ceps::Ceps_Environment * ceps_env_current_ = nullptr;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_guards;
@@ -271,7 +273,7 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
 	int active_states_logger_ctr_ = 0;
 
 
-	using states_t = std::vector<state_rep_t>;
+
 	bool quiet_mode_= false;
 	bool shutdown_threads_ = false;
 	mutable std::recursive_mutex glob_states_mutex_;
@@ -306,6 +308,7 @@ class State_machine_simulation_core:public IUserdefined_function_registry, Ism4c
     executionloop_context_t executionloop_context_;
 
 public:
+
     decltype(executionloop_context_)& executionloop_context() {return executionloop_context_;}
     bool& enforce_native(){return enforce_native_;}
     bool is_export_event(std::string const & ev_id) const {return exported_events_.find(ev_id) != exported_events_.end();}
@@ -436,6 +439,9 @@ public:
 	type_definitions_t type_definitions_;
 	type_definitions_t const & type_definitions() const {return type_definitions_;}
 	type_definitions_t & type_definitions() {return type_definitions_;}
+	state_rep_t resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
+	state_rep_t resolve_state_qualified_id(std::string compound_id, State_machine* parent);
+
 private:
 
 
@@ -452,8 +458,6 @@ private:
 								int depth,
 								int thread_ctr,
 								bool is_thread = false);
-	state_rep_t resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
-	state_rep_t resolve_state_qualified_id(std::string compound_id, State_machine* parent);
 	event_rep_t resolve_event_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
 	void process_simulation(ceps::ast::Nodeset& sim,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 	void eval_guard_assign(ceps::ast::Binary_operator & root);

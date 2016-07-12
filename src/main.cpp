@@ -610,7 +610,6 @@ int main(int argc,char ** argv)
 	}
 
 	try{
-
 		Result_process_cmd_line result_cmd_line;
 		init_state_machine_simulation(argc,argv,&sm_core,result_cmd_line);
 		PRINT_DEBUG_INFO = sm_core.print_debug_info_;
@@ -621,23 +620,15 @@ int main(int argc,char ** argv)
 			return 0;
 		}
 		run_state_machine_simulation(&sm_core,result_cmd_line);
-
-
-		if (DUMP_PLANTUML_REP_TO_COUT) write_plantuml_rep(cout,sm_core.ceps_env_current(), sm_core.current_universe(), result_cmd_line);
-		if (gen_doc)
-		{
-			std::cerr << "***Writing doxygen conformant documents to: '"<< doc_out_dir << "'" << std::endl;
-			write_doxygen_doc(doc_out_dir,sm_core.ceps_env_current(), sm_core.current_universe(), result_cmd_line);
-		}
 	}
 	catch (ceps::interpreter::semantic_exception & se)
 	{
-		std::cerr << "***Fatal Error: "<< se.what() << std::endl;
+		std::cout << "***Fatal Error: "<< se.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 	catch (std::runtime_error & re)
 	{
-		std::cerr << "***Fatal Error: " << re.what() << std::endl;
+		std::cout << "***Fatal Error:" << re.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
