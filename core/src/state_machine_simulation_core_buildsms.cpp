@@ -241,8 +241,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			  }
 			  tt.guard = t.guard_native_;
 			  if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
-			  if (t.action_.size() >= 2) tt.a1 = t.action_[1].native_func_;
-			  if (t.action_.size() >= 3) tt.a1 = t.action_[2].native_func_;
+			  if (t.action_.size() >= 2) tt.a2 = t.action_[1].native_func_;
+			  if (t.action_.size() >= 3) tt.a3 = t.action_[2].native_func_;
+			  assert(t.action_.size() < 4);
 			  ctx.transitions.push_back(tt);
 			  if(ctx.state_to_first_transition.find(tt.from) != ctx.state_to_first_transition.end()) continue;
 			  ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;

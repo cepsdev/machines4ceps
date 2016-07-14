@@ -369,7 +369,6 @@ do{
 		 auto cev = resolve_event_qualified_id(sim.nodes()[pos],nullptr);
 		 if ( (!cev.valid() || cev.sid_.length() == 0) ) {
 		  ceps::ast::Scope scope(node_raw);scope.owns_children() = false;
-		  std::cout << scope << std::endl;
 
 		  if (enforce_native())
                                  fatal_(-1,"Expecting native implementation (--enforce_native):fetch_event");
