@@ -330,10 +330,11 @@ for(;!quit && !shutdown();)
 		for(;i != execution_ctxt.transitions.size();++i){
 			auto const & t = execution_ctxt.transitions[i];
 			if (t.smp != smp) break;
-			if (t.ev == ev_id && t.from == s)
-				if (!t.guard || (t.guard && (*t.guard)()))  {
+			if (t.ev == ev_id && t.from == s){
+				if (t.guard == nullptr || (*t.guard)() )  {
 					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
 				}
+			}
 		}
 		if (!triggered) {temp[s] = 1;}
 	}

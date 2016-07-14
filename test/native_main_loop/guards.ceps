@@ -1,0 +1,26 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event E,F,G;
+Guard g1,g2,g3;
+Systemstate s1,s2,s3;
+
+export{G;};
+
+
+Statemachine{
+ id{S0;};
+ States{Initial;a;b;c;};
+ Transition{Initial;a;g2;};
+ Transition{Initial;b;g1;};
+};
+
+Globals{
+ g1 = 1;
+ g2 = 0;
+};
+
+Simulation{
+ Start{S0;};
+};

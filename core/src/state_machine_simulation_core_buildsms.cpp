@@ -209,7 +209,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 
 	//Build loop execution context
-	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv](State_machine* cur_sm){
+	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv,smp](State_machine* cur_sm){
 
 		executionloop_context_t::transition_t t;
 		t.smp = cur_sm->idx_;
@@ -217,7 +217,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		ctx.transitions.push_back(t);
 		ctx.state_to_first_transition[t.smp] = ctx.transitions.size()-1;
 
-		auto insert_transitions = [&ctx,&ev_to_id](State_machine* sm_from, State_machine* sm_to){
+		auto insert_transitions = [&ctx,&ev_to_id,smp](State_machine* sm_from, State_machine* sm_to){
 			 for(auto const & t : sm_from->transitions()){
 			  if (sm_from != sm_to){
 			   if (!t.from_.is_sm_) continue;
@@ -239,7 +239,14 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				assert(tt.ev > 0);
 				break;
 			  }
-			  tt.guard = t.guard_native_;
+
+
+
+			  {
+			   auto it =  smp->get_user_supplied_guards().find(t.guard_);
+			   if (it !=  smp->get_user_supplied_guards().end())
+				  tt.guard = it->second;
+			  }
 			  if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
 			  if (t.action_.size() >= 2) tt.a2 = t.action_[1].native_func_;
 			  if (t.action_.size() >= 3) tt.a3 = t.action_[2].native_func_;
