@@ -146,23 +146,7 @@ constexpr int TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED = 3;
 constexpr int TIMER_THREAD_FN_CTRL_ID = 4;
 
 
-bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
-	DEBUG_FUNC_PROLOGUE
-	DEBUG << "[KILLING NAMED TIMERS][TIMER_ID="<< timer_id <<"]\n";
-	{
-		std::lock_guard<std::mutex> lk(timer_threads_m);
-		auto t = 0;
-		for(auto& tinf : timer_threads){
-			if (timer_id.length()  == 0 || std::get<4>(tinf) == timer_id){
-				std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = true;
-			} else if (!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) && !std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)){
-				++t;
-			}
-		}
-		timed_events_active_ = t;
-	}
-	return false;
-}
+
 
 
 void timer_thread_fn(State_machine_simulation_core* smc, int id, bool periodic, double delta,State_machine_simulation_core::event_t event){
@@ -295,7 +279,51 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 
 }
 
-bool State_machine_simulation_core::exec_action_timer(double t,sm4ceps_plugin_int::ev ev_,sm4ceps_plugin_int::id id_,bool periodic_timer,sm4ceps_plugin_int::Variant (*fp)()){
+
+#if 0
+	struct timer_table_entry_t{
+		bool in_use = false;
+		bool kill = false;
+		bool fresh = false;
+		std::string name;
+		int id;
+		long period_in_ms = 0;
+		long time_remaining_in_ms = 0;
+		bool periodic = false;
+		int fd = -1;
+		event_t event;
+	};
+
+	size_t timer_table_size = 128;
+
+	mutable std::mutex timer_table_mtx;
+	std::vector<timer_table_entry_t> timer_table;
+#endif
+
+
+#ifndef __gnu_linux__
+
+bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
+	{
+		std::lock_guard<std::mutex> lk(timer_threads_m);
+		auto t = 0;
+		for(auto& tinf : timer_threads){
+			if (timer_id.length()  == 0 || std::get<4>(tinf) == timer_id){
+				std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = true;
+			} else if (!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) && !std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)){
+				++t;
+			}
+		}
+		timed_events_active_ = t;
+	}
+	return false;
+}
+
+bool State_machine_simulation_core::exec_action_timer(double t,
+		                                              sm4ceps_plugin_int::ev ev_,
+													  sm4ceps_plugin_int::id id_,
+													  bool periodic_timer,
+													  sm4ceps_plugin_int::Variant (*fp)()){
 
 	if (t < 0) return true;
 	std::string ev_id = ev_.name_;
@@ -341,7 +369,8 @@ bool State_machine_simulation_core::exec_action_timer(double t,sm4ceps_plugin_in
 	   std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i]) = false;
 	   std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[i]) = false;
 	   std::get<TIMER_THREAD_FN_CTRL_ID>(timer_threads[i]) = timer_id;
-	   if (std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])){ std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])->join();delete std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i]);}
+	   if (std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])){ std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])->join();
+	   delete std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i]);}
 	   timer_thread_id = i; break;
 	  }
 
@@ -350,6 +379,152 @@ bool State_machine_simulation_core::exec_action_timer(double t,sm4ceps_plugin_in
 	  std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[timer_thread_id]) = new std::thread{timer_thread_fn,this,timer_thread_id,periodic_timer,delta,ev_to_send};
 	}
 }
+#else
+
+bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
+	std::lock_guard<std::mutex> lk(timer_table_mtx);
+	auto t = 0;
+	bool bfound = false;
+	for(auto& e : timer_table){
+		if (timer_id.length() == 0 || timer_id == e.name){
+			e.kill = true;
+		} else if (e.in_use && !e.kill) ++t;
+	}
+	timed_events_active_ = t;
+	return false;
+}
+
+#include <poll.h>
+#include <unistd.h>
+
+void main_timer_thread_fn(State_machine_simulation_core* smc){
+	pollfd* poll_fds = new pollfd[smc->timer_table_size];
+	memset(poll_fds,sizeof(pollfd)*smc->timer_table_size,0);
+	int* tidxs = new int[smc->timer_table_size];
+	memset(tidxs,sizeof(int),0);
+
+	for(;!smc->shutdown();){
+	 size_t active_timers = 0;
+
+	 {
+	  std::lock_guard<std::mutex> lk(smc->timer_table_mtx);
+	  for(size_t i = 0; i!=smc->timer_table.size();++i){
+	   if (smc->timer_table[i].kill && smc->timer_table[i].in_use){
+		   smc->timer_table[i].in_use = false;
+		   close(smc->timer_table[i].fd);
+		   smc->timer_table[i].fd = -1;
+		   continue;
+	   }
+       if(!smc->timer_table[i].in_use || smc->timer_table[i].kill || smc->timer_table[i].fd < 0) continue;
+       poll_fds[active_timers].fd = smc->timer_table[i].fd;
+       poll_fds[active_timers].events = POLLIN;
+       tidxs[active_timers] = i;
+       ++active_timers;
+	  }//for
+	  smc->timed_events_active_ = active_timers;
+	 }
+	 if (active_timers == 0){
+		  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		  continue;
+	 }
+	 auto r = poll(poll_fds, active_timers, 10);
+	 if (r == 0) continue;
+	 if (r < 0) smc->fatal_(-1," main_timer_thread_fn: poll failed. "+std::to_string(errno));
+
+	 for(size_t j = 0;j!=active_timers;++j){
+	  uint64_t exp;
+	  auto r = read(poll_fds[j].fd,&exp,sizeof(uint64_t));auto rr = errno;
+	  if (r < 0 && rr == EAGAIN) continue;
+	  if (r!=sizeof(uint64_t)) smc->fatal_(-1," main_timer_thread_fn: read failed. "+std::to_string(errno));
+	  {
+		  std::lock_guard<std::mutex> lk(smc->timer_table_mtx);
+		  if (!smc->timer_table[tidxs[j]].periodic)  smc->timer_table[tidxs[j]].kill = true;
+		  smc->enqueue_event(smc->timer_table[tidxs[j]].event,false);
+	  }
+	 }
+
+	}//for
+}
+
+bool State_machine_simulation_core::exec_action_timer(double t,
+		                                              sm4ceps_plugin_int::ev ev_,
+													  sm4ceps_plugin_int::id id_,
+													  bool periodic_timer,
+													  sm4ceps_plugin_int::Variant (*fp)()){
+
+	if (t < 0) return true;
+	std::string ev_id = ev_.name_;
+	if (fp != nullptr){
+			ev_id = "@@queued_action";
+	}
+	std::string timer_id;
+
+	if (id_.name_.length())
+	{
+		timer_id = id_.name_;
+		kill_named_timer(timer_id);
+	}
+
+	double delta = t;
+	ceps::ast::Unit_rep u;
+
+	log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
+
+	event_t ev_to_send(ev_id);
+	ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
+	ev_to_send.already_sent_to_out_queues_ = false;
+	ev_to_send.glob_func_ = fp;
+	bool create_thread = false;
+	if (ev_.args_.size())		ev_to_send.payload_native_ = ev_.args_;
+
+
+	{
+		std::lock_guard<std::mutex> lk(timer_table_mtx);
+		if (timer_table.size() == 0){
+			timer_table.resize(timer_table_size);
+			create_thread = true;
+			timed_events_active_ = 0;
+		}
+		bool entry_found = false;
+		for(auto & e : timer_table){
+			if (e.in_use) continue;
+			entry_found = true;
+			e.in_use =true;
+			e.fresh = true;
+			e.kill = false;
+			e.name = timer_id;
+			e.period_in_ms = periodic_timer;
+			e.time_remaining_in_ms = e.period_in_ms = (long)(t * 1000.0);
+			e.event = ev_to_send;
+			e.fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+			if (e.fd < 0) fatal_(-1,"timerfd_create failed.");
+			itimerspec tspec;
+			tspec.it_interval.tv_nsec = 0;
+			tspec.it_interval.tv_sec = 0;
+			tspec.it_value.tv_nsec = 0;
+			tspec.it_value.tv_sec = 0;
+			if (periodic_timer){
+			 tspec.it_interval.tv_sec = (long) delta;
+			 tspec.it_interval.tv_nsec = (delta - floor(delta)) * 1000000000.0;
+			} else {
+			 tspec.it_value.tv_sec = (long) delta;
+			 tspec.it_value.tv_nsec = (delta - floor(delta)) * 1000000000.0;
+			 std::cout << ">>>> " << tspec.it_value.tv_sec << "  " << tspec.it_value.tv_nsec << std::endl;
+			}
+			auto r = timerfd_settime(e.fd, 0, &tspec, nullptr);
+			if (r < 0) fatal_(-1,"timerfd_settime failed.");
+			++timed_events_active_;
+			break;
+		}
+		if (!entry_found) fatal_(-1,"Out of resources: no available timer slot left.");
+	}
+
+	if (create_thread) new std::thread{main_timer_thread_fn,this};
+	return true;
+}
+
+
+#endif
 
 void State_machine_simulation_core::start_timer(double t,sm4ceps_plugin_int::ev ev_){
  exec_action_timer(t,ev_,sm4ceps_plugin_int::id{},false);

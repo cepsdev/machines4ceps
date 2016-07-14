@@ -15,6 +15,7 @@ const auto CEPS_REP_PUGI_XML_NODE_SET = 14;
 #include <netdb.h>
 #include <unistd.h>
 #include <endian.h>
+#include <sys/timerfd.h>
 static inline int closesocket(int s) { return close(s); }
 #else
 #ifdef _WIN32

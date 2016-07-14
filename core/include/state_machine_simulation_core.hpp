@@ -271,6 +271,8 @@ public:
 	size_t ev_sync_queue_end = 0;
 };
 
+
+
 class State_machine_simulation_core:public IUserdefined_function_registry, Ism4ceps_plugin_interface
 {
 public:
@@ -401,6 +403,25 @@ public:
 		bool is_epsilon() const {return id_ == "";}
 		event_t& operator = (event_rep_t const & rhs) { id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;}
 	};
+#ifdef __gnu_linux__
+	struct timer_table_entry_t{
+		bool in_use = false;
+		bool kill = false;
+		bool fresh = false;
+		std::string name;
+		int id;
+		long period_in_ms = 0;
+		long time_remaining_in_ms = 0;
+		bool periodic = false;
+		int fd = -1;
+		event_t event;
+	};
+
+	size_t timer_table_size = 128;
+
+	mutable std::mutex timer_table_mtx;
+	std::vector<timer_table_entry_t> timer_table;
+#endif
 
 	typedef ceps::ast::Nodebase_ptr (*smcore_plugin_fn_t)(ceps::ast::Call_parameters* params);
 
@@ -521,8 +542,9 @@ private:
 	bool contains_sm_func_calls(ceps::ast::Nodebase_ptr  expr);
 	void update_asserts(states_t const & reached_states);
 
-	int timed_events_active_ = 0;
+
 public:
+	int timed_events_active_ = 0;
 	void enqueue_event(event_t ev,bool update_out_queues = false);
 	void inc_timed_events() {++timed_events_active_;}
 	void dec_timed_events() {--timed_events_active_;}
