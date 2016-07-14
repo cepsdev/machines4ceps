@@ -78,8 +78,13 @@ template <>
  };
 }
 
+class State_machine_simulation_core;
+
 class executionloop_context_t{
 public:
+
+	using state_rep_t = int;
+
 	executionloop_context_t(){
 		ev_sync_queue.resize(1024);
 	}
@@ -166,10 +171,10 @@ public:
 		return get_inf(state, SM);
 	}
 
-	void do_enter_impl(int sms,std::vector<int> const & v);
-	void do_enter(int* sms,int n,std::vector<int> const & v);
-	void do_exit_impl(int sms,std::vector<int> const & v);
-	void do_exit(int* sms,int n,std::vector<int> const & v);
+	void do_enter_impl(State_machine_simulation_core*,int sms,std::vector<int> const & v);
+	void do_enter(State_machine_simulation_core*,int* sms,int n,std::vector<int> const & v);
+	void do_exit_impl(State_machine_simulation_core* smc,int sms,std::vector<int> const & v);
+	void do_exit(State_machine_simulation_core* smc,int* sms,int n,std::vector<int> const & v);
 
 	void remove_children(int sms,std::vector<int> & v){
 		auto child_idx = state_to_children[sms]+1;
@@ -190,6 +195,19 @@ public:
 	  if (active_sub_states) return false;
 	  return true;
 	}
+
+	void set_assoc_sm(int state,State_machine* smp){
+		if ((size_t)number_of_states > assoc_sm.size())
+			assoc_sm.resize(number_of_states+1,0);
+		assoc_sm[state] = smp;
+	}
+
+	State_machine* get_assoc_sm(int state){
+		if ((size_t)number_of_states > assoc_sm.size())
+			assoc_sm.resize(number_of_states+1,0);
+		return assoc_sm[state];
+	}
+
 
 	void set_join_state(int state,int join){
 		if ((size_t)number_of_states > join_states.size())
@@ -233,6 +251,7 @@ public:
 	std::map<std::string,int> state_id_to_idx;
 	std::map<int,std::string> idx_to_state_id;
 	std::unordered_set<int> exported_events;
+	std::vector<State_machine*> assoc_sm;
 
 	static constexpr unsigned int INIT = 0;
 	static constexpr unsigned int FINAL = 1;

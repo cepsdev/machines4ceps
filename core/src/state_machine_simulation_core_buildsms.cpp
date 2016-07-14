@@ -123,6 +123,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 	auto & ev_to_id = smp->executionloop_context().ev_to_id;
 
+	auto& ctx = smp->executionloop_context();
 
 	for(auto const &s : smp->ceps_env_current().get_global_symboltable().scopes)
 	{
@@ -156,6 +157,18 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	);
 
 	smp->executionloop_context().number_of_states = ctr-1;
+
+	//Associated sms
+
+	traverse_sms(smsv,[&ctx,&ctr,&ev_to_id](State_machine* cur_sm){
+		ctx.set_assoc_sm(cur_sm->idx_,cur_sm);
+		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
+		 auto state = *it;
+		 ctx.set_assoc_sm(state->idx_,cur_sm);
+		}
+	 }
+	);
+
 
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id](State_machine* cur_sm){
 	  for(auto & t : cur_sm->transitions()){
@@ -195,9 +208,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 
 
-	auto& ctx = smp->executionloop_context();
 	//Build loop execution context
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv](State_machine* cur_sm){
+
 		executionloop_context_t::transition_t t;
 		t.smp = cur_sm->idx_;
 		assert(t.smp > 0);

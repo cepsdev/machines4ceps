@@ -1,0 +1,39 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event E,F,G;
+Guard g1,g2,g3;
+Systemstate s1,s2,s3;
+
+export{G;};
+
+Statemachine{
+ id{S2;};
+ States{Initial;};
+};
+
+Statemachine{
+ id{S1;};
+ States{Initial;Final;A;B;C;};
+ on_enter{print(in_state(Initial),"\n");G;};
+ on_exit{print(in_state(C),"\n");};
+ Actions{
+  a{print("S1::a in_state(B) == ", in_state(B),"\n");};
+ };
+ Transition{Initial;A;G;};
+ Transition{A;B;};
+ Transition{B;C;a;};
+ Transition{C;S2;};
+};
+
+Statemachine{
+ id{S0;};
+ States{Initial;};
+ Transition{Initial;S1;E;};
+};
+
+
+Simulation{
+ Start{S0;};E;
+};

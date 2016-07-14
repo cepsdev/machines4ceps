@@ -7,44 +7,52 @@
 
 constexpr bool PRINT_DEBUG = true;
 
-void executionloop_context_t::do_enter_impl(int sms,std::vector<int> const & v){
+void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,int sms,std::vector<int> const & v){
 		if (get_inf(sms,executionloop_context_t::VISITED)) return;
 		set_inf(sms,executionloop_context_t::VISITED,true);
 		if (!v[sms]) return;
 
 		for(auto i = state_to_children[sms]+1;children[i];++i){
 			if (!is_sm(children[i])) continue;
-			do_enter_impl(children[i],v);
+			do_enter_impl(smc,children[i],v);
 		}
-		if (!current_states[sms] && on_enter.size() > sms && on_enter[sms]) on_enter[sms]();
+		if (!current_states[sms] && on_enter.size() > sms && on_enter[sms]) {
+            smc->current_smp() = get_assoc_sm(sms);
+			on_enter[sms]();
+
+		}
 	}
-void executionloop_context_t::do_enter(int* sms,int n,std::vector<int> const & v){
+void executionloop_context_t::do_enter(State_machine_simulation_core* smc,int* sms,int n,std::vector<int> const & v){
 
 		if (n){
 			//std::cout << "do_enter() n="<<n<<" sms[0] == "<< sms[0] << "\n";
 			for(int i = 0;i != number_of_states+1;++i) set_inf(i,executionloop_context_t::VISITED,false);
-			for(int j = 0; j != n;++j) do_enter_impl(*(sms+j),v);
+			for(int j = 0; j != n;++j) do_enter_impl(smc,*(sms+j),v);
 		}
 	}
 
 
-void executionloop_context_t::do_exit_impl(int sms,std::vector<int> const & v){
+void executionloop_context_t::do_exit_impl(State_machine_simulation_core* smc,int sms,std::vector<int> const & v){
 		if (get_inf(sms,executionloop_context_t::VISITED)) return;
 		set_inf(sms,executionloop_context_t::VISITED,true);
 		if (!current_states[sms]) return;
 
 		for(auto i = state_to_children[sms]+1;children[i];++i){
 			if (!is_sm(children[i])) continue;
-			do_exit_impl(children[i],v);
+			do_exit_impl(smc,children[i],v);
 		}
-		if (on_exit.size() > sms && on_exit[sms]) on_exit[sms]();
+		if (on_exit.size() > sms && on_exit[sms]) {
+			smc->current_smp() = get_assoc_sm(sms);
+			on_exit[sms]();
+
+		}
 	}
-void executionloop_context_t::do_exit(int* sms,int n,std::vector<int> const & v){
+void executionloop_context_t::do_exit(State_machine_simulation_core* smc,int* sms,int n,std::vector<int> const & v){
 
 		if (n){
 			//std::cout << "do_enter() n="<<n<<" sms[0] == "<< sms[0] << "\n";
 			for(int i = 0;i != number_of_states+1;++i) set_inf(i,executionloop_context_t::VISITED,false);
-			for(int j = 0; j != n;++j) do_exit_impl(*(sms+j),v);
+			for(int j = 0; j != n;++j) do_exit_impl(smc,*(sms+j),v);
 		}
 	}
 
@@ -229,7 +237,7 @@ taking_epsilon_transitions = false;
 for(;!quit && !shutdown();)
 {
 
- bool ev_read = false;ev_id = 0;
+ bool ev_read = false;ev_id = 0;current_smp() = nullptr;
  //std::cout << current_event().id_ << std::endl;
 
 
@@ -407,6 +415,8 @@ for(;!quit && !shutdown();)
 			auto t = *p;
 			auto const & trans = execution_ctxt.transitions[t];
 
+			current_smp() = execution_ctxt.get_assoc_sm(trans.smp);
+
 			auto a1 = trans.a1;
 			auto a2 = trans.a2;
 			auto a3 = trans.a3;
@@ -552,11 +562,13 @@ for(;!quit && !shutdown();)
 	  }
 	  log() << "\n";}
 
-	 execution_ctxt.do_exit(exiting_sms.data(),exiting_sms_next,temp);
+	 execution_ctxt.do_exit(this,exiting_sms.data(),exiting_sms_next,temp);
 
 	 for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 	 			auto t = *p;
 	 			auto const & trans = execution_ctxt.transitions[t];
+
+	 			current_smp() = execution_ctxt.get_assoc_sm(trans.smp);
 
 	 			auto a1 = trans.a1;
 	 			auto a2 = trans.a2;
@@ -566,7 +578,7 @@ for(;!quit && !shutdown();)
 	 			if (a3) a3();
 	 }
 
-	 execution_ctxt.do_enter(entering_sms.data(),entering_sms_next,temp);
+	 execution_ctxt.do_enter(this,entering_sms.data(),entering_sms_next,temp);
 	 if (PRINT_DEBUG){
 	  log() << "[CHANGES] ";
 	  for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
