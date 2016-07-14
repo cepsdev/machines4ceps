@@ -424,7 +424,7 @@ void main_timer_thread_fn(State_machine_simulation_core* smc){
 	  smc->timed_events_active_ = active_timers;
 	 }
 	 if (active_timers == 0){
-		  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		  continue;
 	 }
 	 auto r = poll(poll_fds, active_timers, 10);
@@ -438,8 +438,9 @@ void main_timer_thread_fn(State_machine_simulation_core* smc){
 	  if (r!=sizeof(uint64_t)) smc->fatal_(-1," main_timer_thread_fn: read failed. "+std::to_string(errno));
 	  {
 		  std::lock_guard<std::mutex> lk(smc->timer_table_mtx);
+
+		  if(!smc->timer_table[tidxs[j]].kill) smc->enqueue_event(smc->timer_table[tidxs[j]].event,false);
 		  if (!smc->timer_table[tidxs[j]].periodic)  smc->timer_table[tidxs[j]].kill = true;
-		  smc->enqueue_event(smc->timer_table[tidxs[j]].event,false);
 	  }
 	 }
 
@@ -509,7 +510,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 			} else {
 			 tspec.it_value.tv_sec = (long) delta;
 			 tspec.it_value.tv_nsec = (delta - floor(delta)) * 1000000000.0;
-			 std::cout << ">>>> " << tspec.it_value.tv_sec << "  " << tspec.it_value.tv_nsec << std::endl;
+			 //std::cout << ">>>> " << tspec.it_value.tv_sec << "  " << tspec.it_value.tv_nsec << std::endl;
 			}
 			auto r = timerfd_settime(e.fd, 0, &tspec, nullptr);
 			if (r < 0) fatal_(-1,"timerfd_settime failed.");
