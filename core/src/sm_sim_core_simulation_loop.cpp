@@ -50,21 +50,93 @@ void executionloop_context_t::do_exit(int* sms,int n,std::vector<int> const & v)
 
 
 
+/*
+if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_)) {
+	if (current_event().payload_native_.size()){
+                for(auto & v : current_event().payload_native_){
+                 if (v.what_ == sm4ceps_plugin_int::Variant::Int)
+                   current_event().payload_.push_back(new ceps::ast::Int(v.iv_,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+                 else if (v.what_ == sm4ceps_plugin_int::Variant::Double)
+                   current_event().payload_.push_back(new ceps::ast::Double(v.dv_,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+                 else if (v.what_ == sm4ceps_plugin_int::Variant::String)
+                   current_event().payload_.push_back(new ceps::ast::String(v.sv_,nullptr, nullptr, nullptr));
+	 }
+                global_event_call_back_fn_(current_event());
+                for(auto v : current_event().payload_) delete v;
+                current_event().payload_.clear();
+	} else
+	global_event_call_back_fn_(current_event());
+}
+*/
+
+
+#ifdef TEST_EV_CALLBACK
+void test_ev_callback(State_machine_simulation_core::event_t ev){
+ std::cout << "test_ev_callback" << std::endl;
+ std::cout << "event-id == " << ev.id_ <<std::endl;
+ std::cout << "payload-size ==" << ev.payload_.size() << std::endl;
+ for(auto i = 0; i != ev.payload_.size();++i)
+	 std::cout << *ev.payload_[i] << std::endl;
+}
+#endif
+
+
 
 void State_machine_simulation_core::simulate_purly_native(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
 		                                     ceps::ast::Nodeset& universe){
 
+#ifdef TEST_EV_CALLBACK
+this->global_event_call_back_fn_ = test_ev_callback;
+#endif
 
+auto & execution_ctxt = executionloop_context();
+int ev_id;
+event_t dummy_ev;
+event_t dummy_ev2;
 
 current_event().id_= {};
 assert_in_end_states_.clear();
 assert_not_in_end_states_.clear();
+std::vector<ceps::ast::Int*> callback_ceps_int_vec;
+ for(int i = 0; i != 16;++i)callback_ceps_int_vec.push_back(new ceps::ast::Int(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+std::vector<ceps::ast::Double*> callback_ceps_double_vec;
+ for(int i = 0; i != 16;++i)callback_ceps_double_vec.push_back(new ceps::ast::Double(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+std::vector<ceps::ast::String*> callback_ceps_str_vec;
+ for(int i = 0; i != 16;++i)callback_ceps_str_vec.push_back(new ceps::ast::String("", nullptr, nullptr, nullptr));
 
+
+auto global_ev_cllbck = [this,&ev_id,&dummy_ev,&dummy_ev2,&execution_ctxt,&callback_ceps_int_vec,&callback_ceps_double_vec,&callback_ceps_str_vec](){
+	if (execution_ctxt.current_ev_id == ev_id){
+		dummy_ev.id_ = execution_ctxt.id_to_ev[ev_id];
+		global_event_call_back_fn_(dummy_ev);
+	} else {
+	  dummy_ev2.payload_.clear();
+	  dummy_ev2.id_ = execution_ctxt.id_to_ev[ev_id];
+
+      if (current_event().payload_native_.size()){
+    	int iint=0,idouble=0,istr=0,imax=16;
+
+	    for(auto & v : current_event().payload_native_){
+		  if (v.what_ == sm4ceps_plugin_int::Variant::Int && iint < imax){
+		   ceps::ast::value(*callback_ceps_int_vec[iint]) = v.iv_;
+		   dummy_ev2.payload_.push_back(callback_ceps_int_vec[iint++]);
+		  } else if (v.what_ == sm4ceps_plugin_int::Variant::Double){
+		   ceps::ast::value(*callback_ceps_double_vec[idouble]) = v.dv_;
+		   dummy_ev2.payload_.push_back(callback_ceps_double_vec[idouble++]);
+		  }else if (v.what_ == sm4ceps_plugin_int::Variant::String){
+		   ceps::ast::value(*callback_ceps_str_vec[istr]) = v.sv_;
+		   dummy_ev2.payload_.push_back(callback_ceps_str_vec[istr++]);
+		  }
+	  }//for
+	}
+    global_event_call_back_fn_(dummy_ev2);
+  }
+};
 
 states_t states;
-trans_hull_of_containment_rel(states_in,states);
+
 std::string testcase;
 std::string testname;
 
@@ -145,18 +217,19 @@ triggered_transitions.resize(max_number_of_active_transitions);
 
 
 
-auto & execution_ctxt = executionloop_context();
+
 
 execution_ctxt.current_states_init_and_clear();
 
 int cur_states_size = execution_ctxt.current_states.size();
 std::vector<State_machine*> on_enter_seq;
 states_t new_states_fetch;
+taking_epsilon_transitions = false;
 
 for(;!quit && !shutdown();)
 {
 
- bool ev_read = false;int ev_id = 0;
+ bool ev_read = false;ev_id = 0;
  //std::cout << current_event().id_ << std::endl;
 
 
@@ -204,9 +277,6 @@ for(;!quit && !shutdown();)
          }
 	    }//for
 	  }
-	  taking_epsilon_transitions = true;
-	  continue;
-	 } else if (!remove_states_.empty()){
 	  taking_epsilon_transitions = true;
 	  continue;
 	 } else {
@@ -263,12 +333,14 @@ for(;!quit && !shutdown();)
 
 	if (triggered_transitions_end == 0){
 		if (PRINT_DEBUG)log() << "[NO TRANSITIONS TRIGGERED]\n" << "[ITERATION END]\n";
-		taking_epsilon_transitions = !taking_epsilon_transitions;
+		if (taking_epsilon_transitions) taking_epsilon_transitions = false;
 		if(ev_read && post_proc_native) post_proc_native();
+		if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
+			global_ev_cllbck();
 		continue;
 	}
 
-	if(ev_read) taking_epsilon_transitions = true;
+	taking_epsilon_transitions = true;
 
 	std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
 	auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
@@ -508,6 +580,8 @@ for(;!quit && !shutdown();)
 	}
 
 	if(ev_read && post_proc_native) post_proc_native();
+	if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
+		global_ev_cllbck();
 
 	if (PRINT_DEBUG){
 	 log() << "[ACTIVE STATES] ";

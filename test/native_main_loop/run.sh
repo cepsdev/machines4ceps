@@ -40,4 +40,20 @@ else
   fi
 fi
  
-
+echo -en "Test \e[4mtimer_a\e[0m:"
+./run_timer_a.sh > timer_a/log.txt
+if [ $? -ne 0 ]; then
+  echo -e "\e[38;5;196m failed"
+  echo "..."
+  tail  timer_a/log.txt --lines=25
+  echo -e "\e[0m"
+else
+ diff timer_a/log.txt timer_a/expected_log.txt > timer_a/diff.log
+ if [ $? -ne 0 ]; then
+   echo -e "\e[38;5;196m failed"
+   cat timer_a/diff.log
+   echo -e "\e[0m"
+ else
+   echo -e "\e[38;5;28m passed \e[0m"
+  fi
+fi

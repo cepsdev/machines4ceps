@@ -119,18 +119,32 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	using namespace std;
 	DEBUG_FUNC_PROLOGUE;
 	
+	int ev_ctr = 1;
+
+	auto & ev_to_id = smp->executionloop_context().ev_to_id;
+
+
+	for(auto const &s : smp->ceps_env_current().get_global_symboltable().scopes)
+	{
+		for(auto se : s.name_to_symbol)
+		{
+			if(se.second.category != ceps::parser_env::Symbol::SYMBOL) continue;
+			if(((ceps::parser_env::Symbol*)se.second.payload)->name != "Event") continue;
+			ev_to_id[se.first] = ev_ctr++;
+		}
+	}
+
 	smp->executionloop_context().transitions.clear();
 	smp->executionloop_context().state_to_first_transition.clear();
 
 
 	std::vector<State_machine*> smsv;
-	auto & ev_to_id = smp->executionloop_context().ev_to_id;
 	
+
 
 	for(auto sm : sms) smsv.push_back(sm.second);
 	int ctr = 1;
-	int ev_ctr = 1;
-	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id](State_machine* cur_sm){
+	traverse_sms(smsv,[&ctr,&ev_to_id](State_machine* cur_sm){
 		cur_sm->idx_ = ctr++;
 		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
 		 auto state = *it;
@@ -1080,6 +1094,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		 executionloop_context().idx_to_state_id[e.second] = e.first;
 	 }
 	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
+
+	 for(auto const & e: this->exported_events_) executionloop_context().exported_events.insert(executionloop_context().ev_to_id[e]);
    }
 
 

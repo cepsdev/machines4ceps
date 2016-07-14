@@ -1,0 +1,22 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event E,F,G;
+Guard g1,g2,g3;
+Systemstate s1,s2,s3;
+
+export{G;};
+
+Statemachine{
+ id{S1;};
+ States{Initial;Final;A;B;C;};
+ on_enter{start_timer(2.0*s,E);start_timer(4.0*s,E);G;G(1,2,3,1.1,2.2,"hallo");};
+ Transition{Initial;A;G;};
+ Transition{A;B;};
+ Transition{B;C;};
+};
+
+Simulation{
+ Start{S1;};
+};

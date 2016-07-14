@@ -232,7 +232,7 @@ public:
 	std::vector<int> join_states;
 	std::map<std::string,int> state_id_to_idx;
 	std::map<int,std::string> idx_to_state_id;
-
+	std::unordered_set<int> exported_events;
 
 	static constexpr unsigned int INIT = 0;
 	static constexpr unsigned int FINAL = 1;
