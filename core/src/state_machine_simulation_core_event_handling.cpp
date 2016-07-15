@@ -5,6 +5,7 @@
 #include "cepsparserdriver.hh"
 
 void State_machine_simulation_core::queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl){
+#ifdef SHORTCIRCUIT_EVENTQUEUE
 	if (vl.size() == 0 && enforce_native()){
 		auto& ctxt = executionloop_context();
 		auto evid = ctxt.ev_to_id[ev_name];
@@ -13,6 +14,7 @@ void State_machine_simulation_core::queue_event(std::string ev_name,std::initial
 			return;
 		}
 	}
+#endif
 	event_t ev(ev_name);
 	ev.already_sent_to_out_queues_ = false;
 	ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();

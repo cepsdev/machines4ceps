@@ -5,7 +5,7 @@
 #define DONT_PRINT_DEBUG
 #define PRINT_LOG_SIM_LOOP
 
-constexpr bool PRINT_DEBUG = true;
+constexpr bool PRINT_DEBUG = false;
 
 void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,int sms,std::vector<int> const & v){
 		if (get_inf(sms,executionloop_context_t::VISITED)) return;
