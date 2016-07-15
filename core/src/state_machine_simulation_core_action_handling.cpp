@@ -301,7 +301,6 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 #endif
 
 
-#ifndef __gnu_linux__
 
 bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
 	{
@@ -318,6 +317,8 @@ bool State_machine_simulation_core::kill_named_timer(std::string const & timer_i
 	}
 	return false;
 }
+
+#ifndef __gnu_linux__
 
 bool State_machine_simulation_core::exec_action_timer(double t,
 		                                              sm4ceps_plugin_int::ev ev_,
@@ -381,7 +382,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 }
 #else
 
-bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
+bool State_machine_simulation_core::kill_named_timer_main_timer_table(std::string const & timer_id){
 	std::lock_guard<std::mutex> lk(timer_table_mtx);
 	auto t = 0;
 	bool bfound = false;
@@ -463,7 +464,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 	if (id_.name_.length())
 	{
 		timer_id = id_.name_;
-		kill_named_timer(timer_id);
+                kill_named_timer_main_timer_table(timer_id);
 	}
 
 	double delta = t;
@@ -540,7 +541,7 @@ void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin
 	exec_action_timer(t,ev_,id_,true);
 }
 void State_machine_simulation_core::stop_timer(sm4ceps_plugin_int::id id_){
-	kill_named_timer(id_.name_);
+        kill_named_timer_main_timer_table(id_.name_);
 }
 void State_machine_simulation_core::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)()){
 	exec_action_timer(t,sm4ceps_plugin_int::ev{},sm4ceps_plugin_int::id{},true,fp);

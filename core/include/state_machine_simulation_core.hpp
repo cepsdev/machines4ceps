@@ -1,6 +1,9 @@
 #ifndef INC_CEPS_STATE_MACHINE_CORE_HPP
 #define INC_CEPS_STATE_MACHINE_CORE_HPP
 
+#define NO_SHORTCIRCUIT_EVENTQUEUE
+
+
 #include <string> 
 #include <vector>
 #include <map>
@@ -83,7 +86,9 @@ class State_machine_simulation_core;
 class executionloop_context_t{
 public:
 
-	using state_rep_t = int;
+        //using state_rep_t = std::uint16_t;
+        using state_rep_t = int;
+        using state_present_rep_t = std::uint8_t;
 
 	executionloop_context_t(){
 		ev_sync_queue.resize(1024);
@@ -126,7 +131,7 @@ public:
 
 	void current_states_init_and_clear(){
 		if (current_states.size() != (size_t)number_of_states+1) current_states.resize(number_of_states+1);
-		std::memset(current_states.data(),0,(number_of_states+1)*sizeof(int));
+                std::memset(current_states.data(),0,(number_of_states+1)*sizeof(state_present_rep_t));
 	}
 
 	void set_inf(int state,unsigned int what,bool value){
@@ -171,14 +176,14 @@ public:
 		return get_inf(state, SM);
 	}
 
-	void do_enter_impl(State_machine_simulation_core*,int sms,std::vector<int> const & v);
-	void do_enter(State_machine_simulation_core*,int* sms,int n,std::vector<int> const & v);
-	void do_exit_impl(State_machine_simulation_core* smc,int sms,std::vector<int> const & v);
-	void do_exit(State_machine_simulation_core* smc,int* sms,int n,std::vector<int> const & v);
+        void do_enter_impl(State_machine_simulation_core*,int sms,std::vector<executionloop_context_t::state_present_rep_t> const & v);
+        void do_enter(State_machine_simulation_core*,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v);
+        void do_exit_impl(State_machine_simulation_core* smc,int sms,std::vector<executionloop_context_t::state_present_rep_t> const & v);
+        void do_exit(State_machine_simulation_core* smc,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v);
 
-	void remove_children(int sms,std::vector<int> & v){
+        void remove_children(int sms,std::vector<executionloop_context_t::state_present_rep_t> & v){
 		auto child_idx = state_to_children[sms]+1;
-		for(int child;child = children[child_idx];++child_idx){
+                for(int child;(child = children[child_idx]);++child_idx){
 			v[child] = 0;
 			set_inf(child,VISITED,true);
 			if (!is_sm(child)) continue;
@@ -186,10 +191,10 @@ public:
 		}
 	}
 
-	bool empty(int sms,std::vector<int> const & v ){
+        bool empty(int sms,std::vector<executionloop_context_t::state_present_rep_t> const & v ){
 	  auto child_idx = state_to_children[sms]+1;
 	  bool active_sub_states = false;
-	  for(int child;child=children[child_idx];++child_idx){
+          for(int child;(child=children[child_idx]);++child_idx){
 		 if (v[child]){active_sub_states = true;break;}
 	  }
 	  if (active_sub_states) return false;
@@ -236,7 +241,7 @@ public:
 		bool start() const {return smp != 0 && from == 0 && to == 0;}
 	};
 	std::vector<transition_t> transitions;
-	std::vector<int> current_states;
+        std::vector<state_present_rep_t> current_states;
 	std::unordered_map<int,int> state_to_first_transition;
 	std::vector<int> ev_sync_queue;
 	std::vector<int> parent_vec;
@@ -676,7 +681,7 @@ public:
 	bool print_debug_info(bool b) {bool t = print_debug_info_; print_debug_info_ = b;return t;}
 	bool resolve_q_id(State_machine* smp, std::vector<std::string> const & q_id, State_machine::State & s);
 	bool kill_named_timer(std::string const & timer_id);
-
+        bool kill_named_timer_main_timer_table(std::string const & timer_id);
 
 
 	std::map<std::string, ceps::ast::Nodebase_ptr>&  guards(){return global_guards;}

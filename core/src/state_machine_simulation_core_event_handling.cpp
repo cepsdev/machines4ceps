@@ -4,6 +4,7 @@
 #include <thread>
 #include "cepsparserdriver.hh"
 
+
 void State_machine_simulation_core::queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl){
 #ifdef SHORTCIRCUIT_EVENTQUEUE
 	if (vl.size() == 0 && enforce_native()){

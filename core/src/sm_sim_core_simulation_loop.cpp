@@ -7,7 +7,7 @@
 
 constexpr bool PRINT_DEBUG = false;
 
-void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,int sms,std::vector<int> const & v){
+void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,int sms,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 		if (get_inf(sms,executionloop_context_t::VISITED)) return;
 		set_inf(sms,executionloop_context_t::VISITED,true);
 		if (!v[sms]) return;
@@ -22,7 +22,7 @@ void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,i
 
 		}
 	}
-void executionloop_context_t::do_enter(State_machine_simulation_core* smc,int* sms,int n,std::vector<int> const & v){
+void executionloop_context_t::do_enter(State_machine_simulation_core* smc,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 
 		if (n){
 			//std::cout << "do_enter() n="<<n<<" sms[0] == "<< sms[0] << "\n";
@@ -32,7 +32,7 @@ void executionloop_context_t::do_enter(State_machine_simulation_core* smc,int* s
 	}
 
 
-void executionloop_context_t::do_exit_impl(State_machine_simulation_core* smc,int sms,std::vector<int> const & v){
+void executionloop_context_t::do_exit_impl(State_machine_simulation_core* smc,int sms,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 		if (get_inf(sms,executionloop_context_t::VISITED)) return;
 		set_inf(sms,executionloop_context_t::VISITED,true);
 		if (!current_states[sms]) return;
@@ -47,7 +47,7 @@ void executionloop_context_t::do_exit_impl(State_machine_simulation_core* smc,in
 
 		}
 	}
-void executionloop_context_t::do_exit(State_machine_simulation_core* smc,int* sms,int n,std::vector<int> const & v){
+void executionloop_context_t::do_exit(State_machine_simulation_core* smc,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 
 		if (n){
 			//std::cout << "do_enter() n="<<n<<" sms[0] == "<< sms[0] << "\n";
@@ -207,16 +207,14 @@ sm4ceps_plugin_int::Variant (*post_proc_native)() = nullptr;
 	}
 }
 
-for(auto const & s : states){
-  executionloop_context().current_states.push_back(s.id_);
-}
+execution_ctxt.current_states_init_and_clear();
 
-executionloop_context().current_states.resize(executionloop_context().number_of_states+1);
 auto new_states = executionloop_context().current_states;
 auto temp = executionloop_context().current_states;
-auto entering_sms = executionloop_context().current_states;
-auto exiting_sms = executionloop_context().current_states;
-auto triggered_thread_regions = executionloop_context().current_states;
+
+std::vector<executionloop_context_t::state_rep_t> entering_sms;entering_sms.resize( executionloop_context().current_states.size());
+std::vector<executionloop_context_t::state_rep_t> exiting_sms;exiting_sms.resize( executionloop_context().current_states.size());
+std::vector<executionloop_context_t::state_rep_t> triggered_thread_regions;triggered_thread_regions.resize( executionloop_context().current_states.size());
 
 constexpr auto max_number_of_active_transitions = 1024;
 
@@ -227,7 +225,6 @@ triggered_transitions.resize(max_number_of_active_transitions);
 
 
 
-execution_ctxt.current_states_init_and_clear();
 
 int cur_states_size = execution_ctxt.current_states.size();
 std::vector<State_machine*> on_enter_seq;
@@ -314,7 +311,7 @@ for(;!quit && !shutdown();)
 	 if (ev_read) ev_id = execution_ctxt.ev_to_id[current_event().id_];
     }
 
-	memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*4);
+        memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
 	if (PRINT_DEBUG) log() << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << "\n";
 	int triggered_transitions_end = 0;
 	auto triggered_thread_regions_end = triggered_transitions_end;
@@ -434,7 +431,7 @@ for(;!quit && !shutdown();)
 		 }
 	 	 log() << "\n";
 		}
-		memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*4);
+                memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
 	} else{
 
 	 //Compute transitively entered states
@@ -589,7 +586,7 @@ for(;!quit && !shutdown();)
 	  }
  	  log() << "\n";
 	 }
-	 memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*4);
+         memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
 	}
 
 	if(ev_read && post_proc_native) post_proc_native();
