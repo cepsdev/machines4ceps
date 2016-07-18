@@ -49,20 +49,18 @@ struct Result_process_cmd_line
 	bool quiet = false;
 	bool logtrace = false;
 	std::string monitor = "";
-
 	bool run_as_monitor = false;
 	std::string monitored_node_ip;
 	std::string monitored_node_port;
-
 	std::vector<std::string> plugins;
-
 	std::string timeout;
 	std::string port;
 	bool print_transition_tables = false;
-
 	bool ignore_unresolved_state_id_in_directives = false;
 	bool cppgen = false;
-        bool enforce_native = false;
+	bool cppgen_ignore_print = false;
+    bool enforce_native = false;
+    bool ignore_simulations = false;
 
 	Result_process_cmd_line() = default;
 	Result_process_cmd_line(bool version_flag_set_,

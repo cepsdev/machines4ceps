@@ -419,6 +419,22 @@ void State_machine_simulation_core::register_frame_ctxt(sm4ceps_plugin_int::Fram
 
 }
 
+static void run_simulations(State_machine_simulation_core* smc,
+		                Result_process_cmd_line const& result_cmd_line,
+						ceps::Ceps_Environment& ceps_env,
+						ceps::ast::Nodeset& universe){
+ using namespace ceps::ast;
+ if (result_cmd_line.ignore_simulations) return;
+
+ auto simulations = universe[all{"Simulation"}];
+ if (!simulations.size()) return;
+
+ for (auto simulation_ : simulations){
+	auto simulation = simulation_["Simulation"];
+	smc->process_simulation(simulation,ceps_env,universe);
+ }//for
+}
+
 void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)
 {
 	using namespace ceps::ast;
@@ -1160,14 +1176,5 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	if(generate_cpp_code()){
 		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
 	}
-
-	auto simulations = ns[all{"Simulation"}];
-	if (simulations.size())
-	{
-		for (auto simulation_ : simulations)
-		{
-			auto simulation = simulation_["Simulation"];
-			process_simulation(simulation,ceps_env_current(),current_universe());
-		}//for
-	}
+	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
 }

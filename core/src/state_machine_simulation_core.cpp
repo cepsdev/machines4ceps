@@ -1486,18 +1486,13 @@ void state_machine_simulation_warn(int code, std::string const & msg)
 
 }
 
-
 void State_machine_simulation_core::process_event_from_remote(nmp_header h,char* data)
 {
-	DEBUG_FUNC_PROLOGUE
 	if (h.id == NMP_EVENT_FLAT_PAYLOAD)
 	{
-		DEBUG << "[State_machine_simulation_core::process_event_from_remote][NMP_EVENT_FLAT_PAYLOAD][SIZE="<< h.len << "]\n";
 		int ev_name_len = ntohl(*((int*)data));
 		char buffer[1024] = {0};
 		strncpy(buffer,data+sizeof(int),std::min(1023,(int)ev_name_len));
-		DEBUG << "[State_machine_simulation_core::process_event_from_remote][EV_NAME_LEN="<< ev_name_len  <<"]\n" ;
-		DEBUG << "[State_machine_simulation_core::process_event_from_remote][EV_NAME='"<< buffer  <<"']\n" ;
 
 		size_t offs = ev_name_len+sizeof(int);
 		event_t ev(buffer);
@@ -1509,8 +1504,7 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 				int v;
 				ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
 				auto r = ceps::deserialize_value(v, data+offs, h.len-offs);offs+=r;
-				v = ntohl(v);DEBUG << "[State_machine_simulation_core::process_event_from_remote][READ_INT]["<< v <<"]\n" ;
-				//std::cout << v << std::endl;
+				v = ntohl(v);
 				r = ceps::deserialize_value(m, data+offs, h.len-offs);m = (ceps::ast::Unit_rep::sc_t)ntohl(m);offs+=r;
 				r = ceps::deserialize_value(kg, data+offs, h.len-offs);kg = (ceps::ast::Unit_rep::sc_t)ntohl(kg);offs+=r;
 				r = ceps::deserialize_value(s, data+offs, h.len-offs);s = (ceps::ast::Unit_rep::sc_t)ntohl(s);offs+=r;
@@ -1518,13 +1512,13 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 				r = ceps::deserialize_value(kelvin, data+offs, h.len-offs);kelvin = (ceps::ast::Unit_rep::sc_t)ntohl(kelvin);offs+=r;
 				r = ceps::deserialize_value(mol, data+offs, h.len-offs);mol = (ceps::ast::Unit_rep::sc_t)ntohl(mol);offs+=r;
 				r = ceps::deserialize_value(candela, data+offs, h.len-offs);candela = (ceps::ast::Unit_rep::sc_t)ntohl(candela);offs+=r;
-				ev.payload_.push_back(new ceps::ast::Int( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr));
+				if (this->enforce_native()) ev.payload_native_.push_back(sm4ceps_plugin_int::Variant{v});
+				else ev.payload_.push_back(new ceps::ast::Int( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr));
 			} else if (nmp_payload_id == NMP_PAYLOAD_DOUBLE)	{
 				offs+=sizeof(int);
 				double v;
 				ceps::ast::Unit_rep::sc_t m,kg,s,ampere,kelvin,mol,candela;
 				auto r = ceps::deserialize_value(v, data+offs, h.len-offs);offs+=r;
-				DEBUG << "[State_machine_simulation_core::process_event_from_remote][READ_DOUBLE]["<< v <<"]\n" ;
 				r = ceps::deserialize_value(m, data+offs, h.len-offs);m = (ceps::ast::Unit_rep::sc_t)ntohl(m);offs+=r;
 				r = ceps::deserialize_value(kg, data+offs, h.len-offs);kg = (ceps::ast::Unit_rep::sc_t)ntohl(kg);offs+=r;
 				r = ceps::deserialize_value(s, data+offs, h.len-offs);s = (ceps::ast::Unit_rep::sc_t)ntohl(s);offs+=r;
@@ -1532,15 +1526,15 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 				r = ceps::deserialize_value(kelvin, data+offs, h.len-offs);kelvin = (ceps::ast::Unit_rep::sc_t)ntohl(kelvin);offs+=r;
 				r = ceps::deserialize_value(mol, data+offs, h.len-offs);mol = (ceps::ast::Unit_rep::sc_t)ntohl(mol);offs+=r;
 				r = ceps::deserialize_value(candela, data+offs, h.len-offs);candela = (ceps::ast::Unit_rep::sc_t)ntohl(candela);offs+=r;
-				ev.payload_.push_back(new ceps::ast::Double( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr));
+				if (this->enforce_native()) ev.payload_native_.push_back(sm4ceps_plugin_int::Variant{v});
+				else ev.payload_.push_back(new ceps::ast::Double( v, ceps::ast::Unit_rep(m,kg,s,ampere,kelvin,mol,candela), nullptr, nullptr, nullptr));
 			} else if (nmp_payload_id == NMP_PAYLOAD_STRING)	{
 				offs+=sizeof(int);
 				std::string v;
 				auto r = ceps::deserialize_value(v, data+offs, h.len-offs);offs+=r;
-				DEBUG << "[State_machine_simulation_core::process_event_from_remote][READ_STR]["<< v <<"]\n" ;
-				ev.payload_.push_back(new ceps::ast::String( v, nullptr, nullptr, nullptr));
+				if (this->enforce_native()) ev.payload_native_.push_back(sm4ceps_plugin_int::Variant{v});
+				else ev.payload_.push_back(new ceps::ast::String( v, nullptr, nullptr, nullptr));
 			} else {
-				DEBUG << "[State_machine_simulation_core::process_event_from_remote][UNKNOWN_SERIALIZATION_TAG][IGNORE_PACKET]["<< nmp_payload_id <<"]\n";
 				return;
 			}
 		}
@@ -1554,7 +1548,6 @@ void State_machine_simulation_core::process_event_from_remote(nmp_header h,char*
 	 ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
 	 main_event_queue().push(ev);
 	}
-	//std::cerr << "State_machine_simulation_core::process_event_from_remote\n";
 }
 
 

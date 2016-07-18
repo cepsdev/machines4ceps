@@ -487,9 +487,6 @@ public:
 	state_rep_t resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
 	state_rep_t resolve_state_qualified_id(std::string compound_id, State_machine* parent);
 
-private:
-
-
 
 	void process_statemachine_helper_handle_transitions(
 						State_machine* current_statemachine,

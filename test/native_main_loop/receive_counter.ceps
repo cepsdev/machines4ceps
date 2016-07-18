@@ -1,0 +1,64 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of distributed computation.
+ *  
+ * NODE A
+ *
+ * 
+ */
+
+kind Event;
+kind Systemstate;
+
+Event Send_Counter,Request_Counter,TIMEOUT;
+
+
+Statemachine
+{
+ val event_id = 0;
+ val counter_arg = 1;
+ id{Receiver;};
+ States{
+    Initial;
+    Final;   
+ };
+ //on_enter{start_timer(2.0*s,TIMEOUT,timeout_id);};
+ Actions{
+  action{
+    //kill_timer(timeout_id);
+    if(argv(0)=="TIMEOUT") {
+      print("Timeout.\n");      
+    } else {    
+     //print("Counter:",argv(counter_arg),"\n");
+     if (argc() > 2) print ("argv(2)=",argv(2),"\n");
+     if (argc() > 3)print ("argv(3)=",argv(3),"\n");
+     if (argc() > 4)print ("argv(4)=",argv(4),"\n");
+     //if (argc() > 2)     print ("argv(2)=",argv(2),"\n");
+     //if (argc() > 3)     print ("argv(3)=",argv(3),"\n");
+    }
+    Request_Counter;
+    //start_timer(2.0*s,TIMEOUT,timeout_id);
+  };
+  
+  
+ }; 
+ Transition{Initial;Initial;Send_Counter;action;};
+ //Transition{Initial;Initial;TIMEOUT;action;};
+};
+
+
+
+Simulation
+{
+ Start{Receiver;};
+ Request_Counter;
+};

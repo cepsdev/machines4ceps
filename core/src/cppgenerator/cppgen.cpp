@@ -520,12 +520,15 @@ class Cppgenerator{
     	} else f(p);
     }
        bool inside_start_timer_fn_ = false;
+       bool ignore_print_ = false;
 public:
 	using sysstates_t = decltype(sysstates_);
 	using raw_frames_t = decltype(raw_frames_);
         decltype(inside_start_timer_fn_)& inside_start_timer_fn(){return inside_start_timer_fn_;}
         decltype(inside_start_timer_fn_) inside_start_timer_fn() const {return inside_start_timer_fn_;}
 
+    bool& ignore_print_stmts() {return ignore_print_;}
+    bool ignore_print_stmts() const {return ignore_print_;}
 	sysstates_t& sysstates() {return sysstates_;}
 	sysstates_t const & sysstates() const {return sysstates_;}
 
@@ -1016,6 +1019,10 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 			return;
 		}
 		else if ("print" == name(id)){
+			if (ignore_print_stmts()){
+				os << "/*print removed (--cppgen_ignore_print)*/";
+				return;
+			}
 			os << "std::cout";
 			for(size_t i = 0; i != args.size();++i){
 				os << "<<";write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
@@ -1397,6 +1404,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	DEBUG_FUNC_PROLOGUE
 
 	Cppgenerator cppgenerator;
+	cppgenerator.ignore_print_stmts() = result_cmd_line.cppgen_ignore_print;
 
 
 	auto globals = universe["Globals"];
@@ -1453,6 +1461,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 			if (lhs_id != s.name && s.name+"." != lhs_id.substr(0,s.name.length()+1)) return;
 			std::string rhs_id;std::string base_kind;
 			if (!is_id(binop.right(), rhs_id, base_kind)) return;
+			if (rhs_id.substr(0,s.name.length()+1) == s.name+".") return;//Regular Assignment
 			//std::cout << "Seen the assignment "<< lhs_id << " = " << rhs_id << std::endl;
 			auto struct_type= struct_assign(lhs_id, rhs_id);
 			if (struct_type == nullptr){

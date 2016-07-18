@@ -1,0 +1,62 @@
+/*
+ * 
+ * @author Tomas Prerovsky <tomas.prerovsky@gmail.com> 
+ * 
+ * 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Part of SM4cepS (State Machines for ceps).
+ *
+ *
+ * Demonstrates usage and semantics of distributed computation.
+ *  
+ * NODE A
+ *
+ * 
+ */
+
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event Send_Counter,Request_Counter;
+
+Systemstate c,weight,height;
+
+typedef{
+  counter_t {a{0.0;};b{0.0;};c{0.0;};};
+};
+
+
+Globals{
+ c = counter_t;
+ weight = 10;height=100;
+ c.a = 0.0;
+ c.b = c.a;
+ /*c.c=c.a+c.b;*/
+};
+
+Statemachine
+{
+ id{Sender;};
+ States{
+    Initial;
+    Final;
+    A;
+ };
+ Actions{
+    action{
+       c.a=c.a+0.1;
+       Send_Counter(c.a);
+     };
+  }; 
+ 
+ Transition{Initial;A;};
+ Transition{A;A;Request_Counter;action;};
+};
+
+Simulation
+{
+ Start{Sender;};
+};

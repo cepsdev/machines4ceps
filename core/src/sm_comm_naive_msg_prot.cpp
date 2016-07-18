@@ -535,6 +535,16 @@ void comm_sender_thread(int id,
 	bool conn_established = false;
 	State_machine_simulation_core::event_t ev;
 	bool pop_ev = true;
+
+	int max_payload_length = 32;
+	std::vector<ceps::ast::Int*> ceps_int_vec;
+	 for(int i = 0; i != max_payload_length;++i)ceps_int_vec.push_back(new ceps::ast::Int(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+	std::vector<ceps::ast::Double*> ceps_double_vec;
+	 for(int i = 0; i != max_payload_length;++i)ceps_double_vec.push_back(new ceps::ast::Double(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+	std::vector<ceps::ast::String*> ceps_str_vec;
+	 for(int i = 0; i != 16;++i)ceps_str_vec.push_back(new ceps::ast::String("", nullptr, nullptr, nullptr));
+
+
 	for(;;)
 	{
 		rp = nullptr;result = nullptr;
@@ -587,6 +597,24 @@ void comm_sender_thread(int id,
 		}
 
 		DEBUG << "[comm_sender_thread][SEND_EVENT]['"<< ev.id_ << "']\n";
+
+		//Map Variants to ceps payload
+		if (ev.payload_native_.size()){
+			int iint=0,idouble=0,istr=0;
+			ev.payload_.clear();
+			for(auto & e : ev.payload_native_){
+				if (e.what_ == sm4ceps_plugin_int::Variant::Int){
+					ceps::ast::value(*ceps_int_vec[iint]) = e.iv_;
+					ev.payload_.push_back(ceps_int_vec[iint++]);
+				} else if (e.what_ == sm4ceps_plugin_int::Variant::Double){
+					ceps::ast::value(*ceps_double_vec[idouble]) = e.dv_;
+					ev.payload_.push_back(ceps_double_vec[idouble++]);
+				} if (e.what_ == sm4ceps_plugin_int::Variant::String){
+					ceps::ast::value(*ceps_str_vec[istr]) = e.sv_;
+					ev.payload_.push_back(ceps_str_vec[istr++]);
+					}
+			}
+		}
 
 		if (ev.payload_.size() == 0) {
 
