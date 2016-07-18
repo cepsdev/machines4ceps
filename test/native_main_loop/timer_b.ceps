@@ -1,0 +1,36 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event E,F,G,H,I,J;
+Guard g1,g2,g3;
+Systemstate s1,s2,s3;
+
+export{G;};
+
+Statemachine{
+ id{S1;};
+ States{Initial;Final;A;B;C;};
+ on_enter{start_periodic_timer(1.0*s,E,t1);};
+ Actions{
+  a1{print("S1.a1();\n");};
+  a2{print("S1.a2();\n");};
+  a3{print("S1.a3();\n");};
+  killt{stop_timer(t1);};
+ };
+ 
+ Transition{Initial;A;E;a1;};
+ Transition{A;B;E;a2;};
+ Transition{B;C;E;a3;};
+ Transition{C;Final;E;killt;};
+};
+
+
+
+Globals{
+ s1 = 0;
+};
+
+Simulation{
+ Start{S1;};
+};

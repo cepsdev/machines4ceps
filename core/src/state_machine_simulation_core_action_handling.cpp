@@ -499,6 +499,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 			e.time_remaining_in_ms = e.period_in_ms = (long)(t * 1000.0);
 			e.event = ev_to_send;
 			e.fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+			e.periodic = periodic_timer;
 			if (e.fd < 0) fatal_(-1,"timerfd_create failed.");
 			itimerspec tspec;
 			tspec.it_interval.tv_nsec = 0;
@@ -508,11 +509,9 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 			if (periodic_timer){
 			 tspec.it_interval.tv_sec = (long) delta;
 			 tspec.it_interval.tv_nsec = (delta - floor(delta)) * 1000000000.0;
-			} else {
-			 tspec.it_value.tv_sec = (long) delta;
-			 tspec.it_value.tv_nsec = (delta - floor(delta)) * 1000000000.0;
-			 //std::cout << ">>>> " << tspec.it_value.tv_sec << "  " << tspec.it_value.tv_nsec << std::endl;
 			}
+			tspec.it_value.tv_sec = (long) delta;
+			tspec.it_value.tv_nsec = (delta - floor(delta)) * 1000000000.0;
 			auto r = timerfd_settime(e.fd, 0, &tspec, nullptr);
 			if (r < 0) fatal_(-1,"timerfd_settime failed.");
 			++timed_events_active_;
