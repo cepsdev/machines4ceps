@@ -1,0 +1,337 @@
+
+kind Event;
+kind Guard;
+kind Systemstate;
+
+
+
+
+Systemstate ivenet_heartbeat_year_in;
+Systemstate ivenet_heartbeat_month_in;
+Systemstate ivenet_heartbeat_day_in;
+Systemstate ivenet_heartbeat_hour_in;
+Systemstate ivenet_heartbeat_minute_in;
+Systemstate ivenet_heartbeat_second_in;
+Systemstate ivenet_heartbeat_app_version_in;
+Systemstate ivenet_own_vehicle_pos_latitude_current_in;
+Systemstate ivenet_own_vehicle_pos_longitude_current_in;
+Systemstate ivenet_own_vehicle_pos_altitude_current_in;
+
+Systemstate ivenet_own_vehicle_position;
+Systemstate ivenet_own_vehicle_alignment;
+Systemstate ivenet_mast_state;
+Systemstate ivenet_platform_alignment_state;
+Systemstate ivenet_radar_enabled_state;
+Systemstate ivenet_radar_parkposition_request_state;
+Systemstate ivenet_radar_position_state;
+Systemstate ivenet_time_source_out;
+Systemstate ivenet_time_source_in;
+Systemstate is_system_time_to_be_set;
+
+val IVENET_MAST_IS_LOCKED_NAVIGATION_MODE    = 1;
+val IVENET_MAST_IS_MOVING_ANTENNA_DEPLOYMENT = 2;
+val IVENET_MAST_IS_UNLOCKED_OBSERVATION_MODE = 3;
+
+val IVENET_PLATFORM_IS_NOT_ALIGNED                         = 0;
+val IVENET_PLATFORM_ALIGNMENT_IS_IN_PROGRESS               = 1;
+val IVENET_PLATFORM_IS_ALIGNED                             = 2;
+val IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_VEHICLE_MOVEMENT = 3;
+val IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_MAST_MOVEMENT    = 4;
+val IVENET_PLATFORM_GENERAL_MALFUNCTION                    = 5;
+
+typedef
+{
+  t_ivenet_own_vehicle_position
+  {
+    isValid_in {0;};
+    isValid_out{0;};
+    coordinate;
+  };
+};
+
+typedef
+{
+  t_ivenet_coordinate
+  {
+    latitude          {0.0;}; // {-90.0;  +90.0 }
+    longitude         {0.0;}; // {-180.0; +180.0}
+    altitude          {-999;};// {-999;   +99999}, -999 being 'invalid'
+  };
+};
+
+typedef
+{
+  t_ivenet_own_vehicle_alignment
+  {
+    isValid_in        {0;};
+    hasChanged        {0;};
+    azimuth_current   {0;};     // {0;       35999}
+    azimuth_previous  {0;};     // {0;       35999}
+  };
+};
+
+typedef
+{
+  t_ivenet_mast_state
+  {
+    isValid_in  { 1;  };
+    isValid_out { 1;  };
+    value_in    { IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;  };
+    value_out   { IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;  };
+  };
+};
+
+typedef
+{
+  t_ivenet_platform_alignment_state
+  {
+    isValid_out { 1;  };
+    value       { IVENET_PLATFORM_IS_NOT_ALIGNED; };
+  };
+};
+
+typedef
+{
+  t_ivenet_radar_enabled_state
+  {
+    isValid_out           {1;}; // [Boolean]
+    isRadarWorkingEnabled {0;}; // [Boolean]
+  };
+};
+
+typedef
+{
+  t_ivenet_radar_parkposition_request_state
+  {
+    isValid_out           {1;}; // [Boolean]
+    isRequestActive       {0;}; // [Boolean]
+  };
+};
+
+typedef
+{
+  t_ivenet_radar_position_state
+  {
+    isValid_in            {0;};
+    isRadarInParkposition {0;}; // [Boolean]
+  };
+};
+
+Globals
+{
+  ivenet_time_source_out                 = "BIOS_Time";
+  ivenet_time_source_in                  = "BIOS_Time";
+  ivenet_heartbeat_year_in               = -1;
+  ivenet_heartbeat_month_in              = -1;
+  ivenet_heartbeat_day_in                = -1;
+  ivenet_heartbeat_hour_in               = -1;
+  ivenet_heartbeat_minute_in             = -1;
+  ivenet_heartbeat_second_in             = -1;
+  ivenet_heartbeat_app_version_in                  = "";
+  ivenet_own_vehicle_pos_latitude_current_in       = -1.0;
+  ivenet_own_vehicle_pos_longitude_current_in      = -1.0;
+  ivenet_own_vehicle_pos_altitude_current_in       = -1.0;
+  ivenet_own_vehicle_position             = t_ivenet_own_vehicle_position;
+  ivenet_own_vehicle_position.coordinate  = t_ivenet_coordinate;
+  ivenet_own_vehicle_alignment            = t_ivenet_own_vehicle_alignment;
+  ivenet_mast_state                       = t_ivenet_mast_state;
+  ivenet_platform_alignment_state         = t_ivenet_platform_alignment_state;
+  ivenet_radar_enabled_state              = t_ivenet_radar_enabled_state;
+  ivenet_radar_parkposition_request_state = t_ivenet_radar_parkposition_request_state;
+  ivenet_radar_position_state             = t_ivenet_radar_position_state;
+  is_system_time_to_be_set = 0;
+};
+
+val MAJOR_SOFTWARE_VERSION = 1;
+val MINOR_SOFTWARE_VERSION = 0;
+
+
+xml_frame
+{
+ id { frame_TrgsBagMastToiVeNet; };
+ data{
+  iVeNetToTrgsBagMast{ 
+   ApplicationHeartbeat{
+    TimeSource{
+     if (ivenet_time_source_out == "UTC_Time")
+       "UTC_Time";
+     else if (ivenet_time_source_out == "GPS_Time")
+       "GPS_Time";
+     else
+      "BIOS_Time";
+    };
+    Year    { "year"; };
+    Month   { "month"; };
+    Day     { "day"; };
+    Hour    { "hour"; };
+    Minute  { "minute"; };
+    Second  { "second"; };
+    AppVersion { MAJOR_SOFTWARE_VERSION + "." +  MINOR_SOFTWARE_VERSION; };
+  };
+  test{};
+  StatusMast{
+   xml_attr { "IsValid"; if ( ivenet_mast_state.isValid_out > 0 ) "true"; else "false"; };
+   if ( ivenet_mast_state.isValid_out > 0 ){
+    MastStatus{
+     if (ivenet_mast_state.value_out      == IVENET_MAST_IS_LOCKED_NAVIGATION_MODE)
+      "IsLocked_NavigationMode";
+     else if (ivenet_mast_state.value_out == IVENET_MAST_IS_MOVING_ANTENNA_DEPLOYMENT)
+      "IsMoving_AntennaDeployment";
+     else
+      "IsUnlocked_ObservationMode";
+    };
+   }
+  };//StatusMast	
+
+  StatusRadarEnabled{
+   xml_attr { "IsValid"; if ( ivenet_radar_enabled_state.isValid_out > 0 ) "true"; else "false"; };
+   IsRadarWorkingEnabled { if ( ivenet_radar_enabled_state.isRadarWorkingEnabled > 0 ) "true"; else "false"; };	    
+  };//StatusRadarEnabled
+  StatusPlatform{
+   xml_attr { "IsValid"; if ( ivenet_platform_alignment_state.isValid_out > 0 ) "true"; else "false"; };
+   PlatformStatus{
+    if (ivenet_platform_alignment_state.value      == IVENET_PLATFORM_IS_NOT_ALIGNED)
+     "NotAligned";
+    else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_ALIGNMENT_IS_IN_PROGRESS)
+     "AlignmentInProgress";
+    else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_ALIGNED)
+     "Aligned";
+    else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_VEHICLE_MOVEMENT)
+     "NotAlignedDueToVehicleMovement";
+    else if (ivenet_platform_alignment_state.value == IVENET_PLATFORM_IS_NOT_ALIGNED_DUE_TO_MAST_MOVEMENT)
+     "NotAlignedDueToMastMovement";
+    else
+     "GeneralTechnicalMalfunction";
+   };
+  };
+  RadarParkpositionRequest{
+   xml_attr { "IsValid"; if ( ivenet_radar_parkposition_request_state.isValid_out > 0 ) "true"; else "false"; };
+   IsRequestActive { if ( ivenet_radar_parkposition_request_state.isRequestActive > 0 ) "true"; else "false"; };
+  }; // RadarParkpositionRequest
+  }; // TrgsBagMastToiVeNet 
+ };//data
+};
+
+Systemstate t;
+
+xml_frame
+{
+    id { frame_iVeNetToTrgsBagMast; };
+    query
+    {
+
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/TimeSource" );
+        if (!empty(t))
+        {
+            ivenet_time_source_in = as_string(t);
+            if ( ivenet_time_source_out != ivenet_time_source_in )
+            {
+                is_system_time_to_be_set = 1;
+                ivenet_time_source_out= ivenet_time_source_in;
+            }
+        }
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/Year" );
+        if ( !empty(t) ) ivenet_heartbeat_year_in = as_int(t);
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/Month" );
+        if ( !empty(t) ) ivenet_heartbeat_month_in = as_int(t);
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/Day" );
+        if ( !empty(t) ) ivenet_heartbeat_day_in = as_int(t);
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/Hour" );
+        if ( !empty(t) ) ivenet_heartbeat_hour_in = as_int(t);
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/Minute" );
+        if ( !empty(t) ) ivenet_heartbeat_minute_in = as_int(t);
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/Second" );
+        if ( !empty(t) ) ivenet_heartbeat_second_in = as_int(t);
+
+        if ( is_system_time_to_be_set > 0 )
+        {
+            Set_Time(
+                ivenet_heartbeat_year_in, 
+                ivenet_heartbeat_month_in, 
+                ivenet_heartbeat_day_in, 
+                ivenet_heartbeat_hour_in,
+                ivenet_heartbeat_minute_in,
+                ivenet_heartbeat_second_in
+            );
+            is_system_time_to_be_set = 0;
+        }
+
+        t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/AppVersion" );
+        if ( !empty(t) ) ivenet_heartbeat_app_version_in = as_string(t);
+
+        t = xpath ( "iVeNetToTrgsBagMast/OwnVehiclePosition/@IsValid" );
+                ivenet_own_vehicle_position.isValid_in = 1;
+                t = xpath ( "iVeNetToTrgsBagMast/OwnVehiclePosition/Coordinate/Latitude" );
+                if ( !empty(t) )
+                    ivenet_own_vehicle_pos_latitude_current_in = as_double(t); 
+                t = xpath ( "iVeNetToTrgsBagMast/OwnVehiclePosition/Coordinate/Altitude" );
+                if ( !empty(t) )
+                    ivenet_own_vehicle_pos_altitude_current_in = as_double(t);
+                t = xpath ( "iVeNetToTrgsBagMast/OwnVehiclePosition/Coordinate/Longitude" );
+                if ( !empty(t) )
+                    ivenet_own_vehicle_pos_longitude_current_in = as_double(t);
+                    t = xpath ( "iVeNetToTrgsBagMast/OwnVehicleAlignment/Azimuth" );
+                    if ( !empty(t) )
+                    {
+                        if ( as_double(t) != ivenet_own_vehicle_alignment.azimuth_current )
+                        {
+                            ivenet_own_vehicle_alignment.hasChanged = 1;
+                            print ( "Ivenet sent the following azimuth: ", as_double(t), "\n" );
+                            ivenet_own_vehicle_alignment.azimuth_current = as_double(t);
+                        } else
+                        {
+                            ivenet_own_vehicle_alignment.hasChanged = 0;
+                        }
+                    }
+
+        t = xpath ( "iVeNetToTrgsBagMast/StatusMast/IsValid" );
+        if ( !empty(t) )
+        {
+            if ( as_string(t) == "true" || as_string(t) == "1" || as_string(t) == "True" )
+            {
+                ivenet_mast_state.isValid_in   = 1;
+
+                t = xpath ( "iVeNetToTrgsBagMast/StatusMast/MastStatus" );
+                if ( !empty(t) )
+                {
+                    if ( as_string(t) == "IsLocked_NavigationMode" )
+                        ivenet_mast_state.value_in = IVENET_MAST_IS_LOCKED_NAVIGATION_MODE;
+                    else
+                    if ( as_string(t) == "IsMoving_AntennaDeployment" )
+                        ivenet_mast_state.value_in = IVENET_MAST_IS_MOVING_ANTENNA_DEPLOYMENT;
+                    else
+                        ivenet_mast_state.value_in = IVENET_MAST_IS_UNLOCKED_OBSERVATION_MODE;
+                }
+            }
+            else
+            {
+                ivenet_mast_state.isValid_in   = 0;
+            }
+        }
+
+                ivenet_radar_position_state.isValid_in    = 1;
+
+                t = xpath ( "iVeNetToTrgsBagMast/StateRadarPosition/IsRadarInParkposition" );
+                if ( !empty(t) )
+                {
+                    if ( as_string(t) == "true" || as_string(t) == "1" || as_string(t) == "True" )
+                        ivenet_radar_position_state.isRadarInParkposition = 1;
+                    else
+                        ivenet_radar_position_state.isRadarInParkposition = 0;
+                }
+  }; // query
+}; // xml_frame
+
+
+
+
+
+
+
+
+
+
+
+
+
+

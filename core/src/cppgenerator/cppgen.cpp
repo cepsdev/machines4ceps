@@ -526,8 +526,13 @@ private:
 								 std::ostream& os,
 								 Nodebase_ptr p,
 								 State_machine* cur_sm,std::vector<std::string>& parameters,
-								 bool inside_func_param_list=false);
-	bool write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
+								 bool inside_func_param_list=false,bool inside_xml_gen=false);
+	bool write_cpp_stmt_impl(State_machine_simulation_core* smp,
+			                 Indent& indent,
+							 std::ostream& os,
+							 Nodebase_ptr p,
+							 State_machine* cur_sm,
+							 std::vector<std::string>& parameters,bool inside_xml_gen=false);
 	bool write_raw_frame_declaration_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,std::vector<raw_frame_t::raw_frame_entry> const & frame_entries);
     template<typename F> void traverse_inorder_expr(Nodebase_ptr p,F f){
     	if (p == nullptr) return;
@@ -577,8 +582,8 @@ public:
 	raw_frames_t& raw_frames() {return raw_frames_;}
 	raw_frames_t const & raw_frames() const {return raw_frames_;}
 	decltype(glob_funcs_)& glob_funcs(){return glob_funcs_;}
-	void write_cpp_expr(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
-	bool write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters);
+	void write_cpp_expr(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters,bool inside_xml_gen=false);
+	bool write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters,bool inside_xml_gen = false);
 	bool write_raw_frame_declaration(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,raw_frame_t const & raw_frame);
 	raw_frames_t::iterator  find_raw_frame(std::string id){
 		for(auto i = raw_frames().begin(); i != raw_frames().end();++i)
@@ -798,12 +803,12 @@ public:
 
 	void write_all_xml_out_make_funcs(State_machine_simulation_core* smp,
 					                 Indent& indent,
-									 std::ostream& os);
+									 std::ostream& os,std::ostream & init_plugin_content);
 
 	void write_xml_out_make_func(State_machine_simulation_core* smp,
 					                 Indent& indent,
 									 std::ostream& os,
-									 Cppgenerator::xml_out_frame& xo,ceps::ast::Nodebase_ptr p);
+									 ceps::ast::Nodebase_ptr p);
 
 
 };
@@ -871,10 +876,10 @@ void write_cpp_systemstate_type(std::ostream& os,Type t){
 	else os << "UNKNOWN_TYPE";
 }
 
-void write_cpp_systemstate_declaration(std::ostream& os,sysstate const & state){
+void write_cpp_systemstate_declaration(std::ostream& os,sysstate const & state,std::string prefix =""){
 	write_cpp_systemstate_type(os,state.type);
 	os << " ";
-	os << state.name;
+	os << prefix << state.name;
 }
 
 
@@ -992,9 +997,13 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 						 std::ostream& os,
 						 Nodebase_ptr p,
 						 State_machine* cur_sm,std::vector<std::string>& parameters,
-						 bool inside_func_param_list){
+						 bool inside_func_param_list,bool inside_xml_gen){
 	std::string compound_id;
 	std::string base_kind;
+
+	if (inside_xml_gen){
+		os << "os << ";
+	}
 
 	if (p->kind() == Ast_node_kind::int_literal)
 		os << value(as_int_ref(p));
@@ -1151,22 +1160,31 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 	} else os << "/* "<< *p << " ??*/";
 }
 
-void Cppgenerator::write_cpp_expr(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters){
-	write_cpp_expr_impl(smp,indent,os,p,cur_sm,parameters,false);
+void Cppgenerator::write_cpp_expr(State_machine_simulation_core* smp,
+		Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters,bool inside_xml_gen){
+	write_cpp_expr_impl(smp,indent,os,p,cur_sm,parameters,false,inside_xml_gen);
 }
 
-bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters){
+bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,
+		Indent& indent,
+		std::ostream& os,
+		Nodebase_ptr p,
+		State_machine* cur_sm,
+		std::vector<std::string>& parameters,bool inside_xml_gen){
     std::set<std::string> params_set;
     for(auto p :parameters) params_set.insert(p);
 
-    if(smp->is_assignment_op(p)){
+    if (inside_xml_gen && p->kind() == Ast_node_kind::structdef){
+    	write_xml_out_make_func(smp,indent,os,p);
+    	return false;
+    } else if(smp->is_assignment_op(p)){
 		std::string lhs_id;
 		auto& binop = as_binop_ref(p);
 		if(smp->is_assignment_to_state(binop, lhs_id)) {
          //if (is_compound_id(lhs_id))
              if (binop.right()->kind() != Ast_node_kind::identifier || params_set.find(name(as_id_ref(binop.right()))) != params_set.end()) {
 	    	 indent.print_indentation(os); os <<"set_value("<< sysstates_namespace << "::" << lhs_id <<" , ";
-	    	 write_cpp_expr(smp,indent,os,binop.right(),cur_sm,parameters);
+	    	 write_cpp_expr(smp,indent,os,binop.right(),cur_sm,parameters,inside_xml_gen);
 	    	 os << ")";
 	    	 return true;
 	     }
@@ -1181,11 +1199,11 @@ bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent
 		ceps::ast::Nodebase_ptr cond = ifelse->children()[0];
 		indent.print_indentation(os);
 		os << "if (";
-		write_cpp_expr(smp,indent,os,cond,cur_sm,parameters);
+		write_cpp_expr(smp,indent,os,cond,cur_sm,parameters,false);
 		os << ") {\n";
 		indent.indent_incr();
 		if (ifelse->children().size() > 1) {
-			if (write_cpp_stmt_impl(smp,indent,os,ifelse->children()[1],cur_sm,parameters)) os << ";\n";
+			if (write_cpp_stmt_impl(smp,indent,os,ifelse->children()[1],cur_sm,parameters,inside_xml_gen)) os << ";\n";
 		}
 		indent.indent_decr();
 		indent.print_indentation(os);os << "}";
@@ -1194,7 +1212,7 @@ bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent
 		 bool else_block_is_if = ifelse->children()[2]->kind() == ceps::ast::Ast_node_kind::ifelse;
 		 //if (else_block_is_if)  std::cout << "!!!!!";
 		 if (!else_block_is_if){ os << "{\n";indent.indent_incr();}
-		 if(write_cpp_stmt_impl(smp,indent,os,ifelse->children()[2],cur_sm,parameters)) os << ";\n";
+		 if(write_cpp_stmt_impl(smp,indent,os,ifelse->children()[2],cur_sm,parameters,inside_xml_gen)) os << ";\n";
 		 if (!else_block_is_if){
 			 indent.indent_decr();
 		 	 indent.print_indentation(os);os << "}\n";
@@ -1204,26 +1222,31 @@ bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,Indent
 	} else if (p->kind() == Ast_node_kind::scope) {
 		auto scp = ceps::ast::nlf_ptr(p);
 		for (auto pp : scp->children()){
-			if (write_cpp_stmt_impl(smp,indent,os,pp,cur_sm,parameters)) os << ";\n";
+			if (write_cpp_stmt_impl(smp,indent,os,pp,cur_sm,parameters,inside_xml_gen)) os << ";\n";
 		}
 		return false;
-	} else {indent.print_indentation(os);write_cpp_expr(smp,indent,os,p,cur_sm,parameters);}
+	} else {indent.print_indentation(os);write_cpp_expr(smp,indent,os,p,cur_sm,parameters,inside_xml_gen);}
 	return true;
 }
 
-bool Cppgenerator::write_cpp_stmt(State_machine_simulation_core* smp,Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters){
-	return write_cpp_stmt_impl(smp,indent,os,p,cur_sm,parameters);
+bool Cppgenerator::write_cpp_stmt(State_machine_simulation_core* smp,
+		 Indent& indent,
+		 std::ostream& os,
+		 Nodebase_ptr p,
+		 State_machine* cur_sm,
+		 std::vector<std::string>& parameters,bool inside_xml_gen){
+	return write_cpp_stmt_impl(smp,indent,os,p,cur_sm,parameters,inside_xml_gen);
 }
 
 void Cppgenerator::write_xml_out_make_func(State_machine_simulation_core* smp,
 				                 Indent& indent,
 								 std::ostream& os,
-								 Cppgenerator::xml_out_frame& xo,ceps::ast::Nodebase_ptr p){
+								 ceps::ast::Nodebase_ptr p){
  std::vector<std::string> parameters;
  if (p->kind() == ceps::ast::Ast_node_kind::structdef){
 	 ceps::ast::Struct& data = as_struct_ref(p);
 	 indent.print_indentation(os);
-	 os << "os << \"";indent.print_indentation(os);os <<"\";"; os << "os << \"<"<<name(data)<<"\";";
+	 os << "os << \"<"<<name(data)<<"\";";
 	 bool children = false;
 	 for(auto elem:data.children()){
 	  if (elem->kind() != ceps::ast::Ast_node_kind::structdef) { children=true;continue;}
@@ -1231,25 +1254,24 @@ void Cppgenerator::write_xml_out_make_func(State_machine_simulation_core* smp,
 	  auto& xml_attr = ceps::ast::as_struct_ref(elem);
 	  if (xml_attr.children().size() < 2) continue;
 	  if (xml_attr.children()[0]->kind() != ceps::ast::Ast_node_kind::string_literal) continue;
-	  os << "os << \" \"" << "<<"<<ceps::ast::value(ceps::ast::as_string_ref(xml_attr.children()[0]))<< " = \"";
-	  write_xml_out_make_func(smp,indent,os,xo,xml_attr.children()[1]);
-	  os << "os << \" ";
+	  os << "os << \" \"" << "<<\""<<ceps::ast::value(ceps::ast::as_string_ref(xml_attr.children()[0]))<< " = \\\"\" ;";
+	  write_xml_out_make_func(smp,indent,os,xml_attr.children()[1]);
+	  indent.print_indentation(os);os << "os << \"\\\" \"; ";
 	 }
 	 if (children) {
 	  os << "os << \">\";\n";
 	  indent.indent_incr();
-
 	  for(auto elem:data.children()){
 		if (elem->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(elem)) == "xml_attr") continue;
-		write_xml_out_make_func(smp,indent,os,xo,elem);
+		write_xml_out_make_func(smp,indent,os,elem);
 	   }
-
 	  indent.indent_decr();
-      os << "os << \"</"<<name(data)<<">\";";
+	  indent.print_indentation(os);
+	  os << "os << \"</"<<name(data)<<">\";";
 	 }
-	 else os << "os << \"/>\";";
+	 else {indent.print_indentation(os);os << "os << \"/>\";";}
 	 os << "\n";
- } else if (this->write_cpp_stmt(smp,indent,os,p,nullptr,parameters)) os << ";\n";
+ } else if (this->write_cpp_stmt(smp,indent,os,p,nullptr,parameters,true)) os << ";\n";
 }
 
 
@@ -1258,26 +1280,33 @@ void Cppgenerator::write_xml_out_make_func(State_machine_simulation_core* smp,
 								 std::ostream& os,
 								 Cppgenerator::xml_out_frame& xo){
 	for(auto p : xo.ceps_data.nodes()){
-		write_xml_out_make_func(smp,indent,os,xo,p);
+		write_xml_out_make_func(smp,indent,os,p);
 	}
 }
 
 
 void Cppgenerator::write_all_xml_out_make_funcs(State_machine_simulation_core* smp,
 				                 Indent& indent,
-								 std::ostream& os){
+								 std::ostream& os,std::ostream & init_plugin_content){
  for(auto & xo : xml_out_frames()){
-	 os << "void make_out_xml_frame_" << xo.first << "(";
-	 for(size_t i = 0; i != xo.second.params.size();++i){
+	 os << "static char* gen_msg_out_xml_frame_" << xo.first << "(";
+	 /*for(size_t i = 0; i != xo.second.params.size();++i){
 		 os <<" " << xo.second.params_type[i] << " " << xo.second.params[i];
 		 if (i + 1 != xo.second.params.size()) os << ",";
 		 else os << ", std::stringstream & os";
-	 }
+	 }*/
+	 os << "size_t& data_size";
 	 os << "){\n";
 	 indent.indent_incr();
+	 indent.print_indentation(os);os << "std::stringstream os;\n";
+	 indent.print_indentation(os);
+	 os << "os << \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\";\n";
 	 write_xml_out_make_func(smp,indent,os,xo.second);
+	 indent.print_indentation(os);
+	 os<<"data_size = os.str().length()+1;auto temp = new char[data_size];memcpy(temp,os.str().c_str(),data_size);return temp;\n";
 	 indent.indent_decr();
 	 os << "}\n\n";
+	 init_plugin_content << "smc->register_raw_frame_generator_gen_msg(\"" << xo.first <<"\",gen_msg_out_xml_frame_"<< xo.first <<");\n";
  }
 }
 
@@ -1556,25 +1585,16 @@ void handle_frames(Cppgenerator& cppgenerator,State_machine_simulation_core* smc
  o_hpp << "}\n";
 }
 
-void handle_xml_out_frames(Cppgenerator& cppgenerator,State_machine_simulation_core* smc,ceps::Ceps_Environment& ceps_env,
+void handle_xml_out_frames(std::ostream & init_plugin_content, std::ofstream & o_cpp,  std::ofstream & o_hpp,Indent& indent_cpp,Indent& indent_hpp, Cppgenerator& cppgenerator,State_machine_simulation_core* smc,ceps::Ceps_Environment& ceps_env,
 		  ceps::ast::Nodeset& universe, ceps::ast::Nodeset& frames,Result_process_cmd_line const& result_cmd_line)
 {
  using namespace ceps::ast;
  if (cppgenerator.xml_out_frames().empty()) return;
  std::string out_cpp;
  std::string out_hpp;
-
- std::ofstream o_cpp{out_cpp = "out_xml_out_frames.cpp"};
- std::ofstream o_hpp{out_hpp = "out_xml_out_frames.hpp"};
-
- write_copyright_and_timestamp(o_cpp,out_cpp,true,result_cmd_line);
- write_copyright_and_timestamp(o_hpp,out_hpp,true,result_cmd_line);
- Indent indent_hpp;Indent indent_cpp;
-
- o_cpp << "\n#include \"out_xml_out_frames.hpp\"\n\n";
- cppgenerator.write_all_xml_out_make_funcs(smc,indent_cpp,o_cpp);
-
- o_hpp << "\n\n#include \"out.hpp\"\n\n";;
+ o_cpp << "\n";
+ cppgenerator.write_all_xml_out_make_funcs(smc,indent_cpp,o_cpp,init_plugin_content);
+ o_cpp << "\n";
 }
 
 void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,
@@ -1704,6 +1724,8 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 #include <map>
 #include <vector>
 #include <cstdlib>
+#include <cstring>
+#include <sstream>
 #include "core/include/state_machine_simulation_core_reg_fun.hpp"
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 #include "user_defined.hpp"
@@ -1756,8 +1778,10 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	o_cpp << "}\n";
 
 	for(auto & state_entry : sys_states){
-		indent_hpp.print_indentation(o_hpp);o_hpp << "extern ";write_cpp_systemstate_declaration(o_hpp,state_entry);o_hpp << ";\n";
-		indent_cpp.print_indentation(o_cpp);o_cpp << sysstates_namespace<<"::";write_cpp_systemstate_declaration(o_cpp,state_entry);
+		indent_hpp.print_indentation(o_hpp);
+		o_hpp << "extern ";write_cpp_systemstate_declaration(o_hpp,state_entry);o_hpp << ";\n";
+		indent_cpp.print_indentation(o_cpp);
+		o_cpp << sysstates_namespace<<"::";write_cpp_systemstate_declaration(o_cpp,state_entry,"systemstates::");
 		cppgenerator.sysstates()[state_entry.name] = state_entry;
 		//if (state_entry.type.t != Type::Struct){o_cpp << " = "; write_cpp_expr(indent_cpp,o_cpp,systemstate_first_def[state_entry]);}
 		//else o_cpp << "{}";
@@ -1770,7 +1794,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 				  all_guards,
 				  raw_frames,result_cmd_line);
 
-	handle_xml_out_frames(cppgenerator,this,ceps_env,
+	handle_xml_out_frames(init_plugin_content,o_cpp,o_hpp,indent_cpp,indent_hpp,cppgenerator,this,ceps_env,
 			  universe,
 			  raw_frames,result_cmd_line);
 

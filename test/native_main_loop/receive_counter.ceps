@@ -38,7 +38,7 @@ Statemachine
     if(argv(0)=="TIMEOUT") {
       print("Timeout.\n");      
     } else {    
-     //print("Counter:",argv(counter_arg),"\n");
+     print("Counter:",argv(counter_arg),"\n");
      if (argc() > 2) print ("argv(2)=",argv(2),"\n");
      if (argc() > 3)print ("argv(3)=",argv(3),"\n");
      if (argc() > 4)print ("argv(4)=",argv(4),"\n");

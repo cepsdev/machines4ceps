@@ -11,6 +11,8 @@
 class State_machine_simulation_core;
 
 class Rawframe_generator{
+protected:
+	char* (*fn_gen_msg_native_)(size_t& ) = nullptr;
 public:
 	virtual bool readfrom_spec(ceps::ast::Nodeset const & spec) = 0;
 	virtual void* gen_msg(State_machine_simulation_core*,size_t&) = 0;
@@ -21,6 +23,10 @@ public:
 						  std::vector<std::string>,
 						  std::vector<ceps::ast::Nodebase_ptr>&) = 0;
 	virtual size_t header_length() = 0;
+	void set_native_impl_gen_msg( char* (*fn)(size_t& ) ){
+		fn_gen_msg_native_ = fn;
+	}
+	virtual ~Rawframe_generator() = default;
 };
 
 class Podframe_generator:public Rawframe_generator{

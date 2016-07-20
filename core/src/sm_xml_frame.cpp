@@ -204,6 +204,8 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 }
 
 void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size){
+	if (fn_gen_msg_native_)
+		return fn_gen_msg_native_(data_size);
 	if (smc == nullptr) return nullptr;
 	DEBUG_FUNC_PROLOGUE2;
 	auto data_format = spec_["data"];

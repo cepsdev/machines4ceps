@@ -82,7 +82,7 @@ std::string compose_err_msg_assert(State_machine_simulation_core* smp, state_rep
 	std::stringstream ss;
 	ss << "\nExpected to be in state " << smp->get_fullqualified_id(state) <<", current states are:\n";
 	if (smp->enforce_native()){
-	 for(int i = 0;i!=smp->executionloop_context().current_states.size();++i)
+	 for(size_t i = 0;i!=smp->executionloop_context().current_states.size();++i)
 		 if (smp->executionloop_context().current_states[i]) ss << " " << smp->executionloop_context().idx_to_state_id[i] << "\n";
 	} else{
 	 for(auto const & s : states)

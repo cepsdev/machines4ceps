@@ -311,6 +311,19 @@ for(;!quit && !shutdown();)
 	 if (ev_read) ev_id = execution_ctxt.ev_to_id[current_event().id_];
     }
 
+    if (ev_read && event_triggered_sender().size() && current_event().id_.length()) {
+    	bool processed = false;
+    	for(auto p: event_triggered_sender()){
+         if (p.event_id_ != current_event().id_) continue;
+    	 processed = true;
+ 		 size_t data_size;
+ 		 char* data = (char*)p.frame_gen_->gen_msg(this,data_size);
+		 if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length()));
+		 break;
+ 		}
+    	if (processed) continue;
+    }
+
         memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
 	if (PRINT_DEBUG) log() << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << "\n";
 	int triggered_transitions_end = 0;

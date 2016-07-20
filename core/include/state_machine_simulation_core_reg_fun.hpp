@@ -26,6 +26,7 @@ public:
 	virtual bool register_action(std::string state_machine_id,std::string action, void(*fn)()) = 0;
 	virtual bool register_global_init(void(*fn)()) = 0;
 	virtual bool register_guard(std::string,bool(**)()) = 0;
+	virtual bool register_raw_frame_generator_gen_msg(std::string,char* (*)(size_t& )) = 0;
 	virtual Ism4ceps_plugin_interface* get_plugin_interface() = 0;
 };
 

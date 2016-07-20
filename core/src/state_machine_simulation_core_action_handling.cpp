@@ -400,9 +400,9 @@ bool State_machine_simulation_core::kill_named_timer_main_timer_table(std::strin
 
 void main_timer_thread_fn(State_machine_simulation_core* smc){
 	pollfd* poll_fds = new pollfd[smc->timer_table_size];
-	memset(poll_fds,sizeof(pollfd)*smc->timer_table_size,0);
+	memset(poll_fds,0,sizeof(pollfd)*smc->timer_table_size);
 	int* tidxs = new int[smc->timer_table_size];
-	memset(tidxs,sizeof(int),0);
+	memset(tidxs,0,sizeof(int)*smc->timer_table_size);
 
 	for(;!smc->shutdown();){
 	 size_t active_timers = 0;

@@ -32,6 +32,7 @@
 typedef void (*init_plugin_t)(IUserdefined_function_registry*);
 
 
+
 void register_plugin(State_machine_simulation_core* smc,std::string const& id,ceps::ast::Nodebase_ptr (*fn) (ceps::ast::Call_parameters* ))
 {
 	smc->register_plugin_fn(id,fn);
@@ -1124,6 +1125,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		  std::cout << s <<";";
 	  }
 	  std::cout << "\n";
+	  std::cout << " Total number of states == " << number_of_states << std::endl;
 	 }//print transition tables
      for(auto e: executionloop_context().ev_to_id) executionloop_context().id_to_ev[e.second] = e.first;
      executionloop_context().id_to_ev[0] = "null";
@@ -1177,4 +1179,13 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
 	}
 	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
+}
+
+
+
+bool State_machine_simulation_core::register_raw_frame_generator_gen_msg(std::string frame_id,char* (*fn)(size_t& )){
+	 auto it = frame_generators().find(frame_id);
+	 if (it == frame_generators().end()) fatal_(-1,"sender declaration: Unknown frame with id '"+frame_id+"'");
+	 it->second->set_native_impl_gen_msg(fn);
+	return true;
 }

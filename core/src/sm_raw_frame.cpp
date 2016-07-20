@@ -708,13 +708,13 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 	{
 		rp = nullptr;result = nullptr;
 
-		DEBUG << "[comm_sender_generic_tcp_out_thread][WAIT_FOR_FRAME][pop_frame="<<pop_frame <<"]\n";
+		std::cout << "[comm_sender_generic_tcp_out_thread][WAIT_FOR_FRAME][pop_frame="<<pop_frame <<"]\n";
 		std::tuple<char*,size_t,size_t> frame_info;
 
 		if (pop_frame) {q->wait_and_pop(frame_info);frame_size = std::get<1>(frame_info);frame= std::get<0>(frame_info);}
 		pop_frame = false;
 
-		//std::cout << "SEND   => " << std::endl << frame << std::endl;
+		std::cout << "SEND   => " << std::endl << frame << std::endl;
 
 		DEBUG << "[comm_sender_generic_tcp_out_thread][FETCHED_FRAME]\n";
 		if (!conn_established)

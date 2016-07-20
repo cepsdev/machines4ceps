@@ -1,0 +1,54 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Event ev_send_message_to_ivenet;
+Event ev_message_from_ivenet;
+Event A,B,C,D,E,F;
+
+receiver
+{
+  id { channel_ivenet_receiver; };
+
+  when { frame_iVeNetToTrgsBagMast; };
+  emit { ev_message_from_ivenet; };
+
+  transport
+  {
+    som { 2; }; 
+    eom { 3; }; 
+    generic_tcp_in
+    {
+      port { "1303"; }; 
+      ip { "127.0.0.1"; };
+    };
+  };
+};
+
+sender
+{
+  when { ev_send_message_to_ivenet; };
+  emit { frame_TrgsBagMastToiVeNet; };
+
+  transport
+  {
+    som { 2; };
+    eom { 3; }; 
+    use { channel_ivenet_receiver; };
+  };
+};
+
+Statemachine{
+ id{S;};
+ States{Initial;Sending;Final;};
+ on_enter {start_periodic_timer(1.0*s,E,pt1);};
+ Actions{
+  emit_msg{ev_send_message_to_ivenet;};
+ };
+ Transition{Initial;Sending;};
+ Transition{Sending;Sending;E;emit_msg;};
+};
+
+Simulation{
+ Start{S;};
+};

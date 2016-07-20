@@ -117,6 +117,7 @@ public:
 		++ev_sync_queue_start;
 		if (ev_sync_queue_start == ev_sync_queue.size())
 			ev_sync_queue_start = 0;
+		return true;
 	}
 
 	int get_parent(int state){
@@ -812,6 +813,7 @@ public:
 	void register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id);
 	bool in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids);
 	void register_global_function(std::string name,sm4ceps_plugin_int::Variant (*fp)());
+	bool register_raw_frame_generator_gen_msg(std::string,char* (*)(size_t& ));
 
 
 	private:
