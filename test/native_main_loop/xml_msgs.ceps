@@ -27,6 +27,7 @@ Systemstate ivenet_radar_position_state;
 Systemstate ivenet_time_source_out;
 Systemstate ivenet_time_source_in;
 Systemstate is_system_time_to_be_set;
+Systemstate counter;
 
 val IVENET_MAST_IS_LOCKED_NAVIGATION_MODE    = 1;
 val IVENET_MAST_IS_MOVING_ANTENNA_DEPLOYMENT = 2;
@@ -140,6 +141,7 @@ Globals
   ivenet_radar_parkposition_request_state = t_ivenet_radar_parkposition_request_state;
   ivenet_radar_position_state             = t_ivenet_radar_position_state;
   is_system_time_to_be_set = 0;
+  counter = 0;
 };
 
 val MAJOR_SOFTWARE_VERSION = 1;
@@ -150,7 +152,8 @@ xml_frame
 {
  id { frame_TrgsBagMastToiVeNet; };
  data{
-  iVeNetToTrgsBagMast{ 
+  iVeNetToTrgsBagMast{
+  counter{counter;}; 
    ApplicationHeartbeat{
     TimeSource{
      if (ivenet_time_source_out == "UTC_Time")
@@ -212,7 +215,7 @@ xml_frame
  };//data
 };
 
-Systemstate t;
+Systemstate t,tt;
 
 xml_frame
 {
@@ -221,6 +224,8 @@ xml_frame
     {
 
         t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/TimeSource" );
+	tt = xpath ( "iVeNetToTrgsBagMast/counter");
+	counter = as_int(tt);
         if (!empty(t))
         {
             ivenet_time_source_in = as_string(t);

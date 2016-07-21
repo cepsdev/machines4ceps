@@ -298,6 +298,9 @@ bool Xmlframe_generator::read_msg(char* xml_data,size_t size,
 {
 	//std::cout << xml_data << std::endl;
 	//Read xml_data, store in symbol table
+	if (smc->enforce_native()) return true;
+	//TODO: INSERT HANDLIN IN CASE ENFORCE_NATIVE IS SET.
+
 	{
 		pugi::xml_document* xml_doc = new pugi::xml_document();
 		auto r = xml_doc->load_buffer(xml_data,size);

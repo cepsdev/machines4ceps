@@ -226,8 +226,9 @@ struct raw_frame_t{
 
 };
 
+
 struct Type{
-	enum {Int,String,Double,Struct,Undefined} t;
+	enum {Int,String,Double,Struct,Xml_node_set,Undefined} t;
 	std::string name;
 };
 
@@ -267,7 +268,7 @@ void write_cpp_value(std::ostream& os,Nodebase_ptr v,Type t){
 	else os << "{}";
 }
 
-void write_cpp_sm4ceps_struct_impl(Indent& indent,std::ostream& os,sm4ceps_struct* str){
+void write_cpp_sm4ceps_struct_impl(Indent& indent,std::ostream& os,sm4ceps_struct* str,std::string prefix){
   if (str->t.t != Type::Struct){
 	  indent.print_indentation(os);
 	  if (str->t.t == Type::Int) os << "State<int> ";
@@ -282,7 +283,7 @@ void write_cpp_sm4ceps_struct_impl(Indent& indent,std::ostream& os,sm4ceps_struc
 	  indent.print_indentation(os);
 	  os << "struct{\n";
 	  indent.indent_incr();
-	  for(auto m:str->members)write_cpp_sm4ceps_struct_impl(indent,os,m);
+	  for(auto m:str->members)write_cpp_sm4ceps_struct_impl(indent,os,m,prefix+"."+str->name);
 	  indent.indent_decr();
 	  indent.print_indentation(os);os << "} " << str->name << ";\n";
   }
@@ -292,7 +293,7 @@ void write_cpp_sm4ceps_struct(Indent& indent,std::ostream& os,sm4ceps_struct* st
 	indent.print_indentation(os);
 	os<< "struct "<<str->name<<"{\n";
     indent.indent_incr();
-	for(auto m:str->members)write_cpp_sm4ceps_struct_impl(indent,os,m);
+	for(auto m:str->members)write_cpp_sm4ceps_struct_impl(indent,os,m,str->name);
 	indent.indent_decr();
 	indent.print_indentation(os);os << "};\n";
 }
@@ -561,8 +562,24 @@ private:
     		 traverse_inorder_expr(unop.children()[0],f);
     	} else f(p);
     }
-       bool inside_start_timer_fn_ = false;
-       bool ignore_print_ = false;
+    template<typename F> void traverse_ceps(Nodebase_ptr p,F f){
+      if (p->kind() == ceps::ast::Ast_node_kind::structdef){
+       for(auto pp: ceps::ast::as_struct_ref(p).children())
+    		  traverse_ceps(pp,f);
+      }	else if (p->kind() == ceps::ast::Ast_node_kind::ifelse) {
+    	auto ifelse = ceps::ast::as_ifelse_ptr(p);
+    	ceps::ast::Nodebase_ptr cond = ifelse->children()[0];traverse_inorder_expr(cond,f);
+    	if (ifelse->children().size() > 1) traverse_ceps(ifelse->children()[1],f);
+    	if (ifelse->children().size() > 2) traverse_ceps(ifelse->children()[2],f);
+      } else if (p->kind() == Ast_node_kind::scope) {
+ 		auto scp = ceps::ast::nlf_ptr(p);
+ 		for (auto pp : scp->children())
+ 			traverse_ceps(pp,f);
+ 	  } else
+    	 traverse_inorder_expr(p, f);
+    }
+    bool inside_start_timer_fn_ = false;
+    bool ignore_print_ = false;
 public:
 	using sysstates_t = decltype(sysstates_);
 	using raw_frames_t = decltype(raw_frames_);
@@ -608,6 +625,16 @@ public:
 		}
 		return std::vector<std::string>{result_set.begin(),result_set.end()};
 	}
+	std::vector<std::string> compute_all_sysstates_occuring_in(ceps::ast::Nodeset ceps_script, bool in){
+		 std::set<std::string> result_set;
+		 for(auto p : ceps_script.nodes()) traverse_ceps(p,[&result_set](Nodebase_ptr p){
+					std::string compound_id,base_kind;
+					if (!is_id(p,compound_id,base_kind)) return;
+					if ("Systemstate" != base_kind && "Systemparameter" != base_kind ) return;
+					result_set.insert(compound_id);
+				} );
+		 return std::vector<std::string>{result_set.begin(),result_set.end()};
+		}
 	void write_frame_context_definitions(State_machine_simulation_core* smp,Indent& indent,std::ostream& os){
 		for(auto const & raw_frame : raw_frames()){
 			auto s = compute_all_sysstates_frame_depends_on(raw_frame,true);
@@ -631,6 +658,26 @@ public:
 			indent.indent_decr();
 			indent.print_indentation(os);os << "};\n";
 			indent.print_indentation(os);os <<"extern "<< raw_frame.name << "_in_ctxt_t " << raw_frame.name <<"_in_ctxt;\n";
+		}
+		for(auto const & xml_frame : xml_in_frames()){
+			auto s = compute_all_sysstates_occuring_in(xml_frame.second.ceps_query,true);
+			indent.print_indentation(os);
+			os << "struct " << xml_frame.first << "_in_ctxt_t : public sm4ceps_plugin_int::Framecontext "<<  "{\n";
+			indent.indent_incr();
+			for(auto & e : s){
+			 indent.print_indentation(os);
+			 os << "decltype(systemstates::"<< e << ") "<< e << "_";
+			 os << ";\n";
+			}
+			indent.print_indentation(os);os << "void update_sysstates();\n";
+			indent.print_indentation(os);os << "void read_chunk(void*,size_t);\n";
+			indent.print_indentation(os);os << "bool match_chunk(void*,size_t);\n";
+			indent.print_indentation(os);os << "void init();\n";
+			indent.print_indentation(os);os << "Framecontext* clone();\n";
+			indent.print_indentation(os);os << "virtual ~"<< xml_frame.first << "_in_ctxt_t" <<"();\n";
+		    indent.indent_decr();
+			indent.print_indentation(os);os << "};\n";
+			indent.print_indentation(os);os <<"extern "<< xml_frame.first << "_in_ctxt_t " << xml_frame.first <<"_in_ctxt;\n";
 		}
 	}
 
@@ -1303,7 +1350,7 @@ void Cppgenerator::write_all_xml_out_make_funcs(State_machine_simulation_core* s
 	 os << "os << \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\";\n";
 	 write_xml_out_make_func(smp,indent,os,xo.second);
 	 indent.print_indentation(os);
-	 os<<"data_size = os.str().length()+1;auto temp = new char[data_size];memcpy(temp,os.str().c_str(),data_size);return temp;\n";
+	 os<<"data_size = os.str().length();auto temp = new char[data_size];memcpy(temp,os.str().c_str(),data_size);return temp;\n";
 	 indent.indent_decr();
 	 os << "}\n\n";
 	 init_plugin_content << "smc->register_raw_frame_generator_gen_msg(\"" << xo.first <<"\",gen_msg_out_xml_frame_"<< xo.first <<");\n";
@@ -1536,7 +1583,7 @@ void handle_frames(Cppgenerator& cppgenerator,State_machine_simulation_core* smc
 		  ceps::ast::Nodeset& frames,Result_process_cmd_line const& result_cmd_line)
 {
  using namespace ceps::ast;
- if (frames.size() == 0) return;
+ if (frames.size() == 0 && cppgenerator.xml_in_frames().size()==0) return;
  //Preludes
  std::string out_cpp;
  std::string out_hpp;
@@ -1622,7 +1669,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
     		if (body.size())
     			cppgenerator.xml_out_frames()[id].ceps_data = body;
     		else
-    			cppgenerator.xml_in_frames()[id].ceps_query = body;
+    			cppgenerator.xml_in_frames()[id].ceps_query = ceps::ast::Nodeset(e)["xml_frame"]["query"];
 
     	}
     }
@@ -1730,7 +1777,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 #include "user_defined.hpp"
 )";
-	if (raw_frames.size()) o_hpp << "#include\"out_frames.hpp\"\n";
+	if (raw_frames.size() || cppgenerator.xml_in_frames().size()) o_hpp << "#include\"out_frames.hpp\"\n";
 	o_hpp << out_hpp_prefix << "\n";
 
 	o_cpp << "\n\n#include \""<< out_hpp <<"\"\n\n";

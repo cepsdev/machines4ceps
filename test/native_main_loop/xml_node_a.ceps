@@ -38,15 +38,21 @@ sender
   };
 };
 
+Event ev_increment_counter;
+
 Statemachine{
  id{S;};
  States{Initial;Sending;Final;};
  on_enter {start_periodic_timer(1.0*s,E,pt1);};
  Actions{
-  emit_msg{ev_send_message_to_ivenet;};
+  emit_msg{ev_send_message_to_ivenet;ev_increment_counter;};
+  increment_counter{counter=counter+1;};
+  message_from_ivenet{print("Received message from ivenet\n");};
  };
  Transition{Initial;Sending;};
  Transition{Sending;Sending;E;emit_msg;};
+ Transition{Sending;Sending;ev_increment_counter;increment_counter;};
+ Transition{Sending;Sending;ev_message_from_ivenet;message_from_ivenet;};
 };
 
 Simulation{
