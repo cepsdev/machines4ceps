@@ -34,6 +34,12 @@ namespace sm4ceps_plugin_int{
    id() = default;
  };
 
+ struct xml_node_set{
+	 void* xml_doc = nullptr;
+	 void* xpath_node_set = nullptr;
+	 xml_node_set& value() {return *this;}
+ };
+
 
  double abs(Variant const &v);
 

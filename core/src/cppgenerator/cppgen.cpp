@@ -268,6 +268,8 @@ void write_cpp_value(std::ostream& os,Nodebase_ptr v,Type t){
 	else os << "{}";
 }
 
+
+
 void write_cpp_sm4ceps_struct_impl(Indent& indent,std::ostream& os,sm4ceps_struct* str,std::string prefix){
   if (str->t.t != Type::Struct){
 	  indent.print_indentation(os);
@@ -504,6 +506,8 @@ class Cppgenerator{
 public:
 	struct xml_in_frame{
 		ceps::ast::Nodeset ceps_query;
+		std::map<std::string,std::string> orig_id_to_mangled_id;
+		std::set<std::string> local_xml_nodeset_var;
 	};
 	struct xml_out_frame{
 		ceps::ast::Nodeset ceps_data;
@@ -512,6 +516,8 @@ public:
 		std::vector<std::string> params;
 		std::vector<std::string> params_type;
 	};
+
+	std::map<std::string,std::string> map_sysstates;
 
 private:
 
@@ -659,14 +665,21 @@ public:
 			indent.print_indentation(os);os << "};\n";
 			indent.print_indentation(os);os <<"extern "<< raw_frame.name << "_in_ctxt_t " << raw_frame.name <<"_in_ctxt;\n";
 		}
-		for(auto const & xml_frame : xml_in_frames()){
+		for(auto  & xml_frame : xml_in_frames()){
 			auto s = compute_all_sysstates_occuring_in(xml_frame.second.ceps_query,true);
 			indent.print_indentation(os);
 			os << "struct " << xml_frame.first << "_in_ctxt_t : public sm4ceps_plugin_int::Framecontext "<<  "{\n";
 			indent.indent_incr();
 			for(auto & e : s){
 			 indent.print_indentation(os);
-			 os << "decltype(systemstates::"<< e << ") "<< e << "_";
+			 if(e.find_first_of(".") == std::string::npos && sysstates().find(e) == sysstates().end())
+			 {
+			  xml_frame.second.local_xml_nodeset_var.insert(e);
+			  os << "sm4ceps_plugin_int::xml_node_set " << e << "_";
+			 } else{
+			  xml_frame.second.orig_id_to_mangled_id[e] = replace_all(e ,".","__")+"_";
+			  os << "decltype(systemstates::"<< e << ") "<< replace_all(e ,".","__")<< "_";
+			 }
 			 os << ";\n";
 			}
 			indent.print_indentation(os);os << "void update_sysstates();\n";
@@ -763,6 +776,69 @@ public:
 
 			indent.print_indentation(os);os <<"systemstates::"<< raw_frame.name << "_in_ctxt_t systemstates::" << raw_frame.name <<"_in_ctxt;\n";
 		}
+
+		for(auto const & xml_in_frame : xml_in_frames()){
+		  indent.print_indentation(os);
+		  os << "\n";
+		  os << R"(
+//Frame Context Definitions (xml_in_frame)
+
+)";
+		  os << "void systemstates::" << xml_in_frame.first << "_in_ctxt_t::update_sysstates(){\n";
+			indent.indent_incr();
+			for(auto & e : xml_in_frame.second.orig_id_to_mangled_id){
+				indent.print_indentation(os);
+				os << "systemstates::"<< e.first << " = " <<   e.second;
+				os << ";\n";
+			}
+			indent.indent_decr();
+			indent.print_indentation(os);os << "}\n";
+
+            os << "void systemstates::" << xml_in_frame.first << "_in_ctxt_t::read_chunk(void* chunk,size_t){\n";
+			indent.indent_incr();
+
+			for(auto p : xml_in_frame.second.ceps_query.nodes()){
+				map_sysstates = xml_in_frame.second.orig_id_to_mangled_id;
+				for(auto e : xml_in_frame.second.local_xml_nodeset_var) map_sysstates[e] = e + "_";
+				write_cpp_stmt(smp,indent,os, p,nullptr, params,false);
+				map_sysstates.clear();
+			}
+
+			indent.indent_decr();
+			indent.print_indentation(os);os << "}\n";
+
+			os << "bool systemstates::" << xml_in_frame.first << "_in_ctxt_t::match_chunk(void* chunk,size_t chunk_size){\n";
+			indent.indent_incr();
+			indent.print_indentation(os);
+			os << "return true;\n";
+			indent.indent_decr();
+			indent.print_indentation(os);os << "}\n";
+
+	        os << "void systemstates::" << xml_in_frame.first << "_in_ctxt_t::init(){\n";
+			indent.indent_incr();
+			for(auto & e : xml_in_frame.second.orig_id_to_mangled_id){
+				indent.print_indentation(os);
+				os << e.second << " = systemstates::"<< e.first << ";\n";
+			}
+			indent.indent_decr();
+		    indent.print_indentation(os);os << "}\n";
+
+		    os << "sm4ceps_plugin_int::Framecontext*  systemstates::" << xml_in_frame.first << "_in_ctxt_t::clone(){\n";
+		  	indent.indent_incr();
+		  	indent.print_indentation(os);
+		  	os << "return new "<< xml_in_frame.first << "_in_ctxt_t(*this);\n";
+  			indent.indent_decr();
+  		    indent.print_indentation(os);os << "}\n";
+
+		    os << " systemstates::" << xml_in_frame.first << "_in_ctxt_t::~"<<xml_in_frame.first << "_in_ctxt_t" <<" (){\n";
+		  	indent.indent_incr();
+		  	indent.print_indentation(os);
+		  	indent.indent_decr();
+  		    indent.print_indentation(os);os << "}\n";
+
+			indent.print_indentation(os);os <<"systemstates::"<< xml_in_frame.first << "_in_ctxt_t systemstates::" << xml_in_frame.first <<"_in_ctxt;\n";
+		}
+
 		os << "\n\n";
 	}
 	void write_cpp_glob_func_decl(std::ostream& os, std::string prefix, ceps::ast::Struct & func,std::vector<std::string>& parameters){
@@ -1211,7 +1287,14 @@ void Cppgenerator::write_cpp_expr(State_machine_simulation_core* smp,
 		Indent& indent,std::ostream& os,Nodebase_ptr p,State_machine* cur_sm,std::vector<std::string>& parameters,bool inside_xml_gen){
 	write_cpp_expr_impl(smp,indent,os,p,cur_sm,parameters,false,inside_xml_gen);
 }
-
+bool is_xpath_expr(ceps::ast::Nodebase_ptr p){
+	if (p->kind() == Ast_node_kind::func_call){
+	 ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
+	 ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+	 return ceps::ast::name(id) == "xpath";
+	}
+	return false;
+}
 bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,
 		Indent& indent,
 		std::ostream& os,
@@ -1225,8 +1308,22 @@ bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,
     	write_xml_out_make_func(smp,indent,os,p);
     	return false;
     } else if(smp->is_assignment_op(p)){
-		std::string lhs_id;
+ 		std::string lhs_id;
 		auto& binop = as_binop_ref(p);
+		if(is_xpath_expr(binop.right()) && smp->is_assignment_to_state(binop, lhs_id)){
+			indent.print_indentation(os);
+			os << "smcore_interface->xpath("<<lhs_id<<",";
+
+			ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(binop.right());
+			ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+		 	ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
+			std::vector<ceps::ast::Nodebase_ptr> args;
+			if (params.children().size()) flatten_args(params.children()[0], args);
+			for(auto pp:args) write_cpp_expr(smp,indent,os,pp,cur_sm,parameters,inside_xml_gen);
+
+			os << ");\n";
+		 return true;
+		}
 		if(smp->is_assignment_to_state(binop, lhs_id)) {
          //if (is_compound_id(lhs_id))
              if (binop.right()->kind() != Ast_node_kind::identifier || params_set.find(name(as_id_ref(binop.right()))) != params_set.end()) {
