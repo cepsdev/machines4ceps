@@ -691,6 +691,7 @@ public:
 		    indent.indent_decr();
 			indent.print_indentation(os);os << "};\n";
 			indent.print_indentation(os);os <<"extern "<< xml_frame.first << "_in_ctxt_t " << xml_frame.first <<"_in_ctxt;\n";
+			//indent.print_indentation(os);os <<"void set_xpath_context_"<<xml_frame.first<<"(void* xdoc);\n";
 		}
 	}
 
@@ -800,7 +801,7 @@ public:
 			for(auto p : xml_in_frame.second.ceps_query.nodes()){
 				map_sysstates = xml_in_frame.second.orig_id_to_mangled_id;
 				for(auto e : xml_in_frame.second.local_xml_nodeset_var) map_sysstates[e] = e + "_";
-				write_cpp_stmt(smp,indent,os, p,nullptr, params,false);
+				if (write_cpp_stmt(smp,indent,os, p,nullptr, params,false)) os << ";\n";
 				map_sysstates.clear();
 			}
 
@@ -809,8 +810,11 @@ public:
 
 			os << "bool systemstates::" << xml_in_frame.first << "_in_ctxt_t::match_chunk(void* chunk,size_t chunk_size){\n";
 			indent.indent_incr();
-			indent.print_indentation(os);
-			os << "return true;\n";
+
+			for(auto e: xml_in_frame.second.local_xml_nodeset_var){
+				indent.print_indentation(os);os << e<<"_.xml_doc = chunk;\n";
+			}
+			indent.print_indentation(os);os << "return true;\n";
 			indent.indent_decr();
 			indent.print_indentation(os);os << "}\n";
 
@@ -837,6 +841,8 @@ public:
   		    indent.print_indentation(os);os << "}\n";
 
 			indent.print_indentation(os);os <<"systemstates::"<< xml_in_frame.first << "_in_ctxt_t systemstates::" << xml_in_frame.first <<"_in_ctxt;\n";
+
+
 		}
 
 		os << "\n\n";
@@ -898,17 +904,17 @@ public:
 			   std::string base_kind;
 			   if (!is_id(p,compound_id,base_kind)) return;
 			   if ("Systemstate" != base_kind && "Systemparameter" != base_kind ) return;
-			   std::cout << compound_id << std::endl;
+			   //std::cout << compound_id << std::endl;
 			   if (xo.state_to_arg.find(compound_id) != xo.state_to_arg.end()) return;
 			   xo.state_to_arg[compound_id] = replace_all(compound_id,".","__");
 			   xo.params.push_back(replace_all(compound_id,".","__"));
 			   xo.params_type.push_back("decltype("+sysstates_namespace+"::"+compound_id+")");
-			   std::cout << replace_all(compound_id,".","__") << std::endl;
-			   std::cout << xo.params_type.back() << std::endl;
+			   //std::cout << replace_all(compound_id,".","__") << std::endl;
+			   //std::cout << xo.params_type.back() << std::endl;
 		});
 	}
 	void compute_xml_out_make_xml_func_args(State_machine_simulation_core* smp,std::string name,xml_out_frame& xo){
-		std::cout << name << std::endl;
+		//std::cout << name << std::endl;
 		for(auto p : xo.ceps_data.nodes())
 			compute_xml_out_make_xml_func_args(p,smp,name,xo);
 
@@ -1138,11 +1144,16 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 		if ("Guard" == base_kind){
 			os << guards_namespace <<"::"<< compound_id << "()";
 		}else if ("Systemstate" == base_kind || "Systemparameter" == base_kind ){
+			bool mapped = false;
+			if (!map_sysstates.empty() && map_sysstates.find(compound_id)!=map_sysstates.end()) {compound_id = map_sysstates[compound_id];mapped=true;}
 			std::string base_id = compound_id;
 			auto dot_pos = base_id.find_first_of('.');
+			std::string prefix = "";
+			if (!mapped) prefix = sysstates_namespace+"::";
+
 			if (dot_pos == std::string::npos && sysstates()[base_id].type.t == Type::Struct)
-				os << sysstates_namespace<<"::"<< compound_id;
-			else os << sysstates_namespace<<"::"<< compound_id<<".value()";
+				os << prefix<< compound_id;
+			else os << prefix << compound_id<<".value()";
 		} else if ("Event" == base_kind){
 			if (inside_func_param_list) os << sysstates_namespace<<"::"<<  "ev{\""<< compound_id <<"\"}";
 			else os <<  smcore_singleton  <<"->queue_event" << "(\""<< compound_id <<"\")";
@@ -1227,7 +1238,15 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 		else if ("changed" == name(id)){
 			os << sysstates_namespace << "::" << value(as_string_ref(args[0])) << ".changed()";return;
 		}
-		else if (smp->is_global_event(name(id))){
+		else if ("as_int" == name(id) || "as_double" == name(id) || "as_string" == name(id) || "empty" == name(id)){
+			os << "smcore_interface->"<<name(id)<<"(";
+			for(size_t i = 0; i != args.size();++i){
+			 write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
+	 		 if (i+1<args.size()) os << " , ";
+			}
+			os << ")";
+			return;
+		} else if (smp->is_global_event(name(id))){
 			if (!inside_func_param_list) os <<  smcore_singleton  <<"->queue_event" << "(\""<< name(id)<<"\",{";
 			else os << sysstates_namespace<<"::"<<  "ev(\""<< name(id) <<"\", {";
 
@@ -1312,7 +1331,8 @@ bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,
 		auto& binop = as_binop_ref(p);
 		if(is_xpath_expr(binop.right()) && smp->is_assignment_to_state(binop, lhs_id)){
 			indent.print_indentation(os);
-			os << "smcore_interface->xpath("<<lhs_id<<",";
+			if (!map_sysstates.empty() && map_sysstates.find(lhs_id)!=map_sysstates.end()) lhs_id = map_sysstates[lhs_id];
+			os << "smcore_interface->x_path("<<lhs_id<<",";
 
 			ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(binop.right());
 			ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
@@ -1327,10 +1347,14 @@ bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,
 		if(smp->is_assignment_to_state(binop, lhs_id)) {
          //if (is_compound_id(lhs_id))
              if (binop.right()->kind() != Ast_node_kind::identifier || params_set.find(name(as_id_ref(binop.right()))) != params_set.end()) {
-	    	 indent.print_indentation(os); os <<"set_value("<< sysstates_namespace << "::" << lhs_id <<" , ";
-	    	 write_cpp_expr(smp,indent,os,binop.right(),cur_sm,parameters,inside_xml_gen);
-	    	 os << ")";
-	    	 return true;
+              bool mapped = false;
+              if (!map_sysstates.empty() && map_sysstates.find(lhs_id)!=map_sysstates.end()) {lhs_id = map_sysstates[lhs_id];mapped = true;}
+              std::string prefix = "";
+              if (!mapped) prefix = sysstates_namespace + "::";
+	    	  indent.print_indentation(os); os <<"set_value("<< prefix << lhs_id <<" , ";
+	    	  write_cpp_expr(smp,indent,os,binop.right(),cur_sm,parameters,inside_xml_gen);
+	    	  os << ")";
+	    	  return true;
 	     }
 	     else return false;//typedef
 		} else if (smp->is_assignment_to_guard(binop)) {
@@ -1952,6 +1976,10 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	for(auto & r : cppgenerator.raw_frames()){
 		indent_cpp.print_indentation(o_cpp);o_cpp << "systemstates::"<< r.name <<"_in_ctxt.init();\n";
 	}
+	for(auto & r : cppgenerator.xml_in_frames()){
+		indent_cpp.print_indentation(o_cpp);o_cpp << "systemstates::"<< r.first <<"_in_ctxt.init();\n";
+	}
+
 	indent_cpp.indent_decr();
 	indent_cpp.print_indentation(o_cpp);
 	o_cpp << "}\n";
@@ -2128,6 +2156,9 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	for(auto const & e : cppgenerator.glob_funcs())
 		init_plugin_content << "smcore_interface->register_global_function(\""<<e<<"\",globfuncs::"<<e<<");\n";
 
+	for(auto& f : cppgenerator.xml_in_frames()){
+		init_plugin_content << "smcore_interface->register_raw_frame_generator_framectxt(\""<<f.first << "\", &systemstates::"<<f.first<<"_in_ctxt);\n";
+	}
 
 	init_plugin_content << "}\n";
 

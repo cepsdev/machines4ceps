@@ -527,6 +527,89 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 
 #endif
 
+
+
+
+void State_machine_simulation_core::x_path(sm4ceps_plugin_int::xml_node_set& xs,std::string path){
+ pugi::xml_document* xml_doc = (pugi::xml_document*)xs.xml_doc;
+ if (xml_doc == nullptr) fatal_(-1,"State_machine_simulation_core::x_path:: xml_doc is null.");
+ std::string xpath_expr = path;
+ pugi::xpath_node_set r;
+ try{
+  r = xml_doc->select_nodes(xpath_expr.c_str());
+ } catch(pugi::xpath_exception const & e){
+  fatal_(-1,e.what());
+ }
+ pugi::xpath_node_set* ns = new pugi::xpath_node_set(r);
+ if (xs.xpath_node_set != nullptr){ delete (pugi::xpath_node_set*)xs.xpath_node_set;xs.xpath_node_set=nullptr;}
+ xs.xpath_node_set = ns;
+}
+
+/*
+
+(id == "as_double"){
+		if (args.size() == 0) return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+			if (ns->size() == 0)
+				fatal_(-1,"as_double: node set is empty.\n");
+			return new ceps::ast::Double(ns->first().node().text().as_double(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		}
+		return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	 } else if (id == "as_int"){
+			if (args.size() == 0) return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+			if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+					CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+				auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+				pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+				if (ns->size() == 0)
+					fatal_(-1,"as_double: node set is empty.\n");
+				return new ceps::ast::Int(ns->first().node().text().as_int(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+			}
+			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+	} else if (id == "as_string"){
+	 		if (args.size() == 0) return new ceps::ast::String("",nullptr,nullptr,nullptr);
+	 		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+	 				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+	 			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+	 			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+	 			if (ns->size() == 0)
+	 				fatal_(-1,"as_double: node set is empty.\n");
+	 			return new ceps::ast::String(ns->first().node().text().get(),nullptr,nullptr,nullptr);
+	 		}
+	 		return new ceps::ast::String("",nullptr,nullptr,nullptr);
+*/
+
+
+int State_machine_simulation_core::as_int(sm4ceps_plugin_int::xml_node_set& xs){
+	pugi::xpath_node_set* ns = (pugi::xpath_node_set*)xs.xpath_node_set;
+	if (ns == nullptr) fatal_(-1,"as_int: node set is null.\n");
+	if (ns->size() == 0)
+				fatal_(-1,"as_int: node set is empty.\n");
+	return ns->first().node().text().as_int();
+}
+double State_machine_simulation_core::as_double(sm4ceps_plugin_int::xml_node_set& xs){
+	pugi::xpath_node_set* ns = (pugi::xpath_node_set*)xs.xpath_node_set;
+	if (ns == nullptr) fatal_(-1,"as_double: node set is null.\n");
+	if (ns->size() == 0)
+					fatal_(-1,"as_double: node set is empty.\n");
+	return ns->first().node().text().as_double();
+}
+std::string State_machine_simulation_core::as_string(sm4ceps_plugin_int::xml_node_set& xs){
+	pugi::xpath_node_set* ns = (pugi::xpath_node_set*)xs.xpath_node_set;
+	if (ns == nullptr) fatal_(-1,"as_string: node set is null.\n");
+	if (ns->size() == 0)
+					fatal_(-1,"as_string: node set is empty.\n");
+	return ns->first().node().text().as_string();
+}
+bool State_machine_simulation_core::empty(sm4ceps_plugin_int::xml_node_set& xs){
+	pugi::xpath_node_set* ns = (pugi::xpath_node_set*)xs.xpath_node_set;
+	if (ns == nullptr) fatal_(-1,"empty: node set is null.\n");
+	return ns->size() == 0;
+}
+
 void State_machine_simulation_core::start_timer(double t,sm4ceps_plugin_int::ev ev_){
  exec_action_timer(t,ev_,sm4ceps_plugin_int::id{},false);
 }

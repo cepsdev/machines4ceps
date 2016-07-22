@@ -298,6 +298,22 @@ bool Xmlframe_generator::read_msg(char* xml_data,size_t size,
 {
 	//std::cout << xml_data << std::endl;
 	//Read xml_data, store in symbol table
+	if (this->frame_ctxt != nullptr){
+		pugi::xml_document* xml_doc = new pugi::xml_document();
+		auto r = xml_doc->load_buffer(xml_data,size);
+		if (!r){
+		 State_machine_simulation_core::event_t ev("runtime_xml_exception");
+		 ev.already_sent_to_out_queues_ = true;
+		 ev.payload_.push_back(new ceps::ast::String(r.description(),nullptr,nullptr,nullptr));
+		 smc->main_event_queue().push(ev);
+		 smc->warn_(-1,"XML Read failed.");
+		 return false;
+		}
+		this->frame_ctxt->match_chunk(xml_doc,0);
+		this->frame_ctxt->read_chunk(nullptr,0);
+		delete xml_doc;
+		return true;
+	}
 	if (smc->enforce_native()) return true;
 	//TODO: INSERT HANDLIN IN CASE ENFORCE_NATIVE IS SET.
 

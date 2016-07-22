@@ -1189,3 +1189,11 @@ bool State_machine_simulation_core::register_raw_frame_generator_gen_msg(std::st
 	 it->second->set_native_impl_gen_msg(fn);
 	return true;
 }
+
+
+bool State_machine_simulation_core::register_raw_frame_generator_framectxt(std::string frame_id,sm4ceps_plugin_int::Framecontext* f){
+	auto it = frame_generators().find(frame_id);
+	if (it == frame_generators().end()) fatal_(-1,"sender declaration: Unknown frame with id '"+frame_id+"'");
+	it->second->frame_ctxt = f;
+	return true;
+}

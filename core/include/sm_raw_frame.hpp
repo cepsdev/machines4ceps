@@ -8,6 +8,7 @@
 #include <set> 
 #include "ceps_all.hh"
 #include "core/include/serialization.hpp"
+#include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 class State_machine_simulation_core;
 
 class Rawframe_generator{
@@ -27,6 +28,8 @@ public:
 		fn_gen_msg_native_ = fn;
 	}
 	virtual ~Rawframe_generator() = default;
+
+	sm4ceps_plugin_int::Framecontext* frame_ctxt = nullptr;
 };
 
 class Podframe_generator:public Rawframe_generator{

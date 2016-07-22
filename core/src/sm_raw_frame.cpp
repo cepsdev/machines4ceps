@@ -922,6 +922,15 @@ void comm_generic_tcp_in_thread_fn(int id,
 
 					    if (decode_result){
 					    	//std::cout << " IN <== " << buffer->str().c_str() << std::endl;
+
+					    	if (gen->frame_ctxt != nullptr){
+					    		auto clone = gen->frame_ctxt->clone();
+					    		State_machine_simulation_core::event_t ev;
+					    		ev.id_ = "@@framecontext";
+					    		ev.frmctxt_ = clone;
+					    		smc->enqueue_event(ev);
+					    	}
+
 					    	State_machine_simulation_core::event_t ev(ev_id);
 					    	ev.already_sent_to_out_queues_ = true;
 					    	if (payload.size())

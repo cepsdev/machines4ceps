@@ -119,6 +119,12 @@ public:
  virtual void register_frame_ctxt(sm4ceps_plugin_int::Framecontext* ctxt, std::string receiver_id) = 0;
  virtual bool in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids) = 0;
  virtual void register_global_function(std::string name,sm4ceps_plugin_int::Variant (*fp)()) = 0;
+ virtual void x_path(sm4ceps_plugin_int::xml_node_set&,std::string path) = 0;
+ virtual int as_int(sm4ceps_plugin_int::xml_node_set&) = 0;
+ virtual double as_double(sm4ceps_plugin_int::xml_node_set&) = 0;
+ virtual std::string as_string(sm4ceps_plugin_int::xml_node_set&) = 0;
+ virtual bool empty(sm4ceps_plugin_int::xml_node_set&) = 0;
+ virtual bool register_raw_frame_generator_framectxt(std::string,sm4ceps_plugin_int::Framecontext*) = 0;
 };
 
 #endif

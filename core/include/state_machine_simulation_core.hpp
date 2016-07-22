@@ -814,6 +814,14 @@ public:
 	bool in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids);
 	void register_global_function(std::string name,sm4ceps_plugin_int::Variant (*fp)());
 	bool register_raw_frame_generator_gen_msg(std::string,char* (*)(size_t& ));
+	bool register_raw_frame_generator_framectxt(std::string,sm4ceps_plugin_int::Framecontext*);
+
+	void x_path(sm4ceps_plugin_int::xml_node_set&,std::string path);
+	int as_int(sm4ceps_plugin_int::xml_node_set&);
+	double as_double(sm4ceps_plugin_int::xml_node_set&);
+	std::string as_string(sm4ceps_plugin_int::xml_node_set&);
+	bool empty(sm4ceps_plugin_int::xml_node_set&);
+
 
 
 	private:
