@@ -219,6 +219,11 @@ Systemstate t,tt;
 
 xml_frame
 {
+ id{frame_iVeNetToTrgsBagMast_dontcare;};
+ query{};
+};
+xml_frame
+{
     id { frame_iVeNetToTrgsBagMast; };
     query
     {
@@ -226,6 +231,7 @@ xml_frame
         t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/TimeSource" );
 	tt = xpath ( "iVeNetToTrgsBagMast/counter");
 	counter = as_int(tt);
+	print("query:counter=",counter,"\n");
         if (!empty(t))
         {
             ivenet_time_source_in = as_string(t);
@@ -250,14 +256,7 @@ xml_frame
 
         if ( is_system_time_to_be_set > 0 )
         {
-            Set_Time(
-                ivenet_heartbeat_year_in, 
-                ivenet_heartbeat_month_in, 
-                ivenet_heartbeat_day_in, 
-                ivenet_heartbeat_hour_in,
-                ivenet_heartbeat_minute_in,
-                ivenet_heartbeat_second_in
-            );
+            
             is_system_time_to_be_set = 0;
         }
 

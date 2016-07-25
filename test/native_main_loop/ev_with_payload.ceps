@@ -1,0 +1,22 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event E,F,G,H;
+
+Statemachine{
+ id{S;};
+ States{Initial;State_1;State_2;Final;};
+ on_enter{E(1.1);E(2);E("Hello, world!");};
+ Actions{
+  action_1{print("argc=",argc()," argv(0)=\"",argv(0),"\" argv(1)=",argv(1)," \n");};
+ };
+ Transition{Initial;Initial;E;action_1;};
+};
+
+Globals{
+};
+
+Simulation{
+ Start{S;};
+};

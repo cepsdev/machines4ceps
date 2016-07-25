@@ -10,7 +10,7 @@ receiver
 {
   id { channel_ivenet_receiver; };
 
-  when { frame_iVeNetToTrgsBagMast; };
+  when { frame_iVeNetToTrgsBagMast_dontcare; };
   emit { ev_message_from_ivenet; };
 
   transport
@@ -43,11 +43,11 @@ Event ev_increment_counter;
 Statemachine{
  id{S;};
  States{Initial;Sending;Final;};
- on_enter {start_periodic_timer(1.0*s,E,pt1);};
+ on_enter {start_periodic_timer(0.1*s,E,pt1);};
  Actions{
-  emit_msg{ev_send_message_to_ivenet;ev_increment_counter;};
+  emit_msg{ev_send_message_to_ivenet;ev_increment_counter;start_timer(2.0*s,F,t2);};
   increment_counter{counter=counter+1;};
-  message_from_ivenet{print("Received message from ivenet\n");};
+  message_from_ivenet{print("Received message from ivenet\n");stop_timer(t2);};
  };
  Transition{Initial;Sending;};
  Transition{Sending;Sending;E;emit_msg;};

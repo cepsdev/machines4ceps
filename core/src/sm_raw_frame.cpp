@@ -701,11 +701,22 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 	struct addrinfo *result, *rp;
 	auto q = frames;
 	bool conn_established = false;
+	bool io_err = false;
+	bool socket_owner = !reuse_socket;
+
 	char* frame = nullptr;
 	size_t frame_size = 0;
 	bool pop_frame = true;
 	for(;;)
 	{
+		if (io_err && socket_owner){
+ 		 if(reg_socket){
+		  std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+		  smc->get_reg_socks()[sock_name] = -1;
+		 }
+		 close(cfd);
+		 io_err = false;
+		}
 		rp = nullptr;result = nullptr;
 
 		DEBUG << "[comm_sender_generic_tcp_out_thread][WAIT_FOR_FRAME][pop_frame="<<pop_frame <<"]\n";
@@ -725,9 +736,10 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 					{
 						std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
 						auto it = smc->get_reg_socks().find(sock_name);
-						if (it != smc->get_reg_socks().end()){
+						if (it != smc->get_reg_socks().end() && it->second >= 0 && (!io_err || cfd != it->second)){
 							cfd = it->second;
-							conn_established = true;
+							conn_established = true;io_err = false;
+							DEBUG << "[comm_sender_generic_tcp_out_thread][REUSE_SOCK_ID("<< cfd <<")]\n";
 							break;
 						}
 					}
@@ -782,20 +794,20 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 		if (som.size() == 0 && eof.size() == 0){
 			auto l = htonl(len);
 			if ( write(cfd, &l,sizeof(l)) != sizeof(l)){
-				close(cfd);	conn_established=false;DEBUG << "[comm_sender_generic_tcp_out_thread][write of data length failed]\n";continue;
+				io_err=true;conn_established=false;DEBUG << "[comm_sender_generic_tcp_out_thread][write of data length failed]\n";continue;
 			}
 		}
 		if (som.size())
 		 if ( (wr = write(cfd, som.c_str(),eof.length() )) != (int)som.length())
 		 {
-			close(cfd);
+			io_err=true;
 			conn_established=false;
 			DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
 			continue;
 		}
 		if (len && frame) if ( (wr = write(cfd, frame,len )) != (int)len)
 		{
-			close(cfd);
+			io_err=true;
 			conn_established=false;
 			DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
 			continue;
@@ -803,7 +815,7 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 		if (eof.size())
 			if ( (wr = write(cfd, eof.c_str(),eof.length() )) != (int)eof.length())
 			{
-				close(cfd);
+				io_err=true;
 				conn_established=false;
 				DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
 				continue;
@@ -813,7 +825,13 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 		pop_frame = true;
 
 	}
-	if (conn_established)close(cfd);
+	if (conn_established && socket_owner){
+		if(reg_socket){
+			std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+			smc->get_reg_socks()[sock_name] = -1;
+		}
+		close(cfd);
+	}
 }
 
 

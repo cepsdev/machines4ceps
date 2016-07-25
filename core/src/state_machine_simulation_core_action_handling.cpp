@@ -236,7 +236,7 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 		if ( ! is_second(u) )
 			fatal_(-1,"Timer function expects first argument to be a duration (SI unit seconds).");
 
-		log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
+		//log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
 
 		event_t ev_to_send(ev_id);
 		ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
@@ -342,7 +342,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 	double delta = t;
 	ceps::ast::Unit_rep u;
 
-	log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
+	//log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
 
 	event_t ev_to_send(ev_id);
 	ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
@@ -412,6 +412,7 @@ void main_timer_thread_fn(State_machine_simulation_core* smc){
 	  for(size_t i = 0; i!=smc->timer_table.size();++i){
 	   if (smc->timer_table[i].kill && smc->timer_table[i].in_use){
 		   smc->timer_table[i].in_use = false;
+		   //smc->warn_(-1,"Closing timer fd, fd="+std::to_string(smc->timer_table[i].fd)+ " ");
 		   close(smc->timer_table[i].fd);
 		   smc->timer_table[i].fd = -1;
 		   continue;
@@ -433,13 +434,19 @@ void main_timer_thread_fn(State_machine_simulation_core* smc){
 	 if (r < 0) smc->fatal_(-1," main_timer_thread_fn: poll failed. "+std::to_string(errno));
 
 	 for(size_t j = 0;j!=active_timers;++j){
+	  if ((poll_fds[j].revents & POLLIN) == 0) {
+		  continue;
+	  }
 	  uint64_t exp;
 	  auto r = read(poll_fds[j].fd,&exp,sizeof(uint64_t));auto rr = errno;
 	  if (r < 0 && rr == EAGAIN) continue;
-	  if (r!=sizeof(uint64_t)) smc->fatal_(-1," main_timer_thread_fn: read failed. "+std::to_string(errno));
+	  if (r!=sizeof(uint64_t)) {
+		  smc->fatal_(-1," main_timer_thread_fn: read failed. errno="+std::to_string(errno)+" ev="+smc->timer_table[tidxs[j]].event.id_+" fd="+std::to_string(poll_fds[j].fd));
+		  //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		  continue;
+	  }
 	  {
 		  std::lock_guard<std::mutex> lk(smc->timer_table_mtx);
-
 		  if(!smc->timer_table[tidxs[j]].kill) smc->enqueue_event(smc->timer_table[tidxs[j]].event,false);
 		  if (!smc->timer_table[tidxs[j]].periodic)  smc->timer_table[tidxs[j]].kill = true;
 	  }
@@ -470,7 +477,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 	double delta = t;
 	ceps::ast::Unit_rep u;
 
-	log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
+	//log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
 
 	event_t ev_to_send(ev_id);
 	ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
@@ -483,7 +490,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 	{
 		std::lock_guard<std::mutex> lk(timer_table_mtx);
 		if (timer_table.size() == 0){
-			timer_table.resize(timer_table_size);
+			timer_table.resize(timer_table_size*16);
 			create_thread = true;
 			timed_events_active_ = 0;
 		}
@@ -499,6 +506,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 			e.time_remaining_in_ms = e.period_in_ms = (long)(t * 1000.0);
 			e.event = ev_to_send;
 			e.fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+			//std::cout << "Creating fd="<< std::to_string(e.fd)<< std::endl;
 			e.periodic = periodic_timer;
 			if (e.fd < 0) fatal_(-1,"timerfd_create failed.");
 			itimerspec tspec;
@@ -513,7 +521,8 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 			tspec.it_value.tv_sec = (long) delta;
 			tspec.it_value.tv_nsec = (delta - floor(delta)) * 1000000000.0;
 			auto r = timerfd_settime(e.fd, 0, &tspec, nullptr);
-			if (r < 0) fatal_(-1,"timerfd_settime failed.");
+			auto err = errno;
+			if (r < 0) fatal_(-1,"timerfd_settime failed: errno="+std::to_string(err)+" fd="+std::to_string(e.fd));
 			++timed_events_active_;
 			break;
 		}
