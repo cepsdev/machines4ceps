@@ -220,7 +220,7 @@ Systemstate t,tt;
 xml_frame
 {
  id{frame_iVeNetToTrgsBagMast_dontcare;};
- query{};
+ query{t = xpath ( "iVeNetToTrgsBagMast/ApplicationHeartbeat/TimeSource" );};
 };
 xml_frame
 {

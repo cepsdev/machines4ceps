@@ -198,7 +198,7 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 		else {
 			std::string  func_name;
 			if (!read_func_call_values(this,args[1], func_name,fargs))
-				fatal_(-1,"Internal Error.");
+				fatal_(-1,"Internal Error: State_machine_simulation_core::exec_action_timer:read_func_call_values.");
 
 			if (is_global_event(func_name))
 			{
@@ -1389,7 +1389,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			std::vector<ceps::ast::Nodebase_ptr> args;
 			std::string  func_name;
 			if (!read_func_call_values(this,n, func_name,args))
-				fatal_(-1,"Internal Error.");
+				fatal_(-1,"Internal Error:State_machine_simulation_core::execute_action_seq");
 
 			if (is_global_event(func_name))
 			{

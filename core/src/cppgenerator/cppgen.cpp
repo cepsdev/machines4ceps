@@ -1237,6 +1237,14 @@ void Cppgenerator::write_cpp_expr_impl(State_machine_simulation_core* smp,
 		if ("truncate" == name(id))os << "((int)";
 		else if ("changed" == name(id)){
 			os << sysstates_namespace << "::" << value(as_string_ref(args[0])) << ".changed()";return;
+		}else if ( "abs" == name(id)){
+			os << "std::abs(";
+			for(size_t i = 0; i != args.size();++i){
+			 write_cpp_expr_impl(smp,indent,os,args[i],cur_sm,parameters,true);
+	 		 if (i+1<args.size()) os << " , ";
+			}
+			os << ")";
+			return;
 		}
 		else if ("as_int" == name(id) || "as_double" == name(id) || "as_string" == name(id) || "empty" == name(id)){
 			os << "smcore_interface->"<<name(id)<<"(";
@@ -1902,6 +1910,7 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	o_hpp << out_hpp_prefix << "\n";
 
 	o_cpp << "\n\n#include \""<< out_hpp <<"\"\n\n";
+	o_cpp << "#include<cmath>\nusing namespace std;\n";
 
 	//Systemstates section
 	o_hpp << "namespace "<< sysstates_namespace <<"{\n";

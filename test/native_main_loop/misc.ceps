@@ -1,0 +1,52 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Event E,F,G,H;
+Systemstate a,b,c,d,e,f,g,h;
+Globals{
+ a = 0;
+ b = 1.1;
+ c = 1.2;
+ d = 1.3;
+ e = "Hello,World!";
+ 
+};
+
+Statemachine{
+ id{S;};
+ States{Initial;};
+ Actions{
+  a1{
+   print("S.a1:\n");
+   F(b,2.2);
+  };
+  a2{
+   print("S.a2:\n");
+   print ("argv(1) = ", argv(1),"\n");
+   print ("argv(1) < 1.2 = ", ( argv(1) < 1.2 ) ,"\n");
+   print ("argv(1) > 1.2 = ", ( argv(1) > 1.2 ) ,"\n");
+   if (argv(1) > c ){
+    print("argv(1) > c\n");
+   }
+   if (argv(1) < c ){
+    print("argv(1) < c\n");
+   }
+   if (  c > argv(1) ){
+    print("argv(1) < c\n");
+   }
+   if ( c < argv(1)  ){
+    print("argv(1) > c\n");
+   }
+
+  };
+ };
+ Transition{Initial;Initial;E;a1;};
+ Transition{Initial;Initial;F;a2;};
+
+};
+
+Simulation{
+ Start{S;};
+ E;
+};

@@ -41,7 +41,7 @@ namespace sm4ceps_plugin_int{
  };
 
 
- double abs(Variant const &v);
+ //double abs(Variant const &v);
 
 
  bool operator == (Variant const & lhs, std::string const & rhs);

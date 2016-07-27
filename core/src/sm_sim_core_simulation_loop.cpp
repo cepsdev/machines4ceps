@@ -21,6 +21,7 @@ void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,i
 			on_enter[sms]();
 
 		}
+
 	}
 void executionloop_context_t::do_enter(State_machine_simulation_core* smc,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 
