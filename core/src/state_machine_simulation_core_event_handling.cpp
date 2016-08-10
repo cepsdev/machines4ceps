@@ -164,7 +164,6 @@ do{
 			 }
 
 			 ev.sid_ = eev.id_;
-
              if (map_ceps_payload_to_native_ && eev.payload_.size()){
                 eev.payload_native_.clear();
                for(auto v : eev.payload_){
