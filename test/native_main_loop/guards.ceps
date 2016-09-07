@@ -3,22 +3,34 @@ kind Systemstate;
 kind Guard;
 
 Event E,F,G;
-Guard g1,g2,g3;
-Systemstate s1,s2,s3;
+Guard g1,g2,g3,g4,g5,g6,g7,g8,g9;
+Systemstate s1,s2,s3,s4;
 
 export{G;};
 
 
 Statemachine{
  id{S0;};
+ Actions{
+  a1{print("S0.a1\n");};
+  a2{print("S0.a2\n");};
+ };
  States{Initial;a;b;c;};
- Transition{Initial;a;g2;};
- Transition{Initial;b;g1;};
+ Transition{Initial;a;g2 && !g7;a1;};
+ Transition{Initial;b;g1 && !g8;a2;};
 };
 
 Globals{
- g1 = 1;
- g2 = 0;
+ s1 = 1; s2 = 0; s3 = 0;s4 = 0;
+ g5 = 1;
+ g6 = 1;
+ g3 = (0 != s1) || g9;
+ g4 = (0 != s2);
+ g1 = !g5 &&  ( ( s3  >=  s4 ) ||  g3 );
+ g2 = !g6 &&  ( ( s3  <=  s4 ) ||  g4 );
+ g7 = 0;
+ g8 = 0;
+ g9 = s3 +1 == s4; 
 };
 
 Simulation{

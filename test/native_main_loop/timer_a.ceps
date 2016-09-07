@@ -11,7 +11,15 @@ export{G;};
 Statemachine{
  id{S1;};
  States{Initial;Final;A;B;C;};
- on_enter{start_timer(2.0*s,E);start_timer(2.1*s,F);start_timer(2.2*s,G);start_timer(2.3*s,H);start_periodic_timer(2.4*s,I,i);G;G(1,2,3,1.1,2.2,"hallo");};
+ on_enter{
+  start_timer(2.0*s,E);
+  start_timer(2.1*s,F);
+  start_timer(2.2*s,G);
+  start_timer(2.3*s,H);
+  start_periodic_timer(2.4*s,I,i);
+  //G;
+  //G(1,2,3,1.1,2.2,"hallo");
+ };
 Actions{killi{stop_timer(i);};};
  Transition{Initial;A;G;};
  Transition{A;B;H;killi;};

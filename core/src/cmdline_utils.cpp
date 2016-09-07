@@ -241,6 +241,8 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv)
 			else if (arg == "--ignore_unresolved_state_id_in_directives" || arg == "--iursd") {r.ignore_unresolved_state_id_in_directives = true; continue;}
 			else if (arg == "--ignore_simulations") {r.ignore_simulations=true; continue;}
 			else if (arg == "--cppgen_ignore_print") {r.cppgen_ignore_print=true;continue;}
+			else if (arg == "--cppgen_statemachines") {r.cppgen_statemachines=true;continue;}
+
 
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {

@@ -59,6 +59,7 @@ struct Result_process_cmd_line
 	bool ignore_unresolved_state_id_in_directives = false;
 	bool cppgen = false;
 	bool cppgen_ignore_print = false;
+	bool cppgen_statemachines = false;
     bool enforce_native = false;
     bool ignore_simulations = false;
 

@@ -1555,6 +1555,48 @@ void State_machine_simulation_core::register_plugin_fn(std::string const & id,sm
 	name_to_smcore_plugin_fn[id] = fn;
 }
 
+void* State_machine_simulation_core::create_sm(std::string name, std::string full_name,int depth, int order){
+	auto sm = new State_machine(order,name,nullptr,depth);
+	State_machine::statemachines[full_name] = sm;
+	set_qualified_id(sm,full_name);
+	return sm;
+}
+
+bool State_machine_simulation_core::sm_set_parent(void * sm, void * parent){
+	if (sm == nullptr) return false;
+	((State_machine*)sm)->parent_ = (State_machine*)parent;
+	return true;
+}
+
+bool State_machine_simulation_core::sm_add_child(void* sm, void * child){
+	if (sm == nullptr || child == nullptr) return false;
+	((State_machine*)sm)->add_child((State_machine*)child);
+	return true;
+}
+bool State_machine_simulation_core::sm_set_misc_attributes(void* sm_, bool is_thread, bool contains_threads, bool complete, bool join, bool idx){
+	if (sm_ == nullptr) return false;
+	auto sm = (State_machine*)sm_;
+	sm->is_thread_ = is_thread;
+	sm->contains_threads_ = contains_threads;
+	sm->complete_ = complete;
+	sm->join_ = join;
+	sm->idx_ = idx;
+	return true;
+}
+
+void State_machine_simulation_core::sm_add_state(void* sm_, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx ){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+	State_machine::State* s = new State_machine::State(id);
+	s->id_ = id; s->is_sm_ = is_sm; s->smp_ = (State_machine*)smp; s->parent_ = (State_machine*)parent;s->unresolved_ = unresolved;s->idx_ = idx;
+	sm->states_.insert(s);
+}
+
+void* State_machine_simulation_core::get_sm(std::string name){
+ return State_machine::statemachines[name];
+}
+
+
 
 
 

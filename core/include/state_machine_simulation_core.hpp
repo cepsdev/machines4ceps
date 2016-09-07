@@ -821,6 +821,13 @@ public:
 	double as_double(sm4ceps_plugin_int::xml_node_set&);
 	std::string as_string(sm4ceps_plugin_int::xml_node_set&);
 	bool empty(sm4ceps_plugin_int::xml_node_set&);
+	void* create_sm(std::string name, std::string full_name,int depth, int order);
+	void* get_sm(std::string name);
+	bool sm_set_parent(void * sm, void * parent);
+	bool sm_add_child(void* sm, void * child);
+	bool sm_set_misc_attributes(void* sm, bool is_thread, bool contains_threads, bool complete, bool join, bool idx);
+	void sm_add_state(void* sm, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx );
+
 
 
 
