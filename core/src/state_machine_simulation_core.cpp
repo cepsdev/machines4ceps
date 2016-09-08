@@ -1555,6 +1555,10 @@ void State_machine_simulation_core::register_plugin_fn(std::string const & id,sm
 	name_to_smcore_plugin_fn[id] = fn;
 }
 
+void State_machine_simulation_core::drop_all_sms(){
+	State_machine::statemachines.clear();
+}
+
 void* State_machine_simulation_core::create_sm(std::string name, std::string full_name,int depth, int order){
 	auto sm = new State_machine(order,name,nullptr,depth);
 	State_machine::statemachines[full_name] = sm;
@@ -1591,6 +1595,88 @@ void State_machine_simulation_core::sm_add_state(void* sm_, std::string id, bool
 	s->id_ = id; s->is_sm_ = is_sm; s->smp_ = (State_machine*)smp; s->parent_ = (State_machine*)parent;s->unresolved_ = unresolved;s->idx_ = idx;
 	sm->states_.insert(s);
 }
+
+void State_machine_simulation_core::sm_add_transition(void* sm_,int slot, std::string guard, void * orig_parent){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+	State_machine::Transition * tp = nullptr;
+	if (slot < 0) {sm->transitions().push_back(State_machine::Transition());tp = &sm->transitions()[sm->transitions().size()-1];}
+	else {sm->threads()[slot].push_back(State_machine::Transition());tp = &sm->threads()[slot][sm->threads()[slot].size()-1];}
+
+	tp->guard_ = guard;
+	tp->orig_parent_ = (State_machine*)orig_parent;
+}
+void State_machine_simulation_core::sm_transition_set_from(void* sm_,int slot, std::string id , bool is_sm ,
+		                                                   void * smp, void * parent, bool unresolved, int idx){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+	State_machine::Transition * tp = nullptr;
+	if (slot < 0) tp = &sm->transitions()[sm->transitions().size()-1];
+	else tp = &sm->threads()[slot][sm->threads()[slot].size()-1];
+
+	tp->from_.id_ = id;
+	tp->from_.idx_ = idx;
+	tp->from_.is_sm_ = is_sm;
+	tp->from_.parent_ = (State_machine*) parent;
+	tp->from_.smp_ = (State_machine*) smp;
+	tp->from_.unresolved_ = unresolved;
+}
+
+void State_machine_simulation_core::sm_transition_set_to(void* sm_,int slot, std::string id , bool is_sm ,
+		                                                   void * smp, void * parent, bool unresolved, int idx){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+	State_machine::Transition * tp = nullptr;
+	if (slot < 0) tp = &sm->transitions()[sm->transitions().size()-1];
+	else tp = &sm->threads()[slot][sm->threads()[slot].size()-1];
+
+	tp->to_.id_ = id;
+	tp->to_.idx_ = idx;
+	tp->to_.is_sm_ = is_sm;
+	tp->to_.parent_ = (State_machine*) parent;
+	tp->to_.smp_ = (State_machine*) smp;
+	tp->to_.unresolved_ = unresolved;
+}
+void State_machine_simulation_core::sm_transition_add_ev(void* sm_,int slot,std::string id, int idx){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+	State_machine::Transition * tp = nullptr;
+	if (slot < 0) tp = &sm->transitions()[sm->transitions().size()-1];
+	else tp = &sm->threads()[slot][sm->threads()[slot].size()-1];
+
+	State_machine::Transition::Event ev;
+	ev.id_ = id;
+	ev.evid_ = idx;
+	tp->events_.insert(ev);
+}
+void State_machine_simulation_core::sm_transition_add_action(void* sm_,int slot,std::string id, void* assoc_sm){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+	State_machine::Transition * tp = nullptr;
+	if (slot < 0) tp = &sm->transitions()[sm->transitions().size()-1];
+	else tp = &sm->threads()[slot][sm->threads()[slot].size()-1];
+
+	State_machine::Transition::Action ac;
+	ac.associated_sm_ = (State_machine*)assoc_sm;
+	ac.id_ = id;
+	tp->actions().push_back(ac);
+}
+
+void State_machine_simulation_core::sm_transition_add_action(void* sm_,std::string id, void* assoc_sm){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+	State_machine::Transition::Action ac;
+	ac.associated_sm_ = (State_machine*)assoc_sm;
+	ac.id_ = id;
+	sm->actions().push_back(ac);
+}
+
 
 void* State_machine_simulation_core::get_sm(std::string name){
  return State_machine::statemachines[name];

@@ -1788,6 +1788,7 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
 
 	os << "\nstatic void create_statemachines(){\n";
 	indent.indent_incr();
+	os << "smcore_interface->drop_all_sms();\n";
 	std::unordered_map<State_machine*,std::string> sm2n;
 	for (auto sm : State_machine::statemachines) sm2n[sm.second] = "smcore_interface->get_sm(\"" + sm.first+"\")";
 
@@ -1838,10 +1839,16 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
 
 	};
 	for (auto sm : State_machine::statemachines){
+     indent.print_indentation(os);
+     os << "smcore_interface->create_sm(\""<< sm.second->id() <<"\", \""<< sm.first <<"\", "<< sm.second->depth_ << " ,"<< sm.second->order_ << ");\n";
+
+	}
+	for (auto sm : State_machine::statemachines){
 	 indent.print_indentation(os);
 	 os <<"\n// "<< sm.first << "\n\n";
 	 indent.print_indentation(os);
-     os << "{auto t=smcore_interface->create_sm(\""<< sm.second->id() <<"\", \""<< sm.first <<"\", "<< sm.second->depth_ << " ,"<< sm.second->order_ << ");\n";
+     //os << "{auto t=smcore_interface->create_sm(\""<< sm.second->id() <<"\", \""<< sm.first <<"\", "<< sm.second->depth_ << " ,"<< sm.second->order_ << ");\n";
+     os << "{auto t=smcore_interface->get_sm(\""<< sm.first <<"\");\n";
 
      for(auto const & t : sm.second->transitions_) handle_transition(t,-1,sm.first);
 
@@ -1868,6 +1875,15 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
     	 os << ", " << s->idx_;
     	 os << ");\n";
      }
+
+     if (sm.second->actions().size())
+     {indent.print_indentation(os);os << "\n// "<< sm.first <<" Actions\n\n";}
+	 for(auto const & a : sm.second->actions()){
+		 indent.print_indentation(os);
+		 if (a.associated_sm_ == nullptr) os << "smcore_interface->sm_transition_add_action(t,\""<< a.id_ << "\", nullptr);\n";
+		 else os << "smcore_interface->sm_transition_add_action(t,\""<< a.id_ << "\","<< sm2n[a.associated_sm_] <<");\n";
+	 }
+
      if (sm.second->children().size())
      {indent.print_indentation(os);os << "\n// Children\n\n";}
      for (auto p: sm.second->children()){
@@ -2009,8 +2025,12 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	std::ofstream o_cpp{out_cpp = "out.cpp"};
 	std::ofstream o_hpp{out_hpp = "out.hpp"};
 	std::stringstream init_plugin_content;
+	if (cppgenerator.gen_code_for_statemachines()) init_plugin_content << "static void create_statemachines();\n";
 	init_plugin_content << "extern \"C\" void init_plugin(IUserdefined_function_registry* smc){\n";
 	init_plugin_content << "smcore_interface = smc->get_plugin_interface();\n";
+	if (cppgenerator.gen_code_for_statemachines()){
+		init_plugin_content << "create_statemachines();\n";
+	}
 	init_plugin_content << "smc->register_global_init(user_defined_init);\n";
 
 	write_copyright_and_timestamp(o_cpp,out_cpp,true,result_cmd_line);

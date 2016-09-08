@@ -345,11 +345,14 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 bool State_machine_simulation_core::register_action_impl(std::string state_machine_id,
 		                                                 std::string action,
 														 void(*fn)(),State_machine* parent){
+	std::cerr << state_machine_id  << std::endl;
 	if (state_machine_id.length() == 0)
 	{
 		if (parent == nullptr) return false;
+		std::cerr << sm_to_id_[parent] <<"."<< action << std::endl;
 		bool r = false;
 		for(auto & a : parent->actions()){
+			std::cerr << a.id_ << std::endl;
 			if (a.id_ != action) continue;
 			a.native_func() = fn;
 			r = true;
@@ -374,6 +377,7 @@ bool State_machine_simulation_core::register_action_impl(std::string state_machi
 			}
 		 }
 		}
+		std::cerr << r << std::endl;
 		return r;
 	}
 

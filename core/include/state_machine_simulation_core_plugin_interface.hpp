@@ -125,12 +125,20 @@ public:
  virtual std::string as_string(sm4ceps_plugin_int::xml_node_set&) = 0;
  virtual bool empty(sm4ceps_plugin_int::xml_node_set&) = 0;
  virtual bool register_raw_frame_generator_framectxt(std::string,sm4ceps_plugin_int::Framecontext*) = 0;
+ virtual void drop_all_sms() = 0;
  virtual void* create_sm(std::string name, std::string full_name,int depth, int order) = 0;
  virtual void* get_sm(std::string name) = 0;
  virtual bool sm_set_parent(void * sm, void * parent) = 0;
  virtual bool sm_add_child(void* sm, void * child) = 0;
  virtual bool sm_set_misc_attributes(void* sm, bool is_thread, bool contains_threads, bool complete, bool join, bool idx) = 0;
  virtual void sm_add_state(void* sm, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx ) = 0;
+ virtual void sm_add_transition(void* sm,int slot, std::string guard, void * orig_parent) = 0;
+ virtual void sm_transition_set_from(void* sm,int slot, std::string id , bool is_sm ,void * smp, void * parent, bool unresolved, int idx) = 0;
+ virtual void sm_transition_set_to(void* sm,int slot, std::string id , bool is_sm ,void * smp, void * parent, bool unresolved, int idx) = 0;
+ virtual void sm_transition_add_ev(void* sm,int slot,std::string id, int idx) = 0;
+ virtual void sm_transition_add_action(void* sm,int slot,std::string id, void* assoc_sm) = 0;
+ virtual void sm_transition_add_action(void* sm,std::string id, void* assoc_sm) = 0;
+
 };
 
 #endif
