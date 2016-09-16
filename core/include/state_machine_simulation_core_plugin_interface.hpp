@@ -138,7 +138,8 @@ public:
  virtual void sm_transition_add_ev(void* sm,int slot,std::string id, int idx) = 0;
  virtual void sm_transition_add_action(void* sm,int slot,std::string id, void* assoc_sm) = 0;
  virtual void sm_transition_add_action(void* sm,std::string id, void* assoc_sm) = 0;
-
+ virtual void sm_set_join_state(void* sm, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx ) = 0;
+ virtual void sm_add_ref_to_sm_at_least_one_transition_was_moved_to(void* sm, void* sm_to) = 0;
 };
 
 #endif

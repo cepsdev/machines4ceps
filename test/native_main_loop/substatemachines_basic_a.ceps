@@ -107,9 +107,38 @@ Statemachine{
  Transition{state_a;S2;F;t3;};
 };
 
+Statemachine{
+ id{S3;};
+ States{Initial;a;b;c;joinstate;};
+ join{joinstate;};
+ Actions{
+  a1{print("\n\n#############--------->S3.a1\n");};
+ };
+
+ thread{States{Initial;Final;a;b;c;}; 
+  Transition{Initial;a;};
+  Transition{a;Final;E;};
+ };
+ thread{States{Initial;Final;a;b;c;}; 
+  Transition{Initial;b;};
+  Transition{b;Final;F;};
+ };
+ Statemachine{
+  id{S1;};
+  States{Initial;};
+ };
+ Statemachine{
+  id{S2;};
+ States{Initial;};
+ };
+
+ Transition{Initial;S1;};
+ Transition{S1;S2;D;a1;};
+
+};
 
 Simulation{
- Start{S1;};
+ Start{S1;S3;};
  A;B;C;D;E;F;
 };
 

@@ -12,8 +12,13 @@ Statemachine{
 };
 
 
+Statemachine{
+ id{S3;}; 
+};
+
+
 Simulation{
- Start{S1;};
+ Start{S1;S3;};
  A;B;C;D;E;F;
 };
 

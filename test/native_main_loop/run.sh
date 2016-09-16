@@ -39,7 +39,24 @@ else
    echo -e "\e[38;5;28m passed \e[0m"
   fi
 fi
- 
+ echo -en "Test \e[4msubstatemachines_basic_a (cppgen with dump of statemachines)\e[0m:"
+./run_substatemachines_basic_a_cppgen_statemachines.sh > substatemachines_basic_a/log_cppgen_statemachines.txt
+if [ $? -ne 0 ]; then
+  echo -e "\e[38;5;196m failed"
+  echo "..."
+  tail  substatemachines_basic_a/log_cppgen_statemachines.txt --lines=25
+  echo -e "\e[0m"
+else
+ diff substatemachines_basic_a/log_cppgen_statemachines.txt substatemachines_basic_a/expected_log_cppgen_sm.txt > substatemachines_basic_a/diff2.log
+ if [ $? -ne 0 ]; then
+   echo -e "\e[38;5;196m failed"
+   cat substatemachines_basic_a/diff2.log
+   echo -e "\e[0m"
+ else
+   echo -e "\e[38;5;28m passed \e[0m"
+  fi
+fi
+
 echo -en "Test \e[4mtimer_a\e[0m:"
 ./run_timer_a.sh > timer_a/log.txt
 if [ $? -ne 0 ]; then

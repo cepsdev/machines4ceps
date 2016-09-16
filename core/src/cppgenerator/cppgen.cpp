@@ -1786,7 +1786,28 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
 					                 Indent& indent,
 									 std::ostream& os){
 
-	os << "\nstatic void create_statemachines(){\n";
+	os << R"(
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <map>
+#include <vector>
+#include <cstdlib>
+#include <cstring>
+#include <sstream>
+#include "core/include/state_machine_simulation_core_reg_fun.hpp"
+
+
+)";
+
+	int n_sms = 0;
+	for (auto sm : State_machine::statemachines){
+		++n_sms;
+        indent.print_indentation(os);
+        os << "void create_statemachine"<< n_sms <<"(Ism4ceps_plugin_interface*);\n";
+	}
+
+	os << "\nvoid create_statemachines(IUserdefined_function_registry* smc){auto smcore_interface=smc->get_plugin_interface();\n";
 	indent.indent_incr();
 	os << "smcore_interface->drop_all_sms();\n";
 	std::unordered_map<State_machine*,std::string> sm2n;
@@ -1837,18 +1858,45 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
 	    		 else os << "smcore_interface->sm_transition_add_action(t,"<< w <<",\""<< a.id_ << "\","<< sm2n[a.associated_sm_] <<");\n";
 	    	 }
 
+
 	};
 	for (auto sm : State_machine::statemachines){
      indent.print_indentation(os);
      os << "smcore_interface->create_sm(\""<< sm.second->id() <<"\", \""<< sm.first <<"\", "<< sm.second->depth_ << " ,"<< sm.second->order_ << ");\n";
 
 	}
+
+	{
+		int i = 0;
+		for (auto sm : State_machine::statemachines){
+			++i;
+			indent.print_indentation(os);
+			os << "create_statemachine"<<i<<"(smcore_interface);\n";
+		}
+	}
+	indent.print_indentation(os);
+	os << "}\n\n";
+
+	int scounter = 0;
 	for (auto sm : State_machine::statemachines){
+	 ++scounter;
+	 indent.print_indentation(os);
+	 os << "void create_statemachine"<<scounter<<"(Ism4ceps_plugin_interface* smcore_interface){\n";
+
 	 indent.print_indentation(os);
 	 os <<"\n// "<< sm.first << "\n\n";
 	 indent.print_indentation(os);
      //os << "{auto t=smcore_interface->create_sm(\""<< sm.second->id() <<"\", \""<< sm.first <<"\", "<< sm.second->depth_ << " ,"<< sm.second->order_ << ");\n";
      os << "{auto t=smcore_interface->get_sm(\""<< sm.first <<"\");\n";
+
+
+	 indent.print_indentation(os);
+	 os << "smcore_interface->sm_set_misc_attributes(t,"<<sm.second->is_thread_<<","
+	    << sm.second->contains_threads_<<","
+		<< sm.second->complete_<<","
+		<< sm.second->join_<<","
+		<< sm.second->idx_
+	    << ");\n";
 
      for(auto const & t : sm.second->transitions_) handle_transition(t,-1,sm.first);
 
@@ -1875,6 +1923,21 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
     	 os << ", " << s->idx_;
     	 os << ");\n";
      }
+     if(sm.second->join_){
+    	 auto s = &sm.second->join_state_;
+    	 indent.print_indentation(os);
+    	 os << "smcore_interface->sm_set_join_state(t";
+    	 os << ", \"" << s->id_<<"\"";
+    	 os << ", " << s->is_sm_;
+    	 if (s->smp_ == nullptr) os << ", nullptr";
+    	 else os << " ," << sm2n[s->smp_];
+    	 if (s->parent_ == nullptr) os << ", nullptr";
+    	 else os << " ," << sm2n[s->parent_];
+    	 os << ", " << s->unresolved_;
+    	 os << ", " << s->idx_;
+    	 os << ");\n";
+
+     }
 
      if (sm.second->actions().size())
      {indent.print_indentation(os);os << "\n// "<< sm.first <<" Actions\n\n";}
@@ -1891,13 +1954,6 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
     		 if (pp.second != p) continue;
          	 indent.print_indentation(os);
         	 os << "smcore_interface->sm_add_child(t,smcore_interface->get_sm(\""<<pp.first<<"\"));\n";
-        	 indent.print_indentation(os);
-        	 os << "smcore_interface->sm_set_misc_attributes(t,"<<sm.second->is_thread_<<","
-        	    << sm.second->contains_threads_<<","
-				<< sm.second->complete_<<","
-				<< sm.second->join_<<","
-				<< sm.second->idx_
-        	    << ");\n";
     		 break;
     	 }
      }
@@ -1907,11 +1963,20 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
     	 os << "smcore_interface->sm_set_parent(t,smcore_interface->get_sm(\""<<p.first<<"\"));";
     	 break;
      }
-     os << "}\n";
+
+
+     for(auto s : sm.second->smps_containing_moved_transitions_){
+    	 indent.print_indentation(os);
+    	 os << "smcore_interface->sm_add_ref_to_sm_at_least_one_transition_was_moved_to(smcore_interface->get_sm(\""<<sm.first<<"\"),"<<
+    			 sm2n[s]
+    		<<");\n";
+     }
+
+     os << "}}\n";
 	}
 
 	indent.indent_decr();
-	os << "}\n";
+	//os << "}\n";
 }
 
 void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,
@@ -2025,18 +2090,22 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 	std::ofstream o_cpp{out_cpp = "out.cpp"};
 	std::ofstream o_hpp{out_hpp = "out.hpp"};
 	std::stringstream init_plugin_content;
-	if (cppgenerator.gen_code_for_statemachines()) init_plugin_content << "static void create_statemachines();\n";
+	std::ofstream* create_statemachines_content= nullptr;
+	if (cppgenerator.gen_code_for_statemachines()) {
+		create_statemachines_content = new std::ofstream("out_create_statemachines.cpp");
+		init_plugin_content <<"void create_statemachines(IUserdefined_function_registry* smc);\n";
+	}
 	init_plugin_content << "extern \"C\" void init_plugin(IUserdefined_function_registry* smc){\n";
 	init_plugin_content << "smcore_interface = smc->get_plugin_interface();\n";
 	if (cppgenerator.gen_code_for_statemachines()){
-		init_plugin_content << "create_statemachines();\n";
+		init_plugin_content << "create_statemachines(smc);\n";
 	}
 	init_plugin_content << "smc->register_global_init(user_defined_init);\n";
 
 	write_copyright_and_timestamp(o_cpp,out_cpp,true,result_cmd_line);
 	write_copyright_and_timestamp(o_hpp,out_hpp,true,result_cmd_line);
 
-	Indent indent_hpp;Indent indent_cpp;
+	Indent indent_hpp;Indent indent_cpp;Indent indent_create_statemachines;
 
 	o_hpp << R"(
 #ifndef INC_SM4CEPS_GEN_OUT_HPP
@@ -2322,12 +2391,14 @@ void State_machine_simulation_core::do_generate_cpp_code(ceps::Ceps_Environment&
 
 
 	if (cppgenerator.gen_code_for_statemachines()){
-	    o_cpp << "\n\n";
-	    o_cpp << R"(// --cppgen_statemachines )";
+		*create_statemachines_content << "\n\n";
+	    *create_statemachines_content << R"(// --cppgen_statemachines )";
 		cppgenerator.write_sms_create_func(this,
-										 indent_cpp,
-						                 o_cpp);
-		o_cpp << "\n\n";
+										 indent_create_statemachines,
+						                 *create_statemachines_content);
+		*create_statemachines_content<< "\n\n";
+		create_statemachines_content->close();
+		delete create_statemachines_content;
 	}
 
 	o_hpp << "std::ostream& operator << (std::ostream& o, systemstates::Variant const & v);\n";

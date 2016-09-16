@@ -1677,6 +1677,25 @@ void State_machine_simulation_core::sm_transition_add_action(void* sm_,std::stri
 	sm->actions().push_back(ac);
 }
 
+void State_machine_simulation_core::sm_set_join_state(void* sm_, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx ){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+    sm->join_state_.id_ = id;
+    sm->join_state_.is_sm_ = is_sm;
+    sm->join_state_.smp_ = (State_machine*)smp;
+    sm->join_state_.parent_ = (State_machine*)parent;
+    sm->join_state_.unresolved_ = unresolved;
+    sm->join_state_.idx_ =idx;
+}
+void State_machine_simulation_core::sm_add_ref_to_sm_at_least_one_transition_was_moved_to(void* sm_, void* sm_to){
+	if (sm_ == nullptr) return;
+	auto sm = (State_machine*)sm_;
+
+	sm->smps_containing_moved_transitions_.push_back((State_machine*) sm_to);
+}
+
+
 
 void* State_machine_simulation_core::get_sm(std::string name){
  return State_machine::statemachines[name];

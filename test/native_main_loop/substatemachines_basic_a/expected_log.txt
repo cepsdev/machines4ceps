@@ -1,6 +1,17 @@
 [SIMULATION STARTED]
-[ACTIVE STATES] S1 S1.Initial 
+[ACTIVE STATES] S1 S1.Initial S3 S3.Initial S3.thread_1 S3.thread_1.Initial S3.thread_2 S3.thread_2.Initial 
 S1::on_enter
+[PROCESSING EVENT] null
+[TRIGGERED TRANSITIONS]
+ S3.Initial => S3.S1
+ S3.thread_1.Initial => S3.thread_1.a
+ S3.thread_2.Initial => S3.thread_2.b
+[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.Initial S3 S3.S1 S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[CHANGES] S3.Initial- S3.S1+ S3.S1.Initial+ S3.thread_1.Initial- S3.thread_1.a+ S3.thread_2.Initial- S3.thread_2.b+ 
+[ACTIVE STATES] S1 S1.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[ITERATION END]
 [PROCESSING EVENT] null
 [NO TRANSITIONS TRIGGERED]
 [ITERATION END]
@@ -8,14 +19,14 @@ S1::on_enter
 [TRIGGERED TRANSITIONS]
  S1.Initial => S1.S1a
  S1.Initial => S1.state_a
-[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a 
-[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial 
-[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial 
+[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 S1:: Initial-> S1::S1a
 S1:: Initial-> state_a
 S1::S1a::on_enter
 [CHANGES] S1.Initial- S1.state_a+ S1.S1a+ S1.S1a.Initial+ 
-[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial 
+[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 [ITERATION END]
 [PROCESSING EVENT] null
 [NO TRANSITIONS TRIGGERED]
@@ -24,14 +35,14 @@ S1::S1a::on_enter
 [TRIGGERED TRANSITIONS]
  S1.S1a.Initial => S1.S1a.S1aa
  S1.S1a.Initial => S1.S1a.Initial
-[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa 
-[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial 
-[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial 
+[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 S1::S1a Initial-> S1::S1a::S1aa
 S1::S1a Initial-> Initial
 S1::S1a::S1aa::on_enter
 [CHANGES] S1.S1a.S1aa+ S1.S1a.S1aa.Initial+ 
-[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial 
+[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 [ITERATION END]
 [PROCESSING EVENT] null
 [NO TRANSITIONS TRIGGERED]
@@ -39,17 +50,17 @@ S1::S1a::S1aa::on_enter
 [PROCESSING EVENT] C
 [TRIGGERED TRANSITIONS]
  S1.S1a.S1aa => S1.S1a.S1ab
-[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa.Initial S1.S1a.S1ab 
-[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial 
-[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S1.S1a.S1aa":  S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial 
+[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa.Initial S1.S1a.S1ab S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S1.S1a.S1aa":  S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 [ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] "S1.S1a"
 [ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] "S1.S1a.S1aa"
-[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial 
+[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 S1::S1a::S1aa::on_exit
 S1::S1a S1aa -> S1ab
 S1::S1a::S1ab::on_enter
 [CHANGES] S1.S1a.S1aa- S1.S1a.S1aa.Initial- S1.S1a.S1ab+ S1.S1a.S1ab.Initial+ 
-[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial 
+[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab S1.S1a.S1ab.Initial S3 S3.S1 S3.S1.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 [ITERATION END]
 [PROCESSING EVENT] null
 [NO TRANSITIONS TRIGGERED]
@@ -57,17 +68,24 @@ S1::S1a::S1ab::on_enter
 [PROCESSING EVENT] D
 [TRIGGERED TRANSITIONS]
  S1.S1a.S1ab => S1.S1a.S1ac
-[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab.Initial S1.S1a.S1ac 
-[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial 
-[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S1.S1a.S1ab":  S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial 
+ S3.S1 => S3.S2
+[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab.Initial S1.S1a.S1ac S3 S3.S1.Initial S3.S2 S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ab.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial S3 S3.S1.Initial S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S1.S1a.S1ab":  S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial S3 S3.S1.Initial S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 [ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] "S1.S1a"
 [ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] "S1.S1a.S1ab"
-[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial 
+[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S3.S1":  S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
+[ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] "S3"
+[ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] "S3.S1"
+[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 S1::S1a::S1ab::on_exit
 S1::S1a S1ab -> S1ac
+
+
+#############--------->S3.a1
 S1::S1a::S1ac::on_enter
-[CHANGES] S1.S1a.S1ab- S1.S1a.S1ab.Initial- S1.S1a.S1ac+ S1.S1a.S1ac.Initial+ 
-[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial 
+[CHANGES] S1.S1a.S1ab- S1.S1a.S1ab.Initial- S1.S1a.S1ac+ S1.S1a.S1ac.Initial+ S3.S1- S3.S1.Initial- S3.S2+ S3.S2.Initial+ 
+[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1ac S1.S1a.S1ac.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.a S3.thread_2 S3.thread_2.b 
 [ITERATION END]
 [PROCESSING EVENT] null
 [NO TRANSITIONS TRIGGERED]
@@ -75,17 +93,23 @@ S1::S1a::S1ac::on_enter
 [PROCESSING EVENT] E
 [TRIGGERED TRANSITIONS]
  S1.S1a.S1ac => S1.S1a.S1aa
-[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1ac.Initial 
-[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S1.S1a.S1ac.Initial 
-[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S1.S1a.S1ac":  S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial 
+ S3.thread_1.a => S3.thread_1.Final
+[THREAD_REGION_CHECK_FOR_JOIN] Statemachine=="S3"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_THREAD] thread=="S3.thread_1"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_FINAL_OF_THREAD] final=="S3.thread_1.Final"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_THREAD] thread=="S3.thread_2"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_FINAL_OF_THREAD] final=="S3.thread_2.Final"
+[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1ac.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.Final S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S1.S1a.S1ac.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.Final S3.thread_2 S3.thread_2.b 
+[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S1.S1a.S1ac":  S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.Final S3.thread_2 S3.thread_2.b 
 [ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] "S1.S1a"
 [ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] "S1.S1a.S1ac"
-[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial 
+[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.Final S3.thread_2 S3.thread_2.b 
 S1::S1a::S1ac::on_exit
 S1::S1a S1ac -> S1aa
 S1::S1a::S1aa::on_enter
-[CHANGES] S1.S1a.S1aa+ S1.S1a.S1aa.Initial+ S1.S1a.S1ac- S1.S1a.S1ac.Initial- 
-[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial 
+[CHANGES] S1.S1a.S1aa+ S1.S1a.S1aa.Initial+ S1.S1a.S1ac- S1.S1a.S1ac.Initial- S3.thread_1.Final+ S3.thread_1.a- 
+[ACTIVE STATES] S1 S1.state_a S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S3 S3.S2 S3.S2.Initial S3.thread_1 S3.thread_1.Final S3.thread_2 S3.thread_2.b 
 [ITERATION END]
 [PROCESSING EVENT] null
 [NO TRANSITIONS TRIGGERED]
@@ -93,13 +117,26 @@ S1::S1a::S1aa::on_enter
 [PROCESSING EVENT] F
 [TRIGGERED TRANSITIONS]
  S1.state_a => S2
-[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 
-[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial 
-[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial 
+ S3.thread_2.b => S3.thread_2.Final
+[THREAD_REGION_CHECK_FOR_JOIN] Statemachine=="S3"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_THREAD] thread=="S3.thread_1"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_FINAL_OF_THREAD] final=="S3.thread_1.Final"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_THREAD] thread=="S3.thread_2"
+[THREAD_REGION_CHECK_FOR_JOIN][CHECK_FINAL_OF_THREAD] final=="S3.thread_2.Final"
+[THREAD_JOIN] join state=="S3.joinstate"
+[KERNEL_STATES][BEFORE_ENTER_CLOSURE] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S3 S3.joinstate S3.S2 S3.S2.Initial S3.thread_1.Final S3.thread_2.Final 
+[KERNEL_STATES][INCLUDING_ENTER_CLOSURE] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial S3 S3.joinstate S3.S2 S3.S2.Initial S3.thread_1.Final S3.thread_2.Final 
+[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S3.thread_1":  S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial S3 S3.joinstate S3.S2 S3.S2.Initial S3.thread_2.Final 
+[ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] "S3"
+[ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] "S3.thread_1"
+[KERNEL_STATES][ON_EXIT_COMPUTATION][REMOVE_CHILDREN_OF] "S3.thread_2":  S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial S3 S3.joinstate S3.S2 S3.S2.Initial 
+[ON_EXIT_COMPUTATION][COMPUTING_EXIT_SM][CHECKING] "S3"
+[ON_EXIT_COMPUTATION][MARKED_FOR_EXIT] "S3.thread_2"
+[KERNEL_STATES][INCLUDING_EXIT_COMPUTATION] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial S3 S3.joinstate S3.S2 S3.S2.Initial 
 S1:: Initial-> S2
 S2::on_enter
-[CHANGES] S1.state_a- S2+ S2.Initial+ 
-[ACTIVE STATES] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial 
+[CHANGES] S1.state_a- S2+ S2.Initial+ S3.joinstate+ S3.thread_1- S3.thread_1.Final- S3.thread_2- S3.thread_2.b- 
+[ACTIVE STATES] S1 S1.S1a S1.S1a.Initial S1.S1a.S1aa S1.S1a.S1aa.Initial S2 S2.Initial S3 S3.joinstate S3.S2 S3.S2.Initial 
 [ITERATION END]
 [PROCESSING EVENT] null
 [NO TRANSITIONS TRIGGERED]
