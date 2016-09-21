@@ -295,28 +295,36 @@ void livelog::Livelogger::comm_stream_handler_fn(int id,struct sockaddr_storage 
 	close(sck);
 }
 
-bool livelog::Livelogger::handle_cmd(Storage::id_t last_transmitted_id,std::uint32_t cmd,int sck){
+bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelog::Livelogger::Storage * st,int sck){
+	Storage::id_t filter_id =  last_transmitted_id;
+	Storage::id_t last_transmitted_id_new;
+
+    if(!for_each_ext(*st,[&](void* data,livelog::Livelogger::Storage::chunk* ch){
+    	if (filter_id >=0 && filter_id > ch->id()) return true;
+	    if ( ::write(sck,ch,sizeof(livelog::Livelogger::Storage::chunk)) != sizeof(livelog::Livelogger::Storage::chunk)) return false;
+	    if ( ::write(sck,data,ch->len_) != ch->len_) return false;
+	    last_transmitted_id_new = ch->id();
+	    })) return false;
+    Storage::len_t sentinel = 0;
+    if ( ::write(sck,&sentinel,sizeof(sentinel)) != sizeof(sentinel)) return false;
+    last_transmitted_id = last_transmitted_id_new;
+    return true;
+}
+
+bool livelog::Livelogger::handle_cmd(Storage::id_t& last_transmitted_id,std::uint32_t cmd,int sck){
+	reg_storage_ref it;Storage::id_t temp_id = -1;
 	if (cmd == livelog::CMD_GET_NEW_LOG_ENTRIES){
 		std::lock_guard<std::mutex> lk(mutex_trans2consumer_);
-	    for_each_ext(trans_storage(),[&](void* data,livelog::Livelogger::Storage::chunk* ch){
-		    if ( ::write(sck,ch,sizeof(livelog::Livelogger::Storage::chunk)) != sizeof(livelog::Livelogger::Storage::chunk)) return false;
-		    if ( ::write(sck,data,ch->len_) != ch->len_) return false;
- 	    });
-	    Storage::len_t sentinel = 0;
-	    if ( ::write(sck,&sentinel,sizeof(sentinel)) != sizeof(sentinel)) return false;
-	    return true;
+		return send_storage(last_transmitted_id,&trans_storage(),sck);
+	}else if (reg_storage_ref_valid(it = find_storage_by_id(cmd))){
+		auto storage = std::get<0>(it->second);
+		if( std::get<1>(it->second)){
+			std::lock_guard<std::mutex> lk2( *std::get<1>(it->second));
+			return send_storage(std::get<2>(it->second),storage,sck);
+		}else return send_storage(std::get<2>(it->second),storage,sck);
 	}
 	return false;
 }
-
-
-
-
-
-
-
-
-
 
 
 

@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <endian.h>
 #include <sys/timerfd.h>
+#include <set>
+#include <unordered_map>
 
 namespace livelog{
 
@@ -69,7 +71,9 @@ private:
 	void comm_stream_dispatcher_fn();
 	void comm_stream_handler_fn(int id,struct sockaddr_storage,int sck);
 	void spawn_trans_thread();
-	bool handle_cmd(Storage::id_t,std::uint32_t cmd,int sck);
+	bool handle_cmd(Storage::id_t&,std::uint32_t cmd,int sck);
+	void fatal(int err, std::string msg);
+	void warning(int err, std::string msg);
 
 	struct Storagesstorage{
 		static constexpr std::size_t default_size = 32;
@@ -106,9 +110,10 @@ private:
 	bool shutdown_;
 	bool write_through_ = true;
 	std::string port_;
-
-	void fatal(int err, std::string msg);
-	void warning(int err, std::string msg);
+	std::unordered_map<int,std::tuple<Storage*,std::mutex*,Storage::id_t>> registered_storages_by_id_;
+	using reg_storage_ref = std::unordered_map<int,std::tuple<Storage*,std::mutex*,Storage::id_t>>::iterator;
+	bool reg_storage_ref_valid(reg_storage_ref it) {return it != registered_storages_by_id_.end();}
+	bool send_storage(Storage::id_t& last_transmitted_id,Storage *,int sck);
 
 public:
 	static constexpr std::size_t default_cis_storage_size = 8192;
@@ -133,6 +138,8 @@ public:
 	static std::size_t overhead_per_memblock();
 	bool& write_through(){return write_through_;}
 	void publish(std::string port);
+	bool register_storage(int i, Storage * s){registered_storages_by_id_[i]=std::make_tuple(s,new std::mutex,-1);}
+	reg_storage_ref find_storage_by_id(int i){return registered_storages_by_id_.find(i);}
 };
 
 
@@ -145,13 +152,14 @@ template<typename F> void for_each(Livelogger::Storage const & storage, F f){
 	}
 }
 
-template<typename F> void for_each_ext(Livelogger::Storage const & storage, F f){
+template<typename F> bool for_each_ext(Livelogger::Storage const & storage, F f){
 	auto current = storage.front();
 	while(std::get<2>(current)){
 		auto& chunk = *std::get<2>(current);
-		f(((char*)&chunk)+sizeof(chunk), &chunk);
+		if(!f(((char*)&chunk)+sizeof(chunk), &chunk)) return false;
 		current = storage.next(std::get<2>(current));
 	}
+	return true;
 }
 
 constexpr int CMD_GET_NEW_LOG_ENTRIES = 1;
