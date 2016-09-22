@@ -434,6 +434,8 @@ static void run_simulations(State_machine_simulation_core* smc,
  auto simulations = universe[all{"Simulation"}];
  if (!simulations.size()) return;
 
+ if (result_cmd_line.live_log) smc->enable_live_logging(result_cmd_line.live_log_port);
+
  for (auto simulation_ : simulations){
 	auto simulation = simulation_["Simulation"];
 	smc->process_simulation(simulation,ceps_env,universe);

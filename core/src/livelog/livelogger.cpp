@@ -1,4 +1,4 @@
-#include "core/include/livelog/sm_sim_livelogger.hpp"
+#include "core/include/livelog/livelogger.hpp"
 #include <iostream>
 
 
@@ -64,9 +64,11 @@ void livelog::Livelogger::flush(){
  cv_trigger_cis2trans_.notify_one();
 }
 
-bool livelog::Livelogger::write(livelog::Livelogger::Storage::what_t what, char* mem, Storage::len_t n){
-	if (n == 0) return true;
+bool livelog::Livelogger::check_write_preconditions(livelog::Livelogger::Storage::len_t n){
 	if(n+sizeof(Storage::chunk) > cis_storage().capacity()) return false;
+	return true;
+}
+void livelog::Livelogger::if_space_low_do_cis_to_trans_transfer(livelog::Livelogger::Storage::len_t n){
 	if (cis_storage().available_space() < n+sizeof(Storage::chunk) && write_through_){
 		std::lock_guard<std::mutex> lk(mutex_cis2trans_);
 		storagesstorage_.move_to_and_clear(cis_storage());
@@ -75,20 +77,19 @@ bool livelog::Livelogger::write(livelog::Livelogger::Storage::what_t what, char*
 		 cv_trigger_cis2trans_.notify_one();
 		}
 	}
+}
+
+bool livelog::Livelogger::write(livelog::Livelogger::Storage::what_t what, char* mem, Storage::len_t n){
+	if(!check_write_preconditions(n)) return false;
+	if_space_low_do_cis_to_trans_transfer(n);
 	cis_storage().push_back(mem,n,what);
+	return true;
 }
 bool livelog::Livelogger::reserve(livelog::Livelogger::Storage::what_t what, Storage::len_t n){
-	if (n == 0) return true;
-	if(n+sizeof(Storage::chunk) > cis_storage().capacity()) return false;
-	if (cis_storage().available_space() < n+sizeof(Storage::chunk) && write_through_){
-		std::lock_guard<std::mutex> lk(mutex_cis2trans_);
-		storagesstorage_.move_to_and_clear(cis_storage());
-		//if(storagesstorage_.size() >= storagesstorage_.storages_.size() / 3){
-		 cis_moved_to_trans_ = true;
-		 cv_trigger_cis2trans_.notify_one();
-		//}
-	}
+	if(!check_write_preconditions(n)) return false;
+	if_space_low_do_cis_to_trans_transfer(n);
 	cis_storage().push_back(nullptr,n,what);
+	return true;
 }
 
 std::tuple<void *, livelog::Livelogger::Storage::len_t,livelog::Livelogger::Storage::chunk*>

@@ -1,4 +1,5 @@
-#include "core/include/livelog/sm_sim_livelogger.hpp"
+#include "core/include/livelog/livelogger.hpp"
+#include "core/include/sm_livelog_storage_ids.hpp"
 #include <iostream>
 #include <cassert>
 #include <chrono>
@@ -53,12 +54,13 @@ int main(){
 	}*/
 	{
 		Livelogger live_logger1(404,40000);
-		live_logger1.publish("3000");
-		for(int i = 0; i != 100; ++i){
-			log(live_logger1, i);live_logger1.flush();
-			std::this_thread::sleep_for(1s);
-			//std::cout << "\nEntries in cis storage:\n";
-			//list_entries<int>(std::cout,live_logger1.trans_storage());
+		//live_logger1.write_through() = false;
+		//live_logger1.publish("3000");
+		for(int i = 0; i != 100000; ++i){
+			log(live_logger1, i);//live_logger1.flush();
+			std::cout << "\nEntries in cis storage:\n";
+			list_entries<int>(std::cout,live_logger1.trans_storage());
+			std::this_thread::sleep_for(0.01s);
 		}
 	}
 }

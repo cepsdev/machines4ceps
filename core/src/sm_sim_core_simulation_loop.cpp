@@ -1,6 +1,7 @@
 #include "core/include/state_machine_simulation_core.hpp"
 
 #include "core/include/base_defs.hpp"
+#include "core/include/sm_livelog_storage_utils.hpp"
 
 #define DONT_PRINT_DEBUG
 #define PRINT_LOG_SIM_LOOP
@@ -310,6 +311,10 @@ for(;!quit && !shutdown();)
 	 }
 	 current_event() = ev;
 	 if (ev_read) ev_id = execution_ctxt.ev_to_id[current_event().id_];
+    }
+
+    if (live_logger()){
+    	sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
     }
 
     if (ev_read && event_triggered_sender().size() && current_event().id_.length()) {

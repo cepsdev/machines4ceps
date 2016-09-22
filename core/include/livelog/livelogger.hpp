@@ -114,9 +114,11 @@ private:
 	using reg_storage_ref = std::unordered_map<int,std::tuple<Storage*,std::mutex*,Storage::id_t>>::iterator;
 	bool reg_storage_ref_valid(reg_storage_ref it) {return it != registered_storages_by_id_.end();}
 	bool send_storage(Storage::id_t& last_transmitted_id,Storage *,int sck);
+	bool check_write_preconditions(Storage::len_t n);
+	void if_space_low_do_cis_to_trans_transfer(Storage::len_t n);
 
 public:
-	static constexpr std::size_t default_cis_storage_size = 8192;
+	static constexpr std::size_t default_cis_storage_size = 100;//8192;
 	static constexpr std::size_t default_trans_storage_size = default_cis_storage_size * 1024;
 
 	Livelogger(std::size_t cis_storage_size,std::size_t trans_storage_size): cis_storage_{cis_storage_size},trans_storage_{trans_storage_size}
@@ -134,6 +136,14 @@ public:
 	Storage& trans_storage() {return trans_storage_;}
 	void flush();
 	bool write(Storage::what_t what, char* mem, Storage::len_t n);
+	template <typename F> bool write_ext(Storage::what_t what, F f, Storage::len_t n){
+		if(!check_write_preconditions(n)) return false;
+		if_space_low_do_cis_to_trans_transfer(n);
+		auto r = cis_storage().push_back(nullptr,n,what);
+		if(r.first) f(cis_storage().data_+r.second+sizeof(Storage::chunk));
+		else return false;
+		return true;
+	}
 	bool reserve(Storage::what_t what, Storage::len_t n);
 	static std::size_t overhead_per_memblock();
 	bool& write_through(){return write_through_;}
@@ -163,7 +173,7 @@ template<typename F> bool for_each_ext(Livelogger::Storage const & storage, F f)
 }
 
 constexpr int CMD_GET_NEW_LOG_ENTRIES = 1;
-
+constexpr int START_USER_DEFINED_STORAGE_IDS = 0x100;
 
 constexpr int LOG_TYPE_ID_INT = 1;
 constexpr int LOG_TYPE_ID_INT32 = 2;

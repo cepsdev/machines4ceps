@@ -63,6 +63,9 @@ struct Result_process_cmd_line
     bool enforce_native = false;
     bool ignore_simulations = false;
 
+    std::string live_log_port = "3000";
+    bool live_log = false;
+
 	Result_process_cmd_line() = default;
 	Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,
