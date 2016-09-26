@@ -53,14 +53,17 @@ int main(){
 		list_entries<int>(std::cout,live_logger1.trans_storage());
 	}*/
 	{
-		Livelogger live_logger1(404,40000);
+		Livelogger live_logger1(404,100000*24);
 		//live_logger1.write_through() = false;
-		//live_logger1.publish("3000");
+		live_logger1.publish("3000");
 		for(int i = 0; i != 100000; ++i){
 			log(live_logger1, i);//live_logger1.flush();
-			std::cout << "\nEntries in cis storage:\n";
-			list_entries<int>(std::cout,live_logger1.trans_storage());
-			std::this_thread::sleep_for(0.01s);
+			//std::cout << "\nEntries in cis storage:\n";
+			//list_entries<int>(std::cout,live_logger1.trans_storage());
+			//std::this_thread::sleep_for(0.01s);
 		}
+		//list_entries<int>(std::cout,live_logger1.trans_storage());
+		std::cout << "ok\n";
+		std::this_thread::sleep_for(1000s);
 	}
 }

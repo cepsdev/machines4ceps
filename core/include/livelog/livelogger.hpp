@@ -118,7 +118,7 @@ private:
 	void if_space_low_do_cis_to_trans_transfer(Storage::len_t n);
 
 public:
-	static constexpr std::size_t default_cis_storage_size = 100;//8192;
+	static constexpr std::size_t default_cis_storage_size = 8192;
 	static constexpr std::size_t default_trans_storage_size = default_cis_storage_size * 1024;
 
 	Livelogger(std::size_t cis_storage_size,std::size_t trans_storage_size): cis_storage_{cis_storage_size},trans_storage_{trans_storage_size}

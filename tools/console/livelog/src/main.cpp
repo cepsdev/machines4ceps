@@ -2,6 +2,8 @@
 #include "core/include/livelog/livelogger.hpp"
 
 
+livelog::Livelogger* log_entries_peer;
+
 void comm_stream_thread(int id,
 			     std::string ip,
 			     std::string port)
@@ -66,11 +68,27 @@ void comm_stream_thread(int id,
 		}
 
 		livelog::Livelogger::Storage::len_t len = 0;
-		if ( sizeof(len) != read(cfd,&len,sizeof(len)) ){
+		char * buffer = nullptr;
+		std::size_t buffer_size = 0;
+		for(;;){
+		 if ( sizeof(len) != read(cfd,&len,sizeof(len)) ){
 			break;
-		}
-		std::cout << len << std::endl;
+		 }
+		 std::cout <<"len="<< len << std::endl;
+		 if (len == 0) //sentinel read
+		  break;
+		 if (buffer_size < len){
+			 std::cout << "alloc"<<std::endl;
+			 if (buffer != nullptr) delete[] buffer;
+			 buffer = new char[buffer_size = len * 2];
+		 }
+		 int r=0;
+		 if(len != (r=read(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
+		 auto ch = ((livelog::Livelogger::Storage::chunk*) buffer);
+		 std::cout << "data:"<<std::endl;
+		 std::cout <<"id="<< ch->id_ << " len=" << ch->len_ << " what="<<ch->what_<<" value="<< *((int*)ch->data()) << std::endl;
 
+		}
 
 		std::this_thread::sleep_for(2.0s);
 
@@ -78,7 +96,10 @@ void comm_stream_thread(int id,
 	if (conn_established)close(cfd);
 }
 
+
+
 int main(int argc, char * argv[]){
+ log_entries_peer = new livelog::Livelogger;
  comm_stream_thread(0,"127.0.0.1","3000");
  return 0;
 }

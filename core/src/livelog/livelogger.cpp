@@ -297,11 +297,13 @@ void livelog::Livelogger::comm_stream_handler_fn(int id,struct sockaddr_storage 
 }
 
 bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelog::Livelogger::Storage * st,int sck){
-	Storage::id_t filter_id =  last_transmitted_id;
-	Storage::id_t last_transmitted_id_new;
+	Storage::id_t filter_id =  last_transmitted_id + 1;
+	Storage::id_t last_transmitted_id_new = last_transmitted_id;
 
     if(!for_each_ext(*st,[&](void* data,livelog::Livelogger::Storage::chunk* ch){
     	if (filter_id >=0 && filter_id > ch->id()) return true;
+    	Storage::len_t data_len = sizeof(livelog::Livelogger::Storage::chunk) + ch->len_;
+    	if ( ::write(sck,&data_len,sizeof(data_len)) != sizeof(data_len)) return false;
 	    if ( ::write(sck,ch,sizeof(livelog::Livelogger::Storage::chunk)) != sizeof(livelog::Livelogger::Storage::chunk)) return false;
 	    if ( ::write(sck,data,ch->len_) != ch->len_) return false;
 	    last_transmitted_id_new = ch->id();
@@ -313,6 +315,7 @@ bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelo
 }
 
 bool livelog::Livelogger::handle_cmd(Storage::id_t& last_transmitted_id,std::uint32_t cmd,int sck){
+	std::cout << "livelog::Livelogger::handle_cmd("<<last_transmitted_id<<","<<cmd<<");" << std::endl;
 	reg_storage_ref it;Storage::id_t temp_id = -1;
 	if (cmd == livelog::CMD_GET_NEW_LOG_ENTRIES){
 		std::lock_guard<std::mutex> lk(mutex_trans2consumer_);
