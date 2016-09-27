@@ -1,0 +1,24 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+Event A,B,C,D,E,F,G;
+
+Statemachine{
+ id{S2;};
+};
+ 
+Statemachine{
+ id{S1;}; 
+};
+
+
+Statemachine{
+ id{S3;}; 
+};
+
+
+Simulation{
+ Start{S1;S3;};
+ A;B;C;D;E;F;
+};
+
