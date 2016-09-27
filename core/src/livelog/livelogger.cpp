@@ -79,10 +79,10 @@ void livelog::Livelogger::if_space_low_do_cis_to_trans_transfer(livelog::Livelog
 	}
 }
 
-bool livelog::Livelogger::write(livelog::Livelogger::Storage::what_t what, char* mem, Storage::len_t n){
+bool livelog::Livelogger::write(livelog::Livelogger::Storage::what_t what, char* mem, Storage::len_t n, id_t id){
 	if(!check_write_preconditions(n)) return false;
 	if_space_low_do_cis_to_trans_transfer(n);
-	cis_storage().push_back(mem,n,what);
+	cis_storage().push_back(mem,n,what,id);
 	return true;
 }
 bool livelog::Livelogger::reserve(livelog::Livelogger::Storage::what_t what, Storage::len_t n){

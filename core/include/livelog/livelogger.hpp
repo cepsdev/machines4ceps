@@ -63,6 +63,19 @@ public:
 		~Storage() {if (data_ == nullptr) delete[] data_;data_=nullptr;}
 		len_t capacity() const {if(len_ == 0) return 0; return len_-1;}
 		void clear() {start_ = 0; end_ = 0; skip_ = 0; len_ = 0;}
+		template <typename F> bool write_ext(Storage::what_t what, F f, Storage::len_t n,std::mutex* mtx = nullptr, Storage::id_t id = -1){
+			auto g = [&](){
+				if(n+sizeof(Storage::chunk) > capacity()) return false;
+				auto r = push_back(nullptr,n,what,id);
+				if(r.first) f(data_+r.second+sizeof(Storage::chunk));
+				else return false;
+				return true;
+			};
+			if (mtx){
+				std::lock_guard<std::mutex> lk(*mtx);
+				return g();
+			} else return g();
+		}
 	};
 
 private:
@@ -135,11 +148,11 @@ public:
 	Storage& cis_storage() {return cis_storage_;}
 	Storage& trans_storage() {return trans_storage_;}
 	void flush();
-	bool write(Storage::what_t what, char* mem, Storage::len_t n);
-	template <typename F> bool write_ext(Storage::what_t what, F f, Storage::len_t n){
+	bool write(Storage::what_t what, char* mem, Storage::len_t n, id_t id = -1);
+	template <typename F> bool write_ext(Storage::what_t what, F f, Storage::len_t n, Storage::id_t id = -1){
 		if(!check_write_preconditions(n)) return false;
 		if_space_low_do_cis_to_trans_transfer(n);
-		auto r = cis_storage().push_back(nullptr,n,what);
+		auto r = cis_storage().push_back(nullptr,n,what,id);
 		if(r.first) f(cis_storage().data_+r.second+sizeof(Storage::chunk));
 		else return false;
 		return true;
@@ -150,6 +163,7 @@ public:
 	void publish(std::string port);
 	bool register_storage(int i, Storage * s){registered_storages_by_id_[i]=std::make_tuple(s,new std::mutex,-1);}
 	reg_storage_ref find_storage_by_id(int i){return registered_storages_by_id_.find(i);}
+	std::mutex& mutex_trans2consumer() {return mutex_trans2consumer_;}
 };
 
 

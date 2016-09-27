@@ -1,5 +1,7 @@
 #include <iostream>
 #include "core/include/livelog/livelogger.hpp"
+#include "core/include/sockets/rdwrn.hpp"
+#include "core/include/sm_livelog_storage_utils.hpp"
 
 
 livelog::Livelogger* log_entries_peer;
@@ -78,12 +80,11 @@ void comm_stream_thread(int id,
 		 if (len == 0) //sentinel read
 		  break;
 		 if (buffer_size < len){
-			 std::cout << "alloc"<<std::endl;
 			 if (buffer != nullptr) delete[] buffer;
 			 buffer = new char[buffer_size = len * 2];
 		 }
 		 int r=0;
-		 if(len != (r=read(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
+		 if(len != (r=readn(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
 		 auto ch = ((livelog::Livelogger::Storage::chunk*) buffer);
 		 std::cout << "data:"<<std::endl;
 		 std::cout <<"id="<< ch->id_ << " len=" << ch->len_ << " what="<<ch->what_<<" value="<< *((int*)ch->data()) << std::endl;
@@ -99,7 +100,27 @@ void comm_stream_thread(int id,
 
 
 int main(int argc, char * argv[]){
- log_entries_peer = new livelog::Livelogger;
- comm_stream_thread(0,"127.0.0.1","3000");
+ using namespace std::chrono_literals;
+ log_entries_peer = new livelog::Livelogger(200,20000000);
+ sm4ceps::Livelogger_sink livelogger_sink(log_entries_peer);
+ livelogger_sink.run();
+ livelog::Livelogger::Storage::id_t next_id = -1;
+ for(;;){
+	 std::this_thread::sleep_for(.25s);log_entries_peer->flush();
+	 {
+		 std::lock_guard<std::mutex> lk1(log_entries_peer->mutex_trans2consumer());
+		 for_each(log_entries_peer->trans_storage(), [&](char* data,livelog::Livelogger::Storage::id_t id,livelog::Livelogger::Storage::what_t what, livelog::Livelogger::Storage::len_t len ){
+			 if (next_id > id) return true;
+			 next_id = id+1;
+			 if (what == sm4ceps::STORAGE_WHAT_CURRENT_STATES){
+				 sm4ceps::extract_current_states_raw(data,len,[&](std::vector<int> states){
+					 for(auto const & e : states) std::cout << e << " ";
+					 std::cout << std::endl;
+				 });
+			 }
+		 });
+	 }
+ }
+ //comm_stream_thread(0,"127.0.0.1","3000");
  return 0;
 }
