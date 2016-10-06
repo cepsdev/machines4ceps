@@ -656,6 +656,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		sm->transitions().erase(it,sm->transitions().end());
 	}
 
+
+
 	for (auto m: State_machine::statemachines)
 	{
 		for(auto& t: m.second->transitions())

@@ -1370,13 +1370,14 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
 			else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
 			if (branch_to_take == nullptr) continue;
-
+			ceps::ast::Nodebase_ptr result_of_branch = nullptr;
 			if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope)
 			{
 				ceps::ast::Scope scope(branch_to_take);scope.owns_children() = false;
-				execute_action_seq(containing_smp,&scope);
+				result_of_branch=execute_action_seq(containing_smp,&scope);
 				scope.children().clear();
-			} else { execute_action_seq(containing_smp,branch_to_take);}
+			} else { result_of_branch=execute_action_seq(containing_smp,branch_to_take);}
+			if (result_of_branch != nullptr) return result_of_branch;
 		} else if (n->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "Event")
 		{
 			log() << "[QUEUEING EVENT][" << ceps::ast::name(ceps::ast::as_symbol_ref(n)) <<"]" << "\n";
