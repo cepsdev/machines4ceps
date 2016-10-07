@@ -221,7 +221,9 @@ do{
 			  for(auto const& n: ceps::ast::as_struct_ref(node_raw).children())
 			  	{
 
-			  		if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
+			  		if (n->kind() != ceps::ast::Ast_node_kind::identifier &&
+			  			n->kind() != ceps::ast::Ast_node_kind::symbol &&
+						n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 			  		if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 			  		auto state = resolve_state_qualified_id(n,nullptr);
 			  		std::stringstream ss; ss << ceps::ast::Nodeset(n);

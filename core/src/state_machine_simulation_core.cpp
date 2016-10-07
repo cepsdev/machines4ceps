@@ -701,8 +701,12 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(ceps::ast:
 #endif
 	using namespace ceps::ast;
 	if (p == nullptr) return state_rep_t{};
-	if (p->kind() == ceps::ast::Ast_node_kind::identifier){
-		std::string id = name(as_id_ref(p));
+	if (p->kind() == ceps::ast::Ast_node_kind::identifier || p->kind() == ceps::ast::Ast_node_kind::symbol){
+
+		std::string id;
+		if (p->kind() == ceps::ast::Ast_node_kind::identifier)id = name(as_id_ref(p));
+		else id = ceps::ast::name(as_symbol_ref(p));
+
 		if (parent == nullptr) {
 			auto it = State_machine::statemachines.find(id);
 			if (it == State_machine::statemachines.end()) return state_rep_t{};

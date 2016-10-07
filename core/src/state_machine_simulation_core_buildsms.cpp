@@ -442,6 +442,101 @@ static void run_simulations(State_machine_simulation_core* smc,
  }//for
 }
 
+static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
+{
+	using namespace ceps::ast;
+	if (r == nullptr) return;
+	if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
+	{
+		auto& t = as_binop_ref(r);
+		flatten_args(t.left(),v,op_val);
+		flatten_args(t.right(),v,op_val);
+		return;
+	}
+	v.push_back(r);
+}
+
+static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args){
+ if (p->kind() != ceps::ast::Ast_node_kind::func_call) return false;
+ ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
+ ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+ ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
+ if (params.children().size()) flatten_args(params.children()[0], args);
+ fid = ceps::ast::name(id);
+ return true;
+}
+
+static bool is_id_or_symbol(ceps::ast::Nodebase_ptr p, std::string& n, std::string& k){
+	using namespace ceps::ast;
+	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
+	if (p->kind() == Ast_node_kind::symbol) {n = name(as_symbol_ref(p));k = kind(as_symbol_ref(p)); return true;}
+	return false;
+}
+
+static bool is_id(ceps::ast::Nodebase_ptr p, std::string & result, std::string& base_kind){
+	using namespace ceps::ast;
+	std::string k,l;
+	if (p->kind() == Ast_node_kind::binary_operator && op(as_binop_ref(p)) == '.'){
+	 if (!is_id_or_symbol(as_binop_ref(p).right(),k,l)) return false;
+
+	 if (!is_id(as_binop_ref(p).left(),result,base_kind)) return false;
+	 result = result + "." + k;
+	 return true;
+	} else if (is_id_or_symbol(p,k,l)){ base_kind = l; result = k; return true; }
+	return false;
+}
+
+static std::tuple<bool,std::string,std::string,std::vector<ceps::ast::Nodebase_ptr>,State_machine*> is_sm_instantiation(
+		State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p){
+ if (!smc->is_assignment_op(p)) return {};
+ ceps::ast::Binary_operator& opr = ceps::ast::as_binop_ref(p);
+ auto left = opr.left();
+ auto right = opr.right();
+ std::string lhs_id;
+ std::string base_kind;
+ auto rid = is_id(left, lhs_id,  base_kind);
+ if (!rid || base_kind != "instantiate") return {};
+ std::vector<ceps::ast::Nodebase_ptr> args;
+ std::string rhs_id;
+ auto rf = is_func_call(right,rhs_id,args);
+ auto r = State_machine::statemachines.find(rhs_id);
+ if (r==State_machine::statemachines.end()) return {};
+ return std::make_tuple(true,lhs_id,rhs_id,args,r->second);
+}
+
+static State_machine* handle_instantiation(State_machine_simulation_core* smc,
+						  State_machine* base_sm,
+						  std::string const & rhs_id,std::string const & sm_id,
+						  std::vector<ceps::ast::Nodebase_ptr> const & args){
+ State_machine* sm = new State_machine(0,sm_id,nullptr,0);
+ sm->clone_from(base_sm,State_machine_simulation_core::SM_COUNTER,rhs_id,nullptr,smc);
+ for(auto p:args){
+	 auto r = is_sm_instantiation(smc,p);
+	 if (!std::get<0>(r)) continue;
+	 State_machine* base_sm = std::get<4>(r);
+	 auto sub_sm = handle_instantiation(smc,base_sm,std::get<2>(r),std::get<1>(r),std::get<3>(r) );
+	 if (sub_sm == nullptr) smc->fatal_(-1,"Failed to instantiate "+std::get<1>(r));
+	 State_machine::statemachines[sm_id+"."+std::get<1>(r)] = sub_sm;
+	 std::cout << ".................." << std::endl;
+
+ }
+ return sm;
+}
+
+void handle_instantiations(ceps::ast::Nodeset& ns,State_machine_simulation_core* smc){
+ //std::cout << ns << std::endl;
+ for(auto p : ns.nodes()){
+	 auto r = is_sm_instantiation(smc,p);
+	 if (!std::get<0>(r)) continue;
+	 //std::cout << std::get<1>(r) <<"="<<std::get<2>(r)<< std::endl;
+	 State_machine* base_sm = std::get<4>(r);
+
+	 auto sm = handle_instantiation(smc,base_sm,std::get<2>(r),std::get<1>(r),std::get<3>(r) );
+	 if (sm == nullptr) smc->fatal_(-1,"Failed to instantiate "+std::get<1>(r));
+	 State_machine::statemachines[std::get<1>(r)] = sm;
+ }
+}
+
 void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)
 {
 	using namespace ceps::ast;
@@ -655,9 +750,11 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		);
 		sm->transitions().erase(it,sm->transitions().end());
 	}
+	//handle instantiations
+	handle_instantiations(ns,this);
 
 
-
+    //Check for consistency
 	for (auto m: State_machine::statemachines)
 	{
 		for(auto& t: m.second->transitions())
