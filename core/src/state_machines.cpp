@@ -44,6 +44,7 @@ void State_machine::clone_from(State_machine* rhs,int & counter,std::string cons
 
 	  events_ = rhs->events_;
 	  actions_ = rhs->actions_;
+	  for(auto& a : actions_) a.associated_sm_ = this;
 	  this->is_thread_ = rhs->is_thread_;
 	  this->join_ = rhs->join_;
 	  this->join_state_ = rhs->join_state_;

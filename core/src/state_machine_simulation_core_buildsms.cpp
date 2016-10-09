@@ -495,10 +495,15 @@ static std::tuple<bool,std::string,std::string,std::vector<ceps::ast::Nodebase_p
  std::string lhs_id;
  std::string base_kind;
  auto rid = is_id(left, lhs_id,  base_kind);
- if (!rid || base_kind != "instantiate") return {};
+ if (!rid) return {};
+
  std::vector<ceps::ast::Nodebase_ptr> args;
  std::string rhs_id;
  auto rf = is_func_call(right,rhs_id,args);
+ if(!rf){
+	 auto rid = is_id(right, rhs_id,  base_kind);
+	 if(!rid) return {};
+ }
  auto r = State_machine::statemachines.find(rhs_id);
  if (r==State_machine::statemachines.end()) return {};
  return std::make_tuple(true,lhs_id,rhs_id,args,r->second);
@@ -513,12 +518,21 @@ static State_machine* handle_instantiation(State_machine_simulation_core* smc,
  for(auto p:args){
 	 auto r = is_sm_instantiation(smc,p);
 	 if (!std::get<0>(r)) continue;
-	 State_machine* base_sm = std::get<4>(r);
-	 auto sub_sm = handle_instantiation(smc,base_sm,std::get<2>(r),std::get<1>(r),std::get<3>(r) );
+	 State_machine* base_sm2 = std::get<4>(r);
+	 auto sub_sm = handle_instantiation(smc,base_sm2,std::get<2>(r),std::get<1>(r),std::get<3>(r) );
 	 if (sub_sm == nullptr) smc->fatal_(-1,"Failed to instantiate "+std::get<1>(r));
+	 sub_sm->parent_ = sm;
 	 State_machine::statemachines[sm_id+"."+std::get<1>(r)] = sub_sm;
-	 std::cout << ".................." << std::endl;
+	 for(auto it = sm->states().begin(); it != sm->states().end();++it){
+		if ( (*it)->id() != std::get<1>(r)) continue;
+		sm->states().erase(it);break;
+	 }
+	 sm->add_child(sub_sm);
 
+	 for(auto it = sm->transitions().begin();it!=sm->transitions().end();++it){
+		 if (it->from_.id_ == std::get<1>(r)){it->from_.is_sm_=true;it->from_.smp_=sub_sm;}
+		 if (it->to_.id_ == std::get<1>(r)){it->to_.is_sm_=true;it->to_.smp_=sub_sm;}
+	 }
  }
  return sm;
 }
@@ -754,6 +768,23 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	handle_instantiations(ns,this);
 
 
+	if (result_cmd_line.print_statemachines){
+		std::cout << "\nStatemachines:\n";
+		for(auto smp : State_machine::statemachines){
+			std::cout << "\n\t" << smp.first << "(" << (std::uint64_t)smp.second  << ")" << std::endl;
+			if (smp.second->parent()){
+				auto r = this->get_qualified_id(smp.second->parent());
+				std::cout << "\t parent = "<< r.second << std::endl;
+			}
+			if (smp.second->actions().size())
+				std::cout << "\t Actions:\n";
+			for(auto & a : smp.second->actions()){
+				std::cout << "\t  ";
+				std::cout << a.id_ <<" // assoc sm("<< (std::uint64_t)a.associated_sm_ <<")"<< " rawceps-node-addr ("<<(std::uint64_t)a.body_<<") native ("<<(std::uint64_t)a.native_func_<<")" << std::endl;
+			}
+		}
+		std::cout << "\n\n";
+	}
     //Check for consistency
 	for (auto m: State_machine::statemachines)
 	{
