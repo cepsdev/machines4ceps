@@ -26,7 +26,7 @@ $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records
 $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/sm_comm_naive_msg_prot.o $(TARGET)/cppgen.o $(TARGET)/livelogger.o $(TARGET)/rdwrn.o\
 $(TARGET)/sm_livelog_storage_utils.o
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
-	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o \
+	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o $(cepslibs)/ceps_interpreter_macros.o $(cepslibs)/ceps_interpreter_functions.o \
 	$(TARGET)/main.o $(TARGET)/state_machine_simulation_core.o  $(TARGET)/state_machines.o $(TARGET)/state_machine_simulation_core_action_handling.o \
 	$(TARGET)/state_machine_simulation_core_plugin_interface.o $(TARGET)/state_machine_simulation_core_event_handling.o \
 	$(TARGET)/state_machine_simulation_core_guard_handling.o $(TARGET)/sm_sim_core_simulation_loop.o  $(TARGET)/cppgen.o \
@@ -37,7 +37,7 @@ $(TARGET)/sm_livelog_storage_utils.o
 $(TARGET)/sm_trace: $(TARGET)/pugixml.o $(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
 $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
-	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o \
+	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o $(cepslibs)/ceps_interpreter_macros.o $(cepslibs)/ceps_interpreter_functions.o \
 	$(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o \
 	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o $(TARGET)/pugixml.o -o $(TARGET)/sm_trace
 
