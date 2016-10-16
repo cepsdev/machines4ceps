@@ -164,6 +164,12 @@ public:
 	bool register_storage(int i, Storage * s){registered_storages_by_id_[i]=std::make_tuple(s,new std::mutex,-1);}
 	reg_storage_ref find_storage_by_id(int i){return registered_storages_by_id_.find(i);}
 	std::mutex& mutex_trans2consumer() {return mutex_trans2consumer_;}
+	template <typename F> bool foreach_registered_storage(F f){
+     for(auto & e : registered_storages_by_id_ ){
+    	 if(!f(e.first,std::get<0>(e.second),std::get<1>(e.second),std::get<2>(e.second))) return false;
+     }
+     return true;
+	}
 };
 
 

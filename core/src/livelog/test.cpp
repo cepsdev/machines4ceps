@@ -13,7 +13,10 @@ template<typename T> void list_entries(std::ostream& os, livelog::Livelogger::St
 
 	if (storage.empty()) std::cout << "No entries\n";
 	else livelog::for_each(storage,
-			[&](void* data,livelog::Livelogger::Storage::id_t id,livelog::Livelogger::Storage::what_t what,livelog::Livelogger::Storage::len_t len)
+			[&](void* data,
+				livelog::Livelogger::Storage::id_t id,
+				livelog::Livelogger::Storage::what_t what,
+				livelog::Livelogger::Storage::len_t len)
 			{
 				os << *((T*)data) << " (what = " << what << " id = "<< id << ")" << std::endl ;
 			}
@@ -24,11 +27,15 @@ void list_entries_map_storage(std::ostream& os, livelog::Livelogger::Storage con
 
 	if (storage.empty()) std::cout << "No entries\n";
 	else livelog::for_each(storage,
-			[&](void* data,livelog::Livelogger::Storage::id_t id,livelog::Livelogger::Storage::what_t what,livelog::Livelogger::Storage::len_t len)
+			[&](void* data,
+				livelog::Livelogger::Storage::id_t id,
+				livelog::Livelogger::Storage::what_t what,
+				livelog::Livelogger::Storage::len_t len)
 			{
-				os << "Map:" << std::endl;
-				auto num_of_elems =*((std::size_t*)data);
-				os << num_of_elems << std::endl;
+		     std::map<int,std::string> i2s;
+			 sm4ceps::storage_read_entry(i2s, (char *) data);
+			 for(auto & e: i2s)
+				 std::cout << e.first << "=>" << e.second << std::endl;
 			}
 	);
 }
@@ -75,12 +82,14 @@ int main(){
 		//live_logger1.write_through() = false;
 		Livelogger::Storage idx2fqs(4096);
 		live_logger1.register_storage(sm4ceps::STORAGE_IDX2FQS,&idx2fqs);
+
 		std::map<int,std::string> the_map = { {0,"a"}, {1,"b"}, {2,"c"}, {3,"d"}, {4,"e"} , {5,"f"},
 				{6,"g"}, {7,"h"}, {8,"i"},  {9,"j"}
 		};
 		sm4ceps::storage_write(idx2fqs,the_map,std::get<1>(live_logger1.find_storage_by_id(sm4ceps::STORAGE_IDX2FQS)->second ));
-		list_entries_map_storage(cout,idx2fqs);
-		
+		//std::cout << "content of sm4ceps::STORAGE_IDX2FQS:" << std::endl;
+		//list_entries_map_storage(cout,idx2fqs);
+		//std::this_thread::sleep_for(20s);
 		live_logger1.publish("3000");
 		
 		for(int i = 0; i != 100000; ++i){

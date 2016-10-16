@@ -10,6 +10,7 @@
 namespace sm4ceps{
   void livelog_write(livelog::Livelogger& live_logger,executionloop_context_t::states_t const &  states);
   void storage_write(livelog::Livelogger::Storage& storage,std::map<int,std::string> i2s, std::mutex* mtx);
+  bool storage_read_entry(std::map<int,std::string>& i2s, char * data);
 
   class Livelogger_source{
 	  livelog::Livelogger* livelogger_ = nullptr;

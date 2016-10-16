@@ -16,6 +16,10 @@ void sm4ceps::livelog_write(livelog::Livelogger& live_logger,executionloop_conte
 
 void sm4ceps::storage_write(livelog::Livelogger::Storage& storage,std::map<int,std::string> i2s, std::mutex* mtx){
 	std::size_t len = sizeof(std::size_t);
+	for(auto const & s : i2s){
+		len += sizeof(std::int32_t);
+		len += s.second.length()+1;
+	}
 	for(auto const & s : i2s)  len+=sizeof(std::int32_t)+s.second.length()+sizeof(std::int32_t);
 	 storage.write_ext(sm4ceps::STORAGE_WHAT_INT32_TO_STRING_MAP,[&](char * data){
 		 std::uint32_t counter = 0;
@@ -24,11 +28,21 @@ void sm4ceps::storage_write(livelog::Livelogger::Storage& storage,std::map<int,s
 		 for(auto const & s : i2s){
 			 *((std::int32_t*)data) = s.first;
 			 data += sizeof(std::int32_t);
-			 *((std::int32_t*)data) = s.second.length();
-			 data += sizeof(std::int32_t);
 			 memcpy(data,s.second.c_str(),s.second.length());
+			 *(data+s.second.length()) = 0;
+			 data+=s.second.length()+1;
 		 }
 	  },len,mtx);
+}
+bool sm4ceps::storage_read_entry(std::map<int,std::string>& i2s, char * data){
+	if (data == nullptr) return false;
+	auto num_elems = *((std::size_t*)data);
+	if (num_elems == 0) return true;
+	data+=sizeof(std::size_t);
+	for(std::size_t i = 0 ; i != num_elems;++i){
+		auto a = *((std::int32_t*)data);data+=sizeof(std::int32_t);
+		i2s[a] = std::string(data);data+=strlen(data)+1;
+	}
 }
 
 void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
@@ -79,20 +93,20 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			conn_established = true;
 		}
 
+		//Read main log
 		auto cmd = livelog::CMD_GET_NEW_LOG_ENTRIES;
 		cmd = htonl(cmd);
 
-		if ( ( write(cfd, (char*) &cmd,sizeof(cmd) )) !=	 sizeof(cmd) )
+		if ( ( write(cfd, (char*) &cmd,sizeof(cmd) )) != sizeof(cmd) )
 		{
-			close(cfd);
-			conn_established=false;
-			continue;
+			close(cfd);conn_established=false;			continue;
 		}
 
 		livelog::Livelogger::Storage::len_t len = 0;
 		char * buffer = nullptr;
 		std::size_t buffer_size = 0;
-		for(;;){
+
+		for(;;) {
 		 if ( sizeof(len) != read(cfd,&len,sizeof(len)) ){
 			break;
 		 }
@@ -110,7 +124,36 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			 auto data = buffer + sizeof(livelog::Livelogger::Storage::chunk);
 			 livelogger_->write(ch->what(),data,ch->len(),ch->id());
 		 }
+		}//Finished looping through input data
+
+		if (livelogger_){
+			if(!livelogger_->foreach_registered_storage(
+			 [&](int idx,livelog::Livelogger::Storage * storage,std::mutex* pmutex, livelog::Livelogger::Storage::id_t next_id){
+				cmd = htonl(idx);
+				if ( ( write(cfd, (char*) &cmd,sizeof(cmd) )) != sizeof(cmd) )
+				{
+					close(cfd);conn_established=false;return false;
+				}
+				for(;;) {
+				 if ( sizeof(len) != read(cfd,&len,sizeof(len)) ){
+					break;
+				 }
+				 if (len == 0) //sentinel read
+				  break;
+				 if (buffer_size < len){
+					 if (buffer != nullptr) delete[] buffer;
+					 buffer = new char[buffer_size = len * 2];
+				 }
+				 int r=0;
+				 if(len != (r=readn(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
+				 auto ch = (livelog::Livelogger::Storage::chunk*)buffer;
+				 auto data = buffer + sizeof(livelog::Livelogger::Storage::chunk);
+				 storage->write_ext(ch->what(), [&](char* to){ memcpy(to,data,ch->len());}, ch->len(),pmutex, ch->id());
+				}
+		 	 }
+			))continue;
 		}
+
 		std::this_thread::sleep_for(0.1s);
 	}
 	if (conn_established)close(cfd);
