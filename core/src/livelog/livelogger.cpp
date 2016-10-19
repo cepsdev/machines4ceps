@@ -1,11 +1,21 @@
 #include "core/include/livelog/livelogger.hpp"
 #include <iostream>
 
+#if defined(__linux__)
+#  include <endian.h>
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#  include <sys/endian.h>
+#elif defined(__OpenBSD__)
+#  include <sys/types.h>
+#  define be16toh(x) betoh16(x)
+#  define be32toh(x) betoh32(x)
+#  define be64toh(x) betoh64(x)
+#endif
 
-template<> livelog::Livelogger::Storage::what_t livelog::what<std::int32_t>(std::int32_t const & v){return livelog::LOG_TYPE_ID_INT32;}
-template<> livelog::Livelogger::Storage::what_t livelog::what<std::uint32_t>(std::uint32_t const & v){return livelog::LOG_TYPE_ID_UINT32;}
-template<> livelog::Livelogger::Storage::what_t livelog::what<std::int64_t>(std::int64_t const  & v){return livelog::LOG_TYPE_ID_INT64;}
-template<> livelog::Livelogger::Storage::what_t livelog::what<std::uint64_t>(std::uint64_t const & v){return livelog::LOG_TYPE_ID_UINT64;}
+template<> livelog::Livelogger::Storage::what_t livelog::what<std::int32_t>(std::int32_t const & ){return livelog::LOG_TYPE_ID_INT32;}
+template<> livelog::Livelogger::Storage::what_t livelog::what<std::uint32_t>(std::uint32_t const & ){return livelog::LOG_TYPE_ID_UINT32;}
+template<> livelog::Livelogger::Storage::what_t livelog::what<std::int64_t>(std::int64_t const  & ){return livelog::LOG_TYPE_ID_INT64;}
+template<> livelog::Livelogger::Storage::what_t livelog::what<std::uint64_t>(std::uint64_t const & ){return livelog::LOG_TYPE_ID_UINT64;}
 
 
 std::size_t livelog::Livelogger::overhead_per_memblock() {return sizeof(Storage::chunk); }
@@ -141,6 +151,7 @@ std::tuple<void *,  livelog::Livelogger::Storage::len_t,livelog::Livelogger::Sto
 
 void livelog::Livelogger::Storage::pop(){
 	if (empty()) return;
+	--size_;
 	auto p = reinterpret_cast<chunk*>(data_+start_);
 	start_ += p->len_+sizeof(chunk);
 	if(skip_ != 0 && start_ == skip_) { start_= 0; skip_=0;}
@@ -167,7 +178,7 @@ std::pair<bool,livelog::Livelogger::Storage::pos_t> livelog::Livelogger::Storage
 	 if(mem) std::memcpy(data_+end_+sizeof(Storage::chunk),mem,len);
 	 auto r = std::make_pair(true,end_);
 	 end_ = (end_ + tot_len) % len_;
-	 return r;
+	 ++size_;return r;
  } else {
 	 skip_ = end_;
 	 end_ = 0;
@@ -180,7 +191,7 @@ std::pair<bool,livelog::Livelogger::Storage::pos_t> livelog::Livelogger::Storage
 	 if(mem) std::memcpy(data_+end_+sizeof(Storage::chunk),mem,len);
 	 auto r = std::make_pair(true,end_);
 	 end_= tot_len;
-	 return r;
+	 ++size_;return r;
  }
 }
 
@@ -202,10 +213,10 @@ livelog::Livelogger::~Livelogger(){
 }
 
 
-void livelog::Livelogger::fatal(int err, std::string msg){
+void livelog::Livelogger::fatal(int , std::string msg){
  std::cout << errno << " " << msg << std::endl;
 }
-void livelog::Livelogger::warning(int err, std::string msg){
+void livelog::Livelogger::warning(int , std::string ){
 
 }
 
@@ -265,7 +276,7 @@ void livelog::Livelogger::comm_stream_dispatcher_fn()
 }
 
 
-void livelog::Livelogger::comm_stream_handler_fn(int id,struct sockaddr_storage claddr,int sck)
+void livelog::Livelogger::comm_stream_handler_fn(int ,struct sockaddr_storage claddr,int sck)
 {
 	char host[1024] = {0};
 	char service[1024] = {0};
@@ -276,18 +287,21 @@ void livelog::Livelogger::comm_stream_handler_fn(int id,struct sockaddr_storage 
 		snprintf(addrstr,2048,"[host=%s, service=%s]",host, service);
 	else
 		snprintf(addrstr,2048,"[host=?,service=?]");
-	//std::cout << addrstr << "\n";
 
 	Storage::id_t last_transmitted_id = -1;
 	for(;;)
 	{
 		std::uint32_t cmd;
-		auto r = recv(sck,reinterpret_cast<char*>(&cmd),sizeof(cmd),0);
-		if (r <= 0)
-		{
-			break;return;
-		}
+
+		auto r = recv(sck,reinterpret_cast<char*>(&cmd),sizeof(cmd),0);if (r <= 0)break;
 		cmd = ntohl(cmd);
+		if (livelog::CMD_FLUSH_MAIN_LOG_STORAGE == cmd){
+			flush();
+			continue;
+		}
+		std::uint64_t t;
+		r = recv(sck,reinterpret_cast<char*>(&t),sizeof(t),0);if (r <= 0)break;
+		t = be64toh(t);last_transmitted_id = static_cast<Storage::id_t>(t);
 		try
 		{
 			if(!handle_cmd(last_transmitted_id,cmd,sck)) break;
@@ -307,6 +321,7 @@ bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelo
 	    if ( ::write(sck,ch,sizeof(livelog::Livelogger::Storage::chunk)) != sizeof(livelog::Livelogger::Storage::chunk)) return false;
 	    if ( ::write(sck,data,ch->len_) != ch->len_) return false;
 	    last_transmitted_id_new = ch->id();
+        return true;
 	    })) return false;
     Storage::len_t sentinel = 0;
     if ( ::write(sck,&sentinel,sizeof(sentinel)) != sizeof(sentinel)) return false;
@@ -315,7 +330,7 @@ bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelo
 }
 
 bool livelog::Livelogger::handle_cmd(Storage::id_t& last_transmitted_id,std::uint32_t cmd,int sck){
-	std::cout << "livelog::Livelogger::handle_cmd("<<last_transmitted_id<<","<<cmd<<");" << std::endl;
+	//std::cout << "livelog::Livelogger::handle_cmd("<<last_transmitted_id<<","<<cmd<<");" << std::endl;
 	reg_storage_ref it;Storage::id_t temp_id = -1;
 	if (cmd == livelog::CMD_GET_NEW_LOG_ENTRIES){
 		std::lock_guard<std::mutex> lk(mutex_trans2consumer_);
@@ -324,8 +339,8 @@ bool livelog::Livelogger::handle_cmd(Storage::id_t& last_transmitted_id,std::uin
 		auto storage = std::get<0>(it->second);
 		if( std::get<1>(it->second)){
 			std::lock_guard<std::mutex> lk2( *std::get<1>(it->second));
-			return send_storage(std::get<2>(it->second),storage,sck);
-		}else return send_storage(std::get<2>(it->second),storage,sck);
+			return send_storage(/*std::get<2>(it->second)*/last_transmitted_id,storage,sck);
+		}else return send_storage(/*std::get<2>(it->second)*/last_transmitted_id,storage,sck);
 	}
 	return false;
 }

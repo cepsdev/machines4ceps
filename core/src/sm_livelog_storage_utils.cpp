@@ -2,6 +2,18 @@
 #include "core/include/sm_livelog_storage_ids.hpp"
 #include "core/include/sm_livelog_storage_utils.hpp"
 #include "core/include/sockets/rdwrn.hpp"
+#include <chrono>
+#if defined(__linux__)
+#  include <endian.h>
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#  include <sys/endian.h>
+#elif defined(__OpenBSD__)
+#  include <sys/types.h>
+#  define be16toh(x) betoh16(x)
+#  define be32toh(x) betoh32(x)
+#  define be64toh(x) betoh64(x)
+#endif
+
 
 void sm4ceps::livelog_write(livelog::Livelogger& live_logger,executionloop_context_t::states_t const &  states){
  std::size_t len = 0;
@@ -48,12 +60,14 @@ bool sm4ceps::storage_read_entry(std::map<int,std::string>& i2s, char * data){
 void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			     std::string ip,
 			     std::string port){
-	using namespace std::chrono_literals;
+
 
 	int cfd;
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	bool conn_established = false;
+	std::map<int,ssize_t> logid2last_read_id;
+	std::uint32_t no_data_received = 0;
 
 	for(;;)
 	{
@@ -94,12 +108,31 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 		}
 
 		//Read main log
+        if (no_data_received >= 3){
+		 auto cmd = livelog::CMD_FLUSH_MAIN_LOG_STORAGE;cmd = htonl(cmd);
+		 if ( ( write(cfd, (char*) &cmd,sizeof(cmd) )) != sizeof(cmd) )
+		  {
+			close(cfd);conn_established=false;continue;
+		  }
+		}
+
+		livelog::Livelogger::Storage::id_t last_read_id = -1;
+		if (logid2last_read_id.find(livelog::CMD_GET_NEW_LOG_ENTRIES) == logid2last_read_id.end()){
+			logid2last_read_id[livelog::CMD_GET_NEW_LOG_ENTRIES] = last_read_id;
+		} else last_read_id = logid2last_read_id[livelog::CMD_GET_NEW_LOG_ENTRIES];
+
 		auto cmd = livelog::CMD_GET_NEW_LOG_ENTRIES;
 		cmd = htonl(cmd);
+		std::uint64_t t = htobe64((std::uint64_t)last_read_id);
+		std::size_t chunks_read = 0;
 
 		if ( ( write(cfd, (char*) &cmd,sizeof(cmd) )) != sizeof(cmd) )
 		{
-			close(cfd);conn_established=false;			continue;
+			close(cfd);conn_established=false;continue;
+		}
+		if ( ( write(cfd, (char*) &t,sizeof(t) )) != sizeof(t) )
+		{
+			close(cfd);conn_established=false;continue;
 		}
 
 		livelog::Livelogger::Storage::len_t len = 0;
@@ -123,17 +156,33 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			 auto ch = (livelog::Livelogger::Storage::chunk*)buffer;
 			 auto data = buffer + sizeof(livelog::Livelogger::Storage::chunk);
 			 livelogger_->write(ch->what(),data,ch->len(),ch->id());
+			 logid2last_read_id[livelog::CMD_GET_NEW_LOG_ENTRIES] = ch->id();
+			 ++chunks_read;
 		 }
 		}//Finished looping through input data
 
+		if (chunks_read == 0) ++no_data_received;
+		else no_data_received = 0;
+        //std::cout << "chunks_read="<< chunks_read << std::endl;
 		if (livelogger_){
 			if(!livelogger_->foreach_registered_storage(
 			 [&](int idx,livelog::Livelogger::Storage * storage,std::mutex* pmutex, livelog::Livelogger::Storage::id_t next_id){
 				cmd = htonl(idx);
+				livelog::Livelogger::Storage::id_t last_read_id = -1;
+				if (logid2last_read_id.find(idx) == logid2last_read_id.end()){
+					logid2last_read_id[idx] = last_read_id;
+				} else last_read_id = logid2last_read_id[idx];
+				std::uint64_t t = htobe64((std::uint64_t)last_read_id);
 				if ( ( write(cfd, (char*) &cmd,sizeof(cmd) )) != sizeof(cmd) )
 				{
 					close(cfd);conn_established=false;return false;
 				}
+				if ( ( write(cfd, (char*) &t,sizeof(t) )) != sizeof(t) )
+				{
+					close(cfd);conn_established=false;return false;
+				}
+
+
 				for(;;) {
 				 if ( sizeof(len) != read(cfd,&len,sizeof(len)) ){
 					break;
@@ -149,12 +198,14 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 				 auto ch = (livelog::Livelogger::Storage::chunk*)buffer;
 				 auto data = buffer + sizeof(livelog::Livelogger::Storage::chunk);
 				 storage->write_ext(ch->what(), [&](char* to){ memcpy(to,data,ch->len());}, ch->len(),pmutex, ch->id());
+				 logid2last_read_id[idx] = ch->id();
+
 				}
 		 	 }
 			))continue;
 		}
 
-		std::this_thread::sleep_for(0.1s);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 	if (conn_established)close(cfd);
 }

@@ -5,7 +5,10 @@
 #include <iostream>
 #include <cassert>
 #include <chrono>
-
+#include <signal.h>
+#include <sys/types.h>
+#include <limits>
+#include <cstring>
 using namespace std;
 
 
@@ -43,6 +46,27 @@ void list_entries_map_storage(std::ostream& os, livelog::Livelogger::Storage con
 int main(){
 	using namespace livelog;
 	using namespace std::chrono_literals;
+
+#ifdef _WIN32
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+	wVersionRequested = MAKEWORD(2, 2);
+	err = WSAStartup(wVersionRequested, &wsaData);
+	if (err != 0) {
+		std::cerr << "***Error: WSAStartup failed(" << err << ")\n";
+		return 1;
+	}
+
+	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+		std::cerr << "***Error:Could not find a usable version of Winsock.dll\n";
+		WSACleanup();
+		return 1;
+	}
+#else
+	signal(SIGPIPE, SIG_IGN);
+#endif
+
 /*	{
 		Livelogger live_logger1(201,367);
 		for(int i = 0; i != 100; ++i){
@@ -92,7 +116,7 @@ int main(){
 		//std::this_thread::sleep_for(20s);
 		live_logger1.publish("3000");
 		
-		for(int i = 0; i != 100000; ++i){
+		for(int i = 0; i != 10000; ++i){
 			for(auto& e: ec.current_states) e = 0;
 			ec.current_states[(i + 1) % 10] =  ec.current_states[i % 10] = 1;
 			livelogger_source.log_current_states(ec);
@@ -100,6 +124,8 @@ int main(){
 			//std::cout << "\nEntries in cis storage:\n";
 			//list_entries<int>(std::cout,live_logger1.trans_storage());
 			//std::this_thread::sleep_for(0.01s);
+			std::cout << "*";std::cout.flush();
+			std::this_thread::sleep_for(0.25s);
 		}
 		//list_entries<int>(std::cout,live_logger1.trans_storage());
 		std::cout << "ok\n";

@@ -34,11 +34,14 @@ public:
 		char * data_ = nullptr;
 		pos_t start_ = 0, end_ = 0, skip_ = 0, len_ = 0;
 		id_t id_counter_= id_t{};
+		std::size_t size_ = 0;
 
 		struct chunk{
 			len_t len_;
 			id_t id_;
 			what_t what_;
+                        std::uint64_t timestamp_secs;
+                        std::uint64_t timestamp_nano_secs;
 			len_t len() const {return len_;}
 			len_t set_len(len_t v) {return len_ = v;}
 			id_t id() const {return id_;}
@@ -54,6 +57,7 @@ public:
 		std::tuple<void *, len_t,chunk*> next(chunk* m) const;
 		void pop();
 		bool empty() const {return start_ == end_;}
+		std::size_t size() const {return size_;}
 		len_t available_space();
 		Storage(std::size_t len);
 		Storage() = default;
@@ -161,7 +165,7 @@ public:
 	static std::size_t overhead_per_memblock();
 	bool& write_through(){return write_through_;}
 	void publish(std::string port);
-	bool register_storage(int i, Storage * s){registered_storages_by_id_[i]=std::make_tuple(s,new std::mutex,-1);}
+        bool register_storage(int i, Storage * s){registered_storages_by_id_[i]=std::make_tuple(s,new std::mutex,-1);return true;}
 	reg_storage_ref find_storage_by_id(int i){return registered_storages_by_id_.find(i);}
 	std::mutex& mutex_trans2consumer() {return mutex_trans2consumer_;}
 	template <typename F> bool foreach_registered_storage(F f){
@@ -192,6 +196,7 @@ template<typename F> bool for_each_ext(Livelogger::Storage const & storage, F f)
 	return true;
 }
 
+constexpr int CMD_FLUSH_MAIN_LOG_STORAGE = 0;
 constexpr int CMD_GET_NEW_LOG_ENTRIES = 1;
 constexpr int START_USER_DEFINED_STORAGE_IDS = 0x100;
 
