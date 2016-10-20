@@ -18,6 +18,8 @@ struct chunk_ext{
     livelog::Livelogger::Storage::len_t len = 0;
     livelog::Livelogger::Storage::id_t id = 0;
     livelog::Livelogger::Storage::what_t what = 0;
+    std::uint64_t secs = 0;
+    std::uint64_t nsecs = 0;
     char* data = nullptr;
 };
 
@@ -40,8 +42,10 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
 signals:
     void append_rows(int from, int to);
+    void model_reset();
 private slots:
     void do_append_rows(int from, int to);
+    void do_model_reset();
 private:
     livelog::Livelogger* log_entries_peer;
     sm4ceps::Livelogger_sink* livelogger_sink;

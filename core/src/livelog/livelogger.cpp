@@ -21,6 +21,18 @@ template<> livelog::Livelogger::Storage::what_t livelog::what<std::uint64_t>(std
 std::size_t livelog::Livelogger::overhead_per_memblock() {return sizeof(Storage::chunk); }
 
 
+void livelog::Livelogger::clear_all(){
+ {
+  std::lock_guard<std::mutex> lk1(this->mutex_trans2consumer_);
+  std::unique_lock<std::mutex> lk(this->mutex_cis2trans_);
+  reseted_ = true;
+  trans_storage_.clear();
+  cis_storage_.clear();
+  for(auto & e : storagesstorage_.storages_ )
+      e.clear();
+ }
+}
+
 void livelog::Livelogger::trans_thread_fn(){
 
  for(;;){
@@ -56,9 +68,12 @@ void livelog::Livelogger::trans_thread_fn(){
 		 for(int i = storagesstorage2_.s_; i!=storagesstorage2_.e_;i=(i+1) %storagesstorage2_.storages_.size() ){
 			 auto& s = storagesstorage2_.storages_[i];
 
-			 for_each(s,[&](void* data,livelog::Livelogger::Storage::id_t id,livelog::Livelogger::Storage::what_t what,livelog::Livelogger::Storage::len_t len){
-
-				 trans_storage_.push_back(data,len,what,id);
+             for_each2(s,[&](void* data,
+                             livelog::Livelogger::Storage::id_t id,
+                             livelog::Livelogger::Storage::what_t what,
+                             livelog::Livelogger::Storage::len_t len,
+                             std::uint64_t secs, std::uint64_t nsecs){
+                 trans_storage_.push_back(data,len,what,id,secs,nsecs);
 			 });
 		 }
 
@@ -89,10 +104,15 @@ void livelog::Livelogger::if_space_low_do_cis_to_trans_transfer(livelog::Livelog
 	}
 }
 
-bool livelog::Livelogger::write(livelog::Livelogger::Storage::what_t what, char* mem, Storage::len_t n, id_t id){
+bool livelog::Livelogger::write(livelog::Livelogger::Storage::what_t what ,
+                                char* mem ,
+                                Storage::len_t n ,
+                                id_t id ,
+                                std::uint64_t secs ,
+                                std::uint64_t nsecs){
 	if(!check_write_preconditions(n)) return false;
 	if_space_low_do_cis_to_trans_transfer(n);
-	cis_storage().push_back(mem,n,what,id);
+    cis_storage().push_back(mem,n,what,id,secs,nsecs);
 	return true;
 }
 bool livelog::Livelogger::reserve(livelog::Livelogger::Storage::what_t what, Storage::len_t n){
@@ -158,23 +178,30 @@ void livelog::Livelogger::Storage::pop(){
 	if ( empty() ) {start_ = end_ = 0;}
 }
 
-std::pair<bool,livelog::Livelogger::Storage::pos_t> livelog::Livelogger::Storage::push_back(void * mem, len_t len, what_t what, id_t id)
+std::pair<bool,livelog::Livelogger::Storage::pos_t> livelog::Livelogger::Storage::push_back(void * mem, len_t len, what_t what, id_t id,std::uint64_t secs, std::uint64_t nsecs)
 {
  auto tot_len = len+sizeof(chunk);
  if (tot_len + 1 > len_) return std::make_pair(false,0);
- while (tot_len > available_space()){
-	 /*std::cout << "*start="<<start_<< " end= "<<end_<<" len= "<< len_ << " skip= " << skip_ <<"\n";*/
-	 pop();
-	 /*std::cout << "*start="<<start_<< " end= "<<end_<<" len= "<< len_ << " skip= " << skip_ <<"\n";*/
- }
+ while (tot_len > available_space()) pop();
+
+ auto write_chunk = [&](chunk* to){
+   to->len_ = len;
+   to->what_ = what;
+   if (id >= 0) to->id_ = id;
+   else to->id_ = id_counter_++;
+   if(secs == 0){
+    struct timespec t = {0};
+    clock_gettime(CLOCK_REALTIME,&t);
+    to->timestamp_secs = t.tv_sec;
+    to->timestamp_nsecs = t.tv_nsec;}
+   else {
+    to->timestamp_secs = secs;
+    to->timestamp_nsecs = nsecs;
+   }
+ };
 
  if (end_ + tot_len <= len_){
-	 ((chunk*)(data_+end_))->len_ = len;
-	 ((chunk*)(data_+end_))->what_ = what;
-
-	 if (id >= 0) ((chunk*)(data_+end_))->id_ = id;
-	 else ((chunk*)(data_+end_))->id_ = id_counter_++;
-
+	 write_chunk((chunk*)(data_+end_));
 	 if(mem) std::memcpy(data_+end_+sizeof(Storage::chunk),mem,len);
 	 auto r = std::make_pair(true,end_);
 	 end_ = (end_ + tot_len) % len_;
@@ -182,12 +209,7 @@ std::pair<bool,livelog::Livelogger::Storage::pos_t> livelog::Livelogger::Storage
  } else {
 	 skip_ = end_;
 	 end_ = 0;
-	 ((chunk*)(data_+end_))->len_ = len;
-	 ((chunk*)(data_+end_))->what_ = what;
-
-	 if (id >= 0) ((chunk*)(data_+end_))->id_ = id;
-	 else ((chunk*)(data_+end_))->id_ = id_counter_++;
-
+	 write_chunk((chunk*)(data_+end_));
 	 if(mem) std::memcpy(data_+end_+sizeof(Storage::chunk),mem,len);
 	 auto r = std::make_pair(true,end_);
 	 end_= tot_len;

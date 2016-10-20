@@ -28,22 +28,11 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*
-Execution model
-
-
-
-*/
-
 #include <signal.h>
 #include <sys/types.h>
 #include <limits>
 #include <cstring>
 #include "core/include/base_defs.hpp"
-
-
-
-
 
 
 #include "core/include/state_machine.hpp"

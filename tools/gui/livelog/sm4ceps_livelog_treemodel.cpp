@@ -2,19 +2,25 @@
 #include <thread>
 #include <mutex>
 #include <strstream>
+#include <time.h>
 
 
 LivelogTreeModel::LivelogTreeModel( QObject *parent ): QAbstractItemModel(parent){
     connect(this,SIGNAL(append_rows(int,int)),this,SLOT(do_append_rows(int,int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(model_reset()),this,SLOT(do_model_reset()),Qt::QueuedConnection);
     log_entries_peer = new livelog::Livelogger(200,20000000);
     log_entries_peer->register_storage(sm4ceps::STORAGE_IDX2FQS,new livelog::Livelogger::Storage (4096*1000));
     livelogger_sink = new sm4ceps::Livelogger_sink(log_entries_peer);
     livelogger_sink->run();
     new std::thread{&LivelogTreeModel::check_for_new_entries,this};
-    //std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 }
 
 LivelogTreeModel::~LivelogTreeModel(){}
+
+void LivelogTreeModel::do_model_reset(){
+    beginResetModel();
+    endResetModel();
+}
 
 QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
     if (!index.isValid())
@@ -22,6 +28,7 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
 
     if (role != Qt::DisplayRole)
       return QVariant();
+
 
     {
      std::lock_guard<std::mutex> lk1(log_entries_peer->mutex_trans2consumer());
@@ -39,6 +46,17 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
                for(auto const & e : states) ss << t[e] << " ";
              });
            return ss.str().c_str();
+         }
+         if (index.column() == 3){
+             struct tm t;
+             time_t tt = ch.secs;
+             double r = ch.nsecs / 1000000000.0;
+             char buffer[128] = {0};
+             std::size_t n = strftime(buffer,32,"%T.",localtime(&tt));
+             strcpy(buffer+n,std::to_string(r).substr(2).c_str());
+             n+= std::to_string(r).substr(2).length();
+             strftime(buffer+n,128-strlen(buffer)," %F",localtime(&tt));
+             return buffer;
          }
      }
     }
@@ -58,7 +76,7 @@ QVariant LivelogTreeModel::headerData(int section, Qt::Orientation orientation,
         if (section == 0) return QVariant("No.");
         if (section == 1) return QVariant("What");
         if (section == 2) return QVariant("Summary");
-        if (section == 3) return QVariant("Time");
+        if (section == 3) return QVariant("Timestamp");
     }
     return QVariant();
 }
@@ -83,20 +101,23 @@ int LivelogTreeModel::rowCount(const QModelIndex &parent) const {
  return 0;
 }
 int LivelogTreeModel::columnCount(const QModelIndex &parent ) const {
- return 3;
+ return 4;
 }
 
 void LivelogTreeModel::update_chunks(){
  chunks.resize(log_entries_peer->trans_storage().size());
  std::size_t j = 0;
  auto& ch = chunks;
- for_each(log_entries_peer->trans_storage(),
+ for_each2(log_entries_peer->trans_storage(),
   [&](char* data,
       livelog::Livelogger::Storage::id_t id,
       livelog::Livelogger::Storage::what_t what,
-      livelog::Livelogger::Storage::len_t len )
+      livelog::Livelogger::Storage::len_t len,
+      std::uint64_t secs,std::uint64_t nsecs )
      {
-      ch[j].id = id;ch[j].what = what;ch[j].len = len;ch[j].data = data;++j;
+      ch[j].id = id;ch[j].what = what;ch[j].len = len;ch[j].data = data;
+      ch[j].secs = secs; ch[j].nsecs = nsecs;
+      ++j;
      });
 }
 
@@ -128,6 +149,11 @@ void LivelogTreeModel::check_for_new_entries(){
   int delta = 0;int old_size=0;
   {
    std::lock_guard<std::mutex> lk1(log_entries_peer->mutex_trans2consumer());
+    if (log_entries_peer->reseted()){
+        chunks.clear();
+        emit model_reset();
+        continue;
+    }
    old_size = chunks.size();
    update_chunks();
    delta = chunks.size() - old_size;

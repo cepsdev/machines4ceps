@@ -75,6 +75,7 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 
 		if (!conn_established)
 		{
+
 			for(;rp == nullptr;)
 			{
 
@@ -105,6 +106,8 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			 }
 			}
 			conn_established = true;
+            logid2last_read_id.clear();
+            if (livelogger_) livelogger_->clear_all();
 		}
 
 		//Read main log
@@ -155,7 +158,8 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 		 if (livelogger_){
 			 auto ch = (livelog::Livelogger::Storage::chunk*)buffer;
 			 auto data = buffer + sizeof(livelog::Livelogger::Storage::chunk);
-			 livelogger_->write(ch->what(),data,ch->len(),ch->id());
+
+             livelogger_->write(ch->what(),data,ch->len(),ch->id(),ch->timestamp_secs, ch->timestamp_nsecs);
 			 logid2last_read_id[livelog::CMD_GET_NEW_LOG_ENTRIES] = ch->id();
 			 ++chunks_read;
 		 }
