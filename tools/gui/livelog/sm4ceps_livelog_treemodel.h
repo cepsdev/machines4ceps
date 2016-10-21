@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <QStyle>
 #include "core/include/livelog/livelogger.hpp"
 #include "core/include/sockets/rdwrn.hpp"
 #include "core/include/sm_livelog_storage_utils.hpp"
@@ -28,7 +29,7 @@ class LivelogTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    explicit LivelogTreeModel( QObject *parent = 0);
+    explicit LivelogTreeModel( QStyle* style, QObject *parent = 0);
     ~LivelogTreeModel();
 
     QVariant data(const QModelIndex &index, int role) const Q_DECL_OVERRIDE;
@@ -53,6 +54,8 @@ private:
     mutable std::vector<chunk_ext> chunks;
     void check_for_new_entries();
     void update_chunks();
+    QStyle* style=nullptr;
+    livelog::Livelogger::Storage::chunk* last = nullptr;
 
 };
 

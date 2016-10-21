@@ -189,6 +189,22 @@ template<typename F> void for_each(Livelogger::Storage const & storage, F f){
 	}
 }
 
+template<typename F> Livelogger::Storage::chunk* for_each(Livelogger::Storage const & storage,Livelogger::Storage::chunk* start, F f){
+        Livelogger::Storage::chunk* current = start;
+        Livelogger::Storage::chunk* pre = current;
+
+        if (start == nullptr) current = storage.front();
+        else current = storage.next(current);
+
+        while(current){
+                pre = current;
+                auto& chunk = *current;
+                f(((char*)&chunk)+sizeof(chunk), chunk.id(),chunk.what(),chunk.len());
+                current = storage.next(current);
+        }
+        return pre;
+}
+
 template<typename F> void for_each2(Livelogger::Storage const & storage, F f){
         auto current = storage.front();
         while(std::get<2>(current)){
@@ -196,6 +212,22 @@ template<typename F> void for_each2(Livelogger::Storage const & storage, F f){
                 f(((char*)&chunk)+sizeof(chunk), chunk.id(),chunk.what(),chunk.len(),chunk.timestamp_secs,chunk.timestamp_nsecs );
                 current = storage.next(std::get<2>(current));
         }
+}
+
+template<typename F> Livelogger::Storage::chunk* for_each2(Livelogger::Storage const & storage,Livelogger::Storage::chunk* start, F f){
+        Livelogger::Storage::chunk* current = start;
+        Livelogger::Storage::chunk* pre = current;
+
+        if (start == nullptr) current = std::get<2>(storage.front());
+        else current = std::get<2>(storage.next(current));
+
+        while(current){
+                pre = current;
+                auto& chunk = *current;
+                f(((char*)&chunk)+sizeof(chunk), chunk.id(),chunk.what(),chunk.len(),chunk.timestamp_secs,chunk.timestamp_nsecs );
+                current = std::get<2>(storage.next(current));
+        }
+        return pre;
 }
 
 template<typename F> bool for_each_ext(Livelogger::Storage const & storage, F f){

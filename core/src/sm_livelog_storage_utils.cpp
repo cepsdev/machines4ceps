@@ -14,6 +14,10 @@
 #  define be64toh(x) betoh64(x)
 #endif
 
+constexpr short DATA_INT64  = 1;
+constexpr short DATA_SZ     = 2;
+constexpr short DATA_DOUBLE = 3;
+constexpr short DATA_VEC_OF_VARIANTS = 4;
 
 void sm4ceps::livelog_write(livelog::Livelogger& live_logger,executionloop_context_t::states_t const &  states){
  std::size_t len = 0;
@@ -23,6 +27,21 @@ void sm4ceps::livelog_write(livelog::Livelogger& live_logger,executionloop_conte
 	 for(auto const & s : states){
 		 if (s != 0) {*((std::uint32_t*)data) = counter; data += sizeof(std::uint32_t);} ++counter;
 	 }
+  },len);
+}
+
+void sm4ceps::livelog_write(livelog::Livelogger& live_logger,std::pair<std::string,std::vector<sm4ceps_plugin_int::Variant>> const & event){
+ std::size_t len = storage_write_event(nullptr,
+                        std::get<0>(event),
+						std::get<1>(event),false);
+ live_logger.write_ext(sm4ceps::STORAGE_WHAT_EVENT,[&](char * data){
+	 storage_write_event(data, std::get<0>(event), std::get<1>(event),true);
+  },len);
+}
+void sm4ceps::livelog_write_console(livelog::Livelogger& live_logger,std::string const & s){
+ std::size_t len = storage_write(nullptr, s,false);
+ live_logger.write_ext(sm4ceps::STORAGE_WHAT_CONSOLE,[&](char * data){
+	 storage_write(data, s,true);
   },len);
 }
 
@@ -55,6 +74,141 @@ bool sm4ceps::storage_read_entry(std::map<int,std::string>& i2s, char * data){
 		auto a = *((std::int32_t*)data);data+=sizeof(std::int32_t);
 		i2s[a] = std::string(data);data+=strlen(data)+1;
 	}
+}
+//
+
+std::size_t sm4ceps::storage_write(char * data,
+ 		                   std::string const & s,
+						   bool write){
+ std::size_t r = 0;
+ if(write) *((short*)(data+r)) = DATA_SZ;
+ r += sizeof(short);
+ if (write) *((std::uint32_t*)(data+r)) = s.length()+1;
+ r += sizeof(std::uint32_t);
+ if(write) memcpy(data+r,s.c_str(),s.length()+1);
+ r += s.length()+1;
+ return r;
+}
+
+std::size_t sm4ceps::storage_write(char * data,
+ 		                   std::int64_t j,
+ 						   bool write){
+ std::size_t r = 0;
+ if(write) *((short*)(data+r)) = DATA_INT64;
+ r += sizeof(short);
+ if(write) *((std::int64_t*)(data+r)) = j;
+ r += sizeof(std::int64_t);
+ return r;
+}
+
+std::size_t sm4ceps::storage_write(char * data,
+  		                double v,
+  						bool write){
+ std::size_t r = 0;
+ if(write) *((short*)(data+r)) = DATA_DOUBLE;
+ r += sizeof(short);
+ if(write) *((double*)(data+r)) = v;
+ r += sizeof(double);
+ return r;
+}
+
+std::size_t sm4ceps::storage_write(char * data,
+		                std::vector<sm4ceps_plugin_int::Variant> const & v,
+  						bool write){
+ std::size_t r = 0;
+ if(write) *((short*)(data+r)) = DATA_VEC_OF_VARIANTS;
+ r += sizeof(short);
+ if(write) *((std::uint32_t*)(data+r)) = v.size();
+ r += sizeof(std::uint32_t);
+ for(auto const & e : v){
+	 if (e.what_ == sm4ceps_plugin_int::Variant::Int)
+		 r+=storage_write(data+r,(std::int64_t)e.iv_,write);
+	 else if (e.what_ == sm4ceps_plugin_int::Variant::Double)
+		 r+=storage_write(data+r,e.dv_,write);
+	 else if (e.what_ == sm4ceps_plugin_int::Variant::String)
+		 r+=storage_write(data+r,e.sv_,write);
+ }
+ return r;
+}
+
+
+//Event serialization/deserialization
+
+void sm4ceps::storage_write_event(livelog::Livelogger::Storage& storage,
+		                   std::string ev_name,
+						   std::vector<sm4ceps_plugin_int::Variant>const & params,
+						   std::mutex* mtx){
+ std::size_t len = storage_write_event(nullptr,ev_name, params,false);
+ storage.write_ext(sm4ceps::STORAGE_WHAT_EVENT,[&](char * data){
+	 storage_write_event(data,ev_name, params,true);
+ },len,mtx);
+}
+
+std::size_t sm4ceps::storage_write_event(char * data,
+		                   std::string ev_name,
+						   std::vector<sm4ceps_plugin_int::Variant> const & params,
+						   bool write){
+ std::size_t r = 0;
+ r += storage_write(data+r,ev_name,write);
+ r += storage_write(data+r,params,write);
+ return r;
+}
+
+//Reads
+
+std::size_t sm4ceps::storage_read_variant(char * data,sm4ceps_plugin_int::Variant& v ){
+  std::size_t r = 0;
+  short what = *((short*)(data+r));
+  r+=sizeof(short);
+  if (what == DATA_INT64) {std::int64_t vv; r+=storage_read(data+r,vv); v.iv_ = (int)vv;v.what_= sm4ceps_plugin_int::Variant::Int;}
+  else if (what == DATA_DOUBLE) {r+=storage_read(data+r,v.dv_);v.what_= sm4ceps_plugin_int::Variant::Double;}
+  else if (what == DATA_SZ) {r+=storage_read(data+r,v.sv_);v.what_= sm4ceps_plugin_int::Variant::String;}
+
+
+  return r;
+}
+
+std::size_t sm4ceps::storage_read(char * data, std::vector<sm4ceps_plugin_int::Variant> & v){
+ std::size_t r = 0;
+ std::size_t len = *(std::uint32_t*)(data+r);
+
+ r+= sizeof (std::uint32_t);
+ for(std::size_t i = 0; i!=len;++i){
+     sm4ceps_plugin_int::Variant vv;
+     r += storage_read_variant(data+r,vv);
+     v.push_back(vv);
+ }
+ return r;
+}
+
+std::size_t sm4ceps::storage_read(char * data, std::string & s){
+ std::size_t r = 0;
+ std::size_t len = *(std::uint32_t*)(data+r);
+ r+=sizeof(std::uint32_t);
+ s = data + r;
+ return r + s.length() + 1;
+}
+
+std::size_t sm4ceps::storage_read(char * data, std::int64_t& v){
+ std::size_t r = 0;
+ v = *((std::int64_t*)(data+r));
+ return r+sizeof(std::int64_t);
+}
+
+std::size_t sm4ceps::storage_read(char * data, double & v){
+ std::size_t r = 0;
+ v = *((double*)(data+r));
+ return r+sizeof(double);
+}
+
+bool sm4ceps::storage_read_event(std::string& ev_name,
+		   	   	   	   	  std::vector<sm4ceps_plugin_int::Variant>& params,
+						  char * data){
+ std::size_t r = sizeof(short);
+ r+=storage_read(data+r,ev_name);
+ r+= sizeof(short); //jump over magic number
+ r+=storage_read(data+r,params);
+ return r != 0;
 }
 
 void sm4ceps::Livelogger_sink::comm_stream_fn(int id,

@@ -10,7 +10,12 @@ namespace sm4ceps{
   constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_EVENT = 3;
   constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_CURRENT_STATES = 4;
   constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_CONSOLE = 5;
+  constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_INFO = 6;
+  constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_WARNING = 7;
+  constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_ERROR = 8;
+  constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_TRANSITION = 9;
   constexpr livelog::Livelogger::Storage::what_t STORAGE_WHAT_INT32_TO_STRING_MAP = 6;
+
 };
 
 #endif

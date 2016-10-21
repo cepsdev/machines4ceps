@@ -1,6 +1,7 @@
 #include "core/include/livelog/livelogger.hpp"
 #include "core/include/sm_livelog_storage_ids.hpp"
 #include "core/include/sm_livelog_storage_utils.hpp"
+#include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -115,11 +116,23 @@ int main(){
 		//list_entries_map_storage(cout,idx2fqs);
 		//std::this_thread::sleep_for(20s);
 		live_logger1.publish("3000");
-		
+		using namespace sm4ceps_plugin_int;
+		int ev_j = 0;
+		std::vector<std::pair<std::string,std::vector<Variant>>> events =
+				{
+						{"ev1",{Variant{1}, Variant{"DuaneReade"}, Variant{4.9} }},
+						{"ev2",{Variant{"The Night Of"},Variant{"John Turturo"},Variant{1},Variant{2},Variant{3}}},
+						{"ev3",{Variant{"The Night Of"},Variant{"Riz Ahmed"},Variant{4},Variant{2.0},Variant{3.14}}}
+				};
+
 		for(int i = 0; i != 10000; ++i){
 			for(auto& e: ec.current_states) e = 0;
 			ec.current_states[(i + 1) % 10] =  ec.current_states[i % 10] = 1;
 			livelogger_source.log_current_states(ec);
+			if (i % 5 == 2) {livelogger_source.log_event(events[ev_j]); ev_j = (ev_j + 1) % 3; }
+			if (i % 7 == 2) {livelogger_source.log_console("Some output");}
+
+
 			//log(live_logger1, i);//live_logger1.flush();
 			//std::cout << "\nEntries in cis storage:\n";
 			//list_entries<int>(std::cout,live_logger1.trans_storage());

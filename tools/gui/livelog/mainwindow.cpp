@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    ui->treeView->setModel(new LivelogTreeModel);
+    ui->treeView->setModel(new LivelogTreeModel(style()));
 }
 
 MainWindow::~MainWindow()

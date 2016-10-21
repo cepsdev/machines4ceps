@@ -3,9 +3,12 @@
 #include <mutex>
 #include <strstream>
 #include <time.h>
+#include <QStyle>
+#include "core/include/state_machine_simulation_core_plugin_interface.hpp"
+#include "core/include/livelog/livelogger.hpp"
 
-
-LivelogTreeModel::LivelogTreeModel( QObject *parent ): QAbstractItemModel(parent){
+LivelogTreeModel::LivelogTreeModel( QStyle* style_,QObject *parent ): QAbstractItemModel(parent){
+    style=style_;
     connect(this,SIGNAL(append_rows(int,int)),this,SLOT(do_append_rows(int,int)),Qt::QueuedConnection);
     connect(this,SIGNAL(model_reset()),this,SLOT(do_model_reset()),Qt::QueuedConnection);
     log_entries_peer = new livelog::Livelogger(200,20000000);
@@ -26,9 +29,21 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
     if (!index.isValid())
       return QVariant();
 
-    if (role != Qt::DisplayRole)
-      return QVariant();
+    if (role != Qt::DisplayRole){
+     if (role== Qt::DecorationRole)
+      {
+         std::lock_guard<std::mutex> lk1(log_entries_peer->mutex_trans2consumer());
+         if (chunks.size() <= index.row()) return QVariant();
+         if (index.column() == 0) return index.row();
+         auto& ch = chunks[index.row()];
 
+         if (ch.what == sm4ceps::STORAGE_WHAT_INFO && index.column() == 1){
+
+           if (style)  return style->standardIcon(QStyle::SP_MessageBoxInformation);
+         }
+      }
+      return QVariant();
+    }
 
     {
      std::lock_guard<std::mutex> lk1(log_entries_peer->mutex_trans2consumer());
@@ -36,6 +51,18 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
      if (index.column() == 0) return index.row();
      //std::cout << index.row()<< "/" << index.column() << std::endl;
      auto& ch = chunks[index.row()];
+
+     if (index.column() == 3){
+         struct tm t;
+         time_t tt = ch.secs;
+         double r = ch.nsecs / 1000000000.0;
+         char buffer[128] = {0};
+         std::size_t n = strftime(buffer,32,"%T.",localtime(&tt));
+         strcpy(buffer+n,std::to_string(r).substr(2).c_str());
+         n+= std::to_string(r).substr(2).length();
+         strftime(buffer+n,128-strlen(buffer)," %F",localtime(&tt));
+         return buffer;
+     }
      if (ch.what == sm4ceps::STORAGE_WHAT_CURRENT_STATES){
          if (index.column() == 1) return QVariant("Active States");
          if (index.column() == 2){
@@ -47,20 +74,38 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
              });
            return ss.str().c_str();
          }
-         if (index.column() == 3){
-             struct tm t;
-             time_t tt = ch.secs;
-             double r = ch.nsecs / 1000000000.0;
-             char buffer[128] = {0};
-             std::size_t n = strftime(buffer,32,"%T.",localtime(&tt));
-             strcpy(buffer+n,std::to_string(r).substr(2).c_str());
-             n+= std::to_string(r).substr(2).length();
-             strftime(buffer+n,128-strlen(buffer)," %F",localtime(&tt));
-             return buffer;
-         }
-     }
+    } else if (ch.what == sm4ceps::STORAGE_WHAT_EVENT){
+        if (index.column() == 1) return QVariant("Event");
+        if (index.column() == 2){
+          std::stringstream ss;
+          sm4ceps::extract_event_raw(ch.data,ch.len,
+            [&](std::pair<std::string,std::vector<sm4ceps_plugin_int::Variant>> const & ev){
+                ss << std::get<0>(ev) << "(";
+                for(std::size_t i = 0;i!=std::get<1>(ev).size();++i){
+                    auto const & v = std::get<1>(ev)[i];
+                    if (v.what_ == sm4ceps_plugin_int::Variant::String)
+                        ss << "\"" << v.sv_ << "\"";
+                    else if (v.what_ == sm4ceps_plugin_int::Variant::Int)
+                        ss << v.iv_;
+                    else if (v.what_ == sm4ceps_plugin_int::Variant::Double)
+                        ss << v.dv_;
+
+                    if (i+1 != std::get<1>(ev).size()) ss << ",";
+                }
+                ss << ")";
+            });
+          return QVariant(ss.str().c_str());
+        }
+    } else if (ch.what == sm4ceps::STORAGE_WHAT_CONSOLE){
+         std::string s;
+         sm4ceps::extract_string_raw(ch.data,ch.len,
+           [&](std::string & t){
+             s = t;
+           });
+         return s.c_str();
     }
-    return QVariant();
+   }
+   return QVariant();
 }
 
 Qt::ItemFlags LivelogTreeModel::flags(const QModelIndex &index) const {
@@ -105,16 +150,20 @@ int LivelogTreeModel::columnCount(const QModelIndex &parent ) const {
 }
 
 void LivelogTreeModel::update_chunks(){
- chunks.resize(log_entries_peer->trans_storage().size());
+ //chunks.resize(log_entries_peer->trans_storage().size());
  std::size_t j = 0;
  auto& ch = chunks;
- for_each2(log_entries_peer->trans_storage(),
+
+
+ last = for_each2(log_entries_peer->trans_storage(),last,
   [&](char* data,
       livelog::Livelogger::Storage::id_t id,
       livelog::Livelogger::Storage::what_t what,
       livelog::Livelogger::Storage::len_t len,
       std::uint64_t secs,std::uint64_t nsecs )
      {
+      ch.push_back(chunk_ext{});
+      auto j = ch.size()-1;
       ch[j].id = id;ch[j].what = what;ch[j].len = len;ch[j].data = data;
       ch[j].secs = secs; ch[j].nsecs = nsecs;
       ++j;
@@ -161,7 +210,7 @@ void LivelogTreeModel::check_for_new_entries(){
   if (delta > 0){
       emit do_append_rows(old_size,old_size+delta);
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
  }//for
 }
 
