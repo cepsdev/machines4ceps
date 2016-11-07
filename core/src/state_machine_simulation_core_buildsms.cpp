@@ -1314,6 +1314,9 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	if(generate_cpp_code()){
 		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
 	}
+	if (result_cmd_line.dot_gen){
+		do_generate_dot_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
+	}
 	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
 }
 

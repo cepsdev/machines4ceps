@@ -63,6 +63,7 @@ struct Result_process_cmd_line
     bool enforce_native = false;
     bool ignore_simulations = false;
     bool print_statemachines = false;
+    bool dot_gen = false;
 
     std::string live_log_port = "3000";
     bool live_log = false;

@@ -419,7 +419,7 @@ sm4ceps_struct* struct_assign(std::string compound_id, std::string struct_id){
 
 
 
-void write_copyright_and_timestamp(std::ostream& out, std::string title,bool b,Result_process_cmd_line const& result_cmd_line){
+static void write_copyright_and_timestamp(std::ostream& out, std::string title,bool b,Result_process_cmd_line const& result_cmd_line){
 	if(!b) return;
 	time_t timer;time(&timer);tm * timeinfo;timeinfo = localtime(&timer);
 	out

@@ -244,6 +244,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv)
 			else if (arg == "--cppgen_statemachines") {r.cppgen_statemachines=true;continue;}
 			else if (arg == "--live_log") {r.live_log=true;continue;}
 			else if (arg == "--print_statemachines") {r.print_statemachines=true;continue;}
+			else if (arg == "--dot_gen") {r.dot_gen=true;continue;}
 
 
 
