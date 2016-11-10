@@ -4,13 +4,28 @@
 StandardItemSM::StandardItemSM(State_machine* sm_, State_machine::State* state_)
     :QStandardItem(sm_ != nullptr ? sm_->id().c_str():state_->id().c_str() ),sm(sm_),state(state_)
 {
+ setCheckable(true);setEditable(false);
+}
 
+
+void StandardItemSM::setData(const QVariant &value, int role){
+ QStandardItem::setData(value,role);
+ if (role == Qt::CheckStateRole){
+   ModelSM* m = (ModelSM*)model();
+   if (m == nullptr) return;
+   m->item_checked_state_changed(this);
+ }
 }
 
 ModelSM::ModelSM(State_machine_simulation_core* smc, QObject * parent):
     QStandardItemModel(parent),smcore(smc)
 {
  initialize();load();
+}
+
+void ModelSM::item_checked_state_changed(StandardItemSM* item)
+{
+ emit item_checkstate_changed(item);
 }
 
 void ModelSM::initialize()

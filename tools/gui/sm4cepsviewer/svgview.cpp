@@ -25,7 +25,7 @@ SvgView::SvgView(QWidget *parent)
 
 bool SvgView::reload(QString svg ){
     QGraphicsScene *s = scene();
-    QScopedPointer<QGraphicsSvgItem> svgItem(new QGraphicsSvgItem("temp.svg"));
+    QScopedPointer<QGraphicsSvgItem> svgItem(new QGraphicsSvgItem("out.svg"));
     if (!svgItem->renderer()->isValid())
        return false;
      s->clear();
