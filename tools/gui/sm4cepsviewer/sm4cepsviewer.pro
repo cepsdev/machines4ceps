@@ -13,7 +13,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = sm4cepsviewer
 TEMPLATE = app
 
-
+ 
 QMAKE_CXXFLAGS += -std=c++14
 QMAKE_CXXFLAGS += -Wall
 

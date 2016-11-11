@@ -30,7 +30,7 @@ void ModelSM::item_checked_state_changed(StandardItemSM* item)
 
 void ModelSM::initialize()
 {
- setHorizontalHeaderLabels(QStringList() << tr("State Machine"));
+ setHorizontalHeaderLabels(QStringList() << tr("Compound State"));
  for (auto column = 1; column < columnCount(); ++column)
          horizontalHeaderItem(column)->setTextAlignment(Qt::AlignVCenter|Qt::AlignRight);
 }

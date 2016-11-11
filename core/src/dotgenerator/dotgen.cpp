@@ -32,20 +32,20 @@ std::string full_name_of_sm(std::pair<std::string,State_machine*> const & elem){
 	return elem.first;
 }
 template<typename F, typename T,typename S> void traverse_sm(std::unordered_set<State_machine*>& m,State_machine* sm, T const & sms,std::string name,bool traverse_sub_sms, F f,S& s){
-	f(sm,name);
+    if(!f(sm,name)) return;
 	if (!traverse_sub_sms) return;
 	for(auto state: sm->states()){
 		if (!state->is_sm() || state->smp() == nullptr) continue;
 		if (m.find(state->smp()) != m.end()) continue;
 		m.insert(state->smp());
-		traverse_sm(m,state->smp(),sms,name+"."+state->id_,traverse_sub_sms,f,s);
+        traverse_sm(m,state->smp(),sms,name+"."+state->id_,traverse_sub_sms,f,s);
 	}
 
 	for(auto subsm: sm->children()){
 		//assert(m.find(subsm) != m.end());
 		if (m.find(subsm) != m.end()) continue;
 		m.insert(subsm);
-		traverse_sm(m,subsm,sms,name+"."+subsm->id_,traverse_sub_sms,f,s);
+        traverse_sm(m,subsm,sms,name+"."+subsm->id_,traverse_sub_sms,f,s);
 	}
 }
 
@@ -86,7 +86,7 @@ class Dotgenerator{
 	std::map<State_machine*,std::string> sm2initial;
 
 	std::string pure_state_base_style_ = "style=\"rounded\"";
-	void dump_sm(std::ostream& o,std::string name,State_machine* sm);
+    void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand);
 	std::string state_style(std::string name){
 		if (name == "initial" || name ==  "Initial")
 		{
@@ -130,7 +130,11 @@ public:
 };
 
 
-void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm){
+void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand){
+     if (expand != nullptr && expand->find(sm) == expand->end()){
+      o << " "<<sm2dotname[sm]<<"[ label=\""<< sm->id() << "\\n...\" ," <<state_style(sm->id())<< ",fontsize=14];\n";
+      return;
+     }
 	 o << " subgraph "<<n2dotname[name]<<"{\n";
 	 o << "  label=\"" << sm->id() << "\";\nfontname=\"Arial\";\nfontsize=14;\n";
 
@@ -140,53 +144,83 @@ void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm){
 	 }
 
 	 for(auto subsm:sm->children()){
-		 dump_sm(o,name+"."+subsm->id(),subsm);
+         dump_sm(o,name+"."+subsm->id(),subsm,expand);
 	 }
 
 	 o << " }\n";
 }
 
 void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,State_machine*> const & sms,std::set<State_machine*>* expand, std::ostream& o){
-
+    //expand = nullptr;
     int cluster_counter = 0;
     int pure_state_counter = 0;
     Dotgenerator dotgen;
     o << "digraph Root {\ncompound=true;fillcolor=cornsilk;style=\"rounded,filled\";/*\nnodesep=1.1;*/\nnode [shape=box, fontname=\"Arial\"];\n";
 
     auto map_names = [&](State_machine* sm,std::string name){
+        if (expand != nullptr && expand->find(sm) == expand->end()){
+            dotgen.n2dotname[name] = dotgen.sm2dotname[sm] = dotgen.sm2initial[sm] = "cluster_proxy"+std::to_string(cluster_counter++);
+            for(auto const& s:sm->states()) if (!s->is_sm_){
+                dotgen.n2dotname[name+"."+s->id()] = dotgen.sm2initial[sm];
+            }
+            for(auto s:sm->children())
+                dotgen.n2dotname[name+"."+s->id()] = dotgen.n2dotname[name+"."+s->id()] = dotgen.sm2initial[s] = dotgen.sm2initial[sm];
+
+            return false;
+        }
         dotgen.n2dotname[name] = "cluster"+std::to_string(cluster_counter);
         dotgen.sm2dotname[sm] = "cluster"+std::to_string(cluster_counter++);
         for(auto const& s:sm->states()) if (!s->is_sm_){
             dotgen.n2dotname[name+"."+s->id()] = "node"+std::to_string(pure_state_counter++)+"_is_"+s->id();
             if (s->id() == "Initial" || s->id() == "initial") dotgen.sm2initial[sm] = dotgen.n2dotname[name+"."+s->id()];
         }
+        return true;
     };
 
-    auto dump_toplevel_sm = [&](State_machine* sm,std::string name)->void{
-        dotgen.dump_sm(o,name,sm);
+    auto dump_toplevel_sm = [&](State_machine* sm,std::string name)->bool{
+        dotgen.dump_sm(o,name,sm,expand);return true;
     };
 
-    auto dump_transitions =[&](State_machine* sm, std::string name){
+    auto dump_transitions =[&](State_machine* sm, std::string name)->bool{
+         bool out_only = false;
+         if (expand != nullptr  && expand->find(sm) == expand->end() ) out_only = true;
          for(auto& t : sm->transitions()){
-             if ( (t.from_.parent_ == sm || t.from_.parent_ == nullptr)&& (t.to_.parent_ == sm || t.to_.parent_ == nullptr) && !(t.from_.is_sm_ || t.to_.is_sm_) ){
-                 o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" << dotgen.n2dotname[name+"."+t.to_.id()]
-                 << "[penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
-             }
-             if (!t.from_.is_sm_ && t.to_.is_sm_){
-                 o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" <<dotgen.sm2initial[t.to_.smp_]
-                 << "[lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\",penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
-             }
-             if (t.from_.is_sm_ && !t.to_.is_sm_){
-                 o << dotgen.sm2initial[t.from_.smp_] << "->" << dotgen.n2dotname[name+"."+t.to_.id()]
-                 << "[ltail=\""<< dotgen.sm2dotname[t.from_.smp_] << "\", penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
-             }
-             if (t.from_.is_sm_ && t.to_.is_sm_){
-                 o << dotgen.sm2initial[t.from_.smp_] << "->" << dotgen.sm2initial[t.to_.smp_]
-                 << "[ltail=\""<< dotgen.sm2dotname[t.from_.smp_] << "\", "<< "lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\"" << ", penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
-             }
+             if (out_only && (!t.to_.is_sm_ || t.to_.smp()->parent() == sm) ) continue;
 
 
+             if ((t.from_.parent_ == sm || t.from_.parent_ == nullptr)&& (t.to_.parent_ == sm || t.to_.parent_ == nullptr) && !(t.from_.is_sm_ || t.to_.is_sm_) ){
+                 if (dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() )
+                     o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" << dotgen.n2dotname[name+"."+t.to_.id()] << "[penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
+             }
+             else if (!t.from_.is_sm_ && t.to_.is_sm_ && dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() ){
+                 o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" <<dotgen.sm2initial[t.to_.smp_];
+                 if (expand == nullptr  || expand->find(t.to_.smp_) != expand->end())
+                     o << "[lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\",penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
+                 o << ";\n";
+             }
+             else if (t.from_.is_sm_ && !t.to_.is_sm_ && dotgen.sm2initial.find(t.from_.smp_) != dotgen.sm2initial.end()){
+                 o << dotgen.sm2initial[t.from_.smp_] << "->" << dotgen.n2dotname[name+"."+t.to_.id()];
+                 if (expand == nullptr  || expand->find(t.from_.smp_) != expand->end())
+                     o << "[ltail=\""<< dotgen.sm2dotname[t.from_.smp_] << "\", penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
+                 o << ";\n";
+             }
+             else if (t.from_.is_sm_ && t.to_.is_sm_
+                     && dotgen.sm2initial.find(t.from_.smp_) != dotgen.sm2initial.end()
+                     && dotgen.sm2initial.find(t.to_.smp_) != dotgen.sm2initial.end() ){
+                 o << dotgen.sm2initial[t.from_.smp_] << "->" << dotgen.sm2initial[t.to_.smp_];
+                 o << "[";
+                 if (expand == nullptr  || expand->find(t.from_.smp_) != expand->end())
+                 {
+                     o << "ltail=\""<< dotgen.sm2dotname[t.from_.smp_] << "\", ";
+                 }
+                 if (expand == nullptr  || expand->find(t.to_.smp_) != expand->end())
+                 {
+                     o << "lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\", ";
+                 }
+                 o << "penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
+             }             
          }
+         return true;
     };
     traverse_sms(sms,true,map_names,dotgen);
     traverse_sms(sms,false,dump_toplevel_sm,dotgen);

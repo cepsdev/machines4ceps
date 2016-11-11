@@ -10,27 +10,41 @@
 #include "sm_model.h"
 #include "graphviz/gvc.h"
 #include <stdlib.h>
+#include <QPushButton>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_view(new SvgView),
     m_treeview(new QTreeView)
 {
- auto mainSplitter = new QSplitter(Qt::Horizontal);
- mainSplitter->addWidget(m_view);
- mainSplitter->addWidget(m_treeview);
- mainSplitter->setStretchFactor(1, 1);
- setCentralWidget(mainSplitter);
+
+ m_selections_tab = new QTabWidget();
 
  m_treeview->setAllColumnsShowFocus(true);
  m_treeview->setModel(m_sm_treeview_model  = new ModelSM(smcore,this));
  connect(m_treeview,SIGNAL(clicked(const QModelIndex &)), this, SLOT(sm_treeview_clicked(const QModelIndex &)) );
  connect(m_sm_treeview_model,SIGNAL(item_checkstate_changed(StandardItemSM*)),this,SLOT(item_checkstate_changed(StandardItemSM*)));
- //m_sm_treeview_model->register_mainwnd(this);
 
- /*QTimer *timer = new QTimer(this);
- connect(timer, SIGNAL(timeout()), m_view, SLOT(reload()));
- timer->start(0);*/
+ m_selections_tab->addTab(m_treeview,"" );
+ m_selections_tab->addTab(new QWidget,"+" );
+ std::cout << m_selections_tab->count() << std::endl;
+
+ connect(m_selections_tab,SIGNAL(currentChanged(int)),this,SLOT(sm_sel_tab_currentChanged(int)),Qt::QueuedConnection);
+std::cout << m_selections_tab->count() << std::endl;
+
+ auto mainSplitter = new QSplitter(Qt::Horizontal);
+ mainSplitter->addWidget(/*m_treeview*/m_selections_tab);
+ mainSplitter->addWidget(m_view);
+ mainSplitter->setStretchFactor(1, 1);
+ setCentralWidget(mainSplitter);
+
+}
+
+
+void MainWindow::sm_sel_tab_currentChanged(int index){
+ if (index == m_selections_tab->count()-1){
+     m_selections_tab->setTabText(index,"");
+ }
 }
 
 void MainWindow::item_checkstate_changed(StandardItemSM* item){
@@ -58,34 +72,7 @@ void MainWindow::item_checkstate_changed(StandardItemSM* item){
 
 void MainWindow::sm_treeview_clicked(const QModelIndex &index){
 
- /*StandardItemSM* item = (StandardItemSM*)m_sm_treeview_model->itemFromIndex(index);
- {
-   std::ofstream of{"out.dot"};
-   std::map<std::string,State_machine*> m;m.insert(std::make_pair(item->associated_sm()->id(),item->associated_sm()));
-   smcore->do_generate_dot_code(m,of);
-   of.flush();
- }
- system("dot -T svg -o out.svg out.dot");
- m_view->reload();
-*/
 
- /*Agraph_t *g, *prev = NULL;
- GVC_t *gvc;
- gvc = gvContext();
- int argc = 6;
- char* v[] = {"dot","-T","svg","-o","out.svg","out.dot"};
-
- gvParseArgs(gvc, argc, v);
- while ((g = gvNextInputGraph(gvc))) {
-  if (prev) {
-   gvFreeLayout(gvc, prev);
-   agclose(prev);
-  }
-  gvLayoutJobs(gvc, g);
-  gvRenderJobs(gvc, g);
-  prev = g;
- }
- gvFreeContext(gvc);*/
 }
 
 MainWindow::~MainWindow()
