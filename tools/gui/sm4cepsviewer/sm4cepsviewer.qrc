@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="add_sm_selection_icon.png">../icons/oxygen/base/48x48/actions/code-class.png</file>
+        <file alias="delete_sm_selection_icon.png">../icons/oxygen/base/48x48/actions/edit-delete.png</file>
+        <file alias="simulation_ctrl_play_all.png">../icons/oxygen/base/48x48/actions/arrow-right.png</file>
+    </qresource>
+</RCC>
