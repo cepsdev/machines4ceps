@@ -799,8 +799,9 @@ void State_machine_simulation_core::process_simulation(ceps::ast::Nodeset& sim,c
 		if (!state.valid()) fatal_(-1,"Expression doesn't evaluate to an existing state: "+ss.str());
 		states.push_back(state);
 	}//for*/
-	if(enforce_native()) simulate_purly_native(sim,states,ceps_env,universe);
-	else simulate(sim,states,ceps_env,universe);
+	//if(enforce_native()) run_simulation(sim,states,ceps_env,universe);
+	//else simulate(sim,states,ceps_env,universe);
+	run_simulation(sim,states,ceps_env,universe);
 }
 
 bool State_machine_simulation_core::is_assignment_op(ceps::ast::Nodebase_ptr n)

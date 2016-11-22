@@ -80,44 +80,30 @@ if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_
 */
 
 
-#ifdef TEST_EV_CALLBACK
-void test_ev_callback(State_machine_simulation_core::event_t ev){
- std::cout << "test_ev_callback" << std::endl;
- std::cout << "event-id == " << ev.id_ <<std::endl;
- std::cout << "payload-size ==" << ev.payload_.size() << std::endl;
- for(auto i = 0; i != ev.payload_.size();++i)
-	 std::cout << *ev.payload_[i] << std::endl;
-}
-#endif
 
 
-
-void State_machine_simulation_core::simulate_purly_native(ceps::ast::Nodeset sim,
+void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
 		                                     ceps::ast::Nodeset& universe){
 
-#ifdef TEST_EV_CALLBACK
-this->global_event_call_back_fn_ = test_ev_callback;
-#endif
+ auto & execution_ctxt = executionloop_context();
+ int ev_id;
+ event_t dummy_ev;
+ event_t dummy_ev2;
 
-auto & execution_ctxt = executionloop_context();
-int ev_id;
-event_t dummy_ev;
-event_t dummy_ev2;
-
-current_event().id_= {};
-assert_in_end_states_.clear();
-assert_not_in_end_states_.clear();
-std::vector<ceps::ast::Int*> callback_ceps_int_vec;
- for(int i = 0; i != 16;++i)callback_ceps_int_vec.push_back(new ceps::ast::Int(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
-std::vector<ceps::ast::Double*> callback_ceps_double_vec;
- for(int i = 0; i != 16;++i)callback_ceps_double_vec.push_back(new ceps::ast::Double(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
-std::vector<ceps::ast::String*> callback_ceps_str_vec;
- for(int i = 0; i != 16;++i)callback_ceps_str_vec.push_back(new ceps::ast::String("", nullptr, nullptr, nullptr));
+ current_event().id_= {};
+ assert_in_end_states_.clear();
+ assert_not_in_end_states_.clear();
+ std::vector<ceps::ast::Int*> callback_ceps_int_vec;
+  for(int i = 0; i != 16;++i)callback_ceps_int_vec.push_back(new ceps::ast::Int(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+ std::vector<ceps::ast::Double*> callback_ceps_double_vec;
+  for(int i = 0; i != 16;++i)callback_ceps_double_vec.push_back(new ceps::ast::Double(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+ std::vector<ceps::ast::String*> callback_ceps_str_vec;
+  for(int i = 0; i != 16;++i)callback_ceps_str_vec.push_back(new ceps::ast::String("", nullptr, nullptr, nullptr));
 
 
-auto global_ev_cllbck = [this,&ev_id,&dummy_ev,&dummy_ev2,&execution_ctxt,&callback_ceps_int_vec,&callback_ceps_double_vec,&callback_ceps_str_vec](){
+ auto global_ev_cllbck = [this,&ev_id,&dummy_ev,&dummy_ev2,&execution_ctxt,&callback_ceps_int_vec,&callback_ceps_double_vec,&callback_ceps_str_vec](){
 	if (execution_ctxt.current_ev_id == ev_id){
 		dummy_ev.id_ = execution_ctxt.id_to_ev[ev_id];
 		global_event_call_back_fn_(dummy_ev);
@@ -143,23 +129,21 @@ auto global_ev_cllbck = [this,&ev_id,&dummy_ev,&dummy_ev2,&execution_ctxt,&callb
 	}
     global_event_call_back_fn_(dummy_ev2);
   }
-};
+ };
 
-states_t states;
+ states_t states;
 
-std::string testcase;
-std::string testname;
+ std::string testcase;
+ std::string testname;
 
-auto const& testcase_ = sim["TestCase"];
-auto const& testname_ = sim["Test"];
-if (testcase_.size()==1 && testname_.size()==1 &&
+ auto const& testcase_ = sim["TestCase"];
+ auto const& testname_ = sim["Test"];
+ if (testcase_.size()==1 && testname_.size()==1 &&
 	testcase_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier && testname_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier )
-{
-	if (PRINT_DEBUG) log() << "[TESTCASE]";
-	if (PRINT_DEBUG) log() << "[" << (testcase = name(ceps::ast::as_id_ref(testcase_.nodes()[0]))) <<"]\n";
-	if (PRINT_DEBUG) log() << "[TEST]";
-	if (PRINT_DEBUG) log() << "[" << (testname = name(ceps::ast::as_id_ref(testname_.nodes()[0]))) <<"]\n";
-}
+ {
+	info("[TESTCASE]["+ (testcase = name(ceps::ast::as_id_ref(testcase_.nodes()[0]))) + "]\n" );
+	info("[TEST]["+ (testname = name(ceps::ast::as_id_ref(testname_.nodes()[0]))) + "]\n" );
+ }
 
 
 auto fixture = universe[testcase];

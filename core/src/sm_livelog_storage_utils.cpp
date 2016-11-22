@@ -45,6 +45,13 @@ void sm4ceps::livelog_write_console(livelog::Livelogger& live_logger,std::string
   },len);
 }
 
+void sm4ceps::livelog_write_info(livelog::Livelogger& live_logger,std::string const & s){
+ std::size_t len = storage_write(nullptr, s,false);
+ live_logger.write_ext(sm4ceps::STORAGE_WHAT_INFO,[&](char * data){
+	 storage_write(data, s,true);
+  },len);
+}
+
 void sm4ceps::storage_write(livelog::Livelogger::Storage& storage,std::map<int,std::string> i2s, std::mutex* mtx){
 	std::size_t len = sizeof(std::size_t);
 	for(auto const & s : i2s){

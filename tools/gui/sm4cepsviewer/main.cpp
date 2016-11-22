@@ -20,6 +20,30 @@ void warn(int code, std::string const & msg)
     cerr << "\n***WARNING. " << msg <<"."<< endl;
 }
 
+void smcore_thread(State_machine_simulation_core* sm_core,int argc,char ** argv){
+    using namespace std;
+    sm_core->set_fatal_error_handler(fatal);
+    sm_core->set_non_fatal_error_handler(warn);
+    sm_core->set_log_stream(&std::cout);
+    string last_file_processed;
+
+    try{
+        Result_process_cmd_line result_cmd_line;
+        result_cmd_line.live_log = true;
+        init_state_machine_simulation(argc,argv,sm_core,result_cmd_line);
+        PRINT_DEBUG_INFO = sm_core->print_debug_info_;
+        run_state_machine_simulation(sm_core,result_cmd_line);
+    }
+    catch (ceps::interpreter::semantic_exception & se)
+    {
+        std::cout << "***Fatal Error: "<< se.what() << std::endl;
+    }
+    catch (std::runtime_error & re)
+    {
+        std::cout << "***Fatal Error:" << re.what() << std::endl;
+    }
+}
+
 
 int setup_and_run_sm_core(int argc,char ** argv, State_machine_simulation_core** result_sm_core)
 {
@@ -68,7 +92,17 @@ int setup_and_run_sm_core(int argc,char ** argv, State_machine_simulation_core**
          std::cerr << "\n***Error: Couldn't open file '" << f << "' " << std::endl << std::endl;
          return EXIT_FAILURE;
      }
+    State_machine_simulation_core* sm_core = *result_sm_core = new State_machine_simulation_core;
+    new std::thread{smcore_thread,sm_core,argc,argv};
+    return EXIT_SUCCESS;
+}//main
 
+#include "graphviz/gvc.h"
+
+State_machine_simulation_core* smcore = nullptr;
+
+int main(int argc, char *argv[])
+{
 #ifdef _WIN32
     WORD wVersionRequested;
     WSADATA wsaData;
@@ -89,47 +123,17 @@ int setup_and_run_sm_core(int argc,char ** argv, State_machine_simulation_core**
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    State_machine_simulation_core* sm_core = *result_sm_core = new State_machine_simulation_core;
-    sm_core->set_fatal_error_handler(fatal);
-    sm_core->set_non_fatal_error_handler(warn);
-    sm_core->set_log_stream(&std::cout);
-    string last_file_processed;
-    try{
-        Result_process_cmd_line result_cmd_line;
-        init_state_machine_simulation(argc,argv,sm_core,result_cmd_line);
-        PRINT_DEBUG_INFO = sm_core->print_debug_info_;
-        run_state_machine_simulation(sm_core,result_cmd_line);
-    }
-    catch (ceps::interpreter::semantic_exception & se)
-    {
-        std::cout << "***Fatal Error: "<< se.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-    catch (std::runtime_error & re)
-    {
-        std::cout << "***Fatal Error:" << re.what() << std::endl;
-        return EXIT_FAILURE;
-    }
 
-#ifdef _WIN32
-    WSACleanup();
-#endif
-
-    return EXIT_SUCCESS;
-}//main
-
-#include "graphviz/gvc.h"
-
-State_machine_simulation_core* smcore = nullptr;
-
-int main(int argc, char *argv[])
-{
     QApplication a(argc, argv);
 
 
     if (0!=setup_and_run_sm_core(argc,argv,&smcore)) return EXIT_FAILURE;
-
-    MainWindow w;
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    MainWindow w(smcore);
     w.show();
-    return a.exec();
+    auto r = a.exec();
+#ifdef _WIN32
+    WSACleanup();
+#endif
+    return r;
 }

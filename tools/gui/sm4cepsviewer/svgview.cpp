@@ -20,12 +20,11 @@ SvgView::SvgView(QWidget *parent)
     setTransformationAnchor(AnchorUnderMouse);
     setDragMode(ScrollHandDrag);
     setViewportUpdateMode(FullViewportUpdate);
-
 }
 
-bool SvgView::reload(QString svg ){
+bool SvgView::load_from_file(QString svg){
     QGraphicsScene *s = scene();
-    QScopedPointer<QGraphicsSvgItem> svgItem(new QGraphicsSvgItem("out.svg"));
+    QScopedPointer<QGraphicsSvgItem> svgItem(new QGraphicsSvgItem(svg));
     if (!svgItem->renderer()->isValid())
        return false;
      s->clear();
@@ -38,6 +37,3 @@ bool SvgView::reload(QString svg ){
      return true;
 }
 
-void SvgView::reload(){
-    reload("");
-}

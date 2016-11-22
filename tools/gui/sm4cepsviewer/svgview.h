@@ -15,9 +15,7 @@ class SvgView : public QGraphicsView{
     Q_OBJECT
 public:
     explicit SvgView(QWidget *parent = nullptr);
-    bool reload(QString);
-public slots:
-    void reload();
+    bool load_from_file(QString svg);
 private:
     QGraphicsSvgItem *m_svgItem = nullptr;
 };

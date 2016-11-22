@@ -12,6 +12,7 @@ namespace sm4ceps{
   void livelog_write(livelog::Livelogger& live_logger,executionloop_context_t::states_t const &  states);
   void livelog_write(livelog::Livelogger& live_logger,std::pair<std::string,std::vector<sm4ceps_plugin_int::Variant>> const & event);
   void livelog_write_console(livelog::Livelogger& live_logger,std::string const &);
+  void livelog_write_info(livelog::Livelogger& live_logger,std::string const &);
 
   void storage_write(livelog::Livelogger::Storage& storage,std::map<int,std::string> i2s, std::mutex* mtx);
   bool storage_read_entry(std::map<int,std::string>& i2s, char * data);
@@ -67,16 +68,20 @@ namespace sm4ceps{
 	  Livelogger_source() = default;
 	  Livelogger_source(livelog::Livelogger* livelogger):livelogger_{livelogger} {}
 	  void log_current_states(executionloop_context_t & ec) {
-		  if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
-		  livelog_write(*livelogger_,ec.current_states);
+		if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
+		livelog_write(*livelogger_,ec.current_states);
 	  }
 	  void log_event(std::pair<std::string,std::vector<sm4ceps_plugin_int::Variant>> const & v) {
-	 		  if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
-	 		  livelog_write(*livelogger_,v);
-	 	  }
+	 	if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
+	 	livelog_write(*livelogger_,v);
+	  }
 	  void log_console(std::string const & v) {
-	 		  if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
-	 		  livelog_write_console(*livelogger_,v);
+	 	if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
+	    livelog_write_console(*livelogger_,v);
+	  }
+	  void log_info(std::string const & v) {
+		if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
+		livelog_write_info(*livelogger_,v);
 	  }
   };
   class Livelogger_sink{

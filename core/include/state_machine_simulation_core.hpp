@@ -36,6 +36,8 @@
 
 #include "core/include/sm_execution_ctxt.hpp"
 #include "core/include/livelog/livelogger.hpp"
+#include "core/include/sm_livelog_storage_ids.hpp"
+#include "core/include/sm_livelog_storage_utils.hpp"
 
 
 namespace log4ceps = log4kmw;
@@ -141,12 +143,18 @@ private:
     executionloop_context_t executionloop_context_;
     livelog::Livelogger* live_logger_ = nullptr;
     livelog::Livelogger* live_logger(){return live_logger_;}
-
+    sm4ceps::Livelogger_source* livelogger_source_;
+    sm4ceps::Livelogger_source* live_logger_out() {return livelogger_source_;}
+    void info(std::string const & s){
+    	if(!quiet_mode()) log() << s;
+    	if (live_logger_out()) live_logger_out()->log_info(s);
+    }
 public:
     void enable_live_logging(std::string port){
     	if (live_logger_) return;
       	live_logger_ = new livelog::Livelogger();
       	live_logger_->publish(port);
+      	livelogger_source_ = new sm4ceps::Livelogger_source(live_logger_);
      }
     decltype(executionloop_context_)& executionloop_context() {return executionloop_context_;}
     bool& enforce_native(){return enforce_native_;}
@@ -484,7 +492,7 @@ public:
 	bool fetch_event(event_rep_t& ev,ceps::ast::Nodeset& sim,int& pos,states_t& states,
 			bool& states_updated, std::vector<State_machine*>& on_enter_seq,bool ignore_handler = true, bool ignore_ev_queue =  false,bool exit_if_start_found = false);
 	void simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
-	void simulate_purly_native(ceps::ast::Nodeset sim,
+	void run_simulation(ceps::ast::Nodeset sim,
 			                                     states_t& states_in,
 			                                     ceps::Ceps_Environment& ceps_env,
 			                                     ceps::ast::Nodeset& universe);

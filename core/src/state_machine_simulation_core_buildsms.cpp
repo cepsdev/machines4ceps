@@ -434,7 +434,8 @@ static void run_simulations(State_machine_simulation_core* smc,
  auto simulations = universe[all{"Simulation"}];
  if (!simulations.size()) return;
 
- if (result_cmd_line.live_log) smc->enable_live_logging(result_cmd_line.live_log_port);
+ std::cout << "result_cmd_line.live_log=" << result_cmd_line.live_log << std::endl;
+ if (result_cmd_line.live_log) {smc->enable_live_logging(result_cmd_line.live_log_port);}
 
  for (auto simulation_ : simulations){
 	auto simulation = simulation_["Simulation"];
@@ -1201,23 +1202,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	}*/
 #endif
 
-	if (logtrace()){
-			std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
-			auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
-			std::string fout("mfqsmid.ceps");
-			std::ofstream o(fout);
-			if(!o) fatal_(-1,"Couldn't write '"+fout+"'");
-			o << "map{\n";
-			for(auto e : map_fullqualified_sm_id_to_computed_idx){
-			 o <<" " << e.second <<";" << "\"" << e.first << "\";\n";
-			}
-			o << "};";
-
-			DEBUG << "[LOG4CEPS][Mapping file'" << fout <<"' written.]\n";
-			log4kmw::get_value<0>(log4kmw_states::Current_states) = log4kmw::Dynamic_bitset(number_of_states);
-			log4kmw_loggers::logger_Trace.logger().init(log4kmw::persistence::memory_mapped_file("trace.bin", 1024*1024*8, true));
-			DEBUG << "[LOG4CEPS][Trace log 'trace.bin' initialized.]\n";
-	} else if (enforce_native()) {
+    {
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
 	 auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
 	 if (result_cmd_line.print_transition_tables){
@@ -1269,12 +1254,12 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		 executionloop_context().idx_to_state_id[e.second] = e.first;
 	 }
 	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
-
 	 for(auto const & e: this->exported_events_) executionloop_context().exported_events.insert(executionloop_context().ev_to_id[e]);
    }
 
 
-	if(enforce_native()){
+   // Check a native implementation is present for each action in the case the flag --enforce_native set.
+   if(enforce_native()){
 	 std::vector<State_machine*> smsv;
 	 std::vector<std::string> r;
 	 auto tt = this;

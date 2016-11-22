@@ -103,6 +103,13 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
              s = t;
            });
          return s.c_str();
+    } else if (ch.what == sm4ceps::STORAGE_WHAT_INFO){
+         std::string s;
+         sm4ceps::extract_string_raw(ch.data,ch.len,
+           [&](std::string & t){
+             s = t;
+           });
+         return s.c_str();
     }
    }
    return QVariant();
