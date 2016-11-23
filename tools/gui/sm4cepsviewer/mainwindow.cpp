@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "svgview.h"
 #include "smachines_window.h"
-
+#include <QAction>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
