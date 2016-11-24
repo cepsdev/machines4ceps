@@ -305,31 +305,35 @@ void livelog::Livelogger::comm_stream_handler_fn(int ,struct sockaddr_storage cl
 	char addrstr[2048] = {0};
 	socklen_t addrlen = sizeof(struct sockaddr_storage);
 
+
 	if (getnameinfo((struct sockaddr*)&claddr,addrlen,host,1024,service,1024,0) == 0)
 		snprintf(addrstr,2048,"[host=%s, service=%s]",host, service);
 	else
 		snprintf(addrstr,2048,"[host=?,service=?]");
-
+    //std::cout << "livelog::Livelogger::comm_stream_handler_fn: " <<  addrstr << std::endl;
 	Storage::id_t last_transmitted_id = -1;
 	for(;;)
 	{
 		std::uint32_t cmd;
-
 		auto r = recv(sck,reinterpret_cast<char*>(&cmd),sizeof(cmd),0);if (r <= 0)break;
-		cmd = ntohl(cmd);
+        cmd = ntohl(cmd);
 		if (livelog::CMD_FLUSH_MAIN_LOG_STORAGE == cmd){
 			flush();
 			continue;
 		}
 		std::uint64_t t;
-		r = recv(sck,reinterpret_cast<char*>(&t),sizeof(t),0);if (r <= 0)break;
+        r = recv(sck,reinterpret_cast<char*>(&t),sizeof(t),0);
+        if (r <= 0)break;
 		t = be64toh(t);last_transmitted_id = static_cast<Storage::id_t>(t);
 		try
 		{
-			if(!handle_cmd(last_transmitted_id,cmd,sck)) break;
+            if(!handle_cmd(last_transmitted_id,cmd,sck)){
+              Storage::len_t l= 0;
+              if ( send(sck, (char*) &l,sizeof(l),0)  != sizeof(l)){std::cout << "*** write failed" << std::endl; break;}
+            }
 		} catch(...){}
 	}
-	close(sck);
+    close(sck);
 }
 
 bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelog::Livelogger::Storage * st,int sck){

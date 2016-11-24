@@ -146,7 +146,7 @@ private:
     sm4ceps::Livelogger_source* livelogger_source_;
     sm4ceps::Livelogger_source* live_logger_out() {return livelogger_source_;}
     void info(std::string const & s){
-    	if(!quiet_mode()) log() << s;
+        if(!quiet_mode()) log() << s << "\n";
     	if (live_logger_out()) live_logger_out()->log_info(s);
     }
 public:

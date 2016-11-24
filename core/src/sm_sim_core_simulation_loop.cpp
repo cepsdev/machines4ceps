@@ -80,7 +80,17 @@ if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_
 */
 
 
-
+static void map_ev_payload_to_variant(State_machine_simulation_core::event_t const & ev,std::vector<sm4ceps_plugin_int::Variant>& r){
+    if (ev.payload_native_.size()) {r = ev.payload_native_; return;}
+    for(auto v : ev.payload_){
+      if (v->kind() == ceps::ast::Ast_node_kind::int_literal)
+         r.push_back(sm4ceps_plugin_int::Variant(value(as_int_ref(v))));
+      else if (v->kind() == ceps::ast::Ast_node_kind::float_literal)
+          r.push_back(sm4ceps_plugin_int::Variant(value(as_double_ref(v))));
+      else if (v->kind() == ceps::ast::Ast_node_kind::string_literal)
+          r.push_back(sm4ceps_plugin_int::Variant(value(as_string_ref(v))));
+      }
+}
 
 void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
@@ -141,19 +151,17 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  if (testcase_.size()==1 && testname_.size()==1 &&
 	testcase_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier && testname_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier )
  {
-	info("[TESTCASE]["+ (testcase = name(ceps::ast::as_id_ref(testcase_.nodes()[0]))) + "]\n" );
-	info("[TEST]["+ (testname = name(ceps::ast::as_id_ref(testname_.nodes()[0]))) + "]\n" );
+    info("Running test '"+ ( testname = name(ceps::ast::as_id_ref(testname_.nodes()[0]) ))  +"' of test case '"+ (testcase = name(ceps::ast::as_id_ref(testcase_.nodes()[0]))) + "'" );
  }
 
-
-auto fixture = universe[testcase];
-if (!fixture.empty())
-{
-	if (PRINT_DEBUG) log()<< "[FIXTURE(S) FOUND]\n";
+ auto fixture = universe[testcase];
+ if (!fixture.empty())
+ {
+    info("Fixture(s) loaded");
 	sim.nodes().insert(sim.nodes().begin(),fixture.nodes().begin(),fixture.nodes().end());
-}
+ }
 
-if (user_supplied_global_init() == nullptr){
+ if (user_supplied_global_init() == nullptr){
 	auto globals = universe["Globals"];
 	if (!globals.empty())
 	{
@@ -164,77 +172,65 @@ if (user_supplied_global_init() == nullptr){
 	{
 		sim.nodes().insert(sim.nodes().begin(),globals.nodes().begin(),globals.nodes().end());
 	}
-}
+ }
 
 
-request_start_for_all_dispatchers();
+ request_start_for_all_dispatchers();
 
 
-if (PRINT_DEBUG)log()<< "[SIMULATION STARTED]\n";
-if (user_supplied_global_init() != nullptr){
+ info("Simulation started.");
+ if (user_supplied_global_init() != nullptr){
       map_ceps_payload_to_native_=true;
       delete_ceps_payload_=true;
-
 	user_supplied_global_init()();
-}
+ }
 
-int pos = 0;bool quit = false;
+ int pos = 0;bool quit = false;
 
-//Each simulation step starts with a phase where only epsilon transitions are taken until no further transitions are found,
-//followed by the consumption of an event.
-bool taking_epsilon_transitions = true;
+ //Each simulation step starts with a phase where only epsilon transitions are taken until no further transitions are found,
+ //followed by the consumption of an event.
+ bool taking_epsilon_transitions = true;
 
 
-sm4ceps_plugin_int::Variant (*post_proc_native)() = nullptr;
-{
+ sm4ceps_plugin_int::Variant (*post_proc_native)() = nullptr;
+ {
 	auto it = glob_funcs().find("post_event_processing");
 	if (it != glob_funcs().end()){
 		post_proc_native = it->second;
 	}
-}
+ }
 
-execution_ctxt.current_states_init_and_clear();
+ execution_ctxt.current_states_init_and_clear();
 
-auto new_states = executionloop_context().current_states;
-auto temp = executionloop_context().current_states;
+ auto temp = executionloop_context().current_states;
 
-std::vector<executionloop_context_t::state_rep_t> entering_sms;entering_sms.resize( executionloop_context().current_states.size());
-std::vector<executionloop_context_t::state_rep_t> exiting_sms;exiting_sms.resize( executionloop_context().current_states.size());
-std::vector<executionloop_context_t::state_rep_t> triggered_thread_regions;triggered_thread_regions.resize( executionloop_context().current_states.size());
+ std::vector<executionloop_context_t::state_rep_t> entering_sms;entering_sms.resize( executionloop_context().current_states.size());
+ std::vector<executionloop_context_t::state_rep_t> exiting_sms;exiting_sms.resize( executionloop_context().current_states.size());
+ std::vector<executionloop_context_t::state_rep_t> triggered_thread_regions;triggered_thread_regions.resize( executionloop_context().current_states.size());
 
-constexpr auto max_number_of_active_transitions = 1024;
+ constexpr auto max_number_of_active_transitions = 4096;
 
-std::vector<int> triggered_transitions;
-triggered_transitions.resize(max_number_of_active_transitions);
+ std::vector<int> triggered_transitions;
+ triggered_transitions.resize(max_number_of_active_transitions);
+ int cur_states_size = execution_ctxt.current_states.size();
+ std::vector<State_machine*> on_enter_seq;
+ taking_epsilon_transitions = false;
 
+ for(;!quit && !shutdown();)
+ {
+  bool ev_read = false;ev_id = 0;current_smp() = nullptr;
+  bool fetch_made_states_update = false;
+  execution_ctxt.current_ev_id = 0;
 
-
-
-
-
-int cur_states_size = execution_ctxt.current_states.size();
-std::vector<State_machine*> on_enter_seq;
-states_t new_states_fetch;
-taking_epsilon_transitions = false;
-
-for(;!quit && !shutdown();)
-{
-
- bool ev_read = false;ev_id = 0;current_smp() = nullptr;
- //std::cout << current_event().id_ << std::endl;
-
-
- bool fetch_made_states_update = false;
- execution_ctxt.current_ev_id = 0;
- if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
+  if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
   {
 	ev_read = true;
 	ev_id   = execution_ctxt.front_ev_sync_queue();
 	execution_ctxt.pop_ev_sync_queue();
 	execution_ctxt.current_ev_id = ev_id;
   } else if(!taking_epsilon_transitions) {
-	if (step_handler_) quit = step_handler_();
 
+    if (step_handler_) quit = step_handler_();
 	states_t new_states_fetch;
 	current_event().id_= {};
 	event_rep_t ev;
@@ -243,14 +239,14 @@ for(;!quit && !shutdown();)
       for(auto const & s : new_states_fetch){
 		execution_ctxt.current_states[s.id_] = 1;
 	  }
-	  if (PRINT_DEBUG){
+      /*if (PRINT_DEBUG){
 	   log() << "[ACTIVE STATES] ";
 	   for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
 		if (!execution_ctxt.current_states[z]) continue;
 		log() << execution_ctxt.idx_to_state_id[z] << " ";
 	   }
 	   log() << "\n";
-	  }
+      }*/
 
 	  if (on_enter_seq.size()){
 	   for(auto const & sm : on_enter_seq){
@@ -298,7 +294,7 @@ for(;!quit && !shutdown();)
     }
 
     if (live_logger()){
-        //sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
+        sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
     }
 
     if (ev_read && event_triggered_sender().size() && current_event().id_.length()) {
@@ -314,9 +310,14 @@ for(;!quit && !shutdown();)
     	if (processed) continue;
     }
 
-        memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
-	if (PRINT_DEBUG) log() << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << "\n";
-	int triggered_transitions_end = 0;
+    memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
+    //if (PRINT_DEBUG) log() << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << "\n";
+    if (live_logger() && ev_read){
+         std::vector<sm4ceps_plugin_int::Variant> v;
+         map_ev_payload_to_variant(current_event(),v);
+         live_logger_out()->log_event(std::make_pair(execution_ctxt.id_to_ev[ev_id],v));
+    }
+    int triggered_transitions_end = 0;
 	auto triggered_thread_regions_end = triggered_transitions_end;
 
 	for (int s = 0; s != cur_states_size && max_number_of_active_transitions != triggered_transitions_end;++s){

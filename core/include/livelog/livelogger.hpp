@@ -130,12 +130,12 @@ private:
 	std::string port_;
 	std::unordered_map<int,std::tuple<Storage*,std::mutex*,Storage::id_t>> registered_storages_by_id_;
 	using reg_storage_ref = std::unordered_map<int,std::tuple<Storage*,std::mutex*,Storage::id_t>>::iterator;
-	bool reg_storage_ref_valid(reg_storage_ref it) {return it != registered_storages_by_id_.end();}
 	bool send_storage(Storage::id_t& last_transmitted_id,Storage *,int sck);
 	bool check_write_preconditions(Storage::len_t n);
 	void if_space_low_do_cis_to_trans_transfer(Storage::len_t n);
 
 public:
+    bool reg_storage_ref_valid(reg_storage_ref it) {return it != registered_storages_by_id_.end();}
 	static constexpr std::size_t default_cis_storage_size = 8192;
 	static constexpr std::size_t default_trans_storage_size = default_cis_storage_size * 1024;
 

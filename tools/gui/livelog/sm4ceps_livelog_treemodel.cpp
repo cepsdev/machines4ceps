@@ -30,17 +30,15 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
       return QVariant();
 
     if (role != Qt::DisplayRole){
-     if (role== Qt::DecorationRole)
+     if (role == Qt::DecorationRole)
       {
          std::lock_guard<std::mutex> lk1(log_entries_peer->mutex_trans2consumer());
          if (chunks.size() <= index.row()) return QVariant();
          if (index.column() == 0) return index.row();
          auto& ch = chunks[index.row()];
 
-         if (ch.what == sm4ceps::STORAGE_WHAT_INFO && index.column() == 1){
-
-           if (style)  return style->standardIcon(QStyle::SP_MessageBoxInformation);
-         }
+      } else if (role == Qt::TextAlignmentRole){
+         return Qt::AlignLeft + Qt::AlignVCenter;
       }
       return QVariant();
     }
@@ -97,6 +95,7 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
           return QVariant(ss.str().c_str());
         }
     } else if (ch.what == sm4ceps::STORAGE_WHAT_CONSOLE){
+         if (index.column() == 1) return QVariant("Application Output");
          std::string s;
          sm4ceps::extract_string_raw(ch.data,ch.len,
            [&](std::string & t){
@@ -104,6 +103,7 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
            });
          return s.c_str();
     } else if (ch.what == sm4ceps::STORAGE_WHAT_INFO){
+         if (index.column() == 1) return QVariant("Info");
          std::string s;
          sm4ceps::extract_string_raw(ch.data,ch.len,
            [&](std::string & t){
@@ -188,6 +188,7 @@ void LivelogTreeModel::check_for_new_entries(){
   log_entries_peer->flush();
   {
    auto r = log_entries_peer->find_storage_by_id(sm4ceps::STORAGE_IDX2FQS);
+   if (log_entries_peer->reg_storage_ref_valid(r)){
    livelog::Livelogger::Storage* s =  std::get<0>(r->second);
    std::mutex& m = *std::get<1>(r->second);
    std::lock_guard<std::mutex> lk(m);
@@ -201,6 +202,9 @@ void LivelogTreeModel::check_for_new_entries(){
           sm4ceps::storage_read_entry(id2name,(char*)data);
        }
    );
+   } else {
+       std::cout << "*** STORAGE_IDX2FQS invalid." << std::endl;
+   }
   }
   int delta = 0;int old_size=0;
   {
@@ -214,10 +218,11 @@ void LivelogTreeModel::check_for_new_entries(){
    update_chunks();
    delta = chunks.size() - old_size;
   }
+  //std::cout << "delta = "<< delta << std::endl;
   if (delta > 0){
       emit do_append_rows(old_size,old_size+delta);
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
  }//for
 }
 

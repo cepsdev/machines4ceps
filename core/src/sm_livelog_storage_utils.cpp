@@ -221,39 +221,33 @@ bool sm4ceps::storage_read_event(std::string& ev_name,
 void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			     std::string ip,
 			     std::string port){
-
-
 	int cfd;
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	bool conn_established = false;
 	std::map<int,ssize_t> logid2last_read_id;
 	std::uint32_t no_data_received = 0;
-
 	for(;;)
 	{
 		rp = nullptr;result = nullptr;
-
 		if (!conn_established)
 		{
-
 			for(;rp == nullptr;)
 			{
-
 			memset(&hints, 0, sizeof(struct addrinfo));
 			hints.ai_canonname = NULL;
 			hints.ai_addr = NULL;
 			hints.ai_next = NULL;
 			hints.ai_family = AF_INET;
-
 			hints.ai_socktype = SOCK_STREAM;
             //hints.ai_flags = AI_NUMERICSERV;
 			if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &result) != 0){
-				std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
+                std::this_thread::sleep_for(std::chrono::microseconds(1000));
+                continue;
 			}
-
 			if (result == nullptr) {
-				std::this_thread::sleep_for(std::chrono::microseconds(1000)); continue;
+                std::this_thread::sleep_for(std::chrono::microseconds(1000));
+                continue;
 			}
 			 for (rp = result; rp != NULL; rp = rp->ai_next) {
 			  cfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -263,7 +257,8 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			 }
 			 if (result != nullptr) freeaddrinfo(result);
 			 if (rp == nullptr) {
-				 std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
+                 std::this_thread::sleep_for(std::chrono::microseconds(1000000));
+                 continue;
 			 }
 			}
 			conn_established = true;
@@ -285,7 +280,7 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			logid2last_read_id[livelog::CMD_GET_NEW_LOG_ENTRIES] = last_read_id;
 		} else last_read_id = logid2last_read_id[livelog::CMD_GET_NEW_LOG_ENTRIES];
 
-		auto cmd = livelog::CMD_GET_NEW_LOG_ENTRIES;
+        std::uint32_t cmd = livelog::CMD_GET_NEW_LOG_ENTRIES;
 		cmd = htonl(cmd);
 		std::uint64_t t = htobe64((std::uint64_t)last_read_id);
 		std::size_t chunks_read = 0;
@@ -329,7 +324,7 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 		if (chunks_read == 0) ++no_data_received;
 		else no_data_received = 0;
         //std::cout << "chunks_read="<< chunks_read << std::endl;
-		if (livelogger_){
+        if (livelogger_){
 			if(!livelogger_->foreach_registered_storage(
 			 [&](int idx,livelog::Livelogger::Storage * storage,std::mutex* pmutex, livelog::Livelogger::Storage::id_t next_id){
 				cmd = htonl(idx);
@@ -340,20 +335,21 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 				std::uint64_t t = htobe64((std::uint64_t)last_read_id);
 				if ( ( write(cfd, (char*) &cmd,sizeof(cmd) )) != sizeof(cmd) )
 				{
-					close(cfd);conn_established=false;return false;
+                    close(cfd);conn_established=false;return false;
 				}
 				if ( ( write(cfd, (char*) &t,sizeof(t) )) != sizeof(t) )
 				{
-					close(cfd);conn_established=false;return false;
+                    close(cfd);conn_established=false;return false;
 				}
 
 
 				for(;;) {
 				 if ( sizeof(len) != read(cfd,&len,sizeof(len)) ){
-					break;
+                  break;
 				 }
-				 if (len == 0) //sentinel read
+                 if (len == 0) { //sentinel read
 				  break;
+                 }
 				 if (buffer_size < len){
 					 if (buffer != nullptr) delete[] buffer;
 					 buffer = new char[buffer_size = len * 2];

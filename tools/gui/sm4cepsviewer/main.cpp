@@ -30,10 +30,11 @@ void smcore_thread(State_machine_simulation_core* sm_core,int argc,char ** argv)
 
     try{
         Result_process_cmd_line result_cmd_line;
-        //result_cmd_line.live_log = true;
+        result_cmd_line.live_log = true;
         init_state_machine_simulation(argc,argv,sm_core,result_cmd_line);
         PRINT_DEBUG_INFO = sm_core->print_debug_info_;
         run_state_machine_simulation(sm_core,result_cmd_line);
+        std::cout << std::endl;
     }
     catch (ceps::interpreter::semantic_exception & se)
     {
