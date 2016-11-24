@@ -82,7 +82,7 @@ struct Result_process_cmd_line
 	{}
 };
 
-Result_process_cmd_line process_cmd_line(int argc,char ** argv);
+Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_cmd_line r = Result_process_cmd_line{});
 
 std::string get_rel_out_path(std::string const & def_file);
 

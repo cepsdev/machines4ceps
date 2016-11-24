@@ -81,7 +81,7 @@ namespace sm4ceps{
 	  }
 	  void log_info(std::string const & v) {
 		if (!livelogger_) throw std::runtime_error("Livelogger_source is detached");
-		livelog_write_info(*livelogger_,v);
+                livelog_write_console(*livelogger_,v);
 	  }
   };
   class Livelogger_sink{

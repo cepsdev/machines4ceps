@@ -26,10 +26,11 @@ void smcore_thread(State_machine_simulation_core* sm_core,int argc,char ** argv)
     sm_core->set_non_fatal_error_handler(warn);
     sm_core->set_log_stream(&std::cout);
     string last_file_processed;
+    signal(SIGPIPE, SIG_IGN);
 
     try{
         Result_process_cmd_line result_cmd_line;
-        result_cmd_line.live_log = true;
+        //result_cmd_line.live_log = true;
         init_state_machine_simulation(argc,argv,sm_core,result_cmd_line);
         PRINT_DEBUG_INFO = sm_core->print_debug_info_;
         run_state_machine_simulation(sm_core,result_cmd_line);
@@ -128,7 +129,7 @@ int main(int argc, char *argv[])
 
 
     if (0!=setup_and_run_sm_core(argc,argv,&smcore)) return EXIT_FAILURE;
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    //std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     MainWindow w(smcore);
     w.show();
     auto r = a.exec();

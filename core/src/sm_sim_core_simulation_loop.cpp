@@ -298,7 +298,7 @@ for(;!quit && !shutdown();)
     }
 
     if (live_logger()){
-    	sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
+        //sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
     }
 
     if (ev_read && event_triggered_sender().size() && current_event().id_.length()) {

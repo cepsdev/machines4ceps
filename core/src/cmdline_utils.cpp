@@ -192,7 +192,7 @@ std::string& get_report_out_dir()
 	return report_dir;
 }
 
-Result_process_cmd_line process_cmd_line(int argc,char ** argv)
+Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_cmd_line r_init)
 {
 	using namespace std;
 	global_out_path = "";
@@ -204,7 +204,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv)
 	string out_path = "";
 	std::vector<std::string> definition_file_rel_paths;
 
-	Result_process_cmd_line r;
+	Result_process_cmd_line r = r_init;
 
 	for(int i = 1; i < argc;++i)
 	{

@@ -31,9 +31,9 @@ INCLUDEPATH += "../../../../ceps/core/include" \
 
 LIBS += -L../../../../ceps/core/bin -lcepscore
 LIBS += -ldl -lpthread
-LIBS += -L../../../../graphviz/bin/lib -lcgraph
-LIBS += -L../../../../graphviz/bin/lib -lgvc
-LIBS += -L../../../../graphviz/bin/lib -lcdt
+#LIBS += -L../../../../graphviz/bin/lib -lcgraph
+#LIBS += -L../../../../graphviz/bin/lib -lgvc
+#LIBS += -L../../../../graphviz/bin/lib -lcdt
 
 
 
