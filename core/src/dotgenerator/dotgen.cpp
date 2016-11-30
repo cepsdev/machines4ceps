@@ -86,17 +86,21 @@ class Dotgenerator{
 	std::map<State_machine*,std::string> sm2initial;
 
 	std::string pure_state_base_style_ = "style=\"rounded\"";
-    void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand);
-	std::string state_style(std::string name){
+    std::string pure_state_base_highlighted_style_ = "style=\"rounded,filled\",fillcolor=lightpink";
+
+    void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states);
+    std::string state_style(std::string name, bool highlight){
 		if (name == "initial" || name ==  "Initial")
 		{
-			return "shape=\"point\",width=\"0.15\"";
+            if (!highlight) return "shape=\"point\",width=\"0.15\"";
+            return "shape=\"point\",width=\"0.15\",fillcolor=lightpink";
 		}
 		if (name == "final" || name ==  "Final")
 		{
-			return "shape=\"point\",width=\"0.15\",fillcolor=white";
+            if (!highlight) return "shape=\"point\",width=\"0.15\",fillcolor=white";
+            return "shape=\"point\",width=\"0.15\",fillcolor=lightpink";
 		}
-		return pure_state_base_style();
+        return pure_state_base_style(highlight);
 	}
 
 	std::string label(State_machine::State* s){
@@ -124,37 +128,51 @@ class Dotgenerator{
 	  return ",fontname=\"Courier\",label=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
 	}
 public:
-	std::string pure_state_base_style(){return pure_state_base_style_;}
+    std::string pure_state_base_style(bool highlight){if (!highlight)return pure_state_base_style_;return pure_state_base_highlighted_style_;}
 
 	friend State_machine_simulation_core;
 };
 
 
-void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand){
+void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states){
      if (expand != nullptr && expand->find(sm) == expand->end()){
-      o << " "<<sm2dotname[sm]<<"[ label=\""<< sm->id() << "\\n...\" ," <<state_style(sm->id())<< ",fontsize=14];\n";
-      return;
+       bool highlight = (highlighted_states.size()==0)?false:(highlighted_states.find(sm->idx_)!=highlighted_states.end());
+       o << " "<<sm2dotname[sm]<<"[ label=\""<< sm->id() << "\\n...\" ," <<state_style(sm->id(),highlight)<< ",fontsize=14];\n";
+       return;
      }
 	 o << " subgraph "<<n2dotname[name]<<"{\n";
-	 o << "  label=\"" << sm->id() << "\";\nfontname=\"Arial\";\nfontsize=14;\n";
+     o << "  label=\"" << sm->id() << "\";\nfontname=\"Arial\";\nfontsize=14;\n";
+
+     if (highlighted_states.size() && highlighted_states.find(sm->idx_)!=highlighted_states.end()){
+
+     }
 
 	 for(auto const& s:sm->states()) if (!s->is_sm_){
 		 std::string t = n2dotname[name+"."+s->id()];
-		 o << " "<<t<<"["<<label(s) << "," <<state_style(s->id())<< ",fontsize=14];\n";
+         bool highlight = (highlighted_states.size()==0)?false:(highlighted_states.find(s->idx_)!=highlighted_states.end());
+         o << " "<<t<<"["<<label(s) << "," <<state_style(s->id(),highlight)<< ",fontsize=14];\n";
 	 }
 
 	 for(auto subsm:sm->children()){
-         dump_sm(o,name+"."+subsm->id(),subsm,expand);
+         dump_sm(o,name+"."+subsm->id(),subsm,expand,highlighted_states);
 	 }
 
 	 o << " }\n";
 }
 
-void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,State_machine*> const & sms,std::set<State_machine*>* expand, std::ostream& o){
+void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,State_machine*> const & sms,
+                                                         std::set<State_machine*>* expand,
+                                                         std::set<int>& highlighted_states,
+                                                         std::ostream& o){
     //expand = nullptr;
     int cluster_counter = 0;
     int pure_state_counter = 0;
     Dotgenerator dotgen;
+    if (highlighted_states.size()) {
+        o << "// Highlighted States: ";
+        for(auto e : highlighted_states) o << e << " ";
+        o << "\n";
+    }
     o << "digraph Root {\ncompound=true;fillcolor=cornsilk;style=\"rounded,filled\";/*\nnodesep=1.1;*/\nnode [shape=box, fontname=\"Arial\"];\n";
 
     auto map_names = [&](State_machine* sm,std::string name){
@@ -178,7 +196,7 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
     };
 
     auto dump_toplevel_sm = [&](State_machine* sm,std::string name)->bool{
-        dotgen.dump_sm(o,name,sm,expand);return true;
+        dotgen.dump_sm(o,name,sm,expand,highlighted_states);return true;
     };
 
     auto dump_transitions =[&](State_machine* sm, std::string name)->bool{
@@ -186,23 +204,23 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
          if (expand != nullptr  && expand->find(sm) == expand->end() ) out_only = true;
          for(auto& t : sm->transitions()){
              if (out_only && (!t.to_.is_sm_ || t.to_.smp()->parent() == sm) ) continue;
-
-
              if ((t.from_.parent_ == sm || t.from_.parent_ == nullptr)&& (t.to_.parent_ == sm || t.to_.parent_ == nullptr) && !(t.from_.is_sm_ || t.to_.is_sm_) ){
                  if (dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() )
                      o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" << dotgen.n2dotname[name+"."+t.to_.id()] << "[penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
              }
              else if (!t.from_.is_sm_ && t.to_.is_sm_ && dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() ){
                  o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" <<dotgen.sm2initial[t.to_.smp_];
+                 o << "[";
                  if (expand == nullptr  || expand->find(t.to_.smp_) != expand->end())
-                     o << "[lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\",penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
-                 o << ";\n";
+                     o << "lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\",";
+                 o <<"penwidth=1"<< dotgen.edge_label(t,sm) << "];\n";
              }
              else if (t.from_.is_sm_ && !t.to_.is_sm_ && dotgen.sm2initial.find(t.from_.smp_) != dotgen.sm2initial.end()){
                  o << dotgen.sm2initial[t.from_.smp_] << "->" << dotgen.n2dotname[name+"."+t.to_.id()];
+                 o << "[";
                  if (expand == nullptr  || expand->find(t.from_.smp_) != expand->end())
-                     o << "[ltail=\""<< dotgen.sm2dotname[t.from_.smp_] << "\", penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
-                 o << ";\n";
+                     o << "ltail=\""<< dotgen.sm2dotname[t.from_.smp_] << "\",";
+                 o << "penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
              }
              else if (t.from_.is_sm_ && t.to_.is_sm_
                      && dotgen.sm2initial.find(t.from_.smp_) != dotgen.sm2initial.end()
@@ -235,8 +253,9 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 													  Result_process_cmd_line const& result_cmd_line){
 
 	std::ofstream o{"out.dot"};
+    std::set<int> empty_highlight_states_set;
 	write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
-    do_generate_dot_code(State_machine::statemachines,nullptr,o);
+    do_generate_dot_code(State_machine::statemachines,nullptr,empty_highlight_states_set,o);
 }
 
 

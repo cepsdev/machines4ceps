@@ -567,7 +567,7 @@ public:
 
 	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards,Result_process_cmd_line const& result_cmd_line);
 	void do_generate_dot_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards,Result_process_cmd_line const& result_cmd_line);
-        void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*, std::ostream& os);
+    void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*,std::set<int>& highlighted_states, std::ostream& os);
 
 	//CAL (Sender)
 

@@ -25,6 +25,20 @@ void LivelogTreeModel::do_model_reset(){
     endResetModel();
 }
 
+bool LivelogTreeModel::is_active_states(QModelIndex const& index,std::set<int>& state_ids){
+ std::lock_guard<std::mutex> lk1(log_entries_peer->mutex_trans2consumer());
+ if (chunks.size() <= index.row()) return false;
+ auto& ch = chunks[index.row()];
+ if (ch.what != sm4ceps::STORAGE_WHAT_CURRENT_STATES) return false;
+
+ sm4ceps::extract_current_states_raw(ch.data,ch.len,
+   [&](std::vector<int> states){
+     for(auto const & e : states) state_ids.insert(e);
+   });
+
+ return true;
+}
+
 QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
     if (!index.isValid())
       return QVariant();
@@ -39,6 +53,8 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
 
       } else if (role == Qt::TextAlignmentRole){
          return Qt::AlignLeft + Qt::AlignVCenter;
+      } else if (Qt::BackgroundRole){
+         return QVariant();
       }
       return QVariant();
     }
@@ -70,6 +86,7 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
              [&](std::vector<int> states){
                for(auto const & e : states) ss << t[e] << " ";
              });
+           if (ss.str().length() == 0) return "-- empty --";
            return ss.str().c_str();
          }
     } else if (ch.what == sm4ceps::STORAGE_WHAT_EVENT){
@@ -95,7 +112,7 @@ QVariant LivelogTreeModel::data(const QModelIndex &index, int role) const{
           return QVariant(ss.str().c_str());
         }
     } else if (ch.what == sm4ceps::STORAGE_WHAT_CONSOLE){
-         if (index.column() == 1) return QVariant("Application Output");
+         if (index.column() == 1) return QVariant("Console");
          std::string s;
          sm4ceps::extract_string_raw(ch.data,ch.len,
            [&](std::string & t){

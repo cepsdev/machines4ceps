@@ -41,6 +41,7 @@ public:
     QModelIndex parent(const QModelIndex &index) const Q_DECL_OVERRIDE;
     int rowCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
     int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
+    bool is_active_states(QModelIndex const& idx,std::set<int>& state_ids);
 signals:
     void append_rows(int from, int to);
     void model_reset();

@@ -14,6 +14,17 @@ std::string Statemachine_window::get_temporary_filename(){
     return "smwnd_temp"+std::to_string(this_instance_id);
 }
 
+void Statemachine_window::highlight_states(std::set<int> const& state_ids){
+ highlighted_states() = state_ids;
+ {
+   std::ofstream of{get_temporary_filename()+".dot"};
+   assoc_smcore_->do_generate_dot_code(displayed_sms_,&sm_selection_,highlighted_states(),of);
+   of.flush();
+ }
+ system( std::string{"dot -T svg -o "+get_temporary_filename()+"_out.svg"+" "+get_temporary_filename()+".dot"}.c_str());
+ svgview_->load_from_file(std::string{get_temporary_filename()+"_out.svg"}.c_str());
+}
+
 
 void Statemachine_window::itemChangedinUnderlyingSMSelection(StandardItemSM* item){
 
@@ -22,7 +33,7 @@ void Statemachine_window::itemChangedinUnderlyingSMSelection(StandardItemSM* ite
 
     {
       std::ofstream of{get_temporary_filename()+".dot"};
-      std::map<std::string,State_machine*> m;
+      displayed_sms_.clear();
       std::map<State_machine*,bool> dominated;
       for(auto s: sm_selection_){
        dominated[s] = false;
@@ -30,8 +41,8 @@ void Statemachine_window::itemChangedinUnderlyingSMSelection(StandardItemSM* ite
         if(sm_selection_.find(p) != sm_selection_.end()){dominated[s] = true;break;}
        }
       }
-      for(auto s : dominated) if (!s.second)m[s.first->id()] = s.first;
-      assoc_smcore_->do_generate_dot_code(m,&sm_selection_,of);
+      for(auto s : dominated) if (!s.second)displayed_sms_[s.first->id()] = s.first;
+      assoc_smcore_->do_generate_dot_code(displayed_sms_,&sm_selection_,highlighted_states(),of);
       of.flush();
     }
     system( std::string{"dot -T svg -o "+get_temporary_filename()+"_out.svg"+" "+get_temporary_filename()+".dot"}.c_str());

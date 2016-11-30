@@ -159,10 +159,17 @@ public:
 	class transition_t{
 		public:
 		int smp = 0,from = 0, to = 0, ev = 0;
+        bool native = true;
 		bool(**guard)() = nullptr;
 		void(* a1)() = nullptr;
 		void(* a2)() = nullptr;
 		void(* a3)() = nullptr;
+
+        void* guard_script = nullptr;
+        void* a1_script = nullptr;
+        void* a2_script = nullptr;
+        void* a3_script = nullptr;
+
 		transition_t() = default;
 		bool start() const {return smp != 0 && from == 0 && to == 0;}
 	};

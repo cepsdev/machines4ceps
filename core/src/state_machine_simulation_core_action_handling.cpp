@@ -953,6 +953,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		if(args.size() == 0) sleep(1);
 		#endif
 	}else if (id == "print"){
+
 		for(auto& n : args)
 		{
 			if (n->kind() == ceps::ast::Ast_node_kind::int_literal ||
@@ -1422,8 +1423,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			}
 			else if (func_name == "print")
 			{
-
 				for(auto& n : args) n = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
+                std::stringstream ss;
 
 				for(auto& n : args)
 				{
@@ -1433,10 +1434,13 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 					    n->kind() == ceps::ast::Ast_node_kind::identifier
 					    )
 					{
-						std::cout << to_string(this,n);
+                        ss << to_string(this,n);
 						continue;
 					}
-				}
+                }//for
+                if(live_logger()){
+                   this->live_logger_out()->log_console(ss.str());
+                } else std::cout << ss.str();
 
 			}
 			else if (func_name == "kill_timer" || func_name == "stop_timer")

@@ -21,6 +21,8 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QTextEdit>
+#include <QListView>
+#include <QTableView>
 
 MainWindow::MainWindow(State_machine_simulation_core* assoc_smcore,QWidget *parent) :
     QMainWindow(parent),
@@ -47,7 +49,7 @@ void MainWindow::sm_explorer_new_selection(){
     Statemachine_window* ttt;
     auto new_treeview_widget_idx = sm_explorer_treeview_stack_->addWidget(t = new QTreeView());
     t->setModel(tt = new ModelSM(smcore_));
-    ttt = new Statemachine_window(smcore_,tt);
+    active_sm_windows_.insert(ttt = new Statemachine_window(smcore_,tt));
     mdi_area_->addSubWindow(ttt);
     ttt->show();
     sm_explorer_treeview_stack_->setCurrentWidget(sm_explorer_treeview_stack_->widget(new_treeview_widget_idx));
@@ -57,6 +59,32 @@ void MainWindow::sm_explorer_remove_selection(){
 
 }
 
+void MainWindow::logview_first_elem(){
+    QItemSelection sel;
+    sel.select(logview_->model()->index(0,0), logview_->model()->index(0,logview_->model()->columnCount()-1));
+    logview_->selectionModel()->clear();
+    logview_->selectionModel()->select(sel,QItemSelectionModel::SelectCurrent);
+    logview_->scrollToTop();
+}
+
+void MainWindow::logview_play_resume_elem(){
+
+}
+
+void MainWindow::logview_last_elem(){
+    QItemSelection sel;
+    if (logview_->model()->rowCount()==0) return;
+    sel.select(logview_->model()->index(logview_->model()->rowCount()-1,0), logview_->model()->index(logview_->model()->rowCount()-1,logview_->model()->columnCount()-1));
+    logview_->selectionModel()->clear();
+    logview_->selectionModel()->select(sel,QItemSelectionModel::SelectCurrent);
+    logview_->scrollToBottom();
+}
+
+void MainWindow::logview_filter_elem(){
+
+}
+
+
 // setup methods
 void MainWindow::setup_dock_widgets(){
     setup_dock_widget_cur_sm_sel();
@@ -64,7 +92,7 @@ void MainWindow::setup_dock_widgets(){
 void MainWindow::setup_dock_widget_cur_sm_sel(){
     dock_widget_current_sm_selection_ = new QDockWidget(tr("State Chart Explorer"));
     dock_widget_simulation_ctrl_ = new QDockWidget(tr("Simulations"));
-    dock_widget_logger_ctrl_ = new QDockWidget;
+    dock_widget_logger_ctrl_ = new QDockWidget(tr("Log"));
 
     dock_widget_current_sm_selection_->setObjectName("state_chart_explorer");
     dock_widget_current_sm_selection_->setAllowedAreas(Qt::LeftDockWidgetArea| Qt::RightDockWidgetArea);
@@ -133,13 +161,33 @@ void MainWindow::setup_dock_widget_cur_sm_sel(){
 
     //Logger and others
     {
-     QTabWidget* t = new QTabWidget;
+     QToolBar* qbar = new QToolBar();
+     QVBoxLayout* main_layout = new QVBoxLayout();
+     main_layout->addWidget(qbar);
      QTreeView* tt;
-     t->addTab(tt = new QTreeView, "Log");
-     tt->setModel(new LivelogTreeModel(style()));
-     //t->addTab(new QTextEdit, "Console");
+     logview_ = new QTreeView;
+     main_layout->addWidget(logview_);
+     logview_->setModel(logview_model_ = new LivelogTreeModel(style()));
+     QWidget* t = new QWidget();
+     t->setLayout(main_layout);
+
+     logview_ctrl_first_element_ = qbar->addAction(QIcon(QPixmap(":/media_skip_backward.png")),"Move to first element");
+     logview_ctrl_play_resume_ = qbar->addAction(QIcon(QPixmap(":/media_play.png")),"Step through list");
+     logview_ctrl_last_element_ = qbar->addAction(QIcon(QPixmap(":/media_skip_forward.png")),"Move to last element");
+     qbar->addSeparator();
+     logview_ctrl_filter_ = qbar->addAction(QIcon(QPixmap(":/filter.png")),"Filter view");
+
+     connect(logview_ctrl_first_element_,SIGNAL(triggered()),this,SLOT(logview_first_elem()));
+     connect(logview_ctrl_play_resume_,SIGNAL(triggered()),this,SLOT(logview_play_resume_elem()));
+     connect(logview_ctrl_last_element_,SIGNAL(triggered()),this,SLOT(logview_last_elem()));
+     connect(logview_ctrl_filter_,SIGNAL(triggered()),this,SLOT(logview_filter_elem()));
+
      dock_widget_logger_ctrl_->setWidget(t);
      addDockWidget(Qt::BottomDockWidgetArea, dock_widget_logger_ctrl_);
+     connect(logview_,SIGNAL(activated(const QModelIndex&)),this,SLOT(logview_elem_activated(const QModelIndex&)));
+     connect(logview_,SIGNAL(clicked(const QModelIndex&)),this,SLOT(logview_elem_clicked(const QModelIndex&)));
+     connect(logview_->selectionModel(),SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
+             this,SLOT(logview_selection_changed(const QItemSelection &, const QItemSelection &)));
     }
 }
 
@@ -155,6 +203,26 @@ void MainWindow::sm_treeview_clicked(const QModelIndex &index){
 
 
 }
+
+void MainWindow::logview_elem_activated(const QModelIndex& idx){
+}
+
+void MainWindow::logview_elem_clicked(const QModelIndex& idx){
+}
+
+void  MainWindow::logview_selection_changed(const QItemSelection & selected, const QItemSelection &){
+    QModelIndexList idxs = selected.indexes();
+    if (idxs.size() == 0) return;
+    QModelIndex idx = idxs.at(0);
+    std::set<int> s;
+    if(logview_model_->is_active_states(idx,s)){
+        for(auto p : active_sm_windows_){
+            if (!p->highlight_currently_selected_states()) continue;
+            p->highlight_states(s);
+        }
+    }
+}
+
 
 MainWindow::~MainWindow()
 {

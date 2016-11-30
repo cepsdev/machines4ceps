@@ -240,18 +240,23 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				assert(tt.ev > 0);
 				break;
 			  }
-
-
-
 			  {
 			   auto it =  smp->get_user_supplied_guards().find(t.guard_);
 			   if (it !=  smp->get_user_supplied_guards().end())
 				  tt.guard = it->second;
 			  }
-			  if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
-			  if (t.action_.size() >= 2) tt.a2 = t.action_[1].native_func_;
-			  if (t.action_.size() >= 3) tt.a3 = t.action_[2].native_func_;
-			  assert(t.action_.size() < 4);
+              if (t.action_.size() && t.action_[0].native_func_ == nullptr){
+               //Case: no native implementation available
+               tt.native = false;
+               if (t.action_.size() >= 1) tt.a1_script = t.action_[0].body();
+               if (t.action_.size() >= 2) tt.a2_script = t.action_[1].body();
+               if (t.action_.size() >= 3) tt.a3_script = t.action_[2].body();
+              } else{
+               if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
+               if (t.action_.size() >= 2) tt.a2 = t.action_[1].native_func_;
+               if (t.action_.size() >= 3) tt.a3 = t.action_[2].native_func_;
+              }
+              //assert(t.action_.size() < 4);
 			  ctx.transitions.push_back(tt);
 			  if(ctx.state_to_first_transition.find(tt.from) != ctx.state_to_first_transition.end()) continue;
 			  ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;
@@ -434,8 +439,7 @@ static void run_simulations(State_machine_simulation_core* smc,
  auto simulations = universe[all{"Simulation"}];
  if (!simulations.size()) return;
 
- std::cout << "result_cmd_line.live_log=" << result_cmd_line.live_log << std::endl;
- if (result_cmd_line.live_log) {smc->enable_live_logging(result_cmd_line.live_log_port);}
+
 
  for (auto simulation_ : simulations){
 	auto simulation = simulation_["Simulation"];
@@ -571,17 +575,16 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	regfn("min", static_cast<double(*)(double, int)> (mymin));
 	regfn("min", static_cast<int(*)(int, int)> (mymin));
 
-	ceps::ast::Nodeset ns = current_universe();
-
-	auto statemachines = ns[all{"Statemachine"}];
-	auto globalfunctions = ns["global_functions"];
-	auto frames = ns[all{"raw_frame"}];
-	auto xmlframes = ns[all{"xml_frame"}];
-	auto all_sender = ns[all{"sender"}];
-	auto all_receiver = ns[all{"receiver"}];
-	auto unique_event_declarations = ns["unique"];
+    ceps::ast::Nodeset ns            = current_universe();
+    auto statemachines               = ns[all{"Statemachine"}];
+    auto globalfunctions             = ns["global_functions"];
+    auto frames                      = ns[all{"raw_frame"}];
+    auto xmlframes                   = ns[all{"xml_frame"}];
+    auto all_sender                  = ns[all{"sender"}];
+    auto all_receiver                = ns[all{"receiver"}];
+    auto unique_event_declarations   = ns["unique"];
 	auto no_transitions_declarations = ns["no_transitions"];
-	auto exported_events = ns["export"];
+    auto exported_events             = ns["export"];
 
 	start_comm_threads() = !generate_cpp_code();
 
@@ -1201,13 +1204,24 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		init_fn(smc, register_plugin);
 	}*/
 #endif
-
     {
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
 	 auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+
+
+
+     if (result_cmd_line.live_log) {
+      enable_live_logging(result_cmd_line.live_log_port);
+      livelog::Livelogger::Storage* idx2fqs = new livelog::Livelogger::Storage(number_of_states*128);
+      live_logger()->register_storage(sm4ceps::STORAGE_IDX2FQS,idx2fqs);
+      std::map<int,std::string> m;
+      for(auto const & v : map_fullqualified_sm_id_to_computed_idx) m[v.second] = v.first;
+      sm4ceps::storage_write(*idx2fqs,m,std::get<1>(live_logger()->find_storage_by_id(sm4ceps::STORAGE_IDX2FQS)->second ));
+     }
+
 	 if (result_cmd_line.print_transition_tables){
 	  for(auto e : map_fullqualified_sm_id_to_computed_idx){
-	   std::cout <<" " << e.second <<";" << "\"" << e.first << "\";";
+       std::cout <<" " << e.second <<"=>" << "\"" << e.first << "\";";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final_state";
