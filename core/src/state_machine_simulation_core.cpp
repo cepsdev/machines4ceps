@@ -10,6 +10,8 @@
 #include "core/include/serialization.hpp"
 #include "core/include/sm_raw_frame.hpp"
 #include "core/include/sm_xml_frame.hpp"
+#include "core/include/modelling/partitions.hpp"
+
 #include "pugixml.hpp"
 #ifdef __gnu_linux__
 
@@ -1294,6 +1296,7 @@ bool state_machine_sim_core_default_stepping()
 }
 
 
+
 void init_state_machine_simulation(	int argc,
 									char ** argv,
 									State_machine_simulation_core* smc,
@@ -1317,6 +1320,8 @@ void init_state_machine_simulation(	int argc,
 			 ss << "\n***Error: Couldn't open file '" << f << "' " << std::endl << std::endl;
 			 throw std::runtime_error(ss.str()) ;
 		 }
+
+    ceps::interpreter::register_struct_rewrite_rule(smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);
 
 	smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);
 }

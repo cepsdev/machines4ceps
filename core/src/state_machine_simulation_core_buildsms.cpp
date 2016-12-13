@@ -588,6 +588,10 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 	start_comm_threads() = !generate_cpp_code();
 
+	if (result_cmd_line.print_evaluated_input_tree){
+		std::cout << ceps::ast::Nodebase::pretty_print << this->current_universe() << std::endl;
+	}
+
 
 	//handle unique definitions
 
@@ -1172,10 +1176,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	  }
 	  exported_events_.insert(ceps::ast::name(ceps::ast::as_symbol_ref(p)));
 	}
-	
-
-
-
+	build_signal_structures(result_cmd_line);
 
 #ifdef __gnu_linux__
 	for(auto const & plugin_lib : result_cmd_line.plugins){

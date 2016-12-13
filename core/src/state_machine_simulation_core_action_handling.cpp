@@ -1398,7 +1398,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 
 			if (is_global_event(func_name))
 			{
-				log() << "[QUEUEING EVENT WITH PAYLOAD][" << func_name <<"]" << "\n";
+				//log() << "[QUEUEING EVENT WITH PAYLOAD][" << func_name <<"]" << "\n";
 				{
 					for(size_t i = 0; i != args.size(); ++i)
 					{

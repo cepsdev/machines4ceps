@@ -25,6 +25,7 @@
 #include "core/include/state_machine_simulation_core_reg_fun.hpp"
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 #include "core/include/events.hpp"
+#include "core/include/signalgenerator.hpp"
 
 
 #include "log4kmw_state.hpp"
@@ -87,7 +88,9 @@ template <>
 }
 
 
-class State_machine_simulation_core:public IUserdefined_function_registry, Ism4ceps_plugin_interface
+class State_machine_simulation_core:
+		 public IUserdefined_function_registry,
+		        Ism4ceps_plugin_interface
 {
 public:
 	typedef std::chrono::steady_clock clock_type;
@@ -98,7 +101,14 @@ private:
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_guards;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_prev_;
-
+    std::vector<std::pair<std::string,sm4ceps::datasources::Signalgenerator>> sig_generators_;
+    void build_signal_structures(Result_process_cmd_line const& result_cmd_line);
+public:
+    using signal_generator_handle = int;
+    signal_generator_handle add_sig_gen(std::string,sm4ceps::datasources::Signalgenerator const &);
+    signal_generator_handle find_sig_gen(std::string id);
+    sm4ceps::datasources::Signalgenerator* sig_gen(signal_generator_handle);
+private:
 	using Logger_active_states = std::vector<int>;
 	using Logger_entry_counter = int;
 
@@ -143,10 +153,10 @@ private:
     executionloop_context_t executionloop_context_;
     livelog::Livelogger* live_logger_ = nullptr;
     livelog::Livelogger* live_logger(){return live_logger_;}
-    sm4ceps::Livelogger_source* livelogger_source_;
+    sm4ceps::Livelogger_source* livelogger_source_ = nullptr;
     sm4ceps::Livelogger_source* live_logger_out() {return livelogger_source_;}
-    void info(std::string const & s){
-        if(!quiet_mode()) log() << s << "\n";
+    void info(std::string const & s,bool nline = true){
+        if(!quiet_mode()) log() << s << (nline?"\n":"");
     	if (live_logger_out()) live_logger_out()->log_info(s);
     }
 public:
@@ -684,6 +694,10 @@ public:
 
 
 };
+
+namespace sm4ceps{
+ bool valid(State_machine_simulation_core::signal_generator_handle const &);
+}
 
 struct ceps_interface_eval_func_callback_ctxt_t{
 	State_machine_simulation_core* smc;

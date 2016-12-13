@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "render_statemachines.h"
+#include <QBrush>
+#include <QColor>
 
 MainWindow::MainWindow(State_machine_simulation_core* smcore, QWidget *parent) :
     QMainWindow(parent),
@@ -14,6 +16,10 @@ MainWindow::MainWindow(State_machine_simulation_core* smcore, QWidget *parent) :
             sm_render_ctxt->add(sm.second,sm.first);
             sm_render_ctxt->layout(scene,sm.second);
         }
+    //scene->setForegroundBrush(QBrush(Qt::lightGray, Qt::Dense4Pattern));
+    //scene->setForegroundBrush(QColor(255, 255, 255, 127));
+    ui->graphicsView->setRenderHints(QPainter::Antialiasing
+    | QPainter::TextAntialiasing);
     ui->graphicsView->setScene(scene);
 }
 

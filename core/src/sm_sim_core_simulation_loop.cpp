@@ -222,6 +222,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   bool fetch_made_states_update = false;
   execution_ctxt.current_ev_id = 0;
 
+
   if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
   {
 	ev_read = true;
@@ -295,6 +296,11 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 
     if (live_logger()){
         sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
+    } else if(!quiet_mode()){
+    	info("Active States: ",false);
+    	for(int i = 0; i != executionloop_context().current_states.size();++i)
+    		if (executionloop_context().current_states[i]) info(executionloop_context().idx_to_state_id[i]+" ",false );
+    	info("");
     }
 
     if (ev_read && event_triggered_sender().size() && current_event().id_.length()) {
@@ -312,10 +318,26 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 
     memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
     //if (PRINT_DEBUG) log() << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << "\n";
-    if (live_logger() && ev_read){
+    if ( (live_logger() || !quiet_mode()) && ev_read){
          std::vector<sm4ceps_plugin_int::Variant> v;
          map_ev_payload_to_variant(current_event(),v);
-         live_logger_out()->log_event(std::make_pair(execution_ctxt.id_to_ev[ev_id],v));
+         if (live_logger()) live_logger_out()->log_event(std::make_pair(execution_ctxt.id_to_ev[ev_id],v));
+         else {
+        	 std::string p;
+        	 if (v.size()){
+        		 p.append("(");
+        		 int j = 0;
+        		 for (auto & e : v){
+                  if (e.what_ == sm4ceps_plugin_int::Variant::Int) p.append(std::to_string(e.iv_));
+                  else if (e.what_ == sm4ceps_plugin_int::Variant::Double) p.append(std::to_string(e.dv_));
+                  else p.append("'"+e.sv_+"'");
+                  if (j+1 != v.size()) p.append(", ");
+                  ++j;
+        		 }
+        		 p.append(")");
+        	 }
+        	 info("Event "+execution_ctxt.id_to_ev[ev_id]+p+" fetched.");
+         }
     }
     int triggered_transitions_end = 0;
 	auto triggered_thread_regions_end = triggered_transitions_end;
@@ -352,9 +374,9 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
 	auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
 
-    if (live_logger()){
+    if (live_logger() || !quiet_mode()){
      std::stringstream ss;
-     ss << "Triggered Transitions:\n";
+     ss << "Triggered Transitions: ";
      for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 		auto t = *p;
         auto const & trans = execution_ctxt.transitions[t];
@@ -427,9 +449,9 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
             if (a1) a1();  if (a2) a2(); if (a3) a3();
           }
 		}
-        if (live_logger()){
+        if (!quiet_mode() || live_logger()){
          std::stringstream ss;
-         ss << "Changes:\n  ";
+         ss << "Changes: ";
 		 for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
 		  if (execution_ctxt.current_states[z] == temp[z]) continue;
           ss << execution_ctxt.idx_to_state_id[z];
@@ -542,9 +564,9 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	 }
 
 	 execution_ctxt.do_enter(this,entering_sms.data(),entering_sms_next,temp);
-     if (live_logger()){
+     if (!quiet_mode() || live_logger()){
        std::stringstream ss;
-       ss << "Changes:\n  ";
+       ss << "Changes: ";
        for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
         if (execution_ctxt.current_states[z] == temp[z]) continue;
         ss << execution_ctxt.idx_to_state_id[z];
@@ -562,6 +584,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
         sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
     }*/
  }
+ info("Simulation finished.");
 }
 
 

@@ -21,6 +21,7 @@ class MainWindow;
 
 class SvgView;
 class QTreeView;
+class QTableView;
 class QMdiSubWindow;
 class QAction;
 class QStackedLayout;
@@ -60,7 +61,7 @@ private:
     QDockWidget* dock_widget_logger_ctrl_;
     LivelogTreeModel* logview_model_;
     std::set<Statemachine_window*> active_sm_windows_;
-    QTreeView* logview_;
+    QTableView* logview_;
 
     bool logview_filter_event = true;
     bool logview_filter_info = true;

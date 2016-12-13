@@ -165,7 +165,7 @@ void MainWindow::setup_dock_widget_cur_sm_sel(){
      QVBoxLayout* main_layout = new QVBoxLayout();
      main_layout->addWidget(qbar);
      QTreeView* tt;
-     logview_ = new QTreeView;
+     logview_ = new QTableView;
      main_layout->addWidget(logview_);
      logview_->setModel(logview_model_ = new LivelogTreeModel(style()));
      QWidget* t = new QWidget();

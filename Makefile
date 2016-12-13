@@ -24,7 +24,7 @@ $(TARGET)/state_machine_simulation_core_guard_handling.o $(TARGET)/cmdline_utils
 $(TARGET)/cal_sender.o $(TARGET)/cal_receiver.o $(TARGET)/state_machine_simulation_core_plugin_interface.o $(TARGET)/state_machine_simulation_core_buildsms.o \
 $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
 $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/sm_comm_naive_msg_prot.o $(TARGET)/cppgen.o $(TARGET)/dotgen.o $(TARGET)/livelogger.o $(TARGET)/rdwrn.o\
-$(TARGET)/sm_livelog_storage_utils.o
+$(TARGET)/sm_livelog_storage_utils.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
 	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o $(cepslibs)/ceps_interpreter_macros.o $(cepslibs)/ceps_interpreter_functions.o \
 	$(TARGET)/main.o $(TARGET)/state_machine_simulation_core.o  $(TARGET)/state_machines.o $(TARGET)/state_machine_simulation_core_action_handling.o \
@@ -32,7 +32,7 @@ $(TARGET)/sm_livelog_storage_utils.o
 	$(TARGET)/state_machine_simulation_core_guard_handling.o $(TARGET)/sm_sim_core_simulation_loop.o  $(TARGET)/cppgen.o $(TARGET)/dotgen.o \
 	$(TARGET)/cmdline_utils.o $(TARGET)/sm_sim_core_asserts.o $(TARGET)/sm_comm_naive_msg_prot.o $(TARGET)/serialization.o $(TARGET)/sm_raw_frame.o $(TARGET)/sm_xml_frame.o $(TARGET)/cal_sender.o $(TARGET)/cal_receiver.o $(TARGET)/state_machine_simulation_core_buildsms.o \
 	$(TARGET)/pugixml.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o \
-	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/livelogger.o $(TARGET)/sm_livelog_storage_utils.o $(TARGET)/rdwrn.o -o $(TARGET)/sm
+	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/livelogger.o $(TARGET)/sm_livelog_storage_utils.o $(TARGET)/rdwrn.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o -o $(TARGET)/sm
 
 $(TARGET)/sm_trace: $(TARGET)/pugixml.o $(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
 $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o
@@ -109,6 +109,12 @@ $(TARGET)/sm_livelog_storage_utils.o: core/src/sm_livelog_storage_utils.cpp core
 	$(CXX)   $(cflags) $(includes) core/src/sm_livelog_storage_utils.cpp -c -o $(TARGET)/sm_livelog_storage_utils.o	
 $(TARGET)/rdwrn.o: core/src/sockets/rdwrn.cpp
 	$(CXX)   $(cflags) $(includes) core/src/sockets/rdwrn.cpp -c -o $(TARGET)/rdwrn.o	
+$(TARGET)/signalgenerator.o: core/src/signalgenerator.cpp
+	$(CXX)   $(cflags) $(includes) core/src/signalgenerator.cpp -c -o $(TARGET)/signalgenerator.o
+$(TARGET)/gensm.o: core/src/modelling/gensm.cpp
+	$(CXX)   $(cflags) $(includes) core/src/modelling/gensm.cpp -c -o $(TARGET)/gensm.o
+$(TARGET)/partitions.o: core/src/modelling/partitions.cpp
+	$(CXX)   $(cflags) $(includes) core/src/modelling/partitions.cpp -c -o $(TARGET)/partitions.o
 
 clean:
 	rm $(TARGET)/*

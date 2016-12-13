@@ -245,9 +245,8 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 			else if (arg == "--live_log") {r.live_log=true;continue;}
 			else if (arg == "--print_statemachines") {r.print_statemachines=true;continue;}
 			else if (arg == "--dot_gen") {r.dot_gen=true;continue;}
-
-
-
+			else if (arg == "--print_evaluated_input_tree") {r.print_evaluated_input_tree=true;continue;}
+			else if (arg == "--print_signal_generators") {r.print_signal_generators=true;continue;}
 
 
 			else if (arg.substr(0, 6) == "--port") { 
