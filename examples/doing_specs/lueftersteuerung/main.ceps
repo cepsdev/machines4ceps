@@ -1,16 +1,12 @@
 kind Systemstate;
-kind Symbol;
 kind Event;
+kind Guard;
 
-Symbol model;
 Systemstate motor_temperatur;
 Systemstate luefter_drehung;
 
-model = luefter_steuerung;
-
 partition{
  id = vp_motor_temperatur;
- motor_temperatur;
  {motor_temperatur <= 1.0;niedrig;};
  {motor_temperatur > 2.0 && motor_temperatur <= 3.0;};
  {motor_temperatur > 3.0; hoch;};
@@ -30,15 +26,10 @@ signal{
  };
 };
 
-Event E;
-
-Statemachine{id{S;}; States{Initial;a;}; Transition{Initial;a;}; Transition{a;a;E;};};
-
 Simulation{
  start_signal(signal_1,motor_temperatur);
- Start{S;mod_gen_stdvpart_vp_motor_temperatur;};
- E(1,2,"abc");
- };
+ Start{mod_gen_stdvpart_vp_motor_temperatur;};
+};
 
 
 

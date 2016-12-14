@@ -101,6 +101,7 @@ private:
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_guards;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_prev_;
+/*Signal Generators ==>*/
     std::vector<std::pair<std::string,sm4ceps::datasources::Signalgenerator>> sig_generators_;
     void build_signal_structures(Result_process_cmd_line const& result_cmd_line);
 public:
@@ -108,6 +109,14 @@ public:
     signal_generator_handle add_sig_gen(std::string,sm4ceps::datasources::Signalgenerator const &);
     signal_generator_handle find_sig_gen(std::string id);
     sm4ceps::datasources::Signalgenerator* sig_gen(signal_generator_handle);
+/*<== Signal Generators*/
+private:
+	using ceps_fn_eval_impl_t = ceps::ast::Nodebase_ptr (State_machine_simulation_core::*)(std::string const & id ,
+			                                                const std::vector<ceps::ast::Nodebase_ptr> &,
+															State_machine* );
+	std::map<std::string,ceps_fn_eval_impl_t> ceps_fns_;
+public:
+	void reg_global_ceps_fn(std::string n, ceps_fn_eval_impl_t f ){ceps_fns_[n] = f;}
 private:
 	using Logger_active_states = std::vector<int>;
 	using Logger_entry_counter = int;
@@ -253,35 +262,24 @@ public:
 		event_t event;
 	};
 
-	size_t timer_table_size = 128;
+	size_t timer_table_size = 1024;
 
 	mutable std::mutex timer_table_mtx;
 	std::vector<timer_table_entry_t> timer_table;
 #endif
-
 	typedef ceps::ast::Nodebase_ptr (*smcore_plugin_fn_t)(ceps::ast::Call_parameters* params);
-
 	void register_plugin_fn(std::string const & id, smcore_plugin_fn_t fn);
-
 	typedef void (*global_event_call_back_fn)(event_t);
 	global_event_call_back_fn global_event_call_back_fn_ = nullptr;
 	void set_global_event_call_back(global_event_call_back_fn fn){global_event_call_back_fn_ = fn;}
-
-
-
 private:
-
 	std::map<std::string,smcore_plugin_fn_t> name_to_smcore_plugin_fn;
-
 	using main_event_queue_t = threadsafe_queue<event_t, sm4ceps::Eventqueue<event_t> /*std::queue<event_t>*/ >;
 	using out_event_queue_t  = threadsafe_queue<event_t, std::queue<event_t> >;
 	using out_event_queues_t = std::vector<out_event_queue_t*>;
-
 	mutable std::mutex out_event_queues_m_;
 	main_event_queue_t main_event_queue_;
 	out_event_queues_t out_event_queues_;
-
-
 	struct Log{
 		std::ostream* os_p = nullptr;
 		State_machine_simulation_core* parent_ = nullptr;
@@ -296,11 +294,8 @@ private:
 			return *this;
 		}
 	};
-
 	Log std_log_;
-
 	std::map<std::string,threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* > id_to_out_chan_;
-
 public:
 
 	threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* get_out_channel(std::string const & s){

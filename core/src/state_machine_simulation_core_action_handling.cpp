@@ -490,7 +490,7 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 	{
 		std::lock_guard<std::mutex> lk(timer_table_mtx);
 		if (timer_table.size() == 0){
-			timer_table.resize(timer_table_size*16);
+			timer_table.resize(timer_table_size);
 			create_thread = true;
 			timed_events_active_ = 0;
 		}
@@ -502,7 +502,6 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 			e.fresh = true;
 			e.kill = false;
 			e.name = timer_id;
-			e.period_in_ms = periodic_timer;
 			e.time_remaining_in_ms = e.period_in_ms = (long)(t * 1000.0);
 			e.event = ev_to_send;
 			e.fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
@@ -554,42 +553,6 @@ void State_machine_simulation_core::x_path(sm4ceps_plugin_int::xml_node_set& xs,
  xs.xpath_node_set = ns;
 }
 
-/*
-
-(id == "as_double"){
-		if (args.size() == 0) return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
-				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
-			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
-			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
-			if (ns->size() == 0)
-				fatal_(-1,"as_double: node set is empty.\n");
-			return new ceps::ast::Double(ns->first().node().text().as_double(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-		}
-		return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-	 } else if (id == "as_int"){
-			if (args.size() == 0) return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-			if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
-					CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
-				auto& udef = ceps::ast::as_user_defined_ref(args[0]);
-				pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
-				if (ns->size() == 0)
-					fatal_(-1,"as_double: node set is empty.\n");
-				return new ceps::ast::Int(ns->first().node().text().as_int(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-			}
-			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-	} else if (id == "as_string"){
-	 		if (args.size() == 0) return new ceps::ast::String("",nullptr,nullptr,nullptr);
-	 		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
-	 				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
-	 			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
-	 			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
-	 			if (ns->size() == 0)
-	 				fatal_(-1,"as_double: node set is empty.\n");
-	 			return new ceps::ast::String(ns->first().node().text().get(),nullptr,nullptr,nullptr);
-	 		}
-	 		return new ceps::ast::String("",nullptr,nullptr,nullptr);
-*/
 
 
 int State_machine_simulation_core::as_int(sm4ceps_plugin_int::xml_node_set& xs){
@@ -673,7 +636,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 {
 	std::vector<ceps::ast::Nodebase_ptr> args;
 	if (params != nullptr && params->children().size()) flatten_args(this,params->children()[0], args, ',');
-
+	/*{
+	 auto it = ceps_fns_.find(id);
+	 if (it != ceps_fns_.end()){
+		 return (this->*it->second)(id,args,active_smp);
+	 }
+	}*/
 	if (id == "argv")
 	{
 		auto const & args =  params->children();
