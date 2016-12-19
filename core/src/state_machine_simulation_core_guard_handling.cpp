@@ -72,107 +72,16 @@ void acc_args(ceps::ast::Nodebase_ptr root,std::vector<ceps::ast::Nodebase_ptr >
 ceps::ast::Nodebase_ptr State_machine_simulation_core::unfold(ceps::ast::Nodebase_ptr expr,
 							   std::map<std::string, ceps::ast::Nodebase_ptr>& guard_to_interpretation,
 							   std::set<std::string>& path,
-							   states_t const & current_states)
+							   states_t const & current_states, executionloop_context_t* exec_ctxt)
 {
 
 	DEBUG_FUNC_PROLOGUE
-
 	using namespace ceps::ast;
-	if (expr->kind() == Ast_node_kind::int_literal)
-		return new Int( value(as_int_ref(expr)), unit(as_int_ref(expr)), nullptr, nullptr, nullptr);
-	if (expr->kind() == Ast_node_kind::float_literal)
-		return new Double( value(as_double_ref(expr)), unit(as_double_ref(expr)), nullptr, nullptr, nullptr);
-	if (expr->kind() == Ast_node_kind::string_literal)
-		return new String( value(as_string_ref(expr)), nullptr, nullptr, nullptr);
-	if(expr->kind() == Ast_node_kind::func_call)
-	{
-
-		 ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(expr);
-		 ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
-		 ceps::ast::Call_parameters* params = dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
-
-		 std::vector<ceps::ast::Nodebase_ptr > args;
-		 acc_args(params->children()[0],args);
-		 if(name(id) == "in_state")
-		 {
-			 if(params->children().size() == 0) fatal_(-1,"Function '"+name(id)+"' expects at least one argument");
-			 if(print_debug_info_) std::cerr << "[DEBUG][IN_STATE]";
-			 bool found = false;
-			 for(auto p : args)
-			 {
-				 if(print_debug_info_) std::cerr << *p << " ";
-				 if ( !(p->kind() == ceps::ast::Ast_node_kind::identifier) && !(p->kind() == ceps::ast::Ast_node_kind::binary_operator)){
-					 std::stringstream ss;
-					 ss << *p;
-					 fatal_(-1,"Function '"+name(id)+"': illformed argument, expected a qualified id, got: "+ss.str());
-				 }
-				 auto state = resolve_state_qualified_id(p,nullptr);
-				 if(!state.valid())
-				 {
-					 std::stringstream ss;
-					 ss << *p;
-					 fatal_(-1,"Function '"+name(id)+"': illformed argument, unknown state: "+ss.str());
-				 }
-				 for(auto s:current_states)
-				 {
-					 if (s == state) {found = true; break;}
-				 }
-				 if(found && !print_debug_info_) break;
-			}
-
-			 if(print_debug_info_) std::cerr << ") = " << found << std::endl  ;
-
-
-			 return new Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-		 }
-		 ceps::ast::Call_parameters* clp= new Call_parameters();
-		 ceps::ast::Identifier* fid = new ceps::ast::Identifier(name(id),nullptr,nullptr,nullptr);
-
-		 for(auto p : args)
-		 {
-			clp->children().push_back( unfold(p,guard_to_interpretation,path,current_states));
-		 }
-		 ceps::ast::Func_call* fc =new ceps::ast::Func_call(fid,clp,nullptr);
-
-	     return fc;
-	}
 
 	ceps::ast::Nodebase_ptr nlf_base = nullptr;
 	if (expr->kind() == Ast_node_kind::binary_operator)
 	{
-		if (op(ceps::ast::as_binop_ref(expr)) == '.')
-		{
-			std::vector<ceps::ast::Nodebase_ptr> v;
-
-			flatten_args(this,expr,v,'.');
-			//for(auto p : v) std::cout << *p << std::endl;
-			if (!node_isrw_state(v[0]))
-			{
-				std::stringstream ss;
-				ss << *expr << "\n";
-				fatal_(-1,"Expected a Systemstate/Systemparameter: "+ ss.str());
-			}
-			std::string s;
-			for(size_t i = 0; i < v.size();++i)
-			{
-				if (node_isrw_state(v[i]))
-				{
-					s += name(as_symbol_ref(v[i]));
-				} else if (v[i]->kind() == ceps::ast::Ast_node_kind::identifier )
-				{
-					s += name(as_id_ref(v[i]));
-				} else fatal_(-1,"Illformed qualified identifier expression");
-				if (i + 1 < v.size()) s+= ".";
-			}
-			DEBUG << "[UNFOLD][EVAL_STATE]" << s << "\n";
-
-			auto it = this->get_global_states().find(s);
-			if (it == get_global_states().end())
-				fatal_(-1,s + " has no value.");
-
-			return it->second;
-		}
-		else nlf_base = new Binary_operator(ceps::ast::op(ceps::ast::as_binop_ref(expr)), nullptr, nullptr, nullptr);
+		nlf_base = new Binary_operator(ceps::ast::op(ceps::ast::as_binop_ref(expr)), nullptr, nullptr, nullptr);
 	}
 	else if (expr->kind() == Ast_node_kind::unary_operator)
 	{
@@ -191,16 +100,16 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::unfold(ceps::ast::Nodebas
 			if (it != guard_to_interpretation.end()) return it->second;
 
 			path.insert(n);
-			auto r = guard_to_interpretation[n] = unfold(global_guards[n],guard_to_interpretation,path,current_states);
+			auto r = guard_to_interpretation[n] = unfold(global_guards[n],guard_to_interpretation,path,current_states,exec_ctxt);
 			path.erase(n);
 			return r;
 		} else return expr;
 	}
-	else fatal_(-1,"Unfolding of expression failed.");
+	else return expr;
 
 	for(auto p : ceps::ast::nlf_ptr(expr)->children())
 	{
-		ceps::ast::nlf_ptr(nlf_base)->children().push_back( unfold(p,guard_to_interpretation,path,current_states));
+		ceps::ast::nlf_ptr(nlf_base)->children().push_back( unfold(p,guard_to_interpretation,path,current_states,exec_ctxt));
 	}
 	return nlf_base;
 }
@@ -228,7 +137,14 @@ bool contains_compund_states(ceps::ast::Nodebase_ptr expr, bool inside_dot_expr)
 	return false;
 }
 
-bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,std::string const & guard_name,states_t const & states)
+ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+										 State_machine* containing_smp,
+										 ceps::ast::Nodebase_ptr node,
+										 ceps::ast::Nodebase_ptr root_node);
+
+bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
+		                                       std::string const & guard_name,
+											   states_t const & states, executionloop_context_t* exec_ctxt)
 {
 	using namespace ceps::ast;
     bool bool_result;
@@ -256,56 +172,21 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 
 		decltype(global_guards) guard_to_interpretation;
 		std::set<std::string> eval_path {guard_name};
-		//std::cout << "UNFOLDED:" << *guard_unfolded << std::endl;
 		std::lock_guard<std::recursive_mutex>g(states_mutex());
-		auto guard_unfolded = unfold(guard_expr,guard_to_interpretation,eval_path,states);
-		DEBUG << "[CALL][ceps::interpreter::evaluate][A]\n";
-		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &get_global_states();
-		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &get_global_states();
-
-		result  = ceps::interpreter::evaluate(guard_unfolded,
-															ceps_env.get_global_symboltable(),
-															ceps_env.interpreter_env(),nullptr,nullptr	);
-		ceps_env.interpreter_env().symbol_mapping().clear();
-		DEBUG << "[RET_FROM_CALL][ceps::interpreter::evaluate][A]\n";
-	} else
-	{
-		DEBUG << "[CALL][ceps::interpreter::evaluate][B]\n";
-		std::lock_guard<std::recursive_mutex>g(states_mutex());
-		ceps_env.interpreter_env().symbol_mapping()["Systemstate"] = &get_global_states();
-		ceps_env.interpreter_env().symbol_mapping()["Systemparameter"] = &get_global_states();
-
-		if (this->print_debug_info_)
-		{
-			DEBUG << *guard_expr  << "\n";
-			DEBUG << "[CURRENT STATES]\n";
-			std::cout << "*************************************??" << std::endl;
-			for (auto & t : get_global_states())
-			{
-				if (t.first == "x_drive") std::cout << "*************************************" << std::endl;
-				if (t.second == nullptr) {
-					DEBUG << t.first << " is null \n";
-					warn_(-1, "Systemstate '" + t.first + "' is null");
-					continue;
-				}
-				std::cout << "*************************************" << t.second <<std::endl;
-				DEBUG << t.first << " = " << *t.second << "\n";
-			}
-		}
-		//std::cout << "NOTUNFOLDED:" << *guard_expr << std::endl;
-		result  = ceps::interpreter::evaluate(guard_expr,
-										ceps_env.get_global_symboltable(),
-										ceps_env.interpreter_env(),nullptr,nullptr	);
-		ceps_env.interpreter_env().symbol_mapping().clear();
-		DEBUG << "[RET_FROM_CALL][ceps::interpreter::evaluate][B]\n";
+		auto guard_unfolded = unfold(guard_expr,guard_to_interpretation,eval_path,states,exec_ctxt);
+		result = eval_locked_ceps_expr(this,
+									   nullptr,
+									   guard_unfolded,
+									   nullptr);
+	} else	{
+		result = eval_locked_ceps_expr(this,
+									   nullptr,
+									   guard_expr,
+									   nullptr);
 	}
-	//std::cout << "UNFOLDED/EVALUATED " << *result << std::endl;
 	if(result != nullptr)
 		bool_result = eval_to_bool(result);
 	else bool_result = false;
-
-	DEBUG << "[GUARD_EVAL] " << guard_name << "=" << bool_result << "\n";
-
 
 	return bool_result;
 }

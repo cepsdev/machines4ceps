@@ -179,9 +179,15 @@ void timer_thread_fn(State_machine_simulation_core* smc, int id, bool periodic, 
 	}
 }
 
-void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool periodic_timer)
+
+void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nodebase_ptr> const & args,
+		                                              bool periodic_timer,
+													  sm4ceps::datasources::Signalgenerator* siggen)
 {
 
+    if (siggen != nullptr){
+
+    }
 	if (args.size() >= 2 && (( args[1]->kind() == ceps::ast::Ast_node_kind::symbol && kind(ceps::ast::as_symbol_ref(args[1])) == "Event")
 		                               || args[1]->kind() == ceps::ast::Ast_node_kind::func_call  || args[1]->kind() == ceps::ast::Ast_node_kind::identifier)
 		)
@@ -447,7 +453,20 @@ void main_timer_thread_fn(State_machine_simulation_core* smc){
 	  }
 	  {
 		  std::lock_guard<std::mutex> lk(smc->timer_table_mtx);
-		  if(!smc->timer_table[tidxs[j]].kill) smc->enqueue_event(smc->timer_table[tidxs[j]].event,false);
+
+
+		  if(!smc->timer_table[tidxs[j]].kill){
+			  if (smc->timer_table[tidxs[j]].siggen){
+
+				  auto g = smc->timer_table[tidxs[j]].siggen;
+				  if (g->values().size()){
+					  double v = g->values()[smc->timer_table[tidxs[j]].loc_storage++ % g->values().size()];
+					  auto& ev = smc->timer_table[tidxs[j]].event;
+					  ev.payload_native_[1] = sm4ceps_plugin_int::Variant{v};
+				  }
+			  }
+			  smc->enqueue_event(smc->timer_table[tidxs[j]].event,false);
+		  }
 		  if (!smc->timer_table[tidxs[j]].periodic)  smc->timer_table[tidxs[j]].kill = true;
 	  }
 	 }
@@ -455,16 +474,33 @@ void main_timer_thread_fn(State_machine_simulation_core* smc){
 	}//for
 }
 
+ceps::ast::Nodebase_ptr  State_machine_simulation_core::ceps_fn_start_signal_gen(std::string const & id ,
+				                                                const std::vector<ceps::ast::Nodebase_ptr> & args,
+																State_machine* ){
+ sm4ceps::datasources::Signalgenerator* siggen = nullptr;
+ auto h = find_sig_gen(ceps::ast::name(ceps::ast::as_id_ref(args[0])));
+ if (h < 0) return nullptr;
+ siggen = sig_gen(h);
+ siggen->target_state() = ceps::ast::name(ceps::ast::as_symbol_ref(args[1]));
+ exec_action_timer(siggen->delta(),sm4ceps_plugin_int::ev{},sm4ceps_plugin_int::id{},true,nullptr,siggen);
+ return nullptr;
+}
+
 bool State_machine_simulation_core::exec_action_timer(double t,
 		                                              sm4ceps_plugin_int::ev ev_,
 													  sm4ceps_plugin_int::id id_,
 													  bool periodic_timer,
-													  sm4ceps_plugin_int::Variant (*fp)()){
+													  sm4ceps_plugin_int::Variant (*fp)(),
+													  sm4ceps::datasources::Signalgenerator* siggen
+													  ){
 
 	if (t < 0) return true;
 	std::string ev_id = ev_.name_;
 	if (fp != nullptr){
 			ev_id = "@@queued_action";
+	}
+	if (siggen != nullptr){
+		ev_id = "@@set_state";
 	}
 	std::string timer_id;
 
@@ -485,6 +521,10 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 	ev_to_send.glob_func_ = fp;
 	bool create_thread = false;
 	if (ev_.args_.size())		ev_to_send.payload_native_ = ev_.args_;
+	if (siggen != nullptr){
+		ev_to_send.payload_native_.push_back(sm4ceps_plugin_int::Variant(siggen->target_state()));
+		ev_to_send.payload_native_.push_back(sm4ceps_plugin_int::Variant(0.0));
+	}
 
 
 	{
@@ -507,6 +547,8 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 			e.fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 			//std::cout << "Creating fd="<< std::to_string(e.fd)<< std::endl;
 			e.periodic = periodic_timer;
+			e.loc_storage = 0;
+			e.siggen = siggen;
 			if (e.fd < 0) fatal_(-1,"timerfd_create failed.");
 			itimerspec tspec;
 			tspec.it_interval.tv_nsec = 0;
@@ -636,12 +678,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 {
 	std::vector<ceps::ast::Nodebase_ptr> args;
 	if (params != nullptr && params->children().size()) flatten_args(this,params->children()[0], args, ',');
-	/*{
+	{
 	 auto it = ceps_fns_.find(id);
 	 if (it != ceps_fns_.end()){
 		 return (this->*it->second)(id,args,active_smp);
 	 }
-	}*/
+	}
 	if (id == "argv")
 	{
 		auto const & args =  params->children();
@@ -689,12 +731,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			 ss << *p;
 			 fatal_(-1,"Function '"+id+"': illformed argument, unknown state: "+ss.str());
 			}
-			for(auto s:current_states())
-			{
-			 if (s == state) {found = true; break;}
-			}
+			found = this->executionloop_context().current_states[state.id_];
 			if(found) break;
-		} return new ceps::ast::Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+		}
+	  return new ceps::ast::Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 	} else if (id == "stop") {
 		for(auto p : args)
 		{
@@ -760,8 +800,13 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 		}
 	} else if (id == "changed"){
-	 if(args.size() == 1 && args[0]->kind() == ceps::ast::Ast_node_kind::string_literal){
-       auto state_id = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
+
+	 if(args.size() == 1 && (args[0]->kind() == ceps::ast::Ast_node_kind::string_literal ||
+			 args[0]->kind() == ceps::ast::Ast_node_kind::identifier || args[0]->kind() == ceps::ast::Ast_node_kind::symbol) ){
+       std::string state_id;
+       if (args[0]->kind() == ceps::ast::Ast_node_kind::identifier) state_id  = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+       else if (args[0]->kind() == ceps::ast::Ast_node_kind::symbol) state_id  = ceps::ast::name(ceps::ast::as_symbol_ref(args[0]));
+       else state_id  = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
 	   {
 		   std::lock_guard<std::recursive_mutex>g(states_mutex());
 		   auto it_cur = get_global_states().find(state_id);

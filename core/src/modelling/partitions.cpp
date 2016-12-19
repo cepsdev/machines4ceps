@@ -28,7 +28,7 @@ ceps::ast::Nodeset sm4ceps::modelling::standard_value_partition_sm(ceps::ast::St
    auto& range = as_scope_ref(e).children();
    if(range.size() == 1){
 	   range2guard["set_"+std::to_string(range_counter)] = range[0];
-   } else if (range.size() > 1){
+   } else if (range.size() > 1) {
 	 auto first_entry = range[0];
 	 auto second_entry = range[1];
      if (second_entry->kind() == Ast_node_kind::identifier){
@@ -41,9 +41,13 @@ ceps::ast::Nodeset sm4ceps::modelling::standard_value_partition_sm(ceps::ast::St
  }
 
  int guard_ctr = 0;
+ gen_sm.add_state("Initial");
  for(auto& e : range2guard){
 	 gen_sm.add_state(e.first);
  }
+
+ for(auto& p : range2guard)
+	 gen_sm.add_transition("Initial",p.first,p.second);
 
  for(auto& from : range2guard){
 	 for(auto& to : range2guard){

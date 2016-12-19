@@ -165,7 +165,8 @@ public:
 		void(* a2)() = nullptr;
 		void(* a3)() = nullptr;
 
-        void* guard_script = nullptr;
+		std::string script_guard;
+        //void* guard_script = nullptr;
         void* a1_script = nullptr;
         void* a2_script = nullptr;
         void* a3_script = nullptr;

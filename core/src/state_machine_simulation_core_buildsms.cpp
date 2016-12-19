@@ -245,6 +245,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			   if (it !=  smp->get_user_supplied_guards().end())
 				  tt.guard = it->second;
 			  }
+			  if (tt.guard == nullptr && t.has_guard()){
+				  tt.script_guard = t.guard();
+			  }
               if (t.action_.size() && t.action_[0].native_func_ == nullptr){
                //Case: no native implementation available
                tt.native = false;
@@ -556,6 +559,10 @@ void handle_instantiations(ceps::ast::Nodeset& ns,State_machine_simulation_core*
  }
 }
 
+static bool is_a_lazy_ceps_fun(std::string const & id){
+	return id == "start_signal" || id == "changed";
+}
+
 void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)
 {
 	using namespace ceps::ast;
@@ -587,6 +594,10 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
     auto exported_events             = ns["export"];
 
 	start_comm_threads() = !generate_cpp_code();
+
+	//Register global functions
+	reg_global_ceps_fn("start_signal",&State_machine_simulation_core::ceps_fn_start_signal_gen);
+	this->ceps_env_current().interpreter_env().is_lazy_func = &is_a_lazy_ceps_fun;
 
 	if (result_cmd_line.print_evaluated_input_tree){
 		std::cout << ceps::ast::Nodebase::pretty_print << this->current_universe() << std::endl;

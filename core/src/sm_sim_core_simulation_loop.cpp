@@ -287,6 +287,27 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 			scope.children().clear();
 		}
 		continue;
+	  } else if (ev.sid_ == "@@set_state"){
+		  if (enforce_native()){
+
+		  } else {
+			std::lock_guard<std::recursive_mutex>g(states_mutex());
+			std::string s = ev.payload_native_[0].sv_;
+			auto w = get_global_states()[s];
+			global_systemstates_prev()[s] = w;
+
+			if (w == nullptr || w->kind() != ceps::ast::Ast_node_kind::float_literal)
+				 get_global_states()[s] =
+			 		new ceps::ast::Double(ev.payload_native_[1].dv_, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			else {
+				auto old_value = ceps::ast::value(ceps::ast::as_double_ref(get_global_states()[s]));
+				if (old_value != ev.payload_native_[1].dv_) global_systemstates_prev()[s] = nullptr;
+				ceps::ast::value(ceps::ast::as_double_ref(get_global_states()[s])) = ev.payload_native_[1].dv_;
+			}
+		  }
+
+		  taking_epsilon_transitions = true;
+		  continue;
 	  }
 	  ev_read = true;
 	 }
@@ -352,7 +373,11 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 			auto const & t = execution_ctxt.transitions[i];
 			if (t.smp != smp) break;
 			if (t.ev == ev_id && t.from == s){
-				if (t.guard == nullptr || (*t.guard)() )  {
+				if (!t.script_guard.empty()){
+				  states_t st;
+                  bool r = eval_guard(ceps_env,t.script_guard,st);
+                  if (r){triggered_transitions[triggered_transitions_end++]=i;triggered=true;}
+				} else if (t.guard == nullptr || (*t.guard)() )  {
 					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
 				}
 			}

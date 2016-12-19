@@ -116,6 +116,9 @@ private:
 															State_machine* );
 	std::map<std::string,ceps_fn_eval_impl_t> ceps_fns_;
 public:
+	ceps::ast::Nodebase_ptr  ceps_fn_start_signal_gen(std::string const & id ,
+				                                                const std::vector<ceps::ast::Nodebase_ptr> &,
+																State_machine* );
 	void reg_global_ceps_fn(std::string n, ceps_fn_eval_impl_t f ){ceps_fns_[n] = f;}
 private:
 	using Logger_active_states = std::vector<int>;
@@ -259,6 +262,8 @@ public:
 		long time_remaining_in_ms = 0;
 		bool periodic = false;
 		int fd = -1;
+		sm4ceps::datasources::Signalgenerator* siggen = nullptr;
+		int loc_storage;
 		event_t event;
 	};
 
@@ -365,8 +370,10 @@ private:
 	void guards_in_expr(ceps::ast::Nodebase_ptr  expr, std::set<std::string> & v);
 	ceps::ast::Nodebase_ptr unfold(ceps::ast::Nodebase_ptr expr,
 								   std::map<std::string, ceps::ast::Nodebase_ptr>& guard_to_interpretation,
-								   std::set<std::string>& path,states_t const & states);
-	bool eval_guard(ceps::Ceps_Environment& ceps_env,std::string const & guard_name,std::vector<state_rep_t> const& current_states );
+								   std::set<std::string>& path,states_t const & states, executionloop_context_t* exec_ctxt = nullptr);
+	bool eval_guard(ceps::Ceps_Environment& ceps_env, std::string const & guard_name,
+			        std::vector<state_rep_t> const& current_states,
+					executionloop_context_t* exec_ctxt = nullptr);
 	bool contains_sm_func_calls(ceps::ast::Nodebase_ptr  expr);
 	void update_asserts(states_t const & reached_states);
 
@@ -401,8 +408,13 @@ public:
 
 
 	void process_event_from_remote(nmp_header,char* data);
-	void exec_action_timer(std::vector<ceps::ast::Nodebase_ptr>& args,bool);
-	bool exec_action_timer(double,sm4ceps_plugin_int::ev,sm4ceps_plugin_int::id,bool periodic_timer,sm4ceps_plugin_int::Variant (*fp)() = nullptr);
+	void exec_action_timer(std::vector<ceps::ast::Nodebase_ptr> const &  args,bool,sm4ceps::datasources::Signalgenerator* sig_gen = nullptr);
+	bool exec_action_timer(double,
+			               sm4ceps_plugin_int::ev,
+						   sm4ceps_plugin_int::id,
+						   bool periodic_timer,
+						   sm4ceps_plugin_int::Variant (*fp)() = nullptr,
+						   sm4ceps::datasources::Signalgenerator* sig_gen = nullptr);
 	bool is_global_event(std::string const & ev_name);
 
 

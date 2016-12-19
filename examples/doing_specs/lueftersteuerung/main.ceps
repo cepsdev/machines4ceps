@@ -8,7 +8,7 @@ Systemstate luefter_drehung;
 partition{
  id = vp_motor_temperatur;
  {motor_temperatur <= 1.0;niedrig;};
- {motor_temperatur > 2.0 && motor_temperatur <= 3.0;};
+ {motor_temperatur > 2.0 && motor_temperatur <= 3.0;mittel;};
  {motor_temperatur > 3.0; hoch;};
 };
 
@@ -26,8 +26,19 @@ signal{
  };
 };
 
+Statemachine{
+  id{S;};
+  States{Initial;s1;};
+  Actions{
+    a{print("motor_temperatur = ", motor_temperatur, "\n");};    
+  };
+  Transition{Initial;Initial;changed(motor_temperatur) && in_state(S.Initial);a;};
+};
+
 Simulation{
- start_signal(signal_1,motor_temperatur);
+ luefter_drehung = 0;
+ motor_temperatur = 1.0;
+ start_signal(signal_2,motor_temperatur);
  Start{mod_gen_stdvpart_vp_motor_temperatur;};
 };
 
