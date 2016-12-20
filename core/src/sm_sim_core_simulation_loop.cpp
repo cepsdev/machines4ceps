@@ -239,6 +239,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	 if (fetch_made_states_update){
       for(auto const & s : new_states_fetch){
 		execution_ctxt.current_states[s.id_] = 1;
+		execution_ctxt.visit_state(s.id_);
 	  }
       /*if (PRINT_DEBUG){
 	   log() << "[ACTIVE STATES] ";
@@ -312,7 +313,8 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	  ev_read = true;
 	 }
 	 current_event() = ev;
-	 if (ev_read) ev_id = execution_ctxt.ev_to_id[current_event().id_];
+	 if (ev_read) {ev_id = execution_ctxt.ev_to_id[current_event().id_];quit = true; }
+
     }
 
     if (live_logger()){
@@ -380,6 +382,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 				} else if (t.guard == nullptr || (*t.guard)() )  {
 					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
 				}
+				if (triggered) execution_ctxt.visit_transition(i);
 			}
 		}
 		if (!triggered) {temp[s] = 1;}
@@ -419,7 +422,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		if (!possible_exit_or_enter_occured && (execution_ctxt.get_parent(trans.to) != execution_ctxt.get_parent(trans.from)))
 			possible_exit_or_enter_occured = true;
 		if (!possible_exit_or_enter_occured && (execution_ctxt.is_sm(trans.to) || execution_ctxt.is_sm(trans.from))) possible_exit_or_enter_occured = true;
-		temp[trans.from] = 0;temp[trans.to] = 1;
+		temp[trans.from] = 0;temp[trans.to] = 1;execution_ctxt.visit_state(trans.to);
 		if (execution_ctxt.get_inf(trans.to,executionloop_context_t::IN_THREAD) && execution_ctxt.get_inf(trans.to,executionloop_context_t::FINAL)){
 			auto region = execution_ctxt.get_parent(execution_ctxt.get_parent(trans.to));
 			int i = 0;
@@ -456,6 +459,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 				}
 				possible_exit_or_enter_occured = true;
 				temp[execution_ctxt.join_states[region]] = 1;
+				execution_ctxt.visit_state(execution_ctxt.join_states[region]);
 			}
 		}
 	}
@@ -501,10 +505,10 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 
 		 //Newly added state
 		 if(execution_ctxt.is_sm(state)){
-			temp[state] = 1;
+			temp[state] = 1;execution_ctxt.visit_state(state);
 			int init_state = execution_ctxt.initial_state[state];
 			if ( init_state ) {
-				temp[init_state ] = 1;
+				temp[init_state ] = 1;execution_ctxt.visit_state(init_state);
 				execution_ctxt.set_inf(init_state ,executionloop_context_t::VISITED,true);
 			}
 			if (execution_ctxt.get_inf(state,executionloop_context_t::REGION)){
@@ -512,10 +516,10 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 					int thread;
 					if (!execution_ctxt.is_sm(thread = execution_ctxt.children[ti])) continue;
 					if (!execution_ctxt.get_inf(thread,executionloop_context_t::THREAD)) continue;
-					temp[thread] = 1;
+					temp[thread] = 1;execution_ctxt.visit_state(thread);
 					execution_ctxt.set_inf(thread,executionloop_context_t::VISITED,true);
 					if(execution_ctxt.initial_state[thread] != 0){
-						temp[execution_ctxt.initial_state[thread]] = 1;
+						temp[execution_ctxt.initial_state[thread]] = 1;execution_ctxt.visit_state(execution_ctxt.initial_state[thread]);
 						execution_ctxt.set_inf(execution_ctxt.initial_state[thread],executionloop_context_t::VISITED,true);
 					}
 				}
@@ -523,7 +527,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		 } else {
 		   auto prnt = execution_ctxt.get_parent(state);
 		   if (execution_ctxt.current_states[prnt]) continue;
-		   temp[prnt] = 1;
+		   temp[prnt] = 1;execution_ctxt.visit_state(prnt);
 		   execution_ctxt.set_inf(prnt,executionloop_context_t::VISITED,true);
 		 }
 		 auto p = state;
@@ -531,9 +535,9 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 			 auto prnt = execution_ctxt.get_parent(p);
 			 if (prnt == 0 || execution_ctxt.current_states[prnt] == 1) break;
 			 p = prnt;
-			 temp[p] = 1;execution_ctxt.set_inf(p,executionloop_context_t::VISITED,true);
+			 temp[p] = 1;execution_ctxt.visit_state(p);execution_ctxt.set_inf(p,executionloop_context_t::VISITED,true);
 			 if (execution_ctxt.initial_state[p] != 0){
-				 temp[execution_ctxt.initial_state[p]] = 1;
+				 temp[execution_ctxt.initial_state[p]] = 1;execution_ctxt.visit_state(execution_ctxt.initial_state[p]);
 				 execution_ctxt.set_inf(execution_ctxt.initial_state[p],executionloop_context_t::VISITED,true);
 			 }
 		 }

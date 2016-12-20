@@ -51,8 +51,12 @@ struct state_rep_t {
 
 class State_machine
 {
-public:	
- 
+  bool cover_ = false;
+
+public:
+  bool& cover(){return cover_;}
+  bool cover() const {return cover_;}
+
   std::string const & id() const {return id_;}
   std::string & id() {return id_;}
 

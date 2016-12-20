@@ -5,6 +5,12 @@ kind Guard;
 Systemstate motor_temperatur;
 Systemstate luefter_drehung;
 
+Statemachine{
+  id{mod_z;};
+  States{Initial;n1;};
+  Transition{Initial;n1;};
+};
+
 partition{
  id = vp_motor_temperatur;
  {motor_temperatur <= 1.0;niedrig;};
@@ -35,7 +41,9 @@ Statemachine{
   Transition{Initial;Initial;changed(motor_temperatur) && in_state(S.Initial);a;};
 };
 
+Event EXIT;
 Simulation{
+ start_timer(2.0*s,EXIT);
  luefter_drehung = 0;
  motor_temperatur = 1.0;
  start_signal(signal_2,motor_temperatur);

@@ -141,12 +141,14 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 
 	std::vector<State_machine*> smsv;
-	
-
-
 	for(auto sm : sms) smsv.push_back(sm.second);
-	int ctr = 1;
-	traverse_sms(smsv,[&ctr,&ev_to_id](State_machine* cur_sm){
+    int ctr = 1;
+    bool non_cover_sm = true;
+
+	auto compute_state_ids_fn = [&ctr,&ev_to_id,&non_cover_sm](State_machine* cur_sm){
+		if (cur_sm->cover() && non_cover_sm) return;
+		if (!cur_sm->cover() && !non_cover_sm) return;
+
 		cur_sm->idx_ = ctr++;
 		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
 		 auto state = *it;
@@ -154,8 +156,12 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		 if (!state->is_sm_) continue;
 		 state->smp_->idx_ = state->idx_;
 		}	
-	 }
-	);
+	 };
+	traverse_sms(smsv,compute_state_ids_fn);
+	non_cover_sm = false;
+	auto old_state_ctr = ctr;
+	traverse_sms(smsv,compute_state_ids_fn);
+    if (old_state_ctr != ctr) smp->executionloop_context().start_of_covering_states = old_state_ctr;
 
 	smp->executionloop_context().number_of_states = ctr-1;
 
@@ -210,14 +216,16 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 
 	//Build loop execution context
-	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv,smp](State_machine* cur_sm){
+	auto build_transitions_table = [&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv,smp,&non_cover_sm](State_machine* cur_sm){
+
+		if (cur_sm->cover() && non_cover_sm) return;
+		if (!cur_sm->cover() && !non_cover_sm) return;
 
 		executionloop_context_t::transition_t t;
 		t.smp = cur_sm->idx_;
 		assert(t.smp > 0);
 		ctx.transitions.push_back(t);
 		ctx.state_to_first_transition[t.smp] = ctx.transitions.size()-1;
-
 		auto insert_transitions = [&ctx,&ev_to_id,smp](State_machine* sm_from, State_machine* sm_to){
 			 for(auto const & t : sm_from->transitions()){
 			  if (sm_from != sm_to){
@@ -265,16 +273,18 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			  ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;
 			 }
 		};
-
-
 		//Fetch foreign transitions i.e. transitions with from == cur_sm
 		traverse_sms(smsv,[&ctx,&cur_sm,&ev_to_id,insert_transitions](State_machine* sm){
 			if (sm != cur_sm) insert_transitions(sm,cur_sm);
 		});
-
 		insert_transitions(cur_sm,cur_sm);
-	 }
-	);
+    };
+	non_cover_sm = true;
+	traverse_sms(smsv,build_transitions_table);
+	auto count_transitions = ctx.transitions.size();
+	non_cover_sm = false;
+	traverse_sms(smsv,build_transitions_table);
+	if (count_transitions != ctx.transitions.size()) ctx.start_of_covering_transitions = count_transitions;
 
 	//Set parent information
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
@@ -448,6 +458,7 @@ static void run_simulations(State_machine_simulation_core* smc,
 	auto simulation = simulation_["Simulation"];
 	smc->process_simulation(simulation,ceps_env,universe);
  }//for
+ smc->print_report(result_cmd_line, ceps_env, universe);
 }
 
 static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
@@ -1218,13 +1229,12 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 #endif
     {
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
-	 auto number_of_states = compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
-
-
+	 compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+	 executionloop_context().init_coverage_structures();
 
      if (result_cmd_line.live_log) {
       enable_live_logging(result_cmd_line.live_log_port);
-      livelog::Livelogger::Storage* idx2fqs = new livelog::Livelogger::Storage(number_of_states*128);
+      livelog::Livelogger::Storage* idx2fqs = new livelog::Livelogger::Storage( executionloop_context().number_of_states*128);
       live_logger()->register_storage(sm4ceps::STORAGE_IDX2FQS,idx2fqs);
       std::map<int,std::string> m;
       for(auto const & v : map_fullqualified_sm_id_to_computed_idx) m[v.second] = v.first;
@@ -1232,8 +1242,11 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
      }
 
 	 if (result_cmd_line.print_transition_tables){
+	  std::cout << "Full qualified state id => Index : (option --print_transition_tables)\n";
+	  if (executionloop_context().start_of_covering_states_valid())
+		  std::cout << " There are states to be covered, start of covering state space = " << executionloop_context().start_of_covering_states << "\n";
 	  for(auto e : map_fullqualified_sm_id_to_computed_idx){
-       std::cout <<" " << e.second <<"=>" << "\"" << e.first << "\";";
+       std::cout <<" \"" << e.first <<"\" => " << "" << e.second << " ";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final_state";
@@ -1254,25 +1267,16 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
  	   std::cout << "\";\n";
 	  }
 	  int j = 0;
+	  std::cout << "(Transition Id) Index of State Machine : Index of Start State -> Index of Destination State/Event Index Info... (option --print_transition_tables)\n";
+	  if (executionloop_context().start_of_covering_transitions_valid())
+		  std::cout << " There are transitions to be covered, start of covering transition space = " << executionloop_context().start_of_covering_transitions << "\n";
 	  for(auto const & t : executionloop_context().transitions){
-	   std::cout << j++ << " ";
+	   if (t.start()) continue;
+	   std::cout << " ("<< j++ << ") ";
        std::cout << t.smp << ": ";
-       if (t.start())
-      	 std::cout << "START\n";
-       else std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2) << std::endl;
+       std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2) << std::endl;
 	  }
-	  for(auto const & s : executionloop_context().state_to_first_transition){
-		std::cout << "first("<< s.first<<") == "<< s.second << std::endl;
-	  }
-	  for(int i = 1; i <= executionloop_context().number_of_states;++i){
-	 	std::cout << "parent("<< i <<") == "<< executionloop_context().get_parent(i) << std::endl;
-	  }
-	  std::cout << "children-vector:\n";
-	  for(auto s : executionloop_context().children ) {
-		  std::cout << s <<";";
-	  }
-	  std::cout << "\n";
-	  std::cout << " Total number of states == " << number_of_states << std::endl;
+	  std::cout << "Total number of states == " << executionloop_context().number_of_states <<" (option --print_transition_tables)\n\n";
 	 }//print transition tables
      for(auto e: executionloop_context().ev_to_id) executionloop_context().id_to_ev[e.second] = e.first;
      executionloop_context().id_to_ev[0] = "null";

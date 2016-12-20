@@ -513,6 +513,12 @@ public:
 			                                     states_t& states_in,
 			                                     ceps::Ceps_Environment& ceps_env,
 			                                     ceps::ast::Nodeset& universe);
+	ceps::ast::Nodeset make_report(Result_process_cmd_line const& result_cmd_line,
+							ceps::Ceps_Environment& ceps_env,
+							ceps::ast::Nodeset& universe);
+	void print_report(Result_process_cmd_line const& result_cmd_line,
+							ceps::Ceps_Environment& ceps_env,
+							ceps::ast::Nodeset& universe);
 	bool print_debug_info(bool b) {bool t = print_debug_info_; print_debug_info_ = b;return t;}
 	bool resolve_q_id(State_machine* smp, std::vector<std::string> const & q_id, State_machine::State & s);
 	bool kill_named_timer(std::string const & timer_id);

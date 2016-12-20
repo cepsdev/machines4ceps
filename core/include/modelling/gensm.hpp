@@ -7,6 +7,7 @@ namespace sm4ceps{ namespace modelling { namespace gensm {
   std::string id;
   std::vector<ceps::ast::ident> states;
   std::vector<std::tuple<std::string,std::string,ceps::ast::Nodebase_ptr >> transitions;
+  ceps::ast::strct* header;
 
   sm(std::string id);
   ceps::ast::Nodeset ns();

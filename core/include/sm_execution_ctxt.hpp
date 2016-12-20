@@ -5,15 +5,16 @@
 #include <vector>
 #include <map>
 #include <unordered_set>
+#include <limits>
 
 class State_machine_simulation_core;
 
 class executionloop_context_t{
 public:
 
-        //using state_rep_t = std::uint16_t;
-        using state_rep_t = int;
-        using state_present_rep_t = std::uint8_t;
+    //using state_rep_t = std::uint16_t;
+    using state_rep_t = int;
+    using state_present_rep_t = std::uint8_t;
 
 	executionloop_context_t(){
 		ev_sync_queue.resize(1024);
@@ -209,6 +210,30 @@ public:
 
 	size_t ev_sync_queue_start = 0;
 	size_t ev_sync_queue_end = 0;
+
+	size_t start_of_covering_states = std::numeric_limits<size_t>::max();
+	bool start_of_covering_states_valid() const { return start_of_covering_states != std::numeric_limits<size_t>::max(); }
+	size_t start_of_covering_transitions = std::numeric_limits<size_t>::max();
+	bool start_of_covering_transitions_valid() const { return start_of_covering_transitions != std::numeric_limits<size_t>::max(); }
+
+	std::vector<int> coverage_state_table;
+	std::vector<int> coverage_transitions_table;
+
+	void init_coverage_structures(){
+		if (start_of_covering_states_valid()) coverage_state_table.resize((size_t)number_of_states - start_of_covering_states+1);
+		if (start_of_covering_transitions_valid()) coverage_transitions_table.resize(transitions.size()-start_of_covering_transitions);
+	}
+
+	void visit_state(size_t idx){
+		if (idx < start_of_covering_states) return;
+		++coverage_state_table[idx - start_of_covering_states];
+	}
+	void visit_transition(size_t idx){
+		if (idx < start_of_covering_transitions) return;
+		++coverage_transitions_table[idx - start_of_covering_transitions];
+	}
+
+
 };
 
 

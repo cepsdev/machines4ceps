@@ -23,12 +23,23 @@ ceps::ast::Nodeset sm4ceps::modelling::gensm::sm::ns(){
 	ceps::ast::Nodeset result;
 	//auto s = new ceps::ast::Struct("Statemachine");
 	using namespace ceps::ast;
-	auto s = new
+	strct* s;
+	if (header != nullptr)
+	 s = new
      strct{"Statemachine",
 		    strct{"id",ident{id}},
+			*header,
 			strct{"States",states},
 			transitions
 	 };
+	else
+	 s = new
+	 strct{"Statemachine",
+	       strct{"id",ident{id}},
+		   strct{"States",states},
+		   transitions
+		};
+
 	result.nodes().push_back(s->get_root());
 	return result;
 }

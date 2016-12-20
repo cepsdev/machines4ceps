@@ -56,6 +56,8 @@ ceps::ast::Nodeset sm4ceps::modelling::standard_value_partition_sm(ceps::ast::St
 	 }
  }
 
+ gen_sm.header = new ceps::ast::strct{"cover",ceps::ast::ident{"cover_edges_upto_1"}};
+
  Nodeset result;
  result.nodes().push_back(gen_sm.ns().nodes()[0]);
  //result.nodes().insert(result.nodes().begin(),gen_sm.ns().nodes().begin(),gen_sm.ns().nodes().end());
