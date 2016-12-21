@@ -68,7 +68,7 @@ public:
 		else inf_vec[state] &=  ~ (1 << what);
 	}
 
-	bool get_inf(int state, unsigned int what){
+	bool get_inf(int state, unsigned int what) const{
 		unsigned int r = (inf_vec[state] & (1 << what));
 		return r != 0;
 	}

@@ -1743,28 +1743,37 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 	int number_of_transitions_covered = 0;
 	std::vector<std::string> state_coverage_state_list;
 	std::vector<std::string> state_coverage_missing_states_list;
-
-	if (executionloop_context().start_of_covering_states_valid()){
-		number_of_states_to_cover = executionloop_context().coverage_state_table.size();
-		for(auto i = 0;i!=executionloop_context().coverage_state_table.size();++i){
-		 if (executionloop_context().get_inf(i+executionloop_context().start_of_covering_states,executionloop_context_t::INIT) ||
-			 executionloop_context().get_inf(i+executionloop_context().start_of_covering_states,executionloop_context_t::FINAL) ||
-			 executionloop_context().get_inf(i+executionloop_context().start_of_covering_states,executionloop_context_t::SM) ) --number_of_states_to_cover;
-		}
-		for(auto i = 0;i!=executionloop_context().coverage_state_table.size();++i){
-			if (executionloop_context().get_inf(i+executionloop_context().start_of_covering_states,executionloop_context_t::INIT)) continue;
-			if (executionloop_context().get_inf(i+executionloop_context().start_of_covering_states,executionloop_context_t::FINAL)) continue;
-			if (executionloop_context().get_inf(i+executionloop_context().start_of_covering_states,executionloop_context_t::SM)) continue;
-			number_of_states_covered += executionloop_context().coverage_state_table[i] != 0;
-			if (executionloop_context().coverage_state_table[i]){
-				state_coverage_state_list.push_back(executionloop_context().idx_to_state_id[i+executionloop_context().start_of_covering_states]);
-			} else {
-				state_coverage_missing_states_list.push_back(executionloop_context().idx_to_state_id[i+executionloop_context().start_of_covering_states]);
-			}
+    auto const& ctx=executionloop_context();
+	//Distill information relating to state coverage
+	if (ctx.start_of_covering_states_valid()){
+		number_of_states_to_cover = ctx.coverage_state_table.size();
+		for(auto i = 0;i != ctx.coverage_state_table.size();++i){
+		 if (ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::INIT) ||
+			 ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::FINAL) ||
+			 ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::SM) ) {--number_of_states_to_cover; continue;}
+		 number_of_states_covered += ctx.coverage_state_table[i] != 0;
+		 if (ctx.coverage_state_table[i])
+				state_coverage_state_list.push_back(ctx.idx_to_state_id.find(i+ctx.start_of_covering_states)->second);
+		 else
+				state_coverage_missing_states_list.push_back(ctx.idx_to_state_id.find(i+ctx.start_of_covering_states)->second);
 		}
 	}
-	state_coverage = (double)number_of_states_covered / (double)number_of_states_to_cover;
 
+	//Distill information relating to transition coverage (aka edge- or "branch"-coverage)
+
+	if(ctx.start_of_covering_transitions_valid()){
+	   number_of_transitions_to_cover = ctx.coverage_transitions_table.size();
+	   for(auto i = 0;i != ctx.coverage_transitions_table.size();++i){
+		   number_of_transitions_covered += ctx.coverage_transitions_table[i] != 0;
+		   auto from_state = ctx.transitions[ctx.start_of_covering_transitions + i].from;
+		   auto to_state = ctx.transitions[ctx.start_of_covering_transitions + i].to;
+
+
+	   }
+	}
+
+	state_coverage = (double)number_of_states_covered / (double)number_of_states_to_cover;
+    transition_coverage = (double) number_of_transitions_covered / (double) number_of_transitions_to_cover;
 
 	auto summary = new strct{ "summary",
 		strct{"coverage",
