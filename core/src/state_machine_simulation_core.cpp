@@ -1716,17 +1716,89 @@ void* State_machine_simulation_core::get_sm(std::string name){
 
 
 // Reporting
-static void print_report_coverage(std::ostream& os, ceps::ast::Nodeset coverage, std::string indent){
-	os << indent << "Coverage:\n";
-	std::cout << indent <<" "<< "State Coverage: " << coverage["state_coverage"]["ratio"].as_double()  << " ( "<< coverage["state_coverage"]["percentage"].as_double() << "% )"<< "\n";
-	std::cout << indent <<" "<< "Transition Coverage: " << coverage["transition_coverage"].as_double() << "\n";
+static ceps::ast::Binary_operator* mkop(std::string o,ceps::ast::Nodebase_ptr l, ceps::ast::Nodebase_ptr r){
+	return new ceps::ast::Binary_operator(o[0],l,r,nullptr);
 }
 
-static void print_report(std::ostream& os, ceps::ast::Nodeset report ){
-	os << "Results:\n";
-	auto summary = report["summary"];
-	print_report_coverage(os, summary["coverage"], " ");
+static ceps::ast::Nodebase_ptr compute_dot_expr_from_sm_state_given_as_string(std::string sm_state){
+	size_t beg = 0;
+	auto dot_pos = sm_state.find_first_of(".");
+    if (dot_pos == std::string::npos) return new ceps::ast::Identifier(sm_state.substr(beg));
+	auto dot_pos2 = sm_state.substr(dot_pos+1).find_first_of(".");
+    if (dot_pos2 == std::string::npos)
+    	return mkop(".",new ceps::ast::Identifier(sm_state.substr(beg,dot_pos)),new ceps::ast::Identifier(sm_state.substr(dot_pos+1)));
+    dot_pos2 += dot_pos+1;
+    ceps::ast::Nodebase_ptr left_side =
+    		mkop(".",
+    			  new ceps::ast::Identifier(sm_state.substr(beg,dot_pos)),
+				  new ceps::ast::Identifier(sm_state.substr(dot_pos+1,dot_pos2-dot_pos-1)));
+    beg = dot_pos2+1;
+	for(;beg < sm_state.length();){
+		auto dot_pos = sm_state.substr(beg).find_first_of(".");
+		if (dot_pos != std::string::npos){
+			dot_pos += beg;
+			left_side = mkop(".",left_side,new ceps::ast::Identifier(sm_state.substr(beg,dot_pos-beg)));
+            beg = dot_pos + 1;
+		} else
+         return mkop(".",left_side,new ceps::ast::Identifier(sm_state.substr(beg)));
+	}
 }
+
+static std::vector<ceps::ast::Nodebase_ptr> mk_sm_state_exprs(std::vector<std::string> const & v){
+	std::vector<ceps::ast::Nodebase_ptr> r;
+	for(auto const & e : v){
+		r.push_back(compute_dot_expr_from_sm_state_given_as_string(e));
+	}
+	return r;
+}
+
+static ceps::ast::Nodebase_ptr compute_ceps_expr_from_sm_state_transition(const executionloop_context_t & ctx,int t){
+	ceps::ast::Nodebase_ptr r = nullptr;
+
+	auto from_sm = compute_dot_expr_from_sm_state_given_as_string(ctx.idx_to_state_id.find(ctx.transitions[t].from)->second);
+    int start = t;
+	for(;start > 0;--start) if (ctx.transitions[start].smp != ctx.transitions[start-1].smp) break;
+    int idx = 0;
+    for(int i = start; i != t;++i) idx += ctx.transitions[t].from == ctx.transitions[i].from;
+    r = mkop("-",from_sm,new ceps::ast::Int(idx,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
+	return r;
+}
+
+static std::vector<ceps::ast::Nodebase_ptr>  mk_sm_state_transition_exprs(State_machine_simulation_core* smc, std::vector<int> v){
+	std::vector<ceps::ast::Nodebase_ptr> r;
+	for(auto const & e : v){
+		auto expr = compute_ceps_expr_from_sm_state_transition(smc->executionloop_context(),e);
+		if(expr) r.push_back(expr);
+	}
+	return r;
+}
+
+static void print_report_coverage(std::ostream& os, ceps::ast::Nodeset coverage, std::string indent){
+    if (coverage["state_coverage"].empty()) return;
+
+    double v1 = coverage["state_coverage"]["ratio"].as_double();
+    auto state_coverage_valid = coverage["state_coverage"]["valid"].as_int();
+	os << indent << "State Coverage: ";
+	if (state_coverage_valid) os << v1 << " ( "<< coverage["state_coverage"]["percentage"].as_double() << "% )"<< "\n";
+	else os << "not available\n";
+
+    double v2 = coverage["transition_coverage"]["ratio"].as_double();
+    auto transition_coverage_valid = coverage["transition_coverage"]["valid"].as_int();
+	os << indent << "Transition Coverage: ";
+	if (transition_coverage_valid) os << v2 << " ( "<< coverage["transition_coverage"]["percentage"].as_double() << "% )"<< "\n";
+	else os << "not available\n";
+}
+
+static void print_report(std::ostream& os, ceps::ast::Nodeset report,Result_process_cmd_line const& result_cmd_line ){
+	if (result_cmd_line.report_format_sexpression) {
+		os << ceps::ast::Nodebase::pretty_print << report;
+		return;
+	}
+	auto summary = report["summary"];
+	print_report_coverage(os, summary["coverage"], "");
+
+}
+
 
 ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd_line const& result_cmd_line,
 						ceps::Ceps_Environment& ceps_env,
@@ -1743,9 +1815,20 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 	int number_of_transitions_covered = 0;
 	std::vector<std::string> state_coverage_state_list;
 	std::vector<std::string> state_coverage_missing_states_list;
+	std::vector<ceps::ast::Nodebase_ptr> state_coverage_states_list_ceps_expr;
+	std::vector<ceps::ast::Nodebase_ptr> state_coverage_missing_states_list_ceps_expr;
+
+	std::vector<int> transition_coverage_list;
+	std::vector<int> transition_coverage_missing_list;
+	std::vector<ceps::ast::Nodebase_ptr> transition_coverage_list_ceps_expr;
+	std::vector<ceps::ast::Nodebase_ptr> transition_coverage_missing_list_ceps_expr;
+
     auto const& ctx=executionloop_context();
+    bool state_coverage_defined = false;
+    bool transition_coverage_defined = false;
+
 	//Distill information relating to state coverage
-	if (ctx.start_of_covering_states_valid()){
+	if (state_coverage_defined = ctx.start_of_covering_states_valid()){
 		number_of_states_to_cover = ctx.coverage_state_table.size();
 		for(auto i = 0;i != ctx.coverage_state_table.size();++i){
 		 if (ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::INIT) ||
@@ -1759,30 +1842,54 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 		}
 	}
 
-	//Distill information relating to transition coverage (aka edge- or "branch"-coverage)
+	state_coverage_states_list_ceps_expr = mk_sm_state_exprs(state_coverage_state_list);
+	state_coverage_missing_states_list_ceps_expr = mk_sm_state_exprs(state_coverage_missing_states_list);
 
-	if(ctx.start_of_covering_transitions_valid()){
-	   number_of_transitions_to_cover = ctx.coverage_transitions_table.size();
+
+	//Distill information relating to transition coverage (aka edge- or "branch"-coverage)
+	if(transition_coverage_defined = ctx.start_of_covering_transitions_valid()){
 	   for(auto i = 0;i != ctx.coverage_transitions_table.size();++i){
-		   number_of_transitions_covered += ctx.coverage_transitions_table[i] != 0;
+		   if (ctx.transitions[ctx.start_of_covering_transitions + i].start()) continue;
 		   auto from_state = ctx.transitions[ctx.start_of_covering_transitions + i].from;
 		   auto to_state = ctx.transitions[ctx.start_of_covering_transitions + i].to;
-
-
+		   if (ctx.get_inf(from_state,executionloop_context_t::INIT) ||
+		   	   ctx.get_inf(from_state,executionloop_context_t::FINAL) ||
+		   	   ctx.get_inf(from_state,executionloop_context_t::SM) ) continue;
+		   if (ctx.get_inf(to_state,executionloop_context_t::INIT) ||
+		   	   ctx.get_inf(to_state,executionloop_context_t::FINAL) ||
+		   	   ctx.get_inf(to_state,executionloop_context_t::SM) ) continue;
+		   number_of_transitions_covered += ctx.coverage_transitions_table[i] != 0;
+		   if (ctx.coverage_transitions_table[i]) transition_coverage_list.push_back(ctx.start_of_covering_transitions + i);
+		   else transition_coverage_missing_list.push_back(ctx.start_of_covering_transitions + i);
+		   ++number_of_transitions_to_cover;
 	   }
 	}
+
+	transition_coverage_list_ceps_expr = mk_sm_state_transition_exprs(this,transition_coverage_list);
+	transition_coverage_missing_list_ceps_expr= mk_sm_state_transition_exprs(this,transition_coverage_missing_list);
 
 	state_coverage = (double)number_of_states_covered / (double)number_of_states_to_cover;
     transition_coverage = (double) number_of_transitions_covered / (double) number_of_transitions_to_cover;
 
-	auto summary = new strct{ "summary",
-		strct{"coverage",
-		 strct{"state_coverage",strct{"ratio",state_coverage},strct{"percentage",state_coverage*100.0},
-		  strct{"covered_states",state_coverage_state_list},
-		  strct{"not_covered_states",state_coverage_missing_states_list}
-		 },
-
-		 strct{"transition_coverage",transition_coverage}
+    auto summary =
+     new strct{ "summary",
+		  strct{"coverage",
+		   strct{"state_coverage",
+		    strct{"valid",state_coverage_defined},
+		    strct{"ratio",state_coverage},
+		    strct{"percentage",state_coverage*100.0},
+		    strct{"covered_states",state_coverage_states_list_ceps_expr},
+		    strct{"not_covered_states",state_coverage_missing_states_list_ceps_expr}
+		   },
+		   strct{"transition_coverage",
+		    strct{"valid",transition_coverage_defined},
+		    strct{"ratio",transition_coverage},
+		    strct{"percentage",transition_coverage*100.0},
+		    strct{"covered_transitions",transition_coverage_list_ceps_expr},
+		    strct{"not_covered_transitions",transition_coverage_missing_list_ceps_expr},
+			strct{"covered_transitions_by_id",transition_coverage_list},
+			strct{"not_covered_transitions_by_id",transition_coverage_missing_list}
+		 }
 	    }
 	};
 	result.nodes().push_back(summary->get_root());
@@ -1792,11 +1899,9 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 void State_machine_simulation_core::print_report(Result_process_cmd_line const& result_cmd_line,
 						ceps::Ceps_Environment& ceps_env,
 						ceps::ast::Nodeset& universe){
-
  ceps::ast::Nodeset report = make_report(result_cmd_line, ceps_env, universe);
- std::cout << report << std::endl;
  std::ostream& os = std::cout;
- ::print_report(os,report);
+ ::print_report(os,report,result_cmd_line);
 }
 
 

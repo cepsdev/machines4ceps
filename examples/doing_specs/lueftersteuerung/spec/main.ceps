@@ -1,0 +1,8 @@
+Systemstate motor_temperatur;
+
+partition{
+ id = vp_motor_temperatur;
+ {motor_temperatur <= 1.0;                           niedrig;};
+ {motor_temperatur > 2.0 && motor_temperatur <= 3.0; mittel; };
+ {motor_temperatur > 3.0;                            hoch;   };
+};

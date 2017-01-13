@@ -247,7 +247,11 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 			else if (arg == "--dot_gen") {r.dot_gen=true;continue;}
 			else if (arg == "--print_evaluated_input_tree") {r.print_evaluated_input_tree=true;continue;}
 			else if (arg == "--print_signal_generators") {r.print_signal_generators=true;continue;}
-
+		    else if (arg == "--report_format_sexpression") {r.report_format_sexpression=true;continue;}
+		    else if (arg == "--report_verbose") {r.report_verbose=true;continue;}
+		    else if (arg == "--report_format_xml") {r.report_format_xml=true;continue;}
+		    else if (arg == "--report_format_json") {r.report_format_json=true;continue;}
+		    else if (arg == "--report_format_ceps") {r.report_format_ceps=true;continue;}
 
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {

@@ -70,6 +70,13 @@ struct Result_process_cmd_line
     std::string live_log_port = "3000";
     bool live_log = false;
 
+    bool report_format_sexpression = false;
+    bool report_verbose = false;
+    bool report_format_xml = false;
+    bool report_format_json = false;
+    bool report_format_ceps = false;
+
+
 	Result_process_cmd_line() = default;
 	Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,

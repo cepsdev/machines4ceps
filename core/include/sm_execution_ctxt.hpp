@@ -159,7 +159,7 @@ public:
 	std::map<int,std::string> id_to_ev;
 	class transition_t{
 		public:
-		int smp = 0,from = 0, to = 0, ev = 0;
+		int smp = 0,from = 0, to = 0, ev = 0;int rel_idx = -1;
         bool native = true;
 		bool(**guard)() = nullptr;
 		void(* a1)() = nullptr;

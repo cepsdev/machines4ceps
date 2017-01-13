@@ -164,14 +164,15 @@ private:
     bool enforce_native_ = false;
     executionloop_context_t executionloop_context_;
     livelog::Livelogger* live_logger_ = nullptr;
-    livelog::Livelogger* live_logger(){return live_logger_;}
     sm4ceps::Livelogger_source* livelogger_source_ = nullptr;
+public:
+    livelog::Livelogger* live_logger(){return live_logger_;}
     sm4ceps::Livelogger_source* live_logger_out() {return livelogger_source_;}
     void info(std::string const & s,bool nline = true){
         if(!quiet_mode()) log() << s << (nline?"\n":"");
     	if (live_logger_out()) live_logger_out()->log_info(s);
     }
-public:
+
     void enable_live_logging(std::string port){
     	if (live_logger_) return;
       	live_logger_ = new livelog::Livelogger();
@@ -371,9 +372,11 @@ private:
 	ceps::ast::Nodebase_ptr unfold(ceps::ast::Nodebase_ptr expr,
 								   std::map<std::string, ceps::ast::Nodebase_ptr>& guard_to_interpretation,
 								   std::set<std::string>& path,states_t const & states, executionloop_context_t* exec_ctxt = nullptr);
+public:
 	bool eval_guard(ceps::Ceps_Environment& ceps_env, std::string const & guard_name,
 			        std::vector<state_rep_t> const& current_states,
 					executionloop_context_t* exec_ctxt = nullptr);
+private:
 	bool contains_sm_func_calls(ceps::ast::Nodebase_ptr  expr);
 	void update_asserts(states_t const & reached_states);
 

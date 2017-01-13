@@ -1,0 +1,16 @@
+
+signal{
+ id = signal_1;
+ delta_t = 0.1*s;
+ values{
+  for(i : 1 .. 3 j : 1 .. 10 ) { i+(j-1)/10.0; }
+ };
+};
+
+Simulation{
+  motor_temperatur = 1.0;
+ Start{mod_gen_stdvpart_vp_motor_temperatur;};
+ start_timer(2.0*s,EXIT);
+ 
+ start_signal(signal_1,motor_temperatur);
+};

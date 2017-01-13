@@ -92,6 +92,189 @@ static void map_ev_payload_to_variant(State_machine_simulation_core::event_t con
       }
 }
 
+static void check_for_events(State_machine_simulation_core* smc,
+		                     ceps::ast::Nodeset& sim,
+							 int& pos,
+							 bool& ev_read,
+							 executionloop_context_t & execution_ctxt,
+							 bool& taking_epsilon_transitions,
+							 int& ev_id,
+							 bool& quit,
+							 bool& do_continue,
+							 bool& do_break ){
+
+	State_machine_simulation_core::states_t new_states_fetch;
+	smc->current_event().id_= {};
+	event_rep_t ev;
+	std::vector<State_machine*> on_enter_seq;
+	bool fetch_made_states_update = false;
+	if (!smc->fetch_event(ev,sim,pos,new_states_fetch,fetch_made_states_update,on_enter_seq)) {
+	 if (fetch_made_states_update){
+      for(auto const & s : new_states_fetch){
+		execution_ctxt.current_states[s.id_] = 1;
+		execution_ctxt.visit_state(s.id_);
+	  }
+ 	  if (on_enter_seq.size()){
+	   for(auto const & sm : on_enter_seq){
+		 //Handle on_enter
+		 auto it = sm->find_action("on_enter");
+		 if (it == nullptr) continue;
+         if (it->native_func()){
+          smc->current_smp() = it->associated_sm_;
+          it->native_func()();
+         } else{
+          if (it->body_ == nullptr) continue;
+          if (smc->enforce_native())
+           smc->fatal_(-1,"Expecting native implementation (--enforce_native) (on_enter_1):"+it->id());
+          smc->execute_action_seq(sm,it->body());
+         }
+	    }//for
+	  }
+	  taking_epsilon_transitions = true;
+	  do_continue = true;return;
+	 } else {
+	  do_break = true;return;
+	 }
+	} else {
+      if (ev.sid_ == "@@queued_action"){
+		if (ev.glob_func_ != nullptr){
+		 ev.glob_func_(); }
+		else {
+           if (smc->enforce_native())
+            smc->fatal_(-1,"Expecting native implementation (--enforce_native):@@queued_action");
+
+		    ceps::ast::Scope scope;
+			scope.children() = ev.payload_;scope.owns_children() = false;
+			smc->execute_action_seq(nullptr,&scope);
+			scope.children().clear();
+		}
+		do_continue = true;return;
+	  } else if (ev.sid_ == "@@set_state"){
+		  if (smc->enforce_native()){
+
+		  } else {
+			std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+			std::string s = ev.payload_native_[0].sv_;
+			auto w = smc->get_global_states()[s];
+			smc->global_systemstates_prev()[s] = w;
+
+			if (w == nullptr || w->kind() != ceps::ast::Ast_node_kind::float_literal)
+				smc->get_global_states()[s] =
+			 		new ceps::ast::Double(ev.payload_native_[1].dv_, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+			else {
+				auto old_value = ceps::ast::value(ceps::ast::as_double_ref(smc->get_global_states()[s]));
+				if (old_value != ev.payload_native_[1].dv_) smc->global_systemstates_prev()[s] = nullptr;
+				ceps::ast::value(ceps::ast::as_double_ref(smc->get_global_states()[s])) = ev.payload_native_[1].dv_;
+			}
+		  }
+
+		  taking_epsilon_transitions = true;
+		  do_continue = true;return;
+	  }
+	  ev_read = true;
+	 }
+	smc->current_event() = ev;
+	if (ev_read) {ev_id = execution_ctxt.ev_to_id[smc->current_event().id_];quit = true; }
+}
+
+static void log_triggered_transitions(State_machine_simulation_core* smc,
+		                              executionloop_context_t & execution_ctxt,
+									  std::vector<int> & triggered_transitions,std::vector<int>::iterator end_of_trans_it){
+if (smc->live_logger() || !smc->quiet_mode()){
+   std::stringstream ss;
+   ss << "Triggered Transitions: ";
+   for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
+		auto t = *p;
+      auto const & trans = execution_ctxt.transitions[t];
+      ss << "  " << execution_ctxt.idx_to_state_id[trans.from] <<" => " << execution_ctxt.idx_to_state_id[trans.to];
+   }
+   smc->info(ss.str());
+  }
+}
+
+
+static void log_current_states(State_machine_simulation_core* smc){
+if (smc->live_logger()){
+      sm4ceps::livelog_write(*smc->live_logger(),smc->executionloop_context().current_states);
+  } else if(!smc->quiet_mode()){
+	  smc->info("Active States: ",false);
+  	for(int i = 0; i != smc->executionloop_context().current_states.size();++i)
+  		if (smc->executionloop_context().current_states[i]) smc->info(smc->executionloop_context().idx_to_state_id[i]+" ",false );
+  	smc->info("");
+  }
+}
+
+static bool  handle_event_triggered_senders(State_machine_simulation_core* smc,executionloop_context_t & execution_ctxt,bool& ev_read){
+  bool processed = false;
+  if (ev_read && smc->event_triggered_sender().size() && smc->current_event().id_.length()) {
+  	for(auto p: smc->event_triggered_sender()){
+      if (p.event_id_ != smc->current_event().id_) continue;
+  	  processed = true;
+	  size_t data_size;
+	  char* data = (char*)p.frame_gen_->gen_msg(smc,data_size);
+	  if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length()));
+	  break;
+	}
+  }
+  return processed;
+}
+
+static void log_event(State_machine_simulation_core* smc,executionloop_context_t & execution_ctxt, bool ev_read,int ev_id){
+if ( (smc->live_logger() || !smc->quiet_mode()) && ev_read){
+       std::vector<sm4ceps_plugin_int::Variant> v;
+       map_ev_payload_to_variant(smc->current_event(),v);
+       if (smc->live_logger()) smc->live_logger_out()->log_event(std::make_pair(execution_ctxt.id_to_ev[ev_id],v));
+       else {
+      	 std::string p;
+      	 if (v.size()){
+      		 p.append("(");
+      		 int j = 0;
+      		 for (auto & e : v){
+                if (e.what_ == sm4ceps_plugin_int::Variant::Int) p.append(std::to_string(e.iv_));
+                else if (e.what_ == sm4ceps_plugin_int::Variant::Double) p.append(std::to_string(e.dv_));
+                else p.append("'"+e.sv_+"'");
+                if (j+1 != v.size()) p.append(", ");
+                ++j;
+      		 }
+      		 p.append(")");
+      	 }
+      	smc->info("Event "+execution_ctxt.id_to_ev[ev_id]+p+" fetched.");
+       }
+  }
+}
+
+static void  compute_triggered_transitions(State_machine_simulation_core* smc,ceps::Ceps_Environment& ceps_env,
+		                                   executionloop_context_t & execution_ctxt,
+										   executionloop_context_t::states_t & temp,
+										   size_t max_number_of_active_transitions,
+										   std::vector<int> & triggered_transitions,
+										   int& triggered_transitions_end,
+										   int cur_states_size,
+										   int ev_id){
+ for (int s = 0; s != cur_states_size && max_number_of_active_transitions != triggered_transitions_end;++s){
+   if (execution_ctxt.current_states[s] == 0) continue;
+		int i = execution_ctxt.state_to_first_transition[s];
+		int smp = execution_ctxt.transitions[i].smp;
+
+		bool triggered = false;
+		for(;i != execution_ctxt.transitions.size();++i){
+			auto const & t = execution_ctxt.transitions[i];
+			if (t.smp != smp) break;
+			if (t.ev == ev_id && t.from == s){
+				if (!t.script_guard.empty()){
+					State_machine_simulation_core::states_t st;
+                bool r = smc->eval_guard(ceps_env,t.script_guard,st);
+                if (r){triggered_transitions[triggered_transitions_end++]=i;triggered=true;}
+				} else if (t.guard == nullptr || (*t.guard)() )  {
+					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
+				}
+				if (triggered) execution_ctxt.visit_transition(i);
+			}
+		}
+		if (!triggered) {temp[s] = 1;}
+	}
+}
+
 void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
@@ -213,216 +396,70 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  std::vector<int> triggered_transitions;
  triggered_transitions.resize(max_number_of_active_transitions);
  int cur_states_size = execution_ctxt.current_states.size();
- std::vector<State_machine*> on_enter_seq;
  taking_epsilon_transitions = false;
 
  for(;!quit && !shutdown();)
  {
-  bool ev_read = false;ev_id = 0;current_smp() = nullptr;
-  bool fetch_made_states_update = false;
+  bool ev_read = false;
+  ev_id = 0;
+  current_smp() = nullptr;
   execution_ctxt.current_ev_id = 0;
 
-
-  if (!taking_epsilon_transitions && !execution_ctxt.ev_sync_queue_empty())
+  if (!taking_epsilon_transitions)
   {
-	ev_read = true;
-	ev_id   = execution_ctxt.front_ev_sync_queue();
-	execution_ctxt.pop_ev_sync_queue();
-	execution_ctxt.current_ev_id = ev_id;
-  } else if(!taking_epsilon_transitions) {
-
-    if (step_handler_) quit = step_handler_();
-	states_t new_states_fetch;
-	current_event().id_= {};
-	event_rep_t ev;
-	if (!fetch_event(ev,sim,pos,new_states_fetch,fetch_made_states_update,on_enter_seq)) {
-	 if (fetch_made_states_update){
-      for(auto const & s : new_states_fetch){
-		execution_ctxt.current_states[s.id_] = 1;
-		execution_ctxt.visit_state(s.id_);
-	  }
-      /*if (PRINT_DEBUG){
-	   log() << "[ACTIVE STATES] ";
-	   for(int z = 0; z != execution_ctxt.current_states.size(); ++z){
-		if (!execution_ctxt.current_states[z]) continue;
-		log() << execution_ctxt.idx_to_state_id[z] << " ";
-	   }
-	   log() << "\n";
-      }*/
-
-	  if (on_enter_seq.size()){
-	   for(auto const & sm : on_enter_seq){
-		 //Handle on_enter
-		 auto it = sm->find_action("on_enter");
-		 if (it == nullptr) continue;
-         if (it->native_func()){
-          current_smp() = it->associated_sm_;
-          it->native_func()();
-         } else{
-          if (it->body_ == nullptr) continue;
-          if (enforce_native())
-           fatal_(-1,"Expecting native implementation (--enforce_native) (on_enter_1):"+it->id());
-          execute_action_seq(sm,it->body());
-         }
-	    }//for
-	  }
-	  taking_epsilon_transitions = true;
-	  continue;
-	 } else {
-      #ifdef PRINT_LOG_SIM_LOOP
-		 if (print_debug_info_)log()<< "[NO EVENT FOUND => COMPUTATION COMPLETE]\n";
-      #endif
-	  break;
-	 }
+	if (execution_ctxt.ev_sync_queue_empty()){
+	 bool do_continue = false;
+	 bool do_break = false;
+	 check_for_events(this,sim,pos,ev_read,execution_ctxt,taking_epsilon_transitions,ev_id,quit,do_continue,do_break);
+	 if (do_continue) continue;
+	 if (do_break) break;
 	} else {
-      if (ev.sid_ == "@@queued_action"){
-		if (ev.glob_func_ != nullptr){
-		 ev.glob_func_(); }
-		else {
-           if (enforce_native())
-            fatal_(-1,"Expecting native implementation (--enforce_native):@@queued_action");
-
-		    ceps::ast::Scope scope;
-			scope.children() = ev.payload_;scope.owns_children() = false;
-			execute_action_seq(nullptr,&scope);
-			scope.children().clear();
-		}
-		continue;
-	  } else if (ev.sid_ == "@@set_state"){
-		  if (enforce_native()){
-
-		  } else {
-			std::lock_guard<std::recursive_mutex>g(states_mutex());
-			std::string s = ev.payload_native_[0].sv_;
-			auto w = get_global_states()[s];
-			global_systemstates_prev()[s] = w;
-
-			if (w == nullptr || w->kind() != ceps::ast::Ast_node_kind::float_literal)
-				 get_global_states()[s] =
-			 		new ceps::ast::Double(ev.payload_native_[1].dv_, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-			else {
-				auto old_value = ceps::ast::value(ceps::ast::as_double_ref(get_global_states()[s]));
-				if (old_value != ev.payload_native_[1].dv_) global_systemstates_prev()[s] = nullptr;
-				ceps::ast::value(ceps::ast::as_double_ref(get_global_states()[s])) = ev.payload_native_[1].dv_;
-			}
-		  }
-
-		  taking_epsilon_transitions = true;
-		  continue;
-	  }
-	  ev_read = true;
-	 }
-	 current_event() = ev;
-	 if (ev_read) {ev_id = execution_ctxt.ev_to_id[current_event().id_];quit = true; }
-
-    }
-
-    if (live_logger()){
-        sm4ceps::livelog_write(*live_logger(),executionloop_context().current_states);
-    } else if(!quiet_mode()){
-    	info("Active States: ",false);
-    	for(int i = 0; i != executionloop_context().current_states.size();++i)
-    		if (executionloop_context().current_states[i]) info(executionloop_context().idx_to_state_id[i]+" ",false );
-    	info("");
-    }
-
-    if (ev_read && event_triggered_sender().size() && current_event().id_.length()) {
-    	bool processed = false;
-    	for(auto p: event_triggered_sender()){
-         if (p.event_id_ != current_event().id_) continue;
-    	 processed = true;
- 		 size_t data_size;
- 		 char* data = (char*)p.frame_gen_->gen_msg(this,data_size);
-		 if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length()));
-		 break;
- 		}
-    	if (processed) continue;
-    }
-
-    memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
-    //if (PRINT_DEBUG) log() << "[PROCESSING EVENT] " << execution_ctxt.id_to_ev[ev_id] << "\n";
-    if ( (live_logger() || !quiet_mode()) && ev_read){
-         std::vector<sm4ceps_plugin_int::Variant> v;
-         map_ev_payload_to_variant(current_event(),v);
-         if (live_logger()) live_logger_out()->log_event(std::make_pair(execution_ctxt.id_to_ev[ev_id],v));
-         else {
-        	 std::string p;
-        	 if (v.size()){
-        		 p.append("(");
-        		 int j = 0;
-        		 for (auto & e : v){
-                  if (e.what_ == sm4ceps_plugin_int::Variant::Int) p.append(std::to_string(e.iv_));
-                  else if (e.what_ == sm4ceps_plugin_int::Variant::Double) p.append(std::to_string(e.dv_));
-                  else p.append("'"+e.sv_+"'");
-                  if (j+1 != v.size()) p.append(", ");
-                  ++j;
-        		 }
-        		 p.append(")");
-        	 }
-        	 info("Event "+execution_ctxt.id_to_ev[ev_id]+p+" fetched.");
-         }
-    }
-    int triggered_transitions_end = 0;
-	auto triggered_thread_regions_end = triggered_transitions_end;
-
-	for (int s = 0; s != cur_states_size && max_number_of_active_transitions != triggered_transitions_end;++s){
-		if (execution_ctxt.current_states[s] == 0) continue;
-		int i = execution_ctxt.state_to_first_transition[s];
-		int smp = execution_ctxt.transitions[i].smp;
-
-		bool triggered = false;
-		for(;i != execution_ctxt.transitions.size();++i){
-			auto const & t = execution_ctxt.transitions[i];
-			if (t.smp != smp) break;
-			if (t.ev == ev_id && t.from == s){
-				if (!t.script_guard.empty()){
-				  states_t st;
-                  bool r = eval_guard(ceps_env,t.script_guard,st);
-                  if (r){triggered_transitions[triggered_transitions_end++]=i;triggered=true;}
-				} else if (t.guard == nullptr || (*t.guard)() )  {
-					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
-				}
-				if (triggered) execution_ctxt.visit_transition(i);
-			}
-		}
-		if (!triggered) {temp[s] = 1;}
+	 ev_read = true;
+	 ev_id   = execution_ctxt.front_ev_sync_queue();
+	 execution_ctxt.pop_ev_sync_queue();
+	 execution_ctxt.current_ev_id = ev_id;
 	}
+  }
+  log_current_states(this);
+  handle_event_triggered_senders(this,execution_ctxt,ev_read);
+  memcpy(temp.data(),executionloop_context().current_states.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
+  log_event(this,execution_ctxt,ev_read,ev_id);
+  int triggered_transitions_end = 0;
+  auto triggered_thread_regions_end = triggered_transitions_end;
 
+  compute_triggered_transitions(this,ceps_env,
+		                        execution_ctxt,
+								temp,
+								max_number_of_active_transitions,
+								triggered_transitions,
+								triggered_transitions_end,cur_states_size,ev_id);
 
-	if (triggered_transitions_end == 0){
-		if (taking_epsilon_transitions) taking_epsilon_transitions = false;
-        if (ev_read && post_proc_native) post_proc_native();
-		if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
+  bool no_transitions_triggered = triggered_transitions_end == 0;
+  if (no_transitions_triggered){
+	if (taking_epsilon_transitions) taking_epsilon_transitions = false;
+    if (ev_read && post_proc_native) post_proc_native();
+	if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
 			global_ev_cllbck();
-		continue;
-	}
+	continue;
+  }
+  taking_epsilon_transitions = true;
 
-	taking_epsilon_transitions = true;
+  std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
+  auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
+  log_triggered_transitions(this,execution_ctxt,triggered_transitions,end_of_trans_it);
+  bool possible_exit_or_enter_occured = false;
 
-	std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
-	auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
-
-    if (live_logger() || !quiet_mode()){
-     std::stringstream ss;
-     ss << "Triggered Transitions: ";
-     for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
-		auto t = *p;
-        auto const & trans = execution_ctxt.transitions[t];
-        ss << "  " << execution_ctxt.idx_to_state_id[trans.from] <<" => " << execution_ctxt.idx_to_state_id[trans.to];
-     }
-     info(ss.str());
-    }
-
-	bool possible_exit_or_enter_occured = false;
-
-	for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
+  for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 		auto t = *p;
 		auto const & trans = execution_ctxt.transitions[t];
 
 		if (!possible_exit_or_enter_occured && (execution_ctxt.get_parent(trans.to) != execution_ctxt.get_parent(trans.from)))
 			possible_exit_or_enter_occured = true;
-		if (!possible_exit_or_enter_occured && (execution_ctxt.is_sm(trans.to) || execution_ctxt.is_sm(trans.from))) possible_exit_or_enter_occured = true;
-		temp[trans.from] = 0;temp[trans.to] = 1;execution_ctxt.visit_state(trans.to);
+		if (!possible_exit_or_enter_occured && (execution_ctxt.is_sm(trans.to) || execution_ctxt.is_sm(trans.from)))
+			possible_exit_or_enter_occured = true;
+		temp[trans.from] = 0;
+		temp[trans.to] = 1;
+		execution_ctxt.visit_state(trans.to);
 		if (execution_ctxt.get_inf(trans.to,executionloop_context_t::IN_THREAD) && execution_ctxt.get_inf(trans.to,executionloop_context_t::FINAL)){
 			auto region = execution_ctxt.get_parent(execution_ctxt.get_parent(trans.to));
 			int i = 0;

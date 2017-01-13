@@ -179,7 +179,6 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id](State_machine* cur_sm){
 	  for(auto & t : cur_sm->transitions()){
-
 		for(auto e : t.events()){
 		 if(ev_to_id.find(e.id_) != ev_to_id.end()) continue;
 		 ev_to_id[e.id_] = ev_ctr;
@@ -1271,7 +1270,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	  if (executionloop_context().start_of_covering_transitions_valid())
 		  std::cout << " There are transitions to be covered, start of covering transition space = " << executionloop_context().start_of_covering_transitions << "\n";
 	  for(auto const & t : executionloop_context().transitions){
-	   if (t.start()) continue;
+	   //if (t.start()) continue;
 	   std::cout << " ("<< j++ << ") ";
        std::cout << t.smp << ": ";
        std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2) << std::endl;

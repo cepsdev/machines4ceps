@@ -210,8 +210,7 @@ do{
 			}
 			continue;
 		}
-		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef
-				&& ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "Start"){
+		else if (node_raw->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(node_raw)) == "Start"){
 		  if (exit_if_start_found){++pos; return false;}
 		  else
 		  {
