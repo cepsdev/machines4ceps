@@ -182,6 +182,7 @@ static void check_for_events(State_machine_simulation_core* smc,
 static void log_triggered_transitions(State_machine_simulation_core* smc,
 		                              executionloop_context_t & execution_ctxt,
 									  std::vector<int> & triggered_transitions,std::vector<int>::iterator end_of_trans_it){
+return;
 if (smc->live_logger() || !smc->quiet_mode()){
    std::stringstream ss;
    ss << "Triggered Transitions: ";
@@ -198,7 +199,7 @@ if (smc->live_logger() || !smc->quiet_mode()){
 static void log_current_states(State_machine_simulation_core* smc){
 if (smc->live_logger()){
       sm4ceps::livelog_write(*smc->live_logger(),smc->executionloop_context().current_states);
-  } else if(!smc->quiet_mode()){
+  } else if(!smc->quiet_mode() && smc->log_verbosity > 1){
 	  smc->info("Active States: ",false);
   	for(size_t i = 0; i != smc->executionloop_context().current_states.size();++i)
   		if (smc->executionloop_context().current_states[i]) smc->info(smc->executionloop_context().idx_to_state_id[i]+" ",false );
@@ -226,7 +227,7 @@ if ( (smc->live_logger() || !smc->quiet_mode()) && ev_read){
        std::vector<sm4ceps_plugin_int::Variant> v;
        map_ev_payload_to_variant(smc->current_event(),v);
        if (smc->live_logger()) smc->live_logger_out()->log_event(std::make_pair(execution_ctxt.id_to_ev[ev_id],v));
-       else {
+       else if (smc->log_verbosity > 1) {
       	 std::string p;
       	 if (v.size()){
       		 p.append("(");
@@ -361,7 +362,7 @@ static void run_triggered_actions(State_machine_simulation_core* smc,
 static void log_state_changes(State_machine_simulation_core* smc,executionloop_context_t & execution_ctxt, executionloop_context_t::states_t & temp){
  if (!smc->quiet_mode() || smc->live_logger()){
   std::stringstream ss;
-  ss << "Changes: ";
+  ss << "Set of states changed: ";
   for(size_t z = 0; z != execution_ctxt.current_states.size(); ++z){
    if (execution_ctxt.current_states[z] == temp[z]) continue;
    ss << execution_ctxt.idx_to_state_id[z];
@@ -552,11 +553,37 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  }
 
  int pos = 0;bool quit = false;
+ //Execute possible initializations
+ for(;pos!=sim.size();++pos){
+  auto node_raw = sim.nodes()[pos];
+  bool executed = false;
+  if (is_assignment_op(node_raw)) {
+   auto & node = as_binop_ref(node_raw);
+   std::string state_id;
+   if (is_assignment_to_guard(node))
+    eval_guard_assign(node);
+   else if (is_assignment_to_state(node,state_id))
+    eval_state_assign(node,state_id);
+   else {
+	std::stringstream ss;
+	ss << *node_raw;
+	fatal_(-1,"Unsupported assignment:"+ss.str());
+   }
+   executed = true;
+  } else {
+   auto cev = resolve_event_qualified_id(sim.nodes()[pos],nullptr);
+   if ( (!cev.valid() || cev.sid_.length() == 0) ) {
+	executed = true;
+    ceps::ast::Scope scope(node_raw);scope.owns_children() = false;
+	execute_action_seq(nullptr,&scope);
+   }
+  }
+  if(!executed)break;
+ }//for
 
  //Each simulation step starts with a phase where only epsilon transitions are taken until no further transitions are found,
  //followed by the consumption of an event.
  bool taking_epsilon_transitions = true;
-
 
  sm4ceps_plugin_int::Variant (*post_proc_native)() = nullptr;
  {
@@ -602,7 +629,6 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	 }
  }
 
-
  for(;!quit && !shutdown();)
  {
   bool ev_read = false;
@@ -613,16 +639,12 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   if (!taking_epsilon_transitions)
   {
 	if (execution_ctxt.ev_sync_queue_empty()){
-	 bool do_continue = false;
-	 bool do_break = false;
+	 bool do_continue = false;	 bool do_break = false;
 	 check_for_events(this,sim,pos,ev_read,execution_ctxt,taking_epsilon_transitions,ev_id,quit,do_continue,do_break);
-	 if (do_continue) continue;
-	 if (do_break) break;
+	 if (do_continue) continue;	 if (do_break) break;
 	} else {
-	 ev_read = true;
-	 ev_id   = execution_ctxt.front_ev_sync_queue();
-	 execution_ctxt.pop_ev_sync_queue();
-	 execution_ctxt.current_ev_id = ev_id;
+	 ev_read = true;ev_id   = execution_ctxt.front_ev_sync_queue();
+	 execution_ctxt.pop_ev_sync_queue(); execution_ctxt.current_ev_id = ev_id;
 	}
   }
   log_current_states(this);
@@ -632,14 +654,9 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   log_event(this,execution_ctxt,ev_read,ev_id);
   int triggered_transitions_end = 0;
   auto triggered_thread_regions_end = triggered_transitions_end;
-
-  compute_triggered_transitions(this,ceps_env,
-		                        execution_ctxt,
-								temp,
-								max_number_of_active_transitions,
-								triggered_transitions,
+  compute_triggered_transitions(this,ceps_env,execution_ctxt,temp,
+								max_number_of_active_transitions,triggered_transitions,
 								triggered_transitions_end,cur_states_size,ev_id);
-
   bool no_transitions_triggered = triggered_transitions_end == 0;
   if (no_transitions_triggered){
 	if (taking_epsilon_transitions) taking_epsilon_transitions = false;

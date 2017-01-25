@@ -142,12 +142,14 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 										 ceps::ast::Nodebase_ptr node,
 										 ceps::ast::Nodebase_ptr root_node);
 
+
 bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 		                                       std::string const & guard_name,
 											   states_t const & states, executionloop_context_t* exec_ctxt)
 {
 	using namespace ceps::ast;
     bool bool_result;
+
 
     DEBUG_FUNC_PROLOGUE
 

@@ -120,6 +120,8 @@ public:
 				                                                const std::vector<ceps::ast::Nodebase_ptr> &,
 																State_machine* );
 	void reg_global_ceps_fn(std::string n, ceps_fn_eval_impl_t f ){ceps_fns_[n] = f;}
+	ceps::ast::Nodebase_ptr eval_found_sym_undefined(ceps::ast::Nodebase_ptr);
+	int log_verbosity = 0;
 private:
 	using Logger_active_states = std::vector<int>;
 	using Logger_entry_counter = int;

@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define VERSION_SM4CEPS_MAJOR "0"
-#define VERSION_SM4CEPS_MINOR "7.1"
+#define VERSION_SM4CEPS_MINOR "7.2"
 
 vector < string > generated_sql_file_names;
 
@@ -129,261 +129,6 @@ void warn(int code, std::string const & msg)
 
 void process_simulation(ceps::ast::Nodeset& sim,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 
-
-
-
-auto INDENT = 0;
-
-string indent()
-{
- string t;
- for(int i = 0; i < INDENT; ++i)
-  t.append(" ");
- return t;
-}
-
-std::string replace_dot_in_string(const std::string & s,const std::string & r)
-{
-	std::string t;
-	for(size_t i = 0; i < s.length();++i)
-	{
-		char b[2] = {0};
-		b[0] = s[i];
-		if (b[0]=='.') t.append(r);
-		else t.append(b);
-	}
-	return t;
-}
-
-std::string get_id(State_machine* m)
-{
-	std::string r;
-	if (m == nullptr) return "";
-	if (m->parent_ == nullptr) return m->id_;
-
-	std::vector<State_machine*> v;
-	for(State_machine* t = m;t;t= t->parent_)v.push_back(t);
-	for(int i = v.size()-1; i >= 0;--i)
-	{
-		if (i > 0)
-		 r.append(v[i]->id_+"."); else  r.append(v[i]->id_);
-	}
-	return r;
-}
-
-
-std::string gen_plantuml_action_event_seq(std::set< State_machine::Transition::Event>  const & evs,std::vector<State_machine::Transition::Action> const & ac)
-{
-
-	if (evs.size() == 0 && ac.size()==0) return "";
-	if (evs.size() == 0 && ac.size()!=0) return " : / " +ac[0].id();
-	if (evs.size() > 0 && ac.size()==0) return " : " +evs.cbegin()->id();
-	return " : " +evs.cbegin()->id() + " / " +ac[0].id();
-}
-
-void write_plantuml_rep(ostream& out_stream,ceps::Ceps_Environment& ceps_env,
-		      ceps::ast::Nodeset& universe,
-		      Result_process_cmd_line& cmd_line)
-{
-
-  int e_m = 0;
-  vector<State_machine> sms;
-  for(auto & v : State_machine::statemachines)
-  {
-  sms.push_back(*v.second); if (v.second == entry_machine) e_m = v.second->order_;
-  }
-  sort(sms.begin(),sms.end());
-
-
-  out_stream << "@startuml\n";
-  ++INDENT;
-  for(auto & v : sms)
-  {
-
-    auto& sm = v;
-    if (sm.order_ != e_m)
-      {
-        out_stream <<  indent() << "state " << sm.id() << "{\n";
-        ++INDENT;
-      }
-    for(auto const & t : sm.transitions())
-    {
-      //
-
-
-      out_stream << indent() <<
-       t.from() << " -right-> " << t.to() <<gen_plantuml_action_event_seq(t.events(),t.actions()) << "\n";
-    }
-    for(size_t thread = 0; thread < sm.threads().size();++thread)
-    {
-      for(auto const & t : sm.threads()[thread])
-      {
-      //
-
-
-      out_stream << indent() <<
-       t.from() << " -right-> " << t.to() << gen_plantuml_action_event_seq(t.events(),t.actions()) << "\n";
-      }
-      if (thread + 1 < sm.threads().size()) out_stream << "--\n";
-    }
-    if (sm.order_ != e_m) {--INDENT; out_stream <<  indent() << "}\n";}
-  }
-  --INDENT;
-  out_stream << "@enduml\n";
-}
-
-
-
-void write_plantuml_rep(ostream& out_stream, State_machine & sm,ceps::Ceps_Environment& ceps_env,
-		      ceps::ast::Nodeset& universe,
-		      Result_process_cmd_line& cmd_line,
-		      std::map<State_machine*,std::set<State_machine*>>  & refered_by)
-{
-
-
-  INDENT = 0;
-  out_stream << "@startuml\n";
-  ++INDENT;
-
-  std::set<State_machine*> referenced_sm;
-
-  for(auto const & t : sm.transitions()) if (t.to().is_sm_) referenced_sm.insert(t.to().smp_);
-
-  for(auto smp : referenced_sm)
-  {
-    std::string t = get_id(smp);
-    out_stream << indent() << "state " << t << std::endl;
-  }
-
-  for(auto smp : refered_by[&sm])
-  {
-	  std::string sm_id = get_id(smp);
-	  for (auto const & t: smp->transitions())
-	  {
-		  if (t.to().smp_ != &sm) continue;
-
-
-		  if (t.from().is_initial())
-			  out_stream << indent() <<
-			 	    		  sm_id<< " --> " << sm.id() << gen_plantuml_action_event_seq(t.events(),t.actions()) << "\n";
-		  else
-	       out_stream << indent() <<
-	    		  sm_id<<"." << t.from() << " --> " << sm.id() << gen_plantuml_action_event_seq(t.events(),t.actions()) << "\n";
-
-	  }
-	  //out_stream << indent() <<  t <<" -> "<< sm.id() << std::endl;
-  }
-
-  out_stream <<  indent() << "state " << sm.id() << "{\n";
-  ++INDENT;
-
-
-
-  for(auto const & t : sm.transitions())
-    {
-      //
-
-
-      out_stream << indent() <<
-       t.from() << " -right-> " << t.to() <<gen_plantuml_action_event_seq(t.events(),t.actions()) << "\n";
-   }
-
-  for(size_t thread = 0; thread < sm.threads().size();++thread)
-    {
-      for(auto const & t : sm.threads()[thread])
-      {
-      //
-
-      out_stream << indent() <<
-       t.from() << " -right-> " << t.to() << gen_plantuml_action_event_seq(t.events(),t.actions()) << "\n";
-      }
-      if (thread + 1 < sm.threads().size()) out_stream << "--\n";
-    }
-  --INDENT; out_stream <<  indent() << "}\n";
-
-  --INDENT;
-  out_stream << "@enduml\n";
-}
-
-
-void compute_refered_by(std::map<State_machine*,std::set<State_machine*>>&  m)
-{
-	for(auto & v : State_machine::statemachines)
-	{
-		for(auto & t : v.second->transitions())
-		{
-			if (!t.to().is_sm_) continue;
-			m[t.to().smp_].insert(v.second);
-		}
-	}
-}
-
-void write_doxygen_doc(std::string const & out_dir,
-		      ceps::Ceps_Environment& ceps_env,
-		      ceps::ast::Nodeset& universe,
-		      Result_process_cmd_line& cmd_line)
-{
-	//compute refered by
-
-	std::map<State_machine*,std::set<State_machine*>> refered_by;
-	compute_refered_by(refered_by);
-
-	for(auto & v : State_machine::statemachines)
-	{
-		{std::ofstream out(out_dir + "sm_"+v.first+".txt");
-		out << "/*! \\page " << "Statemachine_" <<replace_dot_in_string(v.first,"_")<<std::endl;
-		out << "* \\section sm"<< replace_dot_in_string(v.first,"_")<<" State machine " << v.first <<"" <<  std::endl;
-		out << "* \\image html sm_"<<replace_dot_in_string(v.first,"_")<<".png"<< std::endl;
-
-		if (v.second->children().size())
-		{
-			out << "* \\section subs Contains the following (sub-) state machines\n";
-			for(auto sp: v.second->children())
-			{
-				auto t = get_id(sp);
-			 	out << "* \\ref Statemachine_"<< replace_dot_in_string(t,"_") << std::endl;
-			}
-
-		}
-		if(v.second->parent_ != nullptr)
-		{
-			auto parent  = v.second->parent_;
-			auto t = get_id(parent);
-			out << "* \\section par Parent is\n\\ref Statemachine_" << replace_dot_in_string(t,"_") << std::endl;
-		}
-		//out << "* \\section ref_by Referenced by following state machines\n";
-		std::vector<State_machine*> references;
-		for(auto & t : v.second->transitions())
-		{
-			if (t.to().is_sm_) references.push_back(t.to().smp_);
-		}
-		if (references.size() > 0) {
-			 out << "* \\section refs References the following state machines\n";
-			 for(auto sp: references)
-			 {
-				 auto t = get_id(sp);
-				 out << "* \\ref Statemachine_"<< replace_dot_in_string(t,"_") << std::endl;
-			 }
-		}
-		if (refered_by[v.second].size())
-		{
-			out << "* \\section ref_by Referenced by the following state machines\n";
-			auto& m = refered_by[v.second];
-			for(auto sp: m)
-			 {
-				 auto t = get_id(sp);
-				 out << "* \\ref Statemachine_"<< replace_dot_in_string(t,"_") << std::endl;
-			 }
-		}
-		out << "*/\n";
-		std::ofstream outumplrep(out_dir + "sm_"+replace_dot_in_string(v.first,"_")+".plantuml");
-		write_plantuml_rep(outumplrep, *v.second, ceps_env,universe, cmd_line,refered_by);}
-
-
-		std::string cmd = "java -jar plantuml.jar "+out_dir + "sm_"+replace_dot_in_string(v.first,"_")+".plantuml";
-		std::system(cmd.c_str());
-	}
-}
 
 void run_as_monitor(Result_process_cmd_line const & result_cmd_line){
 
@@ -516,7 +261,7 @@ int main(int argc,char ** argv)
 {
 	if (argc <= 1)
 	{
-		cout <<  "\nsm4cepssim is a UML2 state machine simulator and part of sm4ceps.\n";
+		cout <<  "ceps is a tool for writing executable specifications.\n";
 		cout << "Usage: " << argv[0] << " FILE [FILE...] [-i] [-oPATH] [--debug]\n";
 		cout << "\n";
 		cout << "Example:\n " << argv[0] <<" a.ceps b.ceps .\n";
@@ -536,7 +281,7 @@ int main(int argc,char ** argv)
 			 #else
 							  << "32BIT"
 			 #endif
-							  << "\n(C) BY THE AUTHORS OF sm4ceps \n" << std::endl;
+							  << "\n(C) BY THE AUTHORS OF ceps \n" << std::endl;
 			#else
 				#ifdef _MSC_FULL_VER
 					std::cout << "\n"
@@ -546,7 +291,7 @@ int main(int argc,char ** argv)
 					#else
 						<< "32BIT"
 					#endif
-						<< "\n(C) BY THE AUTHORS OF sm4ceps\n" << std::endl;
+						<< "\n(C) BY THE AUTHORS OF ceps\n" << std::endl;
 				#endif
 			#endif
 	}
@@ -590,13 +335,6 @@ int main(int argc,char ** argv)
 
 
 	string last_file_processed;
-
-	if (global_out_path.length())
-	{
-		gen_doc = true;
-		doc_out_dir = global_out_path;
-		DUMP_PLANTUML_REP_TO_COUT = false;
-	}
 
 	try{
 		Result_process_cmd_line result_cmd_line;

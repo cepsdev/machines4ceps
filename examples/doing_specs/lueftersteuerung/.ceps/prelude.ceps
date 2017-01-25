@@ -1,5 +1,5 @@
 kind Systemstate;
 kind Event;
 kind Guard;
-
 Event EXIT;
+macro timeout { start_timer(hd(arglist),EXIT);};

@@ -1297,6 +1297,18 @@ bool state_machine_sim_core_default_stepping()
 }
 
 
+static ceps::ast::Nodebase_ptr sym_undefined_clbk(ceps::ast::Nodebase_ptr n, void* ctxt){
+
+	if (ctxt == nullptr) return n;
+	return ((State_machine_simulation_core*)ctxt)->eval_found_sym_undefined(n);
+}
+
+ceps::ast::Nodebase_ptr State_machine_simulation_core::eval_found_sym_undefined(ceps::ast::Nodebase_ptr n){
+	if (n == nullptr) return nullptr;
+	fatal_(-1,"Object '"+ceps::ast::name(ceps::ast::as_symbol_ref(n))+"' of kind '"+ceps::ast::kind(ceps::ast::as_symbol_ref(n))+"' is not initialized.");
+}
+
+
 
 void init_state_machine_simulation(	int argc,
 									char ** argv,
@@ -1323,6 +1335,7 @@ void init_state_machine_simulation(	int argc,
 		 }
 
     ceps::interpreter::register_struct_rewrite_rule(smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);
+    smc->ceps_env_current().interpreter_env().reg_sym_undefined_clbk(sym_undefined_clbk,smc);
 
 	smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);
 }

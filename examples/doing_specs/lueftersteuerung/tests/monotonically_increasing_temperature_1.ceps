@@ -1,4 +1,3 @@
-
 signal{
  id = signal_1;
  delta_t = 0.1*s;
@@ -8,8 +7,7 @@ signal{
 };
 
 Simulation{
- //motor_temperatur = 1.0; 
- //Start{mod_gen_stdvpart_vp_motor_temperatur;};
- start_timer(2.0*s,EXIT);
  start_signal(signal_1,motor_temperatur);
+ timeout{2.0*s;};
+ motor_temperatur = 1.0;
 };
