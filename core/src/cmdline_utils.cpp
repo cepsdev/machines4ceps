@@ -252,6 +252,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 		    else if (arg == "--report_format_xml") {r.report_format_xml=true;continue;}
 		    else if (arg == "--report_format_json") {r.report_format_json=true;continue;}
 		    else if (arg == "--report_format_ceps") {r.report_format_ceps=true;continue;}
+		    else if (arg == "--print_evaluated_postprocessing_tree") {r.print_evaluated_postprocessing_tree=true;continue;}
 
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {

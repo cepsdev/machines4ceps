@@ -3,6 +3,7 @@ kind Systemstate;
 kind Guard;
 Guard g;
 Systemstate a,t;
+Event E;
 
 typedef{
   t_composite{
@@ -17,16 +18,18 @@ globals{
  t = t_composite;
 };
 
-Statemachine{id{S1;};
- States{Initial;A;B;C;};
- Actions{ enter_a{print("enter_a:","\n");}; };
- on_enter{a=1;};
- Transition{Initial;A;g;};
+Statemachine{
+ id{S1;};
+ States{Initial;A;B;C;D;};
+ Actions{ enter_a{print("S1.enter_a.","\n");}; };
+ on_enter{a=1;print("S1.on_enter.\n");};
+ Transition{Initial;A;enter_a;};
+ Transition{A;B;};
 };
 
-
+Systemstate tt;
 Simulation{
- print(t.k.b,"\n");
+ print("Hallo!\n");
  g = abs(t.k.b) > 1;
  Start{S1;};
 };

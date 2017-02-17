@@ -1,0 +1,501 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+Event E1,E2,E3,E4,E5,E6,E7,E8,E9,E10,E11,E12,E13,E14,E15,E16,E17,E18,E19,E20;
+Event E21,E22,E23,E24,E25,E26,E27,E28,E29,E30,E31,E32,E33,E34,E35,E36,E37,E38,E39,E40;
+
+Guard g1,g2,g3,g4,g5;
+
+globals{};
+
+val t_delta = 0.001*s;
+
+Statemachine{
+ id{S1;};
+ States{Initial;Final;a;b;c;d;e;};
+ on_enter{
+  start_periodic_timer(t_delta,E1,pt1);
+  start_periodic_timer(t_delta,E2,pt2);
+  start_periodic_timer(t_delta,E3,pt3);
+  start_periodic_timer(t_delta,E4,pt4);
+  start_periodic_timer(t_delta,E5,pt5);
+  start_periodic_timer(t_delta,E6,pt6);
+  start_periodic_timer(t_delta,E7,pt7);
+  start_periodic_timer(t_delta,E8,pt8);
+  start_periodic_timer(t_delta,E9,pt9);
+  start_periodic_timer(t_delta,E10,pt10);
+  start_periodic_timer(t_delta,E11,pt11);
+  start_periodic_timer(t_delta,E12,pt12);
+  start_periodic_timer(t_delta,E13,pt13);
+  start_periodic_timer(t_delta,E14,pt14);
+  start_periodic_timer(t_delta,E15,pt15);
+  start_periodic_timer(t_delta,E16,pt16);
+  start_periodic_timer(t_delta,E17,pt17);
+  start_periodic_timer(t_delta,E18,pt18);
+  start_periodic_timer(t_delta,E19,pt19);
+  start_periodic_timer(t_delta,E20,pt20);
+  start_periodic_timer(t_delta,E21,pt21);
+  start_periodic_timer(t_delta,E22,pt22);
+  start_periodic_timer(t_delta,E23,pt23);
+  start_periodic_timer(t_delta,E24,pt24);
+  start_periodic_timer(t_delta,E25,pt25);
+  start_periodic_timer(t_delta,E26,pt26);
+  start_periodic_timer(t_delta,E27,pt27);
+  start_periodic_timer(t_delta,E28,pt28);
+  start_periodic_timer(t_delta,E29,pt29);
+  start_periodic_timer(t_delta,E30,pt30);
+  start_periodic_timer(t_delta,E31,pt31);
+  start_periodic_timer(t_delta,E32,pt32);
+  start_periodic_timer(t_delta,E33,pt33);
+  start_periodic_timer(t_delta,E34,pt34);
+  start_periodic_timer(t_delta,E35,pt35);
+  start_periodic_timer(t_delta,E36,pt36);
+  start_periodic_timer(t_delta,E37,pt37);
+  start_periodic_timer(t_delta,E38,pt38);
+  start_periodic_timer(t_delta,E39,pt39);
+  start_periodic_timer(t_delta,E40,pt40);
+ };
+};
+
+Event wagE1;
+val wag_e1_delta = 2.0*t_delta; 
+Statemachine{
+ id{WagE1;};
+ on_enter{start_periodic_timer(wag_e1_delta,wagE1);};
+ Actions{
+  kill_e1{stop_timer(pt1);};
+  start_e1{start_periodic_timer(t_delta,E1,pt1);};
+ };
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;};
+ Transition{a;b;wagE1;kill_e1;};
+ Transition{b;a;wagE1;start_e1;};
+};
+
+Statemachine{
+ id{WatchdogE1;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E1;};
+ Transition{a;b;E1;};
+ Transition{b;a;E1;};
+};
+
+Event wagE2;
+val wag_e2_delta = 2.3*t_delta; 
+Statemachine{
+ id{WagE2;};
+ on_enter{start_periodic_timer(wag_e2_delta,wagE2);};
+ Actions{
+  kill_e2{stop_timer(pt2);};
+  start_e2{start_periodic_timer(t_delta,E2,pt2);};
+ };
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;};
+ Transition{a;b;wagE2;kill_e2;};
+ Transition{b;a;wagE2;start_e2;};
+};
+
+Statemachine{
+ id{WatchdogE2;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E2;};
+ Transition{a;b;E2;};
+ Transition{b;a;E2;};
+};
+
+Event wagE3;
+val wag_e3_delta = 3.3*t_delta; 
+Statemachine{
+ id{WagE3;};
+ on_enter{start_periodic_timer(wag_e3_delta,wagE3);};
+ Actions{
+  kill_e3{stop_timer(pt3);};
+  start_e3{start_periodic_timer(t_delta,E3,pt3);};
+ };
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;};
+ Transition{a;b;wagE3;kill_e3;};
+ Transition{b;a;wagE3;start_e3;};
+};
+
+Statemachine{
+ id{WatchdogE3;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E3;};
+ Transition{a;b;E3;};
+ Transition{b;a;E3;};
+};
+
+
+Event wagE4;
+val wag_e4_delta = 4.3*t_delta; 
+Statemachine{
+ id{WagE4;};
+ on_enter{start_periodic_timer(wag_e4_delta,wagE4);};
+ Actions{
+  kill_e4{stop_timer(pt4);};
+  start_e4{start_periodic_timer(t_delta,E4,pt4);};
+ };
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;};
+ Transition{a;b;wagE4;kill_e4;};
+ Transition{b;a;wagE4;start_e4;};
+};
+
+Event wagE5;
+val wag_e5_delta = 1.3*t_delta; 
+Statemachine{
+ id{WagE5;};
+ on_enter{start_periodic_timer(wag_e5_delta,wagE5);};
+ Actions{
+  kill_e5{stop_timer(pt5);};
+  start_e5{start_periodic_timer(t_delta,E5,pt5);};
+ };
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;};
+ Transition{a;b;wagE5;kill_e5;};
+ Transition{b;a;wagE5;start_e5;};
+};
+
+Event wagE6;
+val wag_e6_delta = 6.3*t_delta; 
+Statemachine{
+ id{WagE6;};
+ on_enter{start_periodic_timer(wag_e6_delta,wagE6);};
+ Actions{
+  kill_e6{stop_timer(pt6);};
+  start_e6{start_periodic_timer(t_delta,E6,pt6);};
+ };
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;};
+ Transition{a;b;wagE6;kill_e6;};
+ Transition{b;a;wagE6;start_e6;};
+};
+
+Statemachine{
+ id{WatchdogE4;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E4;};
+ Transition{a;b;E4;};
+ Transition{b;a;E4;};
+};
+
+Statemachine{
+ id{WatchdogE5;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E5;};
+ Transition{a;b;E5;};
+ Transition{b;a;E5;};
+};
+
+Statemachine{
+ id{WatchdogE6;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E6;};
+ Transition{a;b;E6;};
+ Transition{b;a;E6;};
+};
+
+Statemachine{
+ id{WatchdogE7;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E7;};
+ Transition{a;b;E7;};
+ Transition{b;a;E7;};
+};
+
+Statemachine{
+ id{WatchdogE8;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E8;};
+ Transition{a;b;E8;};
+ Transition{b;a;E8;};
+};
+
+Statemachine{
+ id{WatchdogE9;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E9;};
+ Transition{a;b;E9;};
+ Transition{b;a;E9;};
+};
+
+Statemachine{
+ id{WatchdogE10;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E10;};
+ Transition{a;b;E10;};
+ Transition{b;a;E10;};
+};
+
+
+Statemachine{
+ id{WatchdogE11;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E11;};
+ Transition{a;b;E11;};
+ Transition{b;a;E11;};
+};
+
+
+Statemachine{
+ id{WatchdogE12;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E12;};
+ Transition{a;b;E12;};
+ Transition{b;a;E12;};
+};
+
+
+Statemachine{
+ id{WatchdogE13;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E13;};
+ Transition{a;b;E13;};
+ Transition{b;a;E13;};
+};
+
+
+Statemachine{
+ id{WatchdogE14;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E14;};
+ Transition{a;b;E14;};
+ Transition{b;a;E14;};
+};
+
+
+Statemachine{
+ id{WatchdogE15;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E15;};
+ Transition{a;b;E15;};
+ Transition{b;a;E15;};
+};
+
+Statemachine{
+ id{WatchdogE16;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E16;};
+ Transition{a;b;E16;};
+ Transition{b;a;E16;};
+};
+
+
+Statemachine{
+ id{WatchdogE17;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E17;};
+ Transition{a;b;E17;};
+ Transition{b;a;E17;};
+};
+
+Statemachine{
+ id{WatchdogE18;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E18;};
+ Transition{a;b;E18;};
+ Transition{b;a;E18;};
+};
+
+Statemachine{
+ id{WatchdogE19;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E19;};
+ Transition{a;b;E19;};
+ Transition{b;a;E19;};
+};
+
+Statemachine{
+ id{WatchdogE20;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E20;};
+ Transition{a;b;E20;};
+ Transition{b;a;E20;};
+};
+
+
+
+
+
+
+
+
+
+
+Statemachine{
+ id{WatchdogE21;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E21;};
+ Transition{a;b;E21;};
+ Transition{b;a;E21;};
+};
+
+Statemachine{
+ id{WatchdogE22;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E22;};
+ Transition{a;b;E22;};
+ Transition{b;a;E22;};
+};
+
+Statemachine{
+ id{WatchdogE23;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E23;};
+ Transition{a;b;E23;};
+ Transition{b;a;E23;};
+};
+
+Statemachine{
+ id{WatchdogE24;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E24;};
+ Transition{a;b;E24;};
+ Transition{b;a;E24;};
+};
+
+Statemachine{
+ id{WatchdogE25;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E25;};
+ Transition{a;b;E25;};
+ Transition{b;a;E25;};
+};
+
+Statemachine{
+ id{WatchdogE26;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E26;};
+ Transition{a;b;E26;};
+ Transition{b;a;E26;};
+};
+
+Statemachine{
+ id{WatchdogE27;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E27;};
+ Transition{a;b;E27;};
+ Transition{b;a;E27;};
+};
+
+Statemachine{
+ id{WatchdogE28;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E28;};
+ Transition{a;b;E28;};
+ Transition{b;a;E28;};
+};
+
+Statemachine{
+ id{WatchdogE29;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E29;};
+ Transition{a;b;E29;};
+ Transition{b;a;E29;};
+};
+
+Statemachine{
+ id{WatchdogE30;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E30;};
+ Transition{a;b;E30;};
+ Transition{b;a;E30;};
+};
+
+
+Statemachine{
+ id{WatchdogE31;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E31;};
+ Transition{a;b;E31;};
+ Transition{b;a;E31;};
+};
+
+
+Statemachine{
+ id{WatchdogE32;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E32;};
+ Transition{a;b;E32;};
+ Transition{b;a;E32;};
+};
+
+
+Statemachine{
+ id{WatchdogE33;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E33;};
+ Transition{a;b;E33;};
+ Transition{b;a;E33;};
+};
+
+
+Statemachine{
+ id{WatchdogE34;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E34;};
+ Transition{a;b;E34;};
+ Transition{b;a;E34;};
+};
+
+
+Statemachine{
+ id{WatchdogE35;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E35;};
+ Transition{a;b;E35;};
+ Transition{b;a;E35;};
+};
+
+Statemachine{
+ id{WatchdogE36;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E36;};
+ Transition{a;b;E36;};
+ Transition{b;a;E36;};
+};
+
+
+Statemachine{
+ id{WatchdogE37;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E37;};
+ Transition{a;b;E37;};
+ Transition{b;a;E37;};
+};
+
+Statemachine{
+ id{WatchdogE38;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E38;};
+ Transition{a;b;E38;};
+ Transition{b;a;E38;};
+};
+
+Statemachine{
+ id{WatchdogE39;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E39;};
+ Transition{a;b;E39;};
+ Transition{b;a;E39;};
+};
+
+Statemachine{
+ id{WatchdogE40;};
+ States{Initial;Final;a;b;};
+ Transition{Initial;a;E40;};
+ Transition{a;b;E40;};
+ Transition{b;a;E40;};
+};
+
+Simulation{
+ Start{S1;WatchdogE1;WatchdogE2;WatchdogE3;WatchdogE4;WatchdogE5;WatchdogE6;WatchdogE7;WatchdogE8;WatchdogE9;WatchdogE10;
+  WatchdogE11;WatchdogE12;WatchdogE13;WatchdogE14;WatchdogE15;WatchdogE16;WatchdogE17;WatchdogE18;WatchdogE19;WatchdogE20;
+  WatchdogE21;WatchdogE22;WatchdogE23;WatchdogE24;WatchdogE25;WatchdogE26;WatchdogE27;WatchdogE28;WatchdogE29;WatchdogE30;
+  WatchdogE31;WatchdogE32;WatchdogE33;WatchdogE34;WatchdogE35;WatchdogE36;WatchdogE37;WatchdogE38;WatchdogE39;WatchdogE40;
+  WagE1;WagE2;WagE3;WagE4;WagE5;WagE6;
+ };
+};
+  

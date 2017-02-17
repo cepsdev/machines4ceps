@@ -1297,14 +1297,15 @@ bool state_machine_sim_core_default_stepping()
 }
 
 
-static ceps::ast::Nodebase_ptr sym_undefined_clbk(ceps::ast::Nodebase_ptr n, void* ctxt){
+static ceps::ast::Nodebase_ptr sym_undefined_clbk(ceps::ast::Nodebase_ptr n,ceps::ast::Nodebase_ptr pred, void* ctxt){
 
 	if (ctxt == nullptr) return n;
-	return ((State_machine_simulation_core*)ctxt)->eval_found_sym_undefined(n);
+	return ((State_machine_simulation_core*)ctxt)->eval_found_sym_undefined(n,pred);
 }
 
-ceps::ast::Nodebase_ptr State_machine_simulation_core::eval_found_sym_undefined(ceps::ast::Nodebase_ptr n){
+ceps::ast::Nodebase_ptr State_machine_simulation_core::eval_found_sym_undefined(ceps::ast::Nodebase_ptr n,ceps::ast::Nodebase_ptr pred){
 	if (n == nullptr) return nullptr;
+	if (pred != nullptr && pred->kind() == ceps::ast::Ast_node_kind::binary_operator && ceps::ast::op(ceps::ast::as_binop_ref(pred)) == '.' ) return n;
 	fatal_(-1,"Object '"+ceps::ast::name(ceps::ast::as_symbol_ref(n))+"' of kind '"+ceps::ast::kind(ceps::ast::as_symbol_ref(n))+"' is not initialized.");
 }
 
@@ -1791,15 +1792,14 @@ static void print_report_coverage(std::ostream& os, ceps::ast::Nodeset coverage,
 
     double v1 = coverage["state_coverage"]["ratio"].as_double();
     auto state_coverage_valid = coverage["state_coverage"]["valid"].as_int();
-	os << indent << "State Coverage: ";
-	if (state_coverage_valid) os << v1 << " ( "<< coverage["state_coverage"]["percentage"].as_double() << "% )"<< "\n";
-	else os << "not available\n";
-
     double v2 = coverage["transition_coverage"]["ratio"].as_double();
     auto transition_coverage_valid = coverage["transition_coverage"]["valid"].as_int();
+
+    if (!state_coverage_valid || !transition_coverage_valid) return;
+	os << indent << "State Coverage: ";
+	os << v1 << " ( "<< coverage["state_coverage"]["percentage"].as_double() << "% )"<< "\n";
 	os << indent << "Transition Coverage: ";
-	if (transition_coverage_valid) os << v2 << " ( "<< coverage["transition_coverage"]["percentage"].as_double() << "% )"<< "\n";
-	else os << "not available\n";
+	os << v2 << " ( "<< coverage["transition_coverage"]["percentage"].as_double() << "% )"<< "\n";
 }
 
 static void print_report(std::ostream& os, ceps::ast::Nodeset report,Result_process_cmd_line const& result_cmd_line ){
@@ -1808,6 +1808,7 @@ static void print_report(std::ostream& os, ceps::ast::Nodeset report,Result_proc
 		return;
 	}
 	auto summary = report["summary"];
+	if (result_cmd_line.debug_mode)os << "States count: " << report["summary"]["general"]["states_total"].as_int() << "\n";
 	print_report_coverage(os, summary["coverage"], "");
 
 }
@@ -1886,6 +1887,9 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 
     auto summary =
      new strct{ "summary",
+    	  strct{"general",
+    	   strct{"states_total",ctx.number_of_states}
+          },
 		  strct{"coverage",
 		   strct{"state_coverage",
 		    strct{"valid",state_coverage_defined},
@@ -1913,6 +1917,7 @@ void State_machine_simulation_core::print_report(Result_process_cmd_line const& 
 						ceps::Ceps_Environment& ceps_env,
 						ceps::ast::Nodeset& universe){
  ceps::ast::Nodeset report = make_report(result_cmd_line, ceps_env, universe);
+ current_universe().nodes().insert(current_universe().nodes().end(), report.nodes().begin(),report.nodes().end());
  std::ostream& os = std::cout;
  ::print_report(os,report,result_cmd_line);
 }

@@ -1332,6 +1332,10 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		do_generate_dot_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
 	}
 	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
+
+	if (result_cmd_line.print_evaluated_postprocessing_tree){
+		std::cout << ceps::ast::Nodebase::pretty_print << current_universe();
+	}
 }
 
 

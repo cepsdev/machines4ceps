@@ -62,26 +62,6 @@ void executionloop_context_t::do_exit(State_machine_simulation_core* smc,int* sm
 
 
 
-/*
-if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_)) {
-	if (current_event().payload_native_.size()){
-                for(auto & v : current_event().payload_native_){
-                 if (v.what_ == sm4ceps_plugin_int::Variant::Int)
-                   current_event().payload_.push_back(new ceps::ast::Int(v.iv_,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
-                 else if (v.what_ == sm4ceps_plugin_int::Variant::Double)
-                   current_event().payload_.push_back(new ceps::ast::Double(v.dv_,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
-                 else if (v.what_ == sm4ceps_plugin_int::Variant::String)
-                   current_event().payload_.push_back(new ceps::ast::String(v.sv_,nullptr, nullptr, nullptr));
-	 }
-                global_event_call_back_fn_(current_event());
-                for(auto v : current_event().payload_) delete v;
-                current_event().payload_.clear();
-	} else
-	global_event_call_back_fn_(current_event());
-}
-*/
-
-
 static void map_ev_payload_to_variant(State_machine_simulation_core::event_t const & ev,std::vector<sm4ceps_plugin_int::Variant>& r){
     if (ev.payload_native_.size()) {r = ev.payload_native_; return;}
     for(auto v : ev.payload_){
@@ -135,7 +115,7 @@ static void check_for_events(State_machine_simulation_core* smc,
 	  taking_epsilon_transitions = true;
 	  do_continue = true;return;
 	 } else {
-	  do_break = true;return;
+       do_break = true;return;
 	 }
 	} else {
       if (ev.sid_ == "@@queued_action"){
@@ -176,7 +156,7 @@ static void check_for_events(State_machine_simulation_core* smc,
 	  ev_read = true;
 	 }
 	smc->current_event() = ev;
-	if (ev_read) {ev_id = execution_ctxt.ev_to_id[smc->current_event().id_];quit = true; }
+	if (ev_read) {ev_id = execution_ctxt.ev_to_id[smc->current_event().id_];if (ev.sid_ == "EXIT" ) quit = true; }
 }
 
 static void log_triggered_transitions(State_machine_simulation_core* smc,
@@ -459,6 +439,25 @@ static void compute_exit_states(State_machine_simulation_core* smc,
  }
 }
 
+static bool is_a_simulation_directive(ceps::ast::Nodebase_ptr n){
+ if (n->kind() == ceps::ast::Ast_node_kind::structdef){
+	 auto& nn = ceps::ast::as_struct_ref(n);
+	 auto nm = ceps::ast::name(nn);
+	 if (nm == "Start") return true;
+	 if (nm == "start") return true;
+     if (nm == "ASSERT_EVENTUALLY_VISIT_STATES") return true;
+     if (nm == "ASSERT_CURRENT_STATES_CONTAINS") return true;
+     if (nm == "ASSERT_CURRENT_STATES_CONTAIN") return true;
+     if (nm == "ASSERT_CURRENT_STATES_CONTAINS_NOT") return true;
+     if (nm == "ASSERT_CURRENT_STATES_CONTAIN_NOT") return true;
+     if (nm == "ASSERT_END_STATES_CONTAINS") return true;
+     if (nm == "ASSERT_END_STATES_CONTAIN") return true;
+     if (nm == "ASSERT_END_STATES_CONTAINS_NOT") return true;
+     if (nm == "ASSERT_END_STATES_CONTAIN_NOT") return true;
+ }
+ return false;
+}
+
 void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
@@ -556,15 +555,17 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  //Execute possible initializations
  for(;pos!=sim.size();++pos){
   auto node_raw = sim.nodes()[pos];
+  if (is_a_simulation_directive(node_raw)) break;
   bool executed = false;
   if (is_assignment_op(node_raw)) {
    auto & node = as_binop_ref(node_raw);
    std::string state_id;
-   if (is_assignment_to_guard(node))
+   if (is_assignment_to_guard(node)){
     eval_guard_assign(node);
-   else if (is_assignment_to_state(node,state_id))
+   }
+   else if (is_assignment_to_state(node,state_id)){
     eval_state_assign(node,state_id);
-   else {
+   } else {
 	std::stringstream ss;
 	ss << *node_raw;
 	fatal_(-1,"Unsupported assignment:"+ss.str());
@@ -572,7 +573,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
    executed = true;
   } else {
    auto cev = resolve_event_qualified_id(sim.nodes()[pos],nullptr);
-   if ( (!cev.valid() || cev.sid_.length() == 0) ) {
+   if ( (!cev.valid() || cev.sid_.length() == 0) ) {//No Event read
 	executed = true;
     ceps::ast::Scope scope(node_raw);scope.owns_children() = false;
 	execute_action_seq(nullptr,&scope);

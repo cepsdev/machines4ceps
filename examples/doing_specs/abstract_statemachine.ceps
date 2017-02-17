@@ -25,27 +25,6 @@ Statemachine{id{State1Implementation;};
 };
 
 
-Statemachine{
- id{AbstractStatemachine2;};
- abstract;
- States{Initial;State2;};
- Statemachine{id{State1;};
- States{Initial;SubState1;SubState2;};
- on_enter{print("State1Implementation.on_enter();\n");};
- on_exit{print("State1Implementation.on_exit();\n");};
- Actions{
-  a{
-   print("State1Implementation.a()\n");
-  };
- };
- Transition{Initial;SubState1;a;}; 
-};
-
- Transition{Initial;State1;evA;};
- Transition{State1;State2;evB;};
-};
-
-
 
 Statemachine{id{State2Implementation;};
  States{Initial;SubState1;SubState2;};
@@ -67,19 +46,6 @@ InstantiationOfAbstractStatemachine = AbstractStatemachine(State1=State1Implemen
 Simulation{
  print("#1\n");
  Start{InstantiationOfAbstractStatemachine;};
- //Start{AbstractStatemachine2;};
  evA;
  evB;
 };
-
-
-Simulation{
- print("#2\n");
- //Start{InstantiationOfAbstractStatemachine;};
- Start{AbstractStatemachine2;};
- evA;
- evB;
-};
-
-
-Actions{a{};};

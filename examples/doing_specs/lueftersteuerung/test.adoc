@@ -1,0 +1,8 @@
+Hello!
+
+
+[[img-cover-graph]]
+.A covering graph
+image::o.svg[link="file://o.svg"]
+
+

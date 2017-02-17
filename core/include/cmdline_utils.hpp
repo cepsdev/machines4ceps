@@ -65,6 +65,7 @@ struct Result_process_cmd_line
     bool print_statemachines = false;
     bool dot_gen = false;
     bool print_evaluated_input_tree = false;
+    bool print_evaluated_postprocessing_tree = false;
     bool print_signal_generators = false;
 
     std::string live_log_port = "3000";
