@@ -11,6 +11,7 @@
 #include "core/include/sm_raw_frame.hpp"
 #include "core/include/sm_xml_frame.hpp"
 #include "core/include/modelling/partitions.hpp"
+#include "core/include/modelling/cover_path.hpp"
 
 #include "pugixml.hpp"
 #ifdef __gnu_linux__
@@ -1335,7 +1336,11 @@ void init_state_machine_simulation(	int argc,
 			 throw std::runtime_error(ss.str()) ;
 		 }
 
-    ceps::interpreter::register_struct_rewrite_rule(smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);
+    ceps::interpreter::register_struct_rewrite_rule(
+    		smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);
+    ceps::interpreter::register_struct_rewrite_rule(
+    		smc->ceps_env_current().get_global_symboltable(),"cover_path", sm4ceps::modelling::cover_path, smc);
+
     smc->ceps_env_current().interpreter_env().reg_sym_undefined_clbk(sym_undefined_clbk,smc);
 
 	smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);

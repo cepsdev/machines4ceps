@@ -1,0 +1,21 @@
+Guard g_position_changed;
+val threshold_position_changed = 0.1; 
+Systemstate Movement_local_position;
+
+Globals{
+ Movement_local_position = Position;
+ g_position_changed =  (Movement_local_position.x - position.x)*(Movement_local_position.x - position.x) + (Movement_local_position.y - position.y)*(Movement_local_position.y - position.y) > threshold_position_changed;
+};
+
+Statemachine{
+ id{Movement;};
+ cover{cover_edges_upto_1;};
+ States{Initial;Moving;Standstill;};
+ Transition{Initial;Moving;g_position_changed;update_local_pos;};
+ Transition{Initial;Standstill;!g_position_changed;};
+ Transition{Moving;Standstill;!g_position_changed;};
+ Transition{Standstill;Moving;g_position_changed;update_local_pos;};
+ Actions{
+  update_local_pos{Movement_local_position = position;};
+ };
+};

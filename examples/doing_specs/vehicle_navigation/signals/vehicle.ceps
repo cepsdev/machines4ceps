@@ -1,0 +1,28 @@
+typedef
+{
+  Position
+  {
+    x  { 0.0; };
+    y  { 0.0; };
+  };
+};
+
+typedef
+{
+  GPS
+  {
+    x  { 0.0; };
+    y  { 0.0; };
+    valid {0;};
+  };
+};
+
+Systemstate position;
+Systemstate heading;
+Systemstate gps;
+
+Globals{
+ position = Position;
+ heading = 0.0;
+ gps = GPS;
+};

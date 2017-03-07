@@ -1,0 +1,18 @@
+
+cover_path{
+ Movement.Standstill;
+ Movement.Moving;
+};
+
+Statemachine{
+ id{cover_1;};
+ cover{cover_edges_upto_1;};
+ States{Initial;step_1;step_2;Final;};
+ Transition{Initial;step_1;in_state(Movement.Standstill);};
+ Transition{step_1;step_2;in_state(Movement.Moving);};
+ Transition{step_2;Final;};
+};
+
+Event e;
+Simulation{
+};

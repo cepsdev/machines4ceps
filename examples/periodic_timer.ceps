@@ -43,6 +43,7 @@ Statemachine
  * */
 Simulation
 {
+ TestCase{TC1;};Test{T1;};
  s1 = 1;
  duration_timer_1 = 0.25*s;
  duration_timer_2 = 5*duration_timer_1;
