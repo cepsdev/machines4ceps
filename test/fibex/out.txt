@@ -1,0 +1,395 @@
+(STMTS 
+  (STRUCT "fx:FIBEX" 
+    (STRUCT "fx:PROJECT" 
+      (STRUCT "ho:SHORT-NAME" 
+        "XNET1" 
+      )
+    )
+    (STRUCT "fx:ELEMENTS" 
+      (STRUCT "fx:CLUSTERS" 
+        (STRUCT "fx:CLUSTER" 
+          (STRUCT "ho:SHORT-NAME" 
+            "CAN3" 
+          )
+          (STRUCT "ho:DESC" 
+          )
+          (STRUCT "fx:SPEED" 
+            "250000" 
+          )
+          (STRUCT "fx:IS-HIGH-LOW-BIT-ORDER" 
+            "true" 
+          )
+          (STRUCT "fx:BIT-COUNTING-POLICY" 
+            "SAWTOOTH" 
+          )
+          (STRUCT "fx:PROTOCOL" 
+            "CAN" 
+          )
+          (STRUCT "fx:CHANNEL-REFS" 
+            (STRUCT "fx:CHANNEL-REF" 
+            )
+          )
+          (STRUCT "fx:MEDIUM" 
+            "ELECTRICAL" 
+          )
+        )
+      )
+      (STRUCT "fx:CHANNELS" 
+        (STRUCT "fx:CHANNEL" 
+          (STRUCT "ho:SHORT-NAME" 
+            "Channel1" 
+          )
+          (STRUCT "fx:PDU-TRIGGERINGS" 
+            (STRUCT "fx:PDU-TRIGGERING" 
+              (STRUCT "fx:TIMINGS" 
+                (STRUCT "fx:CYCLIC-TIMING" 
+                  (STRUCT "fx:REPEATING-TIME-RANGE" 
+                    (STRUCT "fx:VALUE" 
+                      "PT0.10000000S" 
+                    )
+                  )
+                )
+              )
+              (STRUCT "fx:PDU-REF" 
+              )
+            )
+          )
+          (STRUCT "fx:FRAME-TRIGGERINGS" 
+            (STRUCT "fx:FRAME-TRIGGERING" 
+              (STRUCT "fx:IDENTIFIER" 
+                (STRUCT "fx:IDENTIFIER-VALUE" 
+                  "674" 
+                )
+              )
+              (STRUCT "fx:FRAME-REF" 
+              )
+              (STRUCT "fx:MANUFACTURER-EXTENSION" 
+                (STRUCT "ni:NI-XNET-EXTENSION" 
+                  (STRUCT "ni:CAN-FD-MODE" 
+                    "0" 
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+      (STRUCT "fx:ECUS" 
+        (STRUCT "fx:ECU" 
+          (STRUCT "ho:SHORT-NAME" 
+            "KDT_Verteiler" 
+          )
+          (STRUCT "ho:DESC" 
+          )
+          (STRUCT "fx:CONTROLLERS" 
+            (STRUCT "fx:CONTROLLER" 
+              (STRUCT "ho:SHORT-NAME" 
+                "Controller1" 
+              )
+            )
+          )
+          (STRUCT "fx:CONNECTORS" 
+            (STRUCT "fx:CONNECTOR" 
+              (STRUCT "fx:CHANNEL-REF" 
+              )
+              (STRUCT "fx:CONTROLLER-REF" 
+              )
+            )
+          )
+        )
+      )
+      (STRUCT "fx:PDUS" 
+        (STRUCT "fx:PDU" 
+          (STRUCT "ho:SHORT-NAME" 
+            "Engine_RPM_pdu" 
+          )
+          (STRUCT "ho:DESC" 
+          )
+          (STRUCT "fx:BYTE-LENGTH" 
+            "4" 
+          )
+          (STRUCT "fx:PDU-TYPE" 
+            "APPLICATION" 
+          )
+          (STRUCT "fx:SIGNAL-INSTANCES" 
+            (STRUCT "fx:SIGNAL-INSTANCE" 
+              (STRUCT "fx:BIT-POSITION" 
+                "0" 
+              )
+              (STRUCT "fx:IS-HIGH-LOW-BYTE-ORDER" 
+                "false" 
+              )
+              (STRUCT "fx:SIGNAL-REF" 
+              )
+            )
+            (STRUCT "fx:SIGNAL-INSTANCE" 
+              (STRUCT "fx:BIT-POSITION" 
+                "24" 
+              )
+              (STRUCT "fx:IS-HIGH-LOW-BYTE-ORDER" 
+                "false" 
+              )
+              (STRUCT "fx:SIGNAL-REF" 
+              )
+            )
+            (STRUCT "fx:SIGNAL-INSTANCE" 
+              (STRUCT "fx:BIT-POSITION" 
+                "16" 
+              )
+              (STRUCT "fx:IS-HIGH-LOW-BYTE-ORDER" 
+                "false" 
+              )
+              (STRUCT "fx:SIGNAL-REF" 
+              )
+            )
+          )
+        )
+      )
+      (STRUCT "fx:FRAMES" 
+        (STRUCT "fx:FRAME" 
+          (STRUCT "ho:SHORT-NAME" 
+            "Engine_RPM" 
+          )
+          (STRUCT "ho:DESC" 
+          )
+          (STRUCT "fx:BYTE-LENGTH" 
+            "4" 
+          )
+          (STRUCT "fx:PDU-INSTANCES" 
+            (STRUCT "fx:PDU-INSTANCE" 
+              (STRUCT "fx:PDU-REF" 
+              )
+              (STRUCT "fx:BIT-POSITION" 
+                "0" 
+              )
+              (STRUCT "fx:IS-HIGH-LOW-BYTE-ORDER" 
+                "false" 
+              )
+            )
+          )
+        )
+      )
+      (STRUCT "fx:SIGNALS" 
+        (STRUCT "fx:SIGNAL" 
+          (STRUCT "ho:SHORT-NAME" 
+            "rpm" 
+          )
+          (STRUCT "fx:DEFAULT-VALUE" 
+            "0" 
+          )
+          (STRUCT "fx:CODING-REF" 
+          )
+        )
+        (STRUCT "fx:SIGNAL" 
+          (STRUCT "ho:SHORT-NAME" 
+            "rpm_speed_src" 
+          )
+          (STRUCT "fx:DEFAULT-VALUE" 
+            "0" 
+          )
+          (STRUCT "fx:CODING-REF" 
+          )
+        )
+        (STRUCT "fx:SIGNAL" 
+          (STRUCT "ho:SHORT-NAME" 
+            "speed" 
+          )
+          (STRUCT "fx:DEFAULT-VALUE" 
+            "0" 
+          )
+          (STRUCT "fx:CODING-REF" 
+          )
+        )
+      )
+    )
+    (STRUCT "fx:PROCESSING-INFORMATION" 
+      (STRUCT "ho:UNIT-SPEC" 
+        (STRUCT "ho:UNITS" 
+          (STRUCT "ho:UNIT" 
+            (STRUCT "ho:SHORT-NAME" 
+              "unit1" 
+            )
+            (STRUCT "ho:DISPLAY-NAME" 
+            )
+          )
+          (STRUCT "ho:UNIT" 
+            (STRUCT "ho:SHORT-NAME" 
+              "unit2" 
+            )
+            (STRUCT "ho:DISPLAY-NAME" 
+            )
+          )
+          (STRUCT "ho:UNIT" 
+            (STRUCT "ho:SHORT-NAME" 
+              "unit3" 
+            )
+            (STRUCT "ho:DISPLAY-NAME" 
+            )
+          )
+        )
+      )
+      (STRUCT "fx:CODINGS" 
+        (STRUCT "fx:CODING" 
+          (STRUCT "ho:SHORT-NAME" 
+            "cod1" 
+          )
+          (STRUCT "ho:CODED-TYPE" 
+            (STRUCT "ho:BIT-LENGTH" 
+              "16" 
+            )
+          )
+          (STRUCT "ho:COMPU-METHODS" 
+            (STRUCT "ho:COMPU-METHOD" 
+              (STRUCT "ho:SHORT-NAME" 
+                "cpm1" 
+              )
+              (STRUCT "ho:CATEGORY" 
+                "LINEAR" 
+              )
+              (STRUCT "ho:UNIT-REF" 
+              )
+              (STRUCT "ho:PHYS-CONSTRS" 
+                (STRUCT "ho:SCALE-CONSTR" 
+                  (STRUCT "ho:LOWER-LIMIT" 
+                    "0" 
+                  )
+                  (STRUCT "ho:UPPER-LIMIT" 
+                    "1000" 
+                  )
+                )
+              )
+              (STRUCT "ho:COMPU-INTERNAL-TO-PHYS" 
+                (STRUCT "ho:COMPU-SCALES" 
+                  (STRUCT "ho:COMPU-SCALE" 
+                    (STRUCT "ho:COMPU-RATIONAL-COEFFS" 
+                      (STRUCT "ho:COMPU-NUMERATOR" 
+                        (STRUCT "ho:V" 
+                          "0" 
+                        )
+                        (STRUCT "ho:V" 
+                          "1" 
+                        )
+                      )
+                      (STRUCT "ho:COMPU-DENOMINATOR" 
+                        (STRUCT "ho:V" 
+                          "1" 
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+        (STRUCT "fx:CODING" 
+          (STRUCT "ho:SHORT-NAME" 
+            "cod2" 
+          )
+          (STRUCT "ho:CODED-TYPE" 
+            (STRUCT "ho:BIT-LENGTH" 
+              "8" 
+            )
+          )
+          (STRUCT "ho:COMPU-METHODS" 
+            (STRUCT "ho:COMPU-METHOD" 
+              (STRUCT "ho:SHORT-NAME" 
+                "cpm2" 
+              )
+              (STRUCT "ho:CATEGORY" 
+                "LINEAR" 
+              )
+              (STRUCT "ho:UNIT-REF" 
+              )
+              (STRUCT "ho:PHYS-CONSTRS" 
+                (STRUCT "ho:SCALE-CONSTR" 
+                  (STRUCT "ho:LOWER-LIMIT" 
+                    "0" 
+                  )
+                  (STRUCT "ho:UPPER-LIMIT" 
+                    "1000" 
+                  )
+                )
+              )
+              (STRUCT "ho:COMPU-INTERNAL-TO-PHYS" 
+                (STRUCT "ho:COMPU-SCALES" 
+                  (STRUCT "ho:COMPU-SCALE" 
+                    (STRUCT "ho:COMPU-RATIONAL-COEFFS" 
+                      (STRUCT "ho:COMPU-NUMERATOR" 
+                        (STRUCT "ho:V" 
+                          "0" 
+                        )
+                        (STRUCT "ho:V" 
+                          "1" 
+                        )
+                      )
+                      (STRUCT "ho:COMPU-DENOMINATOR" 
+                        (STRUCT "ho:V" 
+                          "1" 
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+        (STRUCT "fx:CODING" 
+          (STRUCT "ho:SHORT-NAME" 
+            "cod3" 
+          )
+          (STRUCT "ho:CODED-TYPE" 
+            (STRUCT "ho:BIT-LENGTH" 
+              "8" 
+            )
+          )
+          (STRUCT "ho:COMPU-METHODS" 
+            (STRUCT "ho:COMPU-METHOD" 
+              (STRUCT "ho:SHORT-NAME" 
+                "cpm3" 
+              )
+              (STRUCT "ho:CATEGORY" 
+                "LINEAR" 
+              )
+              (STRUCT "ho:UNIT-REF" 
+              )
+              (STRUCT "ho:PHYS-CONSTRS" 
+                (STRUCT "ho:SCALE-CONSTR" 
+                  (STRUCT "ho:LOWER-LIMIT" 
+                    "0" 
+                  )
+                  (STRUCT "ho:UPPER-LIMIT" 
+                    "1000" 
+                  )
+                )
+              )
+              (STRUCT "ho:COMPU-INTERNAL-TO-PHYS" 
+                (STRUCT "ho:COMPU-SCALES" 
+                  (STRUCT "ho:COMPU-SCALE" 
+                    (STRUCT "ho:COMPU-RATIONAL-COEFFS" 
+                      (STRUCT "ho:COMPU-NUMERATOR" 
+                        (STRUCT "ho:V" 
+                          "0" 
+                        )
+                        (STRUCT "ho:V" 
+                          "1" 
+                        )
+                      )
+                      (STRUCT "ho:COMPU-DENOMINATOR" 
+                        (STRUCT "ho:V" 
+                          "1" 
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)
+

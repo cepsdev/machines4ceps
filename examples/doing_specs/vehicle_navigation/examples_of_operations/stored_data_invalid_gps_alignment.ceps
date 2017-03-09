@@ -1,18 +1,37 @@
 
 cover_path{
- Movement.Standstill;
- Movement.Moving;
+ Vehicle.Standstill;
+ Vehicle.Moving;
 };
 
 Statemachine{
  id{cover_1;};
  cover{cover_edges_upto_1;};
- States{Initial;step_1;step_2;Final;};
- Transition{Initial;step_1;in_state(Movement.Standstill);};
- Transition{step_1;step_2;in_state(Movement.Moving);};
- Transition{step_2;Final;};
+ States{Initial;Vehicle_Standstill;Vehicle_Moving;Final;};
+ Transition{Initial;Initial;};
+ Transition{Initial;Vehicle_Standstill;in_state(Vehicle.Standstill);};
+ Transition{Vehicle_Standstill;Vehicle_Moving;in_state(Vehicle.Moving);};
+ Transition{Vehicle_Moving;Final;};
 };
 
-Event e;
+Event E,F;
+Statemachine{
+ id{vehicle_standstill_then_moving_with_constant_velocity;};
+ on_enter{
+   start_timer(3.0*s,E);
+ };
+ Actions{
+  move{
+   position.x = position.x + 0.1;
+   position.y = position.y + 0.1;
+  };
+  starttimer{start_periodic_timer(0.05*s,F);};
+ };
+ States{Initial;Moving;};
+ Transition{Initial;Moving;E;move;starttimer;};
+ Transition{Moving;Moving;F;move;};
+};
+
 Simulation{
+ Start{vehicle_standstill_then_moving_with_constant_velocity;};
 };

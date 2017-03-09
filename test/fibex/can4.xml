@@ -1,0 +1,1286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fx:FIBEX xmlns:fx="http://www.asam.net/xml/fbx" xmlns:can="http://www.asam.net/xml/fbx/can" xmlns:flexray="http://www.asam.net/xml/fbx/flexray" xmlns:lin="http://www.asam.net/xml/fbx/lin" xmlns:ho="http://www.asam.net/xml" xmlns:ni="http://www.ni.com/xnet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.asam.net/xml/fbx/all \FIBEX311schema\fibex4multiplatform.xsd" VERSION="3.1.1">
+  <fx:PROJECT ID="NI-XNET">
+    <ho:SHORT-NAME>XNET1</ho:SHORT-NAME>
+  </fx:PROJECT>
+  <fx:ELEMENTS>
+    <fx:CLUSTERS>
+      <fx:CLUSTER ID="cluster1">
+        <ho:SHORT-NAME>CAN4</ho:SHORT-NAME>
+        <ho:DESC></ho:DESC>
+        <fx:SPEED>250000</fx:SPEED>
+        <fx:IS-HIGH-LOW-BIT-ORDER>true</fx:IS-HIGH-LOW-BIT-ORDER>
+        <fx:BIT-COUNTING-POLICY>SAWTOOTH</fx:BIT-COUNTING-POLICY>
+        <fx:PROTOCOL xsi:type="can:PROTOCOL-TYPE">CAN</fx:PROTOCOL>
+        <fx:CHANNEL-REFS>
+          <fx:CHANNEL-REF ID-REF="channel1"/>
+        </fx:CHANNEL-REFS>
+        <fx:MEDIUM>ELECTRICAL</fx:MEDIUM>
+        <fx:MANUFACTURER-EXTENSION>
+          <ni:NI-XNET-EXTENSION>
+            <ni:APPLICATION-PROTOCOL>J1939</ni:APPLICATION-PROTOCOL>
+          </ni:NI-XNET-EXTENSION>
+        </fx:MANUFACTURER-EXTENSION>
+      </fx:CLUSTER>
+    </fx:CLUSTERS>
+    <fx:CHANNELS>
+      <fx:CHANNEL ID="channel1">
+        <ho:SHORT-NAME>Channel1</ho:SHORT-NAME>
+        <fx:PDU-TRIGGERINGS>
+        <fx:PDU-TRIGGERING ID="pdutrg1">
+          <fx:TIMINGS>
+            <fx:CYCLIC-TIMING>
+              <fx:REPEATING-TIME-RANGE>
+                <fx:VALUE>PT0.10000000S</fx:VALUE>
+              </fx:REPEATING-TIME-RANGE>
+            </fx:CYCLIC-TIMING>
+          </fx:TIMINGS>
+          <fx:PDU-REF ID-REF="pdu2"/>
+        </fx:PDU-TRIGGERING>
+        <fx:PDU-TRIGGERING ID="pdutrg2">
+          <fx:TIMINGS>
+            <fx:CYCLIC-TIMING>
+              <fx:REPEATING-TIME-RANGE>
+                <fx:VALUE>PT0.10000000S</fx:VALUE>
+              </fx:REPEATING-TIME-RANGE>
+            </fx:CYCLIC-TIMING>
+          </fx:TIMINGS>
+          <fx:PDU-REF ID-REF="pdu1"/>
+        </fx:PDU-TRIGGERING>
+        </fx:PDU-TRIGGERINGS>
+        <fx:FRAME-TRIGGERINGS>
+          <fx:FRAME-TRIGGERING ID="trig1">
+            <fx:IDENTIFIER>
+              <fx:IDENTIFIER-VALUE xsi:type="can:IDENTIFIER-VALUE-TYPE" EXTENDED-ADDRESSING="true">419389729</fx:IDENTIFIER-VALUE>
+            </fx:IDENTIFIER>
+            <fx:FRAME-REF ID-REF="frm1"/>
+            <fx:MANUFACTURER-EXTENSION>
+              <ni:NI-XNET-EXTENSION>
+                <ni:APPLICATION-PROTOCOL>J1939</ni:APPLICATION-PROTOCOL>
+              </ni:NI-XNET-EXTENSION>
+            </fx:MANUFACTURER-EXTENSION>
+          </fx:FRAME-TRIGGERING>
+          <fx:FRAME-TRIGGERING ID="trig2">
+            <fx:IDENTIFIER>
+              <fx:IDENTIFIER-VALUE xsi:type="can:IDENTIFIER-VALUE-TYPE" EXTENDED-ADDRESSING="true">419359521</fx:IDENTIFIER-VALUE>
+            </fx:IDENTIFIER>
+            <fx:FRAME-REF ID-REF="frm2"/>
+            <fx:MANUFACTURER-EXTENSION>
+              <ni:NI-XNET-EXTENSION>
+                <ni:APPLICATION-PROTOCOL>J1939</ni:APPLICATION-PROTOCOL>
+              </ni:NI-XNET-EXTENSION>
+            </fx:MANUFACTURER-EXTENSION>
+          </fx:FRAME-TRIGGERING>
+        </fx:FRAME-TRIGGERINGS>
+      </fx:CHANNEL>
+    </fx:CHANNELS>
+    <fx:ECUS>
+      <fx:ECU ID="ecu1">
+        <ho:SHORT-NAME>APU</ho:SHORT-NAME>
+        <ho:DESC></ho:DESC>
+        <fx:CONTROLLERS>
+          <fx:CONTROLLER ID="ctrl1">
+            <ho:SHORT-NAME>Controller1</ho:SHORT-NAME>
+            <fx:MANUFACTURER-EXTENSION>
+              <ni:NI-XNET-EXTENSION>
+                <ni:J1939-NODE-ADDRESS>254</ni:J1939-NODE-ADDRESS>
+                <ni:J1939-NODE-NAME>0x0001010000000000</ni:J1939-NODE-NAME>
+              </ni:NI-XNET-EXTENSION>
+            </fx:MANUFACTURER-EXTENSION>
+          </fx:CONTROLLER>
+        </fx:CONTROLLERS>
+        <fx:CONNECTORS>
+          <fx:CONNECTOR  ID="con1">
+            <fx:CHANNEL-REF ID-REF="channel1"/>
+            <fx:CONTROLLER-REF ID-REF="ctrl1"/>
+            <fx:OUTPUTS>
+              <fx:OUTPUT-PORT ID="outp1">
+                <fx:FRAME-TRIGGERING-REF ID-REF="trig1"/>
+                <fx:COMPLETE-FRAME/>
+              </fx:OUTPUT-PORT>
+              <fx:OUTPUT-PORT ID="outp2">
+                <fx:FRAME-TRIGGERING-REF ID-REF="trig2"/>
+                <fx:COMPLETE-FRAME/>
+              </fx:OUTPUT-PORT>
+            </fx:OUTPUTS>
+          </fx:CONNECTOR>
+        </fx:CONNECTORS>
+      </fx:ECU>
+    </fx:ECUS>
+    <fx:PDUS>
+      <fx:PDU ID="pdu1">
+        <ho:SHORT-NAME>APU_Heartbeat_pdu</ho:SHORT-NAME>
+        <ho:DESC></ho:DESC>
+        <fx:BYTE-LENGTH>8</fx:BYTE-LENGTH>
+        <fx:PDU-TYPE>APPLICATION</fx:PDU-TYPE>
+        <fx:SIGNAL-INSTANCES>
+          <fx:SIGNAL-INSTANCE ID="sgi1">
+            <fx:BIT-POSITION>0</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig22"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi2">
+            <fx:BIT-POSITION>32</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig23"/>
+          </fx:SIGNAL-INSTANCE>
+        </fx:SIGNAL-INSTANCES>
+      </fx:PDU>
+      <fx:PDU ID="pdu2">
+        <ho:SHORT-NAME>Status_APU_Operation_Mode_pdu</ho:SHORT-NAME>
+        <ho:DESC></ho:DESC>
+        <fx:BYTE-LENGTH>8</fx:BYTE-LENGTH>
+        <fx:PDU-TYPE>APPLICATION</fx:PDU-TYPE>
+        <fx:SIGNAL-INSTANCES>
+          <fx:SIGNAL-INSTANCE ID="sgi3">
+            <fx:BIT-POSITION>0</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig1"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi4">
+            <fx:BIT-POSITION>1</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig2"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi5">
+            <fx:BIT-POSITION>2</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig3"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi6">
+            <fx:BIT-POSITION>3</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig4"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi7">
+            <fx:BIT-POSITION>4</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig5"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi8">
+            <fx:BIT-POSITION>5</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig6"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi9">
+            <fx:BIT-POSITION>6</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig7"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi10">
+            <fx:BIT-POSITION>7</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig8"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi11">
+            <fx:BIT-POSITION>8</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig9"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi12">
+            <fx:BIT-POSITION>13</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig10"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi13">
+            <fx:BIT-POSITION>14</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig11"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi14">
+            <fx:BIT-POSITION>15</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig12"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi15">
+            <fx:BIT-POSITION>16</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig13"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi16">
+            <fx:BIT-POSITION>20</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig14"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi17">
+            <fx:BIT-POSITION>24</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig15"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi18">
+            <fx:BIT-POSITION>32</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig16"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi19">
+            <fx:BIT-POSITION>48</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig17"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi20">
+            <fx:BIT-POSITION>56</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig18"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi21">
+            <fx:BIT-POSITION>58</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig19"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi22">
+            <fx:BIT-POSITION>60</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig20"/>
+          </fx:SIGNAL-INSTANCE>
+          <fx:SIGNAL-INSTANCE ID="sgi23">
+            <fx:BIT-POSITION>62</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+            <fx:SIGNAL-REF ID-REF="sig21"/>
+          </fx:SIGNAL-INSTANCE>
+        </fx:SIGNAL-INSTANCES>
+      </fx:PDU>
+    </fx:PDUS>
+    <fx:FRAMES>
+      <fx:FRAME ID="frm1">
+        <ho:SHORT-NAME>Status_APU_Operation_Mode</ho:SHORT-NAME>
+        <ho:DESC></ho:DESC>
+        <fx:BYTE-LENGTH>8</fx:BYTE-LENGTH>
+        <fx:PDU-INSTANCES>
+          <fx:PDU-INSTANCE ID="pduinst1">
+            <fx:PDU-REF ID-REF="pdu2"/>
+            <fx:BIT-POSITION>0</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+          </fx:PDU-INSTANCE>
+        </fx:PDU-INSTANCES>
+      </fx:FRAME>
+      <fx:FRAME ID="frm2">
+        <ho:SHORT-NAME>APU_Heartbeat</ho:SHORT-NAME>
+        <ho:DESC></ho:DESC>
+        <fx:BYTE-LENGTH>8</fx:BYTE-LENGTH>
+        <fx:PDU-INSTANCES>
+          <fx:PDU-INSTANCE ID="pduinst2">
+            <fx:PDU-REF ID-REF="pdu1"/>
+            <fx:BIT-POSITION>0</fx:BIT-POSITION>
+            <fx:IS-HIGH-LOW-BYTE-ORDER>false</fx:IS-HIGH-LOW-BYTE-ORDER>
+          </fx:PDU-INSTANCE>
+        </fx:PDU-INSTANCES>
+      </fx:FRAME>
+    </fx:FRAMES>
+    <fx:SIGNALS>
+      <fx:SIGNAL ID="sig1">
+        <ho:SHORT-NAME>_01_1_Reserved</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod1"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig2">
+        <ho:SHORT-NAME>_01_2_Verfuegbarkeit_Ansteuerung_Load</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod2"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig3">
+        <ho:SHORT-NAME>_01_3_Verfuegbarkeit_Ansteuerung_Preheat</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod3"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig4">
+        <ho:SHORT-NAME>_01_4_Verfuegbarkeit_Ansteuerung_Auto_Silent</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod4"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig5">
+        <ho:SHORT-NAME>_01_5_Verfuegbarkeit_Ansteuerung_Auto</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod5"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig6">
+        <ho:SHORT-NAME>_01_6_Verfuegbarkeit_Ansteuerung_Cont_Silent</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod6"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig7">
+        <ho:SHORT-NAME>_01_7_Verfuegbarkeit_Ansteuerung_Cont</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod7"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig8">
+        <ho:SHORT-NAME>_01_8_Verfuegbarkeit_Ansteuerung_Stop</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod8"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig9">
+        <ho:SHORT-NAME>_02_1_5_Reserved</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod9"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig10">
+        <ho:SHORT-NAME>_02_6_Verfuegbarkeit_Ansteuerung_Diag_IPS</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod10"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig11">
+        <ho:SHORT-NAME>_02_7_Verfuegbarkeit_Ansteuerung_Nachkuehlen</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod11"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig12">
+        <ho:SHORT-NAME>_02_8_Verfuegbarkeit_Ansteuerung_Entstaubung</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod12"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig13">
+        <ho:SHORT-NAME>_03_1_4_Operation_State</ho:SHORT-NAME>
+        <ho:DESC>0000b: Stop
+0001b: Vorglühen
+0010b: Motorstart
+0011b: Warmlaufen
+0100b: Laderegelung
+0101b: HTW-Betrieb
+0110b: Diagnose (IPS)
+1111b: Don't care</ho:DESC>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod13"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig14">
+        <ho:SHORT-NAME>_03_5_8_Operation_Mode</ho:SHORT-NAME>
+        <ho:DESC>0000b: APU Stop
+0001b: Continuous
+0010b: Continuous (silent)
+0011b: Automatic
+0100b: Automatic (silent)
+0101b: Start extern (via FAK)
+1001b: Vorglühen {Status gilt nur für die 7kW FARYMANN APU}
+1010b: Load {Status gilt nur für die 7kW FARYMANN APU}
+1111b: Don't care</ho:DESC>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod14"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig15">
+        <ho:SHORT-NAME>_04_Operation_State_Progress</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod15"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig16">
+        <ho:SHORT-NAME>_05_06_APU_Operation_Time</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod16"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig17">
+        <ho:SHORT-NAME>_07_Status_Sonderfunktionen</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod17"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig18">
+        <ho:SHORT-NAME>_08_1_2_Reserved</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod18"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig19">
+        <ho:SHORT-NAME>_08_3_4_Status_Motorsensorueberwachung</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod19"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig20">
+        <ho:SHORT-NAME>_08_5_6_Status_Ultracap_Mode</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod20"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig21">
+        <ho:SHORT-NAME>_08_7_8_Status_MGU_Operation_Mode</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod21"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig22">
+        <ho:SHORT-NAME>_01_04_Alive_Counter</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>0</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod22"/>
+      </fx:SIGNAL>
+      <fx:SIGNAL ID="sig23">
+        <ho:SHORT-NAME>_05_08_Reserved</ho:SHORT-NAME>
+        <fx:DEFAULT-VALUE>255</fx:DEFAULT-VALUE>
+        <fx:CODING-REF ID-REF="cod23"/>
+      </fx:SIGNAL>
+    </fx:SIGNALS>
+  </fx:ELEMENTS>
+  <fx:PROCESSING-INFORMATION xmlns="http://www.asam.net/xml">
+    <ho:UNIT-SPEC>
+      <ho:UNITS>
+        <ho:UNIT ID="unit1">
+          <ho:SHORT-NAME>unit1</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit2">
+          <ho:SHORT-NAME>unit2</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit3">
+          <ho:SHORT-NAME>unit3</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit4">
+          <ho:SHORT-NAME>unit4</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit5">
+          <ho:SHORT-NAME>unit5</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit6">
+          <ho:SHORT-NAME>unit6</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit7">
+          <ho:SHORT-NAME>unit7</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit8">
+          <ho:SHORT-NAME>unit8</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit9">
+          <ho:SHORT-NAME>unit9</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit10">
+          <ho:SHORT-NAME>unit10</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit11">
+          <ho:SHORT-NAME>unit11</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit12">
+          <ho:SHORT-NAME>unit12</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit13">
+          <ho:SHORT-NAME>unit13</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit14">
+          <ho:SHORT-NAME>unit14</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit15">
+          <ho:SHORT-NAME>unit15</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit16">
+          <ho:SHORT-NAME>unit16</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit17">
+          <ho:SHORT-NAME>unit17</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit18">
+          <ho:SHORT-NAME>unit18</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit19">
+          <ho:SHORT-NAME>unit19</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit20">
+          <ho:SHORT-NAME>unit20</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit21">
+          <ho:SHORT-NAME>unit21</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit22">
+          <ho:SHORT-NAME>unit22</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+        <ho:UNIT ID="unit23">
+          <ho:SHORT-NAME>unit23</ho:SHORT-NAME>
+          <ho:DISPLAY-NAME></ho:DISPLAY-NAME>
+        </ho:UNIT>
+      </ho:UNITS>
+    </ho:UNIT-SPEC>
+    <fx:CODINGS>
+      <fx:CODING ID="cod1">
+        <ho:SHORT-NAME>cod1</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm1</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit1"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod2">
+        <ho:SHORT-NAME>cod2</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm2</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit2"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod3">
+        <ho:SHORT-NAME>cod3</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm3</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit3"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod4">
+        <ho:SHORT-NAME>cod4</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm4</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit4"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod5">
+        <ho:SHORT-NAME>cod5</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm5</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit5"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod6">
+        <ho:SHORT-NAME>cod6</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm6</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit6"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod7">
+        <ho:SHORT-NAME>cod7</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm7</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit7"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod8">
+        <ho:SHORT-NAME>cod8</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm8</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit8"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod9">
+        <ho:SHORT-NAME>cod9</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>5</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm9</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit9"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod10">
+        <ho:SHORT-NAME>cod10</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm10</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit10"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod11">
+        <ho:SHORT-NAME>cod11</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm11</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit11"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod12">
+        <ho:SHORT-NAME>cod12</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>1</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm12</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit12"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod13">
+        <ho:SHORT-NAME>cod13</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>4</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm13</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit13"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod14">
+        <ho:SHORT-NAME>cod14</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>4</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm14</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit14"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod15">
+        <ho:SHORT-NAME>cod15</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>8</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm15</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit15"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod16">
+        <ho:SHORT-NAME>cod16</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT16" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>16</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm16</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit16"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod17">
+        <ho:SHORT-NAME>cod17</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>8</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm17</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit17"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod18">
+        <ho:SHORT-NAME>cod18</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>2</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm18</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit18"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod19">
+        <ho:SHORT-NAME>cod19</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>2</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm19</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit19"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod20">
+        <ho:SHORT-NAME>cod20</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>2</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm20</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit20"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod21">
+        <ho:SHORT-NAME>cod21</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT8" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>2</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm21</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit21"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod22">
+        <ho:SHORT-NAME>cod22</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT32" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>32</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm22</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit22"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+      <fx:CODING ID="cod23">
+        <ho:SHORT-NAME>cod23</ho:SHORT-NAME>
+        <ho:CODED-TYPE ho:BASE-DATA-TYPE="A_UINT32" CATEGORY="STANDARD-LENGTH-TYPE" ENCODING="UNSIGNED">
+          <ho:BIT-LENGTH>32</ho:BIT-LENGTH>
+        </ho:CODED-TYPE>
+        <ho:COMPU-METHODS>
+          <ho:COMPU-METHOD>
+            <ho:SHORT-NAME>cpm23</ho:SHORT-NAME>
+            <ho:CATEGORY>LINEAR</ho:CATEGORY>
+            <ho:UNIT-REF ID-REF="unit23"/>
+            <ho:PHYS-CONSTRS>
+              <ho:SCALE-CONSTR>
+                <ho:LOWER-LIMIT INTERVAL-TYPE="CLOSED">0</ho:LOWER-LIMIT>
+                <ho:UPPER-LIMIT INTERVAL-TYPE="CLOSED">1000</ho:UPPER-LIMIT>
+              </ho:SCALE-CONSTR>
+            </ho:PHYS-CONSTRS>
+            <ho:COMPU-INTERNAL-TO-PHYS>
+              <ho:COMPU-SCALES>
+                <ho:COMPU-SCALE>
+                  <ho:COMPU-RATIONAL-COEFFS>
+                    <ho:COMPU-NUMERATOR>
+                      <ho:V>0</ho:V>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-NUMERATOR>
+                    <ho:COMPU-DENOMINATOR>
+                      <ho:V>1</ho:V>
+                    </ho:COMPU-DENOMINATOR>
+                  </ho:COMPU-RATIONAL-COEFFS>
+                </ho:COMPU-SCALE>
+              </ho:COMPU-SCALES>
+            </ho:COMPU-INTERNAL-TO-PHYS>
+          </ho:COMPU-METHOD>
+        </ho:COMPU-METHODS>
+      </fx:CODING>
+    </fx:CODINGS>
+  </fx:PROCESSING-INFORMATION>
+</fx:FIBEX>

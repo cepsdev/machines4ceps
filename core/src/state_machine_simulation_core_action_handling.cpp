@@ -870,7 +870,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			if (result_of_branch != nullptr) return result_of_branch;
 		} else if (n->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "Event")
 		{
-			log() << "[QUEUEING EVENT][" << ceps::ast::name(ceps::ast::as_symbol_ref(n)) <<"]" << "\n";
+			//log() << "[QUEUEING EVENT][" << ceps::ast::name(ceps::ast::as_symbol_ref(n)) <<"]" << "\n";
 			event_t ev(ceps::ast::name(ceps::ast::as_symbol_ref(n)));
 			ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
 			ev.already_sent_to_out_queues_ = false;

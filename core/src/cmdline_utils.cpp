@@ -265,13 +265,6 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 				}
 				continue; 
 			}
-
-
-
-
-
-
-
 			if (is_output_path)
 				global_out_path = out_path = normalize_path(arg.substr(ofs));
 			else if (is_report_out)

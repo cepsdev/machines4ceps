@@ -2,7 +2,7 @@
 # sm4ceps - Makefile
 #
 
-includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src" -I"../log4kmw/include" -I"core/src_gen/logging"
+includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src" -I"../log4kmw/include" -I"core/src_gen/logging" -I"./utils" 
 #cflags := -O2 -s -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
 #cflags := -g3 -O2 -pg -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
 cflags := -g3 -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
@@ -24,7 +24,7 @@ $(TARGET)/state_machine_simulation_core_guard_handling.o $(TARGET)/cmdline_utils
 $(TARGET)/cal_sender.o $(TARGET)/cal_receiver.o $(TARGET)/state_machine_simulation_core_plugin_interface.o $(TARGET)/state_machine_simulation_core_buildsms.o \
 $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
 $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/sm_comm_naive_msg_prot.o $(TARGET)/cppgen.o $(TARGET)/dotgen.o $(TARGET)/livelogger.o $(TARGET)/rdwrn.o\
-$(TARGET)/sm_livelog_storage_utils.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o $(TARGET)/cover_path.o $(TARGET)/sm_global_functions.o
+$(TARGET)/sm_livelog_storage_utils.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o $(TARGET)/cover_path.o $(TARGET)/sm_global_functions.o $(TARGET)/fibex_import.o 
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
 	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o $(cepslibs)/ceps_interpreter_macros.o $(cepslibs)/ceps_interpreter_functions.o \
 	$(TARGET)/main.o $(TARGET)/state_machine_simulation_core.o  $(TARGET)/state_machines.o $(TARGET)/state_machine_simulation_core_action_handling.o \
@@ -32,7 +32,7 @@ $(TARGET)/sm_livelog_storage_utils.o $(TARGET)/signalgenerator.o $(TARGET)/gensm
 	$(TARGET)/state_machine_simulation_core_guard_handling.o $(TARGET)/sm_sim_core_simulation_loop.o  $(TARGET)/cppgen.o $(TARGET)/dotgen.o \
 	$(TARGET)/cmdline_utils.o $(TARGET)/sm_sim_core_asserts.o $(TARGET)/sm_comm_naive_msg_prot.o $(TARGET)/serialization.o $(TARGET)/sm_raw_frame.o $(TARGET)/sm_xml_frame.o $(TARGET)/cal_sender.o $(TARGET)/cal_receiver.o $(TARGET)/state_machine_simulation_core_buildsms.o \
 	$(TARGET)/pugixml.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o \
-	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/livelogger.o $(TARGET)/sm_livelog_storage_utils.o $(TARGET)/rdwrn.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o $(TARGET)/cover_path.o $(TARGET)/sm_global_functions.o -o $(TARGET)/sm
+	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/livelogger.o $(TARGET)/sm_livelog_storage_utils.o $(TARGET)/rdwrn.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o $(TARGET)/cover_path.o $(TARGET)/sm_global_functions.o $(TARGET)/fibex_import.o -o $(TARGET)/sm
 
 $(TARGET)/sm_trace: $(TARGET)/pugixml.o $(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
 $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o
@@ -119,8 +119,8 @@ $(TARGET)/cover_path.o: core/src/modelling/cover_path.cpp
 	$(CXX)   $(cflags) $(includes) core/src/modelling/cover_path.cpp -c -o $(TARGET)/cover_path.o
 $(TARGET)/sm_global_functions.o: core/src/sm_global_functions.cpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) core/src/sm_global_functions.cpp -c -o $(TARGET)/sm_global_functions.o
-	
-
+$(TARGET)/fibex_import.o: utils/fibex_import.cpp utils/fibex_import.hpp
+	$(CXX)   $(cflags) $(includes) utils/fibex_import.cpp -c -o $(TARGET)/fibex_import.o
 clean:
 	rm $(TARGET)/*
 

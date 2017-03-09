@@ -13,23 +13,28 @@ static void invariant(std::string const &){}
 void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,int sms,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 		if (get_inf(sms,executionloop_context_t::VISITED)) return;
 		set_inf(sms,executionloop_context_t::VISITED,true);
+
 		if (!v[sms]) return;
 
 		for(auto i = state_to_children[sms]+1;children[i];++i){
 			if (!is_sm(children[i])) continue;
 			do_enter_impl(smc,children[i],v);
 		}
-		if (!current_states[sms] && on_enter.size() > (size_t)sms && on_enter[sms]) {
-            smc->current_smp() = get_assoc_sm(sms);
-			on_enter[sms]();
-
+		if (!current_states[sms] /*&& on_enter.size() > (size_t)sms && on_enter[sms]*/) {
+			smc->current_smp() = get_assoc_sm(sms);
+            //std::cout << "##### Calling on_enter B" << std::endl;
+			if (on_enter.size() > (size_t)sms && on_enter[sms])
+			 on_enter[sms]();
+			else{
+				auto it = smc->current_smp()->find_action("on_enter");
+				if (it && it->body_ != nullptr)
+				 smc->execute_action_seq(smc->current_smp(),it->body());
+			}
 		}
-
 	}
 void executionloop_context_t::do_enter(State_machine_simulation_core* smc,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 
 		if (n){
-			//std::cout << "do_enter() n="<<n<<" sms[0] == "<< sms[0] << "\n";
 			for(int i = 0;i != number_of_states+1;++i) set_inf(i,executionloop_context_t::VISITED,false);
 			for(int j = 0; j != n;++j) do_enter_impl(smc,*(sms+j),v);
 		}
@@ -243,6 +248,7 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,cep
 		for(;i != (size_t)execution_ctxt.transitions.size();++i){
 			auto const & t = execution_ctxt.transitions[i];
 			if (t.smp != smp) break;
+			if (temp[t.to] && ev_id == 0 && t.ev == 0 && t.from == t.to && t.guard == nullptr && t.script_guard.length() == 0) continue;
 			if (t.ev == ev_id && t.from == s){
 				if (!t.script_guard.empty()){
 					State_machine_simulation_core::states_t st;
@@ -341,6 +347,12 @@ static void run_triggered_actions(State_machine_simulation_core* smc,
 
 static void log_state_changes(State_machine_simulation_core* smc,executionloop_context_t & execution_ctxt, executionloop_context_t::states_t & temp){
  if (!smc->quiet_mode() || smc->live_logger()){
+  auto changes = false;
+  for(size_t z = 0; z != execution_ctxt.current_states.size(); ++z){
+	if (execution_ctxt.current_states[z] == temp[z]) continue;
+	changes = true;break;
+  }
+  if (!changes) return;
   std::stringstream ss;
   ss << "Set of states changed: ";
   for(size_t z = 0; z != execution_ctxt.current_states.size(); ++z){

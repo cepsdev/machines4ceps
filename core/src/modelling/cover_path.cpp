@@ -13,6 +13,32 @@ static std::string dot_expr_to_string(ceps::ast::Nodebase_ptr e, std::string sep
     return "";
 }
 
+/**
+ * cover_path
+ *
+ * Input: list of sm states state-list (fully qualified).
+ * Output : cover-sm which enters final state iff state-list is a subsequence of the execution sequence.
+ *
+ * Example:
+ *
+ * Input is
+ * cover_path{
+    Movement.Standstill;
+    Movement.Moving;
+   };
+ *
+ *Output is:
+
+ Statemachine{
+  id{cover_1;};
+  cover{cover_edges_upto_1;};
+  States{Initial;step_1;step_2;Final;};
+  Transition{Initial;step_1;in_state(Movement.Standstill);};
+  Transition{step_1;step_2;in_state(Movement.Moving);};
+  Transition{step_2;Final;};
+ };
+ *
+ */
 ceps::ast::Nodeset sm4ceps::modelling::cover_path(ceps::ast::Struct_ptr what,
 		                                          ceps::ast::Nodebase_ptr root,
  				                                  ceps::parser_env::Symbol* sym,
@@ -31,7 +57,6 @@ ceps::ast::Nodeset sm4ceps::modelling::cover_path(ceps::ast::Struct_ptr what,
 		 part_id = name(as_id_ref(as_binop_ref(e).right()));
 		 break;
 	 } else if ( e->kind() == Ast_node_kind::binary_operator && op(as_binop_ref(e)) == '.' ){
-		 //step new ceps::ast::Call_parameters($1,nullptr,nullptr);
 		 steps.push_back(
 				 std::make_pair(new ceps::ast::Func_call(new ceps::ast::Identifier("in_state"),new ceps::ast::Call_parameters(e,nullptr,nullptr) ),
 				                dot_expr_to_string(e,"_"))
@@ -43,7 +68,7 @@ ceps::ast::Nodeset sm4ceps::modelling::cover_path(ceps::ast::Struct_ptr what,
 
  auto gen_sm = sm("__coverpath___"+part_id);
 
- for(auto e : steps) std::cout << e.second << std::endl;
+ //for(auto e : steps) std::cout << e.second << std::endl;
 
  /*int guard_ctr = 0;
  gen_sm.add_state("Initial");

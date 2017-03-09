@@ -12,6 +12,7 @@
 #include "core/include/sm_xml_frame.hpp"
 #include "core/include/modelling/partitions.hpp"
 #include "core/include/modelling/cover_path.hpp"
+#include "utils/fibex_import.hpp"
 
 #include "pugixml.hpp"
 #ifdef __gnu_linux__
@@ -90,7 +91,23 @@ void State_machine_simulation_core::process_files(	std::vector<std::string> cons
 {
 	for(auto const & file_name : file_names)
 	{
+		if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) == ".xml"){
 
+			auto root_node = ceps::ast::read_xml_file(file_name);
+			if (root_node == nullptr) fatal_(ERR_FILE_OPEN_FAILED, file_name);
+			auto v = ceps::ast::nlf_ptr(root_node);
+			for(auto p:v->children()){
+				if (p->kind() != ceps::ast::Ast_node_kind::structdef) continue;
+				if (ceps::ast::name(as_struct_ref(p)) == "fx:FIBEX" ){
+					auto rr = sm4ceps::utils::import_fibex(this,as_struct_ptr(p),ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env());
+					if (rr.size())
+						current_universe().nodes().insert(current_universe().nodes().end(),rr.nodes().begin(), rr.nodes().end());
+				} else {
+				 current_universe().nodes().push_back(p);
+				}
+			}
+			continue;
+		}
 		std::fstream def_file{ last_file_processed = file_name};
 		if (!def_file) fatal_(ERR_FILE_OPEN_FAILED,file_name);
 
