@@ -1,0 +1,4 @@
+Systemstate t;
+Globals{
+ t = 2.0 * rpm;
+};
