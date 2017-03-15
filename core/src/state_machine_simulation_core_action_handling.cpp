@@ -694,7 +694,7 @@ void State_machine_simulation_core::send_raw_frame(void* chunk,size_t len,size_t
  if (channel == nullptr) fatal_(-1,channel_id+" is not an output channel.");
  char* msg_block = new char[len];
  memcpy(msg_block,chunk,len);
- channel->push(std::make_tuple(msg_block,len,header_len));
+ channel->push(std::make_tuple(msg_block,len,header_len,0));
 }
 
 ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string const & id, ceps::ast::Call_parameters* params, void* context)

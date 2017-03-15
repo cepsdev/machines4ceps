@@ -1,0 +1,10 @@
+
+transport{id{Channel1;};canbus{bus_id { "vcan0"; };};};
+
+Simulation{
+ timeout{1.0*s;};
+ for(i : 1 .. 10){
+  rpm = rpm + 1;
+  send(Engine_RPM,Channel1);
+ }
+};

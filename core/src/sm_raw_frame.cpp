@@ -202,9 +202,12 @@ size_t fill_raw_chunk( size_t & header_length, State_machine_simulation_core* sm
 			auto temp_node = ceps::ast::Int(data_size,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 			return fill_raw_chunk(header_length,smc,&temp_node,data_size, data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
 		} else smc->fatal_(-1,std::string("Raw frame:  Unknown identifier '")+ceps::ast::name(ident)+"'");
-	}else if (p->kind() == ceps::ast::Ast_node_kind::int_literal){
+	}else if (p->kind() == ceps::ast::Ast_node_kind::int_literal || p->kind() == ceps::ast::Ast_node_kind::float_literal){
 		if (write_data){
-			std::uint64_t v = (std::uint64_t)value(as_int_ref(p));
+			std::uint64_t v;
+			if (p->kind() == ceps::ast::Ast_node_kind::int_literal) v = (std::uint64_t)value(as_int_ref(p));
+			v = (std::uint64_t)value(as_double_ref(p));
+
 			if (bit_width < 64){
 			   if (bit_width == 1){ v =  (v ? 1 : 0) ;  }
 			   else if (bit_width == 4) v &= 0xFLL;
@@ -261,9 +264,7 @@ size_t fill_raw_chunk( size_t & header_length, State_machine_simulation_core* sm
 		}
 		return bit_width;
 	}
-	else if (p->kind() == ceps::ast::Ast_node_kind::float_literal) {
-		 smc->fatal_(-1,"Floating point numbers not supported in raw frames.");
-	}
+
 	else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
 		 std::string s = ceps::ast::value(ceps::ast::as_string_ref(p));
 		 int corr = 0;
@@ -352,15 +353,11 @@ void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& dat
 	scope.children().clear();
 
 	if (frame_pattern == nullptr) return nullptr;
-	DEBUG << "[Podframe_generator::gen_msg][pattern]" << *frame_pattern << "\n\n";
 	auto chunk_size = compute_size(header_length_,smc,ceps::ast::nlf_ptr(frame_pattern)->children());
 	data_size = chunk_size;
-	DEBUG << "[Podframe_generator::gen_msg][CHUNK_SIZE="<<chunk_size<<"]\n";
 	char* data = new char[chunk_size];
 	bzero(data,chunk_size);
 	fill_raw_chunk(header_length_, smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0);
-	for(size_t offs = 0; offs < chunk_size;++offs)
-		DEBUG <<"[Podframe_generator::gen_msg][CHUNK_BYTE_"<< offs << "="<< ((std::uint32_t) *( (unsigned char*)data+offs)) << "]\n";
 
 	return data;
 }
@@ -685,7 +682,7 @@ bool Podframe_generator::read_msg(char* data,size_t size,
 
 
 
-void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* frames,
+void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,
@@ -720,7 +717,7 @@ void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_
 		rp = nullptr;result = nullptr;
 
 		DEBUG << "[comm_sender_generic_tcp_out_thread][WAIT_FOR_FRAME][pop_frame="<<pop_frame <<"]\n";
-		std::tuple<char*,size_t,size_t> frame_info;
+		std::tuple<char*,size_t,size_t,int> frame_info;
 
 		if (pop_frame) {q->wait_and_pop(frame_info);frame_size = std::get<1>(frame_info);frame= std::get<0>(frame_info);}
 		pop_frame = false;

@@ -200,7 +200,7 @@ static bool  handle_event_triggered_senders(State_machine_simulation_core* smc,e
   	  processed = true;
 	  size_t data_size;
 	  char* data = (char*)p.frame_gen_->gen_msg(smc,data_size);
-	  if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length()));
+	  if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length(),0));
 	  break;
 	}
   }
@@ -1097,7 +1097,7 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
             #ifdef PRINT_DEBUG
 			 DEBUG << "[State_machine_simulation_core::simulate][PUSH_FRAME_TO_SENDER_QUEUE]\n";
             #endif
-			if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length()));
+			if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length(),0));
 		 }
 
 		 if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_)) {

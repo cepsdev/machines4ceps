@@ -1,0 +1,28 @@
+sender
+{
+  id { can1; };
+  transport { 
+   canbus { 
+    //bus_id { "vcan0"; };
+    can_id_mapping{
+     gaga;1;
+     Engine_RPM;674;
+    };
+    }; 
+  };
+};
+
+transport{id{can1;};canbus{bus_id { "vcan0"; };};};
+
+
+Simulation{
+ timeout{1.0*s;};
+ rpm = rpm + 1.0;
+ send(Engine_RPM,can1);
+ rpm = rpm + 1.0;
+ send(Engine_RPM,can1);
+ rpm = rpm + 1.0;
+ send(Engine_RPM,can1);
+ rpm = rpm + 1.0;
+ send(Engine_RPM,can1);
+};

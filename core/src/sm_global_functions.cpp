@@ -104,23 +104,28 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		if(args.size() == 2
 				&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
 				&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
+
 			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
 			auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
 			auto it_frame_gen = frame_generators().find(id);
-			//std::cout << "************************* \n";
-			//std::cout << id << std::endl;
-			//std::cout << "************************* \n";
 			if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a frame id.");
 			auto channel = get_out_channel(ch_id);
 			if (channel == nullptr) fatal_(-1,ch_id+" is not an output channel.");
 			size_t ds;
 			char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
 			if (ds > 0 && msg_block != nullptr){
-				channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length()));
+				int frame_id = 0;
+				if (it_frame_gen->second->header_length() == 0){
+					auto it = channel_frame_name_to_id[ch_id].find(id);
+					if (it == channel_frame_name_to_id[ch_id].end())
+						fatal_(-1,"send: No header/frame id mapping found for the channel/frame combination '"+ch_id+"/"+id+"'");
+					frame_id = it->second;
+				}
+				channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length(),frame_id));
 				return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 			}
-			else fatal_(-1, "send: failed to insert message into queue.");
-		}
+			else fatal_(-1, "send() : failed to insert message into queue.");
+		} fatal_(-1, " send() : wrong number/types of arguments.");
 		return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	} else if (id == "write_read_frm"){
 		if (args.size() == 2

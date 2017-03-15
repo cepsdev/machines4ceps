@@ -303,14 +303,14 @@ private:
 		}
 	};
 	Log std_log_;
-	std::map<std::string,threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* > id_to_out_chan_;
+	std::map<std::string,threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* > id_to_out_chan_;
 public:
 
-	threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* get_out_channel(std::string const & s){
+	threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* get_out_channel(std::string const & s){
 		return id_to_out_chan_[s];
 	}
 
-	void set_out_channel(std::string const & s, threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* ch){
+	void set_out_channel(std::string const & s, threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* ch){
 		id_to_out_chan_[s] = ch;
 	}
 
@@ -427,7 +427,7 @@ public:
 		std::string event_id_;
 		std::string frame_id_;
 		Rawframe_generator* frame_gen_;
-		threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* frame_queue_;
+		threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frame_queue_;
 		std::thread* thread_;
 	};
 	std::vector<event_triggered_sender_t>event_triggered_sender_;
@@ -598,7 +598,10 @@ public:
     void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*,std::set<int>& highlighted_states, std::ostream& os);
 
 	//CAL (Sender)
-
+private:
+    std::unordered_map<std::string, std::unordered_map<int,std::uint32_t> > channel_frame_to_id;
+    std::unordered_map<std::string, std::unordered_map<std::string,int> > channel_frame_name_to_id;
+public:
 	bool handle_userdefined_sender_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 	bool handle_userdefined_receiver_definition(std::string call_name, ceps::ast::Nodeset const & ns);
 

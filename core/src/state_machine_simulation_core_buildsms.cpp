@@ -58,7 +58,7 @@ extern std::vector<std::thread*> comm_threads;
 bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
 							std::string & func_name,
 							std::vector<ceps::ast::Nodebase_ptr>& args);
-void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* frames,
+void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,
@@ -986,7 +986,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		 descr.event_id_ = ev_id;
 		 descr.frame_gen_ = gen;
 		 descr.frame_id_ = frame_id;
-		 descr.frame_queue_ = new threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>;
+		 descr.frame_queue_ = new threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>;
 
 		 if (start_comm_threads()){
 		  comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
@@ -997,7 +997,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		} else if (!condition_defined && !emit_defined && channel_id.length()){
 			 DEBUG << "[PROCESSING_UNCONDITIONED_SENDER]"
 				   <<"\n";
-			 auto channel = new threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>;
+			 auto channel = new threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>;
 			 this->set_out_channel(channel_id,channel);
 			 if (start_comm_threads()){
 			  running_as_node() = true;
