@@ -118,6 +118,8 @@ struct fibex_signal{
   ceps::ast::Nodeset r;
   ceps::ast::Nodeset ns{fibex_struct->children()};
   std::map<std::string,fibex_coding> encodings_map;
+  std::map<std::string,std::string> frm_id_to_frame_name;
+
   auto encodings = ns["fx:PROCESSING-INFORMATION"]["fx:CODINGS"][ceps::ast::all{"fx:CODING"}];
   for (auto const & e_ : encodings){
 	auto e = e_["fx:CODING"];
@@ -204,6 +206,8 @@ struct fibex_signal{
 	  fibex_frame frame;
 	  frame.short_name = frm["ho:SHORT-NAME"].as_str();
 	  frame.id = frm["@ID"].as_str();
+	  frm_id_to_frame_name[frame.id] = frame.short_name;
+
 	  frame.desc = frm["ho:DESC"].as_str();
 	  auto pdus = frm["fx:PDU-INSTANCES"][ceps::ast::all{"fx:PDU-INSTANCE"}];
 	  for (auto ee : pdus.nodes() ){
@@ -228,12 +232,13 @@ struct fibex_signal{
     auto frm = new ceps::ast::Struct("frame",nullptr,nullptr,nullptr);
     frm->children().push_back(new ceps::ast::Struct("id",new ceps::ast::Identifier(e.short_name,nullptr,nullptr,nullptr),nullptr,nullptr));
 
-    ceps::ast::Struct_ptr data;
-    frm->children().push_back(data = new ceps::ast::Struct("payload",nullptr,nullptr,nullptr));
+    ceps::ast::Struct_ptr data = new ceps::ast::Struct("data",nullptr,nullptr,nullptr);frm->children().push_back(data);
+    ceps::ast::Struct_ptr payload;
+    data->children().push_back(payload = new ceps::ast::Struct("payload",nullptr,nullptr,nullptr));
     ceps::ast::Struct_ptr in;
-    data->children().push_back(in = new ceps::ast::Struct("in",nullptr,nullptr,nullptr));
+    payload->children().push_back(in = new ceps::ast::Struct("in",nullptr,nullptr,nullptr));
     ceps::ast::Struct_ptr out;
-    data->children().push_back(out = new ceps::ast::Struct("out",nullptr,nullptr,nullptr));
+    payload->children().push_back(out = new ceps::ast::Struct("out",nullptr,nullptr,nullptr));
     for(auto & pdu_inst:e.pdus){
         size_t bit_offs = pdu_inst.second;
         for(auto & pdu : pdu_inst.first.sig_instances){
@@ -257,5 +262,37 @@ struct fibex_signal{
     }
     r.nodes().push_back(frm);
   }
+
+  auto channels = ns["fx:ELEMENTS"]["fx:CHANNELS"][ceps::ast::all{"fx:CHANNEL"}];
+  for(auto e : channels){
+   auto channel = channels["fx:CHANNEL"];
+   auto channel_id = channel["ho:SHORT-NAME"].as_str();
+   if (channel_id.length() == 0) smc->fatal_(-1,"Import of FIBEX data: channel "+channel["@ID"].as_str() +" has no short name");
+   auto sender = new ceps::ast::Struct("sender",new ceps::ast::Struct("id",new ceps::ast::Identifier(channel_id)));
+   ceps::ast::Struct_ptr canbus = nullptr;
+   auto transport = new ceps::ast::Struct("transport",canbus = new ceps::ast::Struct("canbus"));
+   sender->children().push_back(transport);
+   r.nodes().push_back(sender);
+
+   auto frame_triggerings = channel["fx:FRAME-TRIGGERINGS"][ceps::ast::all{"fx:FRAME-TRIGGERING"}];
+   if (frame_triggerings.size()){
+    auto can_id_mapping = new ceps::ast::Struct("can_id_mapping");
+    canbus->children().push_back(can_id_mapping);
+    for(auto e : frame_triggerings){
+    	auto ftrig = frame_triggerings["fx:FRAME-TRIGGERING"];
+    	auto frame_id = std::stoi(ftrig["fx:IDENTIFIER"]["fx:IDENTIFIER-VALUE"].as_str());
+    	std::string frame_name = "";
+    	std::string frame_ref = ftrig["fx:FRAME-REF"]["@ID-REF"];
+
+    	auto it = frm_id_to_frame_name.find(frame_ref);
+    	if (it == frm_id_to_frame_name.end()) smc->fatal_(-1,"Import of FIBEX data: channel "+channel["@ID"].as_str() +" frame triggering: frame id '"+frame_ref+"' doesn't exist" );
+    	frame_name = it->second;
+    	can_id_mapping->children().push_back(new ceps::ast::Identifier(frame_name,nullptr,nullptr,nullptr));
+    	can_id_mapping->children().push_back(new ceps::ast::Int(frame_id,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr));
+    }
+   }
+  }//for
+
+
   return r;
 }
