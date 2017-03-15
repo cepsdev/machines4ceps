@@ -140,14 +140,18 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
              can_bus = bus_id_.as_str();
              transport_busid_found = can_bus.length();
 		 }
-		 if (!transport_busid_found) fatal_(-1, "CAN-CAL sender definition '"+channel_id+"': no network interface defined (attribute bus_id).");
+		 if (!transport_busid_found){
+			 warn_(-1, "CAN-CAL sender definition '"+channel_id+"': no network interface defined (attribute bus_id).");
+			 return true;
+		 }
 		}else {
 			if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::int_literal)
 				can_bus = std::string("can")+std::to_string(ceps::ast::value(ceps::ast::as_int_ref(bus_id_.nodes()[0])));
 			else if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::string_literal)
 				can_bus = ceps::ast::value(ceps::ast::as_string_ref(bus_id_.nodes()[0]));
-			else
+			else{
 				fatal_(-1, "CAN-CAL sender definition: bus_id must be an integer or string.");
+			}
 		}
 
 		//Handling of can_id_mapping
