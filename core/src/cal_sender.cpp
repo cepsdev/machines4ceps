@@ -80,6 +80,54 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,in
 	std::string can_bus, State_machine_simulation_core* smp,std::unordered_map<int,std::uint32_t>);
 #endif	
 
+static bool is_assignment(ceps::ast::Nodebase_ptr p){
+	if (p == nullptr) return false;
+	if (p->kind() != ceps::ast::Ast_node_kind::binary_operator) return false;
+	if (ceps::ast::op(ceps::ast::as_binop_ref(p)) != '=') return false;
+	return true;
+}
+
+static bool is_symbol(ceps::ast::Nodebase_ptr p, std::string& name, std::string& kind){
+	if (p == nullptr) return false;
+	if (p->kind() != ceps::ast::Ast_node_kind::symbol) return false;
+	name = ceps::ast::name(ceps::ast::as_symbol_ref(p));
+	kind = ceps::ast::kind(ceps::ast::as_symbol_ref(p));
+	return true;
+}
+
+static bool get_one_and_only_symbol(ceps::ast::Nodebase_ptr p, std::string& name, std::string& kind){
+	if (p == nullptr) return false;
+	if (p->kind() == ceps::ast::Ast_node_kind::symbol)
+	{
+	 name = ceps::ast::name(ceps::ast::as_symbol_ref(p));
+	 kind = ceps::ast::kind(ceps::ast::as_symbol_ref(p));
+	 return true;
+	}
+
+	if (p->kind() == ceps::ast::Ast_node_kind::int_literal || p->kind() == ceps::ast::Ast_node_kind::float_literal || p->kind() == ceps::ast::Ast_node_kind::string_literal)
+		return false;
+
+	if (p->kind() == ceps::ast::Ast_node_kind::binary_operator) {
+      auto & oper = ceps::ast::as_binop_ref(p);
+      std::string name1;
+      std::string kind1;
+      std::string name2;
+      std::string kind2;
+      bool r1 = get_one_and_only_symbol(oper.left(),name1,kind1);
+      bool r2 = get_one_and_only_symbol(oper.right(),name2,kind2);
+      if (!(r1 || r2)) return false;
+      if (! (r1 && r2) ) {
+    	  if (r1) {name=name1;kind=kind1;return true;}
+    	  else {name=name2;kind=kind2;return true;}
+      }
+      if (name1 != name2 || kind1 != kind2 ) return false;
+      name = name1; kind = kind1;
+      return true;
+	}
+
+	return false;
+}
+
 bool State_machine_simulation_core::handle_userdefined_sender_definition(std::string call_name,
 	ceps::ast::Nodeset const & ns)
 {
@@ -128,6 +176,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 		 auto bus_id_ = ns["transport"]["canbus"]["bus_id"];
 		 std::string can_bus = "can0";
 		 if (bus_id_.nodes().empty()){
+			//check universe for transport definition
 			ceps::ast::Nodeset ns = current_universe();
 			auto transport_defs = ns[ceps::ast::all{"transport"}];
 			bool transport_busid_found = false;
@@ -155,11 +204,6 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 		}
 
 		//Handling of can_id_mapping
-		/*
-		 *     std::unordered_map<std::string, std::unordered_map<int,std::uint32_t> > channel_frame_to_id;
-    std::unordered_map<std::string, std::unordered_map<std::string,int> > channel_frame_name_to_id;
-		 *
-		 */
 
 		auto can_id_mapping = ns["transport"]["canbus"]["can_id_mapping"];
 		if (can_id_mapping.size()){
@@ -175,11 +219,54 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 			}
 		}
 
-		/*auto const & vv = channel_frame_name_to_id[channel_id];
-		for(auto e : vv) std::cout << e.first << "->" << e.second << std::endl;
-		{auto const & vv = channel_frame_to_id[channel_id];
-		for(auto e : vv) std::cout << e.first << "->" << e.second << std::endl;
-		}*/
+		//Handling of encodings
+
+		std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > encodings;
+		auto encodings_ = current_universe()[ceps::ast::all{"encoding"}];
+		for (auto e : encodings_){
+			auto encoding = e["encoding"];
+			auto transport = encoding["transport"].as_str();
+			if (transport.length() != 0 && transport != channel_id ) continue;
+			for (auto k : encoding.nodes()){
+				if (!is_assignment(k)) continue;
+				auto & ass = ceps::ast::as_binop_ref(k);
+				std::string lhs_name,lhs_kind;
+				if (!is_symbol(ass.left(),lhs_name,lhs_kind)) continue;
+				bool is_in_encoding = lhs_kind == "Systemstate";
+				if (is_in_encoding) continue;
+				int bitwidth=1;
+				if (lhs_kind == "bool") bitwidth = -1;
+				else if (lhs_kind == "uint4_t") bitwidth = 8;
+				else if (lhs_kind == "int4_t") bitwidth = -8;
+				else if (lhs_kind == "uint8_t") bitwidth = 8;
+				else if (lhs_kind == "int8_t") bitwidth = -8;
+				else if (lhs_kind == "uint16_t") bitwidth = 16;
+				else if (lhs_kind == "int16_t") bitwidth = -16;
+				else if (lhs_kind == "uint24_t") bitwidth = 24;
+				else if (lhs_kind == "int24_t") bitwidth = -24;
+				else if (lhs_kind == "uint32_t") bitwidth = 32;
+				else if (lhs_kind == "int32_t") bitwidth = -32;
+				else if (lhs_kind == "uint40_t") bitwidth = 40;
+				else if (lhs_kind == "int40_t") bitwidth = -40;
+				else if (lhs_kind == "uint48_t") bitwidth = 48;
+				else if (lhs_kind == "int48_t") bitwidth = -48;
+				else if (lhs_kind == "uint56_t") bitwidth = 56;
+				else if (lhs_kind == "int56_t") bitwidth = -56;
+				else if (lhs_kind == "uint64_t") bitwidth = 64;
+				else if (lhs_kind == "int64_t") bitwidth = -64;
+
+				std::string rhs_kind,rhs_name;
+				if (!get_one_and_only_symbol(ass.right(),rhs_name,rhs_kind) || rhs_kind != "Systemstate") {
+					std::stringstream ss; ss << ass;
+					warn_(-1,"Illformed out encoding : "+ss.str());
+					continue;
+				}
+				encodings[rhs_name][bitwidth] = ass.right();
+			}
+		}
+
+		out_encodings[channel_id] = encodings;
+
 		auto channel = new threadsafe_queue< std::tuple<char*, size_t,size_t,int>, std::queue<std::tuple<char*, size_t,size_t,int> >>;
 		this->set_out_channel(channel_id, channel);
 

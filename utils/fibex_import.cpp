@@ -8,6 +8,13 @@ struct fibex_coding{
   std::string category;
   std::string encoding;
   std::string bit_length;
+
+  double min = 0;
+  double max = 0;
+  double internal_to_phs_scale = 1.0;
+  double internal_to_phs_offset = 0.0;
+
+  std::string ceps_encoding_type;
 };
 
 
@@ -126,9 +133,27 @@ struct fibex_signal{
     fibex_coding cod;
     cod.base_data_type = e["ho:CODED-TYPE"]["@ho:BASE-DATA-TYPE"].as_str();
     cod.short_name = e["ho:SHORT-NAME"].as_str();
-    cod.category = e["CATEGORY"].as_str();
-    cod.encoding = e ["ENCODING"].as_str();
+    cod.category = e["ho:CODED-TYPE"]["@CATEGORY"].as_str();
+    cod.encoding = e ["ho:CODED-TYPE"]["@ENCODING"].as_str();
     cod.bit_length = e["ho:CODED-TYPE"]["ho:BIT-LENGTH"].as_str();
+    if (cod.bit_length == "1")
+     cod.ceps_encoding_type = "bool";
+    else{
+     if (cod.encoding == "UNSIGNED")
+    	 cod.ceps_encoding_type = "uint"; else cod.ceps_encoding_type = "int";
+     cod.ceps_encoding_type += cod.bit_length;cod.ceps_encoding_type += "_t";
+    }
+
+    for(auto f : e["ho:COMPU-METHODS"][ceps::ast::all{"ho:COMPU-METHOD"}]){
+    	auto compu_method = f["ho:COMPU-METHOD"];
+    	cod.min = std::stod(compu_method["ho:PHYS-CONSTRS"]["ho:SCALE-CONSTR"]["ho:LOWER-LIMIT"].as_str());
+    	cod.max = std::stod(compu_method["ho:PHYS-CONSTRS"]["ho:SCALE-CONSTR"]["ho:UPPER-LIMIT"].as_str());
+    	auto scale = compu_method["ho:COMPU-INTERNAL-TO-PHYS"]["ho:COMPU-SCALES"]["ho:COMPU-SCALE"]["ho:COMPU-RATIONAL-COEFFS"]["ho:COMPU-NUMERATOR"][ceps::ast::all{"ho:V"}];
+    	cod.internal_to_phs_offset = std::stod(scale[ceps::ast::nth{0}].as_str());
+    	cod.internal_to_phs_scale = std::stod(scale[ceps::ast::nth{1}].as_str());
+    }
+
+
     encodings_map[e["@ID"].as_str()] = cod;
   }
 
@@ -293,6 +318,51 @@ struct fibex_signal{
    }
   }//for
 
+  //write encodings
+  ceps::ast::Struct_ptr encoding = new ceps::ast::Struct("encoding",nullptr,nullptr,nullptr);
+
+  for (auto sig : sig_vec){
+   using namespace ceps::ast;
+   auto out_scale = 1.0 / sig.encoding.internal_to_phs_scale;
+   auto out_offs = -1.0*sig.encoding.internal_to_phs_offset*out_scale;
+   auto out_encoding = new Binary_operator('=',
+		                                   new Symbol("out",sig.encoding.ceps_encoding_type),
+										   new Binary_operator('+',
+												   new Binary_operator('*',new Double(out_scale, ceps::ast::all_zero_unit()), new Symbol(sig.name,"Systemstate")  ),
+												   new Double(out_offs, ceps::ast::all_zero_unit())
+                                           )
+   );
+   auto in_encoding = new Binary_operator('=',
+		                                   new Symbol(sig.name,"Systemstate"),
+										   new Binary_operator('+',
+												   new Binary_operator('*',new Double(sig.encoding.internal_to_phs_scale, ceps::ast::all_zero_unit()), new Symbol("in",sig.encoding.ceps_encoding_type)  ),
+												   new Double(sig.encoding.internal_to_phs_offset, ceps::ast::all_zero_unit())
+                                           )
+   );
+   encoding->children().push_back(out_encoding);
+   encoding->children().push_back(in_encoding);
+  }
+
+  r.nodes().push_back(encoding);
+
+  //write constraints
+  ceps::ast::Struct_ptr constraints = new ceps::ast::Struct("constraints",nullptr,nullptr,nullptr);
+
+  for (auto sig : sig_vec){
+   using namespace ceps::ast;
+   auto a = new Binary_operator('<',
+    									   new Symbol(sig.name,"Systemstate"),
+ 										   new Double(sig.encoding.max, ceps::ast::all_zero_unit())
+    );
+   auto b = new Binary_operator('>',
+      									   new Symbol(sig.name,"Systemstate"),
+   										   new Double(sig.encoding.min, ceps::ast::all_zero_unit())
+    );
+   constraints->children().push_back(a);
+   constraints->children().push_back(b);
+  }
+
+  r.nodes().push_back(constraints);
 
   return r;
 }

@@ -1,17 +1,6 @@
 
 transport{id{Channel1;};canbus{bus_id { "vcan0"; };};};
 
-encoding{
- transport{Channel1;};
- kind uint16_t; uint16_t x;
- x = rpm / 2.0 + 10.0;
- rpm = x * 2.0;
-};
-
-constraints{
- rpm <= 100.0; 
- rpm >= 0.0;
-};
 
 Simulation{
  timeout{1.0*s;};

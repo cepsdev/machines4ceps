@@ -167,6 +167,8 @@ private:
     executionloop_context_t executionloop_context_;
     livelog::Livelogger* live_logger_ = nullptr;
     sm4ceps::Livelogger_source* livelogger_source_ = nullptr;
+
+    std::map<std::string /*channel*/ , std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > > out_encodings;
 public:
     livelog::Livelogger* live_logger(){return live_logger_;}
     sm4ceps::Livelogger_source* live_logger_out() {return livelogger_source_;}

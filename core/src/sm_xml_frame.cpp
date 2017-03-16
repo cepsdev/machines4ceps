@@ -203,7 +203,7 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 		make_xml_fragment(ss,smc,e);
 }
 
-void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size){
+void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size,std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > const & encoding){
 	if (fn_gen_msg_native_)
 		return fn_gen_msg_native_(data_size);
 	if (smc == nullptr) return nullptr;

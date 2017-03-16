@@ -1,0 +1,2 @@
+(STRUCT "frame" (STRUCT "id" (ID "Engine_RPM" ))(STRUCT "data" (STRUCT "payload" (STRUCT "in" (STRUCT "uint16" (SYMBOL "rpm" "Systemstate" ))(STRUCT "uint8" (SYMBOL "speed" "Systemstate" ))(STRUCT "uint8" (SYMBOL "rpm_speed_src" "Systemstate" )))(STRUCT "out" (STRUCT "uint16" (SYMBOL "rpm" "Systemstate" ))(STRUCT "uint8" (SYMBOL "speed" "Systemstate" ))(STRUCT "uint8" (SYMBOL "rpm_speed_src" "Systemstate" ))))))
+

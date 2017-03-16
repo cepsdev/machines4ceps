@@ -77,6 +77,9 @@ struct Result_process_cmd_line
     bool report_format_json = false;
     bool report_format_ceps = false;
 
+    bool dump_asciidoc_can_layer = false;
+    bool no_warn = false;
+
 
 	Result_process_cmd_line() = default;
 	Result_process_cmd_line(bool version_flag_set_,

@@ -1,0 +1,25 @@
+:stem:
+= CAN Layer 
+
+
+== Signals 
+
+
+=== rpm
+
+**Default value = ** 
+stem:[0]
+
+=== rpm_speed_src
+
+**Default value = ** 
+stem:[0]
+
+=== speed
+
+**Default value = ** 
+stem:[0]
+
+== Frames 
+
+

@@ -112,7 +112,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			auto channel = get_out_channel(ch_id);
 			if (channel == nullptr) fatal_(-1,ch_id+" is not an output channel.");
 			size_t ds;
-			char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
+			char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds,out_encodings[ch_id]);
 			if (ds > 0 && msg_block != nullptr){
 				int frame_id = 0;
 				if (it_frame_gen->second->header_length() == 0){
@@ -138,7 +138,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			auto it_in_frame_gen = frame_generators().find(in_frame_id);
 			if (it_in_frame_gen == frame_generators().end()) fatal_(-1,"'"+in_frame_id+"' is not a frame id.");
 			size_t ds;
-			char* msg_block = (char*) it_out_frame_gen->second->gen_msg(this,ds);
+			char* msg_block = (char*) it_out_frame_gen->second->gen_msg(this,ds,{});
 			if (ds == 0 || msg_block == nullptr) fatal_(-1,"Frame-Pattern'"+out_frame_id+"' couldn't create a valid frame.");
 			std::vector<std::string> v1;
 			std::vector<ceps::ast::Nodebase_ptr> v2;
@@ -333,7 +333,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			if (it_frame_gen != frame_generators().end())
 			{
 				size_t ds;
-				char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
+				char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds,{});
 				delete[] msg_block;
 				return new ceps::ast::Int(ds,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 			}
@@ -344,7 +344,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		auto it_frame_gen = frame_generators().find(id);
 		if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a raw frame id.");
 		size_t ds;
-		char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds);
+		char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds,{});
 		bool r = ds >= args.size()-1;
 		if(r)for(int i = 1; i < (int)args.size();++i){
 			if (args[i]->kind() != ceps::ast::Ast_node_kind::int_literal) continue;

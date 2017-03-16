@@ -90,7 +90,7 @@ extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodeb
 			if (it_frame_gen != smc->frame_generators().end())
 			{
 				size_t size;
-				unsigned char* msg_block = (unsigned char*) it_frame_gen->second->gen_msg(smc,size);
+				unsigned char* msg_block = (unsigned char*) it_frame_gen->second->gen_msg(smc,size,{});
 				if (msg_block == nullptr) return "(undef)";
 				else{
 					std::string t;
