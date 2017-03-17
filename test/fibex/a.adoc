@@ -5,21 +5,66 @@
 == Signals 
 
 
-=== rpm
+=== [[rpm]]rpm
 
-**Default value = ** 
-stem:[0]
+**Default value : **
 
-=== rpm_speed_src
+stem:[ 0 ]
 
-**Default value = ** 
-stem:[0]
+**Constraints : **
 
-=== speed
+stem:["rpm"< 1000 ]
 
-**Default value = ** 
-stem:[0]
+stem:["rpm"> 10 ]
 
+==== Encodings
+|===
+|*out* is a uint16_t field |stem:["out"= 0.5 *"rpm"+ 10 ]
+|*in* is a uint16_t field |stem:["rpm"= 2 *"in"+( -20 )]
+|===
+=== [[rpm_speed_src]]rpm_speed_src
+
+**Default value : **
+
+stem:[ 0 ]
+
+**Constraints : **
+
+stem:["rpm_speed_src"< 1000 ]
+
+stem:["rpm_speed_src"]
+
+==== Encodings
+|===
+|*out* is a uint8_t field |stem:["out"= 1 *"rpm_speed_src"]
+|*in* is a uint8_t field |stem:["rpm_speed_src"= 1 *"in"]
+|===
+=== [[speed]]speed
+
+**Default value : **
+
+stem:[ 0 ]
+
+**Constraints : **
+
+stem:["speed"< 1000 ]
+
+stem:["speed"]
+
+==== Encodings
+|===
+|*out* is a uint8_t field |stem:["out"= 1 *"speed"]
+|*in* is a uint8_t field |stem:["speed"= 1 *"in"]
+|===
 == Frames 
 
 
+=== Engine_RPM
+
+|===
+| Type | Signal 
+
+| uint16|<<rpm, rpm>>
+| uint8|<<speed, speed>>
+| uint8|<<rpm_speed_src, rpm_speed_src>>
+|===

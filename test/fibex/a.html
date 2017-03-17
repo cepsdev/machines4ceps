@@ -433,24 +433,114 @@ MathJax.Hub.Config({
 <h2 id="_signals">Signals</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_rpm">rpm</h3>
+<h3 id="__a_id_rpm_a_rpm"><a id="rpm"></a>rpm</h3>
 <div class="paragraph">
-<p><strong>Default value = </strong>
-\$0\$</p>
+<p><strong>Default value : </strong></p>
+</div>
+<div class="paragraph">
+<p>\$ 0 \$</p>
+</div>
+<div class="paragraph">
+<p><strong>Constraints : </strong></p>
+</div>
+<div class="paragraph">
+<p>\$"rpm"&lt; 1000 \$</p>
+</div>
+<div class="paragraph">
+<p>\$"rpm"&gt; 10 \$</p>
+</div>
+<div class="sect3">
+<h4 id="_encodings">Encodings</h4>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>out</strong> is a uint16_t field</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">\$"out"= 0.5 *"rpm"+ 10 \$</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>in</strong> is a uint16_t field</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">\$"rpm"= 2 *"in"+( -20 )\$</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_rpm_speed_src">rpm_speed_src</h3>
+<h3 id="__a_id_rpm_speed_src_a_rpm_speed_src"><a id="rpm_speed_src"></a>rpm_speed_src</h3>
 <div class="paragraph">
-<p><strong>Default value = </strong>
-\$0\$</p>
+<p><strong>Default value : </strong></p>
+</div>
+<div class="paragraph">
+<p>\$ 0 \$</p>
+</div>
+<div class="paragraph">
+<p><strong>Constraints : </strong></p>
+</div>
+<div class="paragraph">
+<p>\$"rpm_speed_src"&lt; 1000 \$</p>
+</div>
+<div class="paragraph">
+<p>\$"rpm_speed_src"\$</p>
+</div>
+<div class="sect3">
+<h4 id="_encodings_2">Encodings</h4>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>out</strong> is a uint8_t field</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">\$"out"= 1 *"rpm_speed_src"\$</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>in</strong> is a uint8_t field</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">\$"rpm_speed_src"= 1 *"in"\$</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_speed">speed</h3>
+<h3 id="__a_id_speed_a_speed"><a id="speed"></a>speed</h3>
 <div class="paragraph">
-<p><strong>Default value = </strong>
-\$0\$</p>
+<p><strong>Default value : </strong></p>
+</div>
+<div class="paragraph">
+<p>\$ 0 \$</p>
+</div>
+<div class="paragraph">
+<p><strong>Constraints : </strong></p>
+</div>
+<div class="paragraph">
+<p>\$"speed"&lt; 1000 \$</p>
+</div>
+<div class="paragraph">
+<p>\$"speed"\$</p>
+</div>
+<div class="sect3">
+<h4 id="_encodings_3">Encodings</h4>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>out</strong> is a uint8_t field</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">\$"out"= 1 *"speed"\$</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>in</strong> is a uint8_t field</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">\$"speed"= 1 *"in"\$</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
@@ -458,13 +548,41 @@ MathJax.Hub.Config({
 <div class="sect1">
 <h2 id="_frames">Frames</h2>
 <div class="sectionbody">
-
+<div class="sect2">
+<h3 id="_engine_rpm">Engine_RPM</h3>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Signal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">uint16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#rpm">rpm</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">uint8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#speed">speed</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">uint8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#rpm_speed_src">rpm_speed_src</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-03-16 16:32:17 CET
+Last updated 2017-03-17 04:16:03 CET
 </div>
 </div>
 </body>
