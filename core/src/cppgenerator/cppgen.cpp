@@ -1515,7 +1515,8 @@ void Cppgenerator::write_raw_frame_send(State_machine_simulation_core* smp,
 		os << ";\n";
 	}
 	indent.print_indentation(os);
-	os << "smcore_interface->send_raw_frame(&out,sizeof(out),"<<raw_frame.header_length<<",\""<<channel_id <<"\");\n";
+	if (channel_id.length()) os << "smcore_interface->send_raw_frame(&out,sizeof(out),"<<raw_frame.header_length<<",\""<<channel_id <<"\");\n";
+	else os << "return out;\n";
 	indent.indent_decr();
 	indent.print_indentation(os);os << "}";
 }
@@ -2439,6 +2440,17 @@ void globfuncs::start_periodic_timer(double t,sm4ceps_plugin_int::Variant (*fp)(
 void globfuncs::stop_timer(sm4ceps_plugin_int::id id_){smcore_interface->stop_timer(id_);}
 bool globfuncs::in_state(std::initializer_list<sm4ceps_plugin_int::id> state_ids){return smcore_interface->in_state(state_ids);}
 )~";
+
+
+for (auto raw_frame : cppgenerator.raw_frames()){
+	o_cpp << "raw_frm_dcls::"<< raw_frame.name<< "_out" << " create_frame_" << raw_frame.name << "()";
+	o_hpp << "raw_frm_dcls::"<< raw_frame.name<< "_out" << " create_frame_" << raw_frame.name << "();\n";
+
+	std::vector<std::string> parameters;
+	cppgenerator.write_raw_frame_send(this,indent_cpp,o_cpp,raw_frame,"",nullptr,parameters);
+}
+
+o_hpp << "extern void user_defined_init();\n";
 
 o_hpp << "#endif\n";
 

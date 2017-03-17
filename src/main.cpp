@@ -75,7 +75,7 @@ ostream& operator << (ostream& os, State_machine::State s)
 
 
 
-
+void dummy(int , std::string const & ) {}
 
 void fatal(int code, std::string const & msg )
 {
@@ -339,6 +339,7 @@ int main(int argc,char ** argv)
 	try{
 		Result_process_cmd_line result_cmd_line;
 		init_state_machine_simulation(argc,argv,&sm_core,result_cmd_line);
+		if (result_cmd_line.no_warn) sm_core.set_non_fatal_error_handler(dummy);
 		PRINT_DEBUG_INFO = sm_core.print_debug_info_;
 
 		if (result_cmd_line.run_as_monitor) {
