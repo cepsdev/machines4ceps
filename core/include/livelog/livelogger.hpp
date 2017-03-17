@@ -20,6 +20,7 @@
 #include <sys/timerfd.h>
 #include <set>
 #include <unordered_map>
+#include <vector>
 
 namespace livelog{
 
