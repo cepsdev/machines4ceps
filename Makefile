@@ -115,7 +115,7 @@ $(TARGET)/gensm.o: core/src/modelling/gensm.cpp
 	$(CXX)   $(cflags) $(includes) core/src/modelling/gensm.cpp -c -o $(TARGET)/gensm.o
 $(TARGET)/partitions.o: core/src/modelling/partitions.cpp
 	$(CXX)   $(cflags) $(includes) core/src/modelling/partitions.cpp -c -o $(TARGET)/partitions.o
-$(TARGET)/cover_path.o: core/src/modelling/cover_path.cpp
+$(TARGET)/cover_path.o: core/src/modelling/cover_path.cpp  
 	$(CXX)   $(cflags) $(includes) core/src/modelling/cover_path.cpp -c -o $(TARGET)/cover_path.o
 $(TARGET)/sm_global_functions.o: core/src/sm_global_functions.cpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) core/src/sm_global_functions.cpp -c -o $(TARGET)/sm_global_functions.o
@@ -128,4 +128,6 @@ $(TARGET)/can_layer_docgen.o: utils/can_layer_docgen.cpp utils/can_layer_docgen.
 
 clean:
 	rm $(TARGET)/*
+
+
 

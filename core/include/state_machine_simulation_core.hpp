@@ -167,9 +167,8 @@ private:
     executionloop_context_t executionloop_context_;
     livelog::Livelogger* live_logger_ = nullptr;
     sm4ceps::Livelogger_source* livelogger_source_ = nullptr;
-
-    std::map<std::string /*channel*/ , std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > > out_encodings;
 public:
+    std::map<std::string /*channel*/ , std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > > out_encodings;
     livelog::Livelogger* live_logger(){return live_logger_;}
     sm4ceps::Livelogger_source* live_logger_out() {return livelogger_source_;}
     void info(std::string const & s,bool nline = true){
@@ -600,7 +599,7 @@ public:
     void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*,std::set<int>& highlighted_states, std::ostream& os);
 
 	//CAL (Sender)
-private:
+
     std::unordered_map<std::string, std::unordered_map<int,std::uint32_t> > channel_frame_to_id;
     std::unordered_map<std::string, std::unordered_map<std::string,int> > channel_frame_name_to_id;
 public:

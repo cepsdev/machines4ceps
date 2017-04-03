@@ -1,0 +1,58 @@
+kind Systemstate;kind Event;kind Guard;
+Event canopen_od_write,can_frame_received;
+Systemstate od_index, od_subindex, remote_node, out_channel, data_chunk,data_size,data_sent,data_remains,t;
+
+
+sender
+{
+  id { can1; };
+  transport { 
+   canbus { 
+    bus_id { "vcan0"; };
+    }; 
+  };
+};
+
+Statemachine{
+ id{SDO_Download;};
+ States{Initial;};
+ Actions{
+  a{
+   od_index = argv(1);
+   od_subindex = argv(2);
+   remote_node = argv(3);
+   out_channel = argv(4);
+   data_chunk = argv(5);
+   data_size = argv(6);
+  };
+ };
+ Statemachine{
+  id{Initiate_SDO_Download_Request;};
+  States{Initial;Request_Sent;Response_OK;Data_Sent_Waiting_For_ACK;};
+  Actions{
+   a{
+     data_sent = 0;
+     data_remains = data_size;
+     send(out_channel,remote_node,make_byte_sequence(byte(1),uint16(2),byte(3),uint32(4)));
+   };
+   b{
+    
+   };
+   c{
+    if (data_remains < 8 ) t = data_remains; else t = 8;
+    data_remains = data_remains - t;
+    data_sent = data_Sent + t;
+    send(out_channel,remote_node,make_byte_sequence(byte(),chunk(data_chunk,data_sent,t)));
+   };
+  };
+  Transition{Initial;Request_Sent;a;};
+  Transition{Request_Sent;Response_OK;can_frame_received;b;};
+  Transition{Response_OK;Data_Sent_Waiting_For_ACK;c;};
+ };
+ Transition{Initial;Initiate_SDO_Download_Request;canopen_od_write;a;};
+};
+
+Simulation{
+ Start{SDO_Download;};
+ canopen_od_write(3,0,123,can1,"abcdefabcdef",12);
+};

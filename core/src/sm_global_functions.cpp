@@ -4,6 +4,7 @@
 #include "core/include/base_defs.hpp"
 #include "pugixml.hpp"
 #include <time.h>
+#include <tuple>
 #include "core/include/base_defs.hpp"
 
 bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
@@ -14,6 +15,7 @@ extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_
 extern std::string to_string(std::vector<ceps::ast::Nodebase_ptr>const& v);
 extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p);
 
+static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
 
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,
@@ -100,34 +102,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		}
 		return new ceps::ast::Int( 1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 
-	} else if (id == "send") {
-		if(args.size() == 2
-				&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
-				&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
-
-			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
-			auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
-			auto it_frame_gen = frame_generators().find(id);
-			if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a frame id.");
-			auto channel = get_out_channel(ch_id);
-			if (channel == nullptr) fatal_(-1,ch_id+" is not an output channel.");
-			size_t ds;
-			char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds,out_encodings[ch_id]);
-			if (ds > 0 && msg_block != nullptr){
-				int frame_id = 0;
-				if (it_frame_gen->second->header_length() == 0){
-					auto it = channel_frame_name_to_id[ch_id].find(id);
-					if (it == channel_frame_name_to_id[ch_id].end())
-						fatal_(-1,"send: No header/frame id mapping found for the channel/frame combination '"+ch_id+"/"+id+"'");
-					frame_id = it->second;
-				}
-				channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length(),frame_id));
-				return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-			}
-			else fatal_(-1, "send() : failed to insert message into queue.");
-		} fatal_(-1, " send() : wrong number/types of arguments.");
-		return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-	} else if (id == "write_read_frm"){
+	} else if (id == "send")
+		return handle_send_cmd(this,args,active_smp);
+	else if (id == "write_read_frm"){
 		if (args.size() == 2
 				&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
 				&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier){
@@ -548,4 +525,202 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	//fatal_(-1,"Undefined function '"+id+"' called.");
 	return nullptr;
 }
+
+
+static std::map<std::string, std::pair<int,bool> > type_descr_to_bitwidth_and_signedness = {
+		{"byte", {8,true}},
+		{"ubyte", {8,false}},
+		{"sbyte", {8,true}},
+		{"char", {8,true}},
+		{"schar", {8,true}},
+		{"int8", {8,true}},
+		{"uint8", {8,true}},
+		{"int16", {16,true}},
+		{"uint16", {16,false}},
+		{"int24", {24,true}},
+		{"uint24", {24,false}},
+		{"int32", {32,true}},
+		{"uint32", {32,false}},
+		{"int40", {40,true}},
+		{"uint40", {40,false}},
+		{"int48", {48,true}},
+		{"uint48", {48,false}},
+		{"int56", {56,true}},
+		{"uint56", {56,false}},
+		{"int64", {64,true}},
+		{"uint64", {64,false}}
+};
+
+static std::size_t make_byte_sequence_helper(
+		State_machine_simulation_core *smc,
+		State_machine* active_smp,
+		std::vector<ceps::ast::Nodebase_ptr>,
+		char * chunk = nullptr,
+		bool do_write=false,
+		int bitwidth = 8,
+		bool is_signed = false,
+		bool is_real = false,
+		int endianess = 0,
+		std::size_t pos = 0);
+static std::size_t make_byte_sequence_helper(
+		State_machine_simulation_core *smc,
+		State_machine* active_smp,
+		ceps::ast::Nodebase_ptr,
+		char * chunk = nullptr,
+		bool do_write=false,
+		int bitwidth = 8,
+		bool is_signed = false,
+		bool is_real = false,
+		int endianess = 0,
+		std::size_t pos = 0);
+
+static char* make_byte_sequence(State_machine_simulation_core *smc,State_machine* active_smp, std::vector<ceps::ast::Nodebase_ptr> args,std::size_t size){
+ size = make_byte_sequence_helper(smc,active_smp,args);
+// std:: cout << "size= "<<size << std::endl;
+ if (size == 0) return nullptr;
+ char* chunk = new char[size];
+ make_byte_sequence_helper(smc,active_smp,args,chunk,true);
+ //for(int i = 0;i!=size;++i){std::cout << (int)*((unsigned char*)chunk+i) << " "; } std::cout << std::endl;
+ return chunk;
+}
+
+static std::size_t make_byte_sequence_helper(
+		State_machine_simulation_core *smc,
+		State_machine* active_smp,
+		std::vector<ceps::ast::Nodebase_ptr> v,
+		char * chunk,
+		bool do_write,
+		int bw,
+		bool iss,
+		bool is_real,
+		int en,
+		std::size_t pos){
+ std::size_t s = 0;
+ for(auto e: v){
+  s += make_byte_sequence_helper(smc,active_smp,e,chunk,do_write,bw,iss,is_real,en,pos+s);
+ }
+ return s;
+}
+
+static std::size_t make_byte_sequence_helper(
+		State_machine_simulation_core *smc,
+		State_machine* active_smp,
+		ceps::ast::Nodebase_ptr node,
+		char * chunk,
+		bool do_write,
+		int bw,
+		bool iss,
+		bool is_real,
+		int en,
+		std::size_t pos){
+ std::size_t s = 0;
+ if (node->kind() == ceps::ast::Ast_node_kind::func_call){
+  ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(node);
+  ceps::ast::Identifier& func_id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+  auto it = type_descr_to_bitwidth_and_signedness.find(ceps::ast::name(func_id));
+  if (it != type_descr_to_bitwidth_and_signedness.end()){
+	  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
+	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
+	  std::vector<ceps::ast::Nodebase_ptr> args;
+	  flatten_args(smc,params.children()[0], args);
+	  return make_byte_sequence_helper(smc,active_smp,args,chunk,do_write,it->second.first,it->second.second,is_real,en,pos);
+  } else if (ceps::ast::name(func_id) == "make_byte_sequence") {
+	  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
+	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
+	  std::vector<ceps::ast::Nodebase_ptr> args;
+	  flatten_args(smc,params.children()[0], args);
+	  return make_byte_sequence_helper(smc,active_smp,args,chunk,do_write,bw,iss,is_real,en,pos);
+  } else {
+	std::stringstream ss;  ss << *node;
+	smc->fatal_(-1,"make_byte_sequence(): unsupported argument:"+ss.str());
+  }
+ }
+
+ if (!do_write) return bw / 8;
+
+ if (node->kind() == ceps::ast::Ast_node_kind::int_literal) {
+  std::size_t bytes_to_write = bw / 8;
+  if (!is_real){
+   if (!iss){
+    std::uint64_t j = ceps::ast::value(ceps::ast::as_int_ref(node));
+    std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+   } else {
+	std::int64_t j = ceps::ast::value(ceps::ast::as_int_ref(node));
+	std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+   }
+  }else /*real*/{
+    if (bw == 32){
+     float j = ceps::ast::value(ceps::ast::as_int_ref(node));
+     std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+    } else {
+     double j = ceps::ast::value(ceps::ast::as_int_ref(node));
+     std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+    }
+  }
+  return bytes_to_write;
+ } else if (node->kind() == ceps::ast::Ast_node_kind::float_literal) {
+
+ } else {
+  std::stringstream ss;  ss << *node;
+  smc->fatal_(-1,"make_byte_sequence(): unsupported argument:"+ss.str());
+ }
+}
+static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
+ if(args.size() == 2
+	&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
+	&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
+
+  auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+  auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
+  auto it_frame_gen = smc->frame_generators().find(id);
+  if (it_frame_gen == smc->frame_generators().end()) smc->fatal_(-1,id+" is not a frame id.");
+  auto channel = smc->get_out_channel(ch_id);
+  if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
+  size_t ds;
+  char* msg_block = (char*) it_frame_gen->second->gen_msg(smc,ds,smc->out_encodings[ch_id]);
+  if (ds > 0 && msg_block != nullptr){
+   int frame_id = 0;
+   if (it_frame_gen->second->header_length() == 0){
+	auto it = smc->channel_frame_name_to_id[ch_id].find(id);
+	if (it == smc->channel_frame_name_to_id[ch_id].end())
+	  smc->fatal_(-1,"send: No header/frame id mapping found for the channel/frame combination '"+ch_id+"/"+id+"'");
+	  frame_id = it->second;
+	}
+	channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length(),frame_id));
+	return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+   }
+   else smc->fatal_(-1, "send() : failed to insert message into queue.");
+ } else if (args.size() == 3 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::int_literal
+		    && args[2]->kind() == ceps::ast::Ast_node_kind::func_call){
+   auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+   auto channel = smc->get_out_channel(ch_id);
+   if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
+   auto frame_id = ceps::ast::value(ceps::ast::as_int_ref(args[1]));
+   ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(args[2]);
+   if (func_call.children()[0]->kind() == ceps::ast::Ast_node_kind::identifier)
+   {
+   	 ceps::ast::Identifier& func_id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+   	 if (ceps::ast::name(func_id) != "make_byte_sequence") smc->fatal_(-1, " send() : unsupported argument: "+ceps::ast::name(func_id) +"()");
+	 ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
+   	 ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
+   	 std::vector<ceps::ast::Nodebase_ptr> args;
+   	 flatten_args(smc,params.children()[0], args);
+   	 std::size_t size;
+   	 auto seq = make_byte_sequence(smc,active_smp,args,size);
+   	 if (seq != nullptr){
+   		channel->push(std::make_tuple(seq,size,0,frame_id));
+   	 }
+   }
+ } else {
+	 std::stringstream ss;
+	 for(auto e : args) ss <<"   "<< *e << "\n";
+	 smc->fatal_(-1, " send() : wrong number/types of arguments.\n   Current arguments are:\n"+ss.str());
+ }
+ return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+}
+
+
+
+
+
 
