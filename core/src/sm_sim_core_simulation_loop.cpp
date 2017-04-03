@@ -660,6 +660,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	 execution_ctxt.pop_ev_sync_queue(); execution_ctxt.current_ev_id = ev_id;
 	}
   }
+
   log_current_states(this);
   handle_event_triggered_senders(this,execution_ctxt,ev_read);
 
@@ -672,6 +673,10 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 								triggered_transitions_end,cur_states_size,ev_id);
   bool no_transitions_triggered = triggered_transitions_end == 0;
   if (no_transitions_triggered){
+	if (this->current_event().error_ != nullptr){
+		info("Unhandled error:"+current_event().error_->what_ + "["+std::to_string(current_event().error_->errno_)+"]");
+		break;
+	}
 	if (taking_epsilon_transitions) taking_epsilon_transitions = false;
     if (ev_read && post_proc_native) post_proc_native();
 	if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())

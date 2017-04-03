@@ -574,7 +574,7 @@ static std::size_t make_byte_sequence_helper(
 		int endianess = 0,
 		std::size_t pos = 0);
 
-static char* make_byte_sequence(State_machine_simulation_core *smc,State_machine* active_smp, std::vector<ceps::ast::Nodebase_ptr> args,std::size_t size){
+static char* make_byte_sequence(State_machine_simulation_core *smc,State_machine* active_smp, std::vector<ceps::ast::Nodebase_ptr> args,std::size_t& size){
  size = make_byte_sequence_helper(smc,active_smp,args);
 // std:: cout << "size= "<<size << std::endl;
  if (size == 0) return nullptr;
@@ -690,12 +690,12 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
 	return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
    }
    else smc->fatal_(-1, "send() : failed to insert message into queue.");
- } else if (args.size() == 3 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::int_literal
+ } else if (args.size() == 3 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::identifier
 		    && args[2]->kind() == ceps::ast::Ast_node_kind::func_call){
    auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
    auto channel = smc->get_out_channel(ch_id);
    if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
-   auto frame_id = ceps::ast::value(ceps::ast::as_int_ref(args[1]));
+   auto id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
    ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(args[2]);
    if (func_call.children()[0]->kind() == ceps::ast::Ast_node_kind::identifier)
    {
@@ -705,9 +705,13 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
    	 ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
    	 std::vector<ceps::ast::Nodebase_ptr> args;
    	 flatten_args(smc,params.children()[0], args);
-   	 std::size_t size;
+   	 std::size_t size=0;
    	 auto seq = make_byte_sequence(smc,active_smp,args,size);
    	 if (seq != nullptr){
+   		auto it = smc->channel_frame_name_to_id[ch_id].find(id);
+   		if (it == smc->channel_frame_name_to_id[ch_id].end())
+   		  smc->fatal_(-1,"send: No header/frame id mapping found for the channel/frame combination '"+ch_id+"/"+id+"'");
+ 		int frame_id = it->second;
    		channel->push(std::make_tuple(seq,size,0,frame_id));
    	 }
    }

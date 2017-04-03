@@ -350,7 +350,11 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,in
 			struct sockaddr_can addr;
 			struct ifreq ifr;
 			if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-				smc->fatal_(-1,"comm_sender_socket_can:Error while opening socket");
+				auto te = errno;
+				State_machine_simulation_core::event_t ev;
+				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: socket() failed.",te};
+				smc->main_event_queue().push(ev);
+				return;
 			}
 			strcpy(ifr.ifr_name, can_bus.c_str());
 			ioctl(s, SIOCGIFINDEX, &ifr);
@@ -358,7 +362,11 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,in
 			addr.can_ifindex = ifr.ifr_ifindex;
 
 			if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-				smc->fatal_(-1,"comm_sender_socket_can:Error in socket bind");
+				auto te = errno;
+				State_machine_simulation_core::event_t ev;
+				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: bind() failed.",te};
+				smc->main_event_queue().push(ev);
+				return;
 			}
 			sockcan::interfaces_to_sockets[can_bus] = s;
 		}
@@ -381,8 +389,12 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,in
 			auto frame_id = std::get<3>(frame_info);
 			auto it = frame2id.find(frame_id);
 			bool can_id_found = it != frame2id.end();
-			if (!can_id_found)
-				smc->fatal_(-1,"CAN Communication Layer: No valid CAN ID.");
+			if (!can_id_found){
+				State_machine_simulation_core::event_t ev;
+				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: invalid CAN ID.",0};
+				smc->main_event_queue().push(ev);
+				return;
+			}
 			can_message.can_id = it->second;
 			can_message.can_dlc = frame_size;
 			memcpy(can_message.data,frame,frame_size);

@@ -1,7 +1,19 @@
 kind Systemstate;kind Event;kind Guard;
 Event canopen_od_write,can_frame_received;
-Systemstate od_index, od_subindex, remote_node, out_channel, data_chunk,data_size,data_sent,data_remains,t;
+Systemstate /*od_index, od_subindex, remote_node, out_channel, data_chunk,data_size,*/data_sent,data_remains,t;
 
+val an_int = 0;
+val a_size = 0;
+
+declare_event{
+ canopen_od_write;
+ od_index(an_int);
+ od_subindex(an_int);
+ remote_node(id);
+ out_channel(id);
+ data_chunk(unspecified);
+ data_size(a_size);
+};
 
 sender
 {
@@ -9,6 +21,10 @@ sender
   transport { 
    canbus { 
     bus_id { "vcan0"; };
+    can_id_mapping{
+     sdo_download;580;
+     Engine_RPM;674;
+    };
     }; 
   };
 };
@@ -18,12 +34,12 @@ Statemachine{
  States{Initial;};
  Actions{
   a{
-   od_index = argv(1);
+   /*od_index = argv(1);
    od_subindex = argv(2);
    remote_node = argv(3);
    out_channel = argv(4);
    data_chunk = argv(5);
-   data_size = argv(6);
+   data_size = argv(6);*/
   };
  };
  Statemachine{
@@ -31,9 +47,9 @@ Statemachine{
   States{Initial;Request_Sent;Response_OK;Data_Sent_Waiting_For_ACK;};
   Actions{
    a{
-     data_sent = 0;
-     data_remains = data_size;
-     send(out_channel,remote_node,make_byte_sequence(byte(1),uint16(2),byte(3),uint32(4)));
+     //data_sent = 0;
+     //data_remains = data_size;
+     send(can1,remote_node,make_byte_sequence(byte(1),uint16(2),byte(3),uint32(4)));
    };
    b{
     
@@ -54,5 +70,5 @@ Statemachine{
 
 Simulation{
  Start{SDO_Download;};
- canopen_od_write(3,0,123,can1,"abcdefabcdef",12);
+ canopen_od_write(3,0,sdo_download,can1,"abcdefabcdef",12);
 };

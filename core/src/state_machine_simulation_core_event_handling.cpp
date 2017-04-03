@@ -154,6 +154,11 @@ do{
 			 main_event_queue().data().pop();
 			 lk.unlock();
 
+			 if (eev.error_ != nullptr){
+				 ev.sid_ = "error";
+				 ev.error_token_ = eev.error_;
+				 return true;//fatal_(-1,eev.error_->what_ + " ["+std::to_string(eev.error_->errno_)+"]");
+			 }
 			 if (eev.frmctxt_ !=nullptr){
 				 eev.frmctxt_->update_sysstates();
 				 if ( nullptr != eev.frmctxt_->get_handler()){

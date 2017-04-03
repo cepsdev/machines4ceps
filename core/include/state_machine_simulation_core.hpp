@@ -237,6 +237,11 @@ public:
 	std::map<std::string, ceps::ast::Nodebase_ptr> & get_global_states() {return global_states_;}
 	bool& quiet_mode(){return quiet_mode_;}
 	bool quiet_mode() const {return quiet_mode_;}
+	struct error_t{
+		std::string what_;
+		int errno_;
+	};
+
 	struct event_t {
 		std::string id_;
 		bool already_sent_to_out_queues_ = false;
@@ -245,6 +250,7 @@ public:
 		bool unique_= false;
 		sm4ceps_plugin_int::Framecontext* frmctxt_ = nullptr;
 		sm4ceps_plugin_int::Variant (*glob_func_)()  = nullptr;
+		error_t* error_ = nullptr;
 		event_t() = default;
 		event_t(const event_t &) = default;
 		event_t& operator = (const event_t &) = default;
@@ -253,7 +259,7 @@ public:
 			return id_ < rhs.id_;
 		}
 		bool is_epsilon() const {return id_ == "";}
-		event_t& operator = (event_rep_t const & rhs) { id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;}
+		event_t& operator = (event_rep_t const & rhs) { error_ = (error_t*) rhs.error_token_; id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;}
 	};
 #ifdef __gnu_linux__
 	struct timer_table_entry_t{

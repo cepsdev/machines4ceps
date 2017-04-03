@@ -373,6 +373,7 @@ struct event_rep_t {
 	std::vector<ceps::ast::Nodebase_ptr> payload_;
 	std::vector<sm4ceps_plugin_int::Variant> payload_native_;
 	sm4ceps_plugin_int::Variant (*glob_func_)()  = nullptr;
+	void* error_token_ = nullptr;
 	bool valid() const {return valid_;}
 	bool epsilon() const {return !valid_;}
 
