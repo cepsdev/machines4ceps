@@ -439,6 +439,25 @@ public:
 	};
 	std::vector<event_triggered_sender_t>event_triggered_sender_;
 
+
+/*event signatures
+
+ event_signature{ev;argument_name_1(example_1);...argument_name_n(example_n);};
+
+ where example_i is any valid syntactic construct representing the kind which the actual ith argument should be of,
+ with the exception of the identifier 'unspecified' which serves as a placeholder for any kind of data.
+
+
+*/
+	struct event_signature{
+		struct entry{
+			std::string arg_name;
+			ceps::ast::Ast_node_kind kind;
+		};
+		std::vector<entry> entries;
+	};
+	std::unordered_map<int,std::vector<event_signature>> event_signatures_;
+	std::unordered_map<int,std::vector<event_signature>>& event_signatures() {return event_signatures_;}
 public:
 	std::vector<event_triggered_sender_t>& event_triggered_sender(){return event_triggered_sender_;};
 	bool running_as_node() const {return running_as_node_;}

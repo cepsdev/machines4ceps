@@ -79,6 +79,7 @@ struct Result_process_cmd_line
 
     bool dump_asciidoc_can_layer = false;
     bool no_warn = false;
+    bool print_event_signatures = false;
 
 
 	Result_process_cmd_line() = default;

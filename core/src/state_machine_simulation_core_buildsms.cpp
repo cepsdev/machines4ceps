@@ -129,7 +129,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 	for(auto const &s : smp->ceps_env_current().get_global_symboltable().scopes)
 	{
-		for(auto se : s.name_to_symbol)
+		for(auto se : s->name_to_symbol)
 		{
 			if(se.second.category != ceps::parser_env::Symbol::SYMBOL) continue;
 			if(((ceps::parser_env::Symbol*)se.second.payload)->name != "Event") continue;
@@ -353,9 +353,12 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	 } 
 	);
 	
-	DEBUG << "[LOG4CEPS][GLOBAL_STATE_COUNT=" << ctr <<"]\n";
-	for(auto e : map_fullqualified_sm_id_to_computed_idx){
-	 DEBUG << "[LOG4CEPS]["<< e.first << " => " << e.second <<"]\n";
+	//compute root sms for each transition
+	for(auto & t : smp->executionloop_context().transitions)
+	{
+		auto p = t.smp;
+		for(;smp->executionloop_context().parent_vec[p];p = smp->executionloop_context().parent_vec[p]);
+		t.root_sms = p;
 	}
 
 	return ctr;
@@ -483,6 +486,12 @@ static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<
  if (params.children().size()) flatten_args(params.children()[0], args);
  fid = ceps::ast::name(id);
  return true;
+}
+
+static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args, std::size_t number_of_arguments){
+	auto r = is_func_call(p,fid,args);
+	if (!r) return r;
+	return number_of_arguments == args.size();
 }
 
 static bool is_id_or_symbol(ceps::ast::Nodebase_ptr p, std::string& n, std::string& k){
@@ -1267,14 +1276,16 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
  	   std::cout << "\";\n";
 	  }
 	  int j = 0;
-	  std::cout << "(Transition Id) Index of State Machine : Index of Start State -> Index of Destination State/Event Index Info... (option --print_transition_tables)\n";
+	  std::cout << "(Transition Id) Index of State Machine (parent sm) : Index of Start State -> Index of Destination State/Event Index Info... (option --print_transition_tables)\n";
 	  if (executionloop_context().start_of_covering_transitions_valid())
 		  std::cout << " There are transitions to be covered, start of covering transition space = " << executionloop_context().start_of_covering_transitions << "\n";
 	  for(auto const & t : executionloop_context().transitions){
 	   //if (t.start()) continue;
 	   std::cout << " ("<< j++ << ") ";
-       std::cout << t.smp << ": ";
-       std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2) << std::endl;
+       std::cout << t.smp;
+       std::cout << " (" << executionloop_context().parent_vec[t.smp] << ") : ";
+       std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2);
+       std::cout << " (root=" <<t.root_sms<<")"<< std::endl;
 	  }
 	  std::cout << "Total number of states == " << executionloop_context().number_of_states <<" (option --print_transition_tables)\n\n";
 	 }//print transition tables
@@ -1286,6 +1297,71 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
 	 for(auto const & e: this->exported_events_) executionloop_context().exported_events.insert(executionloop_context().ev_to_id[e]);
    }
+
+   //Handle event signatures
+   {
+	using ceps::ast::all;
+    auto ev_sigs = ns[all{"event_signature"}];
+    for(auto ev_sig_ : ev_sigs){
+     auto ev_sig = ev_sig_["event_signature"];
+     auto cur_ev_id = -1;
+     State_machine_simulation_core::event_signature cur_sig;
+     for(auto e : ev_sig.nodes()){
+    	 std::string n;std::string k;
+    	 if (is_id_or_symbol(e,n,k)){
+    		 if (k != "Event"){
+    			 std::stringstream ss;ss << *e;warn_(-1,"event_signature: illformed expression "+ss.str());continue;
+    		 }
+    		 auto new_ev_it = executionloop_context().ev_to_id.find(n);
+    		 if (new_ev_it == executionloop_context().ev_to_id.end()){
+    			 std::stringstream ss;ss << *e;warn_(-1,"event_signature: unknown event (?) "+ss.str());continue;
+    		 }
+    		 auto new_ev = new_ev_it->second;
+    		 if (cur_ev_id >= 0) event_signatures()[cur_ev_id].push_back(cur_sig);
+    		 cur_sig = {};
+    		 cur_ev_id = new_ev;
+    		 continue;
+    	 }
+    	 if (cur_ev_id < 0) continue;
+    	 std::string fid;
+    	 std::vector<ceps::ast::Nodebase_ptr> args;
+
+    	 if (is_func_call(e, fid, args, 1)){
+    		 auto arg = args[0];
+    		 if (is_id_or_symbol(arg,n,k)){
+    			 if(k.length() == 0 && n == "any")
+    			  cur_sig.entries.push_back({fid,ceps::ast::Ast_node_kind::undefined});
+    			 else if (k.length() == 0)
+       			  cur_sig.entries.push_back({fid,ceps::ast::Ast_node_kind::identifier});
+    			 else
+    			  cur_sig.entries.push_back({fid,ceps::ast::Ast_node_kind::symbol});
+    		 } else cur_sig.entries.push_back({fid,arg->kind()});
+    	 } else {
+			 std::stringstream ss;ss << *e;warn_(-1,"event_signature: illformed expression (expected something like 'myparam1(int);')  got "+ss.str());continue;
+		 }
+     }//processing of event signatures
+     if (cur_ev_id >= 0) event_signatures()[cur_ev_id].push_back(cur_sig);//tailing signature
+    }
+
+    if (result_cmd_line.print_event_signatures){
+  	 std::cout << "Event signatures : (option --print_event_signatures)\n";
+     for (auto const & e : event_signatures() ){
+      std::cout << "Event '"<< executionloop_context().id_to_ev[e.first] << "' (id="<<e.first<<") signature count is " << e.second.size() << "\n";
+      auto ctr = 0;
+      for(auto const & sig : e.second){
+       std::cout << "\n Signature overload #"<< ++ctr << ":\n";
+       for(auto const & entry : sig.entries){
+    	   std::cout << "  "<<entry.arg_name <<" : ";
+    	   if (entry.kind == ceps::ast::Ast_node_kind::undefined) std::cout << " ANY\n";
+    	   else std::cout << ceps::ast::ast_node_kind_to_text[(int)entry.kind] << "\n";
+       }
+      }
+     }
+    }
+   }
+
+
+
 
 
    // Check a native implementation is present for each action in the case the flag --enforce_native set.

@@ -737,6 +737,15 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	ceps_interface_eval_func_callback_ctxt_t ctxt;
 	ctxt.active_smp = containing_smp;
 	ctxt.smc  = smc;
+	std::shared_ptr<ceps::parser_env::Scope> sms_global_scope = nullptr;
+	State_machine * root_sms = containing_smp;
+	if (containing_smp){
+		for(;root_sms->parent();root_sms = root_sms->parent());
+	    if (root_sms->global_scope){
+	    	sms_global_scope = root_sms->global_scope;
+	    }
+	}
+
 	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 
 	smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->get_global_states();
@@ -752,9 +761,14 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 
 	smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
+
+    if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
 	auto r = ceps::interpreter::evaluate(node,
 			smc->ceps_env_current().get_global_symboltable(),
 			smc->ceps_env_current().interpreter_env(),root_node,nullptr	);
+	if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.pop_back();
+
+
 	smc->ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
 	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();

@@ -78,6 +78,9 @@ static void map_ev_payload_to_variant(State_machine_simulation_core::event_t con
           r.push_back(sm4ceps_plugin_int::Variant(value(as_string_ref(v))));
       }
 }
+static bool compute_event_signature_match(State_machine_simulation_core* smc,
+		std::vector<State_machine_simulation_core::event_signature>& v,
+		State_machine_simulation_core::event_signature** ev_sig,State_machine_simulation_core::event_t* ev);
 
 static void check_for_events(State_machine_simulation_core* smc,
 		                     ceps::ast::Nodeset& sim,
@@ -88,7 +91,8 @@ static void check_for_events(State_machine_simulation_core* smc,
 							 int& ev_id,
 							 bool& quit,
 							 bool& do_continue,
-							 bool& do_break ){
+							 bool& do_break,
+							 State_machine_simulation_core::event_signature** ev_sig){
 
 	State_machine_simulation_core::states_t new_states_fetch;
 	smc->current_event().id_= {};
@@ -161,7 +165,36 @@ static void check_for_events(State_machine_simulation_core* smc,
 	  ev_read = true;
 	 }
 	smc->current_event() = ev;
-	if (ev_read) {ev_id = execution_ctxt.ev_to_id[smc->current_event().id_];if (ev.sid_ == "EXIT" ) quit = true; }
+	if (ev_read) {
+		ev_id = execution_ctxt.ev_to_id[smc->current_event().id_];
+		if (ev.sid_ == "EXIT" ) {quit = true;return;}
+		if (ev_id <= 0) return;
+		//Check signature
+		auto sigs_it = smc->event_signatures().find(ev_id);
+		if (sigs_it == smc->event_signatures().end()) return;
+		if(!compute_event_signature_match (smc,sigs_it->second,ev_sig,&smc->current_event()) ){
+		 std::stringstream ss; ss << smc->current_event().id_;
+		 smc->fatal_(-1,"No matching overload (event signature declaration) found for event-ctor "+ss.str());
+		}
+	}
+}
+
+static bool compute_event_signature_match(State_machine_simulation_core* smc,
+		std::vector<State_machine_simulation_core::event_signature>& v,
+		State_machine_simulation_core::event_signature** ev_sig, State_machine_simulation_core::event_t* ev){
+ for(auto & e : v){
+  if (e.entries.size() != ev->payload_.size()) continue;
+  bool match_found = true;
+  for (auto i = 0; i != e.entries.size(); ++i ){
+	  if (e.entries[i].kind == ceps::ast::Ast_node_kind::undefined) continue;
+	  if (e.entries[i].kind != ev->payload_[i]->kind()){match_found = false; break;}
+  }
+  if (match_found){
+	  *ev_sig = &e;
+	  return true;
+  }
+ }
+ return false;
 }
 
 static void log_triggered_transitions(State_machine_simulation_core* smc,
@@ -648,12 +681,13 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   ev_id = 0;
   current_smp() = nullptr;
   execution_ctxt.current_ev_id = 0;
+  State_machine_simulation_core::event_signature* ev_sig = nullptr;
 
   if (!taking_epsilon_transitions)
   {
 	if (execution_ctxt.ev_sync_queue_empty()){
 	 bool do_continue = false;	 bool do_break = false;
-	 check_for_events(this,sim,pos,ev_read,execution_ctxt,taking_epsilon_transitions,ev_id,quit,do_continue,do_break);
+	 check_for_events(this,sim,pos,ev_read,execution_ctxt,taking_epsilon_transitions,ev_id,quit,do_continue,do_break,&ev_sig);
 	 if (do_continue) continue;	 if (do_break) break;
 	} else {
 	 ev_read = true;ev_id   = execution_ctxt.front_ev_sync_queue();
@@ -688,6 +722,29 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 
   std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
   auto end_of_trans_it = unique( triggered_transitions.begin(), triggered_transitions.begin()+triggered_transitions_end );
+  if (ev_id > 0 && ev_sig){
+	//update scopes
+	for(auto it = triggered_transitions.begin();it != end_of_trans_it;++it)
+	{
+     auto sms = execution_ctxt.get_assoc_sm(execution_ctxt.transitions[*it].root_sms);
+     sms->visited_flag = false;
+	}
+	for(auto it = triggered_transitions.begin();it != end_of_trans_it;++it)
+	{
+     auto sms = execution_ctxt.get_assoc_sm(execution_ctxt.transitions[*it].root_sms);
+     if (sms->visited_flag) continue;  sms->visited_flag = true;
+     if (!sms->global_scope) { sms->global_scope = std::make_shared<ceps::parser_env::Scope>();	}
+     auto & scope = *sms->global_scope;
+     for (auto i = 0; i!= ev_sig->entries.size();++i){
+    	 auto var_name = ev_sig->entries[i].arg_name;
+    	 auto val = this->current_event().payload_[i];
+    	 auto sym = scope.insert(var_name);
+    	 sym->category = ceps::parser_env::Symbol::Category::VAR;
+    	 sym->payload = val;
+     }
+	}
+  }
+
   log_triggered_transitions(this,execution_ctxt,triggered_transitions,end_of_trans_it);
   bool possible_exit_or_enter_occured = compute_transition_kernel(triggered_transitions,
           end_of_trans_it,

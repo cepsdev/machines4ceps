@@ -96,6 +96,9 @@ public:
   bool operator < (State_machine const & rhs) const {return order_ < rhs.order_;}
   bool operator > (State_machine const & rhs) const {return order_ > rhs.order_;}
 
+  std::shared_ptr<ceps::parser_env::Scope> global_scope{nullptr};
+  bool visited_flag = false;
+
   struct State{
 	std::string id_;
     bool is_sm_ = false;
