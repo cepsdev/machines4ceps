@@ -11,13 +11,10 @@ val size = 0;
 
 event_signature{
  canopen_od_write;
- channel(id);  
+ remote_node(id);  
  od_index(int);
  od_subindex(int);
- remote_node(id);
- out_channel(id);
  data_chunk(any);
- data_size(size); 
 };
 
 sender
@@ -27,52 +24,46 @@ sender
    canbus { 
     bus_id { "vcan0"; };
     can_id_mapping{
-     sdo_download;580;
-     Engine_RPM;674;
+     sdo_node1_slave; 0x601;
+     sdo_node1_master; 0x601;
+     sdo_node2_slave; 0x602;
+     sdo_node2_master; 0x602;
     };
-    }; 
+   }; 
   };
 };
+
+lookup{
+ channels;
+ node1;can1;
+ node2;can1;
+ node3;can1;
+};
+
 
 Statemachine {
  id { SDO_Download; };
  States { Initial; };
  Statemachine {
   id{ Initiate_SDO_Download_Request; };
-  States{ Initial; Request_Sent; Response_OK; Data_Sent_Waiting_For_ACK; };
+  States{ Initial; 
+          Request_Sent; 
+          Response_OK; 
+          Data_Sent_Waiting_For_ACK; };
   Actions{
-   a{
-     send(channel,remote_node,make_byte_sequence(byte(1),uint16(2),byte(3),uint32(4)));
-   };
-   b{
-    
-   };
-   c{
-    if (data_remains < 8 ) t = data_remains; else t = 8;
-    data_remains = data_remains - t;
-    data_sent = data_Sent + t;
-    send(out_channel,remote_node,make_byte_sequence(byte(),chunk(data_chunk,data_sent,t)));
+   send_download_request{
+     send(lookup(channels,remote_node) /* channel */,
+          as_id("sdo_"+as_text(remote_node)+"_slave" ) /* communication object */ ,
+          make_byte_sequence(byte(32),uint16(od_index),byte(od_subindex),uint32(0)));
    };
   };
-  Transition{Initial;Request_Sent;a;};
-  Transition{Request_Sent;Response_OK;can_frame_received;b;};
-  Transition{Response_OK;Data_Sent_Waiting_For_ACK;c;};
+  Transition{Initial;Request_Sent;send_download_request;};
  };
  Transition{Initial;Initiate_SDO_Download_Request;canopen_od_write;};
 };
 
 
-Statemachine {
-   id{ gaga; };States{Initial;a;b;c;};
-   Transition{a;b;};
-   Transition{c;b;};
-   
-};
-
-Simulation{
+Simulation{ 
  Start{SDO_Download;};
- for(i : 0 ,1,2,3,4,5,6){
-print(i,"\n");
-  canopen_od_write(can1,i,0,sdo_download,can1,"abcdefabcdef",12);
-   };
+ canopen_od_write(node1,3,4,"abcdefabcdef");
 };

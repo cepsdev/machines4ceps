@@ -81,6 +81,7 @@ static void map_ev_payload_to_variant(State_machine_simulation_core::event_t con
 static bool compute_event_signature_match(State_machine_simulation_core* smc,
 		std::vector<State_machine_simulation_core::event_signature>& v,
 		State_machine_simulation_core::event_signature** ev_sig,State_machine_simulation_core::event_t* ev);
+static void print_event_signatures(std::ostream& os,State_machine_simulation_core* smc,std::vector<State_machine_simulation_core::event_signature>& v);
 
 static void check_for_events(State_machine_simulation_core* smc,
 		                     ceps::ast::Nodeset& sim,
@@ -174,6 +175,11 @@ static void check_for_events(State_machine_simulation_core* smc,
 		if (sigs_it == smc->event_signatures().end()) return;
 		if(!compute_event_signature_match (smc,sigs_it->second,ev_sig,&smc->current_event()) ){
 		 std::stringstream ss; ss << smc->current_event().id_;
+		 ss << "\n"; print_event_signatures(ss,smc,sigs_it->second);
+		 ss << "Event " << smc->current_event().id_ << " is of type\n";
+		 for(auto e : smc->current_event().payload_){
+			 ss << "  " << ceps::ast::ast_node_kind_to_text[(int)e->kind()] << "\n";
+		 }
 		 smc->fatal_(-1,"No matching overload (event signature declaration) found for event-ctor "+ss.str());
 		}
 	}
@@ -195,6 +201,19 @@ static bool compute_event_signature_match(State_machine_simulation_core* smc,
   }
  }
  return false;
+}
+
+static void print_event_signatures(std::ostream& os,State_machine_simulation_core* smc,std::vector<State_machine_simulation_core::event_signature>& v){
+ int ctr = 0;
+ for(auto & e : v){
+	 os << "Event Signature Overload #" << ++ctr << ":\n";
+	 for (auto i = 0; i != e.entries.size(); ++i ){
+		 os << "  "<< e.entries[i].arg_name << " : ";
+		 if (e.entries[i].kind == ceps::ast::Ast_node_kind::undefined) os << "ANY";
+		 else os << ceps::ast::ast_node_kind_to_text[(int)e.entries[i].kind];
+		 os << "\n";
+	 }
+ }
 }
 
 static void log_triggered_transitions(State_machine_simulation_core* smc,

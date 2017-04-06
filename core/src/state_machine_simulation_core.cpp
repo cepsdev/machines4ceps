@@ -1945,6 +1945,28 @@ void State_machine_simulation_core::print_report(Result_process_cmd_line const& 
 }
 
 
+ceps::ast::Nodebase_ptr State_machine_simulation_core::lookup(lookup_table_t& t,ceps::ast::Nodebase_ptr p){
+ if (p == nullptr) return nullptr;
+ if (p->kind() == ceps::ast::Ast_node_kind::identifier){
+	 // id -> x
+	 std::string const & s = ceps::ast::name(ceps::ast::as_id_ref(p));
+	 for(auto e : t){
+       if (e.first->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Illformed lookup table.");
+       if (ceps::ast::name(ceps::ast::as_id_ref(e.first)) == s) return e.second;
+	 }
+	 return nullptr;
+ }
+ else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
+	 // string -> x
+ }
+ else if (p->kind() == ceps::ast::Ast_node_kind::int_literal){
+	 // id -> x
+ }
+ fatal_(-1,"Unsupported type of lookup table.");
+ return nullptr;
+}
+
+
 
 
 

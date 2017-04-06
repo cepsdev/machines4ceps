@@ -1207,6 +1207,18 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	  }
 	  exported_events_.insert(ceps::ast::name(ceps::ast::as_symbol_ref(p)));
 	}
+
+	//Handle lookup tables
+
+	auto lookups = ns[all{"lookup"}];
+	for(auto e : lookups){
+		auto lkt = e["lookup"];
+		if (lkt.nodes().size() == 0 || lkt.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
+			fatal_(-1,"First entry of lookup tables must be an identifier.");
+		auto & tbl = lookup_tables()[ceps::ast::name(ceps::ast::as_id_ref(lkt.nodes()[0]))];
+		for(auto i = 1; i < (int)lkt.nodes().size()-1;i+=2)
+			tbl.push_back(std::make_pair(lkt.nodes()[i],lkt.nodes()[i+1]));
+	}
 	build_signal_structures(result_cmd_line);
 
 #ifdef __gnu_linux__

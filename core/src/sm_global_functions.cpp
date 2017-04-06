@@ -29,7 +29,19 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 return (this->*it->second)(id,args,active_smp);
 	 }
 	}
-	if (id == "argv")
+	if (id == "as_id"){
+	 if (args.size() != 1 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) fatal_(-1,"as_id: illformed argument(s).");
+     return new ceps::ast::Identifier(ceps::ast::value(ceps::ast::as_string_ref(args[0])));
+	}else if (id == "as_text"){
+	 if (args.size() != 1 ) fatal_(-1,"as_text: illformed argument(s).");
+	 if (args[0]->kind () == ceps::ast::Ast_node_kind::identifier)
+		 return new ceps::ast::String(ceps::ast::name(ceps::ast::as_id_ref(args[0])));
+	 else if (args[0]->kind () == ceps::ast::Ast_node_kind::string_literal)
+		 return args[0];
+	 else if (args[0]->kind () == ceps::ast::Ast_node_kind::int_literal)
+		 return new ceps::ast::String(std::to_string(ceps::ast::value(ceps::ast::as_int_ref(args[0]))));
+	 fatal_(-1,"as_text: illformed argument(s).");
+	}else if (id == "argv")
 	{
 		auto const & args =  params->children();
 		if (args.size() > 0 && args[0]->kind() == ceps::ast::Ast_node_kind::int_literal){
@@ -43,6 +55,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	} else if (id == "argc")
 	{
 		return new ceps::ast::Int( current_event().payload_.size(), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+	} else if (id == "lookup"){
+     if (args.size() != 2 || args[0]->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"lookup(): illformed argument(s).");
+     auto const & tid = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
+     auto it = lookup_tables().find(tid);
+     if (it == lookup_tables().end()) fatal_(-1,"lookup(): table '"+tid+"' not found.");
+     return lookup(it->second,args[1]);
 	}
 	else if (id == "expect")
 	{

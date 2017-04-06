@@ -458,6 +458,12 @@ public:
 	};
 	std::unordered_map<int,std::vector<event_signature>> event_signatures_;
 	std::unordered_map<int,std::vector<event_signature>>& event_signatures() {return event_signatures_;}
+
+	using lookup_table_t = std::vector<std::pair<ceps::ast::Nodebase_ptr,ceps::ast::Nodebase_ptr>>;
+	using lookup_tables_t = std::unordered_map<std::string,lookup_table_t>;
+	lookup_tables_t lookup_tables_;
+	lookup_tables_t& lookup_tables() {return lookup_tables_;}
+	ceps::ast::Nodebase_ptr lookup(lookup_table_t&,ceps::ast::Nodebase_ptr);
 public:
 	std::vector<event_triggered_sender_t>& event_triggered_sender(){return event_triggered_sender_;};
 	bool running_as_node() const {return running_as_node_;}
