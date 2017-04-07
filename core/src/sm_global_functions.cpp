@@ -15,11 +15,15 @@ extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_
 extern std::string to_string(std::vector<ceps::ast::Nodebase_ptr>const& v);
 extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p);
 
+static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
 static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
+static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
+		State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp, ceps::parser_env::Symboltable & sym_table);
 
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,
-																				ceps::ast::Call_parameters* params)
+																				ceps::ast::Call_parameters* params,
+																				ceps::parser_env::Symboltable & sym_table)
 {
 	std::vector<ceps::ast::Nodebase_ptr> args;
 	if (params != nullptr && params->children().size()) flatten_args(this,params->children()[0], args, ',');
@@ -120,6 +124,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		}
 		return new ceps::ast::Int( 1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
 
+	} else if (id == "make_byte_sequence") {
+		return handle_make_byte_sequence(this,args,active_smp);
+	}else if (id == "breakup_byte_sequence"){
+		return handle_breakup_byte_sequence(this,args,active_smp,sym_table);
 	} else if (id == "send")
 		return handle_send_cmd(this,args,active_smp);
 	else if (id == "write_read_frm"){
@@ -683,6 +691,17 @@ static std::size_t make_byte_sequence_helper(
   smc->fatal_(-1,"make_byte_sequence(): unsupported argument:"+ss.str());
  }
 }
+
+static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
+ std::vector<unsigned char> byte_sequence;
+ std::size_t size;
+ auto seq = make_byte_sequence(smc,active_smp, args,size);
+ if (seq){
+  std::copy(seq,seq+size,back_inserter(byte_sequence));
+ }
+ return new ceps::ast::Byte_array(byte_sequence);
+}
+
 static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
  if(args.size() == 2
 	&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
@@ -709,30 +728,19 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
    }
    else smc->fatal_(-1, "send() : failed to insert message into queue.");
  } else if (args.size() == 3 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::identifier
-		    && args[2]->kind() == ceps::ast::Ast_node_kind::func_call){
+		    && args[2]->kind() == ceps::ast::Ast_node_kind::byte_array){
    auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
    auto channel = smc->get_out_channel(ch_id);
    if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
    auto id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
-   ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(args[2]);
-   if (func_call.children()[0]->kind() == ceps::ast::Ast_node_kind::identifier)
-   {
-   	 ceps::ast::Identifier& func_id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
-   	 if (ceps::ast::name(func_id) != "make_byte_sequence") smc->fatal_(-1, " send() : unsupported argument: "+ceps::ast::name(func_id) +"()");
-	 ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
-   	 ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
-   	 std::vector<ceps::ast::Nodebase_ptr> args;
-   	 flatten_args(smc,params.children()[0], args);
-   	 std::size_t size=0;
-   	 auto seq = make_byte_sequence(smc,active_smp,args,size);
-   	 if (seq != nullptr){
+   auto &seq = ceps::ast::bytes(ceps::ast::as_byte_array_ref(args[2]));
+   if (seq.size() != 0){
    		auto it = smc->channel_frame_name_to_id[ch_id].find(id);
    		if (it == smc->channel_frame_name_to_id[ch_id].end())
    		  smc->fatal_(-1,"send: No header/frame id mapping found for the channel/frame combination '"+ch_id+"/"+id+"'");
  		int frame_id = it->second;
-   		channel->push(std::make_tuple(seq,size,0,frame_id));
+   		channel->push(std::make_tuple((char*)seq.data(),seq.size(),0,frame_id));
    	 }
-   }
  } else {
 	 std::stringstream ss;
 	 for(auto e : args) ss <<"   "<< *e << "\n";
@@ -741,7 +749,17 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
  return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 }
 
+static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
+		State_machine_simulation_core *smc,
+		std::vector<ceps::ast::Nodebase_ptr> args,
+		State_machine* active_smp,
+		ceps::parser_env::Symboltable & sym_table){
 
+for(auto a : args){
+	std::cout << *a << "\n";
+}
+
+}
 
 
 

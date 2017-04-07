@@ -697,12 +697,12 @@ void State_machine_simulation_core::send_raw_frame(void* chunk,size_t len,size_t
  channel->push(std::make_tuple(msg_block,len,header_len,0));
 }
 
-ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string const & id, ceps::ast::Call_parameters* params, void* context)
+static ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string const & id, ceps::ast::Call_parameters* params, void* context,ceps::parser_env::Symboltable & sym_table)
 {
 	if (context == nullptr) return nullptr;
 	ceps_interface_eval_func_callback_ctxt_t* ctxt = (ceps_interface_eval_func_callback_ctxt_t*) context;
 
-	return ctxt->smc->ceps_interface_eval_func(ctxt->active_smp,id,params);
+	return ctxt->smc->ceps_interface_eval_func(ctxt->active_smp,id,params,sym_table);
 }
 
 ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operator_ptr binop,

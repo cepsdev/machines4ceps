@@ -580,7 +580,7 @@ void handle_instantiations(ceps::ast::Nodeset& ns,State_machine_simulation_core*
 }
 
 static bool is_a_lazy_ceps_fun(std::string const & id){
-	return id == "start_signal" || id == "changed";
+	return id == "start_signal" || id == "changed" || id == "breakup_byte_sequence";
 }
 
 void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)

@@ -370,7 +370,7 @@ public:
 	Log& log(){return std_log_;}
 
 
-	ceps::ast::Nodebase_ptr ceps_interface_eval_func(State_machine* active_smp,std::string const & , ceps::ast::Call_parameters*);
+	ceps::ast::Nodebase_ptr ceps_interface_eval_func(State_machine* active_smp,std::string const & , ceps::ast::Call_parameters*,ceps::parser_env::Symboltable & sym_table);
 private:
 	bool (*on_empty_event_queue_handler_)(std::string&) =  nullptr;
 	bool (*on_queued_event_handler_)(std::string const &)  = nullptr;

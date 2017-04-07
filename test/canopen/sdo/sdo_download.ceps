@@ -1,13 +1,16 @@
 kind Systemstate;
 kind Event;
 kind Guard;
-
-Event canopen_od_write,can_frame_received;
-
-Systemstate data_sent,data_remains,t;
-
 val int = 0;
 val size = 0;
+val can_id = 0;
+val cob_id = 0;
+
+
+Event canopen_od_write;
+Event can_frame_received;
+
+Systemstate data_sent,data_remains,t;
 
 event_signature{
  canopen_od_write;
@@ -17,6 +20,13 @@ event_signature{
  data_chunk(any);
 };
 
+event_signature{
+ can_frame_received;
+ port(id);
+ can_frame_id(can_id);
+ can_frame_payload(any);
+};
+
 sender
 {
   id { can1; };
@@ -24,22 +34,25 @@ sender
    canbus { 
     bus_id { "vcan0"; };
     can_id_mapping{
-     sdo_node1_slave; 0x601;
-     sdo_node1_master; 0x601;
-     sdo_node2_slave; 0x602;
-     sdo_node2_master; 0x602;
+     sdo_node1_server; 0x601;
+     sdo_node1_client; 0x581;
+     sdo_node2_server; 0x602;
+     sdo_node2_client; 0x582;
     };
    }; 
   };
 };
 
 lookup{
- channels;
+ ports;
  node1;can1;
  node2;can1;
  node3;can1;
 };
 
+
+
+Systemstate in_od_index,in_od_subindex;
 
 Statemachine {
  id { SDO_Download; };
@@ -51,13 +64,20 @@ Statemachine {
           Response_OK; 
           Data_Sent_Waiting_For_ACK; };
   Actions{
-   send_download_request{
-     send(lookup(channels,remote_node) /* channel */,
-          as_id("sdo_"+as_text(remote_node)+"_slave" ) /* communication object */ ,
-          make_byte_sequence(byte(32),uint16(od_index),byte(od_subindex),uint32(0)));
+   send_download_request
+   {
+     send(lookup(ports,remote_node),
+      as_id("sdo_"+as_text(remote_node)+"_server" ) /* communication object */ ,
+      make_byte_sequence(byte(32),uint16(od_index),byte(od_subindex),uint32(0)));
    };
-  };
+   handle_incoming_frame{
+     if (can_frame_id == 0x581){
+      breakup_byte_sequence(can_frame_payload,byte(any),uint16(in_od_index),byte(in_od_subindex));
+     }
+   };
+  };//Actions
   Transition{Initial;Request_Sent;send_download_request;};
+  Transition{Request_Sent;Request_Sent;can_frame_received;handle_incoming_frame;};
  };
  Transition{Initial;Initiate_SDO_Download_Request;canopen_od_write;};
 };
@@ -66,4 +86,10 @@ Statemachine {
 Simulation{ 
  Start{SDO_Download;};
  canopen_od_write(node1,3,4,"abcdefabcdef");
+ sleep();sleep();
+ can_frame_received(can2,0x581,make_byte_sequence(byte(96),uint16(3),byte(4),uint32(0) ));
 };
+
+
+
+
