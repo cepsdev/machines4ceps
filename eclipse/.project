@@ -31,7 +31,17 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>dotgenerator</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>include</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>livelog</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
@@ -71,7 +81,17 @@
 			<locationURI>PARENT-1-PROJECT_LOC/include/main.hpp</locationURI>
 		</link>
 		<link>
+			<name>modelling</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>src</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>utils</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
@@ -84,6 +104,11 @@
 			<name>cppgenerator/cppgen.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/cppgenerator/cppgen.hpp</locationURI>
+		</link>
+		<link>
+			<name>dotgenerator/dotgen.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/dotgenerator/dotgen.cpp</locationURI>
 		</link>
 		<link>
 			<name>include/base_defs.hpp</name>
@@ -116,6 +141,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/serialization.hpp</locationURI>
 		</link>
 		<link>
+			<name>include/signalgenerator.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/include/signalgenerator.hpp</locationURI>
+		</link>
+		<link>
 			<name>include/sm_comm_naive_msg_prot.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/sm_comm_naive_msg_prot.hpp</locationURI>
@@ -144,6 +174,16 @@
 			<name>include/state_machine_simulation_core.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/include/state_machine_simulation_core.hpp</locationURI>
+		</link>
+		<link>
+			<name>livelog/livelogger.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/livelog/livelogger.cpp</locationURI>
+		</link>
+		<link>
+			<name>livelog/test.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/livelog/test.cpp</locationURI>
 		</link>
 		<link>
 			<name>logging/log4kmw_events.cpp</name>
@@ -191,6 +231,31 @@
 			<locationURI>PARENT-1-PROJECT_LOC/core/src_gen/logging/log4kmw_states.hpp</locationURI>
 		</link>
 		<link>
+			<name>modelling/cover_path.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/modelling/cover_path.cpp</locationURI>
+		</link>
+		<link>
+			<name>modelling/gensm.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/modelling/gensm.cpp</locationURI>
+		</link>
+		<link>
+			<name>modelling/gensm.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/include/modelling/gensm.hpp</locationURI>
+		</link>
+		<link>
+			<name>modelling/partitions.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/modelling/partitions.cpp</locationURI>
+		</link>
+		<link>
+			<name>modelling/partitions.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/include/modelling/partitions.hpp</locationURI>
+		</link>
+		<link>
 			<name>src/cal_receiver.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/cal_receiver.cpp</locationURI>
@@ -206,6 +271,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/cmdline_utils.cpp</locationURI>
 		</link>
 		<link>
+			<name>src/main.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/tools/console/livelog/src/main.cpp</locationURI>
+		</link>
+		<link>
+			<name>src/modelling</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>src/pugiconfig.hpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/pugixml-1.6/src/pugiconfig.hpp</locationURI>
@@ -219,6 +294,11 @@
 			<name>src/serialization.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/serialization.cpp</locationURI>
+		</link>
+		<link>
+			<name>src/signalgenerator.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/signalgenerator.cpp</locationURI>
 		</link>
 		<link>
 			<name>src/sm_comm_naive_msg_prot.cpp</name>
@@ -279,6 +359,41 @@
 			<name>src/state_machines.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/core/src/state_machines.cpp</locationURI>
+		</link>
+		<link>
+			<name>utils/asciidoc.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-ECLIPSE_HOME/projects/sm4ceps/utils/asciidoc.cpp</locationURI>
+		</link>
+		<link>
+			<name>utils/asciidoc.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-ECLIPSE_HOME/projects/sm4ceps/utils/asciidoc.hpp</locationURI>
+		</link>
+		<link>
+			<name>utils/can_layer_docgen.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-ECLIPSE_HOME/projects/sm4ceps/utils/can_layer_docgen.cpp</locationURI>
+		</link>
+		<link>
+			<name>utils/can_layer_docgen.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-ECLIPSE_HOME/projects/sm4ceps/utils/can_layer_docgen.hpp</locationURI>
+		</link>
+		<link>
+			<name>utils/fibex_import.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/utils/fibex_import.cpp</locationURI>
+		</link>
+		<link>
+			<name>utils/fibex_import.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/utils/fibex_import.hpp</locationURI>
+		</link>
+		<link>
+			<name>src/modelling/cover_path.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/core/src/modelling/cover_path.cpp</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

@@ -24,7 +24,12 @@ C_DEPS :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 cppgenerator \
+dotgenerator \
+livelog \
 . \
 logging \
+modelling \
 src \
+src/modelling \
+utils \
 

@@ -8,8 +8,13 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include utils/subdir.mk
+-include src/modelling/subdir.mk
 -include src/subdir.mk
+-include modelling/subdir.mk
 -include logging/subdir.mk
+-include livelog/subdir.mk
+-include dotgenerator/subdir.mk
 -include cppgenerator/subdir.mk
 -include subdir.mk
 -include objects.mk
