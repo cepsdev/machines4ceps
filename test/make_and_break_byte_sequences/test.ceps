@@ -1,0 +1,147 @@
+kind Systemstate;
+
+Systemstate i1,i2,i3,i4,i5,i6,i7,i8,i9,i10;
+Systemstate s1,s2,s3,s4,s5,s6,s7;
+
+globals{
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ };
+
+Simulation{
+ s1 = make_byte_sequence(byte(255));
+ print(">> s1 = ",s1,"\n");
+ breakup_byte_sequence(s1,i1);
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 255);assert(i2 == 0);assert(i3 == 0);assert(i4 == 0);assert(i5 == 0);assert(i6 == 0);assert(i7 == 0);assert(i8 == 0);
+ 
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(i1),bool(i2),bool(i3),bool(i4),bool(i5),bool(i6),bool(i7),bool(i8));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 1);assert(i2 == 1);assert(i3 == 1);assert(i4 == 1);assert(i5 == 1);assert(i6 == 1);assert(i7 == 1);assert(i8 == 1); 
+
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(i1,i2,i3,i4,i5,i6,i7,i8));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 1);assert(i2 == 1);assert(i3 == 1);assert(i4 == 1);assert(i5 == 1);assert(i6 == 1);assert(i7 == 1);assert(i8 == 1); 
+
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(i1,any,any,any,any,any,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 1);assert(i2 == 0);assert(i3 == 0);assert(i4 == 0);assert(i5 == 0);assert(i6 == 0);assert(i7 == 0);assert(i8 == 0);
+ 
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,i2,any,any,any,any,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 0);assert(i2 == 1);assert(i3 == 0);assert(i4 == 0);assert(i5 == 0);assert(i6 == 0);assert(i7 == 0);assert(i8 == 0);
+  
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any,i3,any,any,any,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 0);assert(i2 == 0);assert(i3 == 1);assert(i4 == 0);assert(i5 == 0);assert(i6 == 0);assert(i7 == 0);assert(i8 == 0);
+  
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any,any,i4,any,any,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 0);assert(i2 == 0);assert(i3 == 0);assert(i4 == 1);assert(i5 == 0);assert(i6 == 0);assert(i7 == 0);assert(i8 == 0);
+  
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any,any,any,i5,any,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 0);assert(i2 == 0);assert(i3 == 0);assert(i4 == 0);assert(i5 == 1);assert(i6 == 0);assert(i7 == 0);assert(i8 == 0);
+  
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any,any,any,any,i6,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 0);assert(i2 == 0);assert(i3 == 0);assert(i4 == 0);assert(i5 == 0);assert(i6 == 1);assert(i7 == 0);assert(i8 == 0);
+  
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any,any,any,any,any,i7,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 0);assert(i2 == 0);assert(i3 == 0);assert(i4 == 0);assert(i5 == 0);assert(i6 == 0);assert(i7 == 1);assert(i8 == 0);
+  
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any,any,any,any,any,any,i8));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i1 == 0);assert(i2 == 0);assert(i3 == 0);assert(i4 == 0);assert(i5 == 0);assert(i6 == 0);assert(i7 == 0);assert(i8 == 1);
+ 
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any),uint2(i3),bool(any,any,any,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i3 == 3);
+ 
+ i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+ breakup_byte_sequence(s1,bool(any,any),uint3(i3),bool(any,any,any,any));
+ print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+ assert(i3 == 7);
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,int8(i1));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i1 == -1,"i1 == -1");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,int3(i1),uint5(i2));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i2 == 31,"i1 == 31");
+assert(i1 == -1,"i1 == -1");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,int2(i1),uint6(i2));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i2 == 63,"i1 == 63");
+assert(i1 == -1,"i1 == -1");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,int4(i1),uint4(i2));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i2 == 15,"i1 == 15");
+assert(i1 == -1,"i1 == -1");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,int5(i1),uint3(i2));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i2 == 7,"i1 == 7");
+assert(i1 == -1,"i1 == -1");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,int6(i1),uint2(i2));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i2 == 3,"i1 == 3");
+assert(i1 == -1,"i1 == -1");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,int7(i1),bit(i2));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i2 == 1,"i1 == 1");
+assert(i1 == -1,"i1 == -1");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s1,bool(any),int3(i3),bool(any,any,any,any,any));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i3 == -1,"i3 == -1");
+
+s2 = make_byte_sequence(byte(255,255));
+print(">> s2 = ",s2,"\n");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s2,int7(i1),uint3(i2),uint6(i3));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i1 == -1,"i1 == -1");
+assert(i2 == 7,"i2 == 7");
+assert(i3 == 63,"i3 == 63");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s2,int7(i1),int3(i2),uint6(i3));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i1 == -1,"i1 == -1");
+assert(i2 == -1,"i2 == -1");
+assert(i3 == 63,"i3 == 63");
+
+i1=0;i2=0;i3=0;i4=0;i5=0;i6=0;i7=0;i8=0;i9=0;i10=0;
+breakup_byte_sequence(s2,int7(i1),uint4(i2),uint5(i3));
+print("i1 = ",i1," i2 = ",i2," i3 = ",i3," i4 = ",i4," i5 = ",i5," i5 = ",i5," i6 = ",i6," i7 = ",i7," i8 = ",i8,"\n");
+assert(i1 == -1,"i1 == -1");
+assert(i2 == 15,"i2 == 15");
+assert(i3 == 31,"i3 == 31");
+ 
+};

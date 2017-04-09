@@ -10,7 +10,12 @@ val cob_id = 0;
 Event canopen_od_write;
 Event can_frame_received;
 
-Systemstate data_sent,data_remains,t;
+Systemstate data_sent,data_remains,t,in_od_index,in_od_subindex;
+
+globals{
+ in_od_index = 0;
+ in_od_subindex = 0;
+};
 
 event_signature{
  canopen_od_write;
@@ -74,6 +79,8 @@ Statemachine {
       if (can_frame_id == 0x581){
        print("handle_incoming_frame()\n");
        breakup_byte_sequence(can_frame_payload,byte(any),uint16(in_od_index),byte(in_od_subindex));
+       print("in_od_index = ", in_od_index, "\n");
+       print("in_od_subindex = ", in_od_subindex, "\n");
       }
    };
   };//Actions

@@ -941,7 +941,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 					    )
 					{
                         ss << to_string(this,n);
-						continue;
+					}
+					else if (n->kind() == ceps::ast::Ast_node_kind::byte_array){
+					 auto& seq = ceps::ast::bytes(ceps::ast::as_byte_array_ref(n));
+                     for(auto c: seq){
+                    	 ss << (int)c << " ";
+                     }
 					}
                 }//for
                 if(live_logger()){

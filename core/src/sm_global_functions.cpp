@@ -608,20 +608,21 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 
 
 static std::map<std::string, std::pair<int,bool> > type_descr_to_bitwidth_and_signedness = {
+		{"bit", {1,false}},
 		{"bool", {1,false}},
 		{"boolean", {1,false}},
-		{"int2", {4,true}},
-		{"uint2", {4,false}},
-		{"int3", {4,true}},
-		{"uint3", {4,false}},
+		{"int2", {2,true}},
+		{"uint2", {2,false}},
+		{"int3", {3,true}},
+		{"uint3", {3,false}},
 		{"int4", {4,true}},
 		{"uint4", {4,false}},
 		{"int5", {5,true}},
 		{"uint5", {5,false}},
 		{"int6", {6,true}},
 		{"uint6", {6,false}},
-		{"int7", {8,true}},
-		{"uint7", {8,false}},
+		{"int7", {7,true}},
+		{"uint7", {7,false}},
 		{"byte", {8,true}},
 		{"ubyte", {8,false}},
 		{"sbyte", {8,true}},
@@ -848,9 +849,9 @@ template <typename I> static std::size_t breakup_byte_sequence_helper(
 		int en=0,
 		std::size_t pos=0,
 		std::size_t bit_pos=0){
- std::size_t s = pos*8 + bit_pos;
+ std::size_t s = 0;
  for(;b!=e;++b){
-  s += breakup_byte_sequence_helper(smc,active_smp,sym_table,*b,chunk,size,do_read,bw,iss,is_real,en,pos+(s+bit_pos)/8,(s+bit_pos) % 8);
+  s += breakup_byte_sequence_helper(smc,active_smp,sym_table,*b,chunk,size,do_read,bw,iss,is_real,en,(s+bit_pos) / 8 + pos,(s+bit_pos) % 8);
  }
  return s;
 }
@@ -893,11 +894,132 @@ static std::size_t breakup_byte_sequence_helper(
 	 }
 
  if (!do_read) return bw;
+ if (bw == 0) return 0;
+ unsigned short bytes_spawned = bw / 8;
+ constexpr auto buffer_size = 10;
 
+ unsigned char buffer[buffer_size]={0};
+
+ if (bit_pos == 0 && bw % 8 == 0){
+	std::memcpy(buffer,chunk+pos,bw / 8);
+	if (iss && (*(buffer + bytes_spawned - 1) & 0x80) ){
+     for(auto j = bytes_spawned; j!= buffer_size; ++j) *(buffer+j) = 0xFF;
+	}
+ } else if (bit_pos == 0){
+	std::memcpy(buffer,chunk+pos,bytes_spawned = (bw+7) / 8  );
+	unsigned char b = 1;
+	for(short j = 1; (bw % 8) - j  ;++j) b = (b << 1) | 1;
+	*(buffer+bytes_spawned - 1) &= b;
+	if (iss){
+	 b = 1 << ((bw % 8)-1);
+	 if (b & *(buffer+bytes_spawned - 1)){
+	  if (bw%8 == 1) *(buffer+bytes_spawned - 1) |=0xFE;
+	  else if (bw%8 == 2) *(buffer+bytes_spawned - 1) |=0xFC;
+	  else if (bw%8 == 3) *(buffer+bytes_spawned - 1) |=0xF8;
+	  else if (bw%8 == 4) *(buffer+bytes_spawned - 1) |=0xF0;
+	  else if (bw%8 == 5) *(buffer+bytes_spawned - 1) |=0xE0;
+	  else if (bw%8 == 6) *(buffer+bytes_spawned - 1) |=0xC0;
+	  else if (bw%8 == 7) *(buffer+bytes_spawned - 1) |=0x80;
+	  for(auto j = bytes_spawned; j!= buffer_size; ++j) *(buffer+j) = 0xFF;
+	 }
+	}
+ } else {
+	 unsigned short tail = 0;
+	 if (bit_pos + bw > 8) tail = (bit_pos + bw)  %  8;
+	 unsigned short bytes_in_chunk_spawned = (bw + 7) / 8 + ( tail != 0 ? 1 : 0) ;
+	 bytes_spawned = (bw + 7) / 8;
+
+	 //std::cout <<"iss= "<< iss << " bit_pos=" << bit_pos << " tail= " << tail << " bytes_spawned= "<< bytes_spawned << " bytes_in_chunk_spawned="<< bytes_in_chunk_spawned<< "\n";
+	 std::memcpy(buffer,chunk+pos,bytes_in_chunk_spawned);
+	 if (tail) {
+		 if (tail == 1) *(buffer+bytes_in_chunk_spawned-1) &= 1;
+		 else if (tail == 2) *(buffer+bytes_in_chunk_spawned-1) &= 3;
+		 else if (tail == 3) *(buffer+bytes_in_chunk_spawned-1) &= 7;
+		 else if (tail == 4) *(buffer+bytes_in_chunk_spawned-1) &= 15;
+		 else if (tail == 5) *(buffer+bytes_in_chunk_spawned-1) &= 31;
+		 else if (tail == 6) *(buffer+bytes_in_chunk_spawned-1) &= 63;
+		 else if (tail == 7) *(buffer+bytes_in_chunk_spawned-1) &= 127;
+	 }
+	 //std::cout << (int)buffer[0] << " " << (int)buffer[1] << std::endl;
+	 for(short j = 0; j != bytes_in_chunk_spawned; ++j) {
+		 *(buffer+j) >>= bit_pos ;
+		 if (j+1 == bytes_in_chunk_spawned) break;
+		 unsigned char upper_part = *(buffer + j + 1) << (8-bit_pos);
+		 *(buffer + j) |= upper_part;
+	 }
+	 //std::cout << (int)buffer[0] << " " << (int)buffer[1] << std::endl;
+	 if (bytes_spawned == 1) {
+		 if (bw == 1) *buffer &= 1;
+		 else if (bw == 2) *buffer &= 3;
+		 else if (bw == 3) *buffer &= 7;
+		 else if (bw == 4) *buffer &= 15;
+		 else if (bw == 5) *buffer &= 31;
+		 else if (bw == 6) *buffer &= 63;
+		 else if (bw == 7) *buffer &= 127;
+	 }
+	 if (bytes_in_chunk_spawned != bytes_spawned){
+      if (tail <= bit_pos) *(buffer+bytes_in_chunk_spawned-1) = 0;
+      else *(buffer+bytes_in_chunk_spawned-1) >>= bit_pos;
+	 }
+	 if (iss){
+		 unsigned char b = 0x80;
+		 if (bw % 8 != 0) {b = 1; b << ( (bw % 8) -1 );}
+		 if (b & *(buffer + bytes_spawned - 1)){
+		  if (bw%8 == 1) *(buffer+bytes_spawned - 1) |=0xFE;
+		  else if (bw%8 == 2) *(buffer+bytes_spawned - 1) |=0xFC;
+		  else if (bw%8 == 3) *(buffer+bytes_spawned - 1) |=0xF8;
+		  else if (bw%8 == 4) *(buffer+bytes_spawned - 1) |=0xF0;
+		  else if (bw%8 == 5) *(buffer+bytes_spawned - 1) |=0xE0;
+		  else if (bw%8 == 6) *(buffer+bytes_spawned - 1) |=0xC0;
+		  else if (bw%8 == 7) *(buffer+bytes_spawned - 1) |=0x80;
+		  for(auto j = bytes_spawned; j!= buffer_size; ++j) *(buffer+j) = 0xFF;
+		 }
+	 }
+ }
+
+
+ ceps::ast::Nodebase_ptr dest=nullptr;
+ std::string name, kind;
+ if (!is_id_or_symbol(node, name, kind)){
+	 std::stringstream ss; ss << *node;
+ 	 smc->fatal_(-1,"breakup_byte_sequence(). Expected a variable, got "+ss.str());
+ }
+
+ if (name == "any") return bw;
+
+ ceps::parser_env::Symbol *sym = nullptr;
+
+ if (kind == "") sym = sym_table.lookup(name);
+
+ if(sym != nullptr){
+  if (sym->category != ceps::parser_env::Symbol::VAR ||  sym->payload == nullptr)
+ 	   smc->fatal_(-1,"breakup_byte_sequence(). '"+name+"' not a variable.[1]");
+  dest = (ceps::ast::Nodebase_ptr)sym->payload;
+ } else {
+   std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+   auto it_cur = smc->get_global_states().find(name);
+   if(it_cur == smc->get_global_states().end())
+ 	  smc->fatal_(-1,"breakup_byte_sequence(). '"+name+"' not a variable.[2]");
+   dest = it_cur->second;
+ }
+
+ if (dest->kind() == ceps::ast::Ast_node_kind::byte_array){
+	 auto & v = ceps::ast::as_byte_array_ref(dest);
+	 std::vector<unsigned char> & seq = ceps::ast::bytes(v);
+     seq.clear();
+     std::copy(buffer,buffer+bytes_spawned,std::back_inserter(seq));
+ } else  if (dest->kind() == ceps::ast::Ast_node_kind::int_literal){
+     auto & v = ceps::ast::as_int_ref(dest);
+	 ceps::ast::value(v) = *((int*)buffer) ;
+ } else if (dest->kind() == ceps::ast::Ast_node_kind::float_literal){
+	 auto & v = ceps::ast::as_double_ref(dest);
+	 ceps::ast::value(v) = *((double*)buffer);
+ } else if (dest->kind() == ceps::ast::Ast_node_kind::string_literal){
+	 auto & v = ceps::ast::as_string_ref(dest);
+	 ceps::ast::value(v) = std::string{(char*)buffer};
+ } else smc->fatal_(-1,"breakup_byte_sequence(). Type of '"+name+"' not supported.[1]");
  return bw;
 }
-
-
 
 static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
 		State_machine_simulation_core *smc,
@@ -912,7 +1034,7 @@ static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
 	 smc->fatal_(-1,"breakup_byte_sequence(). Expect a variable as first argument.");
  auto sym = sym_table.lookup(name);
  std::vector<unsigned char>* seq = nullptr;
- if(sym != nullptr){
+ if(sym != nullptr && kind.length()==0){
   if (sym->category != ceps::parser_env::Symbol::VAR ||
 	  sym->payload == nullptr ||
 	  ((ceps::ast::Nodebase_ptr)sym->payload)->kind()!= ceps::ast::Ast_node_kind::byte_array)
