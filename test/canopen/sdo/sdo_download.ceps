@@ -71,9 +71,10 @@ Statemachine {
       make_byte_sequence(byte(32),uint16(od_index),byte(od_subindex),uint32(0)));
    };
    handle_incoming_frame{
-     if (can_frame_id == 0x581){
-      breakup_byte_sequence(can_frame_payload,byte(any),uint16(in_od_index),byte(in_od_subindex));
-     }
+      if (can_frame_id == 0x581){
+       print("handle_incoming_frame()\n");
+       breakup_byte_sequence(can_frame_payload,byte(any),uint16(in_od_index),byte(in_od_subindex));
+      }
    };
   };//Actions
   Transition{Initial;Request_Sent;send_download_request;};
@@ -86,7 +87,6 @@ Statemachine {
 Simulation{ 
  Start{SDO_Download;};
  canopen_od_write(node1,3,4,"abcdefabcdef");
- sleep();sleep();
  can_frame_received(can2,0x581,make_byte_sequence(byte(96),uint16(3),byte(4),uint32(0) ));
 };
 

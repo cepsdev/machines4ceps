@@ -20,6 +20,60 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
 static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
 		State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp, ceps::parser_env::Symboltable & sym_table);
 
+
+static void flatten_args2(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
+{
+	using namespace ceps::ast;
+	if (r == nullptr) return;
+	if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
+	{
+		auto& t = as_binop_ref(r);
+		flatten_args2(t.left(),v,op_val);
+		flatten_args2(t.right(),v,op_val);
+		return;
+	}
+	v.push_back(r);
+}
+
+
+static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args){
+ if (p->kind() != ceps::ast::Ast_node_kind::func_call) return false;
+ ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
+ ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+ ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
+ if (params.children().size()) flatten_args2(params.children()[0], args);
+ fid = ceps::ast::name(id);
+ return true;
+}
+
+static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args, std::size_t number_of_arguments){
+	auto r = is_func_call(p,fid,args);
+	if (!r) return r;
+	return number_of_arguments == args.size();
+}
+
+static bool is_id_or_symbol(ceps::ast::Nodebase_ptr p, std::string& n, std::string& k){
+	using namespace ceps::ast;
+	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
+	if (p->kind() == Ast_node_kind::symbol) {n = name(as_symbol_ref(p));k = kind(as_symbol_ref(p)); return true;}
+	return false;
+}
+
+static bool is_id(ceps::ast::Nodebase_ptr p, std::string & result, std::string& base_kind){
+	using namespace ceps::ast;
+	std::string k,l;
+	if (p->kind() == Ast_node_kind::binary_operator && op(as_binop_ref(p)) == '.'){
+	 if (!is_id_or_symbol(as_binop_ref(p).right(),k,l)) return false;
+
+	 if (!is_id(as_binop_ref(p).left(),result,base_kind)) return false;
+	 result = result + "." + k;
+	 return true;
+	} else if (is_id_or_symbol(p,k,l)){ base_kind = l; result = k; return true; }
+	return false;
+}
+
+
+
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,
 																				ceps::ast::Call_parameters* params,
@@ -554,13 +608,27 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 
 
 static std::map<std::string, std::pair<int,bool> > type_descr_to_bitwidth_and_signedness = {
+		{"bool", {1,false}},
+		{"boolean", {1,false}},
+		{"int2", {4,true}},
+		{"uint2", {4,false}},
+		{"int3", {4,true}},
+		{"uint3", {4,false}},
+		{"int4", {4,true}},
+		{"uint4", {4,false}},
+		{"int5", {5,true}},
+		{"uint5", {5,false}},
+		{"int6", {6,true}},
+		{"uint6", {6,false}},
+		{"int7", {8,true}},
+		{"uint7", {8,false}},
 		{"byte", {8,true}},
 		{"ubyte", {8,false}},
 		{"sbyte", {8,true}},
 		{"char", {8,true}},
 		{"schar", {8,true}},
 		{"int8", {8,true}},
-		{"uint8", {8,true}},
+		{"uint8", {8,false}},
 		{"int16", {16,true}},
 		{"uint16", {16,false}},
 		{"int24", {24,true}},
@@ -692,7 +760,9 @@ static std::size_t make_byte_sequence_helper(
  }
 }
 
-static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
+static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulation_core *smc,
+		                                                 std::vector<ceps::ast::Nodebase_ptr> args,
+														 State_machine* active_smp){
  std::vector<unsigned char> byte_sequence;
  std::size_t size;
  auto seq = make_byte_sequence(smc,active_smp, args,size);
@@ -749,16 +819,123 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
  return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 }
 
+static std::size_t breakup_byte_sequence_helper(
+		State_machine_simulation_core *smc,
+		State_machine* active_smp,
+		ceps::parser_env::Symboltable & sym_table,
+        ceps::ast::Nodebase_ptr arg,
+        unsigned char * chunk=0,
+		std::size_t size=0,
+		bool do_read=false,
+		int bw=8,
+		bool iss=false,
+		bool is_real=false,
+		int en=0,
+		std::size_t pos=0,
+		std::size_t bit_pos=0);
+template <typename I> static std::size_t breakup_byte_sequence_helper(
+		State_machine_simulation_core *smc,
+		State_machine* active_smp,
+		ceps::parser_env::Symboltable & sym_table,
+		I b,
+		I e,
+		unsigned char * chunk=0,
+		std::size_t size=0,
+		bool do_read=false,
+		int bw=8,
+		bool iss=false,
+		bool is_real=false,
+		int en=0,
+		std::size_t pos=0,
+		std::size_t bit_pos=0){
+ std::size_t s = pos*8 + bit_pos;
+ for(;b!=e;++b){
+  s += breakup_byte_sequence_helper(smc,active_smp,sym_table,*b,chunk,size,do_read,bw,iss,is_real,en,pos+(s+bit_pos)/8,(s+bit_pos) % 8);
+ }
+ return s;
+}
+
+static std::size_t breakup_byte_sequence_helper(
+		State_machine_simulation_core *smc,
+		State_machine* active_smp,
+		ceps::parser_env::Symboltable & sym_table,
+        ceps::ast::Nodebase_ptr node,
+        unsigned char * chunk,
+		std::size_t size,
+		bool do_read,
+		int bw,
+		bool iss,
+		bool is_real,
+		int en,
+		std::size_t pos,
+		std::size_t bit_pos)
+{
+ std::size_t s = 0;
+ if (node->kind() == ceps::ast::Ast_node_kind::func_call){
+	  ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(node);
+	  ceps::ast::Identifier& func_id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+	  auto it = type_descr_to_bitwidth_and_signedness.find(ceps::ast::name(func_id));
+	  if (it != type_descr_to_bitwidth_and_signedness.end()){
+		  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
+		  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
+		  std::vector<ceps::ast::Nodebase_ptr> args;
+		  flatten_args(smc,params.children()[0], args);
+		  return breakup_byte_sequence_helper(smc,
+				                              active_smp,
+											  sym_table,
+											  args.begin(),
+											  args.end(),
+											  chunk,size,do_read,it->second.first,it->second.second,is_real,en,pos,bit_pos);
+	  } else {
+		std::stringstream ss;  ss << *node;
+		smc->fatal_(-1,"breakup_byte_sequence(): unsupported type:"+ss.str());
+	  }
+	 }
+
+ if (!do_read) return bw;
+
+ return bw;
+}
+
+
+
 static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
 		State_machine_simulation_core *smc,
 		std::vector<ceps::ast::Nodebase_ptr> args,
 		State_machine* active_smp,
-		ceps::parser_env::Symboltable & sym_table){
-
-for(auto a : args){
-	std::cout << *a << "\n";
-}
-
+		ceps::parser_env::Symboltable & sym_table)
+{
+ if (args.size() < 2)
+	 smc->fatal_(-1,"breakup_byte_sequence(). Illformed argument(s).");
+ std::string name,kind;
+ if (!is_id_or_symbol(args[0], name, kind))
+	 smc->fatal_(-1,"breakup_byte_sequence(). Expect a variable as first argument.");
+ auto sym = sym_table.lookup(name);
+ std::vector<unsigned char>* seq = nullptr;
+ if(sym != nullptr){
+  if (sym->category != ceps::parser_env::Symbol::VAR ||
+	  sym->payload == nullptr ||
+	  ((ceps::ast::Nodebase_ptr)sym->payload)->kind()!= ceps::ast::Ast_node_kind::byte_array)
+	   smc->fatal_(-1,"breakup_byte_sequence(). '"+name+"' not a variable.[1]");
+  auto & byte_array = ceps::ast::as_byte_array_ref((ceps::ast::Nodebase_ptr)sym->payload);
+  seq = & ceps::ast::bytes(byte_array);
+ } else {
+  std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+  auto it_cur = smc->get_global_states().find(name);
+  if(it_cur == smc->get_global_states().end() || it_cur->second->kind() != ceps::ast::Ast_node_kind::byte_array)
+	  smc->fatal_(-1,"breakup_byte_sequence(). '"+name+"' not a byte sequence.[2]");
+  auto & byte_array = ceps::ast::as_byte_array_ref(it_cur->second);
+  seq = & ceps::ast::bytes(byte_array);
+ }
+ auto bits_read = breakup_byte_sequence_helper(
+ 		smc,
+ 		active_smp,
+		sym_table,
+ 		args.begin()+1,
+ 		args.end(),
+ 		seq->data(),
+ 		seq->size(),
+ 		true);
 }
 
 
