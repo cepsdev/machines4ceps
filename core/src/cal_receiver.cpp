@@ -143,7 +143,7 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 				using namespace ceps::ast;
 				DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER]" << "[CAL=" << call_name << "]" << "[bus=" << can_bus << "]" << "\n";
 				auto handlers = ns[all{ "on_msg" }];
-				if (handlers.empty()) fatal_(-1, "on_msg required in receiver definition.");
+				//if (handlers.empty()) fatal_(-1, "on_msg required in receiver definition.");
 				int dispatcher_id = -1;
 				auto ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
 				ctxt->id_=channel_id;
@@ -235,50 +235,35 @@ void comm_receiver_socket_can(int id,
 	State_machine_simulation_core* smc,
 	bool extended_can_id){
 	int s = 0;
-	DEBUG_FUNC_PROLOGUE2
-	DEBUG << "[comm_receiver_socket_can][STARTED]\n";
 
 	{
-		//extern std::map<std::string,int> interfaces_to_sockets;
-		std::lock_guard<std::mutex> lock(sockcan::interfaces_to_sockets_m);
+	 struct sockaddr_can addr;
+	 struct ifreq ifr;
+	 if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+		smc->fatal_(-1,"comm_receiver_socket_can:Error while opening socket");
+	 }
 
-		auto it = sockcan::interfaces_to_sockets.find(can_bus);
-		if (it != sockcan::interfaces_to_sockets.end()){
-			s = it->second;
-		} else {
-			struct sockaddr_can addr;
-			struct ifreq ifr;
-			if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-				smc->fatal_(-1,"comm_receiver_socket_can:Error while opening socket");
-			}
+	 strcpy(ifr.ifr_name, can_bus.c_str());
+	 ioctl(s, SIOCGIFINDEX, &ifr);
 
-			strcpy(ifr.ifr_name, can_bus.c_str());
-			ioctl(s, SIOCGIFINDEX, &ifr);
+	 addr.can_family  = AF_CAN;
+	 addr.can_ifindex = ifr.ifr_ifindex;
 
-			addr.can_family  = AF_CAN;
-			addr.can_ifindex = ifr.ifr_ifindex;
-
-			if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-				smc->fatal_(-1,"comm_receiver_socket_can:Error in socket bind");
-			}
-			sockcan::interfaces_to_sockets[can_bus] = s;
-		}
+	 if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		smc->fatal_(-1,"comm_receiver_socket_can:Error in socket bind");
+	 }
 	}
 
 	auto current_smc = smc;
 	auto in_ctxt = smc->get_dispatcher_thread_ctxt(id);
 
-	DEBUG << "[comm_receiver_socket_can][ID="<< id << "][WAIT_FOR_START_REQUEST]\n";
 	in_ctxt->wait_for_start_request();
-	DEBUG << "[comm_receiver_socket_can][ID="<< id << "][START_REQUESTED]\n";
 
 	int ctr=1;
 	for (;;++ctr)
 	{
 		struct can_frame can_message{0};
-		DEBUG << "[comm_receiver_socket_can]["<< ctr << "][PRE_RECV]\n";
 		auto r = recv(s, &can_message, sizeof(struct can_frame),0);
-		DEBUG << "[comm_receiver_socket_can]["<< ctr << "][POST_RECV][r="<< r <<"]\n";
 		if (r <= 0)
 			smc->fatal_(-1,"comm_receiver_socket_can:Read failed.");
 
@@ -299,7 +284,23 @@ void comm_receiver_socket_can(int id,
 		std::vector<std::string> v1;
 		std::vector<ceps::ast::Nodebase_ptr> v2;
 
-		if (in_ctxt->get_native_handler().size()){
+		if (in_ctxt->get_native_handler().size() == 0 && in_ctxt->handler.size() == 0){
+			/*
+			  event_signature{
+               can_frame_received;
+               port(id);
+               can_frame_id(can_id);
+               can_frame_payload(any);
+              };*/
+			State_machine_simulation_core::event_t ev;
+			ev.id_ = "can_frame_received";
+			ev.payload_.push_back(new ceps::ast::Identifier(in_ctxt->id_));
+			ev.payload_.push_back(new ceps::ast::Int((int)can_message.can_id,ceps::ast::all_zero_unit()));
+			std::vector<unsigned char> seq;seq.resize(can_message.can_dlc);
+			std::copy(can_message.data,can_message.data+can_message.can_dlc,seq.begin());
+			ev.payload_.push_back(new ceps::ast::Byte_array(seq));
+			current_smc->enqueue_event(ev);
+		} else if (in_ctxt->get_native_handler().size()){
 			for(auto fc :  in_ctxt->get_native_handler()){
 				if (!fc->match_chunk(can_msg,extended_can_id? can_message.can_dlc + 5 : can_message.can_dlc + 2)) continue;
 				fc->read_chunk(can_msg,extended_can_id? can_message.can_dlc + 5 : can_message.can_dlc + 2);

@@ -1,0 +1,57 @@
+kind Systemstate;
+kind Event;
+kind Guard;
+
+Event canopen_od_write;
+Event can_frame_received;
+
+event_signature{
+ can_frame_received;
+ port(id);
+ can_frame_id(0);
+ can_frame_payload(any);
+};
+
+sender
+{
+  id { can_out; };
+  transport { 
+   canbus { 
+    bus_id { "vcan0"; };
+    can_id_mapping{
+     sdo_node1_server; 0x601;
+    };
+   }; 
+  };
+};
+
+receiver
+{
+  id { can_in; };
+  transport { canbus { bus_id { "vcan0"; }; }; };
+};
+
+
+Statemachine{
+ id{S1;};
+ States{Initial;};
+ Actions{
+  data_received{
+   print("can_frame_id=",can_frame_id,"\n");
+   print("can_frame_payload=",can_frame_payload,"\n");
+   print("payload size = ",size(can_frame_payload),"\n");
+  };
+ };
+ Transition{Initial;Initial;can_frame_received;data_received;};
+};
+
+Simulation{
+ Start{S1;};
+ send(can_out,
+      sdo_node1_server,
+      make_byte_sequence(byte(32),
+                        uint16(100),
+                        byte(2),
+                        uint32(0))
+     );
+};

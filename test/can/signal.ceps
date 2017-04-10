@@ -1,0 +1,70 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+Systemstate signal;
+
+sender
+{
+  id { can_out; };
+  transport { 
+   canbus { 
+    bus_id { "vcan0"; };
+    can_id_mapping{
+     sdo_node1_server; 0x601;
+    };
+   }; 
+  };
+};
+
+data{
+ 1.0;2.0;3.0;4.0;5.0;6.0;7.0;8.0;9.0;10.0;
+};
+
+data2{
+ include_xml("in.xml");
+};
+
+val data_len = root.data2.content().size();
+
+globals{
+ signal = root.data2.d.content();
+};
+
+global_functions{
+ h{
+  params{x;};
+  print("signal=", as_double(signal.at(x)),"\n");
+ };
+};
+
+
+Event tick;Event EXIT;
+Systemstate ctr;
+
+Statemachine{id{S1;};
+ States{Initial;};
+ on_enter{
+  start_periodic_timer(0.1*s,tick);
+  ctr = 0;
+ };
+ Actions{
+  handle_tick{
+   send(can_out,
+        sdo_node1_server,
+        make_byte_sequence(byte(32),
+                        uint16(100),
+                        byte(2),
+                        int32(as_double(signal.at(ctr))))
+     );
+  
+   print(as_double(signal.at(ctr)),"\n");
+   ctr = ctr + 1;
+   if (ctr == data_len) EXIT;
+  };
+ };
+ Transition{Initial;Initial;tick;handle_tick;};
+};
+
+Simulation{
+ Start{S1;};
+};

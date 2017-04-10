@@ -334,13 +334,23 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	 }	 else if (id == "as_double"){
 		if (args.size() == 0) return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+		//std::cout << *args[0] << "\n";
+		if (args[0]->kind() == ceps::ast::Ast_node_kind::float_literal) return args[0];
+		else if (args[0]->kind() == ceps::ast::Ast_node_kind::string_literal)
+			return new ceps::ast::Double(std::stod(ceps::ast::value(ceps::ast::as_string_ref(args[0]))),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		else if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
 				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
 			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
 			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
 			if (ns->size() == 0)
 				fatal_(-1,"as_double: node set is empty.\n");
 			return new ceps::ast::Double(ns->first().node().text().as_double(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+		} else if (args[0]->kind() == ceps::ast::Ast_node_kind::nodeset){
+			auto & ns = ceps::ast::as_ast_nodeset_ref(args[0]).children();
+			if (ns.size() != 0){
+			 if (ns[0]->kind() == ceps::ast::Ast_node_kind::float_literal)
+				 return ns[0];
+			}
 		}
 		return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	 } else if (id == "as_int"){
@@ -382,19 +392,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		}
 
 	} else if (id == "size") {
-		if (args.size() == 0) return  new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-		else if (args[0]->kind() == ceps::ast::Ast_node_kind::identifier)
+		if (args[0]->kind() == ceps::ast::Ast_node_kind::byte_array)
 		{
-			auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
-			auto it_frame_gen = frame_generators().find(id);
-			if (it_frame_gen != frame_generators().end())
-			{
-				size_t ds;
-				char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds,{});
-				delete[] msg_block;
-				return new ceps::ast::Int(ds,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-			}
+		 return new ceps::ast::Int(ceps::ast::bytes(ceps::ast::as_byte_array_ref(args[0])).size(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 		}
+		fatal_(-1,"args():Wrong arguments.");
 	} else if (id == "raw_frame_starts_with") {
 		if (args[0]->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Expected frame id.");
 		auto id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
@@ -719,6 +721,12 @@ static std::size_t make_byte_sequence_helper(
 	  std::vector<ceps::ast::Nodebase_ptr> args;
 	  flatten_args(smc,params.children()[0], args);
 	  return make_byte_sequence_helper(smc,active_smp,args,chunk,do_write,it->second.first,it->second.second,is_real,en,pos);
+  } else if (ceps::ast::name(func_id) == "real32" || ceps::ast::name(func_id) == "float" ) {
+	  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
+	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
+	  std::vector<ceps::ast::Nodebase_ptr> args;
+	  flatten_args(smc,params.children()[0], args);
+	  return make_byte_sequence_helper(smc,active_smp,args,chunk,do_write,32,true,true,en,pos);
   } else if (ceps::ast::name(func_id) == "make_byte_sequence") {
 	  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
 	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
@@ -754,7 +762,25 @@ static std::size_t make_byte_sequence_helper(
   }
   return bytes_to_write;
  } else if (node->kind() == ceps::ast::Ast_node_kind::float_literal) {
-
+  std::size_t bytes_to_write = bw / 8;
+  if (!is_real){
+    if(!iss){
+	 std::uint64_t j = ceps::ast::value(ceps::ast::as_double_ref(node));
+     std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+    } else {
+ 	 std::int64_t j = ceps::ast::value(ceps::ast::as_double_ref(node));
+	 std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+	}
+  }else /*real*/{
+   if (bw == 32){
+	float j = ceps::ast::value(ceps::ast::as_double_ref(node));
+	std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+	} else {
+	  double j = ceps::ast::value(ceps::ast::as_double_ref(node));
+	  std::memcpy(chunk+pos,(char*)&j,bytes_to_write);
+	}
+   }
+   return bytes_to_write;
  } else {
   std::stringstream ss;  ss << *node;
   smc->fatal_(-1,"make_byte_sequence(): unsupported argument:"+ss.str());

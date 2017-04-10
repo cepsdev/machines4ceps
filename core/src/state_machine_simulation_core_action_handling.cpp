@@ -947,7 +947,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
                      for(auto c: seq){
                     	 ss << (int)c << " ";
                      }
-					}
+					} else ss << *n << "\n";
                 }//for
                 if(live_logger()){
                    this->live_logger_out()->log_console(ss.str());

@@ -357,7 +357,8 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	for(auto & t : smp->executionloop_context().transitions)
 	{
 		auto p = t.smp;
-		for(;smp->executionloop_context().parent_vec[p];p = smp->executionloop_context().parent_vec[p]);
+		if (smp->executionloop_context().parent_vec.size() > p)
+			for(;smp->executionloop_context().parent_vec[p];p = smp->executionloop_context().parent_vec[p]);
 		t.root_sms = p;
 	}
 
@@ -1248,7 +1249,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		init_fn(smc, register_plugin);
 	}*/
 #endif
-    {
+
+	{
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
 	 compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
 	 executionloop_context().init_coverage_structures();
