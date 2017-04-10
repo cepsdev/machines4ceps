@@ -31,7 +31,7 @@ receiver
   transport { canbus { bus_id { "vcan0"; }; }; };
 };
 
-
+Systemstate x,y;globals{y=0;x=0;};
 Statemachine{
  id{S1;};
  States{Initial;};
@@ -40,6 +40,9 @@ Statemachine{
    print("can_frame_id=",can_frame_id,"\n");
    print("can_frame_payload=",can_frame_payload,"\n");
    print("payload size = ",size(can_frame_payload),"\n");
+   breakup_byte_sequence(can_frame_payload,int2(any),int8(x),int6(y));
+   print("x=",x,"\n");
+   print("y=",y,"\n");
   };
  };
  Transition{Initial;Initial;can_frame_received;data_received;};
@@ -49,9 +52,27 @@ Simulation{
  Start{S1;};
  send(can_out,
       sdo_node1_server,
-      make_byte_sequence(byte(32),
-                        uint16(100),
+      make_byte_sequence(uint8(255),
+                        uint8(255),
+                        uint8(255),
                         byte(2),
                         uint32(0))
      );
+ sleep();
+ send(can_out,
+      sdo_node1_server,
+      make_byte_sequence(byte(32),
+                        uint16(128),
+                        byte(2),
+                        uint32(0))
+     );
+
 };
+
+
+
+
+
+
+
+

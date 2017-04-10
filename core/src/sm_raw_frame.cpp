@@ -212,7 +212,7 @@ size_t fill_raw_chunk(std::map<std::string /*systemstate*/, std::map< int, ceps:
 		if (write_data){
 			std::uint64_t v;
 			if (p->kind() == ceps::ast::Ast_node_kind::int_literal) v = (std::uint64_t)value(as_int_ref(p));
-			v = (std::uint64_t)value(as_double_ref(p));
+			else v = (std::uint64_t)value(as_double_ref(p));
 
 			if (bit_width < 64){
 			   if (bit_width == 1){ v =  (v ? 1 : 0) ;  }
