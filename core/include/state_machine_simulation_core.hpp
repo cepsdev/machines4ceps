@@ -772,4 +772,61 @@ void state_machine_simulation_fatal(int code, std::string const & msg );
 void state_machine_simulation_warn(int code, std::string const & msg);
 bool node_isrw_state(ceps::ast::Nodebase_ptr node);
 
+
+
+namespace sm4ceps{
+
+ template<typename T> struct Systemstatebase{
+    using value_type = T;
+    T v;
+    std::string name;
+    State_machine_simulation_core** smc = nullptr;
+    explicit Systemstatebase(State_machine_simulation_core** smc,std::string name):v{},name{name},smc{smc}{}
+ };
+
+ template<typename T> struct Systemstate:public Systemstatebase<T>{
+    using Systemstatebase<T>::Systemstatebase;
+    Systemstate<T>& operator = (T rhs);
+ };
+
+ template<> struct Systemstate<int>:public Systemstatebase<int>{
+    using Systemstatebase<int>::Systemstatebase;
+    Systemstate& operator = (int rhs){
+        std::lock_guard<std::recursive_mutex>g((*smc)->states_mutex());
+        auto it = (*smc)->get_global_states().find(name);
+        if (it != (*smc)->get_global_states().end() && it->second->kind() == ceps::ast::Ast_node_kind::int_literal){
+         ceps::ast::value(ceps::ast::as_int_ref(it->second)) = rhs;
+        }
+    }
+    int get(){
+        std::lock_guard<std::recursive_mutex>g((*smc)->states_mutex());
+        auto it = (*smc)->get_global_states().find(name);
+        if (it != (*smc)->get_global_states().end() && it->second->kind() == ceps::ast::Ast_node_kind::int_literal){
+         return ceps::ast::value(ceps::ast::as_int_ref(it->second));
+        }
+        return 0;
+    }
+ };
+
+
+ template<> struct Systemstate<double>:public Systemstatebase<double>{
+   using Systemstatebase<double>::Systemstatebase;
+   Systemstate& operator = (double rhs){
+       std::lock_guard<std::recursive_mutex>g((*smc)->states_mutex());
+       auto it = (*smc)->get_global_states().find(name);
+       if (it != (*smc)->get_global_states().end() && it->second->kind() == ceps::ast::Ast_node_kind::float_literal){
+        ceps::ast::value(ceps::ast::as_int_ref(it->second)) = rhs;
+       }
+   }
+   double get(){
+       std::lock_guard<std::recursive_mutex>g((*smc)->states_mutex());
+       auto it = (*smc)->get_global_states().find(name);
+       if (it != (*smc)->get_global_states().end() && it->second->kind() == ceps::ast::Ast_node_kind::float_literal){
+        return ceps::ast::value(ceps::ast::as_int_ref(it->second));
+       }
+       return 0.0;
+   }
+};
+}
+
 #endif

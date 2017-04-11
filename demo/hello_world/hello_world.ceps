@@ -1,0 +1,44 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+Event E;
+Systemstate Counter;
+
+globals{
+ Counter = 0;
+};
+
+
+sender
+{
+  id { can_out; };
+  transport {
+   canbus {
+    bus_id { "vcan0"; };
+    can_id_mapping{
+     sdo_node1_server; 0x601;
+    };
+   };
+  };
+};
+
+Statemachine{
+ id{S1;};
+ on_enter{
+  start_periodic_timer(1.0*s,E);
+ };
+ States{Initial;};
+ Actions{
+  do_count{
+   send(can_out,
+      sdo_node1_server,
+      make_byte_sequence(uint32(Counter)));
+   Counter = Counter + 1;
+  };
+ };
+ Transition{Initial;Initial;E;do_count;};
+};
+
+Simulation{
+ Start{S1;};
+};

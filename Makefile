@@ -7,24 +7,27 @@ includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/includ
 #cflags := -g3 -O2 -pg -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
 cflags := -g3 -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
 TARGET :=
-OBJDIR := bin/$(TARGET)
+OBJDIR := $(TARGET)
+objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_machine_simulation_core.o sm_sim_core_simulation_loop.o state_machine_simulation_core_action_handling.o state_machine_simulation_core_event_handling.o \
+  state_machine_simulation_core_guard_handling.o cmdline_utils.o sm_raw_frame.o sm_xml_frame.o pugixml.o  cal_sender.o cal_receiver.o state_machine_simulation_core_plugin_interface.o state_machine_simulation_core_buildsms.o \
+  log4kmw_events.o log4kmw_loggers.o log4kmw_records.o log4kmw_states.o log4kmw_serialization.o log4kmw_dynamic_bitset.o log4kmw_record.o log4kmw_utils.o sm_comm_naive_msg_prot.o cppgen.o dotgen.o livelogger.o rdwrn.o \
+  sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
 CEPSLIB := ../ceps/core/bin$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
-cepslibs := ../ceps/core/$(OBJDIR)
+cepslibs := ../ceps/core/bin
 pugisrc = pugixml-1.6/src
 log4kmwsrc = ../log4kmw/src
+SM4CEPSLIB := libsm4ceps.a
 
+all: $(TARGET)/sm $(TARGET)/sm_trace $(TARGET)/$(SM4CEPSLIB) $(TARGET)/ceps
 
-all: $(TARGET)/sm $(TARGET)/sm_trace 
+$(TARGET)/$(SM4CEPSLIB): $(objfiles)
+	echo $(objfiles)
+	rm -f $(TARGET)/$(SM4CEPSLIB);\
+	$(AR) rcs $(TARGET)/$(SM4CEPSLIB) $(objfiles)
 
-$(TARGET)/sm: $(TARGET)/serialization.o $(TARGET)/main.o $(TARGET)/state_machines.o $(TARGET)/sm_sim_core_asserts.o $(TARGET)/state_machine_simulation_core.o \
-$(TARGET)/sm_sim_core_simulation_loop.o $(TARGET)/state_machine_simulation_core_action_handling.o $(TARGET)/state_machine_simulation_core_event_handling.o \
-$(TARGET)/state_machine_simulation_core_guard_handling.o $(TARGET)/cmdline_utils.o $(TARGET)/sm_raw_frame.o $(TARGET)/sm_xml_frame.o $(TARGET)/pugixml.o \
-$(TARGET)/cal_sender.o $(TARGET)/cal_receiver.o $(TARGET)/state_machine_simulation_core_plugin_interface.o $(TARGET)/state_machine_simulation_core_buildsms.o \
-$(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
-$(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/sm_comm_naive_msg_prot.o $(TARGET)/cppgen.o $(TARGET)/dotgen.o $(TARGET)/livelogger.o $(TARGET)/rdwrn.o\
-$(TARGET)/sm_livelog_storage_utils.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o $(TARGET)/cover_path.o $(TARGET)/sm_global_functions.o $(TARGET)/fibex_import.o $(TARGET)/can_layer_docgen.o $(TARGET)/asciidoc.o
+$(TARGET)/sm: $(objfiles)
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
 	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o $(cepslibs)/ceps_interpreter_macros.o $(cepslibs)/ceps_interpreter_functions.o \
 	$(TARGET)/main.o $(TARGET)/state_machine_simulation_core.o  $(TARGET)/state_machines.o $(TARGET)/state_machine_simulation_core_action_handling.o \
@@ -34,13 +37,15 @@ $(TARGET)/sm_livelog_storage_utils.o $(TARGET)/signalgenerator.o $(TARGET)/gensm
 	$(TARGET)/pugixml.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o \
 	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/livelogger.o $(TARGET)/sm_livelog_storage_utils.o $(TARGET)/rdwrn.o $(TARGET)/signalgenerator.o $(TARGET)/gensm.o $(TARGET)/partitions.o $(TARGET)/cover_path.o $(TARGET)/sm_global_functions.o $(TARGET)/fibex_import.o $(TARGET)/can_layer_docgen.o $(TARGET)/asciidoc.o -o $(TARGET)/sm
 
+$(TARGET)/ceps:$(TARGET)/sm
+	cp $(TARGET)/sm $(TARGET)/ceps
+
 $(TARGET)/sm_trace: $(TARGET)/pugixml.o $(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
 $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o
 	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
 	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o $(cepslibs)/ceps_interpreter_macros.o $(cepslibs)/ceps_interpreter_functions.o \
 	$(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o \
 	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o $(TARGET)/pugixml.o -o $(TARGET)/sm_trace
-
 
 
 $(TARGET)/main.o: src/main.cpp
