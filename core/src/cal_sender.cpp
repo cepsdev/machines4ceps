@@ -77,7 +77,7 @@ std::map<std::string,int> sockcan::interfaces_to_sockets;
 std::mutex sockcan::interfaces_to_sockets_m;
 
 void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,int>, std::queue<std::tuple<char*, size_t,size_t,int> >>* channel,
-	std::string can_bus, State_machine_simulation_core* smp,std::unordered_map<int,std::uint32_t>);
+        std::string can_bus, State_machine_simulation_core* smp,std::unordered_map<int,std::uint32_t>,bool);
 #endif	
 
 static bool is_assignment(ceps::ast::Nodebase_ptr p){
@@ -174,6 +174,16 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 			fatal_(-1,"A CAN(Socket CAN) CAL sender definition requires an id.");
 		 auto channel_id = ceps::ast::name(ceps::ast::as_id_ref(ns["id"].nodes()[0]));
 		 auto bus_id_ = ns["transport"]["canbus"]["bus_id"];
+                 bool extended= false;
+                 auto candef = ns["transport"]["canbus"];
+                 for(auto p : candef.nodes())
+                 {
+                         if (p->kind() != ceps::ast::Ast_node_kind::identifier) continue;
+                         if (ceps::ast::name(ceps::ast::as_id_ref(p))!="extended") continue;
+                         extended =true;
+                         break;
+                 }
+
 		 std::string can_bus = "can0";
 		 if (bus_id_.nodes().empty()){
 			//check universe for transport definition
@@ -277,7 +287,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 				new std::thread{ comm_sender_socket_can,
 				channel,
 				can_bus,
-				this, channel_frame_to_id[channel_id]});
+                                this, channel_frame_to_id[channel_id],extended});
 		}
 
 
@@ -334,7 +344,7 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 #else
 //#define DEBUG std::cout
 void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,int>, std::queue<std::tuple<char*, size_t,size_t,int> >>* frames,
-	std::string can_bus, State_machine_simulation_core* smc, std::unordered_map<int,std::uint32_t> frame2id) {
+        std::string can_bus, State_machine_simulation_core* smc, std::unordered_map<int,std::uint32_t> frame2id, bool extended_can) {
 	int s = 0;
 	char* frame = nullptr;
 	size_t frame_size = 0;
@@ -396,6 +406,7 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,in
 				return;
 			}
 			can_message.can_id = it->second;
+                        if(extended_can) can_message.can_id |= CAN_EFF_FLAG;
 			can_message.can_dlc = frame_size;
 			memcpy(can_message.data,frame,frame_size);
 			auto r = write(s, &can_message, sizeof(struct can_frame));
