@@ -88,6 +88,60 @@ template <>
 }
 
 
+class Dotgenerator{
+	std::map<std::string,std::string> n2dotname;
+	std::map<State_machine*,std::string> sm2dotname;
+	std::map<State_machine*,std::string> sm2initial;
+	std::map<int,std::string> userdefined_style_infos;
+
+	std::string pure_state_base_style_ = "style=\"rounded\"";
+    std::string pure_state_base_highlighted_style_ = "style=\"rounded,filled\",fillcolor=lightpink";
+
+    void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states);
+    std::string state_style(std::string name, bool highlight){
+		if (name == "initial" || name ==  "Initial")
+		{
+            if (!highlight) return "shape=\"point\",width=\"0.15\"";
+            return "shape=\"point\",width=\"0.15\",fillcolor=lightpink";
+		}
+		if (name == "final" || name ==  "Final")
+		{
+            if (!highlight) return "shape=\"point\",width=\"0.15\",fillcolor=white";
+            return "shape=\"point\",width=\"0.15\",fillcolor=lightpink";
+		}
+        return pure_state_base_style(highlight);
+	}
+
+	std::string label(State_machine::State* s){
+		if (s->id() == "Initial" || s->id() == "initial" || s->id() == "Final" || s->id() == "final" ) return "xlabel=<<i><FONT POINT-SIZE=\"8\">" +s->id()+ "</FONT></i>>";
+		return "label=\""+s->id()+"\"";
+	}
+
+	std::string edge_label(State_machine::Transition const & t,State_machine* sm){
+	  std::string label_content;
+
+	  for (auto ev : t.events())
+	  {
+		  label_content+="<B>"+ev.id()+"</B>";
+	  }
+	  if (t.guard().length()){
+		  label_content+="["+t.guard()+"]";
+	  }
+
+	  for (auto a : t.actions()){
+		  label_content+="<i>/"+a.id()+"();</i> ";
+	  }
+
+	  if (label_content.length() == 0) return "";
+	  if (t.from_.is_sm_ && t.to_.is_sm_) return ",fontname=\"Courier\",xlabel=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
+	  return ",fontname=\"Courier\",label=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
+	}
+public:
+    std::string pure_state_base_style(bool highlight){if (!highlight)return pure_state_base_style_;return pure_state_base_highlighted_style_;}
+
+	friend State_machine_simulation_core;
+};
+
 class State_machine_simulation_core:
 		 public IUserdefined_function_registry,
 		        Ism4ceps_plugin_interface
@@ -96,6 +150,7 @@ public:
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
 private:
+	std::map<std::string,State_machine*> statemachines_;
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
 	ceps::Ceps_Environment * ceps_env_current_ = nullptr;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_guards;
@@ -105,6 +160,7 @@ private:
     std::vector<std::pair<std::string,sm4ceps::datasources::Signalgenerator>> sig_generators_;
     void build_signal_structures(Result_process_cmd_line const& result_cmd_line);
 public:
+    std::map<std::string,State_machine*> & statemachines() {return statemachines_;}
     using signal_generator_handle = int;
     signal_generator_handle add_sig_gen(std::string,sm4ceps::datasources::Signalgenerator const &);
     signal_generator_handle find_sig_gen(std::string id);
@@ -627,7 +683,7 @@ public:
 
 	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards,Result_process_cmd_line const& result_cmd_line);
 	void do_generate_dot_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards,Result_process_cmd_line const& result_cmd_line);
-    void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*,std::set<int>& highlighted_states, std::ostream& os);
+    void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*,std::set<int>& highlighted_states,Dotgenerator dotgen, std::ostream& os);
 
 	//CAL (Sender)
 

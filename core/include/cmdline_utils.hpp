@@ -64,6 +64,8 @@ struct Result_process_cmd_line
     bool ignore_simulations = false;
     bool print_statemachines = false;
     bool dot_gen = false;
+    bool dot_gen_one_file_per_top_level_statemachine = false;
+
     bool print_evaluated_input_tree = false;
     bool print_evaluated_postprocessing_tree = false;
     bool print_signal_generators = false;

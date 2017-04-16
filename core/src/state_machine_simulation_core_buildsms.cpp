@@ -807,6 +807,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	//handle instantiations
 	handle_instantiations(ns,this);
 
+	this->statemachines() = State_machine::statemachines;
+
 
 	if (result_cmd_line.print_statemachines){
 		std::cout << "\nStatemachines:\n";

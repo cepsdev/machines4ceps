@@ -662,59 +662,47 @@ std::string State_machine_simulation_core::get_full_qualified_id(State_machine::
 	return get_fullqualified_id(sr);
 }
 
-
 state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::string compound_id, State_machine* parent)
 {
-#ifdef PRINT_DEBUG
-	DEBUG_FUNC_PROLOGUE
-#endif
-	//std::cout << "resolve_state_qualified_id:"<<(parent?parent->id():"") << "/" <<compound_id <<std::endl;
-
-	using namespace ceps::ast;
-	if (compound_id.length() == 0) return state_rep_t{};
-
-	if (compound_id.find_first_of('.') == std::string::npos){
-		std::string id = compound_id;
-		if (parent == nullptr) {
-			auto it = State_machine::statemachines.find(id);
-			if (it == State_machine::statemachines.end()) return state_rep_t{};
-			return state_rep_t(true,true,it->second,it->second->id_,it->second->idx_);
-		} else
-		{
-			for(auto const & c : parent->children())
-			{
-				if (c->id_ == id) return state_rep_t(true,true,c,c->id_,c->idx_);
-			}
-			State_machine::State s(id);
-
-			State_machine::State* it = nullptr;//parent->states.find(s);
-			for(auto p: parent->states()){
-				if (p->id() == id) {it = p;break;}
-			}
-			if (it == /*parent->states.end()*/nullptr) return state_rep_t{};
-			return state_rep_t(true,false,parent,it->id_,it->idx_);
-		}
-
-	} else  {
-
-		auto pos = compound_id.find_first_of('.');
-		auto base_id = compound_id.substr(0,pos);
-		auto rest = compound_id.substr(pos+1);
-		if (parent == nullptr){
-		  auto it = State_machine::statemachines.find(base_id);
-		  if (it == State_machine::statemachines.end()) return state_rep_t{};
-		  return resolve_state_qualified_id(rest, it->second);
-		}
-
-		for(auto const & c : parent->children())
-			if (c->id_ == base_id) return resolve_state_qualified_id(rest, c);
-		for(auto p: parent->states()){
-			if (!p->is_sm_) continue;
-			if (p->id_ == base_id) return resolve_state_qualified_id(rest, p->smp_);
-		}
-	}
-	return state_rep_t{};
+ using namespace ceps::ast;
+ if (compound_id.length() == 0) return state_rep_t{};
+ if (compound_id.find_first_of('.') == std::string::npos){
+  std::string id = compound_id;
+  if (parent == nullptr) {
+   auto it = State_machine::statemachines.find(id);
+   if (it == State_machine::statemachines.end()) return state_rep_t{};
+   return state_rep_t(true,true,it->second,it->second->id_,it->second->idx_);
+  } else {
+   for(auto const & c : parent->children()){
+	if (c->id_ == id) return state_rep_t(true,true,c,c->id_,c->idx_);
+   }
+   State_machine::State s(id);
+   State_machine::State* it = nullptr;//parent->states.find(s);
+   for(auto p: parent->states()){
+	if (p->id() == id) {it = p;break;}
+   }
+   if (it == /*parent->states.end()*/nullptr) return state_rep_t{};
+   return state_rep_t(true,false,parent,it->id_,it->idx_);
+  }
+ } else {
+  auto pos = compound_id.find_first_of('.');
+  auto base_id = compound_id.substr(0,pos);
+  auto rest = compound_id.substr(pos+1);
+  if (parent == nullptr){
+   auto it = State_machine::statemachines.find(base_id);
+   if (it == State_machine::statemachines.end()) return state_rep_t{};
+   return resolve_state_qualified_id(rest, it->second);
+  }
+  for(auto const & c : parent->children())
+   if (c->id_ == base_id) return resolve_state_qualified_id(rest, c);
+  for(auto p: parent->states()){
+   if (!p->is_sm_) continue;
+   if (p->id_ == base_id) return resolve_state_qualified_id(rest, p->smp_);
+  }
+ }
+ return state_rep_t{};
 }
+
 state_rep_t State_machine_simulation_core::resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent)
 {
 #ifdef PRINT_DEBUG
