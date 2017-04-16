@@ -1,0 +1,14 @@
+kind Event; kind Systemstate;kind Guard;
+
+Event e,f,g,h;
+Statemachine{id{S1;};
+
+States{Initial;A;B;C;D;};
+
+Transition{Initial;A;e;};
+Transition{Initial;B;g;};
+Transition{A;C;};
+Transition{C;D;};
+};
+
+Simulation{Start{S1;};};
