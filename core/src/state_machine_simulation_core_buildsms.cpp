@@ -227,7 +227,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		ctx.transitions.push_back(t);
 		ctx.state_to_first_transition[t.smp] = ctx.transitions.size()-1;
 		auto insert_transitions = [&ctx,&ev_to_id,smp](State_machine* sm_from, State_machine* sm_to){
-			 for(auto const & t : sm_from->transitions()){
+			 for(auto & t : sm_from->transitions()){
 			  if (sm_from != sm_to){
 			   if (!t.from_.is_sm_) continue;
 			   if (t.from_.smp_ != sm_to) continue;
@@ -268,6 +268,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
                if (t.action_.size() >= 3) tt.a3 = t.action_[2].native_func_;
               }
               //assert(t.action_.size() < 4);
+              t.id_ = ctx.transitions.size();
 			  ctx.transitions.push_back(tt);
 			  if(ctx.state_to_first_transition.find(tt.from) != ctx.state_to_first_transition.end()) continue;
 			  ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;
@@ -810,23 +811,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	this->statemachines() = State_machine::statemachines;
 
 
-	if (result_cmd_line.print_statemachines){
-		std::cout << "\nStatemachines:\n";
-		for(auto smp : State_machine::statemachines){
-			std::cout << "\n\t" << smp.first << "(" << (std::uint64_t)smp.second  << ")" << std::endl;
-			if (smp.second->parent()){
-				auto r = this->get_qualified_id(smp.second->parent());
-				std::cout << "\t parent = "<< r.second << std::endl;
-			}
-			if (smp.second->actions().size())
-				std::cout << "\t Actions:\n";
-			for(auto & a : smp.second->actions()){
-				std::cout << "\t  ";
-				std::cout << a.id_ <<" // assoc sm("<< (std::uint64_t)a.associated_sm_ <<")"<< " rawceps-node-addr ("<<(std::uint64_t)a.body_<<") native ("<<(std::uint64_t)a.native_func_<<")" << std::endl;
-			}
-		}
-		std::cout << "\n\n";
-	}
+
     //Check for consistency
 	for (auto m: State_machine::statemachines)
 	{
@@ -1313,6 +1298,27 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
 	 for(auto const & e: this->exported_events_) executionloop_context().exported_events.insert(executionloop_context().ev_to_id[e]);
    }
+
+	if (result_cmd_line.print_statemachines){
+		std::cout << "\nStatemachines:\n";
+		for(auto smp : State_machine::statemachines){
+			std::cout << "\n\t" << smp.first << "(" << (std::uint64_t)smp.second  << ")" << std::endl;
+			if (smp.second->parent()){
+				auto r = this->get_qualified_id(smp.second->parent());
+				std::cout << "\t parent = "<< r.second << std::endl;
+			}
+			if (smp.second->actions().size())
+				std::cout << "\t Actions:\n";
+			for(auto & a : smp.second->actions()){
+				std::cout << "\t  ";
+				std::cout << a.id_ <<" // assoc sm("<< (std::uint64_t)a.associated_sm_ <<")"<< " rawceps-node-addr ("<<(std::uint64_t)a.body_<<") native ("<<(std::uint64_t)a.native_func_<<")" << std::endl;
+			}
+			for (auto t : smp.second->transitions()){
+				std::cout << t.id_ <<":"<< t.from_.idx_ << "=>"<<t.to_.idx_<<"\n";
+			}
+		}
+		std::cout << "\n\n";
+	}
 
    //Handle event signatures
    {

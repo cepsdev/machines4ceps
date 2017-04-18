@@ -104,7 +104,7 @@ template <typename F> void handle_current_states_assertion(ceps::ast::Nodebase_p
  {
   if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
   if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-  auto state = smp->resolve_state_qualified_id(n,nullptr);
+  auto state = smp->resolve_state_or_transition_given_a_qualified_id(n,nullptr);
   if (!state.valid()) {
 	std::stringstream ss; ss << ceps::ast::Nodeset(n);
 	if (smp->conf_ignore_unresolved_state_id_in_directives())
@@ -229,7 +229,7 @@ do{
 			  			n->kind() != ceps::ast::Ast_node_kind::symbol &&
 						n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 			  		if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-			  		auto state = resolve_state_qualified_id(n,nullptr);
+			  		auto state = resolve_state_or_transition_given_a_qualified_id(n,nullptr);
 			  		std::stringstream ss; ss << ceps::ast::Nodeset(n);
 			  		if (!state.valid())
 			  			{
@@ -268,7 +268,7 @@ do{
 				if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 				if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 
-				auto state = resolve_state_qualified_id(n,nullptr);
+				auto state = resolve_state_or_transition_given_a_qualified_id(n,nullptr);
 				if (!state.valid()) {
 					std::stringstream ss; ss << ceps::ast::Nodeset(n);
 					if (conf_ignore_unresolved_state_id_in_directives())
@@ -295,7 +295,7 @@ do{
 				if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 				if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
 
-				auto state = resolve_state_qualified_id(n,nullptr);
+				auto state = resolve_state_or_transition_given_a_qualified_id(n,nullptr);
 				if (!state.valid()) {
 					std::stringstream ss; ss << ceps::ast::Nodeset(n);
 					if (conf_ignore_unresolved_state_id_in_directives())
@@ -318,7 +318,7 @@ do{
 					{
 						if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 						if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-						auto state = resolve_state_qualified_id(n,nullptr);
+						auto state = resolve_state_or_transition_given_a_qualified_id(n,nullptr);
 
 						if (!state.valid()) {
 							std::stringstream ss; ss << ceps::ast::Nodeset(n);
@@ -340,7 +340,7 @@ do{
 						{
 							if (n->kind() != ceps::ast::Ast_node_kind::identifier && n->kind() != ceps::ast::Ast_node_kind::binary_operator) continue;
 							if (n->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(n)) != '.') continue;
-							auto state = resolve_state_qualified_id(n,nullptr);
+							auto state = resolve_state_or_transition_given_a_qualified_id(n,nullptr);
 
 							if (!state.valid()) {
 								std::stringstream ss; ss << ceps::ast::Nodeset(n);

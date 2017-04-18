@@ -3,12 +3,49 @@ kind Event; kind Systemstate;kind Guard;
 Event e,f,g,h;
 Statemachine{id{S1;};
 
+States{Initial;A;B;D;};
+
+Statemachine{id{C;};
+ States{Initial;A;B;C;};
+ Transition{Initial;Initial;};
+};
+
+Transition{Initial;A;e;}; // edge #0
+Transition{Initial;B;g;}; // edge #1
+Transition{A;C;}; // edge #2
+Transition{C;D;}; //edge #3
+};
+
+Statemachine{id{S2;};
+
 States{Initial;A;B;C;D;};
 
-Transition{Initial;A;e;};
-Transition{Initial;B;g;};
-Transition{A;C;};
-Transition{C;D;};
+Transition{Initial;A;e;}; // edge #0
+Transition{Initial;B;g;}; // edge #1
+Transition{A;C;}; // edge #2
+Transition{C;D;}; //edge #3
 };
+
+Statemachine{id{S3;};
+
+States{Initial;A;B;E;};
+
+Statemachine{id{C;};
+ States{Initial;A;B;C;};
+ Transition{Initial;Initial;};
+};
+
+Statemachine{id{D;};
+ States{Initial;A;B;C;};
+ Transition{Initial;Initial;};
+};
+
+Transition{Initial;A;e;}; // edge #0
+Transition{Initial;B;g;}; // edge #1
+Transition{A;C;}; // edge #2
+Transition{C;D;}; //edge #3
+Transition{D;E;}; //edge #3
+};
+
 
 Simulation{Start{S1;};};

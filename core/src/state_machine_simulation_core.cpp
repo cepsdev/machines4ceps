@@ -703,53 +703,50 @@ state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::strin
  return state_rep_t{};
 }
 
-state_rep_t State_machine_simulation_core::resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent)
+state_rep_t State_machine_simulation_core::resolve_state_or_transition_given_a_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent, int* transition_number)
 {
-#ifdef PRINT_DEBUG
-	DEBUG_FUNC_PROLOGUE
-#endif
-	using namespace ceps::ast;
-	if (p == nullptr) return state_rep_t{};
-	if (p->kind() == ceps::ast::Ast_node_kind::identifier || p->kind() == ceps::ast::Ast_node_kind::symbol){
+ using namespace ceps::ast;
+ if (p == nullptr) return state_rep_t{};
+ if (p->kind() == ceps::ast::Ast_node_kind::identifier || p->kind() == ceps::ast::Ast_node_kind::symbol){
+  std::string id;
+  if (p->kind() == ceps::ast::Ast_node_kind::identifier)
+	  id = name(as_id_ref(p));
+  else id = ceps::ast::name(as_symbol_ref(p));
 
-		std::string id;
-		if (p->kind() == ceps::ast::Ast_node_kind::identifier)id = name(as_id_ref(p));
-		else id = ceps::ast::name(as_symbol_ref(p));
-
-		if (parent == nullptr) {
-			auto it = State_machine::statemachines.find(id);
-			if (it == State_machine::statemachines.end()) return state_rep_t{};
-			return state_rep_t(true,true,it->second,it->second->id_,it->second->idx_);
-		} else
-		{
-			for(auto const & c : parent->children())
-			{
-				if (c->id_ == id) return state_rep_t(true,true,c,c->id_,c->idx_);
-			}
-			State_machine::State s(id);
-
-			State_machine::State* it = nullptr;//parent->states.find(s);
-			for(auto p: parent->states()){
-				if (p->id() == id) {it = p;break;}
-			}
-			if (it == /*parent->states.end()*/nullptr) return state_rep_t{};
-			return state_rep_t(true,false,parent,it->id_,it->idx_);
-		}
-
-	} else if (p->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(p)) == '.') {
-		auto root = ceps::ast::as_binop_ptr(p);
-		auto l_ = root->left();
-		auto l = resolve_state_qualified_id(l_,nullptr);
-		if (!l.valid()){
-            #ifdef PRINT_DEBUG
-			 DEBUG<<"[INVALID_STATE_REP]\n";
-            #endif
-			return l;
-		}
-		if(!l.is_sm_) return state_rep_t{};
-		return resolve_state_qualified_id(root->right(),l.smp_);
+  if (parent == nullptr) {
+	auto it = State_machine::statemachines.find(id);
+	if (it == State_machine::statemachines.end()) return state_rep_t{};
+	return state_rep_t(true,true,it->second,it->second->id_,it->second->idx_);
+  } else {
+	for(auto const & c : parent->children())
+	{
+	 if (c->id_ == id) return state_rep_t(true,true,c,c->id_,c->idx_);
 	}
-	return state_rep_t{};
+	State_machine::State s(id);
+
+	State_machine::State* it = nullptr;//parent->states.find(s);
+	for(auto p: parent->states()){
+	 if (p->id() == id) {it = p;break;}
+	}
+	if (it == nullptr) return state_rep_t{};
+	return state_rep_t(true,false,parent,it->id_,it->idx_);
+  }
+ } else if (p->kind() == ceps::ast::Ast_node_kind::binary_operator && op(ceps::ast::as_binop_ref(p)) == '.') {
+  auto root = ceps::ast::as_binop_ptr(p);
+  auto l_ = root->left();
+  auto l = resolve_state_or_transition_given_a_qualified_id(l_,nullptr);
+  if (!l.valid()){
+   return l;
+  }
+  if(!l.is_sm_) return state_rep_t{};
+  if (transition_number != nullptr && root->right()->kind() == Ast_node_kind::int_literal)
+  {
+	  *transition_number = value(as_int_ref(root->right()));
+	  return l;
+  }
+  return resolve_state_or_transition_given_a_qualified_id(root->right(),l.smp_);
+ }
+ return state_rep_t{};
 }
 
 event_rep_t State_machine_simulation_core::resolve_event_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent)

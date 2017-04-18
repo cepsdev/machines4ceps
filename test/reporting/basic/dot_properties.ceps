@@ -1,0 +1,24 @@
+dot_gen_properties{
+ node_display_properties{S1.A;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ node_display_properties{S1.C;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ node_display_properties{S1.D;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ edge_display_properties{S1. 0;"penwidth=4";};
+ edge_display_properties{S1. 2;"penwidth=4";};
+ edge_display_properties{S1. 3;"penwidth=4";};
+ 
+ node_display_properties{S2.A;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ node_display_properties{S2.C;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ node_display_properties{S2.D;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ edge_display_properties{S2. 0;"penwidth=4";};
+ edge_display_properties{S2. 2;"penwidth=4";};
+ edge_display_properties{S2. 3;"penwidth=4";};
+
+ node_display_properties{S3.A;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ node_display_properties{S3.C;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ node_display_properties{S3.D;"style=\"rounded,filled\",fillcolor=\"red\"";};
+ edge_display_properties{S3. 0;"penwidth=4";};
+ edge_display_properties{S3. 2;"penwidth=4";};
+ edge_display_properties{S3. 3;"penwidth=4";};
+ edge_display_properties{S3. 4;"penwidth=4";};
+
+};

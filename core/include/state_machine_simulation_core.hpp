@@ -93,6 +93,7 @@ class Dotgenerator{
 	std::map<State_machine*,std::string> sm2dotname;
 	std::map<State_machine*,std::string> sm2initial;
 	std::map<int,std::string> userdefined_style_infos;
+	std::map<int,std::string> userdefined_edge_style_infos;
 
 	std::string pure_state_base_style_ = "style=\"rounded\"";
     std::string pure_state_base_highlighted_style_ = "style=\"rounded,filled\",fillcolor=lightpink";
@@ -381,7 +382,7 @@ public:
 	type_definitions_t type_definitions_;
 	type_definitions_t const & type_definitions() const {return type_definitions_;}
 	type_definitions_t & type_definitions() {return type_definitions_;}
-	state_rep_t resolve_state_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
+	state_rep_t resolve_state_or_transition_given_a_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent,int* transition_number = nullptr);
 	state_rep_t resolve_state_qualified_id(std::string compound_id, State_machine* parent);
 
 

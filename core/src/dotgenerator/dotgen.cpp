@@ -217,23 +217,29 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
          if (expand != nullptr  && expand->find(sm) == expand->end() ) out_only = true;
          for(auto& t : sm->transitions()){
              if (out_only && (!t.to_.is_sm_ || t.to_.smp()->parent() == sm) ) continue;
+             bool edge_dumped = false;
              if ((t.from_.parent_ == sm || t.from_.parent_ == nullptr)&& (t.to_.parent_ == sm || t.to_.parent_ == nullptr) && !(t.from_.is_sm_ || t.to_.is_sm_) ){
-                 if (dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() )
-                     o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" << dotgen.n2dotname[name+"."+t.to_.id()] << "[penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
+                 if (dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() ){
+                     o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" << dotgen.n2dotname[name+"."+t.to_.id()] << "[penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
+                     edge_dumped = true;
+                 }
              }
              else if (!t.from_.is_sm_ && t.to_.is_sm_ && dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() ){
                  o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" <<dotgen.sm2initial[t.to_.smp_];
                  o << "[";
                  if (expand == nullptr  || expand->find(t.to_.smp_) != expand->end())
                      o << "lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\",";
-                 o <<"penwidth=1"<< dotgen.edge_label(t,sm) << "];\n";
+                 o <<"penwidth=1"<< dotgen.edge_label(t,sm) << "]";
+                 edge_dumped = true;
              }
              else if (t.from_.is_sm_ && !t.to_.is_sm_ && dotgen.sm2initial.find(t.from_.smp_) != dotgen.sm2initial.end()){
                  o << dotgen.sm2initial[t.from_.smp_] << "->" << dotgen.n2dotname[name+"."+t.to_.id()];
                  o << "[";
                  if (expand == nullptr  || expand->find(t.from_.smp_) != expand->end())
                      o << "ltail=\""<< dotgen.sm2dotname[t.from_.smp_] << "\",";
-                 o << "penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
+                 o << "penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
+                 std::cout << "t.id_ = " << t.id_ << std::endl;
+                 edge_dumped = true;
              }
              else if (t.from_.is_sm_ && t.to_.is_sm_
                      && dotgen.sm2initial.find(t.from_.smp_) != dotgen.sm2initial.end()
@@ -248,8 +254,15 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
                  {
                      o << "lhead=\""<< dotgen.sm2dotname[t.to_.smp_] << "\", ";
                  }
-                 o << "penwidth=1"<<  dotgen.edge_label(t,sm)<<"];\n";
-             }             
+                 o << "penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
+                 edge_dumped = true;
+             }
+             if (edge_dumped){
+            	 auto it = dotgen.userdefined_edge_style_infos.find(t.id_);
+            	 if (it != dotgen.userdefined_edge_style_infos.end())
+            		 o << "[" << it->second <<"]";
+            	 o << ";\n";
+             }
          }
          return true;
     };
@@ -278,7 +291,7 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 		if (e->kind() == ceps::ast::Ast_node_kind::string_literal){
           s = resolve_state_qualified_id(ceps::ast::value(ceps::ast::as_string_ref(e)),nullptr);
 		} else if (is_id_or_symbol(e,n,k) || is_dot_op(e) ){
-          s = resolve_state_qualified_id(e,nullptr);
+          s = resolve_state_or_transition_given_a_qualified_id(e,nullptr);
 		}
 		if (s.id_ < 0 || !s.valid()) {
 			std::stringstream ss; ss << *e;
@@ -293,22 +306,59 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
       auto ctr = 0;
       std::string u;
       for (auto e: s->children()){
-    	  if (ctr==0) if (e->kind() == ceps::ast::Ast_node_kind::string_literal) st = resolve_state_qualified_id(ceps::ast::value(ceps::ast::as_string_ref(e)),nullptr);
-    	   else st = resolve_state_qualified_id(e,nullptr);
-    	  if(!st.valid() || st.id_ < 0){
-  			std::stringstream ss; ss << *e;
-  			warn_(-1, "Element #"+std::to_string(ctr)+" of root.dot_gen_properties.node_display_properties: '"+ss.str()+"' not a valid fully qualified state identifier");
-  			break;
-  		  }
-    	  ++ctr;
-    	  if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
-    		if (u.length()){u.append(",");u.append(ceps::ast::value(ceps::ast::as_string_ref(e)));}
-    		else u.append(ceps::ast::value(ceps::ast::as_string_ref(e)));
+       if (ctr==0) if (e->kind() == ceps::ast::Ast_node_kind::string_literal) st = resolve_state_qualified_id(ceps::ast::value(ceps::ast::as_string_ref(e)),nullptr);
+       else st = resolve_state_or_transition_given_a_qualified_id(e,nullptr);
+       if(!st.valid() || st.id_ < 0){
+  		std::stringstream ss; ss << *e;
+  		warn_(-1, "Element #"+std::to_string(ctr)+" of root.dot_gen_properties.node_display_properties: '"+ss.str()+"' not a valid fully qualified state identifier");
+  		break;
+  	   }
+       ++ctr;
+       if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
+       if (u.length()){u.append(",");u.append(ceps::ast::value(ceps::ast::as_string_ref(e)));}
+       else u.append(ceps::ast::value(ceps::ast::as_string_ref(e)));
       }//for
       if (u.length())
     	  dotgen.userdefined_style_infos[st.id_]+=u;
-     }
-	}
+     } else if (ceps::ast::name(*s) == "edge_display_properties") {
+     state_rep_t st;
+      int edge_no = 0;
+      auto ctr = 0;
+      std::string u;
+      ceps::ast::Nodebase_ptr edge_id = nullptr;
+      for (auto e: s->children()){
+       if (ctr==0) st = resolve_state_or_transition_given_a_qualified_id(edge_id=e,nullptr,&edge_no);
+       if(!st.valid() || st.id_ < 0){
+     	std::stringstream ss; ss << *e;
+     	warn_(-1, "Element #"+std::to_string(ctr)+" of root.dot_gen_properties.node_display_properties: '"+ss.str()+"' not a valid fully qualified transition identifier");
+     	break;
+       }
+       ++ctr;
+       if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
+     	if (u.length()){u.append(",");u.append(ceps::ast::value(ceps::ast::as_string_ref(e)));}
+     	else u.append(ceps::ast::value(ceps::ast::as_string_ref(e)));
+      }//for
+      if (u.length() && edge_id) {
+       constexpr auto invalid_transition = -1;
+       int matched_transition = invalid_transition;
+
+       /*for(auto i = 0; i != executionloop_context().transitions.size(); ++i){
+    	   if (executionloop_context().transitions[i].smp == st.id_){
+    		++i; //first transition entry is a sentinel
+    		auto j = 0;
+    		for(;i+j != executionloop_context().transitions.size() && j != edge_no  && executionloop_context().transitions[i].smp == st.id_;++j);
+    		if (j == edge_no) matched_transition = i + j;
+    		break;
+    	   }
+       }*/
+       if (st.is_sm_ && st.smp_->transitions().size() > edge_no) matched_transition = st.smp_->transitions()[edge_no].id_;
+       if(matched_transition == -1){
+     	std::stringstream ss; ss << *edge_id;
+     	warn_(-1, "Element #"+std::to_string(ctr)+" of root.dot_gen_properties.node_display_properties: '"+ss.str()+"' not a valid fully qualified transition identifier");
+       } else dotgen.userdefined_edge_style_infos[matched_transition]+=u;
+      }
+      }//edge_display_properties
+	}//for
 
 	if (!result_cmd_line.dot_gen_one_file_per_top_level_statemachine){
 	 std::ofstream o{"out.dot"};

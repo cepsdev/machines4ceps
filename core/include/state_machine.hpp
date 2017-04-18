@@ -152,6 +152,7 @@ public:
   };
 
   struct Transition{
+	int id_ = -1;
     State from_,to_;
     using Nonleafbase_ptr = ceps::ast::Nonleafbase* ;
     std::string guard_ ;

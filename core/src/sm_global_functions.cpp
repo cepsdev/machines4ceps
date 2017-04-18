@@ -145,7 +145,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			 ss << *p;
 			 fatal_(-1,"Function '"+id+"': illformed argument, expected a qualified id, got: "+ss.str());
 			}
-			auto state = resolve_state_qualified_id(p,active_smp);
+			auto state = resolve_state_or_transition_given_a_qualified_id(p,active_smp);
 			if(!state.valid())
 			{
 			 std::stringstream ss;
@@ -165,7 +165,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 				 fatal_(-1,"Function '"+id+"': illformed argument, expected a qualified id, got: "+ss.str());
 			}
 
-		   auto state = resolve_state_qualified_id(p,active_smp);
+		   auto state = resolve_state_or_transition_given_a_qualified_id(p,active_smp);
 		   if(!state.valid())
 		   {
 				 std::stringstream ss;
