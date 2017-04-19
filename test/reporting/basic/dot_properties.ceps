@@ -1,24 +1,19 @@
+macro node_visited_style {
+ val color_visited_node = "lightblue";
+ "style=\"rounded,filled\"";"fillcolor=\""+color_visited_node+"\"";
+};
+
+macro edge_visited_style {
+ "penwidth=4";"color=blue";
+};
+
 dot_gen_properties{
- node_display_properties{S1.A;"style=\"rounded,filled\",fillcolor=\"red\"";};
- node_display_properties{S1.C;"style=\"rounded,filled\",fillcolor=\"red\"";};
- node_display_properties{S1.D;"style=\"rounded,filled\",fillcolor=\"red\"";};
- edge_display_properties{S1. 0;"penwidth=4";};
- edge_display_properties{S1. 2;"penwidth=4";};
- edge_display_properties{S1. 3;"penwidth=4";};
- 
- node_display_properties{S2.A;"style=\"rounded,filled\",fillcolor=\"red\"";};
- node_display_properties{S2.C;"style=\"rounded,filled\",fillcolor=\"red\"";};
- node_display_properties{S2.D;"style=\"rounded,filled\",fillcolor=\"red\"";};
- edge_display_properties{S2. 0;"penwidth=4";};
- edge_display_properties{S2. 2;"penwidth=4";};
- edge_display_properties{S2. 3;"penwidth=4";};
-
- node_display_properties{S3.A;"style=\"rounded,filled\",fillcolor=\"red\"";};
- node_display_properties{S3.C;"style=\"rounded,filled\",fillcolor=\"red\"";};
- node_display_properties{S3.D;"style=\"rounded,filled\",fillcolor=\"red\"";};
- edge_display_properties{S3. 0;"penwidth=4";};
- edge_display_properties{S3. 2;"penwidth=4";};
- edge_display_properties{S3. 3;"penwidth=4";};
- edge_display_properties{S3. 4;"penwidth=4";};
-
+ for (i : S1,S2,S3 ){
+  node_display_properties{i.A;node_visited_style{};};
+  node_display_properties{i.C;node_visited_style{};};
+  node_display_properties{i.D;node_visited_style{};};
+  edge_display_properties{i. 0;edge_visited_style{};};
+  edge_display_properties{i. 2;edge_visited_style{};};
+  edge_display_properties{i. 3;edge_visited_style{};};
+ }
 };

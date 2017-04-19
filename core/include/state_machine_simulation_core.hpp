@@ -92,10 +92,10 @@ class Dotgenerator{
 	std::map<std::string,std::string> n2dotname;
 	std::map<State_machine*,std::string> sm2dotname;
 	std::map<State_machine*,std::string> sm2initial;
-	std::map<int,std::string> userdefined_style_infos;
-	std::map<int,std::string> userdefined_edge_style_infos;
+	std::map<int,std::vector<std::string>> userdefined_style_infos;
+	std::map<int,std::vector<std::string>> userdefined_edge_style_infos;
 
-	std::string pure_state_base_style_ = "style=\"rounded\"";
+	std::string pure_state_base_style_ = "style=\"rounded,filled\",fillcolor=\"cornsilk\"";
     std::string pure_state_base_highlighted_style_ = "style=\"rounded,filled\",fillcolor=lightpink";
 
     void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states);
