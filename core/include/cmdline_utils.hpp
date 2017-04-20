@@ -43,6 +43,8 @@ struct Result_process_cmd_line
 	bool interactive_mode = false;
 	std::string out_path;
 	std::vector<std::string> definition_file_rel_paths;
+	std::vector<std::string> post_processing_rel_paths;
+
 	bool start_in_server_mode = false;
 	std::vector< std::pair<std::string,std::string>> remote_nodes;
 	std::string server_port;

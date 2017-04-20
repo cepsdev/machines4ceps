@@ -1329,7 +1329,9 @@ void init_state_machine_simulation(	int argc,
 	smc->generate_cpp_code() = result_cmd_line.cppgen;
 	string last_file_processed;
 
-	for(std::string const & f : result_cmd_line.definition_file_rel_paths)
+	std::vector<std::string> v = result_cmd_line.definition_file_rel_paths;
+	v.insert(v.end(),result_cmd_line.post_processing_rel_paths.begin(),result_cmd_line.post_processing_rel_paths.end() );
+	for(std::string const & f : v)
 		 if (!std::ifstream{f})
 		 {
 			 last_file_processed = f;

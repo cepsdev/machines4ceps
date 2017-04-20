@@ -94,9 +94,9 @@ class Dotgenerator{
 	std::map<State_machine*,std::string> sm2initial;
 	std::map<int,std::vector<std::string>> userdefined_style_infos;
 	std::map<int,std::vector<std::string>> userdefined_edge_style_infos;
-
 	std::string pure_state_base_style_ = "style=\"rounded,filled\",fillcolor=\"cornsilk\"";
     std::string pure_state_base_highlighted_style_ = "style=\"rounded,filled\",fillcolor=lightpink";
+    bool global_prop_show_edges_ = true;
 
     void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states);
     std::string state_style(std::string name, bool highlight){
@@ -133,12 +133,13 @@ class Dotgenerator{
 		  label_content+="<i>/"+a.id()+"();</i> ";
 	  }
 
-	  if (label_content.length() == 0) return "";
+	  if (label_content.length() == 0 || !global_prop_show_edges()) return "";
 	  if (t.from_.is_sm_ && t.to_.is_sm_) return ",fontname=\"Courier\",xlabel=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
 	  return ",fontname=\"Courier\",label=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
 	}
 public:
     std::string pure_state_base_style(bool highlight){if (!highlight)return pure_state_base_style_;return pure_state_base_highlighted_style_;}
+    decltype(global_prop_show_edges_) & global_prop_show_edges() {return global_prop_show_edges_;}
 
 	friend State_machine_simulation_core;
 };

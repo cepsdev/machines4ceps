@@ -1,0 +1,57 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+
+section{"CANOpen Network Management (NMT)";};
+
+Event ev_power_up,
+      ev_bootup_message_sent,
+      ev_nmt_master_cmd_reset_communication,
+      ev_nmt_master_cmd_reset_node,
+      ev_nmt_master_cmd_start_node,
+      ev_nmt_master_cmd_stop_node,
+      ev_slave_node_reset_comm,
+      ev_slave_node_reset_node
+      ;
+
+Guard is_autostart_node;
+
+Statemachine{
+ cover{cover_edges_upto_1;};
+ 
+ id{Slave_State_Diagram;};
+ 
+ States {Initial;
+         Power_On_Reset;
+         Initialization;
+         Reset_Node;
+         Reset_Communication;
+         Pre_Operational;
+         Stopped;
+         Operational;
+         };
+         
+ Transition{Initial;Power_On_Reset;};
+ Transition{Power_On_Reset;Initialization;ev_power_up;};
+ Transition{Initialization;Pre_Operational;ev_bootup_message_sent;};
+ 
+ Transition{Pre_Operational;Reset_Communication;ev_nmt_master_cmd_reset_communication;};
+ Transition{Stopped;Reset_Communication;ev_nmt_master_cmd_reset_communication;};
+ Transition{Operational;Reset_Communication;ev_nmt_master_cmd_reset_communication;};
+
+ Transition{Pre_Operational;Reset_Node;ev_nmt_master_cmd_reset_node;};
+ Transition{Stopped;Reset_Node;ev_nmt_master_cmd_reset_node;};
+ Transition{Operational;Reset_Node;ev_nmt_master_cmd_reset_node;};
+ 
+ Transition{Pre_Operational;Operational;ev_nmt_master_cmd_start_node;};
+ Transition{Pre_Operational;Operational;ev_nmt_master_cmd_start_node;is_autostart_node;};
+ 
+ Transition{Operational;Stopped;ev_nmt_master_cmd_stop_node;};
+ Transition{Stopped;Operational;ev_nmt_master_cmd_start_node;};
+ 
+ Transition{Reset_Communication;Initialization;ev_slave_node_reset_comm;};
+ Transition{Reset_Node;Initialization;ev_slave_node_reset_node;};
+ 
+};
+

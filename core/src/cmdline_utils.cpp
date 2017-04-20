@@ -200,9 +200,11 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 
 	bool version_flag_set = false;
 	bool interactive_mode = false;
+	bool post_processing = false;
 	
 	string out_path = "";
 	std::vector<std::string> definition_file_rel_paths;
+	std::vector<std::string> post_processing_rel_paths;
 
 	Result_process_cmd_line r = r_init;
 
@@ -257,6 +259,8 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 		    else if (arg == "--dump_asciidoc_can_layer") {r.dump_asciidoc_can_layer=true;continue;}
 		    else if (arg == "--no_warn") {r.no_warn=true;continue;}
 		    else if (arg == "--print_event_signatures") {r.print_event_signatures=true;continue;}
+		    else if (arg == "--post_processing") {post_processing=true;continue;}
+
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {
 					r.server_port = r.port = arg.substr(6);
@@ -301,7 +305,10 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 					traverse_directories(arg,definition_file_rel_paths,"");
 
 				}
-				else definition_file_rel_paths.push_back(arg);
+				else {
+					if (post_processing) post_processing_rel_paths.push_back(arg);
+					else definition_file_rel_paths.push_back(arg);
+				}
 
 			}
 	}//for
@@ -311,6 +318,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 	r.interactive_mode = interactive_mode;
 	r.out_path = out_path;
 	r.definition_file_rel_paths = definition_file_rel_paths;
+	r.post_processing_rel_paths = post_processing_rel_paths;
 	return r;
 }//process_cmd_line
 

@@ -312,8 +312,19 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 		} else highlight_states.insert(s.id_);
 	}
 	for(auto e : props.nodes()){
-     auto s = as_struct(e);
+
+
+	 {
+	  std::string n,k;
+	  if (is_id(e,n,k)){
+		 if (n == "hide_edge_labels")
+			 dotgen.global_prop_show_edges() = false;
+		 continue;
+	  }
+	 }
+	 auto s = as_struct(e);
      if (!s) continue;
+
      if (ceps::ast::name(*s) == "node_display_properties"){
       state_rep_t st;
       auto ctr = 0;

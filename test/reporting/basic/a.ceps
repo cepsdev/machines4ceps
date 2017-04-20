@@ -8,6 +8,10 @@ States{Initial;A;B;D;};
 Statemachine{id{C;};
  States{Initial;A;B;C;};
  Transition{Initial;Initial;};
+ Transition{Initial;B;};
+ Transition{Initial;C;};
+ Transition{C;A;};
+ Transition{B;A;};
 };
 
 Transition{Initial;A;e;}; // edge #0
