@@ -154,13 +154,14 @@ static std::string expr2asciimath(ceps::ast::Nodebase_ptr p, ceps::ast::Nodebase
 	}
 	else if (p->kind() == ceps::ast::Ast_node_kind::binary_operator){
 		auto & bop = ceps::ast::as_binop_ref(p);
+                auto oop = ceps::ast::op(bop);
 		auto l = bop.left();
 		auto r = bop.right();
 		bool l_iszero = is_zero(l);
 		bool r_iszero = is_zero(r);
 
 		if (l_iszero && r_iszero) return "0";
-		if (r_iszero) return expr2asciimath(l,p);
+		if (r_iszero && oop == '+') return expr2asciimath(l,p);
 
 		if (parent == nullptr || parent->kind() != ceps::ast::Ast_node_kind::binary_operator)
 			return expr2asciimath(bop.left(),p) + binop2str(ceps::ast::op(bop)) + expr2asciimath(bop.right(),p);

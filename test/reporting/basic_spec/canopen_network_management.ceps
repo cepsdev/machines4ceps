@@ -52,6 +52,5 @@ Statemachine{
  
  Transition{Reset_Communication;Initialization;ev_slave_node_reset_comm;};
  Transition{Reset_Node;Initialization;ev_slave_node_reset_node;};
- 
 };
 

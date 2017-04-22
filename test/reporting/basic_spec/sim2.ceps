@@ -1,0 +1,4 @@
+Simulation{
+ ev_power_up;
+ ev_bootup_message_sent;
+};

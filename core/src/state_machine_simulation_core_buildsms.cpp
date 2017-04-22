@@ -1427,17 +1427,23 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	if(generate_cpp_code()){
 		do_generate_cpp_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
 	}
-	if (result_cmd_line.dot_gen){
-		do_generate_dot_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
-	}
 	if (result_cmd_line.dump_asciidoc_can_layer){
 		sm4ceps::utils::dump_asciidoc_canlayer_doc(std::cout,this);
 	}
 	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
-
+    if(result_cmd_line.post_processing_rel_paths.size() ){
+    	std::string last_file_processed;
+    	process_files(	result_cmd_line.post_processing_rel_paths,
+    							last_file_processed);
+    }
 	if (result_cmd_line.print_evaluated_postprocessing_tree){
 		std::cout << ceps::ast::Nodebase::pretty_print << current_universe();
 	}
+
+	if (result_cmd_line.dot_gen){
+		do_generate_dot_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
+	}
+
 }
 
 
