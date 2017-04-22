@@ -4,7 +4,7 @@ kind Guard;
 
 
 section{"CANOpen Network Management (NMT)";};
-
+Event e,f,g,h;
 Event ev_power_up,
       ev_bootup_message_sent,
       ev_nmt_master_cmd_reset_communication,
@@ -17,8 +17,9 @@ Event ev_power_up,
 
 Guard is_autostart_node;
 
+
 Statemachine{
- cover{cover_edges_upto_1;};
+ abstract;
  
  id{Slave_State_Diagram;};
  
@@ -54,3 +55,11 @@ Statemachine{
  Transition{Reset_Node;Initialization;ev_slave_node_reset_node;};
 };
 
+Statemachine{
+ id{Pre_Operational_Impl;};
+ States{Initial;A;B;C;};
+ Transition{Initial;A;e;};
+ Transition{A;B;f;};
+};
+
+i4 = Slave_State_Diagram(Pre_Operational = Pre_Operational_Impl);
