@@ -1,0 +1,34 @@
+kind Guard;kind Event;kind Sytemstate;
+Event e,f,g,h,i;
+
+statemachine{
+ id{Concept_SM;};
+ cover{edges_upto_1;};
+ abstract;
+ states{Initial;A;B;C;D;E;};
+ t{Initial;A;};
+ t{A;B;};
+ t{B;C;};
+ t{C;D;};
+ t{C;E;};
+};
+
+statemachine{
+ id{Implementation_SM;};
+ cover{edges_upto_1;};
+ states{Initial;A;B;C;D;E;};
+ t{Initial;A;e;};
+ t{A;B;f;};
+ t{B;C;g;};
+ t{C;D;h;};
+ t{C;E;i;};
+};
+
+shadow_state(Concept_SM.A,Implementation_SM.A);
+shadow_state(Concept_SM.B,Implementation_SM.B);
+shadow_state(Concept_SM.C,Implementation_SM.C);
+shadow_state(Concept_SM.D,Implementation_SM.D);
+
+Simulation{
+ e;f;g;h;i;
+};

@@ -180,39 +180,48 @@ std::string qualified_id_to_str(std::vector<std::string> const & q_id)
 	return r;
 }
 
+static bool is_id_or_symbol(ceps::ast::Nodebase_ptr p, std::string& n, std::string& k){
+	using namespace ceps::ast;
+	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
+	if (p->kind() == Ast_node_kind::symbol) {n = name(as_symbol_ref(p));k = kind(as_symbol_ref(p)); return true;}
+	return false;
+}
+
+static ceps::ast::Struct_ptr as_struct(ceps::ast::Nodebase_ptr p){
+	if (p->kind() == ceps::ast::Ast_node_kind::structdef) return ceps::ast::as_struct_ptr(p);
+	return nullptr;
+}
+
 void State_machine_simulation_core::process_statemachine_helper_handle_transitions(
 					State_machine* current_statemachine,
 					std::vector<State_machine::Transition>& trans,
 					std::string id,
-					ceps::ast::Nodeset& transitions,
-					int& guard_ctr)
+					ceps::ast::Nodeset& sm_definition,
+					int& guard_ctr, bool is_abstract)
 {
  using namespace std;
-#ifdef PRINT_DEBUG
- DEBUG_FUNC_PROLOGUE
-#endif
 
  int t_ctr=0;
 
- for (auto transition_ : transitions )
+ for (auto p : sm_definition.nodes() )
   {
+   auto transition_ptr = as_struct(p);
+   if (transition_ptr == nullptr) continue;
+   if (ceps::ast::name(*transition_ptr) != "Transition" && ceps::ast::name(*transition_ptr) != "transition" && ceps::ast::name(*transition_ptr) != "t") continue;
+   ceps::ast::Nodeset transition(transition_ptr->children());
+
+	bool abstract_trans = is_abstract;
 	++t_ctr;
-    auto transition = transition_["Transition"];
     if (transition.nodes().size() < 2)
      fatal_(-1,"Statemachine '"+id+"' not enough parameters: Transitions contain at least two elements (source- and target-nodes).");
-
 
     auto from_state_orig = transition.nodes()[0];
     auto to_state_orig = transition.nodes()[1];
     State_machine::State from,to;
 
     if (from_state_orig->kind() == ceps::ast::Ast_node_kind::identifier && to_state_orig->kind() == ceps::ast::Ast_node_kind::identifier){
-
         string s1 = name(as_id_ref(transition.nodes()[0]));
         string s2 = name(as_id_ref(transition.nodes()[1]));
-        #ifdef PRINT_DEBUG
-         DEBUG << "[INSERT LOCAL TRANSITION]" <<  s1 <<"==>"<<s2 << "\n";
-        #endif
         from.id_ = s1; to.id_=s2;
         if (!current_statemachine->lookup(from))
         	fatal_(-1,"Statemachine '"+id+"': "+ s1+" is not a state (or statemachine).");
@@ -225,14 +234,11 @@ void State_machine_simulation_core::process_statemachine_helper_handle_transitio
     	if (!r) fatal_(-1,"State machine '"+ id +"', transition #" + std::to_string(t_ctr) + ": illformed origin state");
     	r = read_qualified_id(to_state_orig,q_to_id );
     	if (!r) fatal_(-1,"State machine '"+ id +"', transition #" + std::to_string(t_ctr) + ": illformed destination state");
-    	//std::cerr << "*******\n";debug_print_qualified_id(q_from_id); std::cerr << "\n"; debug_print_qualified_id(q_to_id);std::cerr << "\n";
-        #ifdef PRINT_DEBUG
-    	 DEBUG << "[INSERT TRANSITION WITH AT LEAST ONE FULLY QUALIFID STATE]" << qualified_id_to_str(q_from_id) <<"==>"<< qualified_id_to_str(q_to_id) << "\n";
-        #endif
     	from = State_machine::State(q_from_id);
     	to = State_machine::State(q_to_id);
     }
     trans.push_back(State_machine::Transition(from,to));
+    trans[trans.size()-1].abstract = abstract_trans;
 
     for(size_t h = 2; h < transition.nodes().size();++h)
     {
@@ -280,29 +286,34 @@ void State_machine_simulation_core::process_statemachine_helper_handle_transitio
   }
 }
 
-
-
 void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm_definition,
 							std::string prefix,
 							State_machine* parent,
 							int depth,
 							int thread_ctr,
-							bool is_thread)
+							bool is_thread,
+							bool is_abstract)
 {
   using namespace std;
   using namespace ceps::ast;
-#ifdef PRINT_DEBUG
-  DEBUG_FUNC_PROLOGUE
-#endif
+
 
   if (fatal_ == nullptr || warn_ == nullptr){
 	  std::cerr << "***** Fatal Error: Errorhandler not defined (fatal_ and/or warn_ not initialized)." << std::endl;
 	  exit(1);
   }
 
+  for(auto p:sm_definition.nodes()){
+   std::string n; std::string k;
+   if (!is_id_or_symbol(p,n,k)) continue;
+   if (n == "abstract") is_abstract = true;
+  }
+
 
   auto states = sm_definition["States"];
-  auto transitions = sm_definition[all{"Transition"}];
+  auto states2 = sm_definition["states"];
+  std::copy(states2.nodes().begin(), states2.nodes().end(),std::back_inserter(states.nodes()));
+  //auto transitions = sm_definition[all{"Transition"}];
   auto events = sm_definition[all{"Events"}];
   auto actions = sm_definition[all{"Actions"}];
   auto threads = sm_definition[all{"thread"}];
@@ -333,9 +344,6 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 		  fatal_(-1,"Statemachine definition: illformed id, expect an IDENTIFIER.");
 	  sm_name = name(as_id_ref(id_.nodes()[0])); id = prefix+name(as_id_ref(id_.nodes()[0]));
   }
-#ifdef PRINT_DEBUG
-  DEBUG << "[PROCESSING CONTENT OF SM="<< id << "]\n";
-#endif
 
   auto& current_statemachine = State_machine::statemachines[id];
   if (current_statemachine == nullptr)
@@ -349,9 +357,7 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   if (parent != nullptr) parent->add_child(current_statemachine);
 
   //INVARIANT: current_statemachine non null points to correct machine
-#ifdef PRINT_DEBUG
-  DEBUG <<"[PROCESS SM("<< id <<")]"<< "[HANDLING_IMPORTS]\n";
-#endif
+
   std::set<std::string> unresolved_imports_set;
   for(auto it =  current_statemachine->unresolved_imports().begin(); it != current_statemachine->unresolved_imports().end(); ++it)
 	  unresolved_imports_set.insert(get<1>(*it));
@@ -393,14 +399,14 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   for (auto sm_ : statemachines)
   {
 	  auto sm = sm_["Statemachine"];
-	  process_statemachine(sm,id+".",current_statemachine,depth+1,0);
+	  process_statemachine(sm,id+".",current_statemachine,depth+1,0,false,is_abstract);
   }//for
   {
 	  int thread_ctr_local = 1;
 	  for (auto sm_ : threads)
 	  {
 		  auto sm = sm_["thread"];
-		  process_statemachine(sm,id+".",current_statemachine,depth+1,thread_ctr_local,true);++thread_ctr_local;
+		  process_statemachine(sm,id+".",current_statemachine,depth+1,thread_ctr_local,true,is_abstract);++thread_ctr_local;
 	  }//for
   }
 
@@ -446,7 +452,7 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 				 + ceps::ast::ast_node_kind_to_text[(int)state.nodes()[0]->kind()] );
      current_statemachine->insert_state( State_machine::State( name(as_id_ref(state.nodes()[0])) ) );
   }
-  process_statemachine_helper_handle_transitions(current_statemachine,current_statemachine->transitions(),id,transitions,anonymous_guard_ctr);
+  process_statemachine_helper_handle_transitions(current_statemachine,current_statemachine->transitions(),id,sm_definition,anonymous_guard_ctr,is_abstract);
 
   if (join.size())
   {
@@ -458,9 +464,7 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 	  auto join_state = join_state_.nodes()[0];
 	  if (join_state->kind() == ceps::ast::Ast_node_kind::identifier ){
         string s1 = name(as_id_ref(join_state));
-        #ifdef PRINT_DEBUG
-         DEBUG << "[INSERT LOCAL JOIN]" <<  s1 << "\n";
-        #endif
+
         current_statemachine->join() = true;
         current_statemachine->join_state().id_ = s1;
         if (!current_statemachine->lookup(current_statemachine->join_state()))
@@ -470,9 +474,7 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 
 	    bool r = read_qualified_id(join_state,q_join_state_id );
 	    if (!r) fatal_(-1,"State machine '"+ id +"', join: illformed state id.\n");
-        #ifdef PRINT_DEBUG
-	   	 DEBUG << "[INSERT GLOBAL JOIN]" << qualified_id_to_str(q_join_state_id) << "\n";
-        #endif
+
 	    current_statemachine->join() = true;
 	    current_statemachine->join_state() = State_machine::State(q_join_state_id);
 	  }

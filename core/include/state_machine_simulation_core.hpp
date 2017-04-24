@@ -44,6 +44,8 @@
 namespace log4ceps = log4kmw;
 namespace log4cepsloggers = log4kmw_loggers;
 
+constexpr int SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH = 128;
+
 
 
 template<typename T, typename Q> class threadsafe_queue{
@@ -391,14 +393,14 @@ public:
 						State_machine* current_statemachine,
 						std::vector<State_machine::Transition>& trans,
 						std::string id,
-						ceps::ast::Nodeset& transitions,int& guard_ctr);
+						ceps::ast::Nodeset& transitions,int& guard_ctr, bool is_abstract = false);
 
 	void process_statemachine(	ceps::ast::Nodeset& sm_definition,
 								std::string prefix,
 								State_machine* parent,
 								int depth,
 								int thread_ctr,
-								bool is_thread = false);
+								bool is_thread = false, bool is_abstract = false);
 	event_rep_t resolve_event_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent);
 	void process_simulation(ceps::ast::Nodeset& sim,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 	void eval_guard_assign(ceps::ast::Binary_operator & root);
@@ -855,6 +857,7 @@ namespace sm4ceps{
         if (it != (*smc)->get_global_states().end() && it->second->kind() == ceps::ast::Ast_node_kind::int_literal){
          ceps::ast::value(ceps::ast::as_int_ref(it->second)) = rhs;
         }
+        return *this;
     }
     int get(){
         std::lock_guard<std::recursive_mutex>g((*smc)->states_mutex());
@@ -875,6 +878,7 @@ namespace sm4ceps{
        if (it != (*smc)->get_global_states().end() && it->second->kind() == ceps::ast::Ast_node_kind::float_literal){
         ceps::ast::value(ceps::ast::as_int_ref(it->second)) = rhs;
        }
+       return *this;
    }
    double get(){
        std::lock_guard<std::recursive_mutex>g((*smc)->states_mutex());

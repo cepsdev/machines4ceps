@@ -1,6 +1,0 @@
-kind Event;
-kind Systemstate;
-kind Guard;
-
-
-section{"Network Mangement (NMT)";};

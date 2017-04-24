@@ -348,12 +348,18 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
      } else if (ceps::ast::name(*s) == "edge_display_properties") {
       state_rep_t st;
       int edge_no = 0;
+      int transition_id = -1;
       auto ctr = 0;
       std::vector<std::string> u;
       ceps::ast::Nodebase_ptr edge_id = nullptr;
       for (auto e: s->children()){
-       if (ctr==0) st = resolve_state_or_transition_given_a_qualified_id(edge_id=e,nullptr,&edge_no);
-       if(!st.valid() || st.id_ < 0){
+       if (ctr==0) {
+    	   if (e->kind() == ceps::ast::Ast_node_kind::int_literal){
+    		transition_id = ceps::ast::value(ceps::ast::as_int_ref(e));
+    	   } else
+    	    st = resolve_state_or_transition_given_a_qualified_id(edge_id=e,nullptr,&edge_no);
+       }
+       if( (!st.valid() || st.id_ < 0) && transition_id < 0){
      	std::stringstream ss; ss << *e;
      	warn_(-1, "Element #"+std::to_string(ctr)+" of root.dot_gen_properties.node_display_properties: '"+ss.str()+"' not a valid fully qualified transition identifier");
      	break;
@@ -362,10 +368,14 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
        if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
         u.push_back(ceps::ast::value(ceps::ast::as_string_ref(e)));
       }//for
-      if (u.size() && edge_id) {
+      if (u.size() && (edge_id || transition_id) ) {
        constexpr auto invalid_transition = -1;
        int matched_transition = invalid_transition;
-       if (st.is_sm_ && st.smp_->transitions().size() > edge_no) matched_transition = st.smp_->transitions()[edge_no].id_;
+       if (transition_id < 0) {
+    	   if (st.is_sm_ && st.smp_->transitions().size() > edge_no) matched_transition = st.smp_->transitions()[edge_no].id_;
+       } else {
+    	   if (transition_id < this->executionloop_context().transitions.size() ) matched_transition = transition_id;
+       }
        if(matched_transition == -1){
      	std::stringstream ss; ss << *edge_id;
      	warn_(-1, "Element #"+std::to_string(ctr)+" of root.dot_gen_properties.node_display_properties: '"+ss.str()+"' not a valid fully qualified transition identifier");

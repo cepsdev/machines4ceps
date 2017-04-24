@@ -159,6 +159,7 @@ public:
 	std::map<int,std::string> id_to_ev;
 	class transition_t{
 		public:
+		unsigned int props = 0;
 		int root_sms = 0; //root state machine, i.e. the very top level sms which transitively contains this transition
 		int smp = 0,from = 0, to = 0, ev = 0;int rel_idx = -1;
         bool native = true;
@@ -181,6 +182,7 @@ public:
 
 	std::vector<transition_t> transitions;
     std::vector<state_present_rep_t> current_states;
+    std::vector<int> shadow_state;
 	std::unordered_map<int,int> state_to_first_transition;
 	std::vector<int> ev_sync_queue;
 	std::vector<int> parent_vec;
@@ -208,6 +210,8 @@ public:
 	static constexpr unsigned int JOIN = 8;
 	static constexpr unsigned int IN_THREAD = 9;
 	static constexpr unsigned int REGION = 10;
+
+	static constexpr unsigned int TRANS_PROP_ABSTRACT = 1;
 
 	size_t ev_sync_queue_start = 0;
 	size_t ev_sync_queue_end = 0;

@@ -156,7 +156,31 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			if(found) break;
 		}
 	  return new ceps::ast::Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-	} else if (id == "stop") {
+	} else 	if(id == "shadow_state") {
+	 if(args.size() != 2) fatal_(-1,"Function '"+id+"' expects two arguments");
+	 auto shadow_state = resolve_state_or_transition_given_a_qualified_id(args[0],active_smp);
+	 auto shadowed_state = resolve_state_or_transition_given_a_qualified_id(args[1],active_smp);
+	 if(!shadow_state.valid() || !shadowed_state.valid())
+	 {
+	  std::stringstream ss;
+	  if(!shadow_state.valid()) ss << *args[0];
+	  if(!shadow_state.valid() && !shadowed_state.valid()) ss <<","<<*args[1];
+	  else if (!shadowed_state.valid()) ss <<","<<*args[1];
+	  fatal_(-1,"Function '"+id+"': unknown state machine state(s): "+ss.str());
+	 }
+	if (shadowed_state.is_sm_) shadowed_state.smp_->shadow = shadow_state;
+	else {
+	  State_machine::State* state = nullptr;
+	  for(auto p : shadowed_state.smp_->states()){
+	   if (p->id_ != shadowed_state.sid_) continue;
+	   state = p;
+	   break;
+	  }
+	  if (!state) fatal_(-1,"Function '"+id+"': Internal Error #1");
+	  state->shadow = shadow_state;
+	 }
+	return new ceps::ast::Int( 1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+	}else if (id == "stop") {
 		for(auto p : args)
 		{
 		   if ( !(p->kind() == ceps::ast::Ast_node_kind::identifier) && !(p->kind() == ceps::ast::Ast_node_kind::binary_operator)){

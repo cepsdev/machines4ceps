@@ -114,6 +114,15 @@ template<typename F, typename T> void traverse_sms(T const & sms, F f){
 	}	
 }
 
+static int get_state_idx(state_rep_t  s){
+	if (s.is_sm_) return s.smp_->idx_;
+	for(auto ss : s.smp_->states()){
+		if (ss->id_ != s.sid_) continue;
+		return ss->idx_;
+	}
+	return -1;
+}
+
 int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		                        std::map<std::string,State_machine*> sms,
 								std::map<std::string,int>& map_fullqualified_sm_id_to_computed_idx){
@@ -237,6 +246,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			  }
 			  executionloop_context_t::transition_t tt;
 
+			  tt.props |= (t.abstract ? executionloop_context_t::TRANS_PROP_ABSTRACT : 0);
 			  tt.smp = sm_to->idx_;
 			  tt.from = t.from_.idx_;
 			  assert(tt.from > 0);
@@ -363,6 +373,21 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		t.root_sms = p;
 	}
 
+	//Compute Shadow States
+	smp->executionloop_context().shadow_state.resize(ctr);
+	traverse_sms(smsv,[&smp](State_machine* cur_sm){
+	  if (cur_sm->shadow.valid()){
+		  smp->executionloop_context().shadow_state[cur_sm->idx_] = get_state_idx(cur_sm->shadow);
+	  } else smp->executionloop_context().shadow_state[cur_sm->idx_] = -1;
+
+	  for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
+	   auto state = *it;
+	   if(state->is_sm_) continue;
+	   if (!state->shadow.valid()) smp->executionloop_context().shadow_state[state->idx_] = -1;
+	   else smp->executionloop_context().shadow_state[state->idx_] = get_state_idx(state->shadow);
+	  }
+	 }
+	);
 	return ctr;
 }
 bool State_machine_simulation_core::register_action_impl(std::string state_machine_id,
@@ -516,6 +541,11 @@ static bool is_id(ceps::ast::Nodebase_ptr p, std::string & result, std::string& 
 	return false;
 }
 
+static ceps::ast::Struct_ptr as_struct(ceps::ast::Nodebase_ptr p){
+	if (p->kind() == ceps::ast::Ast_node_kind::structdef) return ceps::ast::as_struct_ptr(p);
+	return nullptr;
+}
+
 static std::tuple<bool,std::string,std::string,std::vector<ceps::ast::Nodebase_ptr>,State_machine*> is_sm_instantiation(
 		State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p){
  if (!smc->is_assignment_op(p)) return {};
@@ -605,7 +635,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	regfn("min", static_cast<int(*)(int, int)> (mymin));
 
     ceps::ast::Nodeset ns            = current_universe();
-    auto statemachines               = ns[all{"Statemachine"}];
+    //auto statemachines               = ns[all{"Statemachine"}];
     auto globalfunctions             = ns["global_functions"];
     auto frames                      = ns[all{"raw_frame"}];
     auto xmlframes                   = ns[all{"xml_frame"}];
@@ -654,7 +684,6 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	auto can_frames = ns[all{"frame"}];
 	frames.nodes().insert(frames.nodes().end(),can_frames.nodes().begin(),can_frames.nodes().end());
 
-
 	for(auto p:globalfunctions.nodes())
 	{
 		if(p->kind() != ceps::ast::Ast_node_kind::structdef) continue;
@@ -662,14 +691,17 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		global_funcs()[id] = p;
 	}
 
-	if (statemachines.empty())
-	 if(warn_) warn_(WARN_NO_STATEMACHINES,"");
+	for(auto p : current_universe().nodes()){
+		auto pp = as_struct(p);
+		if (pp != nullptr && ( name(*pp) == "Statemachine" || name(*pp) == "statemachine" ) ) {
+		 Nodeset n(pp->children());
+		 process_statemachine(n,"",nullptr,1,0);
+		} else if (pp == nullptr) {
+		 Scope ac_seq;ac_seq.owns_children_ = false;ac_seq.children().push_back(p);
+		 execute_action_seq(nullptr,&ac_seq);
+		}
+	}
 
-	for (auto statemachine_ : statemachines)
-	{
-		auto statemachine = statemachine_["Statemachine"];
-		process_statemachine(statemachine,"",nullptr,1,0);
-	}//for
 	auto entry_ = ns["main"];
 
 	if (!entry_.empty() && entry_machine != nullptr) {
@@ -679,9 +711,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		  fatal_(-1,"No statemachine with id "+entry_name+" found: No main statemachine defined.");
 	}
 
-
 	//BACK PATCH IMPORTS
-
 	for(;;)
 	{
 
@@ -1269,6 +1299,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::EXIT))std::cout <<" on_exit";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::ENTER))std::cout <<" on_enter";
 
+	   if (executionloop_context().shadow_state[e.second] >= 0) std::cout << " shadow_state = "<< executionloop_context().shadow_state[e.second];
+
 	   std::cout << "\n";
 	  }
 
@@ -1286,7 +1318,9 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
        std::cout << t.smp;
        std::cout << " (" << executionloop_context().parent_vec[t.smp] << ") : ";
        std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2);
-       std::cout << " (root=" <<t.root_sms<<")"<< std::endl;
+       std::cout << " (root=" <<t.root_sms<<") ";
+       if (t.props & executionloop_context_t::TRANS_PROP_ABSTRACT) std::cout << "(abstract)";
+       std::cout << std::endl;
 	  }
 	  std::cout << "Total number of states == " << executionloop_context().number_of_states <<" (option --print_transition_tables)\n\n";
 	 }//print transition tables

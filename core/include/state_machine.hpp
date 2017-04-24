@@ -54,6 +54,7 @@ class State_machine
   bool cover_ = false;
 
 public:
+  state_rep_t shadow = {};
   bool& cover(){return cover_;}
   bool cover() const {return cover_;}
 
@@ -101,6 +102,7 @@ public:
 
   struct State{
 	std::string id_;
+	state_rep_t shadow = {};
     bool is_sm_ = false;
     State_machine* smp_ = nullptr;
 
@@ -153,6 +155,7 @@ public:
 
   struct Transition{
 	int id_ = -1;
+	bool abstract = false;
     State from_,to_;
     using Nonleafbase_ptr = ceps::ast::Nonleafbase* ;
     std::string guard_ ;

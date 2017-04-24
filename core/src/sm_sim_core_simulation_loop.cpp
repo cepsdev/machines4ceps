@@ -299,6 +299,7 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,cep
 		bool triggered = false;
 		for(;i != (size_t)execution_ctxt.transitions.size();++i){
 			auto const & t = execution_ctxt.transitions[i];
+			if (t.props & executionloop_context_t::TRANS_PROP_ABSTRACT) continue;
 			if (t.smp != smp) break;
 			if (temp[t.to] && ev_id == 0 && t.ev == 0 && t.from == t.to && t.guard == nullptr && t.script_guard.length() == 0) continue;
 			if (t.ev == ev_id && t.from == s){
@@ -316,6 +317,8 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,cep
 	}
 }
 
+
+
 static bool compute_transition_kernel(std::vector<int>& triggered_transitions,
 		                              std::vector<int>::iterator end_of_trans_it,
 									  executionloop_context_t & execution_ctxt,
@@ -325,25 +328,55 @@ static bool compute_transition_kernel(std::vector<int>& triggered_transitions,
 									  ){
   bool possible_exit_or_enter_occured = false;
 
+  std::vector<int> from_shadows(SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH);auto from_shadows_size=0;
+  std::vector<int> to_shadows(SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH);auto to_shadows_size=0;
+  std::vector<int> vec_of_to_states(SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH+1);
+
   for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
 	auto t = *p;
 	auto const & trans = execution_ctxt.transitions[t];
+	from_shadows_size=0;to_shadows_size=0;
+	if (execution_ctxt.shadow_state[trans.from] >= 0 || execution_ctxt.shadow_state[trans.to] >= 0){
+	 auto s = execution_ctxt.shadow_state[trans.from];
+	 bool entering_sm = false;
+	 bool exiting_sm = false;
 
+	 while(s>=0){
+	  from_shadows[from_shadows_size] = s;
+	  ++from_shadows_size;
+	  if (!exiting_sm) exiting_sm=execution_ctxt.is_sm(s);
+	  s = execution_ctxt.shadow_state[s];
+	 }
+	 s = execution_ctxt.shadow_state[trans.to];
+	 while(s>=0){
+	  to_shadows[to_shadows_size] = s;
+	  ++to_shadows_size;
+	  if (!entering_sm) entering_sm=execution_ctxt.is_sm(s);
+	  s = execution_ctxt.shadow_state[s];
+	 }
+	 if (!possible_exit_or_enter_occured) possible_exit_or_enter_occured = 	entering_sm || exiting_sm;
+	 //TODO: Computation of parent sets
+	}
 	if (!possible_exit_or_enter_occured && (execution_ctxt.get_parent(trans.to) != execution_ctxt.get_parent(trans.from)))
 		possible_exit_or_enter_occured = true;
 	if (!possible_exit_or_enter_occured && (execution_ctxt.is_sm(trans.to) || execution_ctxt.is_sm(trans.from)))
 		possible_exit_or_enter_occured = true;
 
-	temp[trans.from] = 0;
-	temp[trans.to] = 1;
+	temp[trans.from] = 0;for(auto i = 0; i != from_shadows_size; temp[from_shadows[i]] = 0,++i);
+	temp[trans.to] = 1;for(auto i = 0; i != to_shadows_size; temp[to_shadows[i]] = 1,++i)execution_ctxt.visit_state(to_shadows[i]);
 	execution_ctxt.visit_state(trans.to);
 
-	if (execution_ctxt.get_inf(trans.to,executionloop_context_t::IN_THREAD) && execution_ctxt.get_inf(trans.to,executionloop_context_t::FINAL)){
-	 auto region = execution_ctxt.get_parent(execution_ctxt.get_parent(trans.to));
-	 int i = 0;
-	 for(; i != triggered_thread_regions_end;++i) if (triggered_thread_regions[i] == region) break;
-	 if (i == triggered_thread_regions_end)
+	vec_of_to_states[0] = trans.to;if (to_shadows_size)for(auto i=0;i != to_shadows_size;++i)vec_of_to_states[1+i]=to_shadows[i];
+
+	for(auto j = 0; j!=1+to_shadows_size;++j){
+	 auto to = vec_of_to_states[j];
+	 if (execution_ctxt.get_inf(to,executionloop_context_t::IN_THREAD) && execution_ctxt.get_inf(to,executionloop_context_t::FINAL)){
+	  auto region = execution_ctxt.get_parent(execution_ctxt.get_parent(to));
+	  int i = 0;
+	  for(; i != triggered_thread_regions_end;++i) if (triggered_thread_regions[i] == region) break;
+	  if (i == triggered_thread_regions_end)
 		 triggered_thread_regions[triggered_thread_regions_end++] = region;
+	  }
 	}
   }//for
 
