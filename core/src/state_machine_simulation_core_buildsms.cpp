@@ -693,7 +693,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 	for(auto p : current_universe().nodes()){
 		auto pp = as_struct(p);
-		if (pp != nullptr && ( name(*pp) == "Statemachine" || name(*pp) == "statemachine" ) ) {
+		if (pp != nullptr && ( name(*pp) == "Statemachine" || name(*pp) == "statemachine" || name(*pp) == "sm" ) ) {
 		 Nodeset n(pp->children());
 		 process_statemachine(n,"",nullptr,1,0);
 		} else if (pp == nullptr) {
@@ -1270,6 +1270,17 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	{
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
 	 compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+	 for(auto p : map_fullqualified_sm_id_to_computed_idx)
+		 map_state_id_to_full_qualified_id[p.second] = p.first;
+     for(auto e: executionloop_context().ev_to_id) executionloop_context().id_to_ev[e.second] = e.first;
+     executionloop_context().id_to_ev[0] = "null";
+	 for(auto e : map_fullqualified_sm_id_to_computed_idx){
+		 executionloop_context().idx_to_state_id[e.second] = e.first;
+	 }
+	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
+	 for(auto const & e: this->exported_events_) executionloop_context().exported_events.insert(executionloop_context().ev_to_id[e]);
+
+	 compute_shadow_transitions();
 	 executionloop_context().init_coverage_structures();
 
      if (result_cmd_line.live_log) {
@@ -1324,13 +1335,6 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	  }
 	  std::cout << "Total number of states == " << executionloop_context().number_of_states <<" (option --print_transition_tables)\n\n";
 	 }//print transition tables
-     for(auto e: executionloop_context().ev_to_id) executionloop_context().id_to_ev[e.second] = e.first;
-     executionloop_context().id_to_ev[0] = "null";
-	 for(auto e : map_fullqualified_sm_id_to_computed_idx){
-		 executionloop_context().idx_to_state_id[e.second] = e.first;
-	 }
-	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
-	 for(auto const & e: this->exported_events_) executionloop_context().exported_events.insert(executionloop_context().ev_to_id[e]);
    }
 
 	if (result_cmd_line.print_statemachines){

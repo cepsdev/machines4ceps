@@ -448,9 +448,10 @@ public:
 private:
 	bool contains_sm_func_calls(ceps::ast::Nodebase_ptr  expr);
 	void update_asserts(states_t const & reached_states);
-
-
+	void compute_shadow_transitions();
+	std::vector<int> compute_compatible_transitions(executionloop_context_t::transition_t const & t);
 public:
+	std::map<int,std::string> map_state_id_to_full_qualified_id;
 	int timed_events_active_ = 0;
 	void enqueue_event(event_t ev,bool update_out_queues = false);
 	void inc_timed_events() {++timed_events_active_;}

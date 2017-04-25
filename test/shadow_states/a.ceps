@@ -1,34 +1,135 @@
 kind Guard;kind Event;kind Sytemstate;
 Event e,f,g,h,i;
 
-statemachine{
- id{Concept_SM;};
+sm{
+ id{Concept_SM;};abstract;
+ 
  cover{edges_upto_1;};
- abstract;
- states{Initial;A;B;C;D;E;};
+ States{Initial;A;B;C;D;E;};
  t{Initial;A;};
  t{A;B;};
+ t{A;B;f;};
  t{B;C;};
  t{C;D;};
  t{C;E;};
+ t{D;A;};
 };
 
-statemachine{
+sm{
  id{Implementation_SM;};
- cover{edges_upto_1;};
- states{Initial;A;B;C;D;E;};
+ //cover{edges_upto_1;};
+ States{Initial;A;B;C;D;E;F;};
  t{Initial;A;e;};
  t{A;B;f;};
  t{B;C;g;};
  t{C;D;h;};
  t{C;E;i;};
+ t{D;A;h;};
+ t{C;F;h;};
 };
 
 shadow_state(Concept_SM.A,Implementation_SM.A);
 shadow_state(Concept_SM.B,Implementation_SM.B);
 shadow_state(Concept_SM.C,Implementation_SM.C);
 shadow_state(Concept_SM.D,Implementation_SM.D);
+shadow_state(Concept_SM.E,Implementation_SM.E);
+
+
+/*
+
+shadow(Implementation_SM.A) == Concept_SM.A
+shadow(Implementation_SM.B) == Concept_SM.B
+
+induces a *shadow* transition. Shadow transitions are valid moves in the concept machine 
+reflecting moves in the implementation machine.
+
+Why shadowing states in the first place ?
+
+It allows you to express properties within a concept which can be checked on an infinite number of
+implementations of this concept by extension.
+
+Example:
+
+sm{
+ id{canopen_slave;};concept;
+ states{Initial;Preoperational;Operational;Initialization;};
+ t{Initial;Initialization;};
+ t{Initialization;Preoperational;};
+ t{Preoperational;Operational;};
+ t{Operational;Preoperational;}; 
+};
+
+The sm 'canopen_slave' defines a concept. The concept reflects some, but in no means all, parts of
+the behaviour a slave node must confom to according to CiA's DS301 (CanOpen base spec).
+
+Guard heartbeat_allowed = in_state(canopen_slave.Preoperational) || in_state(canopen_slave.parent.Operational);
+Guard no_heartbeat_allowed = !heartbeat_allowed;
+
+sm{
+ id{canopen_slave_with_heartbeat;};
+ extend{canopen_slave;};
+ sm{id{heartbeat};
+  States{Initial;Sending_heartbeat;Not_sending_heartbeat;};
+  t{Initial;Not_sending_heartbeat;};
+  t{Not_sending_heartbeat;Sending_heartbeat;heartbeat_allowed;};
+  t{Sending_heartbeat;Not_sending_heartbeat;not_heartbeat_allowed;};
+ };
+};
+
+The concept sm 'canopen_slave_with_heartbeat' introduces new behaviour while retaining all features of the basic canopen_slave concept. 
+The canopen_slave 'shadows' the parts of 'canopen_slave_heartbeat' which are derived from it.
+
+Systemstate myheartbeat_fake;
+myheartbeat_fake = 0;
+
+sm{
+ id{canopen_slave_with_heartbeat_simple_simulator;};
+ implement{canopen_slave_with_heartbeat;};
+ where{canopen_slave_with_heartbeat.heartbeat.Sending_heartbeat = myheartbeat;};
+
+ t{Initial;Initialization;};
+ t{Initialization;Preoperational;ev_go_preop;};
+ t{Preoperational;Operational;ev_go_op;};
+ t{Operational;Preoperational;ev_go_preop;}; 
+ 
+ sm{ id{myheartbeat;};
+  States{Initial;};
+  on_enter{start_periodic_timer(1.0*s,ev_myheartbeat,ev_myheartbeat_timer);}
+  actions{
+   send_heartbeat{myheartbeat_fake=myheartbeat_fake+1;print("Hi there! ",myheartbeat_fake,"\n");};
+  };
+  t{Initial;Initial;ev_myheartbeat_timer;send_heartbeat;};
+ }; 
+};
+
+
+Ready to start a first simulation.
+
+simulation{
+ start{canopen_slave_with_heartbeat_simple_simulator;};
+ ev_go_preop;ev_go_op; 
+};
+
+Doing more coverage:
+
+sm{ 
+ id{canbus_watchdog;};
+ states{Initial;At_least_10_heartbeats_seen;};
+ t{Initial;At_least_10_heartbeats_seen;myheartbeat_fake >= 10;};
+};
+
+path{
+ canopen_slave.Initialization;
+ canopen_slave.Preoperational;
+ canopen_slave.Operational;
+ canbus_watchdog.At_least_10_heartbeats_seen; 
+};
+
+
+*/
+
 
 Simulation{
+ Start{Implementation_SM;};
  e;f;g;h;i;
 };
