@@ -38,10 +38,6 @@ void State_machine::clone_from(State_machine* rhs,int & counter,std::string cons
 			assert(t.to().id_.size() > 0 || t.to().unresolved());
 		}
 	}
-
-
-
-
 	  events_ = rhs->events_;
 	  actions_ = rhs->actions_;
 	  for(auto& a : actions_) a.associated_sm_ = this;
@@ -49,6 +45,9 @@ void State_machine::clone_from(State_machine* rhs,int & counter,std::string cons
 	  this->join_ = rhs->join_;
 	  this->join_state_ = rhs->join_state_;
 	  this->contains_threads_ = rhs->contains_threads_;
+	  this->is_concept_ = rhs->is_concept_;
+	  this->cover_ = rhs->cover_;
+
 	  assert(rhs->complete_);
 
 

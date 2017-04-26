@@ -21,7 +21,7 @@ template<typename T,typename Pred> static inline std::size_t collect_matching_in
 }
 
 static inline bool operator <= (executionloop_context_t::transition_t const & lhs, executionloop_context_t::transition_t const & rhs){
- if (lhs.props & executionloop_context_t::TRANS_PROP_ABSTRACT && lhs.ev <= 0 && lhs.script_guard.length() == 0) return true;
+ if ( (lhs.props & executionloop_context_t::TRANS_PROP_ABSTRACT) && lhs.ev <= 0 && lhs.script_guard.length() == 0) return true;
  if (lhs.ev == rhs.ev && lhs.script_guard == rhs.script_guard) return true;
  if (lhs.ev != rhs.ev) return false;
  if (lhs.script_guard.length() == 0) return true;
@@ -29,8 +29,8 @@ static inline bool operator <= (executionloop_context_t::transition_t const & lh
 }
 
 static inline bool operator == (executionloop_context_t::transition_t const & lhs, executionloop_context_t::transition_t const & rhs){
-	if ((lhs.props & executionloop_context_t::TRANS_PROP_ABSTRACT && lhs.ev <= 0 && lhs.script_guard.length() == 0)
-		&& (rhs.props & executionloop_context_t::TRANS_PROP_ABSTRACT && rhs.ev <= 0 && rhs.script_guard.length() == 0) )return true;
+	if (( (lhs.props & executionloop_context_t::TRANS_PROP_ABSTRACT) && lhs.ev <= 0 && lhs.script_guard.length() == 0)
+		&& ( (rhs.props & executionloop_context_t::TRANS_PROP_ABSTRACT) && rhs.ev <= 0 && rhs.script_guard.length() == 0) )return true;
 	return lhs.ev == rhs.ev && lhs.script_guard == rhs.script_guard;
 }
 
@@ -97,15 +97,18 @@ void State_machine_simulation_core::compute_shadow_transitions(){
  for(auto st : shadowed_transitions){
   auto const & t = executionloop_context().transitions[st];
   auto candidates = compute_compatible_transitions(t);
+  auto best_candidate = 0;
   if (candidates.size() == 0){
 	  err_no_candidates(this,t);
-  } else if (candidates.size() == 1) shadowed_transitions = candidates; else {
-   std::sort(candidates.begin(), candidates.end(),[&](int i,int j){ return executionloop_context().transitions[i] > executionloop_context().transitions[j];  } );
-   for(auto p: candidates) std::cout << p << " ";
-   if (executionloop_context().transitions[candidates.size()-1] > executionloop_context().transitions[candidates.size()-2]){
-
-   } else err_ambiguous(this,t);
-  }
+  } else if (candidates.size() > 1) {
+   std::sort(candidates.begin(), candidates.end(),[&](int i,int j){ return executionloop_context().transitions[i] < executionloop_context().transitions[j];  } );
+   if (executionloop_context().transitions[candidates[candidates.size()-1]] > executionloop_context().transitions[candidates[candidates.size()-2]]){
+	   best_candidate = candidates[candidates.size()-1];
+   } else {
+     err_ambiguous(this,t);
+   }
+  } else best_candidate = candidates[0];
+  executionloop_context().shadow_transitions[st] = best_candidate;
  }//for
 
 }

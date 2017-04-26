@@ -326,85 +326,87 @@ static bool compute_transition_kernel(std::vector<int>& triggered_transitions,
 									  std::vector<executionloop_context_t::state_rep_t> & triggered_thread_regions,
 									  int triggered_thread_regions_end
 									  ){
-  bool possible_exit_or_enter_occured = false;
+ bool possible_exit_or_enter_occured = false;
+ execution_ctxt.triggered_shadow_transitions.clear();
+ for(auto i : triggered_transitions){
+  auto st = i;
+  for(st = execution_ctxt.shadow_transitions[st];st > 0;st = execution_ctxt.shadow_transitions[st])
+   execution_ctxt.triggered_shadow_transitions.push_back(st);
+ }
 
-  std::vector<int> from_shadows(SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH);auto from_shadows_size=0;
-  std::vector<int> to_shadows(SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH);auto to_shadows_size=0;
-  std::vector<int> vec_of_to_states(SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH+1);
+ auto handle_final_states = [&] (int to){
+  if (execution_ctxt.get_inf(to,executionloop_context_t::IN_THREAD) && execution_ctxt.get_inf(to,executionloop_context_t::FINAL)){
+   auto region = execution_ctxt.get_parent(execution_ctxt.get_parent(to));
+   int i = 0;
+   for(; i != triggered_thread_regions_end;++i) if (triggered_thread_regions[i] == region) break;
+   if (i == triggered_thread_regions_end)
+	triggered_thread_regions[triggered_thread_regions_end++] = region;
+  }
+ };
+
+ auto process_transition = [&] (int t){
+   auto const & trans = execution_ctxt.transitions[t];
+
+   if (!possible_exit_or_enter_occured && (execution_ctxt.get_parent(trans.to) != execution_ctxt.get_parent(trans.from)))
+    possible_exit_or_enter_occured = true;
+   if (!possible_exit_or_enter_occured && (execution_ctxt.is_sm(trans.to) || execution_ctxt.is_sm(trans.from)))
+	possible_exit_or_enter_occured = true;
+
+   temp[trans.from] = 0;
+   temp[trans.to] = 1;
+   execution_ctxt.visit_state(trans.to);
+
+   handle_final_states(trans.to);
+  };
 
   for(auto p = triggered_transitions.begin();p != end_of_trans_it;++p ){
-	auto t = *p;
-	auto const & trans = execution_ctxt.transitions[t];
-	from_shadows_size=0;to_shadows_size=0;
-	if (execution_ctxt.shadow_state[trans.from] >= 0 || execution_ctxt.shadow_state[trans.to] >= 0){
-	 auto s = execution_ctxt.shadow_state[trans.from];
-	 bool entering_sm = false;
-	 bool exiting_sm = false;
-
-	 while(s>=0){
-	  from_shadows[from_shadows_size] = s;
-	  ++from_shadows_size;
-	  if (!exiting_sm) exiting_sm=execution_ctxt.is_sm(s);
-	  s = execution_ctxt.shadow_state[s];
-	 }
-	 s = execution_ctxt.shadow_state[trans.to];
-	 while(s>=0){
-	  to_shadows[to_shadows_size] = s;
-	  ++to_shadows_size;
-	  if (!entering_sm) entering_sm=execution_ctxt.is_sm(s);
-	  s = execution_ctxt.shadow_state[s];
-	 }
-	 if (!possible_exit_or_enter_occured) possible_exit_or_enter_occured = 	entering_sm || exiting_sm;
-	 //TODO: Computation of parent sets
+   auto ti = *p;
+   auto const & t = execution_ctxt.transitions[ti];
+   process_transition(ti);
+   auto shadow_from = execution_ctxt.shadow_state[t.from];auto shadow_to = execution_ctxt.shadow_state[t.to];
+   if (shadow_from <= 0 && shadow_to <= 0) continue;
+   if (shadow_from <= 0 && shadow_to > 0){
+	for(auto st = shadow_to; st > 0; st = execution_ctxt.shadow_state[st]) {
+		temp[st] = 1;execution_ctxt.visit_state(st);handle_final_states(st);
+		//if(!possible_exit_or_enter_occured && execution_ctxt.is_sm(st)) possible_exit_or_enter_occured = true;
 	}
-	if (!possible_exit_or_enter_occured && (execution_ctxt.get_parent(trans.to) != execution_ctxt.get_parent(trans.from)))
-		possible_exit_or_enter_occured = true;
-	if (!possible_exit_or_enter_occured && (execution_ctxt.is_sm(trans.to) || execution_ctxt.is_sm(trans.from)))
-		possible_exit_or_enter_occured = true;
+	possible_exit_or_enter_occured = true;
+   } else if (shadow_from > 0 && shadow_to <= 0){
 
-	temp[trans.from] = 0;for(auto i = 0; i != from_shadows_size; temp[from_shadows[i]] = 0,++i);
-	temp[trans.to] = 1;for(auto i = 0; i != to_shadows_size; temp[to_shadows[i]] = 1,++i)execution_ctxt.visit_state(to_shadows[i]);
-	execution_ctxt.visit_state(trans.to);
+    for(auto st = shadow_from; st > 0; st = execution_ctxt.shadow_state[st]) temp[st] = 0;
+    possible_exit_or_enter_occured = true;
 
-	vec_of_to_states[0] = trans.to;if (to_shadows_size)for(auto i=0;i != to_shadows_size;++i)vec_of_to_states[1+i]=to_shadows[i];
-
-	for(auto j = 0; j!=1+to_shadows_size;++j){
-	 auto to = vec_of_to_states[j];
-	 if (execution_ctxt.get_inf(to,executionloop_context_t::IN_THREAD) && execution_ctxt.get_inf(to,executionloop_context_t::FINAL)){
-	  auto region = execution_ctxt.get_parent(execution_ctxt.get_parent(to));
-	  int i = 0;
-	  for(; i != triggered_thread_regions_end;++i) if (triggered_thread_regions[i] == region) break;
-	  if (i == triggered_thread_regions_end)
-		 triggered_thread_regions[triggered_thread_regions_end++] = region;
-	  }
-	}
+   }
+  }//for
+  for (auto t : execution_ctxt.triggered_shadow_transitions){
+   process_transition(t);execution_ctxt.visit_transition(t);
   }//for
 
   if (triggered_thread_regions_end){
-	for(int i = 0; i != triggered_thread_regions_end; ++i){
- 	 auto region = triggered_thread_regions[i];
-	 if (!execution_ctxt.get_inf(region,executionloop_context_t::JOIN)) continue;
-	 if (execution_ctxt.join_states[region] == 0) continue;
-	 bool all_threads_in_final = true;
-	 for(auto j = execution_ctxt.state_to_children[region]+1;execution_ctxt.children[j];++j){
-		int child;
-		if (!execution_ctxt.is_sm(child = execution_ctxt.children[j])) continue;
-		if (!execution_ctxt.get_inf(child,executionloop_context_t::THREAD)) continue;
-		if (execution_ctxt.final_state[child] == 0){all_threads_in_final = false; break;}
-		if (!temp[execution_ctxt.final_state[child]]){all_threads_in_final = false; break;}
-	 }//for
-	 if (all_threads_in_final){
-	 	for(auto j = execution_ctxt.state_to_children[region]+1;execution_ctxt.children[j];++j){
-			int child;
-			if (!execution_ctxt.is_sm(child = execution_ctxt.children[j])) continue;
-			if (!execution_ctxt.get_inf(child,executionloop_context_t::THREAD)) continue;
-			temp[child] = 0;
-		}
-	    possible_exit_or_enter_occured = true;
-		temp[execution_ctxt.join_states[region]] = 1;
-		execution_ctxt.visit_state(execution_ctxt.join_states[region]);
-	 }
+   for(int i = 0; i != triggered_thread_regions_end; ++i){
+    auto region = triggered_thread_regions[i];
+	if (!execution_ctxt.get_inf(region,executionloop_context_t::JOIN)) continue;
+	if (execution_ctxt.join_states[region] == 0) continue;
+	bool all_threads_in_final = true;
+	for(auto j = execution_ctxt.state_to_children[region]+1;execution_ctxt.children[j];++j){
+	 int child;
+	 if (!execution_ctxt.is_sm(child = execution_ctxt.children[j])) continue;
+	 if (!execution_ctxt.get_inf(child,executionloop_context_t::THREAD)) continue;
+	 if (execution_ctxt.final_state[child] == 0){all_threads_in_final = false; break;}
+	 if (!temp[execution_ctxt.final_state[child]]){all_threads_in_final = false; break;}
 	}//for
+	if (all_threads_in_final){
+	 for(auto j = execution_ctxt.state_to_children[region]+1;execution_ctxt.children[j];++j){
+	  int child;
+	  if (!execution_ctxt.is_sm(child = execution_ctxt.children[j])) continue;
+	  if (!execution_ctxt.get_inf(child,executionloop_context_t::THREAD)) continue;
+	  temp[child] = 0;
+	 }
+    possible_exit_or_enter_occured = true;
+	temp[execution_ctxt.join_states[region]] = 1;
+	execution_ctxt.visit_state(execution_ctxt.join_states[region]);
+	}
+   }//for
   }
   return possible_exit_or_enter_occured;
 }

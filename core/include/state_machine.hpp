@@ -52,11 +52,14 @@ struct state_rep_t {
 class State_machine
 {
   bool cover_ = false;
+  bool is_concept_ = false;
 
 public:
   state_rep_t shadow = {};
   bool& cover(){return cover_;}
   bool cover() const {return cover_;}
+  bool& is_concept(){return is_concept_;}
+  bool is_concept() const {return is_concept_;}
 
   std::string const & id() const {return id_;}
   std::string & id() {return id_;}

@@ -293,6 +293,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	non_cover_sm = true;
 	traverse_sms(smsv,build_transitions_table);
 	auto count_transitions = ctx.transitions.size();
+
 	non_cover_sm = false;
 	traverse_sms(smsv,build_transitions_table);
 	if (count_transitions != ctx.transitions.size()) ctx.start_of_covering_transitions = count_transitions;
@@ -1270,6 +1271,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	{
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
 	 compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
+
 	 for(auto p : map_fullqualified_sm_id_to_computed_idx)
 		 map_state_id_to_full_qualified_id[p.second] = p.first;
      for(auto e: executionloop_context().ev_to_id) executionloop_context().id_to_ev[e.second] = e.first;
@@ -1280,6 +1282,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	 executionloop_context().state_id_to_idx = std::move(map_fullqualified_sm_id_to_computed_idx);
 	 for(auto const & e: this->exported_events_) executionloop_context().exported_events.insert(executionloop_context().ev_to_id[e]);
 
+	 executionloop_context().shadow_transitions.resize(executionloop_context().transitions.size()); for(auto &i : executionloop_context().shadow_transitions) i = -1;
 	 compute_shadow_transitions();
 	 executionloop_context().init_coverage_structures();
 
@@ -1288,15 +1291,15 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
       livelog::Livelogger::Storage* idx2fqs = new livelog::Livelogger::Storage( executionloop_context().number_of_states*128);
       live_logger()->register_storage(sm4ceps::STORAGE_IDX2FQS,idx2fqs);
       std::map<int,std::string> m;
-      for(auto const & v : map_fullqualified_sm_id_to_computed_idx) m[v.second] = v.first;
+      for(auto const & v : executionloop_context().state_id_to_idx) m[v.second] = v.first;
       sm4ceps::storage_write(*idx2fqs,m,std::get<1>(live_logger()->find_storage_by_id(sm4ceps::STORAGE_IDX2FQS)->second ));
      }
 
 	 if (result_cmd_line.print_transition_tables){
-	  std::cout << "Full qualified state id => Index : (option --print_transition_tables)\n";
+	  std::cout << "Full qualified state id => Index :\n";
 	  if (executionloop_context().start_of_covering_states_valid())
 		  std::cout << " There are states to be covered, start of covering state space = " << executionloop_context().start_of_covering_states << "\n";
-	  for(auto e : map_fullqualified_sm_id_to_computed_idx){
+	  for(auto e : executionloop_context().state_id_to_idx){
        std::cout <<" \"" << e.first <<"\" => " << "" << e.second << " ";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial_state";
@@ -1314,23 +1317,24 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 	   std::cout << "\n";
 	  }
-
+	  std::cout << "event id => event name :\n";
 	  for(auto e:executionloop_context().ev_to_id){
 	   std::cout <<" " << e.second <<";" << "\"" << e.first;
  	   std::cout << "\";\n";
 	  }
-	  int j = 0;
-	  std::cout << "(Transition Id) Index of State Machine (parent sm) : Index of Start State -> Index of Destination State/Event Index Info... (option --print_transition_tables)\n";
+	  int j = -1;
+	  std::cout << "(Transition Id) Index of State Machine (parent sm) :\n Index of Start State -> Index of Destination State/Event Index Info...\n";
 	  if (executionloop_context().start_of_covering_transitions_valid())
 		  std::cout << " There are transitions to be covered, start of covering transition space = " << executionloop_context().start_of_covering_transitions << "\n";
 	  for(auto const & t : executionloop_context().transitions){
-	   //if (t.start()) continue;
-	   std::cout << " ("<< j++ << ") ";
+	   ++j;if (j == 0) continue;
+	   std::cout << " ("<< j << ") ";
        std::cout << t.smp;
        std::cout << " (" << executionloop_context().parent_vec[t.smp] << ") : ";
        std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2);
        std::cout << " (root=" <<t.root_sms<<") ";
        if (t.props & executionloop_context_t::TRANS_PROP_ABSTRACT) std::cout << "(abstract)";
+       if (executionloop_context().shadow_transitions[j] > 0) std::cout << " (shadow transition is " << executionloop_context().shadow_transitions[j] <<")";
        std::cout << std::endl;
 	  }
 	  std::cout << "Total number of states == " << executionloop_context().number_of_states <<" (option --print_transition_tables)\n\n";

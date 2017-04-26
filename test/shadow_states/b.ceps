@@ -27,8 +27,7 @@ Event e,f,g,h,i;
 
 sm{
  id{Concept_CanOpen_Slave;};
- abstract;
- cover{edges_upto_1;};
+ concept;
  states{Initial;Preoperational;Operational;Initialization;};
  t{Initial;Initialization;};
  t{Initialization;Preoperational;};
@@ -48,8 +47,6 @@ sm{
 shadow_state(Concept_CanOpen_Slave.Initialization,Implementation_Of_Concept_CanOpen_Slave.Initialization);
 shadow_state(Concept_CanOpen_Slave.Preoperational,Implementation_Of_Concept_CanOpen_Slave.Preoperational);
 shadow_state(Concept_CanOpen_Slave.Operational,Implementation_Of_Concept_CanOpen_Slave.Operational);
-
-
 
 Simulation{
  Start{Implementation_Of_Concept_CanOpen_Slave;};

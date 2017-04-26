@@ -181,6 +181,7 @@ public:
 	using states_t = std::vector<state_present_rep_t>;
 
 	std::vector<transition_t> transitions;
+	std::vector<int> shadow_transitions;
     std::vector<state_present_rep_t> current_states;
     std::vector<int> shadow_state;
 	std::unordered_map<int,int> state_to_first_transition;
@@ -198,6 +199,7 @@ public:
 	std::map<int,std::string> idx_to_state_id;
 	std::unordered_set<int> exported_events;
 	std::vector<State_machine*> assoc_sm;
+	std::vector<int> triggered_shadow_transitions;
 
 	static constexpr unsigned int INIT = 0;
 	static constexpr unsigned int FINAL = 1;

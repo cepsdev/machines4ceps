@@ -302,18 +302,18 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 	  std::cerr << "***** Fatal Error: Errorhandler not defined (fatal_ and/or warn_ not initialized)." << std::endl;
 	  exit(1);
   }
-
+  bool is_concept = false;
   for(auto p:sm_definition.nodes()){
    std::string n; std::string k;
    if (!is_id_or_symbol(p,n,k)) continue;
    if (n == "abstract") is_abstract = true;
+   if (n == "concept") {is_concept=is_abstract = true;}
   }
 
 
   auto states = sm_definition["States"];
   auto states2 = sm_definition["states"];
   std::copy(states2.nodes().begin(), states2.nodes().end(),std::back_inserter(states.nodes()));
-  //auto transitions = sm_definition[all{"Transition"}];
   auto events = sm_definition[all{"Events"}];
   auto actions = sm_definition[all{"Actions"}];
   auto threads = sm_definition[all{"thread"}];
@@ -322,6 +322,8 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   auto on_enter = sm_definition[all{"on_enter"}];
   auto on_exit = sm_definition[all{"on_exit"}];
   auto cover_method = sm_definition["cover"];
+  auto implements = sm_definition["implements"];
+
 
   int anonymous_guard_ctr = 1;
 
@@ -351,7 +353,8 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 	  State_machine::statemachines[id] = current_statemachine = new State_machine(SM_COUNTER++,sm_name,parent,depth);
 	  set_qualified_id(current_statemachine,id);
   }
-  current_statemachine->cover() = !cover_method.empty();
+  current_statemachine->cover() = !cover_method.empty() || is_concept;
+  current_statemachine->is_concept() = is_concept;
   current_statemachine->is_thread() = is_thread;
   if (is_thread && parent) parent->contains_threads() = true;
   if (parent != nullptr) parent->add_child(current_statemachine);
