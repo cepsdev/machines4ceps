@@ -35,12 +35,20 @@ sm{
  t{Operational;Preoperational;};
 };
 
+sm{id{another_sm;};
+ states{Initial;A;B;C;};
+ t{Initial;A;};t{A;B;};t{A;C;};
+};
+
 sm{
  id{Implementation_Of_Concept_CanOpen_Slave;};
- implements{Concept_CanOpen_Slave;};
+ implements{Concept_CanOpen_Slave;another_sm;};
+ t{Initialization;Preoperational;f;};
+ t{Preoperational;Operational;g;};
+ t{Operational;Preoperational;h;};
 };
 
 Simulation{
  Start{Implementation_Of_Concept_CanOpen_Slave;};
- e;f;g;h;
+ f;g;h;
 };

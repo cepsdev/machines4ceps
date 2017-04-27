@@ -183,4 +183,23 @@ void State_machine::clone_from(State_machine* rhs,int & counter,std::string cons
 
  }
 
+template<typename F> void walk_sm(State_machine* sm,  F f){
+	f(sm);
+
+	for(auto state: sm->states()){
+		if (!state->is_sm() || state->smp() == nullptr) continue;
+		walk_sm(state->smp(),f);
+	}
+
+	for(auto subsm: sm->children()){
+		walk_sm(subsm,f);
+	}
+}
+
+void State_machine::merge(State_machine const & rhs){
+ states_.insert(rhs.states_.begin(),rhs.states_.end());
+ std::copy(rhs.transitions_.begin(),rhs.transitions_.end(),std::back_inserter(transitions_));
+ std::copy(rhs.children_.begin(),rhs.children_.end(),std::back_inserter(children_));
+}
+
 

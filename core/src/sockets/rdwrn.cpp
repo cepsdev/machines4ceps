@@ -10,13 +10,14 @@ ssize_t readn(int fd, void * buffer, size_t n){
   auto numRead = read(fd,buf,n - totRead);
   if (numRead == 0)
    return totRead;
-  if (numRead == -1)
+  if (numRead == -1){
    if(errno == EINTR)
     continue;
    else
     return -1;
-   totRead += numRead;
-   buf += numRead;
+  }
+  totRead += numRead;
+  buf += numRead;
  }
  return totRead;
 }

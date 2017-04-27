@@ -54,7 +54,7 @@ void livelog::Livelogger::trans_thread_fn(){
 		  if(storagesstorage2_.storages_.size() != storagesstorage_.storages_.size())
 			  storagesstorage2_.storages_.resize(storagesstorage_.storages_.size());
 
-		  for(int i = storagesstorage_.s_; i!=storagesstorage_.e_;i=(i+1) %storagesstorage_.storages_.size() ){
+		  for(std::size_t i = storagesstorage_.s_; i!=storagesstorage_.e_;i=(i+1) %storagesstorage_.storages_.size() ){
 			  auto& s = storagesstorage_.storages_[i];
 			  auto t = storagesstorage2_.storages_[i].data_;
 			  if (t == nullptr) t = new char[s.len_];
@@ -65,7 +65,7 @@ void livelog::Livelogger::trans_thread_fn(){
 		  storagesstorage_.s_ = storagesstorage_.e_ = 0;
 		 }
 
-		 for(int i = storagesstorage2_.s_; i!=storagesstorage2_.e_;i=(i+1) %storagesstorage2_.storages_.size() ){
+		 for(std::size_t i = storagesstorage2_.s_; i!=storagesstorage2_.e_;i=(i+1) %storagesstorage2_.storages_.size() ){
 			 auto& s = storagesstorage2_.storages_[i];
 
              for_each2(s,[&](void* data,
@@ -345,7 +345,7 @@ bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelo
     	Storage::len_t data_len = sizeof(livelog::Livelogger::Storage::chunk) + ch->len_;
     	if ( ::write(sck,&data_len,sizeof(data_len)) != sizeof(data_len)) return false;
 	    if ( ::write(sck,ch,sizeof(livelog::Livelogger::Storage::chunk)) != sizeof(livelog::Livelogger::Storage::chunk)) return false;
-	    if ( ::write(sck,data,ch->len_) != ch->len_) return false;
+	    if ( ::write(sck,data,ch->len_) != (ssize_t)ch->len_) return false;
 	    last_transmitted_id_new = ch->id();
         return true;
 	    })) return false;
@@ -357,7 +357,7 @@ bool livelog::Livelogger::send_storage(Storage::id_t& last_transmitted_id,livelo
 
 bool livelog::Livelogger::handle_cmd(Storage::id_t& last_transmitted_id,std::uint32_t cmd,int sck){
 	//std::cout << "livelog::Livelogger::handle_cmd("<<last_transmitted_id<<","<<cmd<<");" << std::endl;
-	reg_storage_ref it;Storage::id_t temp_id = -1;
+	reg_storage_ref it;
 	if (cmd == livelog::CMD_GET_NEW_LOG_ENTRIES){
 		std::lock_guard<std::mutex> lk(mutex_trans2consumer_);
 		return send_storage(last_transmitted_id,&trans_storage(),sck);

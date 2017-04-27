@@ -63,6 +63,7 @@ public:
 
   std::string const & id() const {return id_;}
   std::string & id() {return id_;}
+  State_machine& operator = (State_machine const & rhs) = default;
 
   std::vector<State_machine*> const & children() const {return children_;}
   std::vector<State_machine*> & children()  {return children_;}
@@ -108,11 +109,12 @@ public:
 	state_rep_t shadow = {};
     bool is_sm_ = false;
     State_machine* smp_ = nullptr;
-
     State_machine* parent_ = nullptr;
     std::vector<std::string> q_id_;
     bool unresolved_ = false;
 	int idx_= 0;
+	bool dont_cover_ = false;
+
 
 
     State() = default;
@@ -124,6 +126,8 @@ public:
 
     bool is_initial() const {return id_ == "initial" || id_ == "Initial" ;}
     bool is_final() const {return id_ == "final" || id_ == "Final";}
+    bool& dont_cover() {return dont_cover_;}
+    bool dont_cover() const {return dont_cover_;}
 
     std::string const & id() const {if (!is_sm_ || smp_ == nullptr) return id_; return smp_->id();}
     std::string & id() {if (!is_sm_ || smp_ == nullptr) return id_; return smp_->id();}
@@ -371,6 +375,9 @@ public:
 	  }
 	  return state_rep_t{false,false,nullptr,"",-1};
   }
+
+
+  void merge(State_machine const & rhs);
 
 };
 
