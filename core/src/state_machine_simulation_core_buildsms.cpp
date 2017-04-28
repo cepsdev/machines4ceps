@@ -1342,24 +1342,33 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
    }
 
 	if (result_cmd_line.print_statemachines){
+		std::vector<State_machine*> smsv;for(auto sm : State_machine::statemachines) smsv.push_back(sm.second);
 		std::cout << "\nStatemachines:\n";
-		for(auto smp : State_machine::statemachines){
-			std::cout << "\n\t" << smp.first << "(" << (std::uint64_t)smp.second  << ")" << std::endl;
-			if (smp.second->parent()){
-				auto r = this->get_qualified_id(smp.second->parent());
-				std::cout << "\t parent = "<< r.second << std::endl;
+		traverse_sms(smsv,[&](State_machine* sm){
+			std::cout << " id: "<< get_qualified_id(sm).second << "\n";
+			std::cout << " parent: " << (sm->parent() == nullptr ? "null" : get_qualified_id(sm).second ) <<"\n";
+			std::cout << " states:\n";
+			for(auto s:sm->states()){
+				std::string parent="null";
+				std::string smp="null";
+				if (s->parent_) parent = get_qualified_id(s->parent_).second;
+				if (s->smp_) smp = get_qualified_id(s->smp_).second;
+
+				std::cout << " " << s->id_ << "(parent:"<<parent<< ",smp:"<<smp<<",idx:"<<s->idx_<<", shadowed:"<<s->shadow.valid() << ")\n";
 			}
-			if (smp.second->actions().size())
-				std::cout << "\t Actions:\n";
-			for(auto & a : smp.second->actions()){
-				std::cout << "\t  ";
-				std::cout << a.id_ <<" // assoc sm("<< (std::uint64_t)a.associated_sm_ <<")"<< " rawceps-node-addr ("<<(std::uint64_t)a.body_<<") native ("<<(std::uint64_t)a.native_func_<<")" << std::endl;
+			std::cout << " transitions:\n";
+			for(auto const & t : sm->transitions()){
+				std::string parent1="null";
+				std::string parent2="null";
+				std::string smp1="null";
+				std::string smp2="null";
+				if (t.from_.parent_) parent1 = get_qualified_id(t.from_.parent_).second;
+				if (t.to_.parent_) parent2 = get_qualified_id(t.to_.parent_).second;
+				if (t.from_.smp_) smp1 = get_qualified_id(t.from_.smp_).second;
+				if (t.to_.smp_) smp2 = get_qualified_id(t.to_.smp_).second;
+				std::cout <<"  "<< t.from_.id_ <<"(parent:"<< parent1 << ", smp:"<<smp1<<") -> " << t.to_.id_ <<"(parent:"<<parent2 <<",smp:"<<smp2<<")" << "\n";
 			}
-			for (auto t : smp.second->transitions()){
-				std::cout << t.id_ <<":"<< t.from_.idx_ << "=>"<<t.to_.idx_<<"\n";
-			}
-		}
-		std::cout << "\n\n";
+		});
 	}
 
    //Handle event signatures

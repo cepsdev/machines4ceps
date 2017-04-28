@@ -197,7 +197,7 @@ template<typename F> void walk_sm(State_machine* sm,  F f){
 }
 
 void State_machine::merge(State_machine const & rhs){
- states_.insert(rhs.states_.begin(),rhs.states_.end());
+ for(auto p: rhs.states()) if (p->is_initial() || p->is_final()) continue; else states_.insert(p);
  std::copy(rhs.transitions_.begin(),rhs.transitions_.end(),std::back_inserter(transitions_));
  std::copy(rhs.children_.begin(),rhs.children_.end(),std::back_inserter(children_));
 }

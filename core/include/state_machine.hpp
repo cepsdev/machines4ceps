@@ -6,6 +6,7 @@
 #include <map>
 #include <algorithm>
 #include <set> 
+#include <unordered_set>
 #include "ceps_all.hh"
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 
@@ -53,6 +54,7 @@ class State_machine
 {
   bool cover_ = false;
   bool is_concept_ = false;
+  std::unordered_set<State_machine*> shadowing_me_;
 
 public:
   state_rep_t shadow = {};
@@ -60,6 +62,8 @@ public:
   bool cover() const {return cover_;}
   bool& is_concept(){return is_concept_;}
   bool is_concept() const {return is_concept_;}
+  decltype(shadowing_me_)& shadowing_me(){return shadowing_me_;}
+  decltype(shadowing_me_) shadowing_me() const {return shadowing_me_;}
 
   std::string const & id() const {return id_;}
   std::string & id() {return id_;}

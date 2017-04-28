@@ -20,5 +20,7 @@ playground/
 .launch*
 log.txt
 Makefile.orig
+*.svg
+*.dot
 
 

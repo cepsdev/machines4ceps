@@ -195,41 +195,109 @@ static void replace_state(State_machine* toplevel_sm,State_machine::State state_
 	});
 }
 
-State_machine* State_machine_simulation_core::merge_state_machines(std::vector<State_machine*> sms, bool delete_purely_abstract_transitions, int order,std::string id, State_machine* parent, int depth ){
-	if (sms.size() == 0) return new State_machine(SM_COUNTER++,id,parent,depth);
-	std::vector<State_machine*> clones;
-	for(auto sm : sms ){
-    	auto temp = new State_machine(SM_COUNTER++,sm->id(),parent,depth);
-    	temp->clone_from(sm,SM_COUNTER,sm->id(),nullptr,nullptr);
-    	clones.push_back(temp);
-    }
-    auto main_sm = clones.front();
-    main_sm->id() = id;
-    for(std::size_t j = 1; j < clones.size(); ++j){
-    	State_machine::State* new_init;
-    	auto cur_sm = clones[j];
-    	main_sm->states().insert(new_init = new State_machine::State("Initial_"+cur_sm->id()));
-    	new_init->dont_cover() = true;
-    	new_init->parent() = main_sm;
-    	new_init->smp_ = main_sm;
-    	replace_state(cur_sm,State_machine::State("Initial"),new_init);
-    	main_sm->merge(*cur_sm);
-    	State_machine::Transition init_to_new_init;
-    	init_to_new_init.from_ = main_sm->get_initial_state();
-    	init_to_new_init.to_ = *new_init;
-    	main_sm->transitions().push_back(init_to_new_init);
-    }
-    if (delete_purely_abstract_transitions)
-    	walk_sm(main_sm,[&](State_machine* sm){
-     std::vector<State_machine::Transition> v;
-     for(auto & t : sm->transitions())
-    	 {
-    	  if (t.abstract) continue;
-    	  v.push_back(t);
-    	 }
-     sm->transitions() = v;
+template <typename F> void for_all_transitions(State_machine* sm,F f){
+   for(auto & t : sm->transitions())
+	   f(t);
+}
+
+template <typename F> void for_all_states(State_machine* sm,F f){
+   for(auto & t : sm->states())
+	   f(*t);
+}
+
+template <typename F> void for_all_children(State_machine* sm,F f){
+   for(auto & t : sm->children())
+	   f(*t);
+}
+
+static void set_owner(State_machine* old_owner,State_machine* new_owner ){
+    walk_sm(old_owner,[&](State_machine* sm){
+    for_all_children(sm,[&](State_machine& s){
+     if(s.parent_ == old_owner) s.parent_ = new_owner;
     });
-	return main_sm;
+    for_all_states(sm,[&](State_machine::State& s){
+      if(s.smp_ == old_owner) s.smp_ = new_owner;
+    });
+    for_all_transitions(sm,[&](State_machine::Transition& t){
+      if(t.from_.smp_ == old_owner) t.from_.smp_ = new_owner;
+      if(t.to_.smp_ == old_owner) t.to_.smp_ = new_owner;
+     });
+    });
+}
+
+static void remove_all_shadowing(State_machine* toplevel_sm){
+ walk_sm(toplevel_sm,[&](State_machine* sm){
+  sm->shadowing_me().clear();
+  for_all_states(sm,[&](State_machine::State& s){
+   s.shadow.valid_ = false;
+  });
+  for_all_transitions(sm,[&](State_machine::Transition& t){
+   t.from_.shadow.valid_ = false;
+   t.to_.shadow.valid_ = false;
+  });
+ });
+}
+
+static inline State_machine* get_toplevel(State_machine* sm){
+	for(;sm->parent();sm = sm->parent());return sm;
+}
+
+static std::set<State_machine*> compute_all_shadowed_sms(State_machine* toplevel_sm){
+ std::set<State_machine*> r;
+ walk_sm(toplevel_sm,[&](State_machine* sm){
+  for_all_states(sm,[&](State_machine::State& s){
+	  if (s.shadow.valid()) r.insert(s.shadow.smp_);
+  });
+ });
+ return r;
+}
+
+State_machine* State_machine_simulation_core::merge_state_machines(std::vector<State_machine*> sms,
+		                                                           bool delete_purely_abstract_transitions,
+																   int order,
+																   std::string id,
+																   State_machine* parent,
+																   int depth ){
+ if (sms.size() == 0) return new State_machine(SM_COUNTER++,id,parent,depth);
+ std::vector<State_machine*> clones;
+ for(auto sm : sms ){
+  auto temp = new State_machine(SM_COUNTER++,sm->id(),parent,depth);
+  temp->clone_from(sm,SM_COUNTER,sm->id(),nullptr,nullptr);
+  remove_all_shadowing(temp);
+  clones.push_back(temp);
+ }
+ auto main_sm = clones.front();
+ main_sm->id() = id;
+ for(std::size_t j = 1; j != clones.size(); ++j){
+  State_machine::State* new_init;
+  auto cur_sm = clones[j];
+  main_sm->states().insert(new_init = new State_machine::State("Initial_"+cur_sm->id()));
+  new_init->dont_cover() = true;
+  new_init->smp_ = main_sm;
+  replace_state(cur_sm,State_machine::State("Initial"),new_init);
+  set_owner(cur_sm,main_sm);
+  if (sms[j]->is_concept()){
+   auto shadowed_sms = compute_all_shadowed_sms(sms[j]);
+   if (shadowed_sms.empty()){
+   } else {
+   }
+  }
+  main_sm->merge(*cur_sm);
+  State_machine::Transition init_to_new_init;
+  init_to_new_init.from_ = main_sm->get_initial_state();
+  init_to_new_init.to_ = *new_init;
+  main_sm->transitions().push_back(init_to_new_init);
+ }
+ if (delete_purely_abstract_transitions)
+  walk_sm(main_sm,[&](State_machine* sm){
+   std::vector<State_machine::Transition> v;
+    for_all_transitions(sm,[&](State_machine::Transition& t){
+     if (t.abstract) return;
+     v.push_back(t);
+    });
+   sm->transitions() = v;
+  });
+ return main_sm;
 }
 
 void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm_definition,

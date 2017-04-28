@@ -550,8 +550,15 @@ public:
 	void (*warn_)(int, std::string const & ) = nullptr;
 
 	std::pair<bool,std::string> get_qualified_id(State_machine* sm) {
+		if (sm == nullptr) return std::make_pair(false,"null");
 		auto it = sm_to_id_.find(sm);
-		if (it == sm_to_id_.end()) return std::make_pair(false,"");
+		if (it == sm_to_id_.end()) {
+			std::string s = sm->id_;
+			for(sm = sm->parent();sm;sm = sm->parent()){
+				  s = sm->id_ +"."+ s;
+			}
+			return std::make_pair(true,s);
+		}
 		return std::make_pair(true,it->second);
 	}
 	void set_qualified_id(State_machine* sm,std::string id){sm_to_id_[sm] = id;}

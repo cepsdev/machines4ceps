@@ -26,8 +26,7 @@ kind Guard;kind Event;kind Sytemstate;
 Event e,f,g,h,i;
 
 sm{
- id{Concept_CanOpen_Slave;};
- concept;
+ id{Concept_CanOpen_Slave;};concept;
  states{Initial;Preoperational;Operational;Initialization;};
  t{Initial;Initialization;};
  t{Initialization;Preoperational;};
@@ -35,14 +34,9 @@ sm{
  t{Operational;Preoperational;};
 };
 
-sm{id{another_sm;};
- states{Initial;A;B;C;};
- t{Initial;A;};t{A;B;};t{A;C;};
-};
-
 sm{
  id{Implementation_Of_Concept_CanOpen_Slave;};
- implements{Concept_CanOpen_Slave;another_sm;};
+ implements{Concept_CanOpen_Slave;};
  t{Initialization;Preoperational;f;};
  t{Preoperational;Operational;g;};
  t{Operational;Preoperational;h;};
