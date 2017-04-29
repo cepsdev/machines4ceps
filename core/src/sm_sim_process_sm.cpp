@@ -252,12 +252,40 @@ static std::set<State_machine*> compute_all_shadowed_sms(State_machine* toplevel
  return r;
 }
 
+template<typename F> void walk_two_structurally_identical_sms(State_machine* sm,State_machine* sm_clone,  F f){
+	f(sm,sm_clone);
+	for(std::size_t j = 0;j != sm->children().size() && j != sm_clone->children().size();++j){
+		walk_two_structurally_identical_sms(sm->children()[j],sm_clone->children()[j],f);
+	}
+}
+
 State_machine* State_machine_simulation_core::merge_state_machines(std::vector<State_machine*> sms,
 		                                                           bool delete_purely_abstract_transitions,
 																   int order,
 																   std::string id,
 																   State_machine* parent,
 																   int depth ){
+
+ auto handle_shadowing = [&](State_machine* clone,State_machine* orig){
+  if (orig->is_concept()){
+   auto shadowed_sms = compute_all_shadowed_sms(orig);
+   if (shadowed_sms.empty()){
+    walk_two_structurally_identical_sms(orig,clone,[&](State_machine* sm_a,State_machine* sm_b){
+     for_all_states(sm_a,[&](State_machine::State& s){
+      if(s.is_initial()) return;
+      if(s.is_final()) return;
+	  for(auto s2 : sm_b->states())
+	   if(s2->id_ == s.id_){
+        s2->shadow = state_rep_t(true,false,sm_a,s.id_,-1);
+		break;
+	   }
+      });
+    });
+   } else {
+   }
+  }
+ };
+
  if (sms.size() == 0) return new State_machine(SM_COUNTER++,id,parent,depth);
  std::vector<State_machine*> clones;
  for(auto sm : sms ){
@@ -268,6 +296,7 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
  }
  auto main_sm = clones.front();
  main_sm->id() = id;
+ handle_shadowing(main_sm,sms[0]);
  for(std::size_t j = 1; j != clones.size(); ++j){
   State_machine::State* new_init;
   auto cur_sm = clones[j];
@@ -276,12 +305,7 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
   new_init->smp_ = main_sm;
   replace_state(cur_sm,State_machine::State("Initial"),new_init);
   set_owner(cur_sm,main_sm);
-  if (sms[j]->is_concept()){
-   auto shadowed_sms = compute_all_shadowed_sms(sms[j]);
-   if (shadowed_sms.empty()){
-   } else {
-   }
-  }
+  handle_shadowing(cur_sm,sms[j]);
   main_sm->merge(*cur_sm);
   State_machine::Transition init_to_new_init;
   init_to_new_init.from_ = main_sm->get_initial_state();

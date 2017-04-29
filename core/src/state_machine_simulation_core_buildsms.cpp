@@ -1354,7 +1354,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 				if (s->parent_) parent = get_qualified_id(s->parent_).second;
 				if (s->smp_) smp = get_qualified_id(s->smp_).second;
 
-				std::cout << " " << s->id_ << "(parent:"<<parent<< ",smp:"<<smp<<",idx:"<<s->idx_<<", shadowed:"<<s->shadow.valid() << ")\n";
+				std::cout << " " << s->id_ << "(parent:"<<parent<< ",smp:"<<smp<<",idx:"<<s->idx_<<", shadowing:"<<s->shadow.valid() << ")\n";
 			}
 			std::cout << " transitions:\n";
 			for(auto const & t : sm->transitions()){
