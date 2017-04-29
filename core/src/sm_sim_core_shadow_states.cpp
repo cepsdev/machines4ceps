@@ -67,7 +67,7 @@ static void err_no_candidates(State_machine_simulation_core* smp,executionloop_c
  auto shadow_from = smp->executionloop_context().shadow_state[t.from];
  auto shadow_to = smp->executionloop_context().shadow_state[t.to];
  std::stringstream ss;
- ss << "The transition " << smp->map_state_id_to_full_qualified_id[t.from] << " -> " << smp->map_state_id_to_full_qualified_id[t.to]<< " ";
+ ss << " The transition " << smp->map_state_id_to_full_qualified_id[t.from] << " -> " << smp->map_state_id_to_full_qualified_id[t.to]<< " ";
  if (t.ev) ss << "triggered by event " << smp->executionloop_context().id_to_ev[t.ev] << " ";
  if (t.script_guard.length()) ss << "guarded by " << t.script_guard << " ";
  ss << "requires a compatible transition " << smp->map_state_id_to_full_qualified_id[shadow_from] << " -> " << smp->map_state_id_to_full_qualified_id[shadow_to];
@@ -79,7 +79,7 @@ static void err_ambiguous(State_machine_simulation_core* smp,executionloop_conte
  auto shadow_from = smp->executionloop_context().shadow_state[t.from];
  auto shadow_to = smp->executionloop_context().shadow_state[t.to];
  std::stringstream ss;
- ss << "The transition " << smp->map_state_id_to_full_qualified_id[t.from] << " -> " << smp->map_state_id_to_full_qualified_id[t.to]<< " ";
+ ss << " The transition " << smp->map_state_id_to_full_qualified_id[t.from] << " -> " << smp->map_state_id_to_full_qualified_id[t.to]<< " ";
  if (t.ev) ss << "triggered by event " << smp->executionloop_context().id_to_ev[t.ev] << " ";
  if (t.script_guard.length()) ss << "guarded by " << t.script_guard << " ";
  ss << " is ambiguous, there are multiple transitions of the form " << smp->map_state_id_to_full_qualified_id[shadow_from] << " -> " << smp->map_state_id_to_full_qualified_id[shadow_to];

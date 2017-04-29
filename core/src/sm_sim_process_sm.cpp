@@ -264,6 +264,10 @@ template<typename F> void walk_two_structurally_identical_sms(State_machine* sm,
 	}
 }
 
+static std::unordered_set<State_machine*> compute_all_shadowing_sms(State_machine* sm){
+	return {};
+}
+
 State_machine* State_machine_simulation_core::merge_state_machines(std::vector<State_machine*> sms,
 		                                                           bool delete_purely_abstract_transitions,
 																   bool turn_abstract_transitions_to_normal,
@@ -274,8 +278,8 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
 {
  auto handle_shadowing = [&](State_machine* clone,State_machine* orig){
   if (orig->is_concept()){
-   auto shadowed_sms = compute_all_shadowed_sms(orig);
-   if (shadowed_sms.empty()){
+   auto shadowing_sms = compute_all_shadowing_sms(orig);
+   if (shadowing_sms.empty()){
     walk_two_structurally_identical_sms(orig,clone,[&](State_machine* sm_a,State_machine* sm_b){
      for_all_states(sm_a,[&](State_machine::State& s){
       if(s.is_initial()) return;
@@ -358,6 +362,8 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   if (current_statemachine == nullptr)
   {
 	std::vector<State_machine*> implemented_machines;
+	std::vector<State_machine*> extended_machines;
+
 	if (implements.size()){
 	  for(auto p: implements.nodes()){
 	   auto s = resolve_state_or_transition_given_a_qualified_id(p,nullptr, nullptr);
@@ -366,10 +372,27 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 	   implemented_machines.push_back(s.smp_);
 	  }
     }
-	if (implemented_machines.size()){
-		current_statemachine = merge_state_machines(implemented_machines,true,true,SM_COUNTER++,sm_name,parent,depth);
-	} else current_statemachine = new State_machine(SM_COUNTER++,sm_name,parent,depth);
 
+	if (extends.size()){
+	  for(auto p: extends.nodes()){
+	   auto s = resolve_state_or_transition_given_a_qualified_id(p,nullptr, nullptr);
+	   if (!s.valid()) fatal_(-1,"Invalid id.");
+	   if (!s.is_sm_) fatal_(-1,"has to be state machine.");
+	   extended_machines.push_back(s.smp_);
+	  }
+    }
+
+	if (implemented_machines.size()){
+	  current_statemachine = merge_state_machines(implemented_machines,true,true,SM_COUNTER++,sm_name,parent,depth);
+	} else if (extends.size() == 0) current_statemachine = new State_machine(SM_COUNTER++,sm_name,parent,depth);
+
+	if (extended_machines.size() && current_statemachine == nullptr){
+	 current_statemachine = merge_state_machines(extended_machines,false,false,SM_COUNTER++,sm_name,parent,depth);
+	} else if (extended_machines.size()){
+     std::vector<State_machine *>v;v.push_back(current_statemachine);
+     std::copy(extended_machines.begin(),extended_machines.end(),std::back_inserter(v));
+     current_statemachine = merge_state_machines(v,false,false,SM_COUNTER++,sm_name,parent,depth);
+	}
 
 	State_machine::statemachines[id] = current_statemachine;
 	set_qualified_id(current_statemachine,id);

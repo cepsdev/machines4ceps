@@ -1366,8 +1366,11 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 				if (t.to_.parent_) parent2 = get_qualified_id(t.to_.parent_).second;
 				if (t.from_.smp_) smp1 = get_qualified_id(t.from_.smp_).second;
 				if (t.to_.smp_) smp2 = get_qualified_id(t.to_.smp_).second;
-				std::cout <<"  "<< t.from_.id_ <<"(parent:"<< parent1 << ", smp:"<<smp1<<") -> " << t.to_.id_ <<"(parent:"<<parent2 <<",smp:"<<smp2<<")" << "\n";
+				std::cout <<"  "<< t.from_.id_ <<"(parent:"<< parent1 << ", smp:"<<smp1<<") -> " << t.to_.id_ <<"(parent:"<<parent2 <<",smp:"<<smp2<<")";
+				if (t.abstract) std::cout << " (abstract)";
+				std::cout << "\n";
 			}
+			std::cout << "\n";
 		});
 	}
 
