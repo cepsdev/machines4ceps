@@ -160,8 +160,13 @@ static void extract_sm_name_and_id(ceps::ast::Nodeset& sm_definition,std::string
   {
 	  if (!is_thread)
 	  {
-		  smp->log() << sm_definition << "\n";
-		  smp->fatal_(-1,"Statemachine definition: no id found.");
+		  std::string n, k;
+		  if (sm_definition.nodes().size() == 0 || !is_id_or_symbol(sm_definition.nodes()[0],n,k)){
+		   smp->log() << sm_definition << "\n";
+		   smp->fatal_(-1,"Statemachine definition: no id found.");
+		  } else {
+			sm_name = n; id = prefix+n;
+		  }
 	  } else {
 		  sm_name = "thread_"+std::to_string(thread_ctr);
 		  id = prefix + sm_name;
@@ -264,8 +269,8 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
 																   int order,
 																   std::string id,
 																   State_machine* parent,
-																   int depth ){
-
+																   int depth )
+{
  auto handle_shadowing = [&](State_machine* clone,State_machine* orig){
   if (orig->is_concept()){
    auto shadowed_sms = compute_all_shadowed_sms(orig);
@@ -316,7 +321,7 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
   walk_sm(main_sm,[&](State_machine* sm){
    std::vector<State_machine::Transition> v;
     for_all_transitions(sm,[&](State_machine::Transition& t){
-     if (t.abstract) return;
+     if (t.abstract && t.guard().length() == 0 && t.events().empty() && t.actions().empty()) return;
      v.push_back(t);
     });
    sm->transitions() = v;

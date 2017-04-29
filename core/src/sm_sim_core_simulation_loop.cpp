@@ -766,6 +766,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		break;
 	}
 	if (taking_epsilon_transitions) taking_epsilon_transitions = false;
+	else taking_epsilon_transitions = true;
     if (ev_read && post_proc_native) post_proc_native();
 	if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
 			global_ev_cllbck();

@@ -148,11 +148,8 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 											   states_t const & states, executionloop_context_t* exec_ctxt)
 {
 	using namespace ceps::ast;
+
     bool bool_result;
-
-
-    DEBUG_FUNC_PROLOGUE
-
 	{
     	auto it =  get_user_supplied_guards().find(guard_name);
     	if (it !=  get_user_supplied_guards().end()){

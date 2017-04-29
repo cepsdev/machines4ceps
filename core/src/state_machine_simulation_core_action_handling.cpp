@@ -53,6 +53,7 @@ extern std::string to_string(std::vector<ceps::ast::Nodebase_ptr>const& v)
 
 extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p)
 {
+
 	if(p == nullptr) return "(null)";
 	if(p->kind() == ceps::ast::Ast_node_kind::string_literal)
 	{
@@ -934,20 +935,12 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 
 				for(auto& n : args)
 				{
-					if (n->kind() == ceps::ast::Ast_node_kind::int_literal ||
-					    n->kind() == ceps::ast::Ast_node_kind::float_literal ||
-					    n->kind() == ceps::ast::Ast_node_kind::string_literal ||
-					    n->kind() == ceps::ast::Ast_node_kind::identifier
-					    )
-					{
-                        ss << to_string(this,n);
-					}
-					else if (n->kind() == ceps::ast::Ast_node_kind::byte_array){
+                    if (n->kind() == ceps::ast::Ast_node_kind::byte_array){
 					 auto& seq = ceps::ast::bytes(ceps::ast::as_byte_array_ref(n));
                      for(auto c: seq){
                     	 ss << (int)c << " ";
                      }
-					} else ss << *n << "\n";
+					} else ss << to_string(this,n);
                 }//for
                 if(live_logger()){
                    this->live_logger_out()->log_console(ss.str());
