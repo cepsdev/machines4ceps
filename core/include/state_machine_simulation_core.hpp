@@ -450,7 +450,13 @@ private:
 	void update_asserts(states_t const & reached_states);
 	void compute_shadow_transitions();
 	std::vector<int> compute_compatible_transitions(executionloop_context_t::transition_t const & t);
-	State_machine* merge_state_machines(std::vector<State_machine*> sms, bool delete_purely_abstract_transitions, int order,std::string id, State_machine* parent, int depth );
+	State_machine* merge_state_machines(std::vector<State_machine*> sms,
+			                            bool delete_purely_abstract_transitions,
+										bool turn_abstract_transitions_to_normal,
+										int order,
+										std::string id,
+										State_machine* parent,
+										int depth );
 public:
 	std::map<int,std::string> map_state_id_to_full_qualified_id;
 	int timed_events_active_ = 0;

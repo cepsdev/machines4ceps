@@ -266,6 +266,7 @@ template<typename F> void walk_two_structurally_identical_sms(State_machine* sm,
 
 State_machine* State_machine_simulation_core::merge_state_machines(std::vector<State_machine*> sms,
 		                                                           bool delete_purely_abstract_transitions,
+																   bool turn_abstract_transitions_to_normal,
 																   int order,
 																   std::string id,
 																   State_machine* parent,
@@ -322,6 +323,7 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
    std::vector<State_machine::Transition> v;
     for_all_transitions(sm,[&](State_machine::Transition& t){
      if (t.abstract && t.guard().length() == 0 && t.events().empty() && t.actions().empty()) return;
+     if (turn_abstract_transitions_to_normal) t.abstract = false;
      v.push_back(t);
     });
    sm->transitions() = v;
@@ -365,7 +367,7 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 	  }
     }
 	if (implemented_machines.size()){
-		current_statemachine = merge_state_machines(implemented_machines,true,SM_COUNTER++,sm_name,parent,depth);
+		current_statemachine = merge_state_machines(implemented_machines,true,true,SM_COUNTER++,sm_name,parent,depth);
 	} else current_statemachine = new State_machine(SM_COUNTER++,sm_name,parent,depth);
 
 
