@@ -264,8 +264,28 @@ template<typename F> void walk_two_structurally_identical_sms(State_machine* sm,
 	}
 }
 
-static std::unordered_set<State_machine*> compute_all_shadowing_sms(State_machine* sm){
-	return {};
+static std::unordered_set<State_machine*> compute_all_shadowing_sms(State_machine_simulation_core* smp,State_machine* sm){
+	std::unordered_set<State_machine*> sms_contained_in_sm;
+	std::unordered_set<State_machine*> r;
+
+	//std::cout << "compute_all_shadowing_sms(";
+	//std::cout << smp->get_qualified_id(sm).second << ")"<<std::endl;
+
+	walk_sm(sm,[&](State_machine* s){
+	 sms_contained_in_sm.insert(s);
+	});
+	for(auto s:State_machine::statemachines){
+	 if (s.second->parent()) continue;
+	 if (s.second == sm) continue;
+	 walk_sm(s.second,[&](State_machine* stm){
+      for_all_states(stm,[&](State_machine::State& st){
+		if (st.shadow.valid() && sms_contained_in_sm.find(st.shadow.smp_) != sms_contained_in_sm.end() ) r.insert(s.second);
+	  });
+	 });
+	}
+
+	//for (auto s:r){std::cout << " " << smp->get_qualified_id(sm).second << "\n"; }
+	return r;
 }
 
 State_machine* State_machine_simulation_core::merge_state_machines(std::vector<State_machine*> sms,
@@ -276,22 +296,34 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
 																   State_machine* parent,
 																   int depth )
 {
+ auto set_shadowing_info = [&](State_machine* orig,State_machine* clone){
+  walk_two_structurally_identical_sms(orig,clone,[&](State_machine* sm_a,State_machine* sm_b){
+   for_all_states(sm_a,[&](State_machine::State& s){
+    if(s.is_initial()) return;
+    if(s.is_final()) return;
+    for(auto s2 : sm_b->states())
+	 if(s2->id_ == s.id_){
+	  s2->shadow = state_rep_t(true,false,sm_a,s.id_,-1);
+	  break;
+	 }
+	});
+   });
+  };
+
  auto handle_shadowing = [&](State_machine* clone,State_machine* orig){
   if (orig->is_concept()){
-   auto shadowing_sms = compute_all_shadowing_sms(orig);
+   auto shadowing_sms = compute_all_shadowing_sms(this,orig);
    if (shadowing_sms.empty()){
-    walk_two_structurally_identical_sms(orig,clone,[&](State_machine* sm_a,State_machine* sm_b){
-     for_all_states(sm_a,[&](State_machine::State& s){
-      if(s.is_initial()) return;
-      if(s.is_final()) return;
-	  for(auto s2 : sm_b->states())
-	   if(s2->id_ == s.id_){
-        s2->shadow = state_rep_t(true,false,sm_a,s.id_,-1);
-		break;
-	   }
-      });
-    });
+	   set_shadowing_info(orig,clone);
    } else {
+	 auto shadowed_sms_by_to_shadowed_sm = compute_all_shadowed_sms(orig);
+	 if (shadowed_sms_by_to_shadowed_sm.empty()){
+	  auto temp = new State_machine(SM_COUNTER++,"",parent,depth);
+	  temp->id_ = orig->id()+"@"+std::to_string((long long)temp);
+	  temp->clone_from(orig,SM_COUNTER,temp->id_,nullptr,nullptr);
+	  State_machine::statemachines[temp->id_] = temp;
+	  set_shadowing_info(temp,clone);
+	 }
    }
   }
  };
