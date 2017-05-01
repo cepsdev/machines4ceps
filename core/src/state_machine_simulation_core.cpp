@@ -10,6 +10,7 @@
 #include "core/include/sm_xml_frame.hpp"
 #include "core/include/modelling/partitions.hpp"
 #include "core/include/modelling/cover_path.hpp"
+#include "utils/concept_dependency_graph.hpp"
 #include "utils/fibex_import.hpp"
 
 #include "pugixml.hpp"
@@ -84,9 +85,10 @@ void comm_generic_tcp_in_thread_fn(int id,
 		 State_machine_simulation_core* smc,
 		 sockaddr_storage claddr,int sck,std::string som,std::string eof);
 
-void State_machine_simulation_core::process_files(	std::vector<std::string> const & file_names,
+std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_files(	std::vector<std::string> const & file_names,
 						std::string& last_file_processed)
 {
+	std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
 	for(auto const & file_name : file_names)
 	{
 		if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) == ".xml"){
@@ -115,7 +117,7 @@ void State_machine_simulation_core::process_files(	std::vector<std::string> cons
 		if (parser.parse() != 0 || driver.errors_occured())
 			fatal_(ERR_CEPS_PARSER, file_name);
 
-		std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
+
 		ceps::interpreter::evaluate(current_universe(),
 									driver.parsetree().get_root(),
 									ceps_env_current().get_global_symboltable(),
@@ -123,6 +125,7 @@ void State_machine_simulation_core::process_files(	std::vector<std::string> cons
 									&generated_nodes
 									);
 	}//for
+	return generated_nodes;
 }//process_def_files
 
 
@@ -1043,6 +1046,11 @@ void init_state_machine_simulation(	int argc,
     		smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);
     ceps::interpreter::register_struct_rewrite_rule(
     		smc->ceps_env_current().get_global_symboltable(),"cover_path", sm4ceps::modelling::cover_path, smc);
+
+    ceps::interpreter::register_struct_rewrite_rule(
+    		smc->ceps_env_current().get_global_symboltable(),"build_concept_dependency_graph", sm4ceps::utils::build_concept_dependency_graph, smc);
+
+
 
     smc->ceps_env_current().interpreter_env().reg_sym_undefined_clbk(sym_undefined_clbk,smc);
 

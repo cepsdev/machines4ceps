@@ -606,7 +606,7 @@ public:
 	Iterates through a vector of file names, evaluates each file with ceps, appends resulting node set to the 'universe'.
 	Node set resulting from evaluation is supplemented with internal variables (like paths).
 	*/
-	void process_files(	std::vector<std::string> const & file_names,
+	std::vector<ceps::ast::Nodebase_ptr> process_files(	std::vector<std::string> const & file_names,
 						std::string& last_file_processed);
 	void processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine = nullptr);
 	void leave_sm(State_machine* smp,states_t & states,std::set<State_machine*>& sms_exited,std::vector<State_machine*>& on_exit_seq);

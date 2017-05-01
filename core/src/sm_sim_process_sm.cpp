@@ -247,14 +247,29 @@ static inline State_machine* get_toplevel(State_machine* sm){
 	for(;sm->parent();sm = sm->parent());return sm;
 }
 
-static std::set<State_machine*> compute_all_shadowed_sms(State_machine* toplevel_sm){
- std::set<State_machine*> r;
- walk_sm(toplevel_sm,[&](State_machine* sm){
-  for_all_states(sm,[&](State_machine::State& s){
-	  if (s.shadow.valid()) r.insert(s.shadow.smp_);
-  });
- });
- return r;
+static std::vector<State_machine*> compute_all_shadowed_sms_transitively(State_machine* primary_sm){
+ std::queue<State_machine*> newly_added_sms;
+ std::unordered_set<State_machine*> r;
+
+ auto discover_shadowings =
+ [&](State_machine* toplevel_sm){
+  walk_sm(toplevel_sm,[&](State_machine* sm){
+   for_all_states(sm,[&](State_machine::State& s){
+	  if (s.shadow.valid()) newly_added_sms.push(get_toplevel(s.shadow.smp_));
+   });
+ });};
+
+ discover_shadowings(primary_sm);
+
+ while(newly_added_sms.size()){
+	 auto q = newly_added_sms.front();newly_added_sms.pop();
+	 if (r.find(q) == r.end()){
+		 r.insert(q);
+		 discover_shadowings(q);
+	 }
+ }
+
+ return {r.begin(),r.end()};
 }
 
 template<typename F> void walk_two_structurally_identical_sms(State_machine* sm,State_machine* sm_clone,  F f){
@@ -288,6 +303,13 @@ static std::unordered_set<State_machine*> compute_all_shadowing_sms(State_machin
 	return r;
 }
 
+static bool is_child_of(std::string id, State_machine* sm2 ){
+	for(auto p: sm2->children()){
+	 if (sm2->id() == id) return true;
+	}
+	return false;
+}
+
 State_machine* State_machine_simulation_core::merge_state_machines(std::vector<State_machine*> sms,
 		                                                           bool delete_purely_abstract_transitions,
 																   bool turn_abstract_transitions_to_normal,
@@ -310,25 +332,53 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
    });
   };
 
+ auto clone_sm_mangle_name = [&](State_machine* orig){
+  auto temp = new State_machine(SM_COUNTER++,"",nullptr,depth);
+  temp->id_ = orig->id()+"__"+std::to_string((long long)temp);
+  temp->clone_from(orig,SM_COUNTER,temp->id_,nullptr,nullptr);
+  State_machine::statemachines[temp->id_] = temp;
+  return temp;
+ };
+
  auto handle_shadowing = [&](State_machine* clone,State_machine* orig){
   if (orig->is_concept()){
    auto shadowing_sms = compute_all_shadowing_sms(this,orig);
    if (shadowing_sms.empty()){
-	   set_shadowing_info(orig,clone);
+    set_shadowing_info(orig,clone);
    } else {
-	 auto shadowed_sms_by_to_shadowed_sm = compute_all_shadowed_sms(orig);
-	 if (shadowed_sms_by_to_shadowed_sm.empty()){
-	  auto temp = new State_machine(SM_COUNTER++,"",parent,depth);
-	  temp->id_ = orig->id()+"@"+std::to_string((long long)temp);
-	  temp->clone_from(orig,SM_COUNTER,temp->id_,nullptr,nullptr);
-	  State_machine::statemachines[temp->id_] = temp;
-	  set_shadowing_info(temp,clone);
-	 }
+	auto shadowed_sms_by_to_shadowed_sm = compute_all_shadowed_sms_transitively(orig);
+	if (shadowed_sms_by_to_shadowed_sm.empty()){
+	 auto temp = clone_sm_mangle_name(orig);
+	 set_shadowing_info(temp,clone);
+	} else {
+	 //auto orig_clone = clone_sm_mangle_name(orig);
+	 shadowed_sms_by_to_shadowed_sm.push_back(orig);
+	 decltype(shadowed_sms_by_to_shadowed_sm) clones_of_shadowed_sms_by_to_shadowed_sm;
+	 for(auto sm:shadowed_sms_by_to_shadowed_sm)
+	  clones_of_shadowed_sms_by_to_shadowed_sm.push_back(clone_sm_mangle_name(sm));
+	 auto orig_clone = clones_of_shadowed_sms_by_to_shadowed_sm.back();
+	 std::unordered_map<State_machine*,State_machine*> orig_to_clone;
+	 for (std::size_t j = 0; j != shadowed_sms_by_to_shadowed_sm.size();++j )
+	  walk_two_structurally_identical_sms(shadowed_sms_by_to_shadowed_sm[j],clones_of_shadowed_sms_by_to_shadowed_sm[j],
+       [&](State_machine* orig, State_machine*clone)
+		  {
+		   orig_to_clone[orig] = clone;
+		  });
+	 for(auto s : clones_of_shadowed_sms_by_to_shadowed_sm){
+      walk_sm(s,[&](State_machine* sm){
+       for_all_states(sm,[&](State_machine::State& st){
+        if (!st.shadow.valid()) return;
+        st.shadow.smp_ = orig_to_clone[st.shadow.smp_];
+       });
+	  });
+	 }//for
+	 set_shadowing_info(orig_clone,clone);
+	}
    }
   }
  };
 
- if (sms.size() == 0) return new State_machine(SM_COUNTER++,id,parent,depth);
+ if (sms.empty()) return new State_machine(SM_COUNTER++,id,parent,depth);
  std::vector<State_machine*> clones;
  for(auto sm : sms ){
   auto temp = new State_machine(SM_COUNTER++,sm->id(),parent,depth);
@@ -434,7 +484,19 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   current_statemachine->is_concept() = is_concept;
   current_statemachine->is_thread() = is_thread;
   if (is_thread && parent) parent->contains_threads() = true;
-  if (parent != nullptr) parent->add_child(current_statemachine);
+  if (parent != nullptr) {
+   State_machine::State* sm_st = nullptr;
+   for(auto st: parent->states()){
+	   if (st->id() != current_statemachine->id()) continue;sm_st = st; break;
+   }
+   if (sm_st != nullptr){
+	   parent->states().erase(sm_st);
+	   current_statemachine->shadow = sm_st->shadow;
+	   //current_statemachine->cover()
+	   delete sm_st;
+   }
+   if (!is_child_of(current_statemachine->id(),parent)) parent->add_child(current_statemachine);
+  }
 
   //INVARIANT: current_statemachine now points to correct machine
 
@@ -475,12 +537,19 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   }
 
   auto statemachines = sm_definition[all{"Statemachine"}];
-
+  auto statemachines2 = sm_definition[all{"sm"}];
   for (auto sm_ : statemachines)
   {
 	  auto sm = sm_["Statemachine"];
 	  process_statemachine(sm,id+".",current_statemachine,depth+1,0,false,is_abstract);
   }//for
+  for (auto sm_ : statemachines2)
+  {
+	  auto sm = sm_["sm"];
+	  process_statemachine(sm,id+".",current_statemachine,depth+1,0,false,is_abstract);
+  }//for
+
+
   {
 	  int thread_ctr_local = 1;
 	  for (auto sm_ : threads)

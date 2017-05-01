@@ -1487,9 +1487,19 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
     if(result_cmd_line.post_processing_rel_paths.size() ){
     	std::string last_file_processed;
-    	process_files(	result_cmd_line.post_processing_rel_paths,
-    							last_file_processed);
+    	auto new_seg = process_files(	result_cmd_line.post_processing_rel_paths,last_file_processed);
+    	for(auto p : new_seg){
+    		auto pp = as_struct(p);
+    		if (pp != nullptr && ( name(*pp) == "Statemachine" || name(*pp) == "statemachine" || name(*pp) == "sm" ) ) {
+    		 Nodeset n(pp->children());
+    		 process_statemachine(n,"",nullptr,1,0);
+    		} else if (pp == nullptr) {
+    		 Scope ac_seq;ac_seq.owns_children_ = false;ac_seq.children().push_back(p);
+    		 execute_action_seq(nullptr,&ac_seq);
+    		}
+    	}
     }
+
 	if (result_cmd_line.print_evaluated_postprocessing_tree){
 		std::cout << ceps::ast::Nodebase::pretty_print << current_universe();
 	}
