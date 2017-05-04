@@ -11,6 +11,7 @@
 #include "core/include/modelling/partitions.hpp"
 #include "core/include/modelling/cover_path.hpp"
 #include "utils/concept_dependency_graph.hpp"
+#include "utils/stddoc.hpp"
 #include "utils/fibex_import.hpp"
 
 #include "pugixml.hpp"
@@ -1049,8 +1050,8 @@ void init_state_machine_simulation(	int argc,
 
     ceps::interpreter::register_struct_rewrite_rule(
     		smc->ceps_env_current().get_global_symboltable(),"build_concept_dependency_graph", sm4ceps::utils::build_concept_dependency_graph, smc);
-
-
+    ceps::interpreter::register_struct_rewrite_rule(
+        		smc->ceps_env_current().get_global_symboltable(),"make_stddoc", sm4ceps::utils::make_stddoc, smc);
 
     smc->ceps_env_current().interpreter_env().reg_sym_undefined_clbk(sym_undefined_clbk,smc);
 

@@ -1,8 +1,10 @@
 dot_gen_properties{
- for(x : root.summary.coverage.state_coverage.covered_states.content()){
+ static_for(x : root.summary.coverage.state_coverage.covered_states.content()){
   node_display_properties{x;node_visited_style{};};
  }
- for(x : root.summary.coverage.transition_coverage.covered_transitions_by_id.content()){
+ static_for(x : root.summary.coverage.transition_coverage.covered_transitions_by_id.content()){
   edge_display_properties{x;edge_visited_style{};};
  }
 };
+
+make_stddoc{out{"report.adoc";};};
