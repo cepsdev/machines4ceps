@@ -88,11 +88,11 @@ static ceps::ast::Nodebase_ptr make_guard(State_machine* sm, State_machine::Tran
  return (new strct{"span",t.guard()})->p_strct;
 }
 
-static void make_sm_dot_graph_link_fully_collapsed(State_machine* sm,State_machine_simulation_core* smc,std::string name,std::vector<ceps::ast::Nodebase_ptr>& content){
+static ceps::ast::Nodebase_ptr make_sm_dot_graph_link(State_machine* sm,State_machine_simulation_core* smc,std::string name){
  using namespace sm4ceps::modelling::gensm;
  using namespace ceps::ast;
  using namespace std;
- content.push_back( (new strct{"div",strct{"attr",strct{"id",name+"_fully_collapsed"}},strct{"attr",strct{"class","sm_graph"}}, strct{"img",strct{"attr",strct{"src",name+".svg"}} }})->p_strct );
+ return (new strct{"div",strct{"attr",strct{"id",name}},strct{"attr",strct{"class","sm_graph"}}, strct{"img",strct{"attr",strct{"src",name+".svg"}} }})->p_strct ;
 }
 
 static std::string replace_all(std::string str, const std::string& from, const std::string& to) {
@@ -146,9 +146,11 @@ static void make_content_sm(State_machine* sm,
    "table",
    rows
   };
- auto div = new strct{"div",strct{"attr",strct{"class","sm_details"}},table};
- content.push_back(div->p_strct);
- make_sm_dot_graph_link_fully_collapsed(sm,smc,replace_all(name,".","__"),content);
+ auto sm_details_div = (new strct{"div",strct{"attr",strct{"class","sm_details"}},table})->p_strct;
+ //content.push_back(div->p_strct);
+ auto dot_div = make_sm_dot_graph_link(sm,smc,replace_all(name,".","__"));
+ content.push_back(( new strct{"table",strct{"attr",strct{"class","sm_details_and_sm_graph"}},
+	 strct{"tr",strct{"td",std::vector<Nodebase_ptr>{sm_details_div} },strct{"td", std::vector<Nodebase_ptr>{dot_div} }},  } )->p_strct );
  for_all_children(sm,[&](State_machine& s){make_content_sm(&s,name+"."+s.id(),content,smc,env);});
 }
 
