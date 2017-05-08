@@ -1,12 +1,12 @@
 kind Event;
 kind Systemstate;
 kind Guard;
-
+Event ev1,ev2,ev3;
+Guard g;
 
 section{"CANOpen Network Management (NMT)";};
 
-
-Statemachine{
+sm{
  CanOpen_Slave_Node;
  concept;
  
@@ -19,7 +19,9 @@ Statemachine{
          Pre_Operational;
          Stopped;
          Operational;
-         };
+         };        
+ sm{ id{Out_of_order;}; states{Initial;A;B;C;}; };
+ Actions{a{};};
          
  t{ Initial             ; Power_On_Reset      ;};
  t{ Power_On_Reset      ; Initialization      ;};
@@ -36,5 +38,6 @@ Statemachine{
  t{ Stopped             ; Operational         ;};
  t{ Reset_Communication ; Initialization      ;};
  t{ Reset_Node          ; Initialization      ;};
+ t{ Initialization      ; Out_of_order        ;ev1;g;a;};
 };
 

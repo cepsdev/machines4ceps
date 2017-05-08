@@ -394,7 +394,7 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 	} else {
 		for(auto s : statemachines() ){
 		 std::map<std::string,State_machine*> m = { {s.first, s.second} };
-		 std::ofstream o{s.first+".dot"};
+		 std::ofstream o{ replace_all(s.first,".","__")+".dot"};
 	     write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
 	     do_generate_dot_code(m,nullptr,highlight_states,dotgen,o);
 		}

@@ -7,4 +7,4 @@ dot_gen_properties{
  }
 };
 
-make_stddoc{out{"report.adoc";};};
+make_stddoc{out{"report.html";};};
