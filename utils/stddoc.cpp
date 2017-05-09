@@ -45,23 +45,40 @@ static void make_section_title(State_machine* sm,State_machine_simulation_core* 
  using namespace sm4ceps::modelling::gensm;
  using namespace ceps::ast;
  using namespace std;
- content.push_back( (new strct{"h3",title})->p_strct );
+ bool is_concept = get_toplevel(sm)->is_concept();
+
+ if (!is_concept)content.push_back( (new strct{"h3",strct{"attr",strct{"class","sm_section"}},title})->p_strct );
+ else content.push_back( (new strct{"h3",
+	                                strct{"attr",strct{"class","sm_section"}},
+							        title,
+							        strct{"span",strct{"attr",strct{"class","concept_tag_section_title"}},"Concept" } })->p_strct );
+
 }
 
 static void make_subsection_title(State_machine* sm,State_machine_simulation_core* smc,std::string title,std::vector<ceps::ast::Nodebase_ptr>& content){
  using namespace sm4ceps::modelling::gensm;
  using namespace ceps::ast;
  using namespace std;
- content.push_back( (new strct{"h4",title})->p_strct );
+ bool is_concept = get_toplevel(sm)->is_concept();
+
+ if (!is_concept)content.push_back( (new strct{"h4",strct{"attr",strct{"class","sm_subsection"}},title})->p_strct );
+ else content.push_back( (new strct{"h4",
+                                    strct{"attr",strct{"class","sm_section"}},
+	                                title,
+	                                strct{"span",strct{"attr",strct{"class","concept_tag_sub_section_title"}},"Concept" } })->p_strct );
 }
 
-static void make_states_list(State_machine* sm, std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env){
+static std::vector<ceps::ast::Nodebase_ptr> make_states_list(State_machine* sm, State_machine_simulation_core* smc,ceps::interpreter::Environment& env){
  using namespace sm4ceps::modelling::gensm;using namespace ceps::ast;using namespace std;
  vector<Nodebase_ptr> states;
  for_all_states(sm,[&](State_machine::State& st){
-  states.push_back(( new strct{"li",st.id()} ) ->p_strct );
+  if(st.is_initial() || st.is_final() || sm->join_state().id() == st.id()) return;
+  states.push_back(( new strct{"span", strct{"attr",strct{"class","sm_state"}} , st.id()} ) ->p_strct );
  });
- content.push_back((new strct{"ul",states})->p_strct);
+ for_all_children(sm,[&](State_machine& s){
+  states.push_back(( new strct{"span", strct{"attr",strct{"class","sm_composite_state"}} , s.id()} ) ->p_strct );
+ });
+ return states;
 }
 
 static void make_compound_states_list(State_machine* sm,std::string prefix, std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env){
@@ -115,8 +132,8 @@ static void make_content_sm(State_machine* sm,
  vector<Nodebase_ptr> rows;
  if (!sm->parent()) make_section_title(sm,smc,name,content);
  else make_subsection_title(sm,smc,name,content);
- make_states_list(sm,content,smc,env);
- make_compound_states_list(sm,"",content,smc,env);
+
+ auto states_list = make_states_list(sm,smc,env);
 
  for_all_transitions(sm,[&](State_machine::Transition& t){
   vector<Nodebase_ptr> cols;
@@ -141,15 +158,22 @@ static void make_content_sm(State_machine* sm,
   rows.push_back(row->p_strct);
  });
 
- auto table = new
+ strct* table = nullptr;
+
+ if (sm->transitions().size()) table = new
   strct{
    "table",
+   new strct{"tr",new strct{"th",new strct{"attr",new strct{"colspan",3} },"Transition"},new strct{"th","Event"},new strct{"th","Guard"},new strct{"th","Action"}   },
    rows
   };
- auto sm_details_div = (new strct{"div",strct{"attr",strct{"class","sm_details"}},table})->p_strct;
- //content.push_back(div->p_strct);
+
+ Nodebase_ptr sm_details_div = nullptr;
+ if (table) sm_details_div = (new strct{"div",strct{"attr",strct{"class","sm_details"}},table})->p_strct;
+ else sm_details_div = (new strct{"div",strct{"attr",strct{"class","sm_details"}}})->p_strct;
+
  auto dot_div = make_sm_dot_graph_link(sm,smc,replace_all(name,".","__"));
  content.push_back(( new strct{"table",strct{"attr",strct{"class","sm_details_and_sm_graph"}},
+	 strct{"tr",strct{"td",strct{"attr",strct{"colspan",2}},strct{"attr",strct{"class","sm_states_overview"}},states_list }},
 	 strct{"tr",strct{"td",std::vector<Nodebase_ptr>{sm_details_div} },strct{"td", std::vector<Nodebase_ptr>{dot_div} }},  } )->p_strct );
  for_all_children(sm,[&](State_machine& s){make_content_sm(&s,name+"."+s.id(),content,smc,env);});
 }

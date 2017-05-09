@@ -1,4 +1,4 @@
-dot_gen_properties{
+xxdot_gen_properties{
  static_for(x : root.summary.coverage.state_coverage.covered_states.content()){
   node_display_properties{x;node_visited_style{};};
  }

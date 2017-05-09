@@ -9,7 +9,6 @@ section{"CANOpen Network Management (NMT)";};
 sm{
  CanOpen_Slave_Node;
  concept;
- 
 
  states {Initial;
          Power_On_Reset;
@@ -20,8 +19,6 @@ sm{
          Stopped;
          Operational;
          };        
- sm{ id{Out_of_order;}; states{Initial;A;B;C;}; };
- Actions{a{};};
          
  t{ Initial             ; Power_On_Reset      ;};
  t{ Power_On_Reset      ; Initialization      ;};
@@ -38,6 +35,8 @@ sm{
  t{ Stopped             ; Operational         ;};
  t{ Reset_Communication ; Initialization      ;};
  t{ Reset_Node          ; Initialization      ;};
- t{ Initialization      ; Out_of_order        ;ev1;g;a;};
+};
+
+Simulation{
 };
 

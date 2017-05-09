@@ -96,11 +96,11 @@ class Dotgenerator{
 	std::map<State_machine*,std::string> sm2initial;
 	std::map<int,std::vector<std::string>> userdefined_style_infos;
 	std::map<int,std::vector<std::string>> userdefined_edge_style_infos;
-	std::string pure_state_base_style_ = "style=\"rounded,filled\",fillcolor=\"cornsilk\"";
-    std::string pure_state_base_highlighted_style_ = "style=\"rounded,filled\",fillcolor=lightpink";
+	std::string pure_state_base_style_ = "fontname=\"Arial\",color=\"darkgray\",fillcolor=\"silver\",shape=\"box\",style=\"rounded,filled\"";
+    std::string pure_state_base_highlighted_style_ = "fontname=\"Arial\",shape=\"box\",style=\"rounded,filled\",fillcolor=lightpink";
     bool global_prop_show_edges_ = true;
 
-    void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states);
+    void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states, bool toplevel_transparent=false);
     std::string state_style(std::string name, bool highlight){
 		if (name == "initial" || name ==  "Initial")
 		{
@@ -702,7 +702,7 @@ public:
 
 	void do_generate_cpp_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards,Result_process_cmd_line const& result_cmd_line);
 	void do_generate_dot_code(ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe,std::map<std::string, ceps::ast::Nodebase_ptr> const & all_guards,Result_process_cmd_line const& result_cmd_line);
-    void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*,std::set<int>& highlighted_states,Dotgenerator dotgen, std::ostream& os);
+    void do_generate_dot_code(std::map<std::string,State_machine*> const &,std::set<State_machine*>*,std::set<int>& highlighted_states,Dotgenerator dotgen, std::ostream& os, bool toplevel_transparent=false);
 
 	//CAL (Sender)
 

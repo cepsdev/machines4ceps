@@ -150,14 +150,20 @@ static void write_copyright_and_timestamp(std::ostream& out, std::string title,b
 }
 
 
-void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states){
+void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states, bool toplevel_transparent){
      if (expand != nullptr && expand->find(sm) == expand->end()){
        bool highlight = (highlighted_states.size()==0)?false:(highlighted_states.find(sm->idx_)!=highlighted_states.end());
        o << " "<<sm2dotname[sm]<<"[ label=\""<< sm->id() << "\\n...\" ," <<state_style(sm->id(),highlight)<< ",fontsize=14];\n";
        return;
      }
 	 o << " subgraph "<<n2dotname[name]<<"{\n";
-     o << "  label=\"" << sm->id() << "\";\nfontname=\"Arial\";\nfontsize=14;\n";
+	 if (toplevel_transparent && sm->parent() == nullptr){
+	  o << "color=transparent;\n";
+	 } else {
+	  o << "shape=\"box\";\n";
+	  o << "fontname=\"Arial\";color=\"darkgray\";fillcolor=\"lightgrey\";style=\"rounded,filled\";\n";
+      o << "  label=\"" << sm->id() << "\";";
+	 }
 
      {
       auto it = userdefined_style_infos.find(sm->idx_);
@@ -171,7 +177,7 @@ void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,st
 	 for(auto const& s:sm->states()) if (!s->is_sm_){
 		 std::string t = n2dotname[name+"."+s->id()];
          bool highlight = (highlighted_states.size()==0)?false:(highlighted_states.find(s->idx_)!=highlighted_states.end());
-         o << " "<<t<<"["<<label(s) << "," <<state_style(s->id(),highlight)<< ",fontsize=14]";
+         o << " "<<t<<"["<<"id=\""<<t<<"\","<<label(s) << "," <<state_style(s->id(),highlight)<< ",fontsize=14]";
          auto it = userdefined_style_infos.find(s->idx_);
          if (it != userdefined_style_infos.end())
          	 {o << "["; dump_style_vec(o,it->second); o << "]";}
@@ -179,7 +185,7 @@ void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,st
 	 }
 
 	 for(auto subsm:sm->children()){
-         dump_sm(o,name+"."+subsm->id(),subsm,expand,highlighted_states);
+         dump_sm(o,name+"."+subsm->id(),subsm,expand,highlighted_states,toplevel_transparent);
 	 }
 
 	 o << " }\n";
@@ -189,7 +195,7 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
                                                          std::set<State_machine*>* expand,
                                                          std::set<int>& highlighted_states,
 														 Dotgenerator dotgen,
-                                                         std::ostream& o){
+                                                         std::ostream& o, bool toplevel_transparent){
     //expand = nullptr;
     int cluster_counter = 0;
     int pure_state_counter = 0;
@@ -199,7 +205,7 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
         for(auto e : highlighted_states) o << e << " ";
         o << "\n";
     }
-    o << "digraph Root {\ncompound=true;fillcolor=cornsilk;style=\"rounded,filled\";/*\nnodesep=1.1;*/\nnode [shape=box, fontname=\"Arial\"];\n";
+    o << "digraph Root {\ncompound=true;\n";
 
     auto map_names = [&](State_machine* sm,std::string name){
         if (expand != nullptr && expand->find(sm) == expand->end()){
@@ -222,7 +228,7 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
     };
 
     auto dump_toplevel_sm = [&](State_machine* sm,std::string name)->bool{
-        dotgen.dump_sm(o,name,sm,expand,highlighted_states);return true;
+        dotgen.dump_sm(o,name,sm,expand,highlighted_states,toplevel_transparent);return true;
     };
 
     auto dump_transitions =[&](State_machine* sm, std::string name)->bool{
@@ -396,7 +402,7 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 		 std::map<std::string,State_machine*> m = { {s.first, s.second} };
 		 std::ofstream o{ replace_all(s.first,".","__")+".dot"};
 	     write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
-	     do_generate_dot_code(m,nullptr,highlight_states,dotgen,o);
+	     do_generate_dot_code(m,nullptr,highlight_states,dotgen,o,true);
 		}
 	}
 }
