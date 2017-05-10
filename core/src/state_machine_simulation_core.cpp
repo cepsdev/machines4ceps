@@ -1563,24 +1563,27 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
     auto const& ctx=executionloop_context();
     bool state_coverage_defined = false;
     bool transition_coverage_defined = false;
+    number_of_states_to_cover = 0;
 
 	//Distill information relating to state coverage
 	if (state_coverage_defined = ctx.start_of_covering_states_valid()){
-		number_of_states_to_cover = ctx.coverage_state_table.size();
+		//number_of_states_to_cover = ctx.coverage_state_table.size();
 		for(auto i = 0;i != ctx.coverage_state_table.size();++i){
 		 if (ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::INIT) ||
-			 ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::FINAL) ||
-			 ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::SM) ) {--number_of_states_to_cover; continue;}
+			 ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::FINAL)
+			 /*|| ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::SM)*/ ) continue;
 		 number_of_states_covered += ctx.coverage_state_table[i] != 0;
+		 ++number_of_states_to_cover;
 		 if (ctx.coverage_state_table[i]){
 				state_coverage_state_list.push_back(ctx.idx_to_state_id.find(i+ctx.start_of_covering_states)->second);
 				assert(ctx.assoc_sm[i+ctx.start_of_covering_states] != nullptr);
 				++sm_states_covered[get_toplevel(ctx.assoc_sm[i+ctx.start_of_covering_states])];
-		 } else
+		 } else {
 				state_coverage_missing_states_list.push_back(ctx.idx_to_state_id.find(i+ctx.start_of_covering_states)->second);
 		        assert(ctx.assoc_sm[i+ctx.start_of_covering_states] != nullptr);
 		        ++sm_states_not_covered[get_toplevel(ctx.assoc_sm[i+ctx.start_of_covering_states])];
 		}
+	   }
 	}
 
 	for (auto sm : statemachines()){
@@ -1623,7 +1626,9 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
     auto summary =
      new strct{ "summary",
     	  strct{"general",
-    	   strct{"states_total",ctx.number_of_states}
+    	   strct{"states_total",ctx.number_of_states},
+		   strct{"total_of_states_to_cover",number_of_states_to_cover},
+		   strct{"total_of_states_covered",number_of_states_covered}
           },
 		  strct{"coverage",
 		   strct{"state_coverage",

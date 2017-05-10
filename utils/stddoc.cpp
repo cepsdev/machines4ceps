@@ -230,7 +230,65 @@ static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_ma
  using namespace std;
  std::stringstream ss;
  make_json(smc->current_universe()["summary"],ss);
- content.push_back((new strct{"@pass_through","<script>\nvar ceps_coverage_data="+ss.str()+";\n</script>" })->p_strct);
+ content.push_back((new strct{"@pass_through","<script src=\"js/Chart.js\"></script><script>\nvar ceps_coverage_data="+ss.str()+";\n</script>" })->p_strct);
+ content.push_back((new strct{"@pass_through","<div id=\"overview_state_coverage\"><canvas id=\"canvas_overview_state_coverage\"></canvas></div>" })->p_strct);
+ content.push_back((new strct{"@pass_through",R"(
+
+<script>
+(function(ctx,title_text){
+ var lbls = [], dt = [], e = ceps_coverage_data['coverage']['state_coverage']['toplevel_state_machines'];
+ var background_colors = [];
+ var border_colors = [];
+ var yellow1 = 'rgba(255, 206, 86, 0.6)';
+ var yellow2 = 'rgba(255, 206, 86, 1)';
+ var red1  = 'rgba(255, 99, 132, 0.6)';
+ var red2  = 'rgba(255, 99, 132, 1)';
+ var green1 = 'rgba(58, 153, 68, 0.6)';
+ var green2 = 'rgba(58, 153, 68, 0.6)';
+ for(x in e ){
+  lbls.push(x);
+  dt.push(e[x]*100.0);
+  if (e[x] <= 0.33) {background_colors.push(red1);border_colors.push(red2);}
+  else if (e[x] <= 0.66) {background_colors.push(yellow1);border_colors.push(yellow2);}
+  else {background_colors.push(green1);border_colors.push(green2);}
+ }
+ var the_chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: lbls,
+        datasets: [{
+            label: null,
+            data: dt,
+            backgroundColor: background_colors,
+            borderColor: border_colors,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        title: {
+            display: true,
+            text: title_text
+        },
+        legend: {
+            display: false
+        },
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true,
+                    callback: function(value, index, values) {
+                        return value+"%";
+                    }
+                }
+            }]
+        }
+    }
+});
+
+})(document.getElementById("canvas_overview_state_coverage"),'State Coverage Chart');
+</script>
+)" })->p_strct);
+
 
  for (auto sm_ : smc->statemachines()){
 	 if (!is_toplevel_sm(sm_.second)) continue;
