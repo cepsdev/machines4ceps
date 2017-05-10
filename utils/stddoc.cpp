@@ -179,11 +179,59 @@ static void make_content_sm(State_machine* sm,
 }
 
 
+static ceps::ast::Struct_ptr as_struct(ceps::ast::Nodebase_ptr p){
+	if (p->kind() == ceps::ast::Ast_node_kind::structdef) return ceps::ast::as_struct_ptr(p);
+	return nullptr;
+}
+
+static void do_indent(std::ostream & os, std::size_t j){
+	for (auto h = 0; h != j; ++h ) os << " ";
+}
+
+static bool is_atomic(ceps::ast::Nodebase_ptr p){
+	return p->kind() == ceps::ast::Ast_node_kind::int_literal || p->kind() == ceps::ast::Ast_node_kind::float_literal || p->kind() == ceps::ast::Ast_node_kind::string_literal;
+}
+
+static std::pair<std::string,ceps::ast::Nodebase_ptr> node_with_single_leaf_element(ceps::ast::Nodebase_ptr root){
+ auto s = as_struct(root);
+ if (s == nullptr) return std::make_pair(std::string{},nullptr);
+ if (s->children().size() != 1) return std::make_pair(ceps::ast::name(*s),nullptr);
+ auto candidate = s->children()[0];
+ if (!is_atomic(candidate)) return std::make_pair(ceps::ast::name(*s),nullptr);
+ return std::make_pair(ceps::ast::name(*s),s->children()[0]);
+}
+
+static void make_json(ceps::ast::Nodeset ns,std::stringstream& ss, std::size_t indent = 0){
+
+
+ ss << "{\n";++indent;
+ for(std::size_t i = 0; i != ns.nodes().size();++i){
+  auto single_element_assignment = node_with_single_leaf_element(ns.nodes()[i]);
+  if (single_element_assignment.second){
+	  do_indent(ss,indent);ss << "\""<< single_element_assignment.first << "\" : ";
+	  auto p = single_element_assignment.second;
+	  if(p->kind() == ceps::ast::Ast_node_kind::int_literal)
+		  ss << ceps::ast::value(ceps::ast::as_int_ref(p));
+	  else if(p->kind() == ceps::ast::Ast_node_kind::float_literal)
+		  ss << ceps::ast::value(ceps::ast::as_double_ref(p));
+  } else if (ns.nodes()[i]->kind() == ceps::ast::Ast_node_kind::structdef){
+	  do_indent(ss,indent);ss << "\""<< ceps::ast::name(ceps::ast::as_struct_ref(ns.nodes()[i])) << "\" : ";
+	  make_json(ceps::ast::Nodeset(ceps::ast::as_struct_ref(ns.nodes()[i]).children()),ss,indent);
+  } else continue;
+  if (i + 1 != ns.nodes().size()) ss << ",\n"; else ss << "\n";
+ }//for
+ --indent;do_indent(ss,indent);ss<<"}";
+}
+
 static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env)
 {
  using namespace sm4ceps::modelling::gensm;
  using namespace ceps::ast;
  using namespace std;
+ std::stringstream ss;
+ make_json(smc->current_universe()["summary"],ss);
+ content.push_back((new strct{"@pass_through","<script>\nvar ceps_coverage_data="+ss.str()+";\n</script>" })->p_strct);
+
  for (auto sm_ : smc->statemachines()){
 	 if (!is_toplevel_sm(sm_.second)) continue;
 	 make_content_sm(sm_.second,sm_.first,content,smc,env);
@@ -192,10 +240,6 @@ static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_ma
  }
 }
 
-static ceps::ast::Struct_ptr as_struct(ceps::ast::Nodebase_ptr p){
-	if (p->kind() == ceps::ast::Ast_node_kind::structdef) return ceps::ast::as_struct_ptr(p);
-	return nullptr;
-}
 
 
 static void default_text_representation_impl(std::stringstream& ss,ceps::ast::Nodebase_ptr root_node, bool enable_check_for_html = false){
@@ -224,7 +268,7 @@ static void dump_html_impl(std::ostream& fout,ceps::ast::Nodebase_ptr elem){
 
   else{
 
-	  fout << "<" << ceps::ast::name(cont);
+	  if ("@pass_through" != ceps::ast::name(cont)){ fout << "<" << ceps::ast::name(cont);
 	  for(auto e: cont.children()){
 		  if(e->kind() != ceps::ast::Ast_node_kind::structdef) continue;
 		  if (ceps::ast::name(ceps::ast::as_struct_ref(e)) != "attr") continue;
@@ -234,14 +278,14 @@ static void dump_html_impl(std::ostream& fout,ceps::ast::Nodebase_ptr elem){
 		  for(auto ee: attr_cont.children())	fout << default_text_representation(ee);
 		  fout << "\"";
 	  }
-	  fout << ">";
+	  fout << ">";}
 	  for(auto e: cont.children()){
 		  if (e->kind() == ceps::ast::Ast_node_kind::structdef && ceps::ast::name(ceps::ast::as_struct_ref(e)) == "attr") continue;
 		  if (e->kind() == ceps::ast::Ast_node_kind::structdef){
 			  dump_html_impl(fout,e);
 		  } else fout << default_text_representation(e);
 	  }
-	  fout << "</" << ceps::ast::name(cont)<< ">";
+	  if ("@pass_through" != ceps::ast::name(cont)) {fout << "</" << ceps::ast::name(cont)<< ">";}
   }
  } else fout << default_text_representation(elem);
 
