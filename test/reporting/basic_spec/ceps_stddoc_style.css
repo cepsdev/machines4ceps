@@ -58,7 +58,6 @@ body{
 }
 
 
-
 .sm_details_and_sm_graph{
     xborder: 2px solid black;
     border-radius:10px 0px 10px 0px;
@@ -67,6 +66,22 @@ body{
     xdisplay:flex;
     xdisplay: inline-block;
     xdisplay: table; 
-    xmargin: auto;    
+    margin-left: 5%;    
 }
+
+
+#overview_state_coverage{
+    width : 70%;
+    xheight: 200px;
+    overflow:hidden;
+    margin-left: 5%;
+}
+
+#overview_transition_coverage{
+    width : 70%;
+    xheight: 200px;
+    overflow:hidden;
+    margin-left: 5%;
+}
+
 

@@ -134,7 +134,7 @@ public:
 		assoc_sm[state] = smp;
 	}
 
-	State_machine* get_assoc_sm(int state){
+	State_machine* get_assoc_sm(int state) const{
 		if ((size_t)number_of_states > assoc_sm.size())
 			assoc_sm.resize(number_of_states+1,0);
 		return assoc_sm[state];
@@ -198,7 +198,7 @@ public:
 	std::map<std::string,int> state_id_to_idx;
 	std::map<int,std::string> idx_to_state_id;
 	std::unordered_set<int> exported_events;
-	std::vector<State_machine*> assoc_sm;
+	mutable std::vector<State_machine*> assoc_sm;
 	std::vector<int> triggered_shadow_transitions;
 
 	static constexpr unsigned int INIT = 0;

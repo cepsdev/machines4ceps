@@ -1556,9 +1556,15 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 	std::vector<int> transition_coverage_missing_list;
 	std::vector<ceps::ast::Nodebase_ptr> transition_coverage_list_ceps_expr;
 	std::vector<ceps::ast::Nodebase_ptr> transition_coverage_missing_list_ceps_expr;
+
 	std::vector<ceps::ast::Nodebase_ptr> toplevel_state_machines_state_coverage_stats;
 	std::map<State_machine*,int> sm_states_covered;
 	std::map<State_machine*,int> sm_states_not_covered;
+
+	std::vector<ceps::ast::Nodebase_ptr> toplevel_state_machines_transition_coverage_stats;
+	std::map<State_machine*,int> sm_transitions_covered;
+	std::map<State_machine*,int> sm_transitions_not_covered;
+
 
     auto const& ctx=executionloop_context();
     bool state_coverage_defined = false;
@@ -1610,11 +1616,27 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 		   if (ctx.get_inf(to_state,executionloop_context_t::INIT) ||
 		   	   ctx.get_inf(to_state,executionloop_context_t::FINAL) ||
 		   	   ctx.get_inf(to_state,executionloop_context_t::SM) ) continue;
+		   auto sms = ctx.get_assoc_sm(ctx.transitions[ctx.start_of_covering_transitions + i].root_sms);
+		   assert(sms != nullptr);
 		   number_of_transitions_covered += ctx.coverage_transitions_table[i] != 0;
-		   if (ctx.coverage_transitions_table[i]) transition_coverage_list.push_back(ctx.start_of_covering_transitions + i);
-		   else transition_coverage_missing_list.push_back(ctx.start_of_covering_transitions + i);
+		   if (ctx.coverage_transitions_table[i]) {
+			   transition_coverage_list.push_back(ctx.start_of_covering_transitions + i);
+			   ++sm_transitions_covered[sms];
+		   }
+		   else {
+			   transition_coverage_missing_list.push_back(ctx.start_of_covering_transitions + i);
+			   ++sm_transitions_not_covered[sms];
+		   }
 		   ++number_of_transitions_to_cover;
 	   }
+	}
+
+	for (auto sm : statemachines()){
+		if (sm.second->parent() != nullptr) continue;
+		double ratio = (double)sm_transitions_covered[sm.second] / (double)(sm_transitions_covered[sm.second] + sm_transitions_not_covered[sm.second]);
+		toplevel_state_machines_transition_coverage_stats.push_back(
+		 (new strct{sm.first,ratio })->p_strct
+		);
 	}
 
 	transition_coverage_list_ceps_expr = mk_sm_state_transition_exprs(this,transition_coverage_list);
@@ -1646,7 +1668,8 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 		    strct{"covered_transitions",transition_coverage_list_ceps_expr},
 		    strct{"not_covered_transitions",transition_coverage_missing_list_ceps_expr},
 			strct{"covered_transitions_by_id",transition_coverage_list},
-			strct{"not_covered_transitions_by_id",transition_coverage_missing_list}
+			strct{"not_covered_transitions_by_id",transition_coverage_missing_list},
+			strct{"toplevel_state_machines",toplevel_state_machines_transition_coverage_stats}
 		 }
 	    }
 	};
