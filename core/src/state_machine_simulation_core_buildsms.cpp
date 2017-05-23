@@ -1050,30 +1050,31 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	//Handle CALL receiver
 	for(auto receiver_ : all_receiver)
 	{
-		DEBUG << "[PROCESSING RECEIVER][START]\n";
-		auto receiver = receiver_["receiver"];
-		auto when = receiver["when"];
-		auto emit = receiver["emit"];
-		auto transport  = receiver["transport"];
-		std::string port;
-		std::string ip;
-		bool reuse_sock=false;
-		bool reg_sock = false;
+	 DEBUG << "[PROCESSING RECEIVER][START]\n";
+	 auto receiver = receiver_["receiver"];
+	 auto when = receiver["when"];
+	 auto emit = receiver["emit"];
+	 auto transport  = receiver["transport"];
+	 std::string port;
+	 std::string ip;
+	 bool reuse_sock=false;
+	 bool reg_sock = false;
+	 bool websocket = false;
+	 for(auto p: transport.nodes()){ if (p->kind() == Ast_node_kind::identifier && ceps::ast::name(ceps::ast::as_id_ref(p))=="websocket") websocket = true;}
 
-		std::string sock_name;
-		bool no_when_emit = false;
+	 std::string sock_name;
+	 bool no_when_emit = false;
 
-		if (transport["generic_tcp_in"].empty() && transport["use"].empty()) {
-			//Handle user defined transport layers
-			std::string call_name = "(NULL)";
-			if (transport.nodes().size() && transport.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef)
-				call_name = ceps::ast::name(ceps::ast::as_struct_ref(transport.nodes()[0]));
-			auto r = handle_userdefined_receiver_definition(call_name, receiver);
-
-			if (!r)
-				fatal_(-1, "Receiver definition: '" + call_name + "' unknown CAL-identifier (Communication Abstraction Layer).\n");
-			continue;
-		}
+	 if (transport["generic_tcp_in"].empty() && transport["use"].empty()) {
+	  //Handle user defined transport layers
+	  std::string call_name = "(NULL)";
+	  if (transport.nodes().size() && transport.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef)
+	   call_name = ceps::ast::name(ceps::ast::as_struct_ref(transport.nodes()[0]));
+	   auto r = handle_userdefined_receiver_definition(call_name, receiver);
+	   if (!r)
+		fatal_(-1, "Receiver definition: '" + call_name + "' unknown CAL-identifier (Communication Abstraction Layer).\n");
+	   continue;
+	 }
 
 
 		if (when.empty() && emit.empty()) no_when_emit = true;
@@ -1158,7 +1159,23 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 			auto gen = it->second;
 
 			if (start_comm_threads()){
-			 comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
+			 if (websocket){
+			  int dispatcher_id=-1;
+			  auto ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
+			  ctxt->websocket() = true;
+			  comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
+													   dispatcher_id,
+													   gen,
+													   ev_id,
+													   ev_params,
+													   this,
+													   ip,
+													   port,
+													   som,
+													   eof,
+													   sock_name,reg_sock,reuse_sock,
+													   comm_generic_tcp_in_thread_fn });
+			 } else comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
 												   -1,
 												   gen,
 												   ev_id,

@@ -1,0 +1,30 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+Event ev;
+
+frame{id{in_frame;};};
+
+receiver
+{
+ id { websocket_server; };
+ when { in_frame; };
+ emit { ev; };
+ transport
+ {
+  som { 2; }; 
+  eom { 3; };
+  websocket;
+  generic_tcp_in
+  {
+   port { 
+    "8181"; 
+   }; 
+   ip {
+    "127.0.0.1";
+   };
+  };
+ };
+};
+
+Simulation{};
