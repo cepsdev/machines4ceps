@@ -1,9 +1,14 @@
 #include "core/include/sm_raw_frame.hpp"
 #include "core/include/state_machine_simulation_core.hpp"
+
 #include <sys/types.h>
 #include <limits>
 #include <cstring>
 
+
+#include "../cryptopp/sha.h"
+#include "../cryptopp/filters.h"
+#include "../cryptopp/hex.h"
 
 #include "core/include/base_defs.hpp"
 
@@ -971,11 +976,99 @@ static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string
 		line_start = i + 2;++i;
 	}
   }
-
   return std::make_tuple(true,first_line,header);
  }
 
  return std::make_tuple(false,std::string{},header_t{});
+}
+
+static std::string sha1(std::string s){
+ CryptoPP::SHA1 sha1;
+ std::string hash;
+ auto a = new CryptoPP::StringSink(hash);
+ auto b = new CryptoPP::HexEncoder(a);
+ auto c = new CryptoPP::HashFilter(sha1, b);
+ CryptoPP::StringSource(s, true, c);
+ return hash;
+}
+
+/*std::cout << "T1) " <<  encode_base64("f") << std::endl;
+std::cout << "T2) "<< encode_base64("fo") << std::endl;
+std::cout << "T3) "<< encode_base64("foo") << std::endl;
+std::cout << "T4) "<< encode_base64("foob") << std::endl;
+std::cout << "T5) "<< encode_base64("fooba") << std::endl;
+std::cout << "T6) "<< encode_base64("foobar") << std::endl;
+unsigned long long vv = 0x7ed9039cfb14;
+std::cout << "T7) "<< encode_base64((void*)&vv,6) << std::endl;
+unsigned long long vvv = 0xd9039cfb14;
+std::cout << "T8) "<< encode_base64((void*)&vvv,5) << std::endl;
+unsigned long long vvvv = 0x039cfb14;
+std::cout << "T9) "<< encode_base64((void*)&vvvv,4) << std::endl;
+*/
+
+struct websocket_frame{
+ std::vector<unsigned char> payload;
+ bool fin = false;
+ bool rsv1 = false;
+ bool rsv2 = false;
+ bool rsv3 = false;
+ std::uint8_t opcode = 0;
+};
+
+static std::pair<bool,websocket_frame> read_websocket_frame(int sck){
+	websocket_frame r;
+	std::uint16_t header;
+
+	auto bytesread = recv(sck,&header,sizeof header,0);
+    if (bytesread != sizeof header) return {false,{}};
+
+    r.opcode = header & 0xF;
+    r.fin  = header & 0x80;
+    r.rsv1 = header & 0x40;
+    r.rsv2 = header & 0x20;
+    r.rsv3 = header & 0x10;
+    bool mask = header >> 15;
+    std::uint8_t payload_len_1 = (header >> 8) & 0x7F;
+
+    //std::cout << "opcode = " << (unsigned int) opcode <<" fin = " << fin << std::endl;
+    //std::cout << "rsv1 = " << rsv1 <<" rsv2 = " << rsv2 << " rsv3 = " << rsv3 <<std::endl;
+    //std::cout << "mask = " << mask << " payload_1 = "<< (unsigned int) payload_len_1 <<  std::endl;
+
+    size_t payload_len = payload_len_1;
+
+    if (payload_len_1 == 126){
+     std::uint16_t v;
+     bytesread = recv(sck,&v,sizeof v,0);
+     if (bytesread != sizeof v) return {false,{}};
+     payload_len = ntohs(v);
+    } else if (payload_len_1 == 127){
+     std::uint64_t v;
+     bytesread = recv(sck,&v,sizeof v,0);
+     if (bytesread != sizeof v) return {false,{}};
+     payload_len = be64toh(v);
+    }
+
+    std::uint32_t mask_key = 0;
+    if (mask){
+     bytesread = recv(sck,&mask_key,sizeof mask_key,0);
+     if (bytesread != sizeof mask_key) return {false,{}};
+    }
+
+    constexpr size_t bufsize = 4;unsigned char buf[bufsize];
+    size_t payload_bytes_read = 0;
+    r.payload.resize(payload_len);
+
+    for(;payload_bytes_read < payload_len;){
+    	auto toread = std::min(payload_len - payload_bytes_read,bufsize);
+    	bytesread = recv(sck,(char*)buf,toread,0);
+    	if (bytesread != toread) return {false,{}};
+    	for(size_t i = 0; i < bytesread; ++i) r.payload[payload_bytes_read+i] = buf[i] ^ ((unsigned char *)&mask_key)[ (payload_bytes_read+i) % 4];
+    	payload_bytes_read += bytesread;
+    }
+
+    //std::cout << (char*) payload.data() << std::endl;
+
+	return {true,r};
 }
 
 void comm_generic_tcp_in_thread_fn(
@@ -988,21 +1081,6 @@ void comm_generic_tcp_in_thread_fn(
  int sck,
  std::string som,
  std::string eof){
-
-
- /*std::cout << "T1) " <<  encode_base64("f") << std::endl;
- std::cout << "T2) "<< encode_base64("fo") << std::endl;
- std::cout << "T3) "<< encode_base64("foo") << std::endl;
- std::cout << "T4) "<< encode_base64("foob") << std::endl;
- std::cout << "T5) "<< encode_base64("fooba") << std::endl;
- std::cout << "T6) "<< encode_base64("foobar") << std::endl;
- unsigned long long vv = 0x7ed9039cfb14;
- std::cout << "T7) "<< encode_base64((void*)&vv,6) << std::endl;
- unsigned long long vvv = 0xd9039cfb14;
- std::cout << "T8) "<< encode_base64((void*)&vvv,5) << std::endl;
- unsigned long long vvvv = 0x039cfb14;
- std::cout << "T9) "<< encode_base64((void*)&vvvv,4) << std::endl;
- */
 
  DEBUG_FUNC_PROLOGUE2
  char host[1024] = {0};
@@ -1047,20 +1125,46 @@ void comm_generic_tcp_in_thread_fn(
 	auto r = read_http_request(sck,unconsumed_data);
 	if (std::get<0>(r)){
 	 auto const & attrs = std::get<2>(r);
-	 /*std::cout << "http req succesfully read" << std::endl;
-	 std::cout << "header='" << std::get<1>(r) <<"'"<< std::endl;
-	 for (auto const & attr_value_pair :std::get<2>(r) ){
-      std::cout << "'" << attr_value_pair.first << "': '"<<attr_value_pair.second<<"'"<<std::endl;
-	 }*/
 	 if (field_with_content("Upgrade","websocket",attrs) && field_with_content("Connection","Upgrade",attrs)  ){
-
+ 	  auto r = get_http_attribute_content("Sec-WebSocket-Key",attrs);
+ 	  if (!r.first){close(sck);return;}
+      auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+      unsigned char digest[CryptoPP::SHA::DIGESTSIZE];
+      CryptoPP::SHA().CalculateDigest(digest, (unsigned char *)phrase.c_str(),phrase.length());
+      auto hash = encode_base64(digest,CryptoPP::SHA::DIGESTSIZE);
+      std::stringstream response;
+      response << "HTTP/1.1 101 Switching Protocols\r\n";
+      response << "Upgrade: websocket\r\n";
+      response << "Connection: Upgrade\r\n";
+      response << "Sec-WebSocket-Accept: "<< hash <<"\r\n\r\n";
+      auto byteswritten = write(sck, response.str().c_str(),response.str().length());
+      if (byteswritten == response.str().length()){
+       for(;;){
+    	  auto frm = read_websocket_frame(sck);
+    	  if (!frm.first) break;
+    	  std::vector<unsigned char> payload = std::move(frm.second.payload);
+    	  while (!frm.second.fin){
+    		frm = read_websocket_frame(sck);
+    		if (!frm.first) break;
+    		payload.reserve(payload.size()+frm.second.payload.size());
+    		payload.insert(payload.end(),frm.second.payload.begin(),frm.second.payload.end());
+    	  }
+    	  if (!frm.first) break;
+    	  if(frm.second.opcode == 1) {
+    	   std::string s; s.resize(payload.size());for(size_t j = 0; j < payload.size();++j)s[j] = payload[j];//std::cout << s << std::endl;
+    	   State_machine_simulation_core::event_t ev(ev_id);
+    	   ev.already_sent_to_out_queues_ = true;
+    	   ev.payload_.push_back(new ceps::ast::String(s));
+ 		   smc->main_event_queue().push(ev);
+    	  }
+       }
+      }
 	 }
 	}
    }
   } catch (...){}
   close(sck);return;
  }
-
 
  size_t frame_size = 0;
  if (eof.length() == 0){

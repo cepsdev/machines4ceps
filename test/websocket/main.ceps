@@ -1,19 +1,17 @@
 kind Event;
 kind Guard;
 kind Systemstate;
-Event ev;
+Event ev,ev2;
 
-frame{id{in_frame;};};
+frame{id{frm;};data{"Hello,world!";};};
 
 receiver
 {
  id { websocket_server; };
- when { in_frame; };
+ when { frm; };
  emit { ev; };
  transport
  {
-  som { 2; }; 
-  eom { 3; };
   websocket;
   generic_tcp_in
   {
@@ -27,4 +25,27 @@ receiver
  };
 };
 
-Simulation{};
+sender
+{
+  when { ev2; };emit { frm; };
+  transport {use { websocket_server; };};
+};
+
+Systemstate counter;
+counter = 0;
+
+statemachine{
+ print_websocket_message;
+ states{Initial;};
+ Actions{
+  msg_arrived{
+   print("Received data: ", argv(1),"\n");
+   ev2("{\"signal\":"+counter+ "}");
+   counter = counter + 1;
+  };
+ };
+ t{Initial;Initial;ev;msg_arrived;};
+};
+
+
+Simulation{Start{print_websocket_message;};};
