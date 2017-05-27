@@ -652,7 +652,9 @@ public:
 		 std::mutex m_;
 		 std::condition_variable cv_;
 		 bool start_ = false;
-		 bool websocket_ = false;
+		 bool websocket_server_ = false;
+		 bool websocket_client_ = false;
+
 		 std::string& id(){return id_;}
 		 std::string const & id() const {return id_;}
 		 dispatcher_thread_ctxt_t() = default;
@@ -666,8 +668,8 @@ public:
 			 std::unique_lock<std::mutex> lk(m_);
 		 	 cv_.wait(lk, [this]{return start_; });
 		 }
-		 bool& websocket(){return websocket_;}
-
+		 bool& websocket_server(){return websocket_server_;}
+		 bool& websocket_client(){return websocket_client_;}
 		 decltype(native_handler)& get_native_handler() {return native_handler;}
 	};
 private:

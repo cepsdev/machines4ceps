@@ -389,16 +389,19 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			}
 			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
 	} else if (id == "as_string"){
-	 		if (args.size() == 0) return new ceps::ast::String("",nullptr,nullptr,nullptr);
-	 		if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
-	 				CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
-	 			auto& udef = ceps::ast::as_user_defined_ref(args[0]);
-	 			pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
-	 			if (ns->size() == 0)
-	 				fatal_(-1,"as_double: node set is empty.\n");
-	 			return new ceps::ast::String(ns->first().node().text().get(),nullptr,nullptr,nullptr);
-	 		}
-	 		return new ceps::ast::String("",nullptr,nullptr,nullptr);
+	 if (args.size() == 0) return new ceps::ast::String("",nullptr,nullptr,nullptr);
+	 if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
+	  CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
+	 	auto& udef = ceps::ast::as_user_defined_ref(args[0]);
+	 	pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
+	 	if (ns->size() == 0)
+	  	 fatal_(-1,"as_double: node set is empty.\n");
+	 	return new ceps::ast::String(ns->first().node().text().get(),nullptr,nullptr,nullptr);
+	 } else if (args[0]->kind() == ceps::ast::Ast_node_kind::string_literal) return args[0];
+	 else if (args[0]->kind() == ceps::ast::Ast_node_kind::int_literal) return new ceps::ast::String(std::to_string(ceps::ast::value(ceps::ast::as_int_ref(args[0]))),nullptr,nullptr,nullptr);
+	 else if (args[0]->kind() == ceps::ast::Ast_node_kind::float_literal) return new ceps::ast::String(std::to_string(ceps::ast::value(ceps::ast::as_double_ref(args[0]))),nullptr,nullptr,nullptr);
+
+	 return new ceps::ast::String("",nullptr,nullptr,nullptr);
 	} else if (id == "sleep"){
 		#ifdef _WIN32
 		#else
@@ -840,8 +843,7 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
    int frame_id = 0;
    if (it_frame_gen->second->header_length() == 0){
 	auto it = smc->channel_frame_name_to_id[ch_id].find(id);
-	if (it == smc->channel_frame_name_to_id[ch_id].end())
-	  smc->fatal_(-1,"send: No header/frame id mapping found for the channel/frame combination '"+ch_id+"/"+id+"'");
+	 if (it != smc->channel_frame_name_to_id[ch_id].end())
 	  frame_id = it->second;
 	}
 	channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length(),frame_id));

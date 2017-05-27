@@ -3,16 +3,24 @@ kind Guard;
 kind Systemstate;
 Event ev,ev2;
 
-frame{id{frm;};data{"Hello,world!";};};
+
+Systemstate some_text;
+some_text = "";
+
+frame{
+ id{frm;};
+ text;/*binary*/
+ data{some_text;};
+};
 
 receiver
 {
- id { websocket_server; };
+ id { ws_server; };
  when { frm; };
  emit { ev; };
  transport
  {
-  websocket;
+  websocket_server;
   generic_tcp_in
   {
    port { 
@@ -27,8 +35,8 @@ receiver
 
 sender
 {
-  when { ev2; };emit { frm; };
-  transport {use { websocket_server; };};
+ id{ws_server_out;};
+ transport {use { ws_server; };};
 };
 
 Systemstate counter;
@@ -40,7 +48,8 @@ statemachine{
  Actions{
   msg_arrived{
    print("Received data: ", argv(1),"\n");
-   ev2("{\"signal\":"+counter+ "}");
+   some_text = "123";
+   send(frm,ws_server_out);
    counter = counter + 1;
   };
  };

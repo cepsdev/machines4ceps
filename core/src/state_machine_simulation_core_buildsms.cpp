@@ -956,7 +956,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         if (sender["id"].size()) {
         	auto p = sender["id"].nodes()[0];
         	if (p->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Id field in sender definition should contain a single id");
-        	channel_id = sock_name = ceps::ast::name(ceps::ast::as_id_ref(p));
+        	channel_id = ceps::ast::name(ceps::ast::as_id_ref(p));
         	reg_socket = true;
         }
 
@@ -1024,13 +1024,11 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 		 event_triggered_sender().push_back(descr);
 		} else if (!condition_defined && !emit_defined && channel_id.length()){
-			 DEBUG << "[PROCESSING_UNCONDITIONED_SENDER]"
-				   <<"\n";
-			 auto channel = new threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>;
-			 this->set_out_channel(channel_id,channel);
-			 if (start_comm_threads()){
-			  running_as_node() = true;
-			  comm_threads.push_back(
+		 auto channel = new threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>;
+		 this->set_out_channel(channel_id,channel);
+		 if (start_comm_threads()){
+	     running_as_node() = true;
+		 comm_threads.push_back(
 					 new std::thread{comm_sender_generic_tcp_out_thread,
 				                     channel,
 				                     this,
@@ -1059,8 +1057,15 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	 std::string ip;
 	 bool reuse_sock=false;
 	 bool reg_sock = false;
-	 bool websocket = false;
-	 for(auto p: transport.nodes()){ if (p->kind() == Ast_node_kind::identifier && ceps::ast::name(ceps::ast::as_id_ref(p))=="websocket") websocket = true;}
+	 bool websocket_server = false;
+	 bool websocket_client = false;
+	 std::string receiver_id;
+	 for(auto p: transport.nodes()){
+      if (p->kind() == Ast_node_kind::identifier){
+	   if(ceps::ast::name(ceps::ast::as_id_ref(p))=="websocket_server") websocket_server = true;
+	   if(ceps::ast::name(ceps::ast::as_id_ref(p))=="websocket_client") websocket_client = true;
+      }
+	 }
 
 	 std::string sock_name;
 	 bool no_when_emit = false;
@@ -1102,7 +1107,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		if (receiver["id"].size()) {
 			auto p = receiver["id"].nodes()[0];
 			if (p->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"Id field in receiver definition should contain a single id");
-			if (!reuse_sock){ sock_name = ceps::ast::name(ceps::ast::as_id_ref(p)); reg_sock = true; }
+			receiver_id = ceps::ast::name(ceps::ast::as_id_ref(p));
+			if (!reuse_sock){ sock_name = receiver_id; reg_sock = true; }
 		}
 
 
@@ -1159,10 +1165,12 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 			auto gen = it->second;
 
 			if (start_comm_threads()){
-			 if (websocket){
+			 if (websocket_server || websocket_client){
 			  int dispatcher_id=-1;
 			  auto ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
-			  ctxt->websocket() = true;
+			  ctxt->websocket_server() = websocket_server;
+			  ctxt->websocket_client() = websocket_client;
+			  ctxt->id() = receiver_id;
 			  comm_threads.push_back(new std::thread{comm_generic_tcp_in_dispatcher_thread,
 													   dispatcher_id,
 													   gen,

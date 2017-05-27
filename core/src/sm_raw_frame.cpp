@@ -12,6 +12,199 @@
 
 #include "core/include/base_defs.hpp"
 
+/*
+ * http/websocket routines
+*/
+
+static std::pair<bool,std::string> get_http_attribute_content(std::string attr, std::vector<std::pair<std::string,std::string>> const & http_header){
+ for(auto const & v : http_header){
+	 if (v.first == attr)
+		 return {true,v.second};
+ }
+ return {false,{}};
+}
+
+static char base64set[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static std::string encode_base64(void * mem, size_t len){
+ unsigned char * memory = (unsigned char*)mem;
+ if (len == 0) return {};
+ int rest = len % 3;
+ size_t main_part = len - rest;
+ int out_len = (len / 3) * 4;
+ short unsigned int padding = 0;
+ if (rest == 1) {out_len += 4;padding=2;} else if (rest == 2){ out_len +=4;padding=1;}
+ std::string r;
+ r.resize(out_len);
+ size_t j = 0;
+ size_t jo = 0;
+
+ for(; j < main_part; j+=3,jo+=4){
+  r[jo] = base64set[ *(memory + j) >> 2];
+  r[jo+1] = base64set[  ( (*(memory + j) & 3) << 4)  | ( *(memory + j + 1) >> 4) ];
+  r[jo+2] = base64set[ ( (*(memory + j + 1) & 0xF) << 2 )  | (*(memory + j + 2) >> 6) ];
+  r[jo+3] = base64set[*(memory + j + 2) & 0x3F];
+ }
+ if (rest == 1){
+  r[jo] = base64set[ *(memory + j) >> 2];
+  r[jo+1] = base64set[ (*(memory + j) & 3) << 4];
+  j+=2;jo+=2;
+ } else if (rest == 2){
+  r[jo] = base64set[ *(memory + j) >> 2];
+  r[jo+1] = base64set[  ( (*(memory + j) & 3) << 4)  | ( *(memory + j + 1) >> 4) ];
+  r[jo+2] = base64set[ (*(memory + j + 1) & 0xF) << 2 ];
+  j+=3;jo+=3;
+ }
+ if (padding == 1) r[jo]='='; else if (padding == 2) {r[jo] = '='; r[jo+1] = '=';}
+ return r;
+}
+
+static std::string encode_base64(std::string s){
+ return encode_base64((void*)s.c_str(),s.length());
+}
+
+static bool field_with_content(std::string attr, std::string value,std::vector<std::pair<std::string,std::string>> const & http_header){
+ auto r = get_http_attribute_content(attr,http_header);
+ if (!r.first) return false;
+ return r.second == value;
+}
+
+static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string>>> read_http_request(int sck,std::string& unconsumed_data){
+ using header_t = std::vector<std::pair<std::string,std::string>>;
+ std::tuple<bool,std::string,header_t> r;
+
+ constexpr auto buf_size = 4096;
+ char buf[buf_size];
+ std::string buffer = unconsumed_data;
+ std::string eom = "\r\n\r\n";
+ std::size_t eom_pos = 0;
+
+ unconsumed_data.clear();
+ bool http_req_complete = false;
+ ssize_t readbytes = 0;
+ ssize_t buf_pos = 0;
+
+ for(; (readbytes=recv(sck,buf,buf_size-1,0)) > 0;){
+  buf[readbytes] = 0;
+  for(buf_pos = 0; buf_pos < readbytes; ++buf_pos){
+   if (buf[buf_pos] == eom[eom_pos])++eom_pos;else eom_pos = 0;
+   if (eom_pos == eom.length()){
+	http_req_complete = true;
+	if (buf_pos+1 < readbytes) unconsumed_data = buf+buf_pos+1;
+	buf[buf_pos+1] = 0;
+	break;
+   }
+  }
+  buffer.append(buf);
+  if(http_req_complete) break;
+ }
+
+ if (http_req_complete) {
+  header_t header;
+  std::string first_line;
+  size_t line_start = 0;
+  for(size_t i = 0; i < buffer.length();++i){
+	if (i+1 < buffer.length() && buffer[i] == '\r' && buffer[i+1] == '\n' ){
+		if (line_start == 0) first_line = buffer.substr(line_start,i);
+		else if (line_start != i){
+		 std::string attribute;
+		 std::string content;
+		 std::size_t j = line_start;
+		 for(;j < i && buffer[j]==' ';++j);
+		 auto attr_start = j;
+		 for(;j < i && buffer[j]!=':';++j);
+		 attribute = buffer.substr(attr_start,j-attr_start);
+		 ++j;
+		 for(;j < i && buffer[j]==' ' ;++j);
+		 auto cont_start = j;
+		 auto cont_end = i - 1;
+		 for(;buffer[cont_end] == ' ';--cont_end);
+		 content = buffer.substr(cont_start, cont_end - cont_start + 1);
+         header.push_back(std::make_pair(attribute,content));
+		}
+		line_start = i + 2;++i;
+	}
+  }
+  return std::make_tuple(true,first_line,header);
+ }
+
+ return std::make_tuple(false,std::string{},header_t{});
+}
+
+static std::string sha1(std::string s){
+ CryptoPP::SHA1 sha1;
+ std::string hash;
+ auto a = new CryptoPP::StringSink(hash);
+ auto b = new CryptoPP::HexEncoder(a);
+ auto c = new CryptoPP::HashFilter(sha1, b);
+ CryptoPP::StringSource(s, true, c);
+ return hash;
+}
+
+struct websocket_frame{
+ std::vector<unsigned char> payload;
+ bool fin = false;
+ bool rsv1 = false;
+ bool rsv2 = false;
+ bool rsv3 = false;
+ std::uint8_t opcode = 0;
+};
+
+static std::pair<bool,websocket_frame> read_websocket_frame(int sck){
+	websocket_frame r;
+	std::uint16_t header;
+
+	auto bytesread = recv(sck,&header,sizeof header,0);
+    if (bytesread != sizeof header) return {false,{}};
+
+    r.opcode = header & 0xF;
+    r.fin  = header & 0x80;
+    r.rsv1 = header & 0x40;
+    r.rsv2 = header & 0x20;
+    r.rsv3 = header & 0x10;
+    bool mask = header >> 15;
+    std::uint8_t payload_len_1 = (header >> 8) & 0x7F;
+
+    size_t payload_len = payload_len_1;
+
+    if (payload_len_1 == 126){
+     std::uint16_t v;
+     bytesread = recv(sck,&v,sizeof v,0);
+     if (bytesread != sizeof v) return {false,{}};
+     payload_len = ntohs(v);
+    } else if (payload_len_1 == 127){
+     std::uint64_t v;
+     bytesread = recv(sck,&v,sizeof v,0);
+     if (bytesread != sizeof v) return {false,{}};
+     payload_len = be64toh(v);
+    }
+
+    std::uint32_t mask_key = 0;
+    if (mask){
+     bytesread = recv(sck,&mask_key,sizeof mask_key,0);
+     if (bytesread != sizeof mask_key) return {false,{}};
+    }
+
+    constexpr size_t bufsize = 4;unsigned char buf[bufsize];
+    size_t payload_bytes_read = 0;
+    r.payload.resize(payload_len);
+
+    for(;payload_bytes_read < payload_len;){
+    	auto toread = std::min(payload_len - payload_bytes_read,bufsize);
+    	bytesread = recv(sck,(char*)buf,toread,0);
+    	if (bytesread != toread) return {false,{}};
+    	for(size_t i = 0; i < bytesread; ++i) r.payload[payload_bytes_read+i] = buf[i] ^ ((unsigned char *)&mask_key)[ (payload_bytes_read+i) % 4];
+    	payload_bytes_read += bytesread;
+    }
+
+	return {true,r};
+}
+
+
+
+
+
+
 extern ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
 		 State_machine* containing_smp,
 		 ceps::ast::Nodebase_ptr node,
@@ -366,34 +559,35 @@ size_t Podframe_generator::compute_size_of_msg(State_machine_simulation_core* sm
 
 
 
-void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size,std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > const & encoding){
+void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,
+		                          size_t& data_size,
+								  std::map<std::string /*systemstate*/,
+								  std::map< int, ceps::ast::Nodebase_ptr> > const & encoding){
 
-	if (smc == nullptr) return nullptr;
-	DEBUG_FUNC_PROLOGUE2;
-	auto data_format = spec_["data"];
-	if (data_format.nodes().empty()) {
-		std::string id;
-		auto t = spec_["id"];
-		if (t.nodes().size() != 0 && t.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier)
-			id = ceps::ast::name(ceps::ast::as_id_ref(t.nodes()[0]));
+ if (smc == nullptr) return nullptr;
+ auto data_format = spec_["data"];
+ if (data_format.nodes().empty()) {
+  std::string id;
+  auto t = spec_["id"];
+  if (t.nodes().size() != 0 && t.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier)
+	id = ceps::ast::name(ceps::ast::as_id_ref(t.nodes()[0]));
 		smc->fatal_(-1,"Frame '"+id+"' doesn't contain a data section.");
-	}
+ }
 
-	ceps::ast::Nodebase_ptr frame_pattern = nullptr;
-	ceps::ast::Scope scope;
-	scope.children() = data_format.nodes();scope.owns_children() = false;
-	//frame_pattern = eval_locked_ceps_expr(smc,nullptr,&scope,nullptr);
-    frame_pattern = &scope;
+ ceps::ast::Nodebase_ptr frame_pattern = nullptr;
+ ceps::ast::Scope scope;
+ scope.children() = data_format.nodes();scope.owns_children() = false;
+ frame_pattern = eval_locked_ceps_expr(smc,nullptr,&scope,nullptr);
 
-	if (frame_pattern == nullptr) return nullptr;
-	auto chunk_size = compute_size(header_length_,smc,ceps::ast::nlf_ptr(frame_pattern)->children());
-	data_size = chunk_size;
-	char* data = new char[chunk_size];
-	bzero(data,chunk_size);
-	fill_raw_chunk(encoding,header_length_, smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0);
+ if (frame_pattern == nullptr) return nullptr;
+ auto chunk_size = compute_size(header_length_,smc,ceps::ast::nlf_ptr(frame_pattern)->children());
+ data_size = chunk_size;
+ char* data = new char[chunk_size];
+ bzero(data,chunk_size);
+ fill_raw_chunk(encoding,header_length_, smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0);
 
-	scope.children().clear();
-	return data;
+ scope.children().clear();
+ return data;
 }
 
 
@@ -410,11 +604,6 @@ int read_raw_chunk(size_t& header_length,State_machine_simulation_core* smc,
 		            bool read_data = true,
 		            bool host_byte_order = true
 		            );
-
-
-
-
-
 
 int read_raw_chunk(size_t& header_length, State_machine_simulation_core* smc,
 		               ceps::ast::Nodebase_ptr p,
@@ -665,15 +854,6 @@ int read_raw_chunk(size_t& header_length, State_machine_simulation_core* smc,
 	return 0;
 }
 
-
-
-
-
-
-
-
-
-
 int read_raw_chunk(size_t& header_length,State_machine_simulation_core* smc,
 		            std::vector<ceps::ast::Nodebase_ptr> pattern,
 		            size_t data_size,
@@ -716,359 +896,184 @@ bool Podframe_generator::read_msg(char* data,size_t size,
 
 
 
-void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frames,
-			     State_machine_simulation_core* smc,
-			     std::string ip,
-			     std::string port,
-			     std::string som,
-			     std::string eof,
-			     std::string sock_name,
-			     bool reuse_socket,
-			     bool reg_socket)
+void comm_sender_generic_tcp_out_thread(
+ threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frames,
+ State_machine_simulation_core* smc,
+ std::string ip,
+ std::string port,
+ std::string som,
+ std::string eof,
+ std::string sock_name,
+ bool reuse_socket,
+ bool reg_socket)
 {
-	DEBUG_FUNC_PROLOGUE2
-	int cfd = -1;
-	struct addrinfo hints;
-	struct addrinfo *result, *rp;
-	auto q = frames;
-	bool conn_established = false;
-	bool io_err = false;
-	bool socket_owner = !reuse_socket;
+ DEBUG_FUNC_PROLOGUE2
+ int cfd = -1;
+ struct addrinfo hints;
+ struct addrinfo *result, *rp;
+ auto q = frames;
+ bool conn_established = false;
+ bool io_err = false;
+ bool socket_owner = !reuse_socket;
 
-	char* frame = nullptr;
-	size_t frame_size = 0;
-	bool pop_frame = true;
-	for(;;)
-	{
-		if (io_err && socket_owner){
- 		 if(reg_socket){
-		  std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
-		  smc->get_reg_socks()[sock_name] = -1;
-		 }
-		 close(cfd);
-		 io_err = false;
-		}
-		rp = nullptr;result = nullptr;
+ char* frame = nullptr;
+ size_t frame_size = 0;
+ bool pop_frame = true;
+ State_machine_simulation_core::dispatcher_thread_ctxt_t* ctxt = nullptr;
 
-		DEBUG << "[comm_sender_generic_tcp_out_thread][WAIT_FOR_FRAME][pop_frame="<<pop_frame <<"]\n";
-		std::tuple<char*,size_t,size_t,int> frame_info;
-
-		if (pop_frame) {q->wait_and_pop(frame_info);frame_size = std::get<1>(frame_info);frame= std::get<0>(frame_info);}
-		pop_frame = false;
-
-		//std::cout << "SEND   => " << std::endl << frame_size << std::endl;
-
-		DEBUG << "[comm_sender_generic_tcp_out_thread][FETCHED_FRAME]\n";
-		if (!conn_established)
-		{
-			if (reuse_socket){
-				DEBUG << "[comm_sender_generic_tcp_out_thread][REUSE_SOCK("<< sock_name <<")]\n";
-				for(;;){
-					{
-						std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
-						auto it = smc->get_reg_socks().find(sock_name);
-						if (it != smc->get_reg_socks().end() && it->second >= 0 && (!io_err || cfd != it->second)){
-							cfd = it->second;
-							conn_established = true;io_err = false;
-							DEBUG << "[comm_sender_generic_tcp_out_thread][REUSE_SOCK_ID("<< cfd <<")]\n";
-							break;
-						}
-					}
-					std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
-				}
-			}
-			else { DEBUG << "[comm_sender_generic_tcp_out_thread][CONNECTING@"<< ip << ":" << port << "]\n";
-			for(;rp == nullptr;)
-			{
-
-			memset(&hints, 0, sizeof(struct addrinfo));
-			hints.ai_canonname = NULL;
-			hints.ai_addr = NULL;
-			hints.ai_next = NULL;
-			hints.ai_family = AF_INET;
-
-			hints.ai_socktype = SOCK_STREAM;
-            //hints.ai_flags = AI_NUMERICSERV;
-			if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &result) != 0){
-				DEBUG << "[comm_sender_generic_tcp_out_thread][FAILED_TO_CONNECT@"<< ip << ":" << port << "]\n";
-				std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
-			}
-
-			 for (rp = result; rp != NULL; rp = rp->ai_next) {
-			  cfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-			  if (cfd == -1)	continue;
-			  if (connect(cfd, rp->ai_addr, rp->ai_addrlen) != -1)break;
-			  close(cfd);
-			 }
-			 if (result != nullptr) freeaddrinfo(result);
-			 if (rp == nullptr) {
-				 DEBUG << "[comm_sender_generic_tcp_out_thread][FAILED_TO_CONNECT@"<< ip << ":" << port << "]\n";
-				 std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
-			 }
-			}
-			conn_established = true;
-			}
-		}
-
-		if (!reuse_socket)DEBUG << "[comm_sender_generic_tcp_out_thread][SENDING_FRAME@"<< ip << ":" << port << "]\n";
-		else DEBUG << "[comm_sender_generic_tcp_out_thread][SENDING_FRAME@"<< sock_name << "]\n";
-
-		if(reg_socket){
-			std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
-			smc->get_reg_socks()[sock_name] = cfd;
-		}
-
-
-		auto len = frame_size;
-		int wr = 0;
-
-		if (som.size() == 0 && eof.size() == 0){
-			auto l = htonl(len);
-			if ( write(cfd, &l,sizeof(l)) != sizeof(l)){
-				io_err=true;conn_established=false;DEBUG << "[comm_sender_generic_tcp_out_thread][write of data length failed]\n";continue;
-			}
-		}
-		if (som.size())
-		 if ( (wr = write(cfd, som.c_str(),eof.length() )) != (int)som.length())
-		 {
-			io_err=true;
-			conn_established=false;
-			DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
-			continue;
-		}
-		if (len && frame) if ( (wr = write(cfd, frame,len )) != (int)len)
-		{
-			io_err=true;
-			conn_established=false;
-			DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
-			continue;
-		}
-		if (eof.size())
-			if ( (wr = write(cfd, eof.c_str(),eof.length() )) != (int)eof.length())
-			{
-				io_err=true;
-				conn_established=false;
-				DEBUG << "[comm_sender_generic_tcp_out_thread][Partial/failed write]\n";
-				continue;
-			}
-		DEBUG << "[comm_sender_generic_tcp_out_thread][FRAME_WRITTEN][("<< frame_size<< " bytes)]\n";
-		if (frame != nullptr) {delete[] frame;frame=nullptr;}
-		pop_frame = true;
-
+ for(;;)
+ {
+  if (io_err && socket_owner){
+   if(reg_socket){
+	 std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+	 smc->get_reg_socks()[sock_name] = -1;
 	}
-	if (conn_established && socket_owner){
-		if(reg_socket){
-			std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
-			smc->get_reg_socks()[sock_name] = -1;
-		}
-		close(cfd);
+	close(cfd);
+	io_err = false;
+  }
+  rp = nullptr;result = nullptr;
+  std::tuple<char*,size_t,size_t,int> frame_info;
+  if (pop_frame) {
+   q->wait_and_pop(frame_info);
+   frame_size = std::get<1>(frame_info);
+   frame= std::get<0>(frame_info);
+  }
+
+  pop_frame = false;
+  if (!conn_established)
+  {
+   if (reuse_socket){
+   for(;;){
+    {
+	 std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+	 auto it = smc->get_reg_socks().find(sock_name);
+	 if (it != smc->get_reg_socks().end() && it->second >= 0 && (!io_err || cfd != it->second)){
+	  cfd = it->second;
+	  conn_established = true;io_err = false;
+	  break;
+	 }
 	}
-}
-
-static std::pair<bool,std::string> get_http_attribute_content(std::string attr, std::vector<std::pair<std::string,std::string>> const & http_header){
- for(auto const & v : http_header){
-	 if (v.first == attr)
-		 return {true,v.second};
+    std::this_thread::sleep_for(std::chrono::microseconds(1000));continue;
+   }//for
+  } else {
+   for(;rp == nullptr;)
+   {
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_canonname = NULL;    hints.ai_addr = NULL;    hints.ai_next = NULL;
+    hints.ai_family = AF_INET;    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &result) != 0){
+ 	std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
+    }
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+    cfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    if (cfd == -1)	continue;
+    if (connect(cfd, rp->ai_addr, rp->ai_addrlen) != -1)break;
+    close(cfd);
+   }
+   if (result != nullptr) freeaddrinfo(result);
+   if (rp == nullptr) {
+    std::this_thread::sleep_for(std::chrono::microseconds(1000000));continue;
+   }
+  }//for
+  conn_established = true;
+  if(reg_socket){
+   std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+   smc->get_reg_socks()[sock_name] = cfd;
+  }
+  }
+  if (reuse_socket && sock_name.length() && ctxt == nullptr){
+   ctxt = smc->get_dispatcher_thread_ctxt(sock_name);
+  }
  }
- return {false,{}};
-}
 
-static char base64set[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  auto len = frame_size;
+  int wr = 0;
+//  std::cout <<"!!!!!"<< std::endl;
+//  for (size_t j = 0; j < len;++j) std::cout << frame[j];
+//  std::cout << std::endl;
 
-static std::string encode_base64(void * mem, size_t len){
- unsigned char * memory = (unsigned char*)mem;
- if (len == 0) return {};
- int rest = len % 3;
- size_t main_part = len - rest;
- int out_len = (len / 3) * 4;
- short unsigned int padding = 0;
- if (rest == 1) {out_len += 4;padding=2;} else if (rest == 2){ out_len +=4;padding=1;}
- std::string r;
- r.resize(out_len);
- size_t j = 0;
- size_t jo = 0;
-
- for(; j < main_part; j+=3,jo+=4){
-  r[jo] = base64set[ *(memory + j) >> 2];
-  r[jo+1] = base64set[  ( (*(memory + j) & 3) << 4)  | ( *(memory + j + 1) >> 4) ];
-  r[jo+2] = base64set[ ( (*(memory + j + 1) & 0xF) << 2 )  | (*(memory + j + 2) >> 6) ];
-  r[jo+3] = base64set[*(memory + j + 2) & 0x3F];
- }
- if (rest == 1){
-  r[jo] = base64set[ *(memory + j) >> 2];
-  r[jo+1] = base64set[ (*(memory + j) & 3) << 4];
-  j+=2;jo+=2;
- } else if (rest == 2){
-  r[jo] = base64set[ *(memory + j) >> 2];
-  r[jo+1] = base64set[  ( (*(memory + j) & 3) << 4)  | ( *(memory + j + 1) >> 4) ];
-  r[jo+2] = base64set[ (*(memory + j + 1) & 0xF) << 2 ];
-  j+=3;jo+=3;
- }
- if (padding == 1) r[jo]='='; else if (padding == 2) {r[jo] = '='; r[jo+1] = '=';}
- return r;
-}
-
-static std::string encode_base64(std::string s){
- return encode_base64((void*)s.c_str(),s.length());
-}
-
-static bool field_with_content(std::string attr, std::string value,std::vector<std::pair<std::string,std::string>> const & http_header){
- auto r = get_http_attribute_content(attr,http_header);
- if (!r.first) return false;
- return r.second == value;
-}
-
-static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string>>> read_http_request(int sck,std::string& unconsumed_data){
- using header_t = std::vector<std::pair<std::string,std::string>>;
- std::tuple<bool,std::string,header_t> r;
-
- constexpr auto buf_size = 4096;
- char buf[buf_size];
- std::string buffer = unconsumed_data;
- std::string eom = "\r\n\r\n";
- std::size_t eom_pos = 0;
-
- unconsumed_data.clear();
- bool http_req_complete = false;
- ssize_t readbytes = 0;
- ssize_t buf_pos = 0;
-
- for(; (readbytes=recv(sck,buf,buf_size-1,0)) > 0;){
-  buf[readbytes] = 0;
-  for(buf_pos = 0; buf_pos < readbytes; ++buf_pos){
-   if (buf[buf_pos] == eom[eom_pos])++eom_pos;else eom_pos = 0;
-   if (eom_pos == eom.length()){
-	http_req_complete = true;
-	if (buf_pos+1 < readbytes) unconsumed_data = buf+buf_pos+1;
-	buf[buf_pos+1] = 0;
-	break;
+  if (som.size() == 0 && eof.size() == 0){
+   auto l = htonl(len);
+   if ( write(cfd, &l,sizeof(l)) != sizeof(l)){
+	io_err=true;conn_established=false;continue;
    }
   }
-  buffer.append(buf);
-  if(http_req_complete) break;
- }
-
- //std::cout <<"==>"<< buffer <<"<=="<< std::endl;
-
- if (http_req_complete) {
-  header_t header;
-  std::string first_line;
-  size_t line_start = 0;
-  for(size_t i = 0; i < buffer.length();++i){
-	if (i+1 < buffer.length() && buffer[i] == '\r' && buffer[i+1] == '\n' ){
-		if (line_start == 0) first_line = buffer.substr(line_start,i);
-		else if (line_start != i){
-		 std::string attribute;
-		 std::string content;
-		 std::size_t j = line_start;
-		 for(;j < i && buffer[j]==' ';++j);
-		 auto attr_start = j;
-		 for(;j < i && buffer[j]!=':';++j);
-		 attribute = buffer.substr(attr_start,j-attr_start);
-		 ++j;
-		 for(;j < i && buffer[j]==' ' ;++j);
-		 auto cont_start = j;
-		 auto cont_end = i - 1;
-		 for(;buffer[cont_end] == ' ';--cont_end);
-		 content = buffer.substr(cont_start, cont_end - cont_start + 1);
-         header.push_back(std::make_pair(attribute,content));
-		}
-		line_start = i + 2;++i;
-	}
+  if (som.size())
+   if ( (wr = write(cfd, som.c_str(),eof.length() )) != (int)som.length())
+   {
+    io_err=true;
+    conn_established=false;
+    continue;
+   }
+  if (len && frame) if ( (wr = write(cfd, frame,len )) != (int)len)
+  {
+	io_err=true;
+	conn_established=false;
+	continue;
   }
-  return std::make_tuple(true,first_line,header);
+  if (eof.size())
+   if ( (wr = write(cfd, eof.c_str(),eof.length() )) != (int)eof.length())
+   {
+	io_err=true;
+	conn_established=false;
+	continue;
+   }
+   if (frame != nullptr) {delete[] frame;frame=nullptr;}
+   pop_frame = true;
  }
-
- return std::make_tuple(false,std::string{},header_t{});
+ if (conn_established && socket_owner){
+  if(reg_socket){
+   std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
+   smc->get_reg_socks()[sock_name] = -1;
+  }
+  close(cfd);
+ }
 }
 
-static std::string sha1(std::string s){
- CryptoPP::SHA1 sha1;
- std::string hash;
- auto a = new CryptoPP::StringSink(hash);
- auto b = new CryptoPP::HexEncoder(a);
- auto c = new CryptoPP::HashFilter(sha1, b);
- CryptoPP::StringSource(s, true, c);
- return hash;
-}
 
-/*std::cout << "T1) " <<  encode_base64("f") << std::endl;
-std::cout << "T2) "<< encode_base64("fo") << std::endl;
-std::cout << "T3) "<< encode_base64("foo") << std::endl;
-std::cout << "T4) "<< encode_base64("foob") << std::endl;
-std::cout << "T5) "<< encode_base64("fooba") << std::endl;
-std::cout << "T6) "<< encode_base64("foobar") << std::endl;
-unsigned long long vv = 0x7ed9039cfb14;
-std::cout << "T7) "<< encode_base64((void*)&vv,6) << std::endl;
-unsigned long long vvv = 0xd9039cfb14;
-std::cout << "T8) "<< encode_base64((void*)&vvv,5) << std::endl;
-unsigned long long vvvv = 0x039cfb14;
-std::cout << "T9) "<< encode_base64((void*)&vvvv,4) << std::endl;
-*/
 
-struct websocket_frame{
- std::vector<unsigned char> payload;
- bool fin = false;
- bool rsv1 = false;
- bool rsv2 = false;
- bool rsv3 = false;
- std::uint8_t opcode = 0;
-};
-
-static std::pair<bool,websocket_frame> read_websocket_frame(int sck){
-	websocket_frame r;
-	std::uint16_t header;
-
-	auto bytesread = recv(sck,&header,sizeof header,0);
-    if (bytesread != sizeof header) return {false,{}};
-
-    r.opcode = header & 0xF;
-    r.fin  = header & 0x80;
-    r.rsv1 = header & 0x40;
-    r.rsv2 = header & 0x20;
-    r.rsv3 = header & 0x10;
-    bool mask = header >> 15;
-    std::uint8_t payload_len_1 = (header >> 8) & 0x7F;
-
-    //std::cout << "opcode = " << (unsigned int) opcode <<" fin = " << fin << std::endl;
-    //std::cout << "rsv1 = " << rsv1 <<" rsv2 = " << rsv2 << " rsv3 = " << rsv3 <<std::endl;
-    //std::cout << "mask = " << mask << " payload_1 = "<< (unsigned int) payload_len_1 <<  std::endl;
-
-    size_t payload_len = payload_len_1;
-
-    if (payload_len_1 == 126){
-     std::uint16_t v;
-     bytesread = recv(sck,&v,sizeof v,0);
-     if (bytesread != sizeof v) return {false,{}};
-     payload_len = ntohs(v);
-    } else if (payload_len_1 == 127){
-     std::uint64_t v;
-     bytesread = recv(sck,&v,sizeof v,0);
-     if (bytesread != sizeof v) return {false,{}};
-     payload_len = be64toh(v);
-    }
-
-    std::uint32_t mask_key = 0;
-    if (mask){
-     bytesread = recv(sck,&mask_key,sizeof mask_key,0);
-     if (bytesread != sizeof mask_key) return {false,{}};
-    }
-
-    constexpr size_t bufsize = 4;unsigned char buf[bufsize];
-    size_t payload_bytes_read = 0;
-    r.payload.resize(payload_len);
-
-    for(;payload_bytes_read < payload_len;){
-    	auto toread = std::min(payload_len - payload_bytes_read,bufsize);
-    	bytesread = recv(sck,(char*)buf,toread,0);
-    	if (bytesread != toread) return {false,{}};
-    	for(size_t i = 0; i < bytesread; ++i) r.payload[payload_bytes_read+i] = buf[i] ^ ((unsigned char *)&mask_key)[ (payload_bytes_read+i) % 4];
-    	payload_bytes_read += bytesread;
-    }
-
-    //std::cout << (char*) payload.data() << std::endl;
-
-	return {true,r};
+static void comm_act_as_websocket_server(State_machine_simulation_core::dispatcher_thread_ctxt_t * ctx,
+		State_machine_simulation_core* smc,sockaddr_storage claddr, int sck,std::string ev_id){
+ std::string unconsumed_data;
+ auto rhr = read_http_request(sck,unconsumed_data);
+ if (!std::get<0>(rhr)) return;
+ auto const & attrs = std::get<2>(rhr);
+ if (!field_with_content("Upgrade","websocket",attrs) || !field_with_content("Connection","Upgrade",attrs)) return;
+ auto r = get_http_attribute_content("Sec-WebSocket-Key",attrs);
+ if (!r.first){close(sck);return;}
+ auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+ unsigned char digest[CryptoPP::SHA::DIGESTSIZE];
+ CryptoPP::SHA().CalculateDigest(digest, (unsigned char *)phrase.c_str(),phrase.length());
+ auto hash = encode_base64(digest,CryptoPP::SHA::DIGESTSIZE);
+ std::stringstream response;
+ response
+  << "HTTP/1.1 101 Switching Protocols\r\n"
+  << "Upgrade: websocket\r\n"
+  << "Connection: Upgrade\r\n"
+  << "Sec-WebSocket-Accept: "
+  << hash <<"\r\n\r\n";
+ auto byteswritten = write(sck, response.str().c_str(),response.str().length());
+ if (byteswritten == response.str().length()){
+  for(;;){
+   auto frm = read_websocket_frame(sck);
+   if (!frm.first) break;
+   std::vector<unsigned char> payload = std::move(frm.second.payload);
+   while (!frm.second.fin){
+    frm = read_websocket_frame(sck);
+    if (!frm.first) break;
+    payload.reserve(payload.size()+frm.second.payload.size());
+    payload.insert(payload.end(),frm.second.payload.begin(),frm.second.payload.end());
+   }
+   if (!frm.first) break;
+   if(frm.second.opcode == 1) {
+    std::string s; s.resize(payload.size());for(size_t j = 0; j < payload.size();++j)s[j] = payload[j];//std::cout << s << std::endl;
+    State_machine_simulation_core::event_t ev(ev_id);
+    ev.already_sent_to_out_queues_ = true;
+    ev.payload_.push_back(new ceps::ast::String(s));
+ 	smc->main_event_queue().push(ev);
+   }
+  }//for
+ }
 }
 
 void comm_generic_tcp_in_thread_fn(
@@ -1119,50 +1124,8 @@ void comm_generic_tcp_in_thread_fn(
   return;
  } else if (id >= 0){
   auto ctxt = smc->get_dispatcher_thread_ctxt(id);
-  try{
-   if (ctxt->websocket()){
-	std::string unconsumed_data;
-	auto r = read_http_request(sck,unconsumed_data);
-	if (std::get<0>(r)){
-	 auto const & attrs = std::get<2>(r);
-	 if (field_with_content("Upgrade","websocket",attrs) && field_with_content("Connection","Upgrade",attrs)  ){
- 	  auto r = get_http_attribute_content("Sec-WebSocket-Key",attrs);
- 	  if (!r.first){close(sck);return;}
-      auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-      unsigned char digest[CryptoPP::SHA::DIGESTSIZE];
-      CryptoPP::SHA().CalculateDigest(digest, (unsigned char *)phrase.c_str(),phrase.length());
-      auto hash = encode_base64(digest,CryptoPP::SHA::DIGESTSIZE);
-      std::stringstream response;
-      response << "HTTP/1.1 101 Switching Protocols\r\n";
-      response << "Upgrade: websocket\r\n";
-      response << "Connection: Upgrade\r\n";
-      response << "Sec-WebSocket-Accept: "<< hash <<"\r\n\r\n";
-      auto byteswritten = write(sck, response.str().c_str(),response.str().length());
-      if (byteswritten == response.str().length()){
-       for(;;){
-    	  auto frm = read_websocket_frame(sck);
-    	  if (!frm.first) break;
-    	  std::vector<unsigned char> payload = std::move(frm.second.payload);
-    	  while (!frm.second.fin){
-    		frm = read_websocket_frame(sck);
-    		if (!frm.first) break;
-    		payload.reserve(payload.size()+frm.second.payload.size());
-    		payload.insert(payload.end(),frm.second.payload.begin(),frm.second.payload.end());
-    	  }
-    	  if (!frm.first) break;
-    	  if(frm.second.opcode == 1) {
-    	   std::string s; s.resize(payload.size());for(size_t j = 0; j < payload.size();++j)s[j] = payload[j];//std::cout << s << std::endl;
-    	   State_machine_simulation_core::event_t ev(ev_id);
-    	   ev.already_sent_to_out_queues_ = true;
-    	   ev.payload_.push_back(new ceps::ast::String(s));
- 		   smc->main_event_queue().push(ev);
-    	  }
-       }
-      }
-	 }
-	}
-   }
-  } catch (...){}
+  if (ctxt->websocket_server()) comm_act_as_websocket_server(ctxt,smc,claddr,sck,ev_id);
+
   close(sck);return;
  }
 
