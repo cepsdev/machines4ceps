@@ -35,23 +35,6 @@ static void flatten_args2(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Node
 	v.push_back(r);
 }
 
-
-static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args){
- if (p->kind() != ceps::ast::Ast_node_kind::func_call) return false;
- ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
- ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
- ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
- if (params.children().size()) flatten_args2(params.children()[0], args);
- fid = ceps::ast::name(id);
- return true;
-}
-
-static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args, std::size_t number_of_arguments){
-	auto r = is_func_call(p,fid,args);
-	if (!r) return r;
-	return number_of_arguments == args.size();
-}
-
 static bool is_id_or_symbol(ceps::ast::Nodebase_ptr p, std::string& n, std::string& k){
 	using namespace ceps::ast;
 	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
@@ -219,7 +202,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			auto it_in_frame_gen = frame_generators().find(in_frame_id);
 			if (it_in_frame_gen == frame_generators().end()) fatal_(-1,"'"+in_frame_id+"' is not a frame id.");
 			size_t ds;
-			char* msg_block = (char*) it_out_frame_gen->second->gen_msg(this,ds,{});
+			char* msg_block = (char*) std::get<1>(it_out_frame_gen->second->gen_msg(this,ds,{}));
 			if (ds == 0 || msg_block == nullptr) fatal_(-1,"Frame-Pattern'"+out_frame_id+"' couldn't create a valid frame.");
 			std::vector<std::string> v1;
 			std::vector<ceps::ast::Nodebase_ptr> v2;
@@ -430,7 +413,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		auto it_frame_gen = frame_generators().find(id);
 		if (it_frame_gen == frame_generators().end()) fatal_(-1,id+" is not a raw frame id.");
 		size_t ds;
-		char* msg_block = (char*) it_frame_gen->second->gen_msg(this,ds,{});
+		char* msg_block = (char*) std::get<1>(it_frame_gen->second->gen_msg(this,ds,{}));
 		bool r = ds >= args.size()-1;
 		if(r)for(int i = 1; i < (int)args.size();++i){
 			if (args[i]->kind() != ceps::ast::Ast_node_kind::int_literal) continue;
@@ -812,6 +795,7 @@ static std::size_t make_byte_sequence_helper(
   std::stringstream ss;  ss << *node;
   smc->fatal_(-1,"make_byte_sequence(): unsupported argument:"+ss.str());
  }
+ return bw / 8;
 }
 
 static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulation_core *smc,
@@ -838,8 +822,8 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
   auto channel = smc->get_out_channel(ch_id);
   if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
   size_t ds;
-  char* msg_block = (char*) it_frame_gen->second->gen_msg(smc,ds,smc->out_encodings[ch_id]);
-  if (ds > 0 && msg_block != nullptr){
+  auto msg_block = it_frame_gen->second->gen_msg(smc,ds,smc->out_encodings[ch_id]);
+  if (ds > 0 && std::get<1>(msg_block)!=nullptr){
    int frame_id = 0;
    if (it_frame_gen->second->header_length() == 0){
 	auto it = smc->channel_frame_name_to_id[ch_id].find(id);
@@ -862,7 +846,7 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
    		if (it == smc->channel_frame_name_to_id[ch_id].end())
    		  smc->fatal_(-1,"send: No header/frame id mapping found for the channel/frame combination '"+ch_id+"/"+id+"'");
  		int frame_id = it->second;
-   		channel->push(std::make_tuple((char*)seq.data(),seq.size(),0,frame_id));
+   		channel->push(std::make_tuple( Rawframe_generator::gen_msg_return_t{Rawframe_generator::IS_BINARY, (void*)seq.data()},seq.size(),0,frame_id));
    	 }
  } else {
 	 std::stringstream ss;
@@ -923,7 +907,7 @@ static std::size_t breakup_byte_sequence_helper(
 		std::size_t pos,
 		std::size_t bit_pos)
 {
- std::size_t s = 0;
+ //std::size_t s = 0;
  if (node->kind() == ceps::ast::Ast_node_kind::func_call){
 	  ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(node);
 	  ceps::ast::Identifier& func_id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
@@ -1015,7 +999,7 @@ static std::size_t breakup_byte_sequence_helper(
 	 }
 	 if (iss){
 		 unsigned char b = 0x80;
-		 if (bw % 8 != 0) {b = 1; b << ( (bw % 8) -1 );}
+		 if (bw % 8 != 0) {b = 1; b = b << ( (bw % 8) -1 );}
 		 if (b & *(buffer + bytes_spawned - 1)){
 		  if (bw%8 == 1) *(buffer+bytes_spawned - 1) |=0xFE;
 		  else if (bw%8 == 2) *(buffer+bytes_spawned - 1) |=0xFC;
@@ -1110,6 +1094,7 @@ static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
  		seq->data(),
  		seq->size(),
  		true);
+ return new ceps::ast::Int(bits_read,ceps::ast::all_zero_unit());
 }
 
 

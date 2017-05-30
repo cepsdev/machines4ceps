@@ -85,7 +85,7 @@ static void print_event_signatures(std::ostream& os,State_machine_simulation_cor
 
 static void check_for_events(State_machine_simulation_core* smc,
 		                     ceps::ast::Nodeset& sim,
-							 int& pos,
+							 std::size_t& pos,
 							 bool& ev_read,
 							 executionloop_context_t & execution_ctxt,
 							 bool& taking_epsilon_transitions,
@@ -191,7 +191,7 @@ static bool compute_event_signature_match(State_machine_simulation_core* smc,
  for(auto & e : v){
   if (e.entries.size() != ev->payload_.size()) continue;
   bool match_found = true;
-  for (auto i = 0; i != e.entries.size(); ++i ){
+  for (std::size_t i = 0; i != e.entries.size(); ++i ){
 	  if (e.entries[i].kind == ceps::ast::Ast_node_kind::undefined) continue;
 	  if (e.entries[i].kind != ev->payload_[i]->kind()){match_found = false; break;}
   }
@@ -207,7 +207,7 @@ static void print_event_signatures(std::ostream& os,State_machine_simulation_cor
  int ctr = 0;
  for(auto & e : v){
 	 os << "Event Signature Overload #" << ++ctr << ":\n";
-	 for (auto i = 0; i != e.entries.size(); ++i ){
+	 for (std::size_t i = 0; i != e.entries.size(); ++i ){
 		 os << "  "<< e.entries[i].arg_name << " : ";
 		 if (e.entries[i].kind == ceps::ast::Ast_node_kind::undefined) os << "ANY";
 		 else os << ceps::ast::ast_node_kind_to_text[(int)e.entries[i].kind];
@@ -251,8 +251,8 @@ static bool  handle_event_triggered_senders(State_machine_simulation_core* smc,e
       if (p.event_id_ != smc->current_event().id_) continue;
   	  processed = true;
 	  size_t data_size;
-	  char* data = (char*)p.frame_gen_->gen_msg(smc,data_size,{});
-	  if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length(),0));
+	  char* data = (char*) std::get<1>(p.frame_gen_->gen_msg(smc,data_size,{}));
+	  if (data != nullptr) p.frame_queue_->push(std::make_tuple(Rawframe_generator::gen_msg_return_t{Rawframe_generator::IS_BINARY,(void*)data},data_size,p.frame_gen_->header_length(),0));
 	  break;
 	}
   }
@@ -293,11 +293,11 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,cep
 										   int ev_id){
  for (int s = 0; s != cur_states_size && max_number_of_active_transitions != (size_t)triggered_transitions_end;++s){
    if (execution_ctxt.current_states[s] == 0) continue;
-		int i = execution_ctxt.state_to_first_transition[s];
+		ssize_t i = execution_ctxt.state_to_first_transition[s];
 		int smp = execution_ctxt.transitions[i].smp;
 
 		bool triggered = false;
-		for(;i != (size_t)execution_ctxt.transitions.size();++i){
+		for(;(std::size_t)i != execution_ctxt.transitions.size();++i){
 			auto const & t = execution_ctxt.transitions[i];
 			if (t.props & executionloop_context_t::TRANS_PROP_ABSTRACT) continue;
 			if (t.smp != smp) break;
@@ -460,7 +460,7 @@ static void compute_entered_states(State_machine_simulation_core* smc,
   execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
  }
 
- for(auto state = 0; state != temp.size();++state ){
+ for(std::size_t state = 0; state != temp.size();++state ){
   if (execution_ctxt.get_inf(state,executionloop_context_t::VISITED)) continue;
   if(!temp[state] || execution_ctxt.current_states[state]) continue;
   //invariant : temp[state] && !execution_ctxt.current_states[state]
@@ -515,7 +515,7 @@ static void compute_exit_states(State_machine_simulation_core* smc,
  for(int i = 0; i != execution_ctxt.number_of_states+1;++i) {
   execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
  }
- for(auto state = 0; state != temp.size();++state ){
+ for(std::size_t state = 0; state != temp.size();++state ){
   if (!execution_ctxt.is_sm(state)) continue;
   if (execution_ctxt.get_inf(state,executionloop_context_t::VISITED)) continue;
   execution_ctxt.set_inf(state,executionloop_context_t::VISITED,true);
@@ -650,7 +650,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	user_supplied_global_init()();
  }
 
- int pos = 0;bool quit = false;
+ std::size_t pos = 0;bool quit = false;
  //Execute possible initializations
  for(;pos!=sim.size();++pos){
   auto node_raw = sim.nodes()[pos];
@@ -790,7 +790,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
      if (sms->visited_flag) continue;  sms->visited_flag = true;
      if (!sms->global_scope) { sms->global_scope = std::make_shared<ceps::parser_env::Scope>();	}
      auto & scope = *sms->global_scope;
-     for (auto i = 0; i!= ev_sig->entries.size();++i){
+     for (std::size_t i = 0; i!= ev_sig->entries.size();++i){
     	 auto var_name = ev_sig->entries[i].arg_name;
     	 auto val = this->current_event().payload_[i];
     	 auto sym = scope.insert(var_name);
@@ -900,7 +900,9 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
 		user_supplied_global_init()();
         }
 
-	int pos = 0;	int loop_ctr = 0;	bool quit = false;
+	std::size_t pos = 0;
+	int loop_ctr = 0;
+	bool quit = false;
 
 	//Each simulation step starts with a phase where only epsilon transitions are taken until no further transitions are found,
 	//followed by the consumption of an event.
@@ -1210,11 +1212,11 @@ void State_machine_simulation_core::simulate(ceps::ast::Nodeset sim,
 		if (ev_read) for(auto p: event_triggered_sender()){
 			if (p.event_id_ != current_event().id_) continue;
 			size_t data_size;
-			char* data = (char*)p.frame_gen_->gen_msg(this,data_size,{});
+			auto data = p.frame_gen_->gen_msg(this,data_size,{});
             #ifdef PRINT_DEBUG
 			 DEBUG << "[State_machine_simulation_core::simulate][PUSH_FRAME_TO_SENDER_QUEUE]\n";
             #endif
-			if (data != nullptr) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length(),0));
+			if (std::get<0>(data)) p.frame_queue_->push(std::make_tuple(data,data_size,p.frame_gen_->header_length(),0));
 		 }
 
 		 if (ev_read && global_event_call_back_fn_ && is_export_event(current_event().id_)) {

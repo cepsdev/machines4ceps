@@ -153,6 +153,8 @@ class State_machine_simulation_core:
 public:
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
+	using frame_queue_elem_t = std::tuple<Rawframe_generator::gen_msg_return_t,size_t,size_t,int>;
+	using frame_queue_t = threadsafe_queue< frame_queue_elem_t, std::queue<frame_queue_elem_t>>;
 private:
 	std::map<std::string,State_machine*> statemachines_;
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
@@ -370,14 +372,14 @@ private:
 		}
 	};
 	Log std_log_;
-	std::map<std::string,threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* > id_to_out_chan_;
+	std::map<std::string,frame_queue_t* > id_to_out_chan_;
 public:
 
-	threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* get_out_channel(std::string const & s){
+	frame_queue_t* get_out_channel(std::string const & s){
 		return id_to_out_chan_[s];
 	}
 
-	void set_out_channel(std::string const & s, threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* ch){
+	void set_out_channel(std::string const & s, frame_queue_t* ch){
 		id_to_out_chan_[s] = ch;
 	}
 
@@ -502,7 +504,7 @@ public:
 		std::string event_id_;
 		std::string frame_id_;
 		Rawframe_generator* frame_gen_;
-		threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frame_queue_;
+		frame_queue_t* frame_queue_;
 		std::thread* thread_;
 	};
 	std::vector<event_triggered_sender_t>event_triggered_sender_;
@@ -568,7 +570,7 @@ public:
 		return std::make_pair(true,it->second);
 	}
 	void set_qualified_id(State_machine* sm,std::string id){sm_to_id_[sm] = id;}
-	void start_processing_init_script(ceps::ast::Nodeset& sim,int& pos,states_t states);
+	void start_processing_init_script(ceps::ast::Nodeset& sim,std::size_t& pos,states_t states);
 
 
 	State_machine_simulation_core(std::string const & prelude = {})
@@ -618,7 +620,7 @@ public:
 					std::vector<State_machine::Transition::Action>& on_enter_sm_derived_action_list,
 					states_t const& current_states);
 	ceps::ast::Nodebase_ptr execute_action_seq(State_machine* containing_smp,ceps::ast::Nodebase_ptr ac_seq);
-	bool fetch_event(event_rep_t& ev,ceps::ast::Nodeset& sim,int& pos,states_t& states,
+	bool fetch_event(event_rep_t& ev,ceps::ast::Nodeset& sim,std::size_t& pos,states_t& states,
 			bool& states_updated, std::vector<State_machine*>& on_enter_seq,bool ignore_handler = true, bool ignore_ev_queue =  false,bool exit_if_start_found = false);
 	void simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 	void run_simulation(ceps::ast::Nodeset sim,

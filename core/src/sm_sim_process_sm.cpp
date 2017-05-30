@@ -305,7 +305,7 @@ static std::unordered_set<State_machine*> compute_all_shadowing_sms(State_machin
 
 static bool is_child_of(std::string id, State_machine* sm2 ){
 	for(auto p: sm2->children()){
-	 if (sm2->id() == id) return true;
+	 if (p->id() == id) return true;
 	}
 	return false;
 }

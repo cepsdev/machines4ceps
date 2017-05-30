@@ -1,0 +1,66 @@
+<!DOCTYPE html><html>
+
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="ceps">
+<script src="js/Chart.js"></script>
+<div id="overview_state_coverage"><canvas id="canvas_overview_state_coverage"></canvas></div>
+<script>
+var the_chart;
+(function(ctx,title_text){
+
+ the_chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        animation : {duration:0},
+        title: {
+            display: true,
+            text: ""
+        },
+        legend: {
+            display: true
+        }        
+    }
+});
+
+})(document.getElementById("canvas_overview_state_coverage"),'State Coverage Chart');
+
+</script>
+<script>
+var counter = 10;
+/*function updater(){
+ the_chart.data.datasets[0].data.push(counter);
+ the_chart.data.labels.push(counter);
+ the_chart.update(0);
+ ++counter;
+ setTimeout(updater, 1000);
+}
+setTimeout(updater, 1000);*/
+</script>
+
+<script>
+ var ws = new WebSocket("ws://localhost:8181/gaga");
+ ws.onopen = function(e){
+  console.log('Connection to server opened.');
+ }
+ ws.onmessage = function(e){
+  var msg = JSON.parse(e.data);
+  the_chart.data.datasets[0].data.push(msg["signal"]);
+  the_chart.data.labels.push(counter);
+  the_chart.update(0);
+  ++counter;
+
+ }
+ function sendMessage(){ ws.send($('#message').val()); }
+</script>
+
+
+</html>

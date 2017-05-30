@@ -556,7 +556,7 @@ private:
     	} else if (p->kind() == Ast_node_kind::func_call){
     		f(p);
     		ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
-    	    ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+    	    //ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
      	    ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
     		std::vector<ceps::ast::Nodebase_ptr> args;
     		if (params.children().size()) flatten_args(params.children()[0], args);
@@ -1352,7 +1352,7 @@ bool Cppgenerator::write_cpp_stmt_impl(State_machine_simulation_core* smp,
 			os << "smcore_interface->x_path("<<lhs_id<<",";
 
 			ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(binop.right());
-			ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+			//ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
 		 	ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
 			std::vector<ceps::ast::Nodebase_ptr> args;
 			if (params.children().size()) flatten_args(params.children()[0], args);
@@ -1904,7 +1904,7 @@ void Cppgenerator::write_sms_create_func(State_machine_simulation_core* smp,
 
      for(auto const & t : sm.second->transitions_) handle_transition(t,-1,sm.first);
 
-     for (int i = 0; i != sm.second->threads_.size(); ++i){
+     for (std::size_t i = 0; i != sm.second->threads_.size(); ++i){
          if (sm.second->threads_[i].size())
           {indent.print_indentation(os);os << "\n// Thread #" << i + 1 << "\n\n";}
     	 for(auto const & t : sm.second->threads_[i]) handle_transition(t,i,sm.first);

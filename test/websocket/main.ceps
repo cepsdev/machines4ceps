@@ -7,10 +7,16 @@ Event ev,ev2;
 Systemstate some_text;
 some_text = "";
 
+Systemstate counter;
+counter = 0.0;
+
 frame{
  id{frm;};
- text;/*binary*/
- data{some_text;};
+ data{
+ "{";
+ "\"signal\":";as_string(sin(counter));
+ "}";
+ };
 };
 
 receiver
@@ -39,8 +45,21 @@ sender
  transport {use { ws_server; };};
 };
 
-Systemstate counter;
-counter = 0;
+Event start_signal_logger;
+Event signal_logger_dump;
+
+statemachine{
+ signal_logger;
+ states{Initial;Logging;Error;};
+ Actions{
+  starttimer{
+   print(counter,"!\n");start_periodic_timer(0.05*s,signal_logger_dump,signal_logger_dump_timer);
+  };
+  dump{ send(frm,ws_server_out); };
+ };
+ t{Initial;Logging;start_signal_logger;starttimer;};
+ t{Logging;Logging;signal_logger_dump;dump;};
+};
 
 statemachine{
  print_websocket_message;
@@ -48,13 +67,24 @@ statemachine{
  Actions{
   msg_arrived{
    print("Received data: ", argv(1),"\n");
-   some_text = "123";
-   send(frm,ws_server_out);
-   counter = counter + 1;
+   start_signal_logger;
   };
  };
  t{Initial;Initial;ev;msg_arrived;};
 };
 
+Event ev_incr_counter;
 
-Simulation{Start{print_websocket_message;};};
+statemachine{
+ increment_counter;
+ states{Initial;Counting;};
+ Actions{
+  do_increment{counter = counter + 0.1;}; 
+  starttimer{start_periodic_timer(0.1*s,ev_incr_counter,incr_counter_producer_timer);};
+ };
+ t{Initial;Counting;starttimer;};
+ t{Counting;Counting;ev_incr_counter;do_increment;};
+};
+
+
+Simulation{Start{print_websocket_message;signal_logger;increment_counter;};start_signal_logger;};

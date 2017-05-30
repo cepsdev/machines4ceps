@@ -60,7 +60,6 @@ void sm4ceps::storage_write(livelog::Livelogger::Storage& storage,std::map<int,s
 	}
 	for(auto const & s : i2s)  len+=sizeof(std::int32_t)+s.second.length()+sizeof(std::int32_t);
 	 storage.write_ext(sm4ceps::STORAGE_WHAT_INT32_TO_STRING_MAP,[&](char * data){
-		 std::uint32_t counter = 0;
 		 *((std::size_t*) data) = i2s.size();
 		 data+=sizeof(std::size_t);
 		 for(auto const & s : i2s){
@@ -81,6 +80,7 @@ bool sm4ceps::storage_read_entry(std::map<int,std::string>& i2s, char * data){
 		auto a = *((std::int32_t*)data);data+=sizeof(std::int32_t);
 		i2s[a] = std::string(data);data+=strlen(data)+1;
 	}
+	return true;
 }
 //
 
@@ -190,7 +190,6 @@ std::size_t sm4ceps::storage_read(char * data, std::vector<sm4ceps_plugin_int::V
 
 std::size_t sm4ceps::storage_read(char * data, std::string & s){
  std::size_t r = 0;
- std::size_t len = *(std::uint32_t*)(data+r);
  r+=sizeof(std::uint32_t);
  s = data + r;
  return r + s.length() + 1;
@@ -309,7 +308,7 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 			 buffer = new char[buffer_size = len * 2];
 		 }
 		 int r=0;
-		 if(len != (r=readn(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
+		 if( ((ssize_t)len) != (r=readn(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
 
 		 if (livelogger_){
 			 auto ch = (livelog::Livelogger::Storage::chunk*)buffer;
@@ -355,14 +354,14 @@ void sm4ceps::Livelogger_sink::comm_stream_fn(int id,
 					 buffer = new char[buffer_size = len * 2];
 				 }
 				 int r=0;
-				 if(len != (r=readn(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
+				 if(((ssize_t)len) != (r=readn(cfd,buffer,len))) { auto e= errno;std::cout <<"error:" << e << " r=" << r << std::endl;break;}
 				 auto ch = (livelog::Livelogger::Storage::chunk*)buffer;
 				 auto data = buffer + sizeof(livelog::Livelogger::Storage::chunk);
 				 storage->write_ext(ch->what(), [&](char* to){ memcpy(to,data,ch->len());}, ch->len(),pmutex, ch->id());
 				 logid2last_read_id[idx] = ch->id();
 
 				}
-		 	 }
+		 	 return true;}
 			))continue;
 		}
 

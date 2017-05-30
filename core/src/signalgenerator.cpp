@@ -26,7 +26,7 @@ bool sm4ceps::valid(State_machine_simulation_core::signal_generator_handle const
 }
 
 State_machine_simulation_core::signal_generator_handle State_machine_simulation_core::add_sig_gen(std::string id,sm4ceps::datasources::Signalgenerator const & sig){
- for(int i = 0; i != sig_generators_.size();++i){
+ for(std::size_t i = 0; i != sig_generators_.size();++i){
 	auto& e = sig_generators_[i];
 	if (e.first != id) continue;
 	e.second = sig;
@@ -37,7 +37,7 @@ State_machine_simulation_core::signal_generator_handle State_machine_simulation_
 }
 
 State_machine_simulation_core::signal_generator_handle State_machine_simulation_core::find_sig_gen(std::string id){
- for(int i = 0; i != sig_generators_.size();++i){
+ for(std::size_t i = 0; i != sig_generators_.size();++i){
 	auto const & e = sig_generators_[i];
 	if (e.first != id) continue;
 	return i;
@@ -92,7 +92,7 @@ void State_machine_simulation_core::build_signal_structures(Result_process_cmd_l
 	 std::stringstream out;
 	 out << "Registered Signal Generators:\n";
 
-	 for(int i = 0; i!= sig_generators_.size();++i){
+	 for(std::size_t i = 0; i!= sig_generators_.size();++i){
 	  auto& sig = sig_generators_[i].second;
       out << " '" << sig_generators_[i].first << "', id = " << i << ", delta_t = " << sig.delta()
           << "\n";

@@ -40,7 +40,6 @@ ceps::ast::Nodeset sm4ceps::modelling::standard_value_partition_sm(ceps::ast::St
   }
  }
 
- int guard_ctr = 0;
  gen_sm.add_state("Initial");
  for(auto& e : range2guard){
 	 gen_sm.add_state(e.first);

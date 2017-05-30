@@ -25,21 +25,6 @@ static void flatten_args2(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Node
 }
 
 
-static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args){
- if (p->kind() != ceps::ast::Ast_node_kind::func_call) return false;
- ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
- ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
- ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
- if (params.children().size()) flatten_args2(params.children()[0], args);
- fid = ceps::ast::name(id);
- return true;
-}
-
-static bool is_func_call(ceps::ast::Nodebase_ptr p,std::string& fid,std::vector<ceps::ast::Nodebase_ptr>& args, std::size_t number_of_arguments){
-	auto r = is_func_call(p,fid,args);
-	if (!r) return r;
-	return number_of_arguments == args.size();
-}
 
 static bool is_id_or_symbol(ceps::ast::Nodebase_ptr p, std::string& n, std::string& k){
 	using namespace ceps::ast;
@@ -83,7 +68,7 @@ static ceps::ast::Struct_ptr as_struct(ceps::ast::Nodebase_ptr p){
 
 static void dump_style_vec(std::ostream& os, std::vector<std::string> v, std::string delim = ","){
 	if (v.size() == 0) return;
-	for(auto i = 0 ;i + 1 != v.size(); ++i){
+	for(std::size_t i = 0 ;i + 1 != v.size(); ++i){
 		os << v[i] << delim;
 	}
 	os << v.back();
@@ -336,8 +321,10 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
       auto ctr = 0;
       std::vector<std::string> u;
       for (auto e: s->children()){
-       if (ctr==0) if (e->kind() == ceps::ast::Ast_node_kind::string_literal) st = resolve_state_qualified_id(ceps::ast::value(ceps::ast::as_string_ref(e)),nullptr);
-       else st = resolve_state_or_transition_given_a_qualified_id(e,nullptr);
+       if (ctr==0){
+    	if (e->kind() == ceps::ast::Ast_node_kind::string_literal) st = resolve_state_qualified_id(ceps::ast::value(ceps::ast::as_string_ref(e)),nullptr);
+        else st = resolve_state_or_transition_given_a_qualified_id(e,nullptr);
+       }
        if(!st.valid() || st.id_ < 0){
   		std::stringstream ss; ss << *e;
   		warn_(-1, "Element #"+std::to_string(ctr)+" of root.dot_gen_properties.node_display_properties: '"+ss.str()+"' not a valid fully qualified state identifier");
@@ -378,9 +365,9 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
        constexpr auto invalid_transition = -1;
        int matched_transition = invalid_transition;
        if (transition_id < 0) {
-    	   if (st.is_sm_ && st.smp_->transitions().size() > edge_no) matched_transition = st.smp_->transitions()[edge_no].id_;
+    	   if (st.is_sm_ && st.smp_->transitions().size() > (size_t)edge_no) matched_transition = st.smp_->transitions()[edge_no].id_;
        } else {
-    	   if (transition_id < this->executionloop_context().transitions.size() ) matched_transition = transition_id;
+    	   if ((size_t)transition_id < this->executionloop_context().transitions.size() ) matched_transition = transition_id;
        }
        if(matched_transition == -1){
      	std::stringstream ss; ss << *edge_id;

@@ -91,7 +91,7 @@ extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodeb
 			if (it_frame_gen != smc->frame_generators().end())
 			{
 				size_t size;
-				unsigned char* msg_block = (unsigned char*) it_frame_gen->second->gen_msg(smc,size,{});
+				unsigned char* msg_block= (unsigned char*) std::get<1>(it_frame_gen->second->gen_msg(smc,size,{}));
 				if (msg_block == nullptr) return "(undef)";
 				else{
 					std::string t;
@@ -407,7 +407,6 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 bool State_machine_simulation_core::kill_named_timer_main_timer_table(std::string const & timer_id){
 	std::lock_guard<std::mutex> lk(timer_table_mtx);
 	auto t = 0;
-	bool bfound = false;
 	for(auto& e : timer_table){
 		if (timer_id.length() == 0 || timer_id == e.name){
 			e.kill = true;
@@ -695,7 +694,7 @@ void State_machine_simulation_core::send_raw_frame(void* chunk,size_t len,size_t
  if (channel == nullptr) fatal_(-1,channel_id+" is not an output channel.");
  char* msg_block = new char[len];
  memcpy(msg_block,chunk,len);
- channel->push(std::make_tuple(msg_block,len,header_len,0));
+ channel->push(std::make_tuple(Rawframe_generator::gen_msg_return_t{Rawframe_generator::IS_BINARY,msg_block},len,header_len,0));
 }
 
 static ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string const & id, ceps::ast::Call_parameters* params, void* context,ceps::parser_env::Symboltable & sym_table)

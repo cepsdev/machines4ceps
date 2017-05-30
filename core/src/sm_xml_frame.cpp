@@ -203,13 +203,13 @@ void make_xml_fragment(std::stringstream& ss,State_machine_simulation_core* smc,
 		make_xml_fragment(ss,smc,e);
 }
 
-void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size,std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > const & encoding){
+Rawframe_generator::gen_msg_return_t Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& data_size,std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > const & encoding){
 	if (fn_gen_msg_native_)
-		return fn_gen_msg_native_(data_size);
-	if (smc == nullptr) return nullptr;
+		return gen_msg_return_t{Rawframe_generator::IS_ASCII,(void*) (fn_gen_msg_native_(data_size))};
+	if (smc == nullptr) return gen_msg_return_t{0,nullptr};
 	DEBUG_FUNC_PROLOGUE2;
 	auto data_format = spec_["data"];
-	if (data_format.nodes().empty()) return nullptr;
+	if (data_format.nodes().empty()) return gen_msg_return_t{0,nullptr};
 
 	std::stringstream ss;
 	ss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
@@ -221,7 +221,7 @@ void* Xmlframe_generator::gen_msg(State_machine_simulation_core* smc,size_t& dat
 	char* data = new char[ss.str().size()+1];
 	memcpy(data,ss.str().c_str(),ss.str().size());data[ss.str().size()] = 0;
 	data_size = ss.str().size();
-	return data;
+	return gen_msg_return_t{Rawframe_generator::IS_ASCII,(void*)data};
 }
 
 static bool eval_query(std::vector<ceps::ast::Nodebase_ptr>& nodes,State_machine_simulation_core* smc){

@@ -59,7 +59,7 @@ extern std::vector<std::thread*> comm_threads;
 bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
 							std::string & func_name,
 							std::vector<ceps::ast::Nodebase_ptr>& args);
-void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frames,
+void comm_sender_generic_tcp_out_thread(State_machine_simulation_core::frame_queue_t* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,
@@ -369,7 +369,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	for(auto & t : smp->executionloop_context().transitions)
 	{
 		auto p = t.smp;
-		if (smp->executionloop_context().parent_vec.size() > p)
+		if ( ((ssize_t)smp->executionloop_context().parent_vec.size()) > p)
 			for(;smp->executionloop_context().parent_vec[p];p = smp->executionloop_context().parent_vec[p]);
 		t.root_sms = p;
 	}
@@ -1015,7 +1015,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		 descr.event_id_ = ev_id;
 		 descr.frame_gen_ = gen;
 		 descr.frame_id_ = frame_id;
-		 descr.frame_queue_ = new threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>;
+		 descr.frame_queue_ = new frame_queue_t;
 
 		 if (start_comm_threads()){
 		  comm_threads.push_back(new std::thread{comm_sender_generic_tcp_out_thread,descr.frame_queue_,this,ip,port,som,eof,sock_name,reuse_sock,reg_socket });
@@ -1024,7 +1024,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 		 event_triggered_sender().push_back(descr);
 		} else if (!condition_defined && !emit_defined && channel_id.length()){
-		 auto channel = new threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>;
+		 auto channel = new frame_queue_t;
 		 this->set_out_channel(channel_id,channel);
 		 if (start_comm_threads()){
 	     running_as_node() = true;

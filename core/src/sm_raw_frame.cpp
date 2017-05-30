@@ -12,6 +12,12 @@
 
 #include "core/include/base_defs.hpp"
 
+const int Rawframe_generator::IS_ASCII = 1;
+const int Rawframe_generator::IS_UTF8 = 2;
+const int Rawframe_generator::IS_BINARY = 4;
+const int Rawframe_generator::IS_JSON = 8;
+
+
 /*
  * http/websocket routines
 */
@@ -190,10 +196,10 @@ static std::pair<bool,websocket_frame> read_websocket_frame(int sck){
     r.payload.resize(payload_len);
 
     for(;payload_bytes_read < payload_len;){
-    	auto toread = std::min(payload_len - payload_bytes_read,bufsize);
+    	ssize_t toread = std::min(payload_len - payload_bytes_read,bufsize);
     	bytesread = recv(sck,(char*)buf,toread,0);
     	if (bytesread != toread) return {false,{}};
-    	for(size_t i = 0; i < bytesread; ++i) r.payload[payload_bytes_read+i] = buf[i] ^ ((unsigned char *)&mask_key)[ (payload_bytes_read+i) % 4];
+    	for(size_t i = 0; (ssize_t)i < bytesread; ++i) r.payload[payload_bytes_read+i] = buf[i] ^ ((unsigned char *)&mask_key)[ (payload_bytes_read+i) % 4];
     	payload_bytes_read += bytesread;
     }
 
@@ -231,183 +237,83 @@ size_t Podframe_generator::header_length() {
 }
 
 
+static std::map<std::string,std::pair<unsigned short, bool>> typename2descr=
+{
+		{"bit",{1,true}},{"byte",{8,true}},
+		{"int1",{1,true}},{"int2",{2,true}},{"int3",{3,true}},{"int4",{4,true}},{"int5",{5,true}},{"int6",{6,true}},{"int7",{7,true}},{"int8",{8,true}},
+		{"int9",{9,true}},{"int10",{10,true}},{"int11",{11,true}},{"int12",{12,true}},{"int13",{13,true}},{"int14",{14,true}},{"int15",{15,true}},{"int16",{16,true}},
+		{"int17",{17,true}},{"int18",{18,true}},{"int19",{19,true}},{"int20",{20,true}},{"int21",{21,true}},{"int22",{22,true}},{"int23",{23,true}},{"int24",{24,true}},
+		{"int25",{25,true}},{"int26",{26,true}},{"int27",{27,true}},{"int28",{28,true}},{"int29",{29,true}},{"int30",{30,true}},{"int31",{31,true}},{"int32",{32,true}},
+		{"int33",{33,true}},{"int34",{34,true}},{"int35",{35,true}},{"int36",{36,true}},{"int37",{37,true}},{"int38",{38,true}},{"int39",{39,true}},{"int40",{40,true}},
+		{"int41",{41,true}},{"int42",{42,true}},{"int43",{43,true}},{"int44",{44,true}},{"int45",{45,true}},{"int46",{46,true}},{"int47",{47,true}},{"int48",{48,true}},
+		{"int49",{49,true}},{"int50",{50,true}},{"int51",{51,true}},{"int52",{52,true}},{"int53",{53,true}},{"int54",{54,true}},{"int55",{55,true}},{"int56",{56,true}},
+		{"int57",{57,true}},{"int58",{58,true}},{"int59",{59,true}},{"int60",{60,true}},{"int61",{61,true}},{"int62",{62,true}},{"int63",{63,true}},{"int64",{64,true}},
 
-size_t fill_raw_chunk(std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > const & encoding,
-		            size_t & header_length, State_machine_simulation_core* smc,
-		            std::vector<ceps::ast::Nodebase_ptr> pattern,
-		            size_t data_size,
-		            char* data,
-		            size_t bit_offs,
-		            size_t bit_width=sizeof(std::int64_t)*8,
-		            bool signed_value = true,
-		            bool write_data = true,
-		            bool host_byte_order = true
-		            );
+		{"uint1",{1,false}},{"uint2",{2,false}},{"uint3",{3,false}},{"uint4",{4,false}},{"uint5",{5,false}},{"uint6",{6,false}},{"uint7",{7,false}},{"uint8",{8,false}},
+		{"uint9",{9,false}},{"uint10",{10,false}},{"uint11",{11,false}},{"uint12",{12,false}},{"uint13",{13,false}},{"uint14",{14,false}},{"uint15",{15,false}},{"uint16",{16,false}},
+		{"uint17",{17,false}},{"uint18",{18,false}},{"uint19",{19,false}},{"uint20",{20,false}},{"uint21",{21,false}},{"uint22",{22,false}},{"uint23",{23,false}},{"uint24",{24,false}},
+		{"uint25",{25,false}},{"uint26",{26,false}},{"uint27",{27,false}},{"uint28",{28,false}},{"uint29",{29,false}},{"uint30",{30,false}},{"uint31",{31,false}},{"uint32",{32,false}},
+		{"uint33",{33,false}},{"uint34",{34,false}},{"uint35",{35,false}},{"uint36",{36,false}},{"uint37",{37,false}},{"uint38",{38,false}},{"uint39",{39,false}},{"uint40",{40,false}},
+		{"uint41",{41,false}},{"uint42",{42,false}},{"uint43",{43,false}},{"uint44",{44,false}},{"uint45",{45,false}},{"uint46",{46,false}},{"uint47",{47,false}},{"uint48",{48,false}},
+		{"uint49",{49,false}},{"uint50",{50,false}},{"uint51",{51,false}},{"uint52",{52,false}},{"uint53",{53,false}},{"uint54",{54,false}},{"uint55",{55,false}},{"uint56",{56,false}},
+		{"uint57",{57,false}},{"uint58",{58,false}},{"uint59",{59,false}},{"uint60",{60,false}},{"uint61",{61,false}},{"uint62",{62,false}},{"uint63",{63,false}},{"uint64",{64,false}}
 
-size_t fill_raw_chunk(std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > const & encoding,
-		               size_t & header_length, State_machine_simulation_core* smc,
-		               ceps::ast::Nodebase_ptr p,
-		               size_t data_size,
-		               char* data,
-		               size_t bit_offs,
-		               size_t bit_width=sizeof(std::int64_t)*8,
-		               bool signed_value = true,
-		               bool write_data = true,
-		               bool host_byte_order = true) {
+
+};
+
+size_t fill_raw_chunk(std::map<std::string /*systemstate*/,
+ std::map< int, ceps::ast::Nodebase_ptr> > const & encoding,
+ size_t & header_length, State_machine_simulation_core* smc,
+ std::vector<ceps::ast::Nodebase_ptr> pattern,
+ size_t data_size,
+ char* data,
+ size_t bit_offs,
+ std::uint32_t* info,
+ size_t bit_width=sizeof(std::int64_t)*8,
+ bool signed_value = true,
+ bool write_data = true,
+ bool host_byte_order = true
+);
+
+size_t fill_raw_chunk(std::map<std::string /*systemstate*/,
+ std::map< int, ceps::ast::Nodebase_ptr> > const & encoding,
+ size_t & header_length, State_machine_simulation_core* smc,
+ ceps::ast::Nodebase_ptr p,
+ size_t data_size,
+ char* data,
+ size_t bit_offs,
+ std::uint32_t* info,
+ size_t bit_width=sizeof(std::int64_t)*8,
+ bool signed_value = true,
+ bool write_data = true,
+ bool host_byte_order = true) {
 	using namespace ceps::ast;
 	//unsigned char * data = (unsigned char *) data_;
 	if (p == nullptr) return 0;
 	//if (write_data) std::cout << "*** bit_width=" << bit_width << std::endl;
 	if (p->kind() == ceps::ast::Ast_node_kind::structdef){
-		auto& st = ceps::ast::as_struct_ref(p);
-		auto& nm = ceps::ast::name(st);
-		if (nm == "in"){
-		  return 0;
-		} else if (nm == "out"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(), data_size,data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
-		} else if (nm == "byte" || nm == "int8"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,8,true,write_data,host_byte_order);
-		} else if (nm == "ubyte" || nm == "uint8"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,8,false,write_data,host_byte_order);
-		} else if (nm == "ushort" || nm == "uint16"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,16,false,write_data,host_byte_order);
-		} else if (nm == "short" || nm == "int16"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,16,true,write_data,host_byte_order);
-		} else if (nm == "uint" || nm == "uint32"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,32,false,write_data,host_byte_order);
-		} else if (nm == "int" || nm == "int32") {
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,32,true,write_data,host_byte_order);
-		} else if (nm == "ulonglong" || nm == "uint64") {
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,64,false,write_data,host_byte_order);
-		} else if (nm == "longlong" || nm == "int64") {
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,64,true,write_data,host_byte_order);
-		} else if (nm == "uint31"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,31,false,write_data,host_byte_order);
-		} else if (nm == "uint30"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,30,false,write_data,host_byte_order);
-		} else if (nm == "uint29"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,29,false,write_data,host_byte_order);
-		}else if (nm == "uint28"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,28,false,write_data,host_byte_order);
-		} else if (nm == "uint27"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,27,false,write_data,host_byte_order);
-		} else if (nm == "uint26"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,26,false,write_data,host_byte_order);
-		} else if (nm == "uint25"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,25,false,write_data,host_byte_order);
-		} else if (nm == "int31"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,31,true,write_data,host_byte_order);
-		} else if (nm == "int30"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,30,true,write_data,host_byte_order);
-		} else if (nm == "int29"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,29,true,write_data,host_byte_order);
-		}else if (nm == "int28"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,28,true,write_data,host_byte_order);
-		} else if (nm == "int27"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,27,true,write_data,host_byte_order);
-		} else if (nm == "int26"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,26,true,write_data,host_byte_order);
-		} else if (nm == "int25"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,25,true,write_data,host_byte_order);
-		} else if (nm == "uint24"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,24,false,write_data,host_byte_order);
-		} else if (nm == "int24"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,24,true,write_data,host_byte_order);
-		}else if (nm == "uint23"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,23,false,write_data,host_byte_order);
-		} else if (nm == "int23"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,23,true,write_data,host_byte_order);
-		}else if (nm == "uint22"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,22,false,write_data,host_byte_order);
-		} else if (nm == "int22"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,22,true,write_data,host_byte_order);
-		}else if (nm == "uint21"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,21,false,write_data,host_byte_order);
-		} else if (nm == "int21"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,21,true,write_data,host_byte_order);
-		}else if (nm == "uint20"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,20,false,write_data,host_byte_order);
-		} else if (nm == "int20"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,20,true,write_data,host_byte_order);
-		}else if (nm == "uint19"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,19,false,write_data,host_byte_order);
-		} else if (nm == "int19"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,19,true,write_data,host_byte_order);
-		}else if (nm == "uint18"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,18,false,write_data,host_byte_order);
-		} else if (nm == "int18"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,18,true,write_data,host_byte_order);
-		}else if (nm == "uint17"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,17,false,write_data,host_byte_order);
-		} else if (nm == "int17"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,17,true,write_data,host_byte_order);
-		}else if (nm == "uint15"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,15,false,write_data,host_byte_order);
-		} else if (nm == "int15"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,15,true,write_data,host_byte_order);
-		} else if (nm == "uint14"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,14,false,write_data,host_byte_order);
-		} else if (nm == "int14"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,14,true,write_data,host_byte_order);
-		}else if (nm == "uint13"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,13,false,write_data,host_byte_order);
-		} else if (nm == "int13"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,13,true,write_data,host_byte_order);
-		}else if (nm == "uint12"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,12,false,write_data,host_byte_order);
-		} else if (nm == "int12"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,12,true,write_data,host_byte_order);
-		}else if (nm == "uint11"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,11,false,write_data,host_byte_order);
-		} else if (nm == "int11"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,11,true,write_data,host_byte_order);
-		} else if (nm == "uint10"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,10,false,write_data,host_byte_order);
-		} else if (nm == "int10"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,10,true,write_data,host_byte_order);
-		}else if (nm == "uint9"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,9,false,write_data,host_byte_order);
-		} else if (nm == "int9"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,9,true,write_data,host_byte_order);
-		}else if (nm == "uint7"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,7,false,write_data,host_byte_order);
-		} else if (nm == "int7"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,7,true,write_data,host_byte_order);
-		} else if (nm == "uint6"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,6,false,write_data,host_byte_order);
-		} else if (nm == "int6"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,6,true,write_data,host_byte_order);
-		} else if (nm == "uint5"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,5,false,write_data,host_byte_order);
-		} else if (nm == "int5"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,8,true,write_data,host_byte_order);
-		} else if (nm == "uint4"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,4,false,write_data,host_byte_order);
-		} else if (nm == "int4"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,4,true,write_data,host_byte_order);
-		} else if (nm == "uint3"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,3,false,write_data,host_byte_order);
-		} else if (nm == "int3"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,3,true,write_data,host_byte_order);
-		} else if (nm == "uint2"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,2,false,write_data,host_byte_order);
-		} else if (nm == "int2"){
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,2,true,write_data,host_byte_order);
-		} else if (nm == "bit"){ //std::cout << "------\n";
-			return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,1,true,write_data,host_byte_order);
-		} else {
-			return fill_raw_chunk(encoding,header_length,smc,st.children(), data_size,data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
-		}
+	 auto& st = ceps::ast::as_struct_ref(p);
+	 auto& nm = ceps::ast::name(st);
+	 if (nm == "in"){
+	  return 0;
+	 } else if (nm == "out"){
+	 return fill_raw_chunk(encoding,header_length,smc,st.children(), data_size,data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
+	}
+	auto r = typename2descr.find(nm);
+	 if (r != typename2descr.end())
+	  return fill_raw_chunk(encoding,header_length,smc,st.children(),data_size,data,bit_offs,info,r->second.first,r->second.second,write_data,host_byte_order);
+	 return fill_raw_chunk(encoding,header_length,smc,st.children(), data_size,data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
 	}
 	else if (p->kind() == ceps::ast::Ast_node_kind::identifier){
 		auto& ident = ceps::ast::as_id_ref(p);
 		if (ceps::ast::name(ident) == "any") return bit_width;
 		else if (ceps::ast::name(ident) == "__current_frame_size") {
 			auto temp_node = ceps::ast::Int(data_size,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-			return fill_raw_chunk(encoding,header_length,smc,&temp_node,data_size, data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
+			return fill_raw_chunk(encoding,header_length,smc,&temp_node,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
 		} else smc->fatal_(-1,std::string("Raw frame:  Unknown identifier '")+ceps::ast::name(ident)+"'");
 	}else if (p->kind() == ceps::ast::Ast_node_kind::int_literal || p->kind() == ceps::ast::Ast_node_kind::float_literal){
 		if (write_data){
+			if (info) *info |= Rawframe_generator::IS_BINARY;
 			std::uint64_t v;
 			if (p->kind() == ceps::ast::Ast_node_kind::int_literal) v = (std::uint64_t)value(as_int_ref(p));
 			else v = (std::uint64_t)value(as_double_ref(p));
@@ -467,34 +373,32 @@ size_t fill_raw_chunk(std::map<std::string /*systemstate*/, std::map< int, ceps:
 			}
 		}
 		return bit_width;
-	}
-
-	else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
+	} else if (p->kind() == ceps::ast::Ast_node_kind::string_literal){
+		 if (info) *info |= Rawframe_generator::IS_ASCII;
 		 std::string s = ceps::ast::value(ceps::ast::as_string_ref(p));
 		 int corr = 0;
 		 if (bit_offs % 8) corr = 8 - (bit_offs % 8);
 		 bit_offs += corr;
 		 if (write_data) memcpy((data+bit_offs/8),s.c_str(),s.length());
 		 return s.length()*8+corr;
-	}
-	else if (p->kind() == ceps::ast::Ast_node_kind::symbol && "Systemstate" == ceps::ast::kind(ceps::ast::as_symbol_ref(p)) ) {
+	} else if (p->kind() == ceps::ast::Ast_node_kind::symbol && "Systemstate" == ceps::ast::kind(ceps::ast::as_symbol_ref(p)) ) {
 		if(write_data){
 		 auto & state = ceps::ast::as_symbol_ref(p);
 		 auto it = encoding.find(ceps::ast::name(state));
 		 if (it == encoding.end()){
 			auto r = eval_locked_ceps_expr(smc,nullptr,&state,nullptr);
-			if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
+			if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
 			 delete r;}
 		 } else {
 			 auto func_it = it->second.find(bit_width*(signed_value?-1:1));
 			 if (func_it == it->second.end()){
 				 auto r = eval_locked_ceps_expr(smc,nullptr,&state,nullptr);
-				 if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
+				 if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
 				 	 delete r;}
 			 } else {
 				 auto func = func_it->second;
 				 auto r = eval_locked_ceps_expr(smc,nullptr,func,nullptr);
-				 if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs, bit_width,signed_value,write_data,host_byte_order);
+				 if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
 				 	 delete r;}
 			 }
 		 }
@@ -505,32 +409,33 @@ size_t fill_raw_chunk(std::map<std::string /*systemstate*/, std::map< int, ceps:
 	return 0;
 }
 
-size_t fill_raw_chunk(std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > const & encoding,
-		            size_t& header_length,State_machine_simulation_core* smc,
-		            std::vector<ceps::ast::Nodebase_ptr> pattern,
-		            size_t data_size,
-		            char* data,
-		            size_t bit_offs,
-		            size_t bit_width,
-		            bool signed_value,
-		            bool write_data,
-		            bool host_byte_order
-		            ){
-	size_t r=0;
-	for(auto p : pattern){
+size_t fill_raw_chunk(std::map<std::string /*systemstate*/,
+ std::map< int, ceps::ast::Nodebase_ptr> > const & encoding,
+ size_t& header_length,State_machine_simulation_core* smc,
+ std::vector<ceps::ast::Nodebase_ptr> pattern,
+ size_t data_size,
+ char* data,
+ size_t bit_offs,
+ std::uint32_t* info,
+ size_t bit_width,
+ bool signed_value,
+ bool write_data,
+ bool host_byte_order){
 
-		bool header = false;
-		if (p->kind() == ceps::ast::Ast_node_kind::structdef && !write_data){
-				auto& st = ceps::ast::as_struct_ref(p);
-				auto& nm = ceps::ast::name(st);
-				if (nm == "header") {header = true;}
-		}
-		auto rr = fill_raw_chunk(encoding,header_length,smc,p,data_size,data,bit_offs,bit_width,signed_value,write_data,host_byte_order);
-		if (header) {header_length = rr; }
-		r+=rr;
-		bit_offs += rr;
-	}
-	return r;
+ size_t r=0;
+ for(auto p : pattern){
+  bool header = false;
+  if (p->kind() == ceps::ast::Ast_node_kind::structdef && !write_data){
+   auto& st = ceps::ast::as_struct_ref(p);
+   auto& nm = ceps::ast::name(st);
+   if (nm == "header") {header = true;}
+  }
+  auto rr = fill_raw_chunk(encoding,header_length,smc,p,data_size,data,bit_offs,info,bit_width,signed_value,write_data,host_byte_order);
+  if (header) {header_length = rr; }
+  r+=rr;
+  bit_offs += rr;
+ }
+ return r;
 }
 
 size_t compute_size(size_t& header_length,State_machine_simulation_core* smc,std::vector<ceps::ast::Nodebase_ptr> pattern) {
@@ -539,7 +444,9 @@ size_t compute_size(size_t& header_length,State_machine_simulation_core* smc,std
             0,
             nullptr,
             0,
-            0,true,false,true);
+			nullptr,
+            0,
+			true,false,true);
 	return bits / 8 + ( (bits % 8) ? 1 : 0);
 }
 
@@ -559,12 +466,12 @@ size_t Podframe_generator::compute_size_of_msg(State_machine_simulation_core* sm
 
 
 
-void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,
+Rawframe_generator::gen_msg_return_t Podframe_generator::gen_msg(State_machine_simulation_core* smc,
 		                          size_t& data_size,
 								  std::map<std::string /*systemstate*/,
 								  std::map< int, ceps::ast::Nodebase_ptr> > const & encoding){
 
- if (smc == nullptr) return nullptr;
+ if (smc == nullptr) return gen_msg_return_t{0,nullptr};
  auto data_format = spec_["data"];
  if (data_format.nodes().empty()) {
   std::string id;
@@ -579,15 +486,16 @@ void* Podframe_generator::gen_msg(State_machine_simulation_core* smc,
  scope.children() = data_format.nodes();scope.owns_children() = false;
  frame_pattern = eval_locked_ceps_expr(smc,nullptr,&scope,nullptr);
 
- if (frame_pattern == nullptr) return nullptr;
+ if (frame_pattern == nullptr) return gen_msg_return_t{0,nullptr};
  auto chunk_size = compute_size(header_length_,smc,ceps::ast::nlf_ptr(frame_pattern)->children());
  data_size = chunk_size;
  char* data = new char[chunk_size];
  bzero(data,chunk_size);
- fill_raw_chunk(encoding,header_length_, smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0);
-
+ std::uint32_t info = 0;
+ fill_raw_chunk(encoding,header_length_, smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0,&info);
  scope.children().clear();
- return data;
+ if (info & Rawframe_generator::IS_BINARY) info = Rawframe_generator::IS_BINARY;
+ return gen_msg_return_t{info,(void*)data};
 }
 
 
@@ -897,7 +805,7 @@ bool Podframe_generator::read_msg(char* data,size_t size,
 
 
 void comm_sender_generic_tcp_out_thread(
- threadsafe_queue< std::tuple<char*,size_t,size_t,int>, std::queue<std::tuple<char*,size_t,size_t,int> >>* frames,
+ State_machine_simulation_core::frame_queue_t* frames,
  State_machine_simulation_core* smc,
  std::string ip,
  std::string port,
@@ -920,6 +828,7 @@ void comm_sender_generic_tcp_out_thread(
  size_t frame_size = 0;
  bool pop_frame = true;
  State_machine_simulation_core::dispatcher_thread_ctxt_t* ctxt = nullptr;
+ State_machine_simulation_core::frame_queue_elem_t frame_info;
 
  for(;;)
  {
@@ -932,12 +841,15 @@ void comm_sender_generic_tcp_out_thread(
 	io_err = false;
   }
   rp = nullptr;result = nullptr;
-  std::tuple<char*,size_t,size_t,int> frame_info;
+
   if (pop_frame) {
    q->wait_and_pop(frame_info);
    frame_size = std::get<1>(frame_info);
-   frame= std::get<0>(frame_info);
+   frame = (decltype(frame))std::get<1>(std::get<0>(frame_info));
+
   }
+  auto options = std::get<0>(std::get<0>(frame_info));
+
 
   pop_frame = false;
   if (!conn_established)
@@ -988,16 +900,7 @@ void comm_sender_generic_tcp_out_thread(
 
   auto len = frame_size;
   int wr = 0;
-//  std::cout <<"!!!!!"<< std::endl;
-//  for (size_t j = 0; j < len;++j) std::cout << frame[j];
-//  std::cout << std::endl;
 
-  if (som.size() == 0 && eof.size() == 0){
-   auto l = htonl(len);
-   if ( write(cfd, &l,sizeof(l)) != sizeof(l)){
-	io_err=true;conn_established=false;continue;
-   }
-  }
   if (som.size())
    if ( (wr = write(cfd, som.c_str(),eof.length() )) != (int)som.length())
    {
@@ -1005,12 +908,41 @@ void comm_sender_generic_tcp_out_thread(
     conn_established=false;
     continue;
    }
-  if (len && frame) if ( (wr = write(cfd, frame,len )) != (int)len)
-  {
-	io_err=true;
-	conn_established=false;
-	continue;
+  if (len && frame){
+   if (ctxt->websocket_server()){
+	bool fin = true;
+	bool ext1_len = len >= 126 && len <= 65535;
+	bool ext2_len = len > 65535;
+
+    std::uint16_t header = 0;
+    if (fin) header |= 0x80;
+    if(!ext1_len && !ext2_len) header |= len << 8;
+    else if (ext1_len) header |= 126 << 8;
+    else header |= 127 << 8;
+    if (options & Rawframe_generator::IS_BINARY) header |= 2;
+    else if ( (options & Rawframe_generator::IS_ASCII) || (options & Rawframe_generator::IS_JSON)) header |= 1;
+    if( (wr = write(cfd, &header,sizeof header )) != sizeof header){io_err=true;conn_established=false;continue;}
+    if (ext1_len)
+    {
+     std::uint16_t v = len;v = htons(v);
+     if( (wr = write(cfd, &v,sizeof v )) != sizeof v){io_err=true;conn_established=false;continue;}
+    }
+    if (ext2_len)
+    {
+     std::uint64_t v = len;v = htobe64(v);
+     if( (wr = write(cfd, &v,sizeof v )) != sizeof v){io_err=true;conn_established=false;continue;}
+    }
+    if ( (wr = write(cfd, frame,len )) != (int)len){io_err=true;conn_established=false;continue;}
+   } else {
+    if ( (wr = write(cfd, frame,len )) != (int)len)
+	{
+	 io_err=true;
+	 conn_established=false;
+	 continue;
+	}
+   }
   }
+
   if (eof.size())
    if ( (wr = write(cfd, eof.c_str(),eof.length() )) != (int)eof.length())
    {
@@ -1053,7 +985,7 @@ static void comm_act_as_websocket_server(State_machine_simulation_core::dispatch
   << "Sec-WebSocket-Accept: "
   << hash <<"\r\n\r\n";
  auto byteswritten = write(sck, response.str().c_str(),response.str().length());
- if (byteswritten == response.str().length()){
+ if (byteswritten == (ssize_t)response.str().length()){
   for(;;){
    auto frm = read_websocket_frame(sck);
    if (!frm.first) break;
@@ -1125,7 +1057,6 @@ void comm_generic_tcp_in_thread_fn(
  } else if (id >= 0){
   auto ctxt = smc->get_dispatcher_thread_ctxt(id);
   if (ctxt->websocket_server()) comm_act_as_websocket_server(ctxt,smc,claddr,sck,ev_id);
-
   close(sck);return;
  }
 

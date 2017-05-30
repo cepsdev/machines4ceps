@@ -76,7 +76,7 @@ namespace sockcan{
 std::map<std::string,int> sockcan::interfaces_to_sockets;
 std::mutex sockcan::interfaces_to_sockets_m;
 
-void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,int>, std::queue<std::tuple<char*, size_t,size_t,int> >>* channel,
+void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* channel,
         std::string can_bus, State_machine_simulation_core* smp,std::unordered_map<int,std::uint32_t>,bool);
 #endif	
 
@@ -218,7 +218,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 		auto can_id_mapping = ns["transport"]["canbus"]["can_id_mapping"];
 		if (can_id_mapping.size()){
 
-			for(auto i = 0; i!=can_id_mapping.nodes().size() && i+1!=can_id_mapping.nodes().size();i+=2){
+			for(std::size_t i = 0; i!=can_id_mapping.nodes().size() && i+1!=can_id_mapping.nodes().size();i+=2){
               auto frame_name_ = can_id_mapping.nodes()[i];
               auto frame_id_ = can_id_mapping.nodes()[i+1];
               if (frame_name_->kind() != ceps::ast::Ast_node_kind::identifier || frame_id_->kind() != ceps::ast::Ast_node_kind::int_literal)
@@ -277,7 +277,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 
 		out_encodings[channel_id] = encodings;
 
-		auto channel = new threadsafe_queue< std::tuple<char*, size_t,size_t,int>, std::queue<std::tuple<char*, size_t,size_t,int> >>;
+		auto channel = new State_machine_simulation_core::frame_queue_t;
 		this->set_out_channel(channel_id, channel);
 
 		if (start_comm_threads()){
@@ -287,7 +287,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 				new std::thread{ comm_sender_socket_can,
 				channel,
 				can_bus,
-                                this, channel_frame_to_id[channel_id],extended});
+                this, channel_frame_to_id[channel_id],extended});
 		}
 
 
@@ -343,7 +343,7 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 }
 #else
 //#define DEBUG std::cout
-void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,int>, std::queue<std::tuple<char*, size_t,size_t,int> >>* frames,
+void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames,
         std::string can_bus, State_machine_simulation_core* smc, std::unordered_map<int,std::uint32_t> frame2id, bool extended_can) {
 	int s = 0;
 	char* frame = nullptr;
@@ -383,12 +383,12 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,in
 	}
 	for (;;)
 	{
-		std::tuple<char*, size_t,size_t,int> frame_info;
+		State_machine_simulation_core::frame_queue_elem_t frame_info;
 
 		if (pop_frame) {
 			frames->wait_and_pop(frame_info);
 			frame_size = std::get<1>(frame_info);
-			frame = std::get<0>(frame_info);
+			frame = (decltype(frame))std::get<1>(std::get<0>(frame_info));
 			header_size = std::get<2>(frame_info);
 		}
 		pop_frame = false;
@@ -410,10 +410,22 @@ void comm_sender_socket_can(threadsafe_queue< std::tuple<char*, size_t,size_t,in
 			can_message.can_dlc = frame_size;
 			memcpy(can_message.data,frame,frame_size);
 			auto r = write(s, &can_message, sizeof(struct can_frame));
+			if (r != sizeof(struct can_frame)){
+				State_machine_simulation_core::event_t ev;
+				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: write failed.",0};
+				smc->main_event_queue().push(ev);
+				return;
+			}
 		}
 		else if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {
 			sockcan::map_can_frame(&can_message, frame, frame_size,header_size);
 			auto r = write(s, &can_message, sizeof(struct can_frame));
+			if (r != sizeof(struct can_frame)){
+				State_machine_simulation_core::event_t ev;
+				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: write failed.",0};
+				smc->main_event_queue().push(ev);
+				return;
+			}
 		}
 		if (frame != nullptr) { delete[] frame; frame = nullptr; }
 		pop_frame = true;

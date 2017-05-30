@@ -56,6 +56,7 @@ sm4ceps_plugin_int::Variant State_machine_simulation_core::argv(size_t j){
  if (r->kind() == ceps::ast::Ast_node_kind::string_literal)
  	 return sm4ceps_plugin_int::Variant{ceps::ast::value(ceps::ast::as_string_ref(r))};
  fatal_(-1,"Access to argv: Unsupported type.");
+ return {};
 }
 
 bool State_machine_simulation_core::is_global_event(std::string const & ev_name){
@@ -132,7 +133,7 @@ template <typename F> void handle_current_states_assertion(ceps::ast::Nodebase_p
 
 bool State_machine_simulation_core::fetch_event(event_rep_t& ev,
 												ceps::ast::Nodeset& sim,
-												int& pos,
+												std::size_t& pos,
 												states_t& states,
 												bool& states_updated,
 												std::vector<State_machine*>& on_enter_seq,
@@ -194,7 +195,7 @@ do{
 		}
 	}
 
-	for(; pos < (int)sim.nodes().size();++pos)
+	for(; pos < sim.nodes().size();++pos)
 	{
 		auto node_raw = sim.nodes()[pos];
 		if ( is_assignment_op(node_raw) )
@@ -411,7 +412,7 @@ do{
 
 
 	//std::cout << timed_events_pending() << std::endl;
-	if (pos >= (int)sim.nodes().size()){
+	if (pos >= sim.nodes().size()){
 		if (running_as_node() || timed_events_pending()){
 			//DEBUG << "[FETCH_EVENT_LOOP][WAIT_FOR_DATA]\n";
 			this->main_event_queue().wait_for_data();

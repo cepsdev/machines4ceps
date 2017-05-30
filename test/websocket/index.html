@@ -9,7 +9,13 @@
 <script src="http://bit.ly/cdn-bootstrap-jq"></script>
 <script>
  var ws = new WebSocket("ws://localhost:8181/gaga");
- ws.onopen = function(e){console.log('Connection to server opened.');}
+ ws.onopen = function(e){
+  console.log('Connection to server opened.');
+ }
+ ws.onmessage = function(e){
+  var msg = JSON.parse(e.data);
+  console.log(msg);
+ }
  function sendMessage(){ ws.send($('#message').val()); }
  </script>
 </head>

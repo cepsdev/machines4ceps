@@ -61,7 +61,7 @@ bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodeba
 
 extern void define_a_struct(State_machine_simulation_core* smc,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix);
 
-void comm_sender_generic_tcp_out_thread(threadsafe_queue< std::tuple<char*,size_t,size_t>, std::queue<std::tuple<char*,size_t,size_t> >>* frames,
+void comm_sender_generic_tcp_out_thread(State_machine_simulation_core::frame_queue_t* frames,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,
@@ -181,19 +181,6 @@ std::string qualified_id_to_str(std::vector<std::string> const & q_id)
 	}
 	return r;
 }
-
-static bool is_id_or_symbol(ceps::ast::Nodebase_ptr p, std::string& n, std::string& k){
-	using namespace ceps::ast;
-	if (p->kind() == Ast_node_kind::identifier) {n = name(as_id_ref(p));k = ""; return true;}
-	if (p->kind() == Ast_node_kind::symbol) {n = name(as_symbol_ref(p));k = kind(as_symbol_ref(p)); return true;}
-	return false;
-}
-
-static ceps::ast::Struct_ptr as_struct(ceps::ast::Nodebase_ptr p){
-	if (p->kind() == ceps::ast::Ast_node_kind::structdef) return ceps::ast::as_struct_ptr(p);
-	return nullptr;
-}
-
 
 bool resolve_imports(State_machine & sm, void* context)
 {
@@ -979,7 +966,7 @@ void State_machine_simulation_core::enter_sm(bool triggered_by_immediate_child_s
 }
 
 
-void State_machine_simulation_core::start_processing_init_script(ceps::ast::Nodeset& sim,int& pos,states_t states)
+void State_machine_simulation_core::start_processing_init_script(ceps::ast::Nodeset& sim,std::size_t& pos,states_t states)
 {
 #ifdef PRINT_DEBUG
 	DEBUG_FUNC_PROLOGUE
@@ -1013,6 +1000,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::eval_found_sym_undefined(
 	if (n == nullptr) return nullptr;
 	if (pred != nullptr && pred->kind() == ceps::ast::Ast_node_kind::binary_operator && ceps::ast::op(ceps::ast::as_binop_ref(pred)) == '.' ) return n;
 	fatal_(-1,"Object '"+ceps::ast::name(ceps::ast::as_symbol_ref(n))+"' of kind '"+ceps::ast::kind(ceps::ast::as_symbol_ref(n))+"' is not initialized.");
+	return nullptr;
 }
 
 
@@ -1473,6 +1461,7 @@ static ceps::ast::Nodebase_ptr compute_dot_expr_from_sm_state_given_as_string(st
 		} else
          return mkop(".",left_side,new ceps::ast::Identifier(sm_state.substr(beg)));
 	}
+	return nullptr;
 }
 
 static std::vector<ceps::ast::Nodebase_ptr> mk_sm_state_exprs(std::vector<std::string> const & v){
@@ -1572,9 +1561,9 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
     number_of_states_to_cover = 0;
 
 	//Distill information relating to state coverage
-	if (state_coverage_defined = ctx.start_of_covering_states_valid()){
+	if ( (state_coverage_defined = ctx.start_of_covering_states_valid()) ){
 		//number_of_states_to_cover = ctx.coverage_state_table.size();
-		for(auto i = 0;i != ctx.coverage_state_table.size();++i){
+		for(std::size_t i = 0;i != ctx.coverage_state_table.size();++i){
 		 if (ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::INIT) ||
 			 ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::FINAL)
 			 /*|| ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::SM)*/ ) continue;
@@ -1605,8 +1594,8 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 
 
 	//Distill information relating to transition coverage (aka edge- or "branch"-coverage)
-	if(transition_coverage_defined = ctx.start_of_covering_transitions_valid()){
-	   for(auto i = 0;i != ctx.coverage_transitions_table.size();++i){
+	if( (transition_coverage_defined = ctx.start_of_covering_transitions_valid()) ){
+	   for(std::size_t i = 0;i != ctx.coverage_transitions_table.size();++i){
 		   if (ctx.transitions[ctx.start_of_covering_transitions + i].start()) continue;
 		   auto from_state = ctx.transitions[ctx.start_of_covering_transitions + i].from;
 		   auto to_state = ctx.transitions[ctx.start_of_covering_transitions + i].to;
