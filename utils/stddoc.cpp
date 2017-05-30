@@ -81,14 +81,14 @@ static std::vector<ceps::ast::Nodebase_ptr> make_states_list(State_machine* sm, 
  return states;
 }
 
-static void make_compound_states_list(State_machine* sm,std::string prefix, std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env){
+/*static void make_compound_states_list(State_machine* sm,std::string prefix, std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env){
  using namespace sm4ceps::modelling::gensm;using namespace ceps::ast;using namespace std;
  vector<Nodebase_ptr> compound_states;
  for_all_children(sm,[&](State_machine& child){
 	 compound_states.push_back(( new strct{"li",prefix+child.id()} ) ->p_strct );
  });
  content.push_back((new strct{"ul",compound_states})->p_strct);
-}
+}*/
 
 static void make_event(State_machine* sm, State_machine::Transition::Event & ev,std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env){
  using namespace sm4ceps::modelling::gensm;using namespace ceps::ast;using namespace std;
@@ -185,7 +185,7 @@ static ceps::ast::Struct_ptr as_struct(ceps::ast::Nodebase_ptr p){
 }
 
 static void do_indent(std::ostream & os, std::size_t j){
-	for (auto h = 0; h != j; ++h ) os << " ";
+	for (std::size_t h = 0; h != j; ++h ) os << " ";
 }
 
 static bool is_atomic(ceps::ast::Nodebase_ptr p){
@@ -307,8 +307,8 @@ static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_ma
 	 if (!is_toplevel_sm(sm_.second)) continue;
 	 make_content_sm(sm_.second,sm_.first,content,smc,env);
  }
- for (auto element : env.associated_universe()->nodes()){
- }
+ /*for (auto element : env.associated_universe()->nodes()){
+ }*/
 }
 
 

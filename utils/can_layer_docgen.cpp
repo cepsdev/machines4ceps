@@ -24,13 +24,13 @@ static bool is_assignment(ceps::ast::Nodebase_ptr p){
 	return true;
 }
 
-static bool is_symbol(ceps::ast::Nodebase_ptr p, std::string& name, std::string& kind){
+/*static bool is_symbol(ceps::ast::Nodebase_ptr p, std::string& name, std::string& kind){
 	if (p == nullptr) return false;
 	if (p->kind() != ceps::ast::Ast_node_kind::symbol) return false;
 	name = ceps::ast::name(ceps::ast::as_symbol_ref(p));
 	kind = ceps::ast::kind(ceps::ast::as_symbol_ref(p));
 	return true;
-}
+}*/
 
 static bool get_one_and_only_symbol(ceps::ast::Nodebase_ptr p, std::string& name, std::string& kind){
 	if (p == nullptr) return false;
@@ -110,7 +110,7 @@ static bool get_symbols(ceps::ast::Nodebase_ptr p, std::set<std::pair<std::strin
 
 	if (p->kind() == ceps::ast::Ast_node_kind::func_call){
 	  ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(p);
-	  ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
+	  //ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
 	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
 	  std::vector<ceps::ast::Nodebase_ptr> args;
 	  if (params.children().size()) flatten_args(params.children()[0], args);
@@ -179,7 +179,7 @@ static std::string expr2asciimath(ceps::ast::Nodebase_ptr p, ceps::ast::Nodebase
 		if (params.children().size()) flatten_args(params.children()[0], args);
 		std::string r =ceps::ast::name(id) + "(";
         if (args.size()) {
-        	for(int i = 0; i!=args.size()-1;++i) r += expr2asciimath(args[i],p) + ",";
+        	for(std::size_t i = 0; i!=args.size()-1;++i) r += expr2asciimath(args[i],p) + ",";
         	r += expr2asciimath(args[args.size()-1],p);
         }
 		r+=")";
@@ -261,7 +261,7 @@ void sm4ceps::utils::dump_asciidoc_canlayer_doc(std::ostream& os,State_machine_s
    if (s.second.encodings.size()){
     os << "==== Encodings\n";
     os << "|===\n";
-    for(int i = 0; i != s.second.encodings.size();++i){
+    for(std::size_t i = 0; i != s.second.encodings.size();++i){
     	auto & e = s.second.encodings[i];
     	auto expr = expr2asciimath(e,nullptr);
     	os << "|";
