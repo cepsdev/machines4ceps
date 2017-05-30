@@ -14,6 +14,7 @@ frame{
  id{frm;};
  data{
  "{";
+ "\"name\":";"\"Latitude\",";
  "\"signal\":";as_string(sin(counter));
  "}";
  };

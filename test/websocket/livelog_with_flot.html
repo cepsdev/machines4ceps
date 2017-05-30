@@ -1,0 +1,195 @@
+<!DOCTYPE html><html>
+
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="ceps">
+
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script language="javascript" type="text/javascript" src="js/flot/jquery.flot.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+ var signal = [];
+ var signal_start_plot = 0;
+ var signal_end_plot = 0; // [signal_start_plot,signal_end_plot)
+ var data_max_points = 100;
+ var max_data_max_points = 2000; 
+ var data = [ [  ] ];
+ var slider_range = 2000;
+ var userdefined_range = false;
+ var signal_name = "";
+
+
+	$(function() {
+
+		var options = {
+			lines: {
+				show: true
+			},
+			points: {
+				show: true
+			},
+			xaxis: {
+				tickDecimals: 0,
+				tickSize: 0
+			}
+		};
+		
+
+
+		$.plot("#placeholder", data, options);
+
+		// Fetch one series, adding to what we already have
+
+
+            var counter = 0;
+            var ws = new WebSocket("ws://localhost:8181/gaga");
+            ws.onopen = function(e){
+                console.log('Connection to server opened.');
+            }
+            ws.onmessage = function(e){
+                var msg = JSON.parse(e.data);
+                var ss_old = signal_start_plot;
+                var se_old = signal_end_plot;
+                var sg_len_old = signal.length;
+                
+                var p = [counter,msg["signal"]];
+                signal.push(p);
+                if (signal_end_plot+1 == signal.length){
+                 if (userdefined_range){
+                  ++signal_start_plot;
+                 } else {
+                  if (signal_end_plot + 1 - signal_start_plot > data_max_points) signal_start_plot = signal.length - data_max_points;
+                 }
+                 signal_end_plot = signal.length;
+                }
+                
+                data[0] = signal.slice(signal_start_plot,signal_end_plot);
+                
+                //console.log(counter);
+                ++counter;
+                
+                if (signal_name.length == 0){
+                  signal_name = msg["name"];
+                  $( "#signal_name" ).html(signal_name);
+                }
+            }	
+            
+            function update_plot(){
+             $.plot("#placeholder", data, options);setTimeout(update_plot,1000);
+
+             
+             $( "#slider-range" ).slider( "values", 0, Math.round((signal_start_plot/signal.length)*slider_range) );
+             $( "#slider-range" ).slider( "values", 1, Math.round((signal_end_plot/signal.length)*slider_range));
+             $( "#amount" ).val( "" +signal_start_plot + " - " + signal_end_plot );
+             
+            }
+            setTimeout(update_plot,100);
+		
+	});
+
+	</script>
+
+<script>
+
+</script>
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">
+        <kbd>cepS<sub><i>Cloud</i></sub></kbd>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid">
+<div class="row">
+  <div class="col-xs-1 col-md-1"></div>
+  <div class="col-xs-8 col-md-8">
+  
+
+  <div class="panel panel-primary">
+  <div class="panel-heading"><span id="signal_name">&nbsp;&nbsp;&nbsp;/span></div>
+  <div class="panel-body">
+
+   <div id="placeholder" style="width: 100%;height: 600px;font-size: 14px;line-height: 1.2em;"></div>
+   <p>
+   <label for="amount">Range:</label>
+   <input type="text" id="amount" readonly style="border:0; color:#f6931f; font-weight:bold;">
+   </p>
+   <div id="slider-range" style="width: 100%;"></div>
+  </div>
+ </div>
+  </div>
+  <div class="col-xs-3 col-md-3">
+  
+  <ul class="list-group">
+  <li class="list-group-item">
+    <span class="badge">14</span>
+    Maximum
+  </li>
+ <li class="list-group-item">
+    <span class="badge">14</span>
+    Minimum
+ </li>
+</ul>
+
+<ul class="list-group">
+  <li class="list-group-item">
+    <span class="badge">14</span>
+    Maximum in selected range
+  </li>
+ <li class="list-group-item">
+    <span class="badge">14</span>
+    Minimum in selected range
+ </li>
+</ul>
+
+<ul class="list-group">
+  <li class="list-group-item">
+    <span class="badge">14Hz</span>
+    Frequency
+  </li>
+</ul>
+  
+  </div>
+</div>
+
+</div>
+
+
+<script>
+  $( function() {
+    $( "#slider-range" ).slider({
+      range: true,
+      min: 0,
+      max: slider_range,
+      values: [ 75, 300 ],
+      slide: function( event, ui ) {
+        userdefined_range = true;
+        var a = Math.round((ui.values[0] / slider_range)*(signal.length));
+        var b = Math.round((ui.values[1] / slider_range)*(signal.length));
+        if (b-a <= max_data_max_points) {
+         signal_start_plot = a;
+         signal_end_plot = b;        
+        
+        } else {
+         if (Math.abs(b-signal_end_plot) > Math.abs(a-signal_start_plot)){ signal_end_plot = b;signal_start_plot = signal_end_plot-max_data_max_points;}
+         else {signal_start_plot = a; signal_end_plot = signal_start_plot + max_data_max_points; }
+        }
+         $( "#amount" ).val( "" +signal_start_plot + " - " + signal_end_plot );
+      }
+    });
+  } );
+  </script>
+</html>

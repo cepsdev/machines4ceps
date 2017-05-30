@@ -75,14 +75,14 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,std::string som,std::string eof,std::string sock_name,bool reg_sock,bool reuse_sock,
-			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string,std::string));
+			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string,std::string,std::string,bool,bool));
 
 void comm_generic_tcp_in_thread_fn(int id,
 		 Rawframe_generator* gen,
 		 std::string ev_id,
 		 std::vector<std::string> params,
 		 State_machine_simulation_core* smc,
-		 sockaddr_storage claddr,int sck,std::string som,std::string eof);
+		 sockaddr_storage claddr,int sck,std::string som,std::string eof,std::string sock_name,bool reg_sock,bool reuse_sock);
 
 extern void print_qualified_id(std::ostream& os,std::vector<std::string> const & q_id);
 extern std::string qualified_id_to_str(std::vector<std::string> const & q_id);

@@ -835,7 +835,7 @@ void comm_sender_generic_tcp_out_thread(
   if (io_err && socket_owner){
    if(reg_socket){
 	 std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
-	 smc->get_reg_socks()[sock_name] = -1;
+	 smc->get_reg_socks()[sock_name] = std::tuple<int,bool>{-1,false};
 	}
 	close(cfd);
 	io_err = false;
@@ -859,8 +859,8 @@ void comm_sender_generic_tcp_out_thread(
     {
 	 std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
 	 auto it = smc->get_reg_socks().find(sock_name);
-	 if (it != smc->get_reg_socks().end() && it->second >= 0 && (!io_err || cfd != it->second)){
-	  cfd = it->second;
+	 if (it != smc->get_reg_socks().end() && std::get<1>(it->second) && (!io_err || cfd != std::get<0>(it->second) )){
+	  cfd = std::get<0>(it->second);
 	  conn_established = true;io_err = false;
 	  break;
 	 }
@@ -890,7 +890,7 @@ void comm_sender_generic_tcp_out_thread(
   conn_established = true;
   if(reg_socket){
    std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
-   smc->get_reg_socks()[sock_name] = cfd;
+   smc->get_reg_socks()[sock_name] = std::tuple<int,bool>{cfd,true};
   }
   }
   if (reuse_socket && sock_name.length() && ctxt == nullptr){
@@ -956,23 +956,37 @@ void comm_sender_generic_tcp_out_thread(
  if (conn_established && socket_owner){
   if(reg_socket){
    std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
-   smc->get_reg_socks()[sock_name] = -1;
+   smc->get_reg_socks()[sock_name] = std::tuple<int,bool>{-1,false};
   }
   close(cfd);
  }
 }
 
 
+template<typename F> struct cleanup{
+	F f_;
+	cleanup(F f):f_(f){}
+	~cleanup(){f_();}
+};
 
 static void comm_act_as_websocket_server(State_machine_simulation_core::dispatcher_thread_ctxt_t * ctx,
-		State_machine_simulation_core* smc,sockaddr_storage claddr, int sck,std::string ev_id){
+		State_machine_simulation_core* smc,sockaddr_storage claddr, int sck,std::string ev_id,std::string sock_name,bool reg_sock,bool reuse_sock){
+ auto cleanup_f = [smc,reg_sock,sck,sock_name](){
+  if (reg_sock){
+	 	std::lock_guard<std::recursive_mutex> g(smc->get_reg_sock_mtx());
+	 	smc->get_reg_socks()[sock_name] = std::tuple<int,bool>{-1,false};
+  }
+  close(sck);
+ };
+ cleanup<decltype(cleanup_f)> cl{cleanup_f};
+
  std::string unconsumed_data;
  auto rhr = read_http_request(sck,unconsumed_data);
  if (!std::get<0>(rhr)) return;
  auto const & attrs = std::get<2>(rhr);
  if (!field_with_content("Upgrade","websocket",attrs) || !field_with_content("Connection","Upgrade",attrs)) return;
  auto r = get_http_attribute_content("Sec-WebSocket-Key",attrs);
- if (!r.first){close(sck);return;}
+ if (!r.first)return;
  auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
  unsigned char digest[CryptoPP::SHA::DIGESTSIZE];
  CryptoPP::SHA().CalculateDigest(digest, (unsigned char *)phrase.c_str(),phrase.length());
@@ -986,6 +1000,10 @@ static void comm_act_as_websocket_server(State_machine_simulation_core::dispatch
   << hash <<"\r\n\r\n";
  auto byteswritten = write(sck, response.str().c_str(),response.str().length());
  if (byteswritten == (ssize_t)response.str().length()){
+  if (reg_sock){
+	std::lock_guard<std::recursive_mutex> g(smc->get_reg_sock_mtx());
+	smc->get_reg_socks()[sock_name] = std::tuple<int,bool>{sck,true};
+  }
   for(;;){
    auto frm = read_websocket_frame(sck);
    if (!frm.first) break;
@@ -1017,7 +1035,7 @@ void comm_generic_tcp_in_thread_fn(
  sockaddr_storage claddr,
  int sck,
  std::string som,
- std::string eof){
+ std::string eof,std::string sock_name,bool reg_sock,bool reuse_sock){
 
  DEBUG_FUNC_PROLOGUE2
  char host[1024] = {0};
@@ -1056,8 +1074,8 @@ void comm_generic_tcp_in_thread_fn(
   return;
  } else if (id >= 0){
   auto ctxt = smc->get_dispatcher_thread_ctxt(id);
-  if (ctxt->websocket_server()) comm_act_as_websocket_server(ctxt,smc,claddr,sck,ev_id);
-  close(sck);return;
+  if (ctxt->websocket_server()) comm_act_as_websocket_server(ctxt,smc,claddr,sck,ev_id,sock_name,reg_sock,reuse_sock);
+  return;
  }
 
  size_t frame_size = 0;
@@ -1182,7 +1200,7 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
 			     State_machine_simulation_core* smc,
 			     std::string ip,
 			     std::string port,std::string som,std::string eof,std::string sock_name,bool reg_sock,bool reuse_sock,
-			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string,std::string))
+			     void (*handler_fn) (int,Rawframe_generator*,std::string,std::vector<std::string> ,State_machine_simulation_core* , sockaddr_storage,int,std::string,std::string,std::string,bool,bool))
 {
  std::vector<std::thread*> client_handler_threads;
  socklen_t addrlen = sizeof(struct sockaddr_storage);
@@ -1194,9 +1212,9 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
    {
 	std::lock_guard<std::recursive_mutex>g(smc->get_reg_sock_mtx());
 	auto it = smc->get_reg_socks().find(sock_name);
-	if (it != smc->get_reg_socks().end()){
-	 cfd = it->second;
-	 new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,som,eof);
+	if (it != smc->get_reg_socks().end() && std::get<1>(it->second)){
+	 cfd = std::get<0>(it->second);
+	 new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,som,eof,sock_name,reg_sock, reuse_sock);
 	 return;
 	}
    }
@@ -1234,13 +1252,13 @@ void comm_generic_tcp_in_dispatcher_thread(int id,
   cfd = accept(lfd, (struct sockaddr*) &claddr, &addrlen);
   if (reg_sock){
    std::lock_guard<std::recursive_mutex> g(smc->get_reg_sock_mtx());
-   smc->get_reg_socks()[sock_name] = cfd;
+   smc->get_reg_socks()[sock_name] = std::tuple<int,bool>{cfd,false};
  }
  if (cfd == -1){
   continue;
  }
  if (handler_fn)
-  client_handler_threads.push_back(new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,som,eof));
+  client_handler_threads.push_back(new std::thread(*handler_fn,id,gen,ev_id,params,smc,claddr,cfd,som,eof,sock_name,reg_sock,reuse_sock));
  else close(cfd);
  }
  for(auto tp: client_handler_threads) tp->join();

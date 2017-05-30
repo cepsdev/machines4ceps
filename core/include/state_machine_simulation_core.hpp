@@ -675,7 +675,7 @@ public:
 		 decltype(native_handler)& get_native_handler() {return native_handler;}
 	};
 private:
-	std::map<std::string,int> registered_sockets_;
+	std::map<std::string,std::tuple<int,bool>> registered_sockets_;
 	std::recursive_mutex registered_sockets_mtx_;
 	std::set<state_rep_t> assert_not_in_end_states_;
 	std::set<state_rep_t> assert_in_end_states_;
@@ -691,7 +691,7 @@ public:
 	bool& generate_cpp_code() {return generate_cpp_code_;}
 
 	std::recursive_mutex& get_reg_sock_mtx(){return registered_sockets_mtx_;}
-	std::map<std::string,int>& get_reg_socks(){return registered_sockets_;}
+	decltype(registered_sockets_)& get_reg_socks(){return registered_sockets_;}
 	dispatcher_thread_ctxt_t* allocate_dispatcher_thread_ctxt(int & i) {
 		i = dispatcher_thread_ctxt_.size();dispatcher_thread_ctxt_.push_back(new dispatcher_thread_ctxt_t{});
 		return dispatcher_thread_ctxt_[dispatcher_thread_ctxt_.size()-1];
