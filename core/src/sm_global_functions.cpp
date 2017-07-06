@@ -811,6 +811,7 @@ static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulatio
 }
 
 static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
+
  if(args.size() == 2
 	&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
 	&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
