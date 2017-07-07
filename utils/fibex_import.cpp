@@ -304,11 +304,10 @@ struct fibex_signal{
     auto can_id_mapping = new ceps::ast::Struct("can_id_mapping");
     canbus->children().push_back(can_id_mapping);
     for(auto e : frame_triggerings){
-    	auto ftrig = frame_triggerings["fx:FRAME-TRIGGERING"];
+    	auto ftrig = e["fx:FRAME-TRIGGERING"];
     	auto frame_id = std::stoi(ftrig["fx:IDENTIFIER"]["fx:IDENTIFIER-VALUE"].as_str());
     	std::string frame_name = "";
     	std::string frame_ref = ftrig["fx:FRAME-REF"]["@ID-REF"];
-
     	auto it = frm_id_to_frame_name.find(frame_ref);
     	if (it == frm_id_to_frame_name.end()) smc->fatal_(-1,"Import of FIBEX data: channel "+channel["@ID"].as_str() +" frame triggering: frame id '"+frame_ref+"' doesn't exist" );
     	frame_name = it->second;
