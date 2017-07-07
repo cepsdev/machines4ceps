@@ -72,6 +72,10 @@ static std::string binop2str(int ch){
 		return ss.str();
 	}
 
+	if (ch == ceps::Cepsparser::token::REL_OP_GT_EQ) return ">=";
+	else if (ch == ceps::Cepsparser::token::REL_OP_LT_EQ) return "<=";
+
+
 	return "?";
 }
 
