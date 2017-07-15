@@ -1,0 +1,4 @@
+name{ "a simulation"; };
+author { "Tomas Prerovsky"; };
+bind{ port{"3010";}; };
+protocol{"websocket";};

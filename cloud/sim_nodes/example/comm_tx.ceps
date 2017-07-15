@@ -1,0 +1,60 @@
+
+
+
+sender
+{
+  id { can_out; };
+  transport { 
+   canbus { 
+    extended;
+    bus_id { "vcan0"; };
+    can_id_mapping{
+     ETC2; 0x18F00503;
+     PB_TVM2; 0x18FF0903;
+     PB_TVM3_IDX2; 0x18FF3503;
+     PB_TVM3_IDX3; 0x18FF3503;
+     PB_TIC_IDX0; 0x18FF5203;
+     static_for(n : root.PB_MalfunctionDataTransmission_segments.content()){
+      n;0x18FF0203;
+     }
+    };
+   }; 
+  };
+};
+
+send_periodically{can_out;ETC2;0.1*s;};
+send_periodically{can_out;PB_TVM2;0.1*s;};
+send_periodically{can_out;PB_TVM3_IDX2;0.1*s;};
+send_periodically{can_out;PB_TVM3_IDX3;0.1*s;};
+send_periodically{can_out;PB_TIC_IDX0;0.5*s;};
+send_periodically{can_out;PB_TIC_IDX1;0.5*s;};
+
+Event ev_trigger_PB_MalfunctionDataTransmission;
+ 
+sm{
+ PB_MalfunctionDataTransmission_sender__;
+ cover{edges_upto_1;};
+ states{Initial;root.PB_MalfunctionDataTransmission_segments.content();};
+ 
+ on_enter{start_periodic_timer(1.25*s,ev_trigger_PB_MalfunctionDataTransmission);};
+ Actions{
+  send_seg_1{
+   send(as_identifier(text(root.PB_MalfunctionDataTransmission_segments.content().at(0))),can_out);
+  };
+  send_seg_2{
+   send(as_identifier(text(root.PB_MalfunctionDataTransmission_segments.content().at(1))),can_out);
+  };
+  send_seg_3{
+   send(as_identifier(text(root.PB_MalfunctionDataTransmission_segments.content().at(2))),can_out);
+  };
+  send_seg_4{
+   send(as_identifier(text(root.PB_MalfunctionDataTransmission_segments.content().at(3))),can_out);
+  };  
+ };
+ t{Initial;root.PB_MalfunctionDataTransmission_segments.content().at(0);};
+ t{root.PB_MalfunctionDataTransmission_segments.content().at(0);root.PB_MalfunctionDataTransmission_segments.content().at(1);ev_trigger_PB_MalfunctionDataTransmission;send_seg_1;};
+ t{root.PB_MalfunctionDataTransmission_segments.content().at(1);root.PB_MalfunctionDataTransmission_segments.content().at(2);ev_trigger_PB_MalfunctionDataTransmission;send_seg_2;};
+ t{root.PB_MalfunctionDataTransmission_segments.content().at(2);root.PB_MalfunctionDataTransmission_segments.content().at(3);ev_trigger_PB_MalfunctionDataTransmission;send_seg_3;};
+ t{root.PB_MalfunctionDataTransmission_segments.content().at(3);Initial;ev_trigger_PB_MalfunctionDataTransmission;send_seg_4;};
+};
+
