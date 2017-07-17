@@ -1,0 +1,70 @@
+
+
+
+
+
+
+
+frame{
+ id{publisher_comm_layer_frames_reply;};
+ data{
+ "[";
+  static_for(e : root.frame) {
+   "\"";text(e.id.content());"\"";if(!last)",";
+  }
+  "]";
+ };
+};
+
+Event pub_request;
+
+frame{
+ id{publisher_internal_frm;};
+ data{ };
+};
+
+frame{
+ id{publisher_sim_name_reply;};
+ data{
+  text(root.package.name.content());
+ };
+};
+
+receiver
+{
+ id { publisher_in; };
+ when { publisher_internal_frm; };
+ emit { pub_request; };
+ transport
+ {
+  websocket_server;
+  generic_tcp_in
+  {
+   port { "8181"; };
+   ip { "127.0.0.1"; };
+  };
+ };
+};
+
+sender
+{
+ id{publisher_out;};
+ transport {use { publisher_in; };};
+};
+
+statemachine{
+ publisher_dispatcher;
+ cover{edges_upto_1;};
+ states{Initial;};
+ Actions{
+  msg_arrived{
+   print("Received data: ", argv(1),"\n");
+   if (argv(1) == "sim_name"){
+    send(publisher_sim_name_reply,publisher_out);
+   } else if (argv(1) == "comm_layer_frames"){
+    send(publisher_comm_layer_frames_reply,publisher_out);
+   }
+  };
+ };
+ t{Initial;Initial;pub_request;msg_arrived;};
+};

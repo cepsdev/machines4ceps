@@ -1,4 +1,4 @@
-name{ "a simulation"; };
-author { "Tomas Prerovsky"; };
-bind{ port{"3010";}; };
-protocol{"websocket";};
+package{
+ name{ "Transmission Control System (Renk)"; };
+ author { "Tomas Prerovsky"; };
+};
