@@ -30,6 +30,13 @@ frame{
  };
 };
 
+frame{
+ id{publisher_sim_uri_reply;};
+ data{
+  text(root.package.uri.content());
+ };
+};
+
 receiver
 {
  id { publisher_in; };
@@ -63,8 +70,17 @@ statemachine{
     send(publisher_sim_name_reply,publisher_out);
    } else if (argv(1) == "comm_layer_frames"){
     send(publisher_comm_layer_frames_reply,publisher_out);
+   } else if (argv(1) == "sim_uri"){
+    send(publisher_sim_uri_reply,publisher_out);
    }
   };
  };
  t{Initial;Initial;pub_request;msg_arrived;};
 };
+
+
+/*static_for(e : root.frame){
+ text(e.id.content());
+ static_for(ee : data.fetch_recursively_symbols().is_kind("Systemstate");
+
+}*/

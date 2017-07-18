@@ -120,7 +120,7 @@ class Dotgenerator{
 		return "label=\""+s->id()+"\"";
 	}
 
-	std::string edge_label(State_machine::Transition const & t,State_machine* sm){
+        std::string edge_label(State_machine::Transition const & t,State_machine* ){
 	  std::string label_content;
 
 	  for (auto ev : t.events())

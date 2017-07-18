@@ -86,8 +86,10 @@ void comm_generic_tcp_in_thread_fn(int id,
 		 State_machine_simulation_core* smc,
 		 sockaddr_storage claddr,int sck,std::string som,std::string eof);
 
-std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_files(	std::vector<std::string> const & file_names,
-						std::string& last_file_processed)
+
+std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_files(
+        std::vector<std::string> const & file_names,
+        std::string& last_file_processed)
 {
 	std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
 	for(auto const & file_name : file_names)
@@ -118,7 +120,6 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 		if (parser.parse() != 0 || driver.errors_occured())
 			fatal_(ERR_CEPS_PARSER, file_name);
 
-
 		ceps::interpreter::evaluate(current_universe(),
 									driver.parsetree().get_root(),
 									ceps_env_current().get_global_symboltable(),
@@ -127,7 +128,7 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 									);
 	}//for
 	return generated_nodes;
-}//process_def_files
+}//process_files
 
 
 std::string gen_guard_id(std::string qual_sim_id, int ctr)
@@ -744,7 +745,7 @@ bool State_machine_simulation_core::compute_successor_states_kernel_under_event(
 												 std::map<state_rep_t,state_rep_t>& pred,
 												 states_t& states_without_transition,
 												 ceps::Ceps_Environment& ceps_env,
-												 ceps::ast::Nodeset universe,
+                                                 ceps::ast::Nodeset ,
 												 std::map<state_rep_t,
 												 std::vector<State_machine::Transition::Action> >& associated_actions,
 												 std::set<state_rep_t> & remove_states,
@@ -1523,9 +1524,9 @@ static inline State_machine* get_toplevel(State_machine* sm){
  for(;sm->parent();sm = sm->parent());return sm;
 }
 
-ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd_line const& result_cmd_line,
-						ceps::Ceps_Environment& ceps_env,
-						ceps::ast::Nodeset& universe){
+ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd_line const& /*result_cmd_line*/,
+                        ceps::Ceps_Environment& /*ceps_env*/,
+                        ceps::ast::Nodeset& /*universe*/){
 	using namespace ceps::ast;
 	ceps::ast::Nodeset result;
 
