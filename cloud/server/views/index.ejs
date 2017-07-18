@@ -9,7 +9,7 @@
                             
                                 <% sim_cores.forEach(function(sim_core) { %>
                                 <% if (sim_core.ws === undefined) return; %>
-                                <a href="#" class="list-group-item">
+                                <a href="<%= sim_core.uri %>" class="list-group-item">
                                     <i class="fa fa-tasks fa-fw"></i><%= sim_core.name %> 
                                     <span class="pull-right text-muted small"><em>Uptime Here</em>
                                     </span>

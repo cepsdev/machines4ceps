@@ -1,16 +1,21 @@
 
 
 
-
-
-
-
 frame{
  id{publisher_comm_layer_frames_reply;};
  data{
  "[";
   static_for(e : root.frame) {
-   "\"";text(e.id.content());"\"";if(!last)",";
+   "{";
+    "\"name\":";"\"";text(e.id.content());"\"";
+    ",";
+    "\"signals\":";
+    "[";
+    static_for(ee : e.data.fetch_recursively_symbols().is_kind("Systemstate").to_text().sort().unique()){
+     "{"; "\"name\":"; "\"";ee;"\""; "}"; if(!last)",";
+    }
+    "]";
+   "}"; if(!last)",";
   }
   "]";
  };
@@ -78,9 +83,3 @@ statemachine{
  t{Initial;Initial;pub_request;msg_arrived;};
 };
 
-
-/*static_for(e : root.frame){
- text(e.id.content());
- static_for(ee : data.fetch_recursively_symbols().is_kind("Systemstate");
-
-}*/
