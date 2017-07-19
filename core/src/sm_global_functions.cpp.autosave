@@ -181,7 +181,50 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 
         std::vector<ceps::ast::Nodebase_ptr> result_vec;
 
-        for(auto p: generated_nodes){
+        for(auto n: generated_nodes){
+            if ( is_assignment_op(n) )
+             {
+                auto & node = as_binop_ref(n);
+                std::string state_id;
+            
+                        if (is_assignment_to_guard(node))
+                        {
+                            eval_guard_assign(node);
+                        } else if (is_assignment_to_state(node,state_id))
+                        {
+            
+            
+                            auto rhs = eval_locked_ceps_expr(this,containing_smp,node.right(),n);
+            
+                            if (rhs == nullptr) continue;
+            
+                            if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
+                            {
+                                std::lock_guard<std::recursive_mutex>g(states_mutex());
+                                std::string id = ceps::ast::name(ceps::ast::as_id_ref(node.right()));
+                                auto sym = this->ceps_env_current().get_global_symboltable().lookup(id);
+                                if (sym != nullptr) {
+                                  //std::cout <<  *(ceps::ast::Nodebase_ptr)sym->payload << std::endl;
+                                  if (sym->payload) {get_global_states()[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;}
+                                } else {
+                                 auto it = type_definitions().find(id);
+                                 if (it == type_definitions().end())
+                                        fatal_(-1,id+" is not a type.\n");
+                                 define_a_struct(this,ceps::ast::as_struct_ptr(it->second),get_global_states(),name(as_symbol_ref(node.left())) );
+                                }
+                            } else 	{ std::lock_guard<std::recursive_mutex>g(states_mutex());get_global_states()[state_id] = rhs;}
+                        }
+                        else {
+                         std::stringstream ss;ss << *n;
+                         fatal_(-1,"Unsupported assignment:"+ss.str()+"\n");
+                        }
+            
+                    
+            
+            
+            
+            
+            
             auto r = ceps::interpreter::evaluate(p,
                     ceps_env_current().get_global_symboltable(),
                     ceps_env_current().interpreter_env(),p,nullptr	);

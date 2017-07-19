@@ -9,7 +9,7 @@ val GEAR_SELECTOR_FIRST_BACKWARD    = 4;
 val GEAR_SELECTOR_PIVOT             = 5;
 
 TransmissionRequestedRange = GEAR_SELECTOR_NEUTRAL;
-TransmissionCurrentRange   = GEAR_SELECTOR_NEUTRAL;
+TransmissionCurrentRange   = GEAR_SELECTOR_PIVOT;
 
 static_for(i : 0 .. 27) {
  as_symbol("MalfunctionDataTransmission_"+text(i),

@@ -1,11 +1,15 @@
 const WebSocket = require('ws');
 
+let sim_core_counter = 0;
+
 let sim_cores = [
-    { url:"ws://localhost:8181/",
+    { url:"ws://localhost:8181",
+      signal_url:"ws://localhost:8182",
       ws:undefined,
       name:"Not Available",
       uri:"?",
-      comm_layer : { frames : [] }
+      comm_layer : { frames : [] },
+      index :  sim_core_counter
     }
 ];
 
@@ -26,7 +30,20 @@ function sim_core_init(sim_core){
  let frame_names_received = (msg) => {
      sim_core.ws.removeListener('message', frame_names_received);
      sim_core.comm_layer.frames = JSON.parse(msg);
+     sim_core.index = ++ sim_core_counter;
      console.log("Simulation Core '"+sim_core.name+"'@"+sim_core.uri+" online.");
+     let frame_counter = 0;
+     let sig_counter = 0;
+     sim_core.signals = [];
+     for(let frame of sim_core.comm_layer.frames){
+         frame.index = frame_counter++;
+         for(let sig of frame.signals){
+             sig.index = sig_counter++;
+             sim_core.signals.push(sig.name);             
+         }
+         //console.log(frame);
+     }
+    console.log(sim_core.ws._socket.remoteAddress);
  };
  let sim_uri_received = (msg) => {
     sim_core.uri = msg;
@@ -74,15 +91,31 @@ app.set("view engine", "ejs");
 app.use(express.static(publicPath));
 
 app.get("/", function(req, res) {
-    res.render("index",{sim_cores : sim_cores});
+    res.render("index",{page_title:"Home", sim_cores : sim_cores});
 });
 
-app.get("/:simid", function(req, res) {
- if (req.params.simid != "favicon.ico") {
-     let score = get_sim_core_by_uri(req.params.simid);
-     if (score != undefined) {res.render("sim_main",{sim_core : score}); return;}
+app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
+ if (req.params[3] != undefined) {
+    let score = get_sim_core_by_uri(req.params[3]);
+    if (score != undefined) {
+         res.render("sim_main",{page_title: score.name,sim_core : score}); 
+    }
+ } else {
+   let score_idx = req.params[1];
+   let sig_idx = req.params[2];
+   let score = undefined;
+   for(let s of sim_cores) if (s.index == score_idx){ score=s;break; }
+   if (score === undefined) {res.status=404;res.send("404");return;} 
+   let signalname = score.signals[sig_idx];
+   if (signalname === undefined) {res.status=404;res.send("404");return;}
+   let sig = undefined;
+   for(let f of score.comm_layer.frames)
+    for (let s of f.signals) if (s.index == sig_idx){sig = s;break;}
+   if (sig === undefined) {res.status=404;res.send("404");return;}
+   
+   res.render("signal_details",{page_title: score.name +"-"+ signalname,sim_core : score,signal:sig,signal_ws:score.signal_url});   
  }
- res.status(404);res.send("404");
 });
+
 
 http.createServer(app).listen(3000);
