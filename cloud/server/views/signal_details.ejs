@@ -29,11 +29,17 @@
  var slider_range = 2000;
  var userdefined_range = false;
  var signal_name = "";
-
+ var ws_cmd = undefined;
 
  $(function() {
     var counter = 0;
     var ws = new WebSocket("<%= signal_ws %>");
+    ws_cmd = new WebSocket("<%= sim_core.command_url %>");
+
+    ws_cmd.onopen = function(e){
+        console.log('Connection to command server opened.');
+    }
+    
     ws.onopen = function(e){
         console.log('Connection to server opened.');
         ws.send("<%= signal.name %>");
@@ -63,6 +69,62 @@
         //$( "#slider-range" ).slider( "values", 1, Math.round((signal_end_plot/signal.length)*slider_range));
         //$( "#amount" ).val( "" +signal_start_plot + " - " + signal_end_plot );
     }
+
+    $('#btn-console').on('click', function (e) {
+     let cmd = $('#btn-console-input').val();
+     if (ws_cmd != undefined){
+         ws_cmd.send(cmd);
+         $('#panel-body-terminal-list').append(
+             '<li>'+
+             //'<span class="chat-img pull-left">'+
+             //'<button type="button" class="btn btn-info btn-circle"><i class="fa fa-check"></i></button>'+
+             //'<button type="button" class="btn btn-info btn-circle"><i class="fa fa-times"></i></button>'+
+             //'</span>'+
+             '<div class="chat-body clearfix">'+                                       
+             '<p><code>'+
+             cmd+
+             '</code></p>'+
+             '</div>'+
+             '</li>'
+         );
+     }
+    });
+
+    ws_cmd.onmessage = function(e){
+        
+        var msg = JSON.parse(e.data);
+  
+        if (msg.error != 0){
+            $('#panel-body-terminal-list').append(
+             '<li >'+
+             //'<span class="chat-img pull-left">'+
+             //'<button type="button" class="btn btn-info btn-circle"><i class="fa fa-check"></i></button>'+
+             //'<button type="button" class="btn btn-info btn-circle"><i class="fa fa-times"></i></button>'+
+             //'</span>'+
+             '<div class="chat-body clearfix">'+                                       
+             '<div class="alert alert-danger">'+
+             msg.result+
+             '</div>'+
+             '</div>'+
+             '</li>'
+         );
+        } else {
+            $('#panel-body-terminal-list').append(
+             '<li >'+
+             //'<span class="chat-img pull-left">'+
+             //'<button type="button" class="btn btn-info btn-circle"><i class="fa fa-check"></i></button>'+
+             //'<button type="button" class="btn btn-info btn-circle"><i class="fa fa-times"></i></button>'+
+             //'</span>'+
+             '<div class="chat-body clearfix">'+                                       
+             '<div class="alert alert-success">'+
+             msg.result+
+             '</div>'+
+             '</div>'+
+             '</li>'
+         );          
+        }
+    }
+
     setTimeout(update_plot,100);	
 });
 </script>
@@ -101,34 +163,32 @@
 <div class="col-lg-4">
                     <div class="chat-panel panel panel-default">
                         <div class="panel-heading">
-                            <i class="fa fa-comments fa-fw"></i> Console
+                            <i class="fa fa-terminal fa-fw"></i> Terminal
                         <!-- /.panel-heading -->
                         <div class="panel-body">
-                            <ul class="chat">
+                            <ul class="chat" id="panel-body-terminal-list">
+
                                 <!--li class="left clearfix">
                                     <span class="chat-img pull-left">
-                                        <img src="http://placehold.it/50/55C1E7/fff" alt="User Avatar" class="img-circle" />
+                                        <button type="button" class="btn btn-info btn-circle"><i class="fa fa-check"></i></button>
+                                        <button type="button" class="btn btn-info btn-circle"><i class="fa fa-times"></i></button>
                                     </span>
-                                    <div class="chat-body clearfix">
-                                        <div class="header">
-                                            <strong class="primary-font">Jack Sparrow</strong>
-                                            <small class="pull-right text-muted">
-                                                <i class="fa fa-clock-o fa-fw"></i> 12 mins ago
-                                            </small>
-                                        </div>
+                                    <div class="chat-body clearfix">                                        
                                         <p>
-                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum ornare dolor, quis ullamcorper ligula sodales.
+                                            1+1.
                                         </p>
                                     </div>
                                 </li-->
+
                             </ul>
                         </div>
                         <!-- /.panel-body -->
                         <div class="panel-footer">
                             <div class="input-group">
-                                <input id="btn-input" type="text" class="form-control input-sm" placeholder="Type command here..." />
+                                <!--input id="btn-console-input" type="text" class="form-control input-sm" placeholder="Type command here..." /-->
+                                <textarea id="btn-console-input" type="text" class="form-control input-sm" placeholder="Type command here..."></textarea>
                                 <span class="input-group-btn">
-                                    <button class="btn btn-warning btn-sm" id="btn-console">
+                                    <button class="btn btn-default" id="btn-console">
                                         Send
                                     </button>
                                 </span>

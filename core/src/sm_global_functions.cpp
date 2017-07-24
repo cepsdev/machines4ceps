@@ -82,7 +82,15 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 return args[0];
 	 else if (args[0]->kind () == ceps::ast::Ast_node_kind::int_literal)
 		 return new ceps::ast::String(std::to_string(ceps::ast::value(ceps::ast::as_int_ref(args[0]))));
-	 fatal_(-1,"as_text: illformed argument(s).");
+     else if (args[0]->kind () == ceps::ast::Ast_node_kind::none)
+         return new ceps::ast::String("(null)");
+     else if (args[0]->kind () == ceps::ast::Ast_node_kind::float_literal)
+         return new ceps::ast::String(std::to_string(ceps::ast::value(ceps::ast::as_double_ref(args[0]))));
+     else{
+         std::stringstream ss;
+         ss << *args[0];
+         return new ceps::ast::String(ss.str());
+     }
 	}else if (id == "argv")
 	{
 		auto const & args =  params->children();
@@ -140,6 +148,13 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			if(found) break;
 		}
 	  return new ceps::ast::Int( found ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+    } else if (id == "error_msg") {
+        if(args.size() != 1 ||  args[0]->kind() != ceps::ast::Ast_node_kind::error) fatal_(-1,"Function '"+id+"' expects one argument of type Error");
+        return new ceps::ast::String(ceps::ast::err_msg(ceps::ast::as_error_ref(args[0])));
+    } else if (id == "is_error") {
+      if(args.size() != 1 ) fatal_(-1,"Function '"+id+"' expects one argument");
+      bool is_error = args[0]->kind() == ceps::ast::Ast_node_kind::error;
+      return new ceps::ast::Int( is_error ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
     } else if (id == "eval_fragment") {
         if(args.size() != 1 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) fatal_(-1,"Function '"+id+"' expects one string as argument");
         std::stringstream ss; ss << ceps::ast::value(ceps::ast::as_string_ref(args[0]));
@@ -148,7 +163,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
         ceps::Cepsparser parser{driver};
 
         if (parser.parse() != 0 || driver.errors_occured())
-            fatal_(ERR_CEPS_PARSER, ss.str());
+            return new ceps::ast::Error("Syntax Error.",0,nullptr);
+
         std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
 
 
@@ -167,7 +183,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
         ceps_env_current().interpreter_env().set_func_callback(nullptr,nullptr);
         ceps_env_current().interpreter_env().set_binop_resolver(nullptr,nullptr);
 
-        ceps::interpreter::evaluate(current_universe(),
+        std::vector<ceps::ast::Nodebase_ptr> result_vec;
+        try{
+         ceps::interpreter::evaluate(current_universe(),
                                              driver.parsetree().get_root(),
                                              ceps_env_current().get_global_symboltable(),
                                              ceps_env_current().interpreter_env(),
@@ -175,19 +193,43 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
                                              );
 
 
-        ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
-        ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
-        ceps_env_current().interpreter_env().symbol_mapping()=t;
+         ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
+         ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
+         ceps_env_current().interpreter_env().symbol_mapping()=t;
 
-        std::vector<ceps::ast::Nodebase_ptr> result_vec;
-
-        for(auto p: generated_nodes){
-            auto r = ceps::interpreter::evaluate(p,
-                    ceps_env_current().get_global_symboltable(),
-                    ceps_env_current().interpreter_env(),p,nullptr	);
+         for(auto n: generated_nodes){
+          if ( is_assignment_op(n) ){
+           auto & node = as_binop_ref(n);
+           std::string state_id;
+           if (is_assignment_to_guard(node)){
+              eval_guard_assign(node);
+              result_vec.push_back(node.left());
+           } else if (is_assignment_to_state(node,state_id))  {
+              auto rhs = ceps::interpreter::evaluate(node.right(),
+                                                        ceps_env_current().get_global_symboltable(),
+                                                        ceps_env_current().interpreter_env(),n,nullptr	);
+              if (rhs == nullptr) continue;
+              get_global_states()[state_id] = rhs; result_vec.push_back(rhs);
+           }
+         }  else {
+            auto r = ceps::interpreter::evaluate(n,
+                   ceps_env_current().get_global_symboltable(),
+                   ceps_env_current().interpreter_env(),n,nullptr	);
             result_vec.push_back(r);
-        }
-        if (result_vec.size() == 1) return result_vec[0];
+          }
+        }//for
+       } catch (ceps::interpreter::semantic_exception & se)
+       {
+            return new ceps::ast::Error(se.what(),0,nullptr);
+       }
+       catch (std::runtime_error & re)
+       {
+            return new ceps::ast::Error(re.what(),0,nullptr);
+       }
+
+       if (result_vec.size() == 1) return result_vec[0];
+       if (result_vec.size() == 0) return  new ceps::ast::None;
+       return nullptr;
     } else 	if(id == "shadow_state") {
 	 if(args.size() != 2) fatal_(-1,"Function '"+id+"' expects two arguments");
 	 auto shadow_state = resolve_state_or_transition_given_a_qualified_id(args[0],active_smp);

@@ -3,8 +3,10 @@ const WebSocket = require('ws');
 let sim_core_counter = 0;
 
 let sim_cores = [
-    { url:"ws://localhost:8181",
+    { 
+      url:"ws://localhost:8181",
       signal_url:"ws://localhost:8182",
+      command_url:"ws://localhost:8192",
       ws:undefined,
       name:"Not Available",
       uri:"?",

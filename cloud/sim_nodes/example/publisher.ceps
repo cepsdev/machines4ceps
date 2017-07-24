@@ -24,6 +24,65 @@ frame{
  data{ };
 };
 
+
+//Remote Cmds
+
+Event pub_remote_cmd;
+
+receiver
+{
+ id { publisher_cmd_in; };
+ when { publisher_internal_frm; };
+ emit { pub_remote_cmd; };
+ transport
+ {
+  websocket_server;
+  generic_tcp_in
+  {
+   port { "8192"; };
+   ip { "127.0.0.1"; };
+  };
+ };
+};
+
+sender
+{
+ id{publisher_cmd_out;};
+ transport {use { publisher_cmd_in; };};
+};
+
+Systemstate publisher_remote_cmd_handler_eval_result;
+
+frame{
+ id{publisher_remote_cmd_handler_reply;};
+ data{
+  "{";
+  if (is_error(publisher_remote_cmd_handler_eval_result)){
+   "\"error\":1,";
+   "\"result\":";"\"";error_msg(publisher_remote_cmd_handler_eval_result);"\"";
+  } else {
+  "\"error\":0,";
+  "\"result\":";"\"";as_text(publisher_remote_cmd_handler_eval_result);"\"";
+  }
+  "}";
+ };
+};
+
+statemachine{
+ publisher_remote_cmd_handler;
+ cover{edges_upto_1;};
+ states{Initial;};
+ Actions{
+  msg_arrived{
+   print("Received cmd: '", argv(1),"'\n");
+   publisher_remote_cmd_handler_eval_result = eval_fragment(argv(1));
+   send(publisher_remote_cmd_handler_reply,publisher_cmd_out);
+  };
+ };
+ t{Initial;Initial;pub_remote_cmd;msg_arrived;};
+};
+
+
 //Signal Logger
 
 Systemstate publisher_internal_logged_state_name;
@@ -72,6 +131,7 @@ some_random_number_low = 0;
 
 Systemstate a;
 a = 1;
+Systemstate eval_r;
 
 statemachine{
  publisher_signal_logger;
@@ -79,13 +139,10 @@ statemachine{
  states{Initial;Logging;Error;};
  Actions{
   starttimer{
-   start_periodic_timer(0.1*s,signal_logger_dump,signal_logger_dump_timer);
+   start_periodic_timer(0.02*s,signal_logger_dump,signal_logger_dump_timer);
   };
   dump{
    send(publisher_internal_frm_signal_logging,publisher_signal_logger_out);
-
-   eval_fragment("a=a+1;");
-   print(some_random_number_low,"\n");
   };
  };
  t{Initial;Logging;starttimer;};
