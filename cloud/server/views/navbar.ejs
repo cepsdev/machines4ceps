@@ -8,6 +8,31 @@
                     <span class="icon-bar"></span>
                 </button>
                 <a class="navbar-brand" href="http://www.ceps.technology"><kbd style="background-color:darkslateblue;">cepS<sub><i>Cloud</i></sub></kbd></a>
+
+
+
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle btn-lg" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">New <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#" id="action_add_fibex" >Add FIBEX</a></li>
+            <li><a href="#">Create Custom Simulation</a></li>
+          </ul>
+        </li>
+      </ul>
+
+
+
+
+
+
+
+
+
+
+
             </div>
             <!-- /.navbar-header -->
 <!-- Deleted Top Right Nav -->            
@@ -16,20 +41,11 @@
             <div class="navbar-default sidebar" role="navigation">
                 <div class="sidebar-nav navbar-collapse">
                     <ul class="nav" id="side-menu">
-                        <li class="sidebar-search">
-                            <div class="input-group custom-search-form">
-                                <input type="text" class="form-control" placeholder="Search...">
-                                <span class="input-group-btn">
-                                <button class="btn btn-default" type="button">
-                                    <i class="fa fa-search"></i>
-                                </button>
-                            </span>
-                            </div>
-                            <!-- /input-group -->
-                        </li>
+                        
                         <li>
                             <a href="/"><i class="fa fa-dashboard fa-fw"></i> Home</a>
                         </li>
+ <% if (sim_core != undefined) { %>                       
                         <li>
                             <a href="#"><i class="fa fa-exchange"></i> Frames<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
@@ -49,7 +65,8 @@
 
                             </ul>
                             <!-- /.nav-second-level -->
-                        </li>                   
+                        </li>
+<% } %>                   
                     </ul>
                 </div>
                 <!-- /.sidebar-collapse -->

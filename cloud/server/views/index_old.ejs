@@ -1,0 +1,26 @@
+<% include header %>
+ <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-bar-chart-o fa-fw"></i> Available Simulations
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div class="list-group">
+                            
+                                <% sim_cores.forEach(function(sim_core) { %>
+                                <% if (sim_core.ws === undefined) return; %>
+                                <a href="<%= sim_core.uri %>" class="list-group-item">
+                                    <i class="fa fa-tasks fa-fw"></i><%= sim_core.name %> 
+                                    <span class="pull-right text-muted small"><em>Uptime Here</em>
+                                    </span>
+                                </a>
+                                <% }); %>
+                            </div>
+                            <!-- /.list-group -->
+                            
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+                   
+<% include footer %>

@@ -3,7 +3,35 @@ const WebSocket = require('ws');
 let sim_core_counter = 0;
 
 let sim_cores = [
-    { 
+  
+];
+
+
+function Simcore(){
+ this.url=undefined;
+ this.signal_url=undefined;
+ this.command_url=undefined;
+ this.ws=undefined;
+ this.name=undefined;
+ this.uri=undefined;
+ this.comm_layer = { frames : [] };
+ this.index =undefined;
+}
+
+function Simcore(p){
+ this.url=p.url;
+ this.signal_url=p.signal_url;
+ this.command_url=p.command_url;
+ this.ws=p.ws;
+ this.name=p.name;
+ this.uri=p.uri;
+ this.comm_layer = p.comm_layer;
+ this.index =p.index;
+}
+Simcore.prototype.get_status = function () { return "N/A";}
+Simcore.prototype.get_description = function () { return "N/A";}
+
+sim_cores.push(new Simcore(  { 
       url:"ws://localhost:8181",
       signal_url:"ws://localhost:8182",
       command_url:"ws://localhost:8192",
@@ -12,8 +40,7 @@ let sim_cores = [
       uri:"?",
       comm_layer : { frames : [] },
       index :  sim_core_counter
-    }
-];
+    }));
 
 function get_sim_core_by_name(name){
  for(let e of sim_cores)
@@ -93,14 +120,17 @@ app.set("view engine", "ejs");
 app.use(express.static(publicPath));
 
 app.get("/", function(req, res) {
-    res.render("index",{page_title:"Home", sim_cores : sim_cores});
+    res.render("index",{ page_title:"Home",
+                         sim_cores : sim_cores,
+                         sim_core : undefined});
 });
 
 app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
  if (req.params[3] != undefined) {
     let score = get_sim_core_by_uri(req.params[3]);
     if (score != undefined) {
-         res.render("sim_main",{page_title: score.name,sim_core : score}); 
+         res.render("sim_main",{ page_title: score.name,
+                                 sim_core : score}); 
     }
  } else {
    let score_idx = req.params[1];
@@ -115,7 +145,10 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
     for (let s of f.signals) if (s.index == sig_idx){sig = s;break;}
    if (sig === undefined) {res.status=404;res.send("404");return;}
    
-   res.render("signal_details",{page_title: score.name +"-"+ signalname,sim_core : score,signal:sig,signal_ws:score.signal_url});   
+   res.render("signal_details",{ page_title: score.name +"-"+ signalname,
+                                 sim_core : score,
+                                 signal:sig,
+                                 signal_ws:score.signal_url});   
  }
 });
 
