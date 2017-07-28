@@ -1,4 +1,7 @@
 const WebSocket = require('ws');
+const os = require('os');
+
+const host_name = os.hostname();
 
 let sim_core_counter = 0;
 
@@ -32,9 +35,9 @@ Simcore.prototype.get_status = function () { return "N/A";}
 Simcore.prototype.get_description = function () { return "N/A";}
 
 sim_cores.push(new Simcore(  { 
-      url:"ws://localhost:8181",
-      signal_url:"ws://localhost:8182",
-      command_url:"ws://localhost:8192",
+      url:"ws://"+host_name+":8181",
+      signal_url:"ws://"+host_name+":8182",
+      command_url:"ws://"+host_name+":8192",
       ws:undefined,
       name:"Not Available",
       uri:"?",
