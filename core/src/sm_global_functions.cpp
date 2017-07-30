@@ -928,7 +928,7 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
   if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
   size_t ds;
   auto msg_block = it_frame_gen->second->gen_msg(smc,ds,smc->out_encodings[ch_id]);
-  if (ds > 0 && std::get<1>(msg_block)!=nullptr){
+  if (std::get<1>(msg_block)!=nullptr){
    int frame_id = 0;
    if (it_frame_gen->second->header_length() == 0){
 	auto it = smc->channel_frame_name_to_id[ch_id].find(id);
@@ -937,8 +937,13 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
 	}
 	channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length(),frame_id));
 	return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+   } else {
+      std::stringstream ss;
+      for(auto p: args) ss << *p << ", ";
+      ss << "ds="<< ds<<" ";
+      ss << "msg_block="<< (long long)std::get<1>(msg_block);
+      smc->fatal_(-1, "send() : failed to insert message into queue. "+ss.str());
    }
-   else smc->fatal_(-1, "send() : failed to insert message into queue.");
  } else if (args.size() == 3 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::identifier
 		    && args[2]->kind() == ceps::ast::Ast_node_kind::byte_array){
    auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));

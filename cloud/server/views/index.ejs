@@ -261,7 +261,7 @@
                     $("#task_create_fibex_sim_info_step_"+i.toString()+"_"+task_id.toString()).html('<span class="glyphicon glyphicon-remove"></span>');
                     }
                 }
-                ws_cmd.send(JSON.stringify({cmd:"create_fibex_based_simulation", data: v , file_names:u}));
+                ws_cmd.send(JSON.stringify({cmd:"create_fibex_based_simulation",name:description.name, data: v , file_names:u}));
             }
             active_tasks.push({id:task_id,descr:description,ws:ws_cmd});
             return task_id;
