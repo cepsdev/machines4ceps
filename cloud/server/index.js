@@ -5,7 +5,9 @@ const WebSocket = require('ws');
 const os = require('os');
 const { spawn } = require('child_process');
 const fs = require('fs');
-
+const path = require('path');
+const express = require("express");
+const http = require("http");
 
 
 const host_name = os.hostname();
@@ -15,12 +17,37 @@ let sim_cores = [
   
 ];
 
-let  sim_defs = []; 
+let  sim_srcs = []; 
 
 const command_port = 9191;
 const command_ws_url = "ws://"+host_name+":"+command_port.toString();
 
 
+
+function Sim_source() {
+    this.path;
+    this.pkg_info = {name:undefined,uri:undefined,author:undefined,modules:[]};
+    this.main_port = undefined;
+    this.pkgfile_content = undefined;
+}
+
+
+function walk_dir_and_fetch_sim_src_infos(directory, callback){
+ let subds = fs.readdirSync(directory);
+ let r = [];
+ if (subds.length == 0) return r;
+ subds.forEach( (subd) => {
+  let files = fs.readdirSync(path.join(directory,subd));
+  files.forEach( (fname) => {
+      if (fname == "package.json"){
+          fs.readFile(path.join(directory,subd,fname), 'utf8', (err,data) => {
+              if (err) throw err;
+              
+          });
+      }
+  } );   
+ } );
+}
 
 function Simcore(){
  this.url=undefined;
@@ -124,9 +151,6 @@ check_remote_sim_cores();
 setInterval(check_remote_sim_cores,500);
 
 
-let express = require("express");
-let path = require("path");
-let http = require("http");
 let app = express();
 let publicPath = path.resolve(__dirname, "public");
 
@@ -188,5 +212,5 @@ ws_command.on("connection", function connection(ws){
 
 
 
-
+walk_dir_and_fetch_sim_src_infos("../sim_nodes");
 http.createServer(app).listen(3000);
