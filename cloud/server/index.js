@@ -1,13 +1,25 @@
+
+
+
 const WebSocket = require('ws');
 const os = require('os');
+const { spawn } = require('child_process');
+const fs = require('fs');
+
+
 
 const host_name = os.hostname();
 
 let sim_core_counter = 0;
-
 let sim_cores = [
   
 ];
+
+let  sim_defs = []; 
+
+const command_port = 9191;
+const command_ws_url = "ws://"+host_name+":"+command_port.toString();
+
 
 
 function Simcore(){
@@ -31,6 +43,7 @@ function Simcore(p){
  this.comm_layer = p.comm_layer;
  this.index =p.index;
 }
+
 Simcore.prototype.get_status = function () { return "N/A";}
 Simcore.prototype.get_description = function () { return "N/A";}
 
@@ -125,7 +138,8 @@ app.use(express.static(publicPath));
 app.get("/", function(req, res) {
     res.render("index",{ page_title:"Home",
                          sim_cores : sim_cores,
-                         sim_core : undefined});
+                         sim_core : undefined,
+                        command_ws_url:command_ws_url});
 });
 
 app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
@@ -133,7 +147,7 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
     let score = get_sim_core_by_uri(req.params[3]);
     if (score != undefined) {
          res.render("sim_main",{ page_title: score.name,
-                                 sim_core : score}); 
+                                 sim_core : score, command_ws_url:command_ws_url}); 
     }
  } else {
    let score_idx = req.params[1];
@@ -154,6 +168,25 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
                                  signal_ws:score.signal_url});   
  }
 });
+
+
+
+const ws_command = new WebSocket.Server({port: command_port});
+ws_command.on("connection", function connection(ws){
+    ws.on("message",function incoming(message){
+        let msg = JSON.parse(message);
+        if (msg.cmd == "create_fibex_based_simulation"){
+          
+          ws.send(JSON.stringify({ok:true}));  
+        }
+    });
+});
+
+
+
+
+
+
 
 
 http.createServer(app).listen(3000);
