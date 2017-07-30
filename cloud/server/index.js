@@ -3,15 +3,20 @@
 
 const WebSocket = require('ws');
 const os = require('os');
-const { spawn } = require('child_process');
+const { spawn,execFile} = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const express = require("express");
 const http = require("http");
+const chalk = require('chalk');
+
 const host_name = os.hostname();
 
 
 const ceps_executable = "./ceps";
+const ceps_default_args = ["--quiet"];
+const ceps_prelude = "../.ceps/prelude.ceps";
+const ceps_publisher = "../.ceps/publisher.ceps";
 const sim_nodes_root = "../sim_nodes";
 
 
@@ -136,7 +141,7 @@ function walk_dir_and_fetch_sim_src_infos(directory){
            "val publisher_baseport = \""+sim_src.pkg_info.base_port+"\";\n",
            'utf8');
           }
-
+          sim_src.path = subd;
           r.push(sim_src);            
       }
   } );   
@@ -243,10 +248,32 @@ function check_remote_sim_cores() {
     for(let core_info of sim_cores){
      if (core_info.process === undefined){
          core_info.process_launching = true;
-         let base = `${ceps_executable} ${sim_nodes_root}`;
-         //core_info.process = spawn()
-         console.log(base);
-
+       
+          
+         let call_sequence = []; call_sequence.push(`${ceps_prelude}`);
+         core_info.src.pkg_info.modules.forEach( (f) => {call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,`${f}`)); });
+         call_sequence.push(`${ceps_publisher}`);
+         call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,"driver.ceps"));
+                             //" "+ceps_default_args.join(" "); 
+         /*core_info.process = execFile(`/home/tomas/projects/sm4ceps/cloud/server/${ceps_executable}`,["/home/tomas/projects/sm4ceps/cloud/server/a.ceps"], (error, stdout, stderr) => {
+            
+            if (error){
+                 throw error;
+             }
+            console.log(stdout);
+            
+         });*/
+         console.log(chalk.bold(`${ceps_executable} `,call_sequence.join(" ")));
+         let p = spawn(`${ceps_executable}`,call_sequence);
+         p.stdout.on('data', (data) => {
+            console.log(chalk.yellow(`${data}`));
+         });
+         p.stderr.on('data', (data) => {
+            console.log(chalk.redBright(`${data}`));
+         });
+         p.on('close', (code) => {
+            console.log(chalk.red(`Simulation Core "${core_info.src.name}" exited with code ${code}`));
+         });
      }
      else if (core_info.ws === undefined && !core_info.process_launching){
          core_info.ws = new WebSocket(core_info.url);
