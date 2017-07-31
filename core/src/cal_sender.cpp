@@ -184,7 +184,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
                          break;
                  }
 
-		 std::string can_bus = "can0";
+         std::string can_bus = "";
 		 if (bus_id_.nodes().empty()){
 			//check universe for transport definition
 			ceps::ast::Nodeset ns = current_universe();
@@ -200,8 +200,8 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
              transport_busid_found = can_bus.length();
 		 }
 		 if (!transport_busid_found){
-			 warn_(-1, "CAN-CAL sender definition '"+channel_id+"': no network interface defined (attribute bus_id).");
-			 return true;
+             warn_(-1, "CAN-CAL sender definition '"+channel_id+"': no network interface defined (attribute bus_id).Endpoint is treated as virtual.");
+             //return true;
 		 }
 		}else {
 			if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::int_literal)
@@ -209,7 +209,8 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 			else if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::string_literal)
 				can_bus = ceps::ast::value(ceps::ast::as_string_ref(bus_id_.nodes()[0]));
 			else{
-				fatal_(-1, "CAN-CAL sender definition: bus_id must be an integer or string.");
+                warn_(-1, "CAN-CAL sender definition: bus_id must be an integer or string. Endpoint is treated as virtual.");
+                can_bus = "";
 			}
 		}
 
@@ -345,13 +346,14 @@ void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::q
 //#define DEBUG std::cout
 void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames,
         std::string can_bus, State_machine_simulation_core* smc, std::unordered_map<int,std::uint32_t> frame2id, bool extended_can) {
-	int s = 0;
+    int s = -1;
 	char* frame = nullptr;
 	size_t frame_size = 0;
 	size_t header_size = 0;
 	bool pop_frame = true;
+    bool is_virtual = false;
 
-	{
+    if (can_bus.length()){
 		std::lock_guard<std::mutex> lock(sockcan::interfaces_to_sockets_m);
 		auto it = sockcan::interfaces_to_sockets.find(can_bus);
 		if (it != sockcan::interfaces_to_sockets.end()){
@@ -380,7 +382,8 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 			}
 			sockcan::interfaces_to_sockets[can_bus] = s;
 		}
-	}
+    } else is_virtual=true;
+
 	for (;;)
 	{
 		State_machine_simulation_core::frame_queue_elem_t frame_info;
@@ -409,13 +412,15 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
                         if(extended_can) can_message.can_id |= CAN_EFF_FLAG;
 			can_message.can_dlc = frame_size;
 			memcpy(can_message.data,frame,frame_size);
-			auto r = write(s, &can_message, sizeof(struct can_frame));
-			if (r != sizeof(struct can_frame)){
+            if (!is_virtual){
+             auto r = write(s, &can_message, sizeof(struct can_frame));
+             if (r != sizeof(struct can_frame)){
 				State_machine_simulation_core::event_t ev;
 				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: write failed.",0};
 				smc->main_event_queue().push(ev);
 				return;
-			}
+             }
+            }
 		}
 		else if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {
 			sockcan::map_can_frame(&can_message, frame, frame_size,header_size);

@@ -1,0 +1,87 @@
+body{
+ font-family:Arial; 
+}
+
+.sm_state{
+ padding:5px;
+ margin:4px;
+ border: 1px solid black;
+}
+
+.sm_state:hover{
+ background-color: silver;
+}
+
+.sm_composite_state:hover{
+ background-color: lightgrey;
+}
+
+.concept_tag_section_title{
+  padding:3px;
+  margin:3px;
+  font-size: 0.5em;
+  background-color: green;
+  color : white;
+}
+
+.concept_tag_sub_section_title{
+  padding:2px;
+  margin:3px;
+  font-size: 0.5em;
+  background-color: green;
+  color : white;
+}
+
+.sm_composite_state{
+ padding:2px;
+ margin:2px;
+ xxborder-radius: 10px;
+ border: 4px  double ;
+ xxoutline : 1px solid;
+ xxoutline-radius: 10px;
+ xxoutline-offset:-4px;
+}
+
+.sm_details{
+ xborder: 3px solid green;
+ xheight : 100%;
+}
+
+.sm_states_overview{
+ text-align: center;
+ height : 1.5em; 
+ 
+}
+
+.sm_graph{
+  xbackground-color: lightgrey;  
+}
+
+
+.sm_details_and_sm_graph{
+    xborder: 2px solid black;
+    border-radius:10px 0px 10px 0px;
+    padding: 10px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    xdisplay:flex;
+    xdisplay: inline-block;
+    xdisplay: table; 
+    margin-left: 5%;    
+}
+
+
+#overview_state_coverage{
+    width : 70%;
+    xheight: 200px;
+    overflow:hidden;
+    margin-left: 5%;
+}
+
+#overview_transition_coverage{
+    width : 70%;
+    xheight: 200px;
+    overflow:hidden;
+    margin-left: 5%;
+}
+
+

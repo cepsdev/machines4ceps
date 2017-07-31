@@ -39,7 +39,7 @@ receiver
   websocket_server;
   generic_tcp_in
   {
-   port { "8192"; };
+   port { publisher_cmd_port; };
    ip { "127.0.0.1"; };
   };
  };
@@ -112,7 +112,7 @@ receiver
   websocket_server;
   generic_tcp_in
   {
-   port { "8182"; };
+   port { publisher_signal_port; };
    ip { "127.0.0.1"; };
   };
  };
@@ -192,7 +192,7 @@ receiver
   websocket_server;
   generic_tcp_in
   {
-   port { "8181"; };
+   port { publisher_baseport; };
    ip { "127.0.0.1"; };
   };
  };

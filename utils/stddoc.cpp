@@ -125,7 +125,8 @@ static void make_content_sm(State_machine* sm,
 		                    std::string name,
 							std::vector<ceps::ast::Nodebase_ptr>& content,
 							State_machine_simulation_core* smc,
-							ceps::interpreter::Environment& env){
+                            ceps::interpreter::Environment& env,
+                            std::string img_path_prefix){
  using namespace sm4ceps::modelling::gensm;
  using namespace ceps::ast;
  using namespace std;
@@ -138,7 +139,7 @@ static void make_content_sm(State_machine* sm,
  for_all_transitions(sm,[&](State_machine::Transition& t){
   vector<Nodebase_ptr> cols;
   cols.push_back((new strct{"td",t.from().id()})->p_strct);
-  cols.push_back((new strct{"td",ident{"&rarr;"}})->p_strct);
+  cols.push_back((new strct{"td",ident{"<span class=\"glyphicon glyphicon-arrow-right\"></span> "}})->p_strct);
   cols.push_back((new strct{"td",t.to().id()})->p_strct);
   vector<Nodebase_ptr> evs;
   for(auto ev : t.events()){
@@ -163,19 +164,29 @@ static void make_content_sm(State_machine* sm,
  if (sm->transitions().size()) table = new
   strct{
    "table",
+   strct{"attr",strct{"border","1"}},
    new strct{"tr",new strct{"th",new strct{"attr",new strct{"colspan",3} },"Transition"},new strct{"th","Event"},new strct{"th","Guard"},new strct{"th","Action"}   },
    rows
   };
 
  Nodebase_ptr sm_details_div = nullptr;
- if (table) sm_details_div = (new strct{"div",strct{"attr",strct{"class","sm_details"}},table})->p_strct;
+
+ /*<div class="panel panel-default">
+   <div class="panel-heading">Panel Heading</div>
+   <div class="panel-body">Panel Content</div>
+ </div>*/
+
+ if (table) sm_details_div = (new strct{"div",strct{"attr",strct{"class","panel panel-default"}},table})->p_strct;
  else sm_details_div = (new strct{"div",strct{"attr",strct{"class","sm_details"}}})->p_strct;
 
- auto dot_div = make_sm_dot_graph_link(sm,smc,replace_all(name,".","__"));
- content.push_back(( new strct{"table",strct{"attr",strct{"class","sm_details_and_sm_graph"}},
+ auto dot_div = make_sm_dot_graph_link(sm,smc,img_path_prefix+replace_all(name,".","__"));
+ content.push_back(
+   ( new strct{"table",strct{"attr",strct{"class","sm_details_and_sm_graph"}},
 	 strct{"tr",strct{"td",strct{"attr",strct{"colspan",2}},strct{"attr",strct{"class","sm_states_overview"}},states_list }},
-	 strct{"tr",strct{"td",std::vector<Nodebase_ptr>{sm_details_div} },strct{"td", std::vector<Nodebase_ptr>{dot_div} }},  } )->p_strct );
- for_all_children(sm,[&](State_machine& s){make_content_sm(&s,name+"."+s.id(),content,smc,env);});
+     strct{"tr",strct{"td",std::vector<Nodebase_ptr>{sm_details_div} }   },
+     strct{"tr",strct{"td", std::vector<Nodebase_ptr>{dot_div} }} } )->p_strct );
+
+ for_all_children(sm,[&](State_machine& s){make_content_sm(&s,name+"."+s.id(),content,smc,env,img_path_prefix);});
 }
 
 
@@ -283,13 +294,13 @@ static std::string javascript_overview_barchart(std::string canvas_id, std::stri
 	"(document.getElementById(\""+canvas_id+"\"),\""+title+"\",ceps_coverage_data"+data+");</script>";
 }
 
-static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env)
+static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_machine_simulation_core* smc,ceps::interpreter::Environment& env, std::string img_path_prefix)
 {
  using namespace sm4ceps::modelling::gensm;
  using namespace ceps::ast;
  using namespace std;
  std::stringstream ss;
- make_json(smc->current_universe()["summary"],ss);
+ /*make_json(smc->current_universe()["summary"],ss);
  content.push_back((new strct{"@pass_through","<script src=\"js/Chart.js\"></script><script>\nvar ceps_coverage_data="+ss.str()+";\n</script>" })->p_strct);
 
  content.push_back((new strct{"@pass_through","<div id=\"overview_state_coverage\"><canvas id=\"canvas_overview_state_coverage\"></canvas></div>" })->p_strct);
@@ -301,11 +312,11 @@ static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_ma
  content.push_back((new strct{"@pass_through",
 	                          javascript_overview_barchart("canvas_overview_transition_coverage",
 	                        		                       "Transition Coverage Chart",
-														   "['coverage']['transition_coverage']['toplevel_state_machines']") })->p_strct);
+                                                           "['coverage']['transition_coverage']['toplevel_state_machines']") })->p_strct);*/
 
  for (auto sm_ : smc->statemachines()){
 	 if (!is_toplevel_sm(sm_.second)) continue;
-	 make_content_sm(sm_.second,sm_.first,content,smc,env);
+     make_content_sm(sm_.second,sm_.first,content,smc,env,img_path_prefix);
  }
  /*for (auto element : env.associated_universe()->nodes()){
  }*/
@@ -363,17 +374,9 @@ static void dump_html_impl(std::ostream& fout,ceps::ast::Nodebase_ptr elem){
 }
 
 static void dump_html(std::ostream& fout, ceps::ast::Struct& html){
- fout << "<!DOCTYPE html><html>\n";
- fout << R"(
-<meta charset="UTF-8">
-<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="ceps">
-<link rel="stylesheet" type="text/css" href="ceps_stddoc_style.css">
 
- )";
  for (auto e: html.children()) dump_html_impl(fout,e);
- fout << "</html>\n";
+
 }
 
 static void write_html5doc(std::ostream& os, ceps::ast::Nodeset& ns){
@@ -397,7 +400,14 @@ ceps::ast::Nodeset sm4ceps::utils::make_stddoc(
  Nodeset r;
  vector<ceps::ast::Nodebase_ptr> content;
  State_machine_simulation_core* smc = (State_machine_simulation_core*)sym->data;
- make_content(content,smc,env);
+
+ std::string img_path_prefix = "";
+ auto img_path_prefix_ = Nodeset(what->children())["img_path_prefix"];
+ if (img_path_prefix_.size() == 1){
+  img_path_prefix  = img_path_prefix_.as_str();
+ }
+
+ make_content(content,smc,env,img_path_prefix);
  auto stddoc = new
  strct{
   "stddoc",

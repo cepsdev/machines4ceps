@@ -1,0 +1,12 @@
+val color_visited_node = "dodgerblue";
+
+macro node_visited_style {
+ "style=\"rounded,filled,bold\"";
+ "penwidth=4";
+ "color=\""+color_visited_node+"\"";
+};
+
+macro edge_visited_style {
+ "penwidth=4";"color=cornflowerblue";
+};
+

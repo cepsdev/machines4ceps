@@ -21,7 +21,7 @@ const sim_nodes_root = "../sim_nodes";
 
 
 let publish_port_start = 8181;
-let publish_port_delta = 10;
+let publish_port_delta = 20;
 
 let sim_core_counter = 0;
 let sim_cores = [
@@ -55,6 +55,26 @@ function Sim_source(name,pkg_info) {
     this.main_port = undefined;
     this.pkgfile_content = undefined;
     this.name = name;
+}
+
+function instantiate_sim_info(srcs,cores){
+ srcs.forEach( (src) => {
+    let core = new Simcore(
+     {
+      url:"ws://"+host_name+":"+src.pkg_info.base_port.toString(),
+      signal_url:"ws://"+host_name+":"+(src.pkg_info.base_port+1).toString(),
+      command_url:"ws://"+host_name+":"+(src.pkg_info.base_port+10).toString(),
+      ws:undefined,
+      name:src.name,
+      uri:src.pkg_info.uri,
+      comm_layer : { frames : [] },
+      index :  sim_core_counter++,
+      src:src,
+      process : undefined,
+      process_launching : false
+    });
+    cores.push(core);
+ });
 }
 
 
@@ -138,7 +158,9 @@ function make_sim_src_info_given_sim_dir(directory,subd,uniquify_name_clbk,uniqu
            "  name { \""+sim_src.name+"\"; };\n"+
            "  uri { \""+sim_src.pkg_info.uri+"\"; };\n"+
            "};\n"+
-           "val publisher_baseport = \""+sim_src.pkg_info.base_port+"\";\n",
+           "val publisher_baseport = \""+sim_src.pkg_info.base_port+"\";\n"+
+           "val publisher_cmd_port = \""+(sim_src.pkg_info.base_port+10)+"\";\n"+
+           "val publisher_signal_port = \""+(sim_src.pkg_info.base_port+1)+"\";\n",           
            'utf8');
           }
           sim_src.path = subd;
@@ -170,6 +192,7 @@ function Simcore(){
  this.src = undefined;
  this.process = undefined;
  this.process_launching = false;
+ this.dont_launch = false;
 }
 
 function Simcore(p){
@@ -184,6 +207,7 @@ function Simcore(p){
  this.src = p.src;
  this.process = p.process;
  this.process_launching = false;
+ this.dont_launch = false;
 }
 
 Simcore.prototype.get_status = function () { return "N/A";}
@@ -254,6 +278,11 @@ function sim_core_init(sim_core){
 
 function check_remote_sim_cores() {
     for(let core_info of sim_cores){
+     if (core_info.dont_launch){
+         if (core_info.ws) core_info.ws.close();
+         core_info.ws = undefined;
+         continue;
+     }
      if (core_info.process === undefined){
          core_info.process_launching = true;          
          if (core_info.ws) {core_info.ws.close();}
@@ -277,11 +306,44 @@ function check_remote_sim_cores() {
          p.on('close', (code) => {
             core_info.process = undefined;
             core_info.process_launching = false;
-             
+            core_info.dont_launch = true;
             console.log(chalk.red(`Simulation Core "${core_info.src.name}" exited with code ${code}`));
          });
         core_info.process = p;
         setTimeout(() => {core_info.process_launching=false;},3000);
+        //Overview generation
+        let overview_gen_script = "";
+        let modules = "";
+        for(let i = 0; i != core_info.src.pkg_info.modules.length ; ++i){
+          let m = core_info.src.pkg_info.modules[i];
+          modules += " " + m;
+        }
+
+        //overview_gen_script += "cp make_report.ceps "+path.join(sim_nodes_root,core_info.src.path)+"\n";
+        fs.writeFileSync(path.join(sim_nodes_root,core_info.src.path,"make_report.ceps"), 'make_stddoc{out{"overview.ejs";};img_path_prefix{"img/'+core_info.src.pkg_info.uri+'/";}; };');
+        overview_gen_script += "cp make_svgs.sh "+path.join(sim_nodes_root,core_info.src.path)+"\n";
+        overview_gen_script += "cp basic_style.ceps "+path.join(sim_nodes_root,core_info.src.path)+"\n";
+        overview_gen_script += "cp dot_props.ceps "+path.join(sim_nodes_root,core_info.src.path)+"\n";
+        overview_gen_script += 'cd '+path.join(sim_nodes_root,core_info.src.path)+"\npwd\n";        
+        overview_gen_script += '../../server/ceps ../../.ceps/prelude.ceps basic_style.ceps dot_props.ceps '+modules+' --ignore_simulations --dot_gen --dot_gen_one_file_per_top_level_statemachine --post_processing make_report.ceps\n';
+        overview_gen_script += "./make_svgs.sh\n";
+        overview_gen_script += "mkdir -p ../../server/public/img/"+core_info.src.pkg_info.uri+"\n";
+        overview_gen_script += "cp *.svg ../../server/public/img/"+core_info.src.pkg_info.uri+"\n";
+        
+
+        fs.writeFileSync("gen_overview_"+core_info.src.pkg_info.uri+".sh",overview_gen_script);
+        let overview_gen_process = spawn("sh",["gen_overview_"+core_info.src.pkg_info.uri+".sh"]);
+         overview_gen_process.stdout.on('data', (data) => {
+            console.log(chalk.yellow(`${data}`));
+         });
+         overview_gen_process.stderr.on('data', (data) => {
+            console.log(chalk.yellow(`${data}`));
+         });
+         overview_gen_process.on('close', (code) => {
+            console.log(chalk.yellow("gen_overview_"+core_info.src.pkg_info.uri+".sh exited with code "+`${code}`));
+         });
+        
+
      } else if (core_info.ws === undefined && !core_info.process_launching){
          core_info.ws = new WebSocket(core_info.url);
          core_info.ws.on("error", () => {core_info.ws=undefined;} );
@@ -311,7 +373,7 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
     let score = get_sim_core_by_uri(req.params[3]);
     if (score != undefined) {
          res.render("sim_main",{ page_title: score.name,
-                                 sim_core : score, command_ws_url:command_ws_url}); 
+                                 sim_core : score, command_ws_url:command_ws_url,sim_nodes_root:sim_nodes_root }); 
     }
  } else {
    let score_idx = req.params[1];
@@ -351,6 +413,42 @@ function create_fibex_based_simulation(client_msg,ws){
         }
         fs.mkdir(path.join(sim_nodes_root,subd),(err)=>{
           if (err){ws.send(JSON.stringify({ok:false}));return;}
+          let pkg_json_sent = false;
+          let driver_ceps_sent = false; 
+          for(let i = 0; i!=client_msg.file_names.length;++i){
+              if(client_msg.file_names[i] === "package.json") pkg_json_sent = true;
+              if(client_msg.file_names[i] === "driver.ceps") driver_ceps_sent = true;
+              fs.writeFileSync(path.join(sim_nodes_root,subd,client_msg.file_names[i]),client_msg.data[i]);
+          }
+          ws.send(JSON.stringify({ok:true}));
+          if (!pkg_json_sent){
+              let jsn = {name:client_msg.name,modules:[]};
+              for(let i = 0; i!=client_msg.file_names.length;++i){
+                  if (client_msg.file_names[i].match(/xml$/)) jsn.modules.push(client_msg.file_names[i]);
+              }
+              for(let i = 0; i!=client_msg.file_names.length;++i){
+                  if (!client_msg.file_names[i].match(/xml$|driver\.ceps/)) jsn.modules.push(client_msg.file_names[i]);
+              }
+              jsn.modules.push("driver.ceps");  
+              fs.writeFileSync(path.join(sim_nodes_root,subd,"package.json"),JSON.stringify(jsn));
+          }
+          if(!driver_ceps_sent) fs.writeFileSync(path.join(sim_nodes_root,subd,"driver.ceps"),"Simulation{};");
+          let sim_src = make_sim_src_info_given_sim_dir(sim_nodes_root,subd,(s)=>{return uniquify_name(sim_srcs,s);},(s)=>{return uniquify_uri(sim_srcs,s);});
+          if (sim_src == undefined)
+            ws.send(JSON.stringify({ok:false}));
+          else
+            setTimeout( () => { 
+                ws.send(JSON.stringify({ok:true}));
+                instantiate_sim_info([sim_src],sim_cores);
+                let sim_core = sim_cores[sim_cores.length-1];
+                setTimeout( () => {
+                    if (sim_core.process != undefined) ws.send(JSON.stringify({ok:true,uri:sim_core.uri}));
+                    else {
+                        ws.send(JSON.stringify({ok:false}));
+                    }
+                }, 3000);
+            }, 3000 );
+          console.log (sim_src);
         });
     });
 }
@@ -369,23 +467,7 @@ ws_command.on("connection", function connection(ws){
 
 
 sim_srcs = walk_dir_and_fetch_sim_src_infos("../sim_nodes");
-sim_srcs.forEach( (src) => {
-    let core = new Simcore(
-     {
-      url:"ws://"+host_name+":"+src.pkg_info.base_port.toString(),
-      signal_url:"ws://"+host_name+":"+(src.pkg_info.base_port+1).toString(),
-      command_url:"ws://"+host_name+":"+(src.pkg_info.base_port+10).toString(),
-      ws:undefined,
-      name:src.name,
-      uri:src.pkg_info.uri,
-      comm_layer : { frames : [] },
-      index :  sim_core_counter++,
-      src:src,
-      process : undefined,
-      process_launching : false
-    });
-    sim_cores.push(core);
-});
+instantiate_sim_info(sim_srcs,sim_cores);
 check_remote_sim_cores();
 setInterval(check_remote_sim_cores,500);
 http.createServer(app).listen(3000);

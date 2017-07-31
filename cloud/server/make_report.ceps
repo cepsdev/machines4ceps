@@ -1,0 +1,10 @@
+xxdot_gen_properties{
+ static_for(x : root.summary.coverage.state_coverage.covered_states.content()){
+  node_display_properties{x;node_visited_style{};};
+ }
+ static_for(x : root.summary.coverage.transition_coverage.covered_transitions_by_id.content()){
+  edge_display_properties{x;edge_visited_style{};};
+ }
+};
+
+make_stddoc{out{"overview.ejs";};};
