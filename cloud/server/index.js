@@ -142,10 +142,11 @@ function make_sim_src_info_given_sim_dir(directory,subd,uniquify_name_clbk,uniqu
               console.warn("***Warning. No 'uri' field in '"+pkg_json_path+"': a default value was generated '"+s+"'.");
               jsn.uri = s;
           }
-          if (!("base_port" in jsn)){
+          jsn.base_port = publish_port_start;
+          publish_port_start += publish_port_delta;
+
+          if ("base_port" in jsn){
               modified = true;
-              jsn.base_port = publish_port_start;
-              publish_port_start += publish_port_delta;
           }
 
           sim_src = new Sim_source(jsn.name,jsn);
@@ -284,6 +285,7 @@ function check_remote_sim_cores() {
          continue;
      }
      if (core_info.process === undefined){
+         core_info.comm_layer = { frames : [] };
          core_info.process_launching = true;          
          if (core_info.ws) {core_info.ws.close();}
          core_info.ws = undefined;
@@ -397,6 +399,34 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
 
 
 
+function add_modify_files_simulation(client_msg,ws){
+    //ws.send(JSON.stringify({ok:true}));
+    for(sim_core of sim_cores){
+        if (sim_core.name != client_msg.name) continue;
+        if (sim_core.process != undefined) process.kill(sim_core.process.pid);
+        if (sim_core.ws != undefined) sim_core.ws.close();
+        sim_core.ws = undefined;
+        function add_modify (){
+            if (sim_core.process != undefined) {setTimeout(add_modify,500); return;}
+            function module_already_exists(n){
+                for(let i = 0; i!=sim_core.src.pkg_info.modules.length;++i)
+                    if (sim_core.src.pkg_info.modules[i] == n) return true;
+                return false;
+            }
+            for(let i = 0;i != client_msg.file_names.length;++i){
+               if(!module_already_exists(client_msg.file_names[i]))
+                sim_core.src.pkg_info.modules.push(client_msg.file_names[i]);
+        
+               fs.writeFileSync(path.join(sim_nodes_root,sim_core.src.path,client_msg.file_names[i]),client_msg.data[i]);
+            }
+            fs.writeFileSync(path.join(sim_nodes_root,sim_core.src.path,"package.json"),JSON.stringify(sim_core.src.pkg_info));
+            sim_core.dont_launch = false;
+            function ack() { if(sim_core.process==undefined){setTimeout(ack,1000);return;} ws.send(JSON.stringify({ok:true})); }
+            setTimeout(ack,1000);
+        }
+        setTimeout(add_modify,3000);
+    }
+}
 
 function create_fibex_based_simulation(client_msg,ws){
     //let sim_src = make_sim_src_info_given_sim_dir(directory,subd,(s)=>{return uniquify_name(r,s);},(s)=>{return uniquify_uri(r,s);});
@@ -461,6 +491,8 @@ ws_command.on("connection", function connection(ws){
         if (msg.cmd == "create_fibex_based_simulation"){
            create_fibex_based_simulation(msg,ws);       
           //ws.send(JSON.stringify({ok:true}));  
+        } else if (msg.cmd == "add_files"){
+           add_modify_files_simulation(msg,ws);       
         }
     });
 });

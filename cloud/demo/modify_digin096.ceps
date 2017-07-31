@@ -1,0 +1,14 @@
+Event myevent;
+
+Statemachine{
+ modify_CFBP_DigIn096;
+ cover{edges_upto_1;};
+ states{Initial;};
+ on_enter{
+   start_periodic_timer(1.0*s,myevent);
+ };
+ Actions{
+   trigger_msg{CFBP_DigIn096=CFBP_DigIn096+1.0;};
+ };
+ t{Initial;Initial;myevent;trigger_msg;};
+};
