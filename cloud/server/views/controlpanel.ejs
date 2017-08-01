@@ -52,6 +52,40 @@
 });
 </script>
 
+<script>
+function Cepscloud() {this.signal_handlers = [];this.current_signal_values=[];}
+Cepscloud.prototype.register_handler = function (sig_name,callback) { this.signal_handlers.push({sig:sig_name,clbk:callback});}
+Cepscloud.prototype.update = function(sig_list){
+    if (this.signal_handlers.length == 0) return;
+    if (sig_list == undefined) sig_list = this.current_signal_values;
+
+    for(sig of sig_list){
+        for(let i = 0;i!=this.signal_handlers.length;++i)
+        {
+            if (this.signal_handlers[i].sig != sig.name) continue;
+            this.signal_handlers[i].clbk(sig.value);
+        }
+    }
+}
+Cepscloud.prototype.set_signal = function (name,value){
+    let sig = undefined;
+    for(s of this.current_signal_values)
+     if (s.name == name) {sig = s;break;}
+
+    if (sig === undefined) { sig = {name:name,value:value};this.current_signal_values.push(sig);}
+    sig.value = value;
+}
+
+Cepscloud.prototype.get_signal = function (name){
+    for(s of this.current_signal_values)
+     if (s.name == name) return s.value;
+    return undefined;   
+}
+
+var cepscloud = new Cepscloud();
+
+</script>    
+
 
 <body>
     <div id="wrapper">
@@ -93,6 +127,59 @@
 
  
 
+    <script>
+ let bulbs = $("span.bulb");
+ for(let i = 0; i!=bulbs.length;++i)
+  {
+    let elem = $(bulbs[i]);
+    elem.addClass("label");
+    elem.addClass("label-default");
+    let signal = elem.attr("signal");
+    if (signal == undefined){
+        elem.html(elem.html()+'<div class="alert alert-danger" role="alert">No Signal defined.</div>');
+        continue;
+    }
+    let threshold = elem.attr("threshold");
+    if(threshold === undefined) 
+     cepscloud.register_handler(signal, 
+      (sig) => {
+          if (isNaN(sig)) return;
+          let off = Math.round(sig) == 0;
+          if (off) elem.removeClass("label-warning").removeClass("label-default").addClass("label-default");
+          else elem.removeClass("label-warning").removeClass("label-default").addClass("label-warning");
+      });
+  }
+
+  let left_rights = $("span.left_right");
+  for(let i = 0; i!=left_rights.length;++i)
+  {
+   let elem = $(left_rights[i]);
+   let l_onclick = elem.attr("onleft");
+   let r_onclick = elem.attr("onright");
+   
+   elem.html(
+    '<div class="btn-group" role="group">'+
+      '<button type="button" class="btn btn-default" onclick="'+l_onclick+'"><span class="glyphicon glyphicon-chevron-left"></span>&nbsp;</button>'+
+      '<button type="button" class="btn btn-default" onclick="'+r_onclick+'"><span class="glyphicon glyphicon-chevron-right"></span>&nbsp;</button>'+
+    '</div>');
+  }
+</script>
+
+<script>
+ /*setInterval(()=>{
+  let signal_names = ["CFBP_DigIn096","CFBP_DigIn097","CFBP_DigIn098","CFBP_DigIn099","CFBP_DigIn100","CFBP_DigIn101","CFBP_DigIn102","CFBP_DigIn103"];
+  let sigs = [];
+  for (let n of signal_names){
+      sigs.push({name:n,value:Math.random()>0.5?1.0:0.0});
+  }
+  cepscloud.update(sigs);
+ },50);*/   
+
+ setInterval(()=>{
+  cepscloud.update();
+ },50);
+
+</script>
     <!-- Custom Theme JavaScript -->
     <script src="/dist/js/sb-admin-2.js"></script>
 
