@@ -41,6 +41,7 @@ function Sim_source() {
     this.main_port = undefined;
     this.pkgfile_content = undefined;
     this.name = undefined;
+    this.views = [];
 }
 function Sim_source(name) {
     this.path;
@@ -48,6 +49,7 @@ function Sim_source(name) {
     this.main_port = undefined;
     this.pkgfile_content = undefined;
     this.name = name;
+    this.views = [];
 }
 function Sim_source(name,pkg_info) {
     this.path;
@@ -55,6 +57,7 @@ function Sim_source(name,pkg_info) {
     this.main_port = undefined;
     this.pkgfile_content = undefined;
     this.name = name;
+    this.views = [];
 }
 
 function instantiate_sim_info(srcs,cores){
@@ -213,6 +216,12 @@ function Simcore(p){
 
 Simcore.prototype.get_status = function () { return "N/A";}
 Simcore.prototype.get_description = function () { return "N/A";}
+Simcore.prototype.get_view_path = function (view_name){
+ for(let i = 0; i != this.src.views.length;++i )
+     if (this.src.views[i] == view_name)
+        return path.join(sim_nodes_root,this.src.path,"views",view_name+".ejs");
+ return undefined;
+}
 
 /*sim_cores.push(new Simcore(  { 
       url:"ws://"+host_name+":8181",
@@ -370,13 +379,14 @@ app.get("/", function(req, res) {
                         command_ws_url:command_ws_url});
 });
 
-app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
+app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next) {
  if (req.params[3] != undefined) {
     let score = get_sim_core_by_uri(req.params[3]);
     if (score != undefined) {
          res.render("sim_main",{ page_title: score.name,
                                  sim_core : score, command_ws_url:command_ws_url,sim_nodes_root:sim_nodes_root }); 
-    }
+    } else next();
+                                
  } else {
    let score_idx = req.params[1];
    let sig_idx = req.params[2];
@@ -397,6 +407,14 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res) {
  }
 });
 
+app.get("/:sim/controlpanels/:panel", function(req, res, next) {
+   let sim_core = get_sim_core_by_uri(req.params.sim);
+   if (sim_core === undefined) {res.status=404;res.send("404");return;}
+   let f = sim_core.get_view_path(req.params.panel);
+   if (f === undefined) {res.status=404;res.send("404");return;}
+   res.render("controlpanel",{ panel_loc:"../"+f,page_title:"xxx", panel_name: req.params.panel , sim_core : sim_core, signal_ws : sim_core.signal_url});   
+ 
+});
 
 
 function add_modify_files_simulation(client_msg,ws){
@@ -497,9 +515,25 @@ ws_command.on("connection", function connection(ws){
     });
 });
 
+function check_for_views(){
+   sim_cores.forEach( (sim_core) => {
+    fs.readdir(path.join(sim_nodes_root,sim_core.src.path,"views"),(err,files) => {
+        sim_core.src.views = [];
+        if (err) return;
+        for(f of files){
+            let r = f.match(/^(\w(\w|\s)*\w)\.ejs$/);
+            if(!r || !r[1]) continue;
+            sim_core.src.views.push(r[1]);
+        }
+    });
+   } );
+}
+
 
 sim_srcs = walk_dir_and_fetch_sim_src_infos("../sim_nodes");
 instantiate_sim_info(sim_srcs,sim_cores);
+check_for_views();
 check_remote_sim_cores();
 setInterval(check_remote_sim_cores,500);
+setInterval(check_for_views,2000);
 http.createServer(app).listen(3000);

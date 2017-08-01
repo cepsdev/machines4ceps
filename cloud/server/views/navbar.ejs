@@ -65,6 +65,25 @@
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>
+
+<% if(sim_core.src.views && sim_core.src.views.length) { %>
+                        <li>
+                            <a href="#"><i class="fa fa-tasks"></i> Control Panels<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+<% sim_core.src.views.forEach(function(panel) { %>
+                                <li>
+                                    <a href="<%= sim_core.uri %>/controlpanels/<%= panel %>"><%= panel %></a>
+                                </li>
+<% });%>
+                        </li>
+<% } %>
+
+                        
+
+
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
 <% } %>                   
                     </ul>
                 </div>
