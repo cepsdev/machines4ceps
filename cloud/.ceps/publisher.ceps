@@ -90,12 +90,61 @@ Systemstate publisher_internal_dummy;
 publisher_internal_dummy = 0.0;
 publisher_internal_logged_state_name = "publisher_internal_dummy";
 
+
+//DEMO, REMOVE !
+
+Systemstate CFBP_DigIn096;CFBP_DigIn096=0.0;
+Systemstate CFBP_DigIn097;CFBP_DigIn097=0.0;
+Systemstate CFBP_DigIn098;CFBP_DigIn098=0.0;
+Systemstate CFBP_DigIn099;CFBP_DigIn099=0.0;
+Systemstate CFBP_DigIn100;CFBP_DigIn100=0.0;
+Systemstate CFBP_DigIn101;CFBP_DigIn101=0.0;
+Systemstate CFBP_DigIn102;CFBP_DigIn102=0.0;
+Systemstate CFBP_DigIn103;CFBP_DigIn103=0.0;
+
 frame{
  id{publisher_internal_frm_signal_logging;};
  data{
  "{";
  "\"name\":";"\"";publisher_internal_logged_state_name;"\",";
- "\"signal\":";as_string(value_of_systemstate(publisher_internal_logged_state_name));
+ "\"signal\":";as_string(value_of_systemstate(publisher_internal_logged_state_name));",";
+ 
+ "\"signals\": [";
+  "{";
+   "\"name\" : \"CFBP_DigIn096\",";
+   "\"value\": ";as_string(CFBP_DigIn096);
+   "}";",";
+  "{";
+   "\"name\" : \"CFBP_DigIn097\",";
+   "\"value\": ";as_string(CFBP_DigIn097);
+   "}";",";
+  "{";
+   "\"name\" : \"CFBP_DigIn098\",";
+   "\"value\": ";as_string(CFBP_DigIn098);
+   "}";",";
+  "{";
+   "\"name\" : \"CFBP_DigIn099\",";
+   "\"value\": ";as_string(CFBP_DigIn099);
+   "}";",";
+  "{";
+   "\"name\" : \"CFBP_DigIn100\",";
+   "\"value\": ";as_string(CFBP_DigIn100);
+   "}";",";
+  "{";
+   "\"name\" : \"CFBP_DigIn101\",";
+   "\"value\": ";as_string(CFBP_DigIn101);
+   "}";",";
+  "{";
+   "\"name\" : \"CFBP_DigIn102\",";
+   "\"value\": ";as_string(CFBP_DigIn102);
+   "}";",";
+  "{";
+   "\"name\" : \"CFBP_DigIn103\",";
+   "\"value\": ";as_string(CFBP_DigIn103);
+   "}";
+  
+ "]";
+ 
  "}";
  };
 };

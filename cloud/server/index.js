@@ -376,7 +376,7 @@ app.get("/", function(req, res) {
     res.render("index",{ page_title:"Home",
                          sim_cores : sim_cores,
                          sim_core : undefined,
-                        command_ws_url:command_ws_url});
+                         command_ws_url:command_ws_url});
 });
 
 app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next) {
@@ -384,7 +384,9 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next)
     let score = get_sim_core_by_uri(req.params[3]);
     if (score != undefined) {
          res.render("sim_main",{ page_title: score.name,
-                                 sim_core : score, command_ws_url:command_ws_url,sim_nodes_root:sim_nodes_root }); 
+                                 sim_core : score, 
+                                 command_ws_url:command_ws_url,
+                                 sim_nodes_root:sim_nodes_root }); 
     } else next();
                                 
  } else {

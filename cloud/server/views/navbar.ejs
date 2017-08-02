@@ -17,19 +17,14 @@
         <li class="dropdown">
           <a href="#" class="dropdown-toggle btn-lg" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">New <span class="caret"></span></a>
           <ul class="dropdown-menu">
-            <li><a href="#" id="action_add_fibex" >Create Simulation</a></li>
+            <% if (sim_core === undefined) { %> 
+             <li><a href="#" id="action_add_fibex" >Create Simulation</a></li>
+            <% } else { %>
+             <li><a href="#" id="action_add_ctrl_panel" >Create Control Panel</a></li>
+            <% } %>
           </ul>
         </li>
       </ul>
-
-
-
-
-
-
-
-
-
 
 
             </div>

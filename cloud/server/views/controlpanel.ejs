@@ -19,10 +19,54 @@
 <script src="/vendor/flot/jquery.flot.time.js"></script>
 <script src="/vendor/flot-tooltip/jquery.flot.tooltip.min.js"></script>
 
+
+
+<script>
+
+var ws_cmd = undefined;
+var editor = undefined;
+
+function Cepscloud() {this.signal_handlers = [];this.current_signal_values=[];}
+Cepscloud.prototype.register_handler = function (sig_name,callback) { this.signal_handlers.push({sig:sig_name,clbk:callback});}
+Cepscloud.prototype.update = function(sig_list){
+    if (this.signal_handlers.length == 0) return;
+    if (sig_list == undefined) sig_list = this.current_signal_values;
+
+    this.current_signal_values = sig_list;
+
+    for(sig of sig_list){
+        for(let i = 0;i!=this.signal_handlers.length;++i)
+        {
+            if (this.signal_handlers[i].sig != sig.name) continue;
+            this.signal_handlers[i].clbk(sig.value);
+        }
+    }
+}
+Cepscloud.prototype.set_signal = function (name,value){
+    /*let sig = undefined;
+    for(s of this.current_signal_values)
+     if (s.name == name) {sig = s;break;}
+
+    if (sig === undefined) { sig = {name:name,value:value};this.current_signal_values.push(sig);}
+    sig.value = value;*/
+    if (!isNaN(value)) ws_cmd.send(name+"="+value.toString()+";"); else
+    ws_cmd.send(name+"=\""+value.toString()+"\";");
+}
+
+Cepscloud.prototype.get_signal = function (name){
+    for(s of this.current_signal_values)
+     if (s.name == name) return s.value;
+    return undefined;   
+}
+
+var cepscloud = new Cepscloud();
+
+</script>    
+
 <script type="text/javascript">
  var signal = [];
  var signal_name = "";
- var ws_cmd = undefined;
+ 
 
  $(function() {
     var counter = 0;
@@ -35,11 +79,12 @@
     
     ws.onopen = function(e){
         console.log('Connection to server opened.');
-
+        //DEMO, REMOVE !
+        ws.send("CFBP_DigIn096");
     }
     ws.onmessage = function(e) {
         var msg = JSON.parse(e.data);
-                      
+        cepscloud.update(msg.signals);                      
     }
 
     ws_cmd.onmessage = function(e){
@@ -52,39 +97,6 @@
 });
 </script>
 
-<script>
-function Cepscloud() {this.signal_handlers = [];this.current_signal_values=[];}
-Cepscloud.prototype.register_handler = function (sig_name,callback) { this.signal_handlers.push({sig:sig_name,clbk:callback});}
-Cepscloud.prototype.update = function(sig_list){
-    if (this.signal_handlers.length == 0) return;
-    if (sig_list == undefined) sig_list = this.current_signal_values;
-
-    for(sig of sig_list){
-        for(let i = 0;i!=this.signal_handlers.length;++i)
-        {
-            if (this.signal_handlers[i].sig != sig.name) continue;
-            this.signal_handlers[i].clbk(sig.value);
-        }
-    }
-}
-Cepscloud.prototype.set_signal = function (name,value){
-    let sig = undefined;
-    for(s of this.current_signal_values)
-     if (s.name == name) {sig = s;break;}
-
-    if (sig === undefined) { sig = {name:name,value:value};this.current_signal_values.push(sig);}
-    sig.value = value;
-}
-
-Cepscloud.prototype.get_signal = function (name){
-    for(s of this.current_signal_values)
-     if (s.name == name) return s.value;
-    return undefined;   
-}
-
-var cepscloud = new Cepscloud();
-
-</script>    
 
 
 <body>
@@ -102,10 +114,17 @@ var cepscloud = new Cepscloud();
                   <div class="col-lg-8">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                          Control Panel <strong><%= panel_name %></strong>   
+                           
+                          
+                          <!-- Large button group -->
+
+  Control Panel <strong><%= panel_name %></strong>
+  <button style="text-align:right;" class="btn btn-default  " type="button" aria-expanded="false" id="edit_control_panel">
+   <span class="glyphicon glyphicon-pencil"></span>
+  </button>
                         </div>
                         <!-- /.panel-heading -->
-                        <div class="panel-body">
+                        <div class="panel-body" id="panel_ctrl_src">
                           <%- include( panel_loc ) %>
                         </div>
                         <!-- /.panel-body -->
@@ -128,6 +147,8 @@ var cepscloud = new Cepscloud();
  
 
     <script>
+
+    function transform_all(){
  let bulbs = $("span.bulb");
  for(let i = 0; i!=bulbs.length;++i)
   {
@@ -163,6 +184,7 @@ var cepscloud = new Cepscloud();
       '<button type="button" class="btn btn-default" onclick="'+r_onclick+'"><span class="glyphicon glyphicon-chevron-right"></span>&nbsp;</button>'+
     '</div>');
   }
+ }
 </script>
 
 <script>
@@ -182,6 +204,52 @@ var cepscloud = new Cepscloud();
 </script>
     <!-- Custom Theme JavaScript -->
     <script src="/dist/js/sb-admin-2.js"></script>
+
+
+<div class="modal fade" tabindex="-1" role="dialog" id="code_editor">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Edit Code</h4>
+      </div>
+      <div class="modal-body">
+      <div class="form-group">
+         <textarea class="form-control"  id="code" >
+         </textarea>
+      </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="code_save_btn"  data-dismiss="modal">Save</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<script>
+    $(document).ready(function() {
+     transform_all();    
+     $("#code_save_btn").click((e)=>{
+       let v = editor.getValue();
+       $("#panel_ctrl_src").html(v);
+       transform_all();  
+     });
+
+     $("#code").val($("#panel_ctrl_src").html());
+     $("#edit_control_panel").click(function (e) {
+         $('#code_editor').modal();
+         if (editor == undefined) setTimeout(() => { 
+             editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+            lineNumbers: true,
+            styleActiveLine: true,
+            matchBrackets: true
+         });}, 2000);
+        }) ;
+    });
+</script>
 
 </body>
 
