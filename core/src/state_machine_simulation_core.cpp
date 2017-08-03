@@ -10,6 +10,7 @@
 #include "core/include/sm_xml_frame.hpp"
 #include "core/include/modelling/partitions.hpp"
 #include "core/include/modelling/cover_path.hpp"
+#include "core/include/api/websocket/ws_api.hpp"
 #include "utils/concept_dependency_graph.hpp"
 #include "utils/stddoc.hpp"
 #include "utils/fibex_import.hpp"
@@ -614,7 +615,6 @@ void State_machine_simulation_core::eval_state_assign(ceps::ast::Binary_operator
 		return;
 	}
 	auto rhs = eval_locked_ceps_expr(this,nullptr,root.right(),&root);
-
 
 	auto pp = get_global_states()[lhs_id];
 	if (pp) global_states_prev_[lhs_id] = pp;

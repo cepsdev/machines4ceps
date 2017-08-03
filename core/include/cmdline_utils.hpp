@@ -85,6 +85,8 @@ struct Result_process_cmd_line
     bool no_warn = false;
     bool print_event_signatures = false;
     std::string package_file;
+    bool ws_api_on = false;
+    std::string ws_api_port = "8181";
 
 	Result_process_cmd_line() = default;
 	Result_process_cmd_line(bool version_flag_set_,

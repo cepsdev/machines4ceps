@@ -39,6 +39,7 @@
 #include "core/include/livelog/livelogger.hpp"
 #include "core/include/sm_livelog_storage_ids.hpp"
 #include "core/include/sm_livelog_storage_utils.hpp"
+#include "core/include/api/websocket/ws_api.hpp"
 
 
 namespace log4ceps = log4kmw;
@@ -155,13 +156,14 @@ public:
 	using states_t = std::vector<state_rep_t>;
 	using frame_queue_elem_t = std::tuple<Rawframe_generator::gen_msg_return_t,size_t,size_t,int>;
 	using frame_queue_t = threadsafe_queue< frame_queue_elem_t, std::queue<frame_queue_elem_t>>;
+        using global_states_t = std::map<std::string, ceps::ast::Nodebase_ptr>;
 private:
 	std::map<std::string,State_machine*> statemachines_;
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
 	ceps::Ceps_Environment * ceps_env_current_ = nullptr;
 	std::map<std::string, ceps::ast::Nodebase_ptr> global_guards;
-	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_;
-	std::map<std::string, ceps::ast::Nodebase_ptr> global_states_prev_;
+        global_states_t global_states_;
+        global_states_t global_states_prev_;
 /*Signal Generators ==>*/
     std::vector<std::pair<std::string,sm4ceps::datasources::Signalgenerator>> sig_generators_;
     void build_signal_structures(Result_process_cmd_line const& result_cmd_line);
@@ -229,6 +231,9 @@ private:
     executionloop_context_t executionloop_context_;
     livelog::Livelogger* live_logger_ = nullptr;
     sm4ceps::Livelogger_source* livelogger_source_ = nullptr;
+    Websocket_interface* ws_api_ = nullptr;
+    Websocket_interface* &  ws_api(){return ws_api_;}
+
 public:
     std::map<std::string /*channel*/ , std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > > out_encodings;
     livelog::Livelogger* live_logger(){return live_logger_;}

@@ -1509,6 +1509,12 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	if (result_cmd_line.dump_asciidoc_can_layer){
 		sm4ceps::utils::dump_asciidoc_canlayer_doc(std::cout,this);
 	}
+    if(result_cmd_line.ws_api_on){
+        ws_api() = new Websocket_interface(this,result_cmd_line.ws_api_port);
+        ws_api()->start();
+        running_as_node() = true;
+    }
+
 	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
     if(result_cmd_line.post_processing_rel_paths.size() ){
     	std::string last_file_processed;
