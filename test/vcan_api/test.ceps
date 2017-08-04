@@ -1,0 +1,90 @@
+kind Systemstate;
+kind Event;
+kind Guard;
+
+Event EXIT;
+
+macro timeout {
+ start_timer(hd(arglist),EXIT);
+};
+
+macro send_periodically{
+sm {
+  as_identifier(text(hd(tail(arglist)))+"_sender__");
+  cover{edges_upto_1;};
+  states{
+   Initial;
+  };
+  on_enter{
+   start_periodic_timer(hd(tail(tail(arglist))),as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") );
+  };
+  Actions{
+   trigger_msg{send(hd(tail(arglist)),hd(arglist));};
+  };
+  t{ Initial ; Initial ; as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") ; trigger_msg ;};
+ };
+};
+
+Systemstate TransmissionRequestedRange;
+Systemstate TransmissionCurrentRange;
+
+val GEAR_SELECTOR_NEUTRAL           = 0;
+val GEAR_SELECTOR_FIRST_FORWARD     = 1;
+val GEAR_SELECTOR_SECOND_FORWARD    = 2;
+val GEAR_SELECTOR_AUTOMATIC_FORWARD = 3;
+val GEAR_SELECTOR_FIRST_BACKWARD    = 4;
+val GEAR_SELECTOR_PIVOT             = 5;
+
+TransmissionRequestedRange = GEAR_SELECTOR_NEUTRAL;
+TransmissionCurrentRange   = GEAR_SELECTOR_PIVOT;
+
+macro encode_gear_selector{
+     val arg = hd(arglist);
+     if (arg == GEAR_SELECTOR_FIRST_FORWARD)
+      "1F";
+     else if (arg == GEAR_SELECTOR_SECOND_FORWARD)
+      "2F";
+     else if (arg == GEAR_SELECTOR_AUTOMATIC_FORWARD)
+      "AF";
+     else if (arg == GEAR_SELECTOR_FIRST_BACKWARD)
+      "1R";
+     else if (arg == GEAR_SELECTOR_PIVOT)
+      " P";
+     else " N";
+};
+
+frame{
+ id{ETC2;};
+ data{
+  out{
+    uint8{
+     encode_gear_selector{TransmissionRequestedRange;};
+     encode_gear_selector{TransmissionCurrentRange;};
+     0xFF;
+     0xFF;
+     0xFF;
+     0xFF;
+    };
+  };
+ };
+};
+
+sender
+{
+  id { can_out; };
+  transport {
+   canbus {
+    extended;
+    bus_id { "vcan0"; };
+    can_id_mapping{
+     ETC2; 0x18F00503;
+    };
+   };
+  };
+};
+
+send_periodically{can_out;ETC2;0.1*s;};
+
+
+
+Simulation{};
