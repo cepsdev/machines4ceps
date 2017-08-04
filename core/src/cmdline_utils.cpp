@@ -262,6 +262,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 		    else if (arg == "--post_processing") {post_processing=true;continue;}
 		    else if (arg == "--package_file") {++i;if (i >= argc)break;r.package_file = argv[i] ; continue;}
             else if (arg == "--ws_api") {++i;if (i >= argc)break;r.ws_api_on = true;r.ws_api_port = argv[i] ; continue;}
+            else if (arg == "--vcan_api") {++i;if (i >= argc)break;r.vcan_api_on = true;r.vcan_api_port = argv[i] ; continue;}
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {
 					r.server_port = r.port = arg.substr(6);

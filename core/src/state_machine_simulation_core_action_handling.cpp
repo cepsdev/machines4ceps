@@ -690,7 +690,8 @@ void State_machine_simulation_core::register_global_function(std::string name,sm
 
 void State_machine_simulation_core::send_raw_frame(void* chunk,size_t len,size_t header_len,std::string const & channel_id){
  if(len == 0 || chunk == nullptr) return;
- auto channel = get_out_channel(channel_id);
+ auto channel_info = get_out_channel(channel_id);
+ auto channel = std::get<0>(channel_info);
  if (channel == nullptr) fatal_(-1,channel_id+" is not an output channel.");
  char* msg_block = new char[len];
  memcpy(msg_block,chunk,len);

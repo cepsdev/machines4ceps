@@ -147,6 +147,8 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 				int dispatcher_id = -1;
 				auto ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
 				ctxt->id_=channel_id;
+                if(extended) ctxt->info()="CANX";
+                else ctxt->info()="CAN";
 
 				DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER (CAL="<< call_name << "][dispatcher_id=" << dispatcher_id << "]\n";
 				for (auto const & handler_ : handlers) {

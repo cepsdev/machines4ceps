@@ -40,6 +40,7 @@
 #include "core/include/sm_livelog_storage_ids.hpp"
 #include "core/include/sm_livelog_storage_utils.hpp"
 #include "core/include/api/websocket/ws_api.hpp"
+#include "core/include/api/virtual_can/virtual_can_api.hpp"
 
 
 namespace log4ceps = log4kmw;
@@ -154,9 +155,18 @@ class State_machine_simulation_core:
 public:
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
-	using frame_queue_elem_t = std::tuple<Rawframe_generator::gen_msg_return_t,size_t,size_t,int>;
+        using frame_queue_elem_t = std::tuple<
+                                              Rawframe_generator::gen_msg_return_t,
+                                              size_t,
+                                              size_t,
+                                              int>;
 	using frame_queue_t = threadsafe_queue< frame_queue_elem_t, std::queue<frame_queue_elem_t>>;
         using global_states_t = std::map<std::string, ceps::ast::Nodebase_ptr>;
+        int frame_carries_gateway_socket(frame_queue_elem_t const & frm){
+            if ( std::get<1>(std::get<0>(frm)) == nullptr && std::get<1>(frm) == 0 && std::get<2>(frm) == 0 )
+                return std::get<3>(frm);
+            return -1;
+        }
 private:
 	std::map<std::string,State_machine*> statemachines_;
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
@@ -233,6 +243,8 @@ private:
     sm4ceps::Livelogger_source* livelogger_source_ = nullptr;
     Websocket_interface* ws_api_ = nullptr;
     Websocket_interface* &  ws_api(){return ws_api_;}
+    Virtual_can_interface* vcan_api_ = nullptr;
+    Virtual_can_interface* &  vcan_api(){return vcan_api_;}
 
 public:
     std::map<std::string /*channel*/ , std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > > out_encodings;
@@ -354,6 +366,7 @@ public:
 	typedef void (*global_event_call_back_fn)(event_t);
 	global_event_call_back_fn global_event_call_back_fn_ = nullptr;
 	void set_global_event_call_back(global_event_call_back_fn fn){global_event_call_back_fn_ = fn;}
+        using id_to_out_chan_t = std::map<std::string,std::tuple<frame_queue_t*,std::string>>;
 private:
 	std::map<std::string,smcore_plugin_fn_t> name_to_smcore_plugin_fn;
 	using main_event_queue_t = threadsafe_queue<event_t, sm4ceps::Eventqueue<event_t> /*std::queue<event_t>*/ >;
@@ -377,15 +390,22 @@ private:
 		}
 	};
 	Log std_log_;
-	std::map<std::string,frame_queue_t* > id_to_out_chan_;
+        id_to_out_chan_t id_to_out_chan_;
 public:
 
-	frame_queue_t* get_out_channel(std::string const & s){
+        std::vector< std::tuple<std::string/*id*/,frame_queue_t* /*channel_id*/,std::string /*info*/>> get_out_channels(){
+            std::vector< std::tuple<std::string,frame_queue_t*,std::string >> r;
+            for (auto e : id_to_out_chan_)
+                r.push_back(std::make_tuple(e.first,std::get<0>(e.second),std::get<1>(e.second) ));
+            return r;
+        }
+
+        std::tuple<frame_queue_t*,std::string> get_out_channel(std::string const & s){
 		return id_to_out_chan_[s];
 	}
 
-	void set_out_channel(std::string const & s, frame_queue_t* ch){
-		id_to_out_chan_[s] = ch;
+        void set_out_channel(std::string const & s, frame_queue_t* ch, std::string info){
+                id_to_out_chan_[s] = std::make_tuple(ch,info);
 	}
 
 	using type_definitions_t = std::map<std::string, ceps::ast::Struct_ptr>;
@@ -658,6 +678,7 @@ public:
 		 std::string id_;
 		 std::mutex m_;
 		 std::condition_variable cv_;
+                 std::string info_;
 		 bool start_ = false;
 		 bool websocket_server_ = false;
 		 bool websocket_client_ = false;
@@ -665,6 +686,7 @@ public:
 		 std::string& id(){return id_;}
 		 std::string const & id() const {return id_;}
 		 dispatcher_thread_ctxt_t() = default;
+
 
 		 void request_start() {
 			std::lock_guard<std::mutex> lk(m_);
@@ -677,7 +699,8 @@ public:
 		 }
 		 bool& websocket_server(){return websocket_server_;}
 		 bool& websocket_client(){return websocket_client_;}
-		 decltype(native_handler)& get_native_handler() {return native_handler;}
+                 std::string& info(){return info_;}
+                 decltype(native_handler)& get_native_handler() {return native_handler;}
 	};
 private:
 	std::map<std::string,std::tuple<int,bool>> registered_sockets_;
@@ -708,6 +731,8 @@ public:
 			if (e->id() == name) return e;
 		return nullptr;
 	}
+        std::vector<dispatcher_thread_ctxt_t*> & dispatcher_thread_ctxts(){return dispatcher_thread_ctxt_;}
+
 	void request_start_for_all_dispatchers(){
 		for(auto & e: dispatcher_thread_ctxt_) e->request_start();
 	}

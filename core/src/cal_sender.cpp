@@ -279,7 +279,8 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 		out_encodings[channel_id] = encodings;
 
 		auto channel = new State_machine_simulation_core::frame_queue_t;
-		this->set_out_channel(channel_id, channel);
+        if (extended) this->set_out_channel(channel_id, channel,"CAN");
+        else this->set_out_channel(channel_id, channel,"CANX");
 
 		if (start_comm_threads()){
 			running_as_node() = true;
@@ -384,12 +385,25 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 		}
     } else is_virtual=true;
 
+    std::vector<int> gateway_sockets;
+
 	for (;;)
 	{
 		State_machine_simulation_core::frame_queue_elem_t frame_info;
 
 		if (pop_frame) {
 			frames->wait_and_pop(frame_info);
+            auto new_gtwy_sck = -1;
+            if ( 0 <= (new_gtwy_sck = smc->frame_carries_gateway_socket(frame_info))){
+                bool already_registered = false;
+                for(auto & e : gateway_sockets) if (e == new_gtwy_sck) already_registered = true;
+                if (already_registered) continue;
+                std::size_t insertion_idx=0;
+                for(;insertion_idx!=gateway_sockets.size();++insertion_idx) if (gateway_sockets[insertion_idx] < 0) break;
+                if (insertion_idx!=gateway_sockets.size()) gateway_sockets[insertion_idx] = new_gtwy_sck;
+                else gateway_sockets.push_back(new_gtwy_sck);
+                continue;
+            }
 			frame_size = std::get<1>(frame_info);
 			frame = (decltype(frame))std::get<1>(std::get<0>(frame_info));
 			header_size = std::get<2>(frame_info);
@@ -420,6 +434,14 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 				smc->main_event_queue().push(ev);
 				return;
              }
+            }
+            for(auto & sck : gateway_sockets){
+                auto v = htonl(sizeof (can_frame));
+                auto r = send(sck,&v,sizeof(v),MSG_DONTWAIT);
+                if (r != sizeof(v) && (r == EAGAIN || r == EWOULDBLOCK)) continue;/*skip potentially blocking sockets*/
+                if (r != sizeof(v)) {close(sck);sck=-1; /*kill errorneous connections*/}
+                r = send(sck,&can_message,sizeof(can_frame),MSG_DONTWAIT);
+                if (r != sizeof(v)) {close(sck);sck=-1; /*necessary even in case of an EAGAIN/EWOULDBLOCK result*/}
             }
 		}
 		else if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {

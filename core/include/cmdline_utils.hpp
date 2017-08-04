@@ -88,6 +88,9 @@ struct Result_process_cmd_line
     bool ws_api_on = false;
     std::string ws_api_port = "8181";
 
+    bool vcan_api_on = false;
+    std::string vcan_api_port = "8182";
+
 	Result_process_cmd_line() = default;
 	Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,

@@ -924,7 +924,8 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
   auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
   auto it_frame_gen = smc->frame_generators().find(id);
   if (it_frame_gen == smc->frame_generators().end()) smc->fatal_(-1,id+" is not a frame id.");
-  auto channel = smc->get_out_channel(ch_id);
+  auto channel_info = smc->get_out_channel(ch_id);
+  auto channel = std::get<0>(channel_info);
   if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
   size_t ds;
   auto msg_block = it_frame_gen->second->gen_msg(smc,ds,smc->out_encodings[ch_id]);
@@ -947,7 +948,8 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
  } else if (args.size() == 3 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::identifier
 		    && args[2]->kind() == ceps::ast::Ast_node_kind::byte_array){
    auto ch_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
-   auto channel = smc->get_out_channel(ch_id);
+   auto channel_info = smc->get_out_channel(ch_id);
+   auto channel = std::get<0>(channel_info);
    if (channel == nullptr) smc->fatal_(-1,ch_id+" is not an output channel.");
    auto id = ceps::ast::name(ceps::ast::as_id_ref(args[1]));
    auto &seq = ceps::ast::bytes(ceps::ast::as_byte_array_ref(args[2]));

@@ -1025,7 +1025,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		 event_triggered_sender().push_back(descr);
 		} else if (!condition_defined && !emit_defined && channel_id.length()){
 		 auto channel = new frame_queue_t;
-		 this->set_out_channel(channel_id,channel);
+         this->set_out_channel(channel_id,channel,"INET_STREAM");
 		 if (start_comm_threads()){
 	     running_as_node() = true;
 		 comm_threads.push_back(
@@ -1512,6 +1512,11 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
     if(result_cmd_line.ws_api_on){
         ws_api() = new Websocket_interface(this,result_cmd_line.ws_api_port);
         ws_api()->start();
+        running_as_node() = true;
+    }
+    if(result_cmd_line.vcan_api_on){
+        vcan_api() = new Virtual_can_interface(this,result_cmd_line.ws_api_port);
+        vcan_api()->start();
         running_as_node() = true;
     }
 
