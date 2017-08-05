@@ -16,6 +16,7 @@ INCLUDEPATH += $$CEPS_DIR/include/include_gen
 INCLUDEPATH += $$SM4CEPS_DIR
 INCLUDEPATH += $$SM4CEPS_DIR/kmw
 INCLUDEPATH += $$SM4CEPS_DIR/include
+INCLUDEPATH += $$SM4CEPS_DIR/include/api/websocket
 INCLUDEPATH += $$SM4CEPS_DIR/pugixml-1.6/src
 INCLUDEPATH += $$SM4CEPS_DIR/../log4kmw/include
 INCLUDEPATH += $$SM4CEPS_DIR/core/src_gen/logging
@@ -63,6 +64,8 @@ SOURCES   += $$SM4CEPS_DIR/src/main.cpp \
     $$SM4CEPS_DIR/core/src/modelling/cover_path.cpp \
     $$SM4CEPS_DIR/core/src/modelling/gensm.cpp \
     $$SM4CEPS_DIR/core/src/modelling/partitions.cpp \
+    $$SM4CEPS_DIR/core/src/api/websocket/ws_api.cpp \
+    $$SM4CEPS_DIR/core/src/api/virtual_can/virtual_can_api.cpp \
     $$SM4CEPS_DIR/utils/asciidoc.cpp \
     $$SM4CEPS_DIR/utils/can_layer_docgen.cpp \
     $$SM4CEPS_DIR/utils/concept_dependency_graph.cpp \

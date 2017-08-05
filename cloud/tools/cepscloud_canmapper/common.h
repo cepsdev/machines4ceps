@@ -53,6 +53,33 @@ std::string port;
 std::mutex global_mutex;
 std::condition_variable global_mutex_cv;
 */
-extern std::vector<std::string> available_ifs;
+
+ extern std::vector<std::string> sys_info_available_ifs;
+
+using Local_Interface = std::string;
+using Remote_Interface = std::string;
+using Downstream_Mapping = std::pair<Local_Interface,Remote_Interface>;
+using Upstream_Mapping = std::pair<Remote_Interface,Local_Interface>;
+using Hostname = std::string;
+using Port = std::string;
+using Simulation_Core = std::pair<Hostname,Port>;
+struct ctrl_thread_info {
+ std::atomic_bool shutdown{false};
+ std::thread* ctrl_thread;
+} ;
+
+extern std::map<Simulation_Core,std::vector< Downstream_Mapping > > mappings_downstream;
+extern std::map<Simulation_Core,std::vector< Upstream_Mapping > > mappings_upstream;
+extern std::map<Simulation_Core, std::shared_ptr<ctrl_thread_info>  > ctrl_threads;
+extern Simulation_Core current_core;
+
+void ctrl_thread_fn(std::shared_ptr<ctrl_thread_info>);
+
+template <typename T> T & sort_and_remove_duplicates(T & v){
+    std::sort(v.begin(),v.end());
+    auto it = std::unique (v.begin(), v.end());
+    v.erase(it,v.end());
+    return v;
+}
 
 #endif // COMMON_H

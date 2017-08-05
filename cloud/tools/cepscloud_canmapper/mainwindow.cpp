@@ -9,18 +9,22 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
 
-    for(auto e : available_ifs){
-        QListWidgetItem* t;
-        std::cout << e << std::endl;
-        ui->listwidget_local_ifs_downstream->addItem(t = new QListWidgetItem(e.c_str()));
-        t->setCheckState(Qt::Unchecked);
-        ui->listwidget_local_ifs_upstream->addItem(t = new QListWidgetItem(e.c_str()));
-        t->setCheckState(Qt::Unchecked);
-
-    }
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+
+}
+
+void MainWindow::on_connect_btn_clicked()
+{
+    current_core.first = this->ui->line_edit_host->text().toStdString();
+    current_core.second = this->ui->line_edit_port->text().toStdString();
+    auto thrd_info = std::shared_ptr<ctrl_thread_info>(new ctrl_thread_info{});
+    thrd_info->ctrl_thread = new std::thread{ctrl_thread_fn,thrd_info};
 }

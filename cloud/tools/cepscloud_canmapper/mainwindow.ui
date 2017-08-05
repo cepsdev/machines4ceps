@@ -6,117 +6,132 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>566</width>
-    <height>552</height>
+    <width>577</width>
+    <height>657</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>cepSCloud CAN Mapper</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>549</width>
-      <height>480</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <layout class="QFormLayout" name="formLayout">
+   <layout class="QGridLayout" name="gridLayout_3">
+    <item row="0" column="0">
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>cepSCloud Simulation Core :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="line_edit_host">
+        <property name="text">
+         <string>localhost</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Port :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="line_edit_port">
+        <property name="text">
+         <string>8183</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QPushButton" name="connect_btn">
+        <property name="text">
+         <string>Connect</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string>Downstream Mappings</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>cepSCloud Server</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="lineEdit">
-         <property name="text">
-          <string>localhost</string>
+        <widget class="QTabWidget" name="downstream_tabs">
+         <property name="currentIndex">
+          <number>-1</number>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
+        <widget class="QPushButton" name="new_downstream_mapping_btn">
          <property name="text">
-          <string>Port</string>
+          <string>New Downstream Mapping</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEdit_2">
+       <item row="2" column="0">
+        <widget class="QPushButton" name="delete_downstream_mapping_btn">
          <property name="text">
-          <string>8189</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="text">
-          <string>Connect</string>
+          <string>Delete Downstream Mapping</string>
          </property>
         </widget>
        </item>
       </layout>
-     </item>
-     <item>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="title">
+       <string>Upstream Mappings</string>
+      </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="2">
-        <widget class="QListWidget" name="listwidget_local_ifs_downstream">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0" colspan="3">
-        <widget class="QPushButton" name="pushButton">
-         <property name="text">
-          <string>Apply Mappings</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>=&gt;</string>
+       <item row="0" column="0">
+        <widget class="QTabWidget" name="upstream_tabs">
+         <property name="maximumSize">
+          <size>
+           <width>800</width>
+           <height>900</height>
+          </size>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QListWidget" name="listwidget_local_ifs_upstream">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QListWidget" name="listWidget"/>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_3">
+        <widget class="QPushButton" name="new_upstream_mapping_btn">
          <property name="text">
-          <string>&lt;=</string>
+          <string>New Upstream Mapping</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="2">
-        <widget class="QListWidget" name="listwidget_remote_in_channels"/>
+       <item row="2" column="0">
+        <widget class="QPushButton" name="delete_upstream_mapping_btn">
+         <property name="text">
+          <string>Delete Upstream Mapping</string>
+         </property>
+        </widget>
        </item>
       </layout>
-     </item>
-    </layout>
-   </widget>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="apply_mappings_btn">
+      <property name="text">
+       <string>Apply Mappings</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>566</width>
+     <width>577</width>
      <height>19</height>
     </rect>
    </property>
