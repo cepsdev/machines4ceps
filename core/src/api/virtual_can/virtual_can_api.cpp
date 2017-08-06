@@ -112,7 +112,7 @@ void Virtual_can_interface::handler(int sck){
 
     auto const & attrs = std::get<2>(rhr);
     auto cmd_ = get_virtual_can_attribute_content("cmd",attrs);
-    if (cmd_.first) continue;
+    if (!cmd_.first) continue;
     auto const & cmd = cmd_.second;
     std::stringstream response;
 

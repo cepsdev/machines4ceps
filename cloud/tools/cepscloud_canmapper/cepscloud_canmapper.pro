@@ -13,9 +13,11 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    streammapping.cpp
 
 HEADERS  += mainwindow.h \
-    common.h
+    common.h \
+    streammapping.h
 
 FORMS    += mainwindow.ui

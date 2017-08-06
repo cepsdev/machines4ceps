@@ -41,7 +41,7 @@
       <item row="1" column="1">
        <widget class="QLineEdit" name="line_edit_port">
         <property name="text">
-         <string>8183</string>
+         <string>8186</string>
         </property>
        </widget>
       </item>
@@ -60,22 +60,28 @@
        <string>Downstream Mappings</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
+       <item row="2" column="0">
         <widget class="QTabWidget" name="downstream_tabs">
          <property name="currentIndex">
           <number>-1</number>
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="0" column="0">
         <widget class="QPushButton" name="new_downstream_mapping_btn">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>New Downstream Mapping</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="1" column="0">
         <widget class="QPushButton" name="delete_downstream_mapping_btn">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Delete Downstream Mapping</string>
          </property>
@@ -90,7 +96,7 @@
        <string>Upstream Mappings</string>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
+       <item row="2" column="0">
         <widget class="QTabWidget" name="upstream_tabs">
          <property name="maximumSize">
           <size>
@@ -100,15 +106,21 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="0" column="0">
         <widget class="QPushButton" name="new_upstream_mapping_btn">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>New Upstream Mapping</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="1" column="0">
         <widget class="QPushButton" name="delete_upstream_mapping_btn">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Delete Upstream Mapping</string>
          </property>
@@ -119,6 +131,9 @@
     </item>
     <item row="3" column="0">
      <widget class="QPushButton" name="apply_mappings_btn">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="text">
        <string>Apply Mappings</string>
       </property>

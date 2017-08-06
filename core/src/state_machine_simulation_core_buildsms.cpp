@@ -1515,7 +1515,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         running_as_node() = true;
     }
     if(result_cmd_line.vcan_api_on){
-        vcan_api() = new Virtual_can_interface(this,result_cmd_line.ws_api_port);
+        vcan_api() = new Virtual_can_interface(this,result_cmd_line.vcan_api_port);
         vcan_api()->start();
         running_as_node() = true;
     }
