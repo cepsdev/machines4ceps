@@ -19,6 +19,9 @@ StreamMapping::StreamMapping(std::vector< std::pair< Remote_Interface, Remote_In
  clbk_target = trgt;
  clbk = cbk;
 
+ left_groupbox->setTitle("Remote Channels (Out)");
+ right_groupbox->setTitle("Local Network Interfaces (In)");
+
  {
   auto layout = new QVBoxLayout;
   for(auto const & e : remote_interfaces){

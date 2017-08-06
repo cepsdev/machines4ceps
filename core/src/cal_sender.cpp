@@ -279,8 +279,8 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 		out_encodings[channel_id] = encodings;
 
 		auto channel = new State_machine_simulation_core::frame_queue_t;
-        if (extended) this->set_out_channel(channel_id, channel,"CAN");
-        else this->set_out_channel(channel_id, channel,"CANX");
+        if (extended) this->set_out_channel(channel_id, channel,"CANX");
+        else this->set_out_channel(channel_id, channel,"CAN");
 
 		if (start_comm_threads()){
 			running_as_node() = true;
@@ -426,6 +426,7 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
                         if(extended_can) can_message.can_id |= CAN_EFF_FLAG;
 			can_message.can_dlc = frame_size;
 			memcpy(can_message.data,frame,frame_size);
+
             if (!is_virtual){
              auto r = write(s, &can_message, sizeof(struct can_frame));
              if (r != sizeof(struct can_frame)){
@@ -435,13 +436,14 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 				return;
              }
             }
+            if (gateway_sockets.size())can_message.can_id = it->second;
             for(auto & sck : gateway_sockets){
                 auto v = htonl(sizeof (can_frame));
                 auto r = send(sck,&v,sizeof(v),MSG_DONTWAIT);
                 if (r != sizeof(v) && (r == EAGAIN || r == EWOULDBLOCK)) continue;/*skip potentially blocking sockets*/
                 if (r != sizeof(v)) {close(sck);sck=-1; /*kill errorneous connections*/}
                 r = send(sck,&can_message,sizeof(can_frame),MSG_DONTWAIT);
-                if (r != sizeof(v)) {close(sck);sck=-1; /*necessary even in case of an EAGAIN/EWOULDBLOCK result*/}
+                if (r != sizeof(can_frame)) {close(sck);sck=-1; /*necessary even in case of an EAGAIN/EWOULDBLOCK result*/}
             }
 		}
 		else if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {

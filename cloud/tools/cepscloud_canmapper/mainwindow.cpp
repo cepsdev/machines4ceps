@@ -2,19 +2,7 @@
 #include "ui_mainwindow.h"
 #include "streammapping.h"
 #include "common.h"
-#ifdef __linux
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 
-#include <net/if.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#endif
 
 
 MainWindow::MainWindow(QCoreApplication* app,QWidget *parent) :
@@ -61,7 +49,7 @@ void MainWindow::on_pushButton_3_clicked()
 
 std::vector<Stream_Mapping> MainWindow::get_valid_downstream_mappings(){
  std::vector<Stream_Mapping> r;
- for(size_t i = 0; i != ui->downstream_tabs->count();++i ){
+ for(int i = 0; i != ui->downstream_tabs->count();++i ){
   auto rr = ((StreamMapping*)(ui->downstream_tabs->widget(i)))->get_stream_mapping();
   if (rr.first.empty() || rr.second.empty()) continue;
   r.push_back(rr);
@@ -119,23 +107,33 @@ void MainWindow::on_apply_mappings_btn_clicked()
  auto r = get_valid_downstream_mappings();
  std::set<Stream_Mapping> done;
  std::vector<int> local_sockets;
- std::vector<bool> extended_can_info;
+ std::vector<int> extended_can_info;
+ std::vector<std::string> remote_interface;
+
  for(size_t i = 0; i!= r.size();++i){
      auto s = r[i];
      if (done.find(s) != done.end()) continue;
      done.insert(s);
+
      bool extended_can = false;
-     for( auto ss : info_out_channels[current_core])
-         if (ss.first == s.second) {extended_can = ss.second == "CANX";break;}
+     {
+      std::lock_guard<std::mutex> lg(global_mutex);
+      for( auto ss : info_out_channels[current_core])
+         if (ss.first == s.second) {
+             extended_can = ss.second == "CANX";break;
+         }
+     }
      extended_can_info.push_back(extended_can);
-     local_sockets.push_back(-1);
-     int& sck = local_sockets[local_sockets.size()-1];
+
+     //local_sockets.push_back(-1);
+     remote_interface.push_back(s.second);
+     int sck = -1;// local_sockets[local_sockets.size()-1];
 
      struct sockaddr_can addr;
      struct ifreq ifr;
      if((sck = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
          auto err = errno;
-         for(size_t j = 0; j!=local_sockets.size()-1;++j) ::close(local_sockets[j]);
+         for(size_t j = 0; j!=local_sockets.size();++j) ::close(local_sockets[j]);
          ui->statusBar->setStyleSheet("color: red");
          ui->statusBar->showMessage(strerror(err));
          return;
@@ -147,15 +145,29 @@ void MainWindow::on_apply_mappings_btn_clicked()
 
      if(bind(sck, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
          auto err = errno;
-         for(size_t j = 0; j!=local_sockets.size()-1;++j) ::close(local_sockets[j]);
+         for(size_t j = 0; j!=local_sockets.size();++j) ::close(local_sockets[j]);
          ui->statusBar->setStyleSheet("color: red");
          ui->statusBar->showMessage(strerror(err));
          return;
      }
+     local_sockets.push_back(sck);
  }
- ui->statusBar->setStyleSheet("color: green");
- ui->statusBar->showMessage("Local communication structures successfully allocated.");
 
+ for(size_t i = 0; i != local_sockets.size(); ++i){
+     auto t = std::shared_ptr<gateway_thread_info>{ new gateway_thread_info() };
+     //std::cout << extended_can_info[i] << std::endl;
+     t->gateway_thread = new std::thread{gateway_fn,
+                                         this,
+                                         current_core,
+                                         t,
+                                         local_sockets[i],
+                                         extended_can_info[i],
+                                         remote_interface[i]};
+     downstream_threads[current_core].push_back(t);
+ }
+
+ ui->statusBar->setStyleSheet("color: green");
+ ui->statusBar->showMessage("Local communication structures successfully allocated.Wiring up with remote channels...");
 
 
 }

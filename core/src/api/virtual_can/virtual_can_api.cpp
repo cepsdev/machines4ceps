@@ -95,12 +95,13 @@ template<typename F> struct cleanup{
 
 void Virtual_can_interface::handler(int sck){
 
- auto cleanup_f = [this,sck](){
+ bool close_sck = true;
+ auto cleanup_f = [this,sck,&close_sck](){
      using namespace std;
      lock_guard<std::mutex> lg(handler_threads_status_mutex_);
      for(auto& s : handler_threads_status_)
         if (get<1>(s) && get<0>(s) && get<2>(s)==sck)
-          {get<1>(s)=false;get<2>(s)=-1;close(sck);}
+          {get<1>(s)=false;get<2>(s)=-1;if(close_sck)close(sck);}
 
  };
  cleanup<decltype(cleanup_f)> cl{cleanup_f};
@@ -112,9 +113,10 @@ void Virtual_can_interface::handler(int sck){
 
     auto const & attrs = std::get<2>(rhr);
     auto cmd_ = get_virtual_can_attribute_content("cmd",attrs);
-    if (!cmd_.first) continue;
+    if (!cmd_.first) return;
     auto const & cmd = cmd_.second;
     std::stringstream response;
+
 
     if (cmd == "get_out_channels"){
         auto v = smc_->get_out_channels();
@@ -126,7 +128,6 @@ void Virtual_can_interface::handler(int sck){
             response << " "<<std::get<2>(ch);
         response << "\r\n";
         response <<"\r\n";
-
     } else if (cmd == "get_in_channels") {
         auto v = smc_->dispatcher_thread_ctxts();
         response << "HTTP/1.1 100\r\n"<< "in_channels:";
@@ -137,8 +138,16 @@ void Virtual_can_interface::handler(int sck){
             response <<" "<<ch->info();
         response << "\r\n";
         response <<"\r\n";
-    } else if (cmd == "subscribe_out_channels") {
-
+    } else if (cmd == "subscribe_out_channel") {
+        auto out_channel_ = get_virtual_can_attribute_content("out_channel",attrs);
+        if (!out_channel_.first) return;
+        auto const & out_channel_name = out_channel_.second;
+        auto out_channel = smc_->get_out_channel(out_channel_name);
+        if(std::get<0>(out_channel) == nullptr) return;
+        auto frame_queue = std::get<0>(out_channel);
+        frame_queue->push(std::make_tuple(std::make_tuple(0,nullptr),0,0,sck));
+        close_sck = false;
+        return;
     } else if (cmd == "subscribe_in_channels") {
 
     } else return;

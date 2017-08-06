@@ -47,7 +47,19 @@
 #endif
 #endif
 
+#ifdef __linux
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
+#include <net/if.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <linux/can.h>
+#include <linux/can/raw.h>
+#endif
 /*std::string host;
 std::string port;
 std::mutex global_mutex;
@@ -68,24 +80,32 @@ using Upstream_Mapping = Downstream_Mapping;
 using Hostname = std::string;
 using Port = std::string;
 using Simulation_Core = std::pair<Hostname,Port>;
+
 struct ctrl_thread_info {
  std::atomic_bool shutdown{false};
  std::thread* ctrl_thread;
 };
 
 
+struct gateway_thread_info {
+ std::atomic_bool shutdown{false};
+ std::thread* gateway_thread;
+ std::atomic_bool down{false};
+};
 
 using mappings_downstream_t = std::map<Simulation_Core,std::vector< Downstream_Mapping > >;
 using mappings_upstream_t = std::map<Simulation_Core,std::vector< Upstream_Mapping > >;
 using info_out_channels_t = std::map<Simulation_Core,std::vector< std::pair<Remote_Interface,Remote_Interface_Type> > >;
 using info_in_channels_t = std::map<Simulation_Core,std::vector< std::pair<Remote_Interface,Remote_Interface_Type> > >;
 using ctrl_threads_t = std::map<Simulation_Core, std::shared_ptr<ctrl_thread_info>  >;
+using downstream_threads_t = std::map<Simulation_Core, std::vector< std::shared_ptr<gateway_thread_info> >  >;
 
 extern std::map<Simulation_Core,std::vector< Downstream_Mapping > > mappings_downstream;
 extern std::map<Simulation_Core,std::vector< Upstream_Mapping > > mappings_upstream;
 extern std::map<Simulation_Core,std::vector< std::pair<Remote_Interface,Remote_Interface_Type> > > info_out_channels;
 extern std::map<Simulation_Core,std::vector< std::pair<Remote_Interface,Remote_Interface_Type> > > info_in_channels;
 extern std::map<Simulation_Core, std::shared_ptr<ctrl_thread_info>  > ctrl_threads;
+extern downstream_threads_t downstream_threads;
 extern Simulation_Core current_core;
 extern std::mutex global_mutex;
 
@@ -93,6 +113,16 @@ void ctrl_thread_fn(QCoreApplication* core_app,
                     QMainWindow* main_window,
                     Simulation_Core sim_core,
                     std::shared_ptr<ctrl_thread_info> ctrl);
+
+
+void gateway_fn(QMainWindow* main_window,
+                Simulation_Core sim_core,
+                std::shared_ptr<gateway_thread_info> ctrl,
+                int local_sck,
+                int extended_can,
+                std::string remote_interface);
+
+
 
 template <typename T> T & sort_and_remove_duplicates(T & v){
     std::sort(v.begin(),v.end());
