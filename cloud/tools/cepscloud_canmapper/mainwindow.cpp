@@ -167,7 +167,7 @@ void MainWindow::on_apply_mappings_btn_clicked()
  }
 
  ui->statusBar->setStyleSheet("color: green");
- ui->statusBar->showMessage("Local communication structures successfully allocated.Wiring up with remote channels...");
+ ui->statusBar->showMessage("Mapping Rules applied.");
 
 
 }

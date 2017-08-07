@@ -109,12 +109,17 @@
             </div>
             <!-- /.row -->
 
+   
         <div class="row">
                 <div class="col-lg-12" id="tasks_list">
-                    <!--div class="alert alert-warning alert-dismissable">
+                    <div class="alert alert-info alert-dismissable">
                     <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-                     <strong>Info!</strong>
-                    </div-->
+                    <strong>Streaming CAN messages from/to your computer requires the </strong>
+                      <button type="button" class="btn btn-default navbar-btn" onclick="$('#action_download_canmapper_dialog').modal();">
+                        <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>&nbsp;CAN Mapping Tool
+                      </button>
+                    .
+                    </div>
                 </div>
             <!-- /.row -->
         </div>
@@ -126,6 +131,41 @@
 
     <!-- /#wrapper -->
 </div>
+
+
+
+
+
+
+<div class="modal fade" tabindex="-1" role="dialog" id="action_download_canmapper_dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>&nbsp;CAN Mapping Tool
+      </div>
+      <div class="modal-body">
+
+        <ul class="list-group">
+            <li class="list-group-item">
+                <img src="img/ubuntu_orange_hex.svg" style="width:100px">
+                <button class="btn btn-primary" type="button" data-dismiss="modal" onclick="window.open('cepscloud_canmapper');" >Get CAN Mapper for Ubuntu 16.04 LTS</button>
+            </li>
+        </ul>
+
+           
+              
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+
 
 
 

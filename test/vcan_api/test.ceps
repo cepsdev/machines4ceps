@@ -34,6 +34,7 @@ val GEAR_SELECTOR_SECOND_FORWARD    = 2;
 val GEAR_SELECTOR_AUTOMATIC_FORWARD = 3;
 val GEAR_SELECTOR_FIRST_BACKWARD    = 4;
 val GEAR_SELECTOR_PIVOT             = 5;
+val GEAR_MAX_VALUE                  = 5;
 
 TransmissionRequestedRange = GEAR_SELECTOR_NEUTRAL;
 TransmissionCurrentRange   = GEAR_SELECTOR_PIVOT;
@@ -84,7 +85,24 @@ sender
 };
 
 send_periodically{can_out;ETC2;0.1*s;};
+Event toggle_tick;
+
+sm{
+ Toggle_TransmissionCurrentRange;
+ states{Initial;A;};
+ on_enter{
+  start_periodic_timer(0.5*s,toggle_tick);
+ };
+ Actions{
+  toggle{ if (TransmissionCurrentRange < GEAR_MAX_VALUE) TransmissionCurrentRange = TransmissionCurrentRange + 1; 
+          else TransmissionCurrentRange = 0;
+        };
+ };
+ t{Initial;A;};
+ t{A;A;toggle_tick;toggle;};
+ 
+};
 
 
 
-Simulation{};
+Simulation{Start{Toggle_TransmissionCurrentRange;};};
