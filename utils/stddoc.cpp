@@ -182,8 +182,8 @@ static void make_content_sm(State_machine* sm,
  auto dot_div = make_sm_dot_graph_link(sm,smc,img_path_prefix+replace_all(name,".","__"));
  content.push_back(
    ( new strct{"table",strct{"attr",strct{"class","sm_details_and_sm_graph"}},
-	 strct{"tr",strct{"td",strct{"attr",strct{"colspan",2}},strct{"attr",strct{"class","sm_states_overview"}},states_list }},
-     strct{"tr",strct{"td",std::vector<Nodebase_ptr>{sm_details_div} }   },
+    /* strct{"tr",strct{"td",strct{"attr",strct{"colspan",2}},strct{"attr",strct{"class","sm_states_overview"}},states_list }},
+     strct{"tr",strct{"td",std::vector<Nodebase_ptr>{sm_details_div} }   },*/
      strct{"tr",strct{"td", std::vector<Nodebase_ptr>{dot_div} }} } )->p_strct );
 
  for_all_children(sm,[&](State_machine& s){make_content_sm(&s,name+"."+s.id(),content,smc,env,img_path_prefix);});

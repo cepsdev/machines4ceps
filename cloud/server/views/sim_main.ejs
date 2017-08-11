@@ -17,6 +17,21 @@
             <!-- /.row -->
         </div>
 
+          <div class="row">
+                <div class="col-lg-12" id="tasks_list">
+                    <!--div class="alert alert-info alert-dismissable">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <strong>Streaming CAN messages from/to your computer requires the </strong>
+                      <button type="button" class="btn btn-default navbar-btn" onclick="$('#action_download_canmapper_dialog').modal();">
+                        <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>&nbsp;CAN Mapping Tool
+                      </button>
+                    .
+                    </div-->
+                </div>
+            <!-- /.row -->
+        </div>
+
+
 
 
         <!-- /#page-wrapper -->
@@ -35,8 +50,12 @@
     <!-- Custom Theme JavaScript -->
     <script src="../dist/js/sb-admin-2.js"></script>
 
-    
-
+    <% include ctrl_panel_logic %>
+<script>
+    $(document).ready(function(){
+        setup_ctrl_panel_logic();
+    });
+</script>
 </body>
 
 </html>

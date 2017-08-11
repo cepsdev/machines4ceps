@@ -1,0 +1,155 @@
+Event myevent;
+
+Event trigger_szenario_Drehknopf_im_Uhrzeigersinn_drehen;
+Event trigger_szenario_Drehknopf_gegen_den_Uhrzeigersinn_drehen;
+
+Event ev_loesche_CFBP_DigIn096;
+Event ev_loesche_CFBP_DigIn097;
+Event ev_loesche_CFBP_DigIn098;
+Event ev_loesche_CFBP_DigIn099;
+Event ev_loesche_CFBP_DigIn100;
+Event ev_loesche_CFBP_DigIn101;
+Event ev_loesche_CFBP_DigIn102;
+Event ev_loesche_CFBP_DigIn103;
+
+sm{
+  Loesche_Impuls;
+  states{Initial;};
+  Actions{
+    loesche_CFBP_DigIn096{CFBP_DigIn096 = 0.0;};
+    loesche_CFBP_DigIn097{CFBP_DigIn097 = 0.0;};
+    loesche_CFBP_DigIn098{CFBP_DigIn098 = 0.0;};
+    loesche_CFBP_DigIn099{CFBP_DigIn099 = 0.0;};
+    loesche_CFBP_DigIn100{CFBP_DigIn100 = 0.0;};
+    loesche_CFBP_DigIn101{CFBP_DigIn101 = 0.0;};
+    loesche_CFBP_DigIn102{CFBP_DigIn102 = 0.0;};
+    loesche_CFBP_DigIn103{CFBP_DigIn103 = 0.0;};
+  };
+  t{Initial;Initial;ev_loesche_CFBP_DigIn096;loesche_CFBP_DigIn096;};
+  t{Initial;Initial;ev_loesche_CFBP_DigIn097;loesche_CFBP_DigIn097;};
+  t{Initial;Initial;ev_loesche_CFBP_DigIn098;loesche_CFBP_DigIn098;};
+  t{Initial;Initial;ev_loesche_CFBP_DigIn099;loesche_CFBP_DigIn099;};
+  t{Initial;Initial;ev_loesche_CFBP_DigIn100;loesche_CFBP_DigIn100;};
+  t{Initial;Initial;ev_loesche_CFBP_DigIn101;loesche_CFBP_DigIn101;};
+  t{Initial;Initial;ev_loesche_CFBP_DigIn102;loesche_CFBP_DigIn102;};
+  t{Initial;Initial;ev_loesche_CFBP_DigIn103;loesche_CFBP_DigIn103;};
+};
+
+sm{
+ Szenario_Drehknopf_im_Uhrzeigersinn_drehen;
+ states{Initial;Drehe_nach_rechts;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn096 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn096);
+   };
+ };
+ t{Initial;Drehe_nach_rechts;trigger_szenario_Drehknopf_im_Uhrzeigersinn_drehen;};
+ t{Drehe_nach_rechts;Final;set_signals;};
+ t{Final;Initial;};
+};
+
+sm{
+ Szenario_Drehknopf_gegen_den_Uhrzeigersinn_drehen;
+ states{Initial;Drehe_nach_links;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn097 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn097);
+   };
+ };
+ t{Initial;Drehe_nach_links;trigger_szenario_Drehknopf_gegen_den_Uhrzeigersinn_drehen;};
+ t{Drehe_nach_links;Final;set_signals;};
+ t{Final;Initial;};
+};
+
+Event trigger_sz_akt_menu;
+sm{
+ Szenario_Aktivieren_eines_Menuepunktes;
+ states{Initial;Druecke_Drehknopf;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn098 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn098);
+   };
+ };
+ t{Initial;Druecke_Drehknopf;trigger_sz_akt_menu;};
+ t{Druecke_Drehknopf;Final;set_signals;};
+ t{Final;Initial;};
+};
+
+Event trigger_sz_fkt_m_im_hm;
+sm{
+ Szenario_Funktion_der_Taste_Menue_im_Hauptmenue;
+ states{Initial;Druecke_Menu;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn099 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn099);
+   };
+ };
+ t{Initial;Druecke_Menu;trigger_sz_fkt_m_im_hm;};
+ t{Druecke_Menu;Final;set_signals;};
+ t{Final;Initial;};
+};
+
+Event trigger_sz_fkt_m_im_um_fkt;
+sm{
+ Szenario_Funktion_der_Taste_Menue_in_Untermenues_und_Funktionen;
+ states{Initial;Druecke_Menu;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn100 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn100);
+   };
+ };
+ t{Initial;Druecke_Menu;trigger_sz_fkt_m_im_um_fkt;};
+ t{Druecke_Menu;Final;set_signals;};
+ t{Final;Initial;};
+};
+
+Event trigger_sz_fkt_minus;
+sm{
+ Szenario_Funktion_der_Taste_Minus;
+ states{Initial;Druecke_Taste_minus;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn102 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn102);
+   };
+ };
+ t{Initial;Druecke_Taste_minus;trigger_sz_fkt_minus;};
+ t{Druecke_Taste_minus;Final;set_signals;};
+ t{Final;Initial;};
+};
+
+
+Event trigger_sz_fkt_plus;
+sm{
+ Szenario_Funktion_der_Taste_Plus;
+ states{Initial;Druecke_Taste_plus;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn101 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn101);
+   };
+ };
+ t{Initial;Druecke_Taste_plus;trigger_sz_fkt_plus;};
+ t{Druecke_Taste_plus;Final;set_signals;};
+ t{Final;Initial;};
+};
+
+Event trigger_sz_fkt_esc;
+sm{
+ Szenario_Funktion_der_Taste_ESC;
+ states{Initial;Druecke_Taste_ESC;Final;};
+ Actions{
+   set_signals{
+     CFBP_DigIn103 = 1.0;
+     start_timer(1.0*s,ev_loesche_CFBP_DigIn103);
+   };
+ };
+ t{Initial;Druecke_Taste_ESC;trigger_sz_fkt_esc;};
+ t{Druecke_Taste_ESC;Final;set_signals;};
+ t{Final;Initial;};
+};

@@ -1,0 +1,78 @@
+
+
+<div class="modal fade" tabindex="-1" role="dialog" id="ctrl_panel_create_dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Add Control Panel</h4>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+                 <span class="input-group-addon" id="basic-addon1">Simulation's name</span>
+                 <input id ="ctrl_panel_create_dialog_sim_name" type="text" class="form-control" placeholder="<%= sim_core.name %>" 
+                        aria-describedby="basic-addon1" disabled>
+        </div>        
+        <hr/>
+        <div class="input-group">
+                 <span class="input-group-addon" id="basic-addon1">Control Panel's name</span>
+                 <input id ="ctrl_panel_create_dialog_ctrl_panel_name" type="text" class="form-control" placeholder="Type name here" 
+                        aria-describedby="basic-addon1">
+        </div> 
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="ctrl_panel_create_dialog_btn_send" disabled="gaga" data-dismiss="modal">Create</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<script>
+
+    function create_control_panel(ctrl_panel_name){
+      let ws_cmd = new WebSocket("<%= command_ws_url %>");
+            
+      ws_cmd.onopen = function(e){
+        console.log("Connected via websocket.");
+        ws_cmd.send(JSON.stringify({cmd:"create_control_panel",sim_name: "<%= sim_core.name%>", name:ctrl_panel_name}));
+        ws_cmd.onmessage = function(msg){
+            ws_cmd.close();
+            let m = JSON.parse(msg.data);
+            if (m.ok){
+              $("#tasks_list").html(
+                   $("#tasks_list").html()+
+                   '<div  class= "alert alert-success alert-dismissable">'+
+                    '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'+
+                    '<strong>A new control panel is ready: <a href="/'+m.uri+'">'+m.uri+'</a></strong>'+
+                   '</div>' 
+              );                    
+            } else {
+              $("#tasks_list").html(
+                   $("#tasks_list").html()+
+                   '<div  class= "alert alert-danger alert-dismissable">'+
+                    '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'+
+                    '<strong>Failed to create control panel <i>'+ctrl_panel_name+'</i>. <br/>'+ m.reason +
+                   '</div>' 
+              );                    
+            }
+        }
+      }
+    }
+
+    function setup_ctrl_panel_logic(){
+        $("#ctrl_panel_create_dialog_ctrl_panel_name").blur(() => {
+          if ($("#ctrl_panel_create_dialog_ctrl_panel_name").val().length > 0)
+            $("#ctrl_panel_create_dialog_btn_send").removeAttr("disabled");
+          else $("#ctrl_panel_create_dialog_btn_send").attr("disabled","true");
+        });
+
+        $("#ctrl_panel_create_dialog_btn_send").click((e)=>{
+            create_control_panel($("#ctrl_panel_create_dialog_ctrl_panel_name").val());
+        });
+    }
+
+    function show_ctrl_panel_create_dialog(){
+        $("#ctrl_panel_create_dialog").modal();
+    }
+</script>

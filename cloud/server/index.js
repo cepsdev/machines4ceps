@@ -513,6 +513,25 @@ ws_command.on("connection", function connection(ws){
           //ws.send(JSON.stringify({ok:true}));  
         } else if (msg.cmd == "add_files"){
            add_modify_files_simulation(msg,ws);       
+        } else if (msg.cmd == "create_control_panel"){
+            let ctrl_panel_name = msg.name;
+            let sc = get_sim_core_by_name(msg.sim_name);
+            if (sc == undefined){ws.send(JSON.stringify({ok:false,reason:"Simulation doesn't exist."}));return;}
+            try{
+              fs.mkdirSync(path.join(sim_nodes_root,sc.src.path,"views"));
+            } catch (err) {
+              console.log(err);
+              if (err.code != "EEXIST"){
+                ws.send(JSON.stringify({ok:false,reason:"Error Code: '"+err.code+"'"}));return;  
+              }
+            } 
+            try{
+              fs.writeFileSync(path.join(sim_nodes_root,sc.src.path,"views",ctrl_panel_name+".ejs"),"<p>Hello, World!</p>");
+            } catch (err) {
+              console.log(err);
+              ws.send(JSON.stringify({ok:false,reason:"Error Code: '"+err.code+"'"}));return;  
+            }
+            ws.send(JSON.stringify({ok:true,uri:sc.uri+"/controlpanels/"+ctrl_panel_name}));
         }
     });
 });
@@ -523,7 +542,7 @@ function check_for_views(){
         sim_core.src.views = [];
         if (err) return;
         for(f of files){
-            let r = f.match(/^(\w(\w|\s)*\w)\.ejs$/);
+            let r = f.match(/^(\w(\w|\s)*)\.ejs$/);
             if(!r || !r[1]) continue;
             sim_core.src.views.push(r[1]);
         }

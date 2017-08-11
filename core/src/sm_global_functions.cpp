@@ -155,8 +155,17 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
       if(args.size() != 1 ) fatal_(-1,"Function '"+id+"' expects one argument");
       bool is_error = args[0]->kind() == ceps::ast::Ast_node_kind::error;
       return new ceps::ast::Int( is_error ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+    } else if (id == "trigger_event") {
+       if(args.size() != 1 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) return nullptr;
+       std::cout << "????????????" << std::endl;
+       event_t ev(ceps::ast::value(ceps::ast::as_string_ref(args[0])));
+        ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
+        ev.already_sent_to_out_queues_ = false;
+        enqueue_event(ev,true);
     } else if (id == "eval_fragment") {
         if(args.size() != 1 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) fatal_(-1,"Function '"+id+"' expects one string as argument");
+        std::cout << "eval_fragment" << std::endl;
+
         std::stringstream ss; ss << ceps::ast::value(ceps::ast::as_string_ref(args[0]));
 
         Ceps_parser_driver driver{ceps_env_current().get_global_symboltable(),ss};

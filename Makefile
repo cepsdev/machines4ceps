@@ -5,13 +5,14 @@
 includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src" -I"../log4kmw/include" -I"core/src_gen/logging" -I"./utils" 
 #cflags := -std=c++17 -O3 -s -Wall -MD -fmessage-length=0 -Wl,--no-as-needed
 #cflags := -g3 -O2 -pg -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
-cflags := -g3 -Wall -MD -fmessage-length=0 -std=c++17 -Wl,--no-as-needed -fPIC 
+cflags := -O3 -g3 -Wall -MD -fmessage-length=0 -std=c++17 -Wl,--no-as-needed -fPIC 
 TARGET :=
 OBJDIR := $(TARGET)
 objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_machine_simulation_core.o sm_sim_core_simulation_loop.o state_machine_simulation_core_action_handling.o state_machine_simulation_core_event_handling.o \
   state_machine_simulation_core_guard_handling.o cmdline_utils.o sm_raw_frame.o sm_xml_frame.o pugixml.o  cal_sender.o cal_receiver.o state_machine_simulation_core_plugin_interface.o state_machine_simulation_core_buildsms.o \
   log4kmw_events.o log4kmw_loggers.o log4kmw_records.o log4kmw_states.o log4kmw_serialization.o log4kmw_dynamic_bitset.o log4kmw_record.o log4kmw_utils.o sm_comm_naive_msg_prot.o cppgen.o dotgen.o livelogger.o rdwrn.o \
-  sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o sm_sim_core_shadow_states.o sm_sim_process_sm.o concept_dependency_graph.o stddoc.o
+  sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o sm_sim_core_shadow_states.o sm_sim_process_sm.o concept_dependency_graph.o stddoc.o \
+  ws_api.o virtual_can_api.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
 CEPSLIB := ../ceps/core/bin$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
@@ -81,16 +82,9 @@ $(TARGET)/ceps: $(objfiles)
 	$(TARGET)/sm_sim_core_shadow_states.o \
 	$(TARGET)/sm_sim_process_sm.o \
 	$(TARGET)/concept_dependency_graph.o \
+    $(TARGET)/ws_api.o \
+	$(TARGET)/virtual_can_api.o \
 	$(TARGET)/stddoc.o 	-o $(TARGET)/ceps -ldl -lpthread -lrt -lcryptopp
-
-
-$(TARGET)/sm_trace: $(TARGET)/pugixml.o $(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o $(TARGET)/log4kmw_serialization.o \
-$(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o
-	$(CXX)   $(cflags) $(includes) -ldl $(cepslibs)/ceps_ast.o $(cepslibs)/ceps.tab.o $(cepslibs)/ceps_interpreter.o $(cepslibs)/cepsparserdriver.o \
-	$(cepslibs)/cepsruntime.o $(cepslibs)/cepslexer.o $(cepslibs)/symtab.o $(cepslibs)/ceps_interpreter_loop.o $(cepslibs)/ceps_interpreter_nodeset.o $(cepslibs)/ceps_interpreter_macros.o $(cepslibs)/ceps_interpreter_functions.o \
-	$(TARGET)/trace.o $(TARGET)/log4kmw_events.o $(TARGET)/log4kmw_loggers.o $(TARGET)/log4kmw_records.o $(TARGET)/log4kmw_states.o \
-	$(TARGET)/log4kmw_serialization.o $(TARGET)/log4kmw_dynamic_bitset.o $(TARGET)/log4kmw_record.o $(TARGET)/log4kmw_utils.o $(TARGET)/log4kmw_loggers_tests.o $(TARGET)/pugixml.o -o $(TARGET)/sm_trace
-
 
 $(TARGET)/main.o: src/main.cpp
 	$(CXX)   $(cflags) $(includes) src/main.cpp -c -o $(TARGET)/main.o
@@ -182,6 +176,13 @@ $(TARGET)/concept_dependency_graph.o: utils/concept_dependency_graph.cpp utils/c
 	$(CXX)   $(cflags) $(includes) utils/concept_dependency_graph.cpp -c -o $(TARGET)/concept_dependency_graph.o
 $(TARGET)/stddoc.o: utils/stddoc.cpp utils/stddoc.hpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) utils/stddoc.cpp -c -o $(TARGET)/stddoc.o	
+$(TARGET)/ws_api.o: core/src/api/websocket/ws_api.cpp core/include/state_machine_simulation_core.hpp
+	$(CXX)   $(cflags) $(includes) core/src/api/websocket/ws_api.cpp -c -o $(TARGET)/ws_api.o	
+$(TARGET)/virtual_can_api.o: core/src/api/virtual_can/virtual_can_api.cpp core/include/state_machine_simulation_core.hpp
+	$(CXX)   $(cflags) $(includes) core/src/api/virtual_can/virtual_can_api.cpp -c -o $(TARGET)/virtual_can_api.o	
+
+		
+
 clean:
 	rm $(TARGET)/*
 

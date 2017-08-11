@@ -1,0 +1,17 @@
+transport{id{Channel1;};canbus{bus_id { "vcan1"; };};};
+
+send_periodically{Channel1;CFBP_DigIn_TxPDO_08;0.1*s;};
+
+Simulation{ 
+    Start{Loesche_Impuls;
+          Szenario_Drehknopf_im_Uhrzeigersinn_drehen;
+          Szenario_Drehknopf_gegen_den_Uhrzeigersinn_drehen;
+          Szenario_Aktivieren_eines_Menuepunktes;
+          Szenario_Funktion_der_Taste_Menue_im_Hauptmenue;
+          Szenario_Funktion_der_Taste_Menue_in_Untermenues_und_Funktionen;
+          Szenario_Funktion_der_Taste_Minus;
+          Szenario_Funktion_der_Taste_Plus;
+          Szenario_Funktion_der_Taste_ESC;
+          };
+    //start_timer(3.0*s,trigger_szenario_Drehknopf_im_Uhrzeigersinn_drehen);
+};
