@@ -1,5 +1,0 @@
-package{
- name{ "Transmission Control System (Renk)"; };
- uri { "TCS"; };
- author { "Tomas Prerovsky"; };
-};

@@ -1,9 +1,0 @@
-/*
-* Encodings and Constraints for some of the system states.
-*/
-
-encoding{
- transport{can_out;};
- kind uint8_t;kind uint16_t;kind int16_t;kind uint32_t;kind int32_t;
- 
-};

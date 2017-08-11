@@ -21,7 +21,7 @@ pugisrc = pugixml-1.6/src
 log4kmwsrc = ../log4kmw/src
 SM4CEPSLIB := libsm4ceps.a
 
-all: $(TARGET)/sm $(TARGET)/sm_trace $(TARGET)/$(SM4CEPSLIB) $(TARGET)/ceps
+all: $(TARGET)/ceps
 
 $(TARGET)/$(SM4CEPSLIB): $(objfiles)
 	echo $(objfiles)
