@@ -1,0 +1,17 @@
+.vs/
+Debug/
+Release/
+cangateway/Debug
+cangateway/Release
+*.plantuml
+*.obj
+*.tlog
+*.log
+*.idb
+*.pdb
+*.lastbuildstate
+*.sdf
+*.opensdf
+
+
+
