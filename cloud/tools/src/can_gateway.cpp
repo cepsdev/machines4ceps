@@ -55,7 +55,7 @@ net::can::can_info net::can::get_local_endpoint_info(std::string endpoint) {
 	throw net::exceptions::err_can("Unknown local endpoint '"+endpoint+"'");
 }
 
-void set_local_endpoint_info(std::string endpoint, net::can::can_info info) {
+void net::can::set_local_endpoint_info(std::string endpoint, net::can::can_info info) {
 #ifdef PCAN_API
 #ifdef PCAN_API
 	for (auto& e : pcan_api::all_channels_info) {
@@ -264,13 +264,13 @@ std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> ceps::cloud::
 	{
 		auto rhr = send_cmd(cfd, "get_out_channels");
 		if (!std::get<0>(rhr))
-			throw ceps::cloud::exceptions::err_vcan_api{ "No out channels." };
+			return rv;
 
 		auto const & attrs = std::get<2>(rhr);
 		auto out_raw = ceps::cloud::get_virtual_can_attribute_content("out_channels", attrs);
 		auto types_raw = ceps::cloud::get_virtual_can_attribute_content("types", attrs);
 		if (!out_raw.first || !types_raw.first)
-			throw ceps::cloud::exceptions::err_vcan_api{ "No out channels and/or invalid types" };
+			return rv;
 
 		using namespace std;
 

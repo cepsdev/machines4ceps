@@ -89,11 +89,41 @@ static void init_pcan_dll() {
 
 static std::string usage = R"(
 cangateway SIMULATION_CORE [EXPRESSION...]
+
  SIMULATION_CORE
-  Address of host running a cepS core.
+  host name and port running a cepS core.
+  
+  Example:
+   foo.de:8186
+
  EXPRESSION
-  CAN(LOCAL) -> CAN(REMOTE) 
-  CAN(LOCAL) <- CAN(REMOTE) 
+  There are essentially two classes of expressions, mapping expressions and settings.
+   - Mapping expressions. This class of expressions takes one of the following forms:
+    
+    LOCAL CAN ENDPOINT "->" REMOTE CAN 
+    LOCAL CAN ENDPOINT "<-" REMOTE CAN
+    REMOTE CAN "->" LOCAL CAN ENDPOINT
+    REMOTE CAN "<-" LOCAL CAN ENDPOINT
+     
+    Example:
+     can_out "->" PCAN-USB-1
+     This example defines a downstream - can data flows from the remote site 
+     to a locally installed PCAN USB device.
+    Example:
+     can_out "<-" PCAN-USB-1
+     This example defines an upstream - can data flows from the 
+     locally installed PCAN USB device to the remote site.
+
+   - Settings:
+    -b BITRATE
+    BITRATE can be one of the following:
+       1M,800K,500K,250K,125K,100K,95K,
+       83K,50K,47K,33K,20K,10K,5K
+    Example:
+     -b 100K can_out "->" PCAN-USB-1 -b 1M can_out "->" PCAN-USB-2 can_out "->" PCAN-USB-3
+     This example defines three downstreams, the first of which with a local can channel with 
+     a bitrate of 100K. The remaining two can channels share the same bitrate of 1M.
+
  )";
 
 using handle_mapping_return_t = std::tuple<bool, bool, ceps::cloud::Stream_Mapping>;
@@ -111,16 +141,21 @@ handle_mapping_return_t handle_mapping(std::string a,std::string b,bool stream_t
 	for (auto e : *remote_endpoints) if (e.first == (ll ? b : a)) {
 		remote_endpoint = e; break;
 	}
-	if (remote_endpoint == std::pair<ceps::cloud::Remote_Interface, std::string>{}) fatal("[USER ERROR] Mapping '" + a + "' " + (stream_to_b ? "->" : "<-") + " '" + b + "' contains no compatible remote endpoint.");
+	if (remote_endpoint == std::pair<ceps::cloud::Remote_Interface, std::string>{}) fatal("[USER ERROR] Mapping '" + a + "' " + (stream_to_b ? "->" : "<-") + " '" + b + 
+		"' contains no compatible remote endpoint. Rerun with option -ar or -a to print a list of available remote endpoints.");
 
-	net::can::can_info info;
-
-    
+	auto info = net::can::get_local_endpoint_info(ll ? a : b);
+	info.br = br;
+	net::can::set_local_endpoint_info((ll ? a : b),info);
 	return std::make_tuple(true,down_stream,std::make_pair( (ll?a:b), (ll?b:a)));
 }
 
 using mappings_t = std::pair<std::vector<ceps::cloud::Downstream_Mapping>, std::vector<ceps::cloud::Upstream_Mapping>>;
-mappings_t parse_cmdline_and_extract_mappings(int argc, char* argv[], std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_out, std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_in) {
+mappings_t parse_cmdline_and_extract_mappings(int argc,
+	char* argv[], 
+	std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_out, 
+	std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_in) 
+{
 	mappings_t rv;
 	net::can::can_info::BAUD_RATE br = net::can::can_info::BAUD_1M;
 	for (int j = 0; j != argc; ++j) {
@@ -286,7 +321,12 @@ int main(int argc, char* argv[])
 	auto v = ceps::cloud::check_available_ifs();
 	ceps::cloud::sys_info_available_ifs = ceps::misc::sort_and_remove_duplicates(v);
     //handle information parameters which requires only local data
-	for (int i = 2; i != argc; ++i) {
+	if (argc == 1) {
+		std::cout << usage << std::endl;
+		exit(1);
+	}
+
+	for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
 		if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
 			std::cout << "Available local endpoints:\n";
@@ -295,10 +335,6 @@ int main(int argc, char* argv[])
 	}
 
 	if (v.size() == 0) fatal("No CAN Devices found.");
-	if (argc == 1) {
-		std::cout << usage << std::endl;
-		exit(1);
-	}
 	ceps::cloud::current_core = ceps::cloud::cmdline_read_remote_host(argc-1, argv+1);
 	if (ceps::cloud::current_core == ceps::cloud::Simulation_Core{}) fatal("No/Invalid hostname specified.\n A hostname is a a string of the form 'www.foo.com:123'.");
 
