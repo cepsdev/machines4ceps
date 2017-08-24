@@ -31,8 +31,62 @@ std::vector< std::pair<unsigned int, std::string> > pcan_api::all_channels  =
 	{ PCAN_USBBUS13,"PCAN-USB-13" },{ PCAN_USBBUS14,"PCAN-USB-14" },{ PCAN_USBBUS15,"PCAN-USB-15" },{ PCAN_USBBUS16,"PCAN-USB-16" }
 };
 
-
+std::vector< std::pair<std::string, net::can::can_info> > pcan_api::all_channels_info = {
+	{ "PCAN-ISA-1",net::can::can_info{} },{ "PCAN-ISA-2",net::can::can_info{} },{ "PCAN-ISA-3",net::can::can_info{} },{ "PCAN-ISA-4",net::can::can_info{} },
+	{  "PCAN-ISA-5",net::can::can_info{} },{  "PCAN-ISA-6",net::can::can_info{} },{ "PCAN-ISA-7",net::can::can_info{} },{"PCAN-ISA-8",net::can::can_info{} },
+	{ "PCAN-DNG-1",net::can::can_info{} },
+	{ "PCAN_PCI-1",net::can::can_info{} }  ,{ "PCAN_PCI-2",net::can::can_info{} } ,{ "PCAN_PCI-3" ,net::can::can_info{} } ,{ "PCAN_PCI-4" ,net::can::can_info{} },
+	{ "PCAN_PCI-5",net::can::can_info{} } ,{ "PCAN_PCI-6",net::can::can_info{} } ,{ "PCAN_PCI-7",net::can::can_info{} } ,{ "PCAN_PCI-8",net::can::can_info{} },
+	{ "PCAN_PCI-9",net::can::can_info{} } ,{ "PCAN_PCI-10",net::can::can_info{} } ,{ "PCAN_PCI-11",net::can::can_info{} } ,{ "PCAN_PCI-12" ,net::can::can_info{} },
+	{ "PCAN_PCI-13" ,net::can::can_info{} } ,{ "PCAN_PCI-14",net::can::can_info{} } ,{ "PCAN_PCI-15" ,net::can::can_info{} } ,{ "PCAN_PCI-16",net::can::can_info{} },
+	{ "PCAN-USB-1",net::can::can_info{} },{ "PCAN-USB-2",net::can::can_info{} },{ "PCAN-USB-3",net::can::can_info{} },{ "PCAN-USB-4",net::can::can_info{} },
+	{ "PCAN-USB-5",net::can::can_info{} },{ "PCAN-USB-6",net::can::can_info{} },{ "PCAN-USB-7",net::can::can_info{} },{ "PCAN-USB-8",net::can::can_info{} } ,
+	{ "PCAN-USB-9" ,net::can::can_info{} },{ "PCAN-USB-10",net::can::can_info{} },{ "PCAN-USB-11" ,net::can::can_info{} },{ "PCAN-USB-12",net::can::can_info{} },
+	{ "PCAN-USB-13",net::can::can_info{} },{ "PCAN-USB-14",net::can::can_info{} },{ "PCAN-USB-15",net::can::can_info{} },{ "PCAN-USB-16" ,net::can::can_info{} }
+};
 #endif
+
+net::can::can_info net::can::get_local_endpoint_info(std::string endpoint) {
+#ifdef PCAN_API
+	for (auto e : pcan_api::all_channels_info) {
+		if (e.first == endpoint) return e.second;
+	}
+#endif
+	throw net::exceptions::err_can("Unknown local endpoint '"+endpoint+"'");
+}
+
+void set_local_endpoint_info(std::string endpoint, net::can::can_info info) {
+#ifdef PCAN_API
+#ifdef PCAN_API
+	for (auto& e : pcan_api::all_channels_info) {
+		if (e.first == endpoint) {
+			e.second = info; return;
+		}
+	}
+#endif
+	throw net::exceptions::err_can("Unknown local endpoint '" + endpoint + "'");
+#endif
+}
+
+ceps::cloud::Local_Interface net::can::get_local_endpoint(std::string s) {
+ #ifdef PCAN_API
+	for (auto e : pcan_api::all_channels) {
+		if (e.second == s)
+			return ceps::cloud::Local_Interface{e.second};
+	}
+#endif
+	return ceps::cloud::Local_Interface{};
+}
+
+int net::can::get_local_endpoint_handle(std::string s) {
+#ifdef PCAN_API
+	for (auto e : pcan_api::all_channels) {
+		if (e.second == s)
+			return e.first;
+	}
+#endif
+	return -1;
+}
 
 std::vector<std::string> ceps::cloud::check_available_ifs(){
 	std::vector<std::string> r;
@@ -186,7 +240,7 @@ std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string>>> cep
 }
 
 
-std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> request_and_get_reply(int sock, std::string command) {
+std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> ceps::cloud::vcan_api::send_cmd(int sock, std::string command) {
 	INIT_SYS_ERR_HANDLING
 		std::stringstream cmd;
 	cmd << "HTTP/1.1 100\r\n";
@@ -199,16 +253,16 @@ std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> 
 	return ceps::cloud::read_virtual_can_msg(sock, unconsumed_data);
 }
 
-std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> ceps::cloud::fetch_out_channels(ceps::cloud::Simulation_Core sim_core) {
+std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> ceps::cloud::vcan_api::fetch_out_channels(ceps::cloud::Simulation_Core sim_core) {
 	INIT_SYS_ERR_HANDLING
 		int cfd = -1;
 	CLEANUP([&]() {if (cfd != -1) closesocket(cfd); })
 
-		std::vector<std::pair<Remote_Interface, Remote_Interface_Type>> rv;
+	std::vector<std::pair<Remote_Interface, Remote_Interface_Type>> rv;
 	cfd = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
 	if (cfd == -1) { THROW_ERR_INET }
 	{
-		auto rhr = request_and_get_reply(cfd, "get_out_channels");
+		auto rhr = send_cmd(cfd, "get_out_channels");
 		if (!std::get<0>(rhr))
 			throw ceps::cloud::exceptions::err_vcan_api{ "No out channels." };
 

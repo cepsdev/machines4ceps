@@ -92,96 +92,6 @@
 
 #define CLEANUP(x)  auto destructor = x; cleanup<decltype(destructor)> trigger_destructor{ destructor };
 
-#ifdef PCAN_API
- #include "PCANBasic.h"
-
- typedef TPCANStatus(__stdcall *CAN_GetValue_t)(
-	 TPCANHandle,
-	 TPCANParameter,
-	 void*,
-	 DWORD);
-
- typedef TPCANStatus (__stdcall *CAN_Initialize_t)(
-	 TPCANHandle Channel,
-	 TPCANBaudrate Btr0Btr1,
-	 TPCANType HwType /*_DEF_ARG*/,
-	 DWORD IOPort /*_DEF_ARG*/,
-	 WORD Interrupt /*_DEF_ARG*/);
-
-
- typedef TPCANStatus (__stdcall *CAN_InitializeFD_t)(
-	 TPCANHandle Channel,
-	 TPCANBitrateFD BitrateFD);
-
-
- typedef TPCANStatus (__stdcall *CAN_Uninitialize_t)(
-	 TPCANHandle Channel);
-
- typedef TPCANStatus (__stdcall *CAN_Reset_t)(
-	 TPCANHandle Channel);
-
- typedef TPCANStatus (__stdcall *CAN_Read_t)(
-	 TPCANHandle Channel,
-	 TPCANMsg* MessageBuffer,
-	 TPCANTimestamp* TimestampBuffer);
-
- typedef TPCANStatus (__stdcall *CAN_ReadFD_t)(
-	 TPCANHandle Channel,
-	 TPCANMsgFD* MessageBuffer,
-	 TPCANTimestampFD *TimestampBuffer);
-
- typedef TPCANStatus (__stdcall *CAN_Write_t)(
-	 TPCANHandle Channel,
-	 TPCANMsg* MessageBuffer);
-
- typedef TPCANStatus (__stdcall *CAN_WriteFD_t)(
-	 TPCANHandle Channel,
-	 TPCANMsgFD* MessageBuffer);
-
- typedef TPCANStatus (__stdcall *CAN_FilterMessages_t)(
-	 TPCANHandle Channel,
-	 DWORD FromID,
-	 DWORD ToID,
-	 TPCANMode Mode);
- 
- typedef TPCANStatus (__stdcall *CAN_SetValue_t)(
-	 TPCANHandle Channel,
-	 TPCANParameter Parameter,
-	 void* Buffer,
-	 DWORD BufferLength);
-
- typedef TPCANStatus (__stdcall *CAN_GetErrorText_t)(
-	 TPCANStatus Error,
-	 WORD Language,
-	 LPSTR Buffer);
-
- typedef TPCANStatus(__stdcall *CAN_GetValue_t)(
-	 TPCANHandle,
-	 TPCANParameter,
-	 void*,
-	 DWORD);
-
-
-
- namespace pcan_api {
-	 extern CAN_GetValue_t getvalue;
-	 extern CAN_Initialize_t initialize;
-	 extern CAN_InitializeFD_t initialize_fd;
-	 extern CAN_Uninitialize_t uninitialize;
-	 extern CAN_Reset_t reset;
-	 extern CAN_Read_t read;
-	 extern CAN_ReadFD_t read_fd;
-	 extern CAN_Write_t write;
-	 extern CAN_WriteFD_t write_fd;
-	 extern CAN_FilterMessages_t filtermessages;
-	 extern CAN_SetValue_t setvalue;
-	 extern CAN_GetErrorText_t geterrortext;
-	 extern std::vector< std::pair<unsigned int, std::string> > all_channels;
- }
-#endif
-
-
-
  namespace ceps {
 	 namespace cloud {
 		 extern std::vector<std::string> sys_info_available_ifs;
@@ -245,7 +155,10 @@
 				 err_vcan_api(std::string what) : runtime_error{ what } {}
 			 };
 		 }
-		 std::vector<std::pair<Remote_Interface, std::string>> fetch_out_channels(Simulation_Core sim_core);
+		 namespace vcan_api {
+			 std::vector<std::pair<Remote_Interface, std::string>> fetch_out_channels(Simulation_Core sim_core);
+			 std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> send_cmd(int sock, std::string command);
+		 }
 	 }
 	 namespace misc {
 		 template <typename T> T & sort_and_remove_duplicates(T & v) {
@@ -262,14 +175,25 @@
 		 int establish_inet_stream_connect(std::string remote, std::string port);
 	 }
 	 namespace can {
+		 struct can_info {
+			 enum BAUD_RATE {
+				 BAUD_1M, BAUD_800K, BAUD_500K, BAUD_250K, BAUD_125K,
+				 BAUD_100K, BAUD_95K, BAUD_83K, BAUD_50K, BAUD_47K,
+				 BAUD_33K, BAUD_20K, BAUD_10K, BAUD_5K
+			 };
+			 BAUD_RATE br = BAUD_1M;
+		 };
 		 ceps::cloud::Local_Interface get_local_endpoint(std::string);
+		 int get_local_endpoint_handle(std::string s);
+		 can_info get_local_endpoint_info(std::string);
+		 void set_local_endpoint_info(std::string, can_info info);
 	 }
 	 namespace exceptions {
 		 class err_inet : public std::runtime_error {
 		 public:
 			 err_inet(std::string what) : runtime_error{ what } {}
 		 };
-		 class err_getaddrinfo: public err_inet {
+		 class err_getaddrinfo : public err_inet {
 		 public:
 			 err_getaddrinfo(std::string what) :err_inet{ what } {}
 		 };
@@ -285,8 +209,101 @@
 		 public:
 			 err_recv(std::string what) :err_inet{ what } {}
 		 };
+		 class err_can : public std::runtime_error {
+		 public:
+			 err_can(std::string what) : runtime_error{ what } {}
+		 };
 	 }
  }
+
+#ifdef PCAN_API
+#include "PCANBasic.h"
+
+ typedef TPCANStatus(__stdcall *CAN_GetValue_t)(
+	 TPCANHandle,
+	 TPCANParameter,
+	 void*,
+	 DWORD);
+
+ typedef TPCANStatus(__stdcall *CAN_Initialize_t)(
+	 TPCANHandle Channel,
+	 TPCANBaudrate Btr0Btr1,
+	 TPCANType HwType /*_DEF_ARG*/,
+	 DWORD IOPort /*_DEF_ARG*/,
+	 WORD Interrupt /*_DEF_ARG*/);
+
+
+ typedef TPCANStatus(__stdcall *CAN_InitializeFD_t)(
+	 TPCANHandle Channel,
+	 TPCANBitrateFD BitrateFD);
+
+
+ typedef TPCANStatus(__stdcall *CAN_Uninitialize_t)(
+	 TPCANHandle Channel);
+
+ typedef TPCANStatus(__stdcall *CAN_Reset_t)(
+	 TPCANHandle Channel);
+
+ typedef TPCANStatus(__stdcall *CAN_Read_t)(
+	 TPCANHandle Channel,
+	 TPCANMsg* MessageBuffer,
+	 TPCANTimestamp* TimestampBuffer);
+
+ typedef TPCANStatus(__stdcall *CAN_ReadFD_t)(
+	 TPCANHandle Channel,
+	 TPCANMsgFD* MessageBuffer,
+	 TPCANTimestampFD *TimestampBuffer);
+
+ typedef TPCANStatus(__stdcall *CAN_Write_t)(
+	 TPCANHandle Channel,
+	 TPCANMsg* MessageBuffer);
+
+ typedef TPCANStatus(__stdcall *CAN_WriteFD_t)(
+	 TPCANHandle Channel,
+	 TPCANMsgFD* MessageBuffer);
+
+ typedef TPCANStatus(__stdcall *CAN_FilterMessages_t)(
+	 TPCANHandle Channel,
+	 DWORD FromID,
+	 DWORD ToID,
+	 TPCANMode Mode);
+
+ typedef TPCANStatus(__stdcall *CAN_SetValue_t)(
+	 TPCANHandle Channel,
+	 TPCANParameter Parameter,
+	 void* Buffer,
+	 DWORD BufferLength);
+
+ typedef TPCANStatus(__stdcall *CAN_GetErrorText_t)(
+	 TPCANStatus Error,
+	 WORD Language,
+	 LPSTR Buffer);
+
+ typedef TPCANStatus(__stdcall *CAN_GetValue_t)(
+	 TPCANHandle,
+	 TPCANParameter,
+	 void*,
+	 DWORD);
+
+
+ namespace pcan_api {
+	 extern CAN_GetValue_t getvalue;
+	 extern CAN_Initialize_t initialize;
+	 extern CAN_InitializeFD_t initialize_fd;
+	 extern CAN_Uninitialize_t uninitialize;
+	 extern CAN_Reset_t reset;
+	 extern CAN_Read_t read;
+	 extern CAN_ReadFD_t read_fd;
+	 extern CAN_Write_t write;
+	 extern CAN_WriteFD_t write_fd;
+	 extern CAN_FilterMessages_t filtermessages;
+	 extern CAN_SetValue_t setvalue;
+	 extern CAN_GetErrorText_t geterrortext;
+	 extern std::vector< std::pair<unsigned int, std::string> > all_channels;
+	 extern std::vector< std::pair<std::string, net::can::can_info> > all_channels_info;
+ }
+
+#endif
 
 
 #endif // COMMON_H
