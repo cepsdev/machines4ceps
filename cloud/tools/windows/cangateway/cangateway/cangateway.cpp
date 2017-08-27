@@ -89,11 +89,41 @@ static void init_pcan_dll() {
 
 static std::string usage = R"(
 cangateway SIMULATION_CORE [EXPRESSION...]
+
  SIMULATION_CORE
-  Address of host running a cepS core.
+  host name and port running a cepS core.
+  
+  Example:
+   foo.de:8186
+
  EXPRESSION
-  CAN(LOCAL) -> CAN(REMOTE) 
-  CAN(LOCAL) <- CAN(REMOTE) 
+  There are essentially two classes of expressions, mapping expressions and settings.
+   - Mapping expressions. This class of expressions takes one of the following forms:
+    
+    LOCAL CAN ENDPOINT "->" REMOTE CAN 
+    LOCAL CAN ENDPOINT "<-" REMOTE CAN
+    REMOTE CAN "->" LOCAL CAN ENDPOINT
+    REMOTE CAN "<-" LOCAL CAN ENDPOINT
+     
+    Example:
+     can_out "->" PCAN-USB-1
+     This example defines a downstream - can data flows from the remote site 
+     to a locally installed PCAN USB device.
+    Example:
+     can_out "<-" PCAN-USB-1
+     This example defines an upstream - can data flows from the 
+     locally installed PCAN USB device to the remote site.
+
+   - Settings:
+    -b BITRATE
+    BITRATE can be one of the following:
+       1M,800K,500K,250K,125K,100K,95K,
+       83K,50K,47K,33K,20K,10K,5K
+    Example:
+     -b 100K can_out "->" PCAN-USB-1 -b 1M can_out "->" PCAN-USB-2 can_out "->" PCAN-USB-3
+     This example defines three downstreams, the first of which with a local can channel with 
+     a bitrate of 100K. The remaining two can channels share the same bitrate of 1M.
+
  )";
 
 using handle_mapping_return_t = std::tuple<bool, bool, ceps::cloud::Stream_Mapping>;
@@ -111,16 +141,21 @@ handle_mapping_return_t handle_mapping(std::string a,std::string b,bool stream_t
 	for (auto e : *remote_endpoints) if (e.first == (ll ? b : a)) {
 		remote_endpoint = e; break;
 	}
-	if (remote_endpoint == std::pair<ceps::cloud::Remote_Interface, std::string>{}) fatal("[USER ERROR] Mapping '" + a + "' " + (stream_to_b ? "->" : "<-") + " '" + b + "' contains no compatible remote endpoint.");
+	if (remote_endpoint == std::pair<ceps::cloud::Remote_Interface, std::string>{}) fatal("[USER ERROR] Mapping '" + a + "' " + (stream_to_b ? "->" : "<-") + " '" + b + 
+		"' contains no compatible remote endpoint. Rerun with option -ar or -a to print a list of available remote endpoints.");
 
-	net::can::can_info info;
-
-    
+	auto info = net::can::get_local_endpoint_info(ll ? a : b);
+	info.br = br;
+	net::can::set_local_endpoint_info((ll ? a : b),info);
 	return std::make_tuple(true,down_stream,std::make_pair( (ll?a:b), (ll?b:a)));
 }
 
 using mappings_t = std::pair<std::vector<ceps::cloud::Downstream_Mapping>, std::vector<ceps::cloud::Upstream_Mapping>>;
-mappings_t parse_cmdline_and_extract_mappings(int argc, char* argv[], std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_out, std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_in) {
+mappings_t parse_cmdline_and_extract_mappings(int argc,
+	char* argv[], 
+	std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_out, 
+	std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_in) 
+{
 	mappings_t rv;
 	net::can::can_info::BAUD_RATE br = net::can::can_info::BAUD_1M;
 	for (int j = 0; j != argc; ++j) {
@@ -190,19 +225,115 @@ std::map<int, int>info_br2pcan_br{
 	{ net::can::can_info::BAUD_5K, PCAN_BAUD_5K }
 };
 
+__declspec(align(8)) struct can_frame {
+	std::uint32_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+	std::uint8_t    can_dlc; /* frame payload length in byte (0 .. CAN_MAX_DLEN) */
+	std::uint8_t    __pad;   /* padding */
+	std::uint8_t    __res0;  /* reserved / padding */
+	std::uint8_t    __res1;  /* reserved / padding */
+	std::uint8_t    data[8];
+};
+
 void upstream_ctrl(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Upstream_Mapping um) {
 	INIT_SYS_ERR_HANDLING
-		auto remote_sck = -1;
+	auto remote_sck = -1;
+	constexpr auto CAN_RTR_FLAG = 0x40000000U;
 	CLEANUP([&]() {
 		if (remote_sck != -1)closesocket(remote_sck);
-	})
+	});
+	auto ext_can = false;
+	for (auto e : ceps::cloud::info_out_channels[sim_core]) {
+		if (e.first == um.second) {
+			ext_can = e.second == "CANX";
+			break;
+		}
+	}
+	auto info = net::can::get_local_endpoint_info(um.first);
+	auto baudrate = info_br2pcan_br[info.br];
+	auto channel = net::can::get_local_endpoint_handle(um.first);
+	try {
+		if (channel == -1) throw net::exceptions::err_can{ "Couldn't acquire channel handle for '" + um.first + "'." };
+		auto rinit = pcan_api::initialize(channel, baudrate, 0, 0, 0);
+		if (rinit != PCAN_ERROR_OK) {
+			throw net::exceptions::err_can{ "Initialization failed, endpoint is '" + um.first + "', errormessage: " + pcan_errcode2text[rinit] + "." };
+		}
+
 		remote_sck = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
-	if (remote_sck == -1) { THROW_ERR_INET }
-	{
+		if (remote_sck == -1) { THROW_ERR_INET }
+		{
+			std::stringstream cmd;
+			cmd << "HTTP/1.1 100\r\n";
+			cmd << "cmd: subscribe_in_channel\r\n";
+			cmd << "in_channel: " << um.second << "\r\n\r\n";
+
+			auto r = send(remote_sck, cmd.str().c_str(), cmd.str().length(), 0);STORE_SYS_ERR;
+			if (r != cmd.str().length()) {
+				THROW_ERR_INET;
+			}
+			auto read_ev = CreateEvent(	NULL,FALSE,FALSE,NULL); STORE_SYS_ERR;
+			if (read_ev == NULL) {
+				fatal("[INTERNAL ERROR] CreateEvent failed.");
+			}
+			{
+				auto r = pcan_api::setvalue(channel, PCAN_RECEIVE_EVENT, &read_ev, sizeof(read_ev));
+				if (r != PCAN_ERROR_OK) {
+					throw net::exceptions::err_can{ "Setting of event object failed, endpoint is '" + um.first + "', errormessage: " + pcan_errcode2text[r] + "." };
+				}
+			}
+
+			for (;;) {
+				auto wr = WaitForSingleObject(read_ev, INFINITE); STORE_SYS_ERR;
+				if (wr == WAIT_FAILED) fatal("[INTERNAL ERROR] WaitForSingleObject failed.");
+				DWORD rr = PCAN_ERROR_OK;
+				do {
+					TPCANMsg can_message{ 0 };
+
+					auto rr = pcan_api::read(channel, &can_message, NULL);
+					if (rr != PCAN_ERROR_OK && rr != PCAN_ERROR_BUSLIGHT && rr != PCAN_ERROR_BUSHEAVY) {
+						if (can_message.ID == 0) break;
+					}
+					if (rr != PCAN_ERROR_QRCVEMPTY) {
+						can_frame frame = { 0 };
+						frame.can_id = can_message.ID;
+						if (can_message.MSGTYPE & PCAN_MESSAGE_RTR) frame.can_id |= CAN_RTR_FLAG;
+						frame.can_dlc = can_message.LEN;
+						if (frame.can_dlc) memcpy(frame.data, can_message.DATA, frame.can_dlc);
+						auto r = send(remote_sck, (char*)&frame, sizeof(frame), 0); STORE_SYS_ERR; if (r != sizeof(frame)) THROW_ERR_INET;
+					}
+				} while (rr != PCAN_ERROR_QRCVEMPTY);
+
+				/*std::uint32_t l = 0;
+				auto r = recv(remote_sck, (char*)&l, sizeof(l), 0);
+				if (r != sizeof(l)) THROW_ERR_INET;
+				l = ntohl(l);
+				char buffer[32];
+				r = recv(remote_sck, buffer, l, 0);
+				if (r != l) THROW_ERR_INET;
+				std::uint32_t can_id = *((::uint32_t*)buffer);
+				std::uint8_t len = *(((::uint8_t*)buffer) + 4);
+				can_message.MSGTYPE = PCAN_MESSAGE_STANDARD;
+				if (can_id & CAN_RTR_FLAG) { can_message.MSGTYPE |= PCAN_MESSAGE_RTR; can_id &= ~CAN_RTR_FLAG; }
+				can_message.ID = can_id;
+				can_message.LEN = len;
+
+				if (ext_can) can_message.MSGTYPE |= PCAN_MESSAGE_EXTENDED;
+				memcpy(can_message.DATA, buffer + 8, len);*/
+			}
+		}
+	}
+	catch (net::exceptions::err_inet const & e) {
+		fatal(std::string{ "[" + um.second + "->" + um.first + "][NETWORK ERROR] " }+e.what());
+	}
+	catch (ceps::cloud::exceptions::err_vcan_api const & e) {
+		fatal(std::string{ "[" + um.second + "->" + um.first + "][VCAN_API ERROR] " }+e.what());
+	}
+	catch (net::exceptions::err_can const & e) {
+		fatal(std::string{ "[" + um.second + "->" + um.first + "][CAN ERROR] " }+e.what());
 	}
 }
+
 void downstream_ctrl(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Downstream_Mapping dm) {
@@ -286,7 +417,12 @@ int main(int argc, char* argv[])
 	auto v = ceps::cloud::check_available_ifs();
 	ceps::cloud::sys_info_available_ifs = ceps::misc::sort_and_remove_duplicates(v);
     //handle information parameters which requires only local data
-	for (int i = 2; i != argc; ++i) {
+	if (argc == 1) {
+		std::cout << usage << std::endl;
+		exit(1);
+	}
+
+	for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
 		if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
 			std::cout << "Available local endpoints:\n";
@@ -295,10 +431,6 @@ int main(int argc, char* argv[])
 	}
 
 	if (v.size() == 0) fatal("No CAN Devices found.");
-	if (argc == 1) {
-		std::cout << usage << std::endl;
-		exit(1);
-	}
 	ceps::cloud::current_core = ceps::cloud::cmdline_read_remote_host(argc-1, argv+1);
 	if (ceps::cloud::current_core == ceps::cloud::Simulation_Core{}) fatal("No/Invalid hostname specified.\n A hostname is a a string of the form 'www.foo.com:123'.");
 
@@ -312,16 +444,18 @@ int main(int argc, char* argv[])
 			fatal("WSAStartup failed with error: "+std::to_string(err));
 	}
 	
-	auto handle = std::async(std::launch::async, ceps::cloud::vcan_api::fetch_out_channels, ceps::cloud::current_core);
+	auto handle = std::async(std::launch::async, ceps::cloud::vcan_api::fetch_channels, ceps::cloud::current_core);
 	try {
-		auto remote_out_channels = handle.get();
-		ceps::cloud::info_out_channels[ceps::cloud::current_core] = remote_out_channels;
+		auto remote_channels = handle.get();
+		ceps::cloud::info_out_channels[ceps::cloud::current_core] = remote_channels.first;
+		ceps::cloud::info_in_channels[ceps::cloud::current_core] = remote_channels.second;
 		//handle information parameters which requires remote data
 		for (int i = 2; i != argc; ++i) {
 			std::string token = argv[i];
 			if (token == "--print_available_remote_endpoints" || token == "-a" || token == "-ar") {
 				std::cout << "Available remote endpoints (name,direction,type):\n";
-				for (auto e : remote_out_channels) std::cout << "\t" << e.first <<", out , "<< e.second << "\n";
+				for (auto e : remote_channels.first) std::cout << "\t" << e.first <<", out , "<< e.second << "\n";
+				for (auto e : remote_channels.second) std::cout << "\t" << e.first << ", in , " << e.second << "\n";
 			}
 		}
 		auto mappings = parse_cmdline_and_extract_mappings(argc,argv, ceps::cloud::info_out_channels[ceps::cloud::current_core], ceps::cloud::info_in_channels[ceps::cloud::current_core]);

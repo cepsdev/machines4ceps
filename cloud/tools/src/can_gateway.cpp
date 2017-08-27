@@ -55,7 +55,7 @@ net::can::can_info net::can::get_local_endpoint_info(std::string endpoint) {
 	throw net::exceptions::err_can("Unknown local endpoint '"+endpoint+"'");
 }
 
-void set_local_endpoint_info(std::string endpoint, net::can::can_info info) {
+void net::can::set_local_endpoint_info(std::string endpoint, net::can::can_info info) {
 #ifdef PCAN_API
 #ifdef PCAN_API
 	for (auto& e : pcan_api::all_channels_info) {
@@ -253,49 +253,68 @@ std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> 
 	return ceps::cloud::read_virtual_can_msg(sock, unconsumed_data);
 }
 
-std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> ceps::cloud::vcan_api::fetch_out_channels(ceps::cloud::Simulation_Core sim_core) {
+static bool get_attr_values_as_lists_and_zip(
+	std::vector<std::pair<std::string, std::string>> const & attrs,
+	std::string attr_name1, 
+	std::string attr_name2,
+	std::vector<std::pair<Remote_Interface, std::string>> & result) {
+	using namespace std;
+
+	auto out_raw = ceps::cloud::get_virtual_can_attribute_content(attr_name1, attrs);
+	auto types_raw = ceps::cloud::get_virtual_can_attribute_content(attr_name2, attrs);
+	if (!out_raw.first || !types_raw.first)
+		return false;
+
+	vector<string> list1;
+	{
+		istringstream iss{ out_raw.second };
+		copy(istream_iterator<string>(iss),
+			istream_iterator<string>(),
+			back_inserter(list1));
+	}
+	vector<string> list2;
+	{
+		istringstream iss{ types_raw.second };
+		copy(istream_iterator<string>(iss),
+			istream_iterator<string>(),
+			back_inserter(list2));
+	}
+	for (size_t i = 0; i != list1.size(); ++i) {
+		auto const & ch = list1[i];
+		if (i < list2.size()) result.push_back(make_pair(Remote_Interface{ ch }, Remote_Interface_Type{ list2[i] }));
+		else result.push_back(make_pair(Remote_Interface{ ch }, Remote_Interface_Type{ "?" }));
+	}
+
+	return true;
+}
+
+ceps::cloud::vcan_api::fetch_channels_return_t ceps::cloud::vcan_api::fetch_channels(ceps::cloud::Simulation_Core sim_core) {
 	INIT_SYS_ERR_HANDLING
 		int cfd = -1;
 	CLEANUP([&]() {if (cfd != -1) closesocket(cfd); })
-
-	std::vector<std::pair<Remote_Interface, Remote_Interface_Type>> rv;
+	
+	fetch_channels_return_t rv;
 	cfd = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
 	if (cfd == -1) { THROW_ERR_INET }
-	{
-		auto rhr = send_cmd(cfd, "get_out_channels");
-		if (!std::get<0>(rhr))
-			throw ceps::cloud::exceptions::err_vcan_api{ "No out channels." };
 
-		auto const & attrs = std::get<2>(rhr);
-		auto out_raw = ceps::cloud::get_virtual_can_attribute_content("out_channels", attrs);
-		auto types_raw = ceps::cloud::get_virtual_can_attribute_content("types", attrs);
-		if (!out_raw.first || !types_raw.first)
-			throw ceps::cloud::exceptions::err_vcan_api{ "No out channels and/or invalid types" };
+	auto rhr = send_cmd(cfd, "get_out_channels");
 
-		using namespace std;
+	if (std::get<0>(rhr))
+		get_attr_values_as_lists_and_zip(
+			std::get<2>(rhr),
+			"out_channels",
+			"types",
+			rv.first);
 
-		vector<string> out_channels;
-		{
-			istringstream iss{ out_raw.second };
-			copy(istream_iterator<string>(iss),
-				istream_iterator<string>(),
-				back_inserter(out_channels));
-		}
-		vector<string> out_channels_types;
-		{
-			istringstream iss{ types_raw.second };
-			copy(istream_iterator<string>(iss),
-				istream_iterator<string>(),
-				back_inserter(out_channels_types));
-		}
+	rhr = send_cmd(cfd, "get_in_channels");
 
-		for (size_t i = 0; i != out_channels.size(); ++i) {
-			auto const & ch = out_channels[i];
-			if (i < out_channels_types.size()) rv.push_back(make_pair(Remote_Interface{ ch }, Remote_Interface_Type{ out_channels_types[i] }));
-			else rv.push_back(make_pair(Remote_Interface{ ch }, Remote_Interface_Type{ "?" }));
-		}
-		return rv;
-	}
+	if (std::get<0>(rhr))
+		get_attr_values_as_lists_and_zip(
+			std::get<2>(rhr),
+			"in_channels",
+			"types",
+			rv.second);
+	return rv;
 }
 
 
