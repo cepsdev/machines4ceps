@@ -7,6 +7,12 @@
 #include <atomic>
 #include "core/include/base_defs.hpp"
 
+
+extern void comm_receiver_socket_can(int id,
+    std::string bus_id,
+    State_machine_simulation_core* smc,
+    bool extended_can_id,
+    int sock);
 /*
  * virtual_can sockets
 */
@@ -148,8 +154,17 @@ void Virtual_can_interface::handler(int sck){
         frame_queue->push(std::make_tuple(std::make_tuple(0,nullptr),0,0,sck));
         close_sck = false;
         return;
-    } else if (cmd == "subscribe_in_channels") {
-
+    } else if (cmd == "subscribe_in_channel") {
+        auto in_channel_ = get_virtual_can_attribute_content("in_channel",attrs);
+        if (!in_channel_.first) return;
+        auto const & in_channel_name = in_channel_.second;
+        auto dispatcher_ctxt = smc_->get_dispatcher_thread_ctxt(in_channel_name);
+        if (dispatcher_ctxt == nullptr) return;
+        comm_receiver_socket_can(dispatcher_ctxt->handle(),
+            "",
+            smc_,
+            dispatcher_ctxt->can_extended(),
+            sck);
     } else return;
     auto r = send(sck,response.str().c_str(),response.str().length(),0);
     if (r != response.str().length()) return;

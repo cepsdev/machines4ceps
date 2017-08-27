@@ -401,6 +401,8 @@ public:
         }
 
         std::tuple<frame_queue_t*,std::string> get_out_channel(std::string const & s){
+                auto it = id_to_out_chan_.find(s);
+                if (it == id_to_out_chan_.end()) return std::tuple<frame_queue_t*,std::string>{};
 		return id_to_out_chan_[s];
 	}
 
@@ -682,10 +684,15 @@ public:
 		 bool start_ = false;
 		 bool websocket_server_ = false;
 		 bool websocket_client_ = false;
+                 bool can_extended_ = false;
+                 int handle_ = 0;
 
 		 std::string& id(){return id_;}
 		 std::string const & id() const {return id_;}
 		 dispatcher_thread_ctxt_t() = default;
+
+                 bool& can_extended() {return can_extended_;}
+                 int& handle(){ return handle_;}
 
 
 		 void request_start() {
