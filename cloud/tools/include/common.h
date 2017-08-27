@@ -156,7 +156,9 @@
 			 };
 		 }
 		 namespace vcan_api {
-			 std::vector<std::pair<Remote_Interface, std::string>> fetch_out_channels(Simulation_Core sim_core);
+			 using fetch_channels_return_t = std::pair< std::vector<std::pair<Remote_Interface, std::string>>, std::vector<std::pair<Remote_Interface, std::string>>>;
+
+			 fetch_channels_return_t fetch_channels(Simulation_Core sim_core);
 			 std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> send_cmd(int sock, std::string command);
 		 }
 	 }
