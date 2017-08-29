@@ -367,7 +367,7 @@ void Websocket_interface::handler(int sck){
          std::lock_guard<std::recursive_mutex>g(smc_->states_mutex());
          gen_update_reply(reply);
          reply += "]}";
-         send_reply(reply);
+         if(!send_reply(reply)) return;
      }
     }
    }}};

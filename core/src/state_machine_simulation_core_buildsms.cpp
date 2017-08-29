@@ -1630,9 +1630,13 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         ws_api()->start();
         running_as_node() = true;
     }
-    if(result_cmd_line.vcan_api_on){
+
+    if(result_cmd_line.vcan_api_on || ns["package"]["vcan_api_port"].as_str().length()){
         auto simcore_directory  = ns["package"]["hub_directory"];
-        vcan_api() = new Virtual_can_interface(this,result_cmd_line.vcan_api_port);
+        auto vcan_api_port = ns["package"]["vcan_api_port"].as_str();
+        if (vcan_api_port.length())
+            vcan_api() = new Virtual_can_interface(this,vcan_api_port);
+        else vcan_api() = new Virtual_can_interface(this,result_cmd_line.vcan_api_port);
         vcan_api()->hub_directory() = simcore_directory;
         vcan_api()->start();
         running_as_node() = true;
@@ -1641,12 +1645,15 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
             auto reg_name = ns["package"]["name"].as_str();
             auto reg_short_name = ns["package"]["uri"].as_str();
             auto reg_port = ns["package"]["vcan_api_port"].as_str();
+            if (reg_port.length() == 0) reg_port = result_cmd_line.vcan_api_port;
             auto reg_host_name = ns["package"]["vcan_api_host_name"].as_str();
             auto dir_master_name = ns["package"]["directory_master"]["host_name"].as_str();
             auto dir_master_port = ns["package"]["directory_master"]["port"].as_str();
-            auto sock = establish_inet_stream_connect(dir_master_name, dir_master_port);
-            if (sock == -1)
-                this->fatal_(-1,"Failed to register to directory master.");
+            auto sock = -1;
+            for(;sock == -1;){
+                sock = establish_inet_stream_connect(dir_master_name, dir_master_port);
+                if (sock == -1) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
             std::vector<std::pair<std::string,std::string>> p;
             p.push_back(std::make_pair("name",reg_name));
             p.push_back(std::make_pair("short_name",reg_short_name));

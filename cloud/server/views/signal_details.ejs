@@ -29,28 +29,33 @@
  var slider_range = 2000;
  var userdefined_range = false;
  var signal_name = "";
- var ws_cmd = undefined;
+ let ws_cmd = undefined;
 
  $(function() {
     var counter = 0;
-    var ws = new WebSocket("<%= signal_ws %>");
+    console.log("<%= sim_core.command_url %>");
+    console.log("<%= signal_ws %>");
+
+    let ws = new WebSocket("<%= signal_ws %>");
     ws_cmd = new WebSocket("<%= sim_core.command_url %>");
 
     ws_cmd.onopen = function(e){
-        console.log('Connection to command server opened.');
+        console.log('Connection to "<%= sim_core.command_url %>" opened.');
     }
     
     ws.onopen = function(e){
-        console.log('Connection to server opened.');
-        ws.send("<%= signal.name %>");
+        console.log('Connection to <%= signal_ws %> opened.');
+        ws.send("WATCH\n<%= signal.name %>");
+        ws.send("GET_UPDATE\n100");
     }
     ws.onmessage = function(e) {
         var msg = JSON.parse(e.data);
-        if (msg["name"]!="<%= signal.name %>") return;
+        if (!msg.ok) {console.log(msg);return;}
+        if (!("signals" in msg)) return;
         var ss_old = signal_start_plot;
         var se_old = signal_end_plot;
         var sg_len_old = signal.length;
-        var p = [counter,msg["signal"]];
+        var p = [counter,msg["signals"][0]["value"]];
         signal.push(p);
         if (signal_end_plot+1 == signal.length) {
             if (userdefined_range){
@@ -93,6 +98,7 @@
     ws_cmd.onmessage = function(e){
         
         var msg = JSON.parse(e.data);
+        console.log(e.data);
   
         if (msg.error != 0){
             $('#panel-body-terminal-list').append(

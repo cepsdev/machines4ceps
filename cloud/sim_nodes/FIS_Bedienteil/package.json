@@ -1,1 +1,1 @@
-{"name":"FIS Bedienteil","modules":["CBH1_CFBP_CBAG.xml","driver.ceps","scenarios.ceps"],"uri":"FIS_Bedienteil","base_port":8201}
+{"name":"FIS Bedienteil","modules":["CBH1_CFBP_CBAG.xml","driver.ceps","scenarios.ceps"],"uri":"FIS_Bedienteil"}
