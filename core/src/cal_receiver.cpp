@@ -41,7 +41,8 @@ void comm_receiver_kmw_multibus(int id,
 void comm_receiver_socket_can(int id,
 	std::string bus_id,
 	State_machine_simulation_core* smc,
-	bool extended_can_id);
+    bool extended_can_id,
+    int sock);
 namespace sockcan{
 	constexpr auto MIN_CAN_FRAME_SIZE = 2;
 	constexpr auto MAX_CAN_FRAME_PAYLOAD = 8;
@@ -115,7 +116,7 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 			return true;
 #else
 			std::string channel_id;
-			std::string can_bus = "can0";
+            std::string can_bus;
 			if (ns["id"].size() != 1 || ns["id"].nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
 				fatal_(-1, "A CAN(SOCKET CAN) CAL receiver definition requires an id.");
 			channel_id = ceps::ast::name(ceps::ast::as_id_ref(ns["id"].nodes()[0]));
@@ -130,27 +131,25 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 				extended =true;
 				break;
 			}
-			if (bus_id_.nodes().empty())
-				DEBUG << "[SOCKET_CAN_RECEIVER_DEFINITION][No bus specified, default assumed (can0)]\n";
-			else {
-				if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::int_literal)
+            {
+                if(!bus_id_.nodes().empty()){
+                 if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::int_literal)
 					can_bus = std::string("can")+std::to_string(ceps::ast::value(ceps::ast::as_int_ref(bus_id_.nodes()[0])));
-				else if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::string_literal)
+                 else if (bus_id_.nodes()[0]->kind() == ceps::ast::Ast_node_kind::string_literal)
 					can_bus = ceps::ast::value(ceps::ast::as_string_ref(bus_id_.nodes()[0]));
-				else
+                 else
 					fatal_(-1, "CAN-CAL receiver definition: bus_id must be an integer or string.");
+                }
 
 				using namespace ceps::ast;
-				DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER]" << "[CAL=" << call_name << "]" << "[bus=" << can_bus << "]" << "\n";
 				auto handlers = ns[all{ "on_msg" }];
-				//if (handlers.empty()) fatal_(-1, "on_msg required in receiver definition.");
 				int dispatcher_id = -1;
 				auto ctxt = allocate_dispatcher_thread_ctxt(dispatcher_id);
 				ctxt->id_=channel_id;
+                ctxt->handle() = dispatcher_id;
+                ctxt->can_extended() = extended;
                 if(extended) ctxt->info()="CANX";
                 else ctxt->info()="CAN";
-
-				DEBUG << "[PROCESSING_UNCONDITIONED_RECEIVER (CAL="<< call_name << "][dispatcher_id=" << dispatcher_id << "]\n";
 				for (auto const & handler_ : handlers) {
 					auto const & handler = handler_["on_msg"];
 					auto frame_id_ = handler["frame_id"];
@@ -170,10 +169,9 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 					ctxt->handler.push_back(std::make_pair(it_frame->second, it_func->second));
 				}
 				if (start_comm_threads()){
-				 comm_threads.push_back(new std::thread{ comm_receiver_socket_can,
+                 if(can_bus.length()) comm_threads.push_back(new std::thread{ comm_receiver_socket_can,
 					dispatcher_id,
-					can_bus, this, extended });
-
+                    can_bus, this, extended , -1});
 				 running_as_node() = true;
 				}
 			}
@@ -235,10 +233,16 @@ constexpr int CAN_MSG_SIZE = 13;
 void comm_receiver_socket_can(int id,
 	std::string can_bus,
 	State_machine_simulation_core* smc,
-	bool extended_can_id){
+    bool extended_can_id,
+    int sock){
 	int s = 0;
+    /*
+     In the case can_bus is the empty string this communication
+     endpoint is virtual and the id parameter holds a valid TCP Stream socket.
+     A virtual in channel reads can_frame messages from this socket.
+    */
 
-	{
+    if(can_bus.length()){
 	 struct sockaddr_can addr;
 	 struct ifreq ifr;
 	 if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
@@ -254,7 +258,7 @@ void comm_receiver_socket_can(int id,
 	 if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		smc->fatal_(-1,"comm_receiver_socket_can:Error in socket bind");
 	 }
-	}
+    } else s = sock;
 
 	auto current_smc = smc;
 	auto in_ctxt = smc->get_dispatcher_thread_ctxt(id);
@@ -267,7 +271,7 @@ void comm_receiver_socket_can(int id,
 		struct can_frame can_message{0};
 		auto r = recv(s, &can_message, sizeof(struct can_frame),0);
 		if (r <= 0)
-			smc->fatal_(-1,"comm_receiver_socket_can:Read failed.");
+            continue;
 
 
 		std::uint8_t can_msg[CAN_MSG_SIZE];
