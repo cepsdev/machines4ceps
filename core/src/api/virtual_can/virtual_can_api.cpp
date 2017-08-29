@@ -98,6 +98,10 @@ template<typename F> struct cleanup{
 	~cleanup(){f_();}
 };
 
+ceps::ast::Nodeset& Virtual_can_interface::hub_directory(){
+    reset_directory_of_known_simcores_ = true;
+    return this->hub_directory_;
+}
 
 void Virtual_can_interface::handler(int sck){
 
@@ -165,22 +169,60 @@ void Virtual_can_interface::handler(int sck){
             sck);
     } else if (cmd == "get_known_sim_cores") {
         response << "HTTP/1.1 100\r\n"<< "known_sim_cores:";
-        for (auto simcore_ : hub_directory()[ceps::ast::all{"simcore"}]){
-            auto simcore = simcore_["simcore"];
-            auto name = simcore["name"].as_str();
-            auto short_name = simcore["short"].as_str();
-            auto host_name = simcore["host_name"].as_str();
-            auto port = simcore["port"].as_str();
+        if (reset_directory_of_known_simcores_){
+            for (auto simcore_ : hub_directory()[ceps::ast::all{"simcore"}]){
+                auto simcore = simcore_["simcore"];
+                auto name = simcore["name"].as_str();
+                auto short_name = simcore["short"].as_str();
+                auto host_name = simcore["host_name"].as_str();
+                auto port = simcore["port"].as_str();
+                directory_of_known_simcores::simcore_info info;
+                info.host_name = host_name;
+                info.name = name;
+                info.short_name = short_name;
+                info.port = port;
+                known_simcores_.entries.push_back(info);
+            }
+            reset_directory_of_known_simcores_ = false;
+        }
+        for (auto simcore : known_simcores_.entries){
             response << "$";
-            response << name << "\t";
-            response << short_name << "\t";
-            response << host_name << ":";
-            response << port;
+            response << simcore.name << "\t";
+            response << simcore.short_name << "\t";
+            response << simcore.host_name << ":";
+            response << simcore.port;
             response << "$";
         }
         response << "\r\n";
         response <<"\r\n";
-    }else return;
+    } else if (cmd == "register_sim_core") {
+        auto sim_name = get_virtual_can_attribute_content("name",attrs);
+        if (!sim_name.first) return;
+        auto sim_short_name = get_virtual_can_attribute_content("short_name",attrs);
+        if (!sim_short_name.first) return;
+        auto sim_host_name = get_virtual_can_attribute_content("host_name",attrs);
+        if (!sim_host_name.first) return;
+        auto sim_port = get_virtual_can_attribute_content("port",attrs);
+        if (!sim_port.first) return;
+        bool listed = false;
+        for (auto & e:known_simcores_.entries){
+            if(e.host_name == sim_host_name.second && e.port == sim_port.second){
+                e.name = sim_name.second;
+                e.short_name = sim_short_name.second;
+                break;
+                listed = true;
+            }
+        }
+        if(!listed){
+            directory_of_known_simcores::simcore_info info;
+            info.host_name = sim_host_name.second;
+            info.name = sim_name.second;
+            info.short_name = sim_short_name.second;
+            info.port = sim_port.second;
+            known_simcores_.entries.push_back(info);
+        }
+        response << "HTTP/1.1 100\r\n\r\n";
+    }  else return;
     auto r = send(sck,response.str().c_str(),response.str().length(),0);
     if (r != response.str().length()) return;
  }

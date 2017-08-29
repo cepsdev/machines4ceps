@@ -616,6 +616,122 @@ static bool is_a_lazy_ceps_fun(std::string const & id){
 	return id == "start_signal" || id == "changed" || id == "breakup_byte_sequence";
 }
 
+
+
+static int establish_inet_stream_connect(std::string remote, std::string port) {
+    int cfd = -1;
+    struct addrinfo hints;
+    struct addrinfo *result, *rp;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_canonname = NULL;
+    hints.ai_addr = NULL;
+    hints.ai_next = NULL;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(remote.c_str(), port.c_str(), &hints, &result) != 0) return -1;
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        cfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (cfd == -1) continue;
+        if (connect(cfd, rp->ai_addr, rp->ai_addrlen) != -1) break;
+
+        if (rp->ai_next == NULL) {
+                close(cfd); cfd = -1;
+            if (result != nullptr) freeaddrinfo(result);
+            return -1;
+        }
+        close(cfd); cfd = -1;
+    }
+    return cfd;
+}
+
+static std::pair<bool,std::string> get_virtual_can_attribute_content(std::string attr, std::vector<std::pair<std::string,std::string>> const & http_header){
+ for(auto const & v : http_header){
+     if (v.first == attr)
+         return {true,v.second};
+ }
+ return {false,{}};
+}
+
+
+static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string>>> read_virtual_can_msg(int sck,std::string& unconsumed_data){
+ using header_t = std::vector<std::pair<std::string,std::string>>;
+ std::tuple<bool,std::string,header_t> r;
+
+ constexpr auto buf_size = 4096;
+ char buf[buf_size];
+ std::string buffer = unconsumed_data;
+ std::string eom = "\r\n\r\n";
+ std::size_t eom_pos = 0;
+
+ unconsumed_data.clear();
+ bool req_complete = false;
+ ssize_t readbytes = 0;
+ ssize_t buf_pos = 0;
+
+ for(; (readbytes=recv(sck,buf,buf_size-1,0)) > 0;){
+  buf[readbytes] = 0;
+  for(buf_pos = 0; buf_pos < readbytes; ++buf_pos){
+   if (buf[buf_pos] == eom[eom_pos])++eom_pos;else eom_pos = 0;
+   if (eom_pos == eom.length()){
+    req_complete = true;
+    if (buf_pos+1 < readbytes) unconsumed_data = buf+buf_pos+1;
+    buf[buf_pos+1] = 0;
+    break;
+   }
+  }
+  buffer.append(buf);
+  if(req_complete) break;
+ }
+
+ if (req_complete) {
+  header_t header;
+  std::string first_line;
+  size_t line_start = 0;
+  for(size_t i = 0; i < buffer.length();++i){
+    if (i+1 < buffer.length() && buffer[i] == '\r' && buffer[i+1] == '\n' ){
+        if (line_start == 0) first_line = buffer.substr(line_start,i);
+        else if (line_start != i){
+         std::string attribute;
+         std::string content;
+         std::size_t j = line_start;
+         for(;j < i && buffer[j]==' ';++j);
+         auto attr_start = j;
+         for(;j < i && buffer[j]!=':';++j);
+         attribute = buffer.substr(attr_start,j-attr_start);
+         ++j;
+         for(;j < i && buffer[j]==' ' ;++j);
+         auto cont_start = j;
+         auto cont_end = i - 1;
+         for(;buffer[cont_end] == ' ';--cont_end);
+         content = buffer.substr(cont_start, cont_end - cont_start + 1);
+         header.push_back(std::make_pair(attribute,content));
+        }
+        line_start = i + 2;++i;
+    }
+  }
+  return std::make_tuple(true,first_line,header);
+ }
+
+ return std::make_tuple(false,std::string{},header_t{});
+}
+
+static std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> send_cmd(int sock,
+                                                                                                std::string command,
+                                                                                                std::vector<std::pair<std::string,std::string>> parameters) {
+    std::stringstream cmd;
+    cmd << "HTTP/1.1 100\r\n";
+    cmd << "cmd: " + command + "\r\n";
+    for(auto e : parameters)
+     cmd << e.first << ": "<<e.second<<"\r\n";
+    cmd << "\r\n";
+    auto r = send(sock, cmd.str().c_str(), cmd.str().length(), 0);
+    if (r != cmd.str().length()) return std::make_tuple(false,std::string{},std::vector<std::pair<std::string, std::string>>{});
+    std::string unconsumed_data;
+    return read_virtual_can_msg(sock, unconsumed_data);
+}
+
+
+
 void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)
 {
 	using namespace ceps::ast;
@@ -1520,6 +1636,25 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         vcan_api()->hub_directory() = simcore_directory;
         vcan_api()->start();
         running_as_node() = true;
+        auto vcan_api_directory = ns["package"]["directory_master"];
+        if (!vcan_api_directory.empty()) {
+            auto reg_name = ns["package"]["name"].as_str();
+            auto reg_short_name = ns["package"]["uri"].as_str();
+            auto reg_port = ns["package"]["vcan_api_port"].as_str();
+            auto reg_host_name = ns["package"]["vcan_api_host_name"].as_str();
+            auto dir_master_name = ns["package"]["directory_master"]["host_name"].as_str();
+            auto dir_master_port = ns["package"]["directory_master"]["port"].as_str();
+            auto sock = establish_inet_stream_connect(dir_master_name, dir_master_port);
+            if (sock == -1)
+                this->fatal_(-1,"Failed to register to directory master.");
+            std::vector<std::pair<std::string,std::string>> p;
+            p.push_back(std::make_pair("name",reg_name));
+            p.push_back(std::make_pair("short_name",reg_short_name));
+            p.push_back(std::make_pair("host_name",reg_host_name));
+            p.push_back(std::make_pair("port",reg_port));
+            auto r = send_cmd(sock,"register_sim_core",p);
+            if (!std::get<0>(r)) this->fatal_(-1,"Failed to register to directory master.");
+        }
     }
 
 	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
