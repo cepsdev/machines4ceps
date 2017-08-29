@@ -23,9 +23,11 @@ class Virtual_can_interface{
     std::mutex handler_threads_status_mutex_;
     using thread_status_type = std::tuple<std::thread*,bool,int>;
     std::vector< thread_status_type > handler_threads_status_;
+    ceps::ast::Nodeset hub_directory_;
     
 public:
     Virtual_can_interface(State_machine_simulation_core* smc,std::string port = "8183"):smc_{smc},port_{port}{}
+    ceps::ast::Nodeset& hub_directory() {return hub_directory_;}
     void start();
 };
 

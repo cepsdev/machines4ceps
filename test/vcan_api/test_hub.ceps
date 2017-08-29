@@ -1,0 +1,19 @@
+
+package{
+ hub_directory{
+  simcore{
+   name{"Simulation A";};
+   short{"sim_a";};
+   host_name{"tomas-cepsdev-win";};
+   port{"8186";};
+  };
+  simcore{
+   name{"Simulation B";};
+   short{"sim_b";};
+   host_name{"tomas-cepsdev-win";};
+   port{"8187";};
+  };
+ };
+};
+
+Simulation{};

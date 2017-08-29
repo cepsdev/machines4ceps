@@ -122,8 +122,6 @@ void Virtual_can_interface::handler(int sck){
     if (!cmd_.first) return;
     auto const & cmd = cmd_.second;
     std::stringstream response;
-
-
     if (cmd == "get_out_channels"){
         auto v = smc_->get_out_channels();
         response << "HTTP/1.1 100\r\n"<< "out_channels:";
@@ -165,7 +163,24 @@ void Virtual_can_interface::handler(int sck){
             smc_,
             dispatcher_ctxt->can_extended(),
             sck);
-    } else return;
+    } else if (cmd == "get_known_sim_cores") {
+        response << "HTTP/1.1 100\r\n"<< "known_sim_cores:";
+        for (auto simcore_ : hub_directory()[ceps::ast::all{"simcore"}]){
+            auto simcore = simcore_["simcore"];
+            auto name = simcore["name"].as_str();
+            auto short_name = simcore["short"].as_str();
+            auto host_name = simcore["host_name"].as_str();
+            auto port = simcore["port"].as_str();
+            response << "$";
+            response << name << "\t";
+            response << short_name << "\t";
+            response << host_name << ":";
+            response << port;
+            response << "$";
+        }
+        response << "\r\n";
+        response <<"\r\n";
+    }else return;
     auto r = send(sck,response.str().c_str(),response.str().length(),0);
     if (r != response.str().length()) return;
  }
