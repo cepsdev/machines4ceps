@@ -755,6 +755,16 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	for (int i = 1; i != argc; ++i) {
+		std::string token = argv[i];
+		if (token == "--print_known_hosts") {
+			std::cout << "Known hosts:\n";
+			for (auto s : ceps::cloud::sim_cores) {
+				std::cout <<"\t" << s.first << ":" << s.second << " aka " << ceps::cloud::display_name_with_details(s) << std::endl;
+			}
+		}
+	}
+
 	
 	std::vector<std::pair<ceps::cloud::Simulation_Core, std::future<ceps::cloud::vcan_api::fetch_channels_return_t>>> handles;
 	for(auto s : ceps::cloud::sim_cores)
@@ -813,7 +823,7 @@ int main(int argc, char* argv[])
 			if(pcan_api::is_pcan(e.first.first)) downstream_threads.push_back(new std::thread{ downstream_ctrl,ceps::cloud::sim_core(e),ceps::cloud::down_stream(e) });
 #endif
 #ifdef KMW_MULTIBUS_API
-			if (kmw_api::is_kmw(e.first.first)) downstream_threads.push_back(new std::thread{ downstream_ctrl_multibus,ceps::cloud::sim_core(e),ceps::cloud::down_stream(e) });
+			if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(e.first.first)) downstream_threads.push_back(new std::thread{ downstream_ctrl_multibus,ceps::cloud::sim_core(e),ceps::cloud::down_stream(e) });
 #endif
 		}
 		for (auto e : mappings.local_to_remote_mappings) {
@@ -821,7 +831,8 @@ int main(int argc, char* argv[])
 			if (pcan_api::is_pcan(e.first.first))upstream_threads.push_back(new std::thread{ upstream_ctrl,ceps::cloud::sim_core(e),ceps::cloud::up_stream(e) });
 #endif
 #ifdef KMW_MULTIBUS_API
-			if (kmw_api::is_kmw(e.first.first))upstream_threads.push_back(new std::thread{ upstream_ctrl_kmw,ceps::cloud::sim_core(e),ceps::cloud::up_stream(e) });
+			if (kmw_multibus_dll!=nullptr && kmw_api::is_kmw(e.first.first))
+				upstream_threads.push_back(new std::thread{ upstream_ctrl_kmw,ceps::cloud::sim_core(e),ceps::cloud::up_stream(e) });
 #endif
 
 		}
