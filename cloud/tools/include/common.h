@@ -49,6 +49,7 @@
   using ssize_t = long long;
   #define WIN_API
   #define PCAN_API
+  #define KMW_MULTIBUS_API
   #ifndef WIN32_LEAN_AND_MEAN
    #define WIN32_LEAN_AND_MEAN
   #endif
@@ -82,8 +83,18 @@
   NULL); \
  throw net::exceptions::err_inet{r!=0?buffer:""}; \
  }
+#define THROW_ERR_INET_ARG(x) { char* buffer=nullptr;\
+ auto r = FormatMessage( \
+  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, \
+  NULL, \
+  syscall_result, \
+  0, \
+  (LPSTR)&buffer, \
+  0,\
+  NULL); \
+ throw net::exceptions::err_inet{x+(r!=0?buffer:"")}; \
+ }
 #endif
-
  template<typename F> struct cleanup {
 	 F f_;
 	 cleanup(F f) :f_(f) {}
@@ -96,16 +107,52 @@
 	 namespace cloud {
 		 extern std::vector<std::string> sys_info_available_ifs;
 		 extern std::vector<std::string> check_available_ifs();
-
+		 using Hostname = std::string;
+		 using Port = std::string;
+		 using Simulation_Core = std::pair<Hostname, Port>;
 		 using Local_Interface = std::string;
 		 using Remote_Interface = std::string;
 		 using Remote_Interface_Type = std::string;
 		 using Stream_Mapping = std::pair<Local_Interface, Remote_Interface>;
 		 using Downstream_Mapping = Stream_Mapping;
 		 using Upstream_Mapping = Downstream_Mapping;
-		 using Hostname = std::string;
-		 using Port = std::string;
-		 using Simulation_Core = std::pair<Hostname, Port>;
+		 
+		 using Downstream_Mapping_ex = std::pair<Downstream_Mapping, Simulation_Core>;
+		 using Upstream_Mapping_ex = std::pair<Upstream_Mapping, Simulation_Core>;
+
+		 class Route {
+		 public:
+			 std::pair<Simulation_Core, std::string> from;
+			 std::pair<Simulation_Core, std::string> to;
+
+			 Route() = default;
+			 Route(std::pair<Simulation_Core, std::string> a, std::pair<Simulation_Core, std::string> b) : from{ a }, to{ b } {}
+		 };
+
+		 class Sim_Directory {
+		 public:
+			 struct entry {
+				 Simulation_Core sim_core;
+				 std::string name;
+				 std::string short_name;
+			 };
+			 std::vector<entry> entries;
+		 };
+
+		 Sim_Directory fetch_directory_entries(Simulation_Core sim_core);
+
+		 inline Simulation_Core& sim_core(std::pair<Downstream_Mapping, Simulation_Core> & x) { return x.second; }
+		 inline Downstream_Mapping& down_stream(std::pair<Downstream_Mapping, Simulation_Core> & x) { return x.first; }
+		 inline Upstream_Mapping& up_stream(std::pair<Upstream_Mapping, Simulation_Core> & x) { return x.first; }
+		 
+		 using mappings_t = std::pair<std::vector<ceps::cloud::Downstream_Mapping>, std::vector<ceps::cloud::Upstream_Mapping>>;
+		 
+		 using mappingsex_t = struct {
+			 std::vector<ceps::cloud::Upstream_Mapping_ex> local_to_remote_mappings;
+			 std::vector<ceps::cloud::Downstream_Mapping_ex> remote_to_local_mappings;
+			 std::vector<Route> routes;
+			 bool empty() { return local_to_remote_mappings.size() == 0 && remote_to_local_mappings.size() == 0 && routes.size() == 0;  }
+		 };
 
 		 struct ctrl_thread_info {
 			 std::atomic_bool shutdown{ false };
@@ -126,14 +173,32 @@
 		 using ctrl_threads_t = std::map<Simulation_Core, std::shared_ptr<ctrl_thread_info>  >;
 		 using downstream_threads_t = std::map<Simulation_Core, std::vector< std::shared_ptr<gateway_thread_info> >  >;
 
+		 mappings_t parse_cmdline_and_extract_mappings(int argc,
+			 char* argv[],
+			 std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_out,
+			 std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>> remote_in);
+
+		 mappingsex_t parse_cmdline_and_extract_mappings(int argc,
+			 char* argv[],
+			 info_out_channels_t const & out_channels,
+			 info_in_channels_t const & in_channels);
+
+	
 		 extern std::map<Simulation_Core, std::vector< Downstream_Mapping > > mappings_downstream;
 		 extern std::map<Simulation_Core, std::vector< Upstream_Mapping > > mappings_upstream;
 		 extern std::map<Simulation_Core, std::vector< std::pair<Remote_Interface, Remote_Interface_Type> > > info_out_channels;
 		 extern std::map<Simulation_Core, std::vector< std::pair<Remote_Interface, Remote_Interface_Type> > > info_in_channels;
 		 extern std::map<Simulation_Core, std::shared_ptr<ctrl_thread_info>  > ctrl_threads;
 		 extern downstream_threads_t downstream_threads;
-		 extern Simulation_Core current_core;
+		 extern std::set<Simulation_Core> sim_cores;
 		 extern std::mutex global_mutex;
+		 extern std::vector<Route> routes;
+		 extern std::vector<Sim_Directory::entry> global_directory;
+		 std::pair<bool, Sim_Directory::entry> get_direntry(Simulation_Core);
+		 std::string display_name(Simulation_Core);
+		 std::string display_name_with_details(Simulation_Core);
+
+
 
 		 extern void ctrl_thread_fn(Simulation_Core sim_core,
 			 std::shared_ptr<ctrl_thread_info> ctrl);
@@ -148,7 +213,7 @@
 
 		 std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> read_virtual_can_msg(int sck, std::string& unconsumed_data);
 		 std::pair<bool, std::string> get_virtual_can_attribute_content(std::string attr, std::vector<std::pair<std::string, std::string>> const & http_header);
-		 Simulation_Core cmdline_read_remote_host(int argc, char* argv[]);
+		 Simulation_Core cmdline_read_remote_host(char const * arg);
 		 namespace exceptions{
 			 class err_vcan_api : public std::runtime_error {
 			 public:
@@ -303,8 +368,33 @@
 	 extern CAN_GetErrorText_t geterrortext;
 	 extern std::vector< std::pair<unsigned int, std::string> > all_channels;
 	 extern std::vector< std::pair<std::string, net::can::can_info> > all_channels_info;
+	 extern bool is_pcan(std::string);
  }
 
+#endif
+
+#ifdef KMW_MULTIBUS_API
+ #include "Multibus.h"
+ namespace kmw_api{
+	 typedef void (__stdcall *CanStart_t)();
+	 typedef unsigned char (*CanOpen_t)(unsigned char bus);
+	 typedef unsigned char (*CanWrite_t)(unsigned char queue,const CanMessage* message);
+	 typedef void (*CanRead_t)(unsigned char queue,CanEvent* event);
+	 typedef void (*CanInstall_t)(
+		 unsigned char queue,
+		 CanReadCallback readCallback,
+		 CanFlushedCallback flushedCallback);
+
+	 extern CanStart_t canstart;
+	 extern CanOpen_t canopen;
+	 extern CanWrite_t canwrite;
+	 extern CanRead_t canread;
+	 extern CanInstall_t caninstall;
+
+	 extern std::vector< std::pair<unsigned int, std::string> > all_channels;
+	 extern std::vector< std::pair<std::string, net::can::can_info> > all_channels_info;
+	 extern bool is_kmw(std::string);
+ }
 #endif
 
 

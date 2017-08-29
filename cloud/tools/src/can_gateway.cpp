@@ -10,9 +10,11 @@ std::map<Simulation_Core,std::vector< Upstream_Mapping > > ceps::cloud::mappings
 std::map<Simulation_Core, std::shared_ptr<ctrl_thread_info>   > ceps::cloud::ctrl_threads;
 std::map<Simulation_Core,std::vector< std::pair<Remote_Interface,Remote_Interface_Type> > > ceps::cloud::info_out_channels;
 std::map<Simulation_Core,std::vector< std::pair<Remote_Interface,Remote_Interface_Type> > > ceps::cloud::info_in_channels;
+std::vector<Sim_Directory::entry> ceps::cloud::global_directory;
 
 downstream_threads_t ceps::cloud::downstream_threads;
-Simulation_Core ceps::cloud::current_core;
+std::set<ceps::cloud::Simulation_Core> ceps::cloud::sim_cores;
+std::vector<ceps::cloud::Route> ceps::cloud::routes;
 std::mutex ceps::cloud::global_mutex;
 
 #ifdef PCAN_API
@@ -46,9 +48,34 @@ std::vector< std::pair<std::string, net::can::can_info> > pcan_api::all_channels
 };
 #endif
 
+#ifdef KMW_MULTIBUS_API
+std::vector< std::pair<unsigned int, std::string> > kmw_api::all_channels =
+{
+	{ 0 , "KMW_MULTIBUS_0" },{ 1 , "KMW_MULTIBUS_1" },{ 2 , "KMW_MULTIBUS_2" },{ 3 , "KMW_MULTIBUS_3" },{ 4 , "KMW_MULTIBUS_4" },
+	{ 5 , "KMW_MULTIBUS_5" },{ 6 , "KMW_MULTIBUS_6" },{ 7 , "KMW_MULTIBUS_7" }
+};
+
+std::vector< std::pair<std::string, net::can::can_info> > kmw_api::all_channels_info = {
+	{"KMW_MULTIBUS_0",net::can::can_info{}},{"KMW_MULTIBUS_1",net::can::can_info{}},
+	{"KMW_MULTIBUS_2",net::can::can_info{}},{"KMW_MULTIBUS_3",net::can::can_info{}},
+	{"KMW_MULTIBUS_4",net::can::can_info{}},{"KMW_MULTIBUS_5",net::can::can_info{}},
+	{"KMW_MULTIBUS_6",net::can::can_info{} },{"KMW_MULTIBUS_7",net::can::can_info{} }
+};
+kmw_api::CanStart_t kmw_api::canstart = nullptr;
+kmw_api::CanOpen_t kmw_api::canopen = nullptr;
+kmw_api::CanWrite_t kmw_api::canwrite = nullptr;
+kmw_api::CanRead_t kmw_api::canread = nullptr;
+kmw_api::CanInstall_t kmw_api::caninstall = nullptr;
+#endif
+
 net::can::can_info net::can::get_local_endpoint_info(std::string endpoint) {
 #ifdef PCAN_API
 	for (auto e : pcan_api::all_channels_info) {
+		if (e.first == endpoint) return e.second;
+	}
+#endif
+#ifdef KMW_MULTIBUS_API
+	for (auto e : kmw_api::all_channels_info) {
 		if (e.first == endpoint) return e.second;
 	}
 #endif
@@ -57,24 +84,50 @@ net::can::can_info net::can::get_local_endpoint_info(std::string endpoint) {
 
 void net::can::set_local_endpoint_info(std::string endpoint, net::can::can_info info) {
 #ifdef PCAN_API
-#ifdef PCAN_API
 	for (auto& e : pcan_api::all_channels_info) {
 		if (e.first == endpoint) {
 			e.second = info; return;
 		}
 	}
 #endif
-	throw net::exceptions::err_can("Unknown local endpoint '" + endpoint + "'");
+#ifdef KMW_MULTIBUS_API
+	for (auto& e : kmw_api::all_channels_info) {
+		if (e.first == endpoint) {
+			e.second = info; return;
+		}
+	}
 #endif
+
+	throw net::exceptions::err_can("Unknown local endpoint '" + endpoint + "'");
+}
+
+std::string ceps::cloud::display_name(ceps::cloud::Simulation_Core s) {
+	auto const & d = get_direntry(s);
+	if (!d.first) return s.first + ":" + s.second;
+	return d.second.name;
+}
+
+
+std::string ceps::cloud::display_name_with_details(ceps::cloud::Simulation_Core s) {
+	auto const & d = get_direntry(s);
+	if (!d.first) return s.first + ":" + s.second;
+	return d.second.name + " ("+d.second.short_name+")";
 }
 
 ceps::cloud::Local_Interface net::can::get_local_endpoint(std::string s) {
- #ifdef PCAN_API
+#ifdef PCAN_API
 	for (auto e : pcan_api::all_channels) {
 		if (e.second == s)
 			return ceps::cloud::Local_Interface{e.second};
 	}
 #endif
+#ifdef KMW_MULTIBUS_API
+	for (auto e : kmw_api::all_channels) {
+		if (e.second == s)
+			return ceps::cloud::Local_Interface{ e.second };
+	}
+#endif
+
 	return ceps::cloud::Local_Interface{};
 }
 
@@ -85,8 +138,35 @@ int net::can::get_local_endpoint_handle(std::string s) {
 			return e.first;
 	}
 #endif
+#ifdef KMW_MULTIBUS_API
+	for (auto e : kmw_api::all_channels) {
+		if (e.second == s)
+			return e.first;
+	}
+#endif
+
 	return -1;
 }
+
+#ifdef KMW_MULTIBUS_API
+ bool kmw_api::is_kmw(std::string s){
+	 for (auto e : kmw_api::all_channels) {
+		 if (e.second == s)
+			 return true;
+	 }
+	 return false;
+ }
+#endif
+
+#ifdef PCAN_API
+ bool pcan_api::is_pcan(std::string s) {
+	 for (auto e : pcan_api::all_channels) {
+		 if (e.second == s)
+			 return true;
+	 }
+	 return false;
+ }
+#endif
 
 std::vector<std::string> ceps::cloud::check_available_ifs(){
 	std::vector<std::string> r;
@@ -113,6 +193,11 @@ std::vector<std::string> ceps::cloud::check_available_ifs(){
 		r.push_back(channel.second);
 	}
  #endif	
+#ifdef KMW_MULTIBUS_API
+	for (auto channel : kmw_api::all_channels) {
+		r.push_back(channel.second);
+	}
+#endif
 #endif
 return r;
 }
@@ -130,7 +215,8 @@ int net::inet::establish_inet_stream_connect(std::string remote, std::string por
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	if ((syscall_result = getaddrinfo(remote.c_str(), port.c_str(), &hints, &result)) != 0) {
-		throw net::exceptions::err_getaddrinfo(gai_strerror(syscall_result));
+		STORE_SYS_ERR
+			throw net::exceptions::err_getaddrinfo(std::string{ "("+remote+":"+port+") " }+gai_strerror(syscall_result));
 	}
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
@@ -142,7 +228,7 @@ int net::inet::establish_inet_stream_connect(std::string remote, std::string por
 			STORE_SYS_ERR
 				close(cfd); cfd = -1;
 			if (result != nullptr) freeaddrinfo(result);
-			THROW_ERR_INET
+			THROW_ERR_INET_ARG(std::string{ "[" + remote + ":" + port + "] " });
 		}
 		syscall_result = errno;
 		close(cfd); cfd = -1;
@@ -152,9 +238,9 @@ int net::inet::establish_inet_stream_connect(std::string remote, std::string por
 
 
 
-ceps::cloud::Simulation_Core ceps::cloud::cmdline_read_remote_host(int argc, char* argv[]) {
+ceps::cloud::Simulation_Core ceps::cloud::cmdline_read_remote_host(char const * arg) {
 	ceps::cloud::Simulation_Core r;
-	std::string s = argv[0];
+	std::string s = arg;
 	std::regex word_regex("([0-9a-zA-Z.-]+):([0-9]+)");
 	std::smatch m;
 	if (std::regex_match(s, m, word_regex)) {
@@ -245,7 +331,7 @@ std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> 
 		std::stringstream cmd;
 	cmd << "HTTP/1.1 100\r\n";
 	cmd << "cmd: " + command + "\r\n\r\n";
-	auto r = send(sock, cmd.str().c_str(), cmd.str().length(), 0);
+	auto r = send(sock, cmd.str().c_str(), cmd.str().length(), 0); STORE_SYS_ERR;
 	if (r != cmd.str().length()) {
 		THROW_ERR_INET
 	}
@@ -289,33 +375,86 @@ static bool get_attr_values_as_lists_and_zip(
 }
 
 ceps::cloud::vcan_api::fetch_channels_return_t ceps::cloud::vcan_api::fetch_channels(ceps::cloud::Simulation_Core sim_core) {
-	INIT_SYS_ERR_HANDLING
-		int cfd = -1;
+	INIT_SYS_ERR_HANDLING;
+	int cfd = -1;
 	CLEANUP([&]() {if (cfd != -1) closesocket(cfd); })
 	
 	fetch_channels_return_t rv;
-	cfd = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
-	if (cfd == -1) { THROW_ERR_INET }
+	cfd = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second); 
+	if (cfd == -1) {
+		throw net::exceptions::err_inet{"Establishing connect to '"+sim_core.first+":"+ sim_core.second+"' failed."};
+	}
+	try {
+		auto rhr = ceps::cloud::vcan_api::send_cmd(cfd, "get_out_channels");
 
-	auto rhr = send_cmd(cfd, "get_out_channels");
+		if (std::get<0>(rhr))
+			get_attr_values_as_lists_and_zip(
+				std::get<2>(rhr),
+				"out_channels",
+				"types",
+				rv.first);
 
-	if (std::get<0>(rhr))
-		get_attr_values_as_lists_and_zip(
-			std::get<2>(rhr),
-			"out_channels",
-			"types",
-			rv.first);
+		rhr = send_cmd(cfd, "get_in_channels");
 
-	rhr = send_cmd(cfd, "get_in_channels");
-
-	if (std::get<0>(rhr))
-		get_attr_values_as_lists_and_zip(
-			std::get<2>(rhr),
-			"in_channels",
-			"types",
-			rv.second);
+		if (std::get<0>(rhr))
+			get_attr_values_as_lists_and_zip(
+				std::get<2>(rhr),
+				"in_channels",
+				"types",
+				rv.second);
+	}catch (net::exceptions::err_inet & e) {
+		throw net::exceptions::err_inet("("+sim_core.first+":"+sim_core.second+") "+e.what());
+	}
 	return rv;
 }
+
+ceps::cloud::Sim_Directory ceps::cloud::fetch_directory_entries(ceps::cloud::Simulation_Core sim_core) {
+	INIT_SYS_ERR_HANDLING;
+	int cfd = -1;
+	CLEANUP([&]() {if (cfd != -1) closesocket(cfd); })
+
+	Sim_Directory r;
+	cfd = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
+	if (cfd == -1) {
+		throw net::exceptions::err_inet{ "Establishing connect to '" + sim_core.first + ":" + sim_core.second + "' failed." };
+	}
+	auto rhr = ceps::cloud::vcan_api::send_cmd(cfd, "get_known_sim_cores");
+
+	if (!std::get<0>(rhr)) return r;
+	using namespace std;
+
+	auto raw_data = ceps::cloud::get_virtual_can_attribute_content("known_sim_cores", std::get<2>(rhr));
+	for (std::size_t j = 0; raw_data.second.length() > j;) {
+		if (raw_data.second[j] != '$') { ++j; continue; }
+		j += 1;
+		std::string name;
+		std::string short_name;
+		std::string host;
+		auto k = j;
+		for (; raw_data.second[k] != '\t' && k < raw_data.second.length(); ++k);
+		if (raw_data.second[k] != '\t')  continue;
+		name = raw_data.second.substr(j, k - j); k++; j = k;
+		for (; raw_data.second[k] != '\t' && k < raw_data.second.length(); ++k);
+		if (raw_data.second[k] != '\t')  continue;
+		short_name = raw_data.second.substr(j, k - j); k++; j = k;
+		for (; raw_data.second[k] != '$' && k < raw_data.second.length(); ++k);
+		if (raw_data.second[k] != '$')  continue;
+		host = raw_data.second.substr(j, k - j);
+		j = k+1;
+		/*std::cout << name << std::endl;
+		std::cout << short_name << std::endl;
+		std::cout << host << std::endl;*/
+		if (name.length() == 0 || short_name.length() == 0 || host.length() == 0) continue;
+		Sim_Directory::entry e;
+		e.name = name;
+		e.short_name = short_name;
+		e.sim_core = cmdline_read_remote_host(host.c_str());
+		if (e.sim_core.first.length() == 0 || e.sim_core.second.length() == 0) continue;
+		r.entries.push_back(e);
+	}
+	return r;
+}
+
 
 
 
@@ -384,4 +523,5 @@ void gateway_fn(Simulation_Core sim_core,
       if(r!=sizeof(struct can_frame)) return;
     }*/
 }
+
 
