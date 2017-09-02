@@ -399,6 +399,13 @@ public:
            if (ch == '.') dot_read = true;
           }
 
+          if(not_eof && (ch == 'e' || ch == 'E') ){
+              dot_read = true;
+              p_.get(ch);
+              for (; (not_eof = p_.get(ch));)
+                  if (!std::isdigit(ch)) break;
+          }
+
           if (not_eof) p_.unget();
 
           t.sval_ = nonmutable_string<C>(p_.ptr_+start,p_.pos_-start);
@@ -1047,7 +1054,13 @@ int parse_sideeffect_ASSIGN()
       t.kind_ = Token::TOK_INT64;
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,false,-1,t);
       ++pat_len;
+   } else if (t.kind() == Token::TOK_ID && t.sval_ == "double"  )
+   {
+      t.kind_ = Token::TOK_DOUBLE;
+      prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,false,-1,t);
+      ++pat_len;
    }
+
     else if (t.kind() == Token::TOK_ID && t.sval_ == "ident")
    {
       t.kind_ = Token::TOK_ID;
