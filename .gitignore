@@ -22,5 +22,13 @@ log.txt
 Makefile.orig
 *.svg
 *.dot
-
-
+*.gv
+out.cpp
+out_frames.cpp
+out.hpp
+out_frames.hpp
+*_out.*
+.vscode/
+build-*/
+*.pro.user.*
+*.pro.user
