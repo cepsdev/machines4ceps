@@ -1,0 +1,96 @@
+%ignore_ws
+%%
+
+
+lexer read_and_ignore_id_list{
+ ident : => rewind exit .
+ ident => .
+ else => exit.
+}
+
+lexer read_id_list{
+ ident : => rewind exit .
+ VAL_TABLE_ => rewind exit .
+ BO_ => rewind exit.
+ SG_ => rewind exit.
+ BA_DEF_ => rewind exit.
+ ident , => $0; .
+ ident => $0; .
+ else => exit.
+}
+
+lexer read_value_description{
+ integer string => value_description{value{$0;}; description{$1;};}; endl .
+ ; => exit .
+}
+
+lexer read_signal{
+ SG_ any   : any \| any   @ any any ( any , any ) [ any \| any ]  any  =>
+  signal{
+    name{$1;};
+    start_bit{$3;}; 
+    size{$5;};
+    byte_order{/if($7==0)return "little endian";else return "big endian";/;};
+    sign{/if($8=="+") return "unsigned"; else return "signed";/;};
+    factor{$10;};
+    offset{$12;}; 
+    min{$15;};
+    max{$17;};
+    unit{$19;};receiver{call  read_id_list };
+  }; endl .
+ else => exit.
+}
+
+lexer read_attr_value_type{
+ INT any any => type{integer;param1{$1;};param2{$2;};}; .
+ HEX any any => type{hex;param1{$1;};param2{$2;};}; .
+ FLOAT any any => type{float;param1{$1;};param2{$2;};}; .
+ STRING => type{string;}; .
+ ENUM string => type{enum;value{$1;}; /enum_read=1;/.
+ , string => value{$1;}; .
+ ; | enum_read => /enum_read=0;/ }; exit.
+ ; => exit.
+}
+
+BEGIN{
+ VERSION string  => myversion { "Version=" $1; };endl .
+ NS_: => call read_and_ignore_id_list .
+ BS_: => .
+ BU_ : => nodes{call read_id_list}; endl .
+ VAL_TABLE_ any => value_table{name{$1;}; endl call read_value_description }; endl .
+ BO_ any any : any any => message{endl id{$1;}; name{$2;}; size{$4;}; transmitter{$5;};endl call read_signal  }; endl.
+
+ // Environment Variable Definitions
+
+// Environment Variable Value Descriptions
+
+ VAL_ any  any => signal_value_encoding{ message_id{$1;};  signal_id{$2;};endl call read_value_description }; endl. 
+
+ //Comment Definitions
+ CM_ string ; => comment{text{$0;};};.
+ CM_ BU_ any string ; => comment{node{$2};text{$3;};};.
+ CM_ BO_ any string ; => comment{message_id{$2};text{$3;};};.
+ CM_ SG_ any any string ; => comment{message_id{$2};signal{$3};text{$4;};};.
+
+ //User defined Attribute Definitions
+ //Attribute Definitions
+ BA_DEF_ string =>attribute_definition{name{$1;}; attr_value_type{call read_attr_value_type}; }; endl .
+ BA_DEF_ BU_ string =>attribute_definition{ name{$2;};type{BU;};  attr_value_type{call read_attr_value_type}; }; endl .
+ BA_DEF_ BO_ string =>attribute_definition{name{$2;};type{BO;}; attr_value_type{call read_attr_value_type}; }; endl.
+ BA_DEF_ SG_ string =>attribute_definition{name{$2;};type{SG;}; attr_value_type{call read_attr_value_type}; }; endl.
+ BA_DEF_ EV_ string =>attribute_definition{name{$2;};type{EV;}; attr_value_type{call read_attr_value_type}; }; endl.
+
+ //Attribute Defaults
+ BA_DEF_DEF_ string any ; => attibute_default{name{$1;};value{$2;};}; endl.
+
+ //Attribute Values 
+ BA_ any any ; => attribute_value_for_object{ type{attr;};name{$1;};value{$2;}; }; endl.
+ BA_ any BU_ any any ; => attribute_value_for_object{ type{node;};name{$1;};node{$3;};value{$4;}; }; endl.
+ BA_ any BO_ any any ; => attribute_value_for_object{ type{msg;};name{$1;};message_id{$3;};value{$4;}; }; endl.
+ BA_ any SG_ any any any; => attribute_value_for_object{ type{signal;};name{$1;};message_id{$3;};signal_name{$4;};value{$5;}; }; endl.
+ BA_ any EV_ any any ; => attribute_value_for_object{ type{env;};name{$1;};env_var_name{$3;};value{$4;}; }; endl.
+
+}
+%%
+
+

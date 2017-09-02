@@ -1,0 +1,56 @@
+%ignore_ws
+%%
+
+lexer read_signal_signedness{
+ integer + => signed{1;}; .
+ integer - => unsigned{0;}; .
+ else => rewind exit .
+}
+
+lexer read_signal_factor_offset{
+ ( integer, integer ) => scale{$1;}; offset{$3;};.
+ ( - integer, integer ) => scale{-$2;}; offset{$4;};.
+ ( integer, - integer ) => scale{$1;}; offset{-$4;};.
+ ( - integer, - integer ) => scale{-$2;}; offset{-$5;};.
+ else => rewind exit .
+}
+
+
+lexer read_signal_min_max{
+ [ integer \| integer ] => min{$1;}; max{$3;};.
+ [ - integer \| integer ] => min{-$2;}; max{$4;};.
+ [ integer \| - integer ] => min{$1;}; max{-$4;};.
+ [ - integer \| - integer ] => min{-$2;}; max{-$5;};.
+ else => rewind exit .
+}
+
+lexer read_signal_unit{
+ string => unit{$0;} .
+ else => rewind exit .
+}
+
+lexer read_id_list{
+ ident , => $0; .
+ ident | !read_id_list_end => $0; /read_id_list_end=1;/ .
+ any | read_id_list_end => rewind exit .
+}
+
+lexer read_signal {
+ integer \| integer @  => blank start{$0;}; 
+                         width{$2;}; 
+                         call read_signal_signedness
+                         call read_signal_factor_offset endl
+                         blank call read_signal_min_max endl
+                         blank call read_signal_unit endl
+                         blank receiver{ /read_id_list_end=0;/ call read_id_list};.
+ else => rewind exit .
+}
+
+BEGIN{
+ SG_ ident  : => sig{endl 
+                 blank name{$1;}; endl 
+                 call read_signal endl}; 
+                 endl. 
+}
+
+%%
