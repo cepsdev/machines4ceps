@@ -17,6 +17,11 @@
 
 int main(int argc, char *argv[])
 {
+  /*argc = 3;
+  argv = new char* [3];
+  argv[0] = "";
+  argv[1] ="/home/tomas/projects/sm4ceps/test/cepslexer/a.rules";
+  argv[2] = "/home/tomas/projects/sm4ceps/test/cepslexer/a.txt";*/
 
   if (argc == 1)
     {std::cout << "Usage: streamtransform FILE [FILE...]\n";return 1;}
@@ -41,6 +46,7 @@ int main(int argc, char *argv[])
   file_contents.resize(files);
   int file_idx = 0;
 
+
   for(int i = 1; i < argc; ++i)
   {
 	  if (strlen(argv[i]) == 0) continue;
@@ -63,6 +69,8 @@ int main(int argc, char *argv[])
 
 	  for(;scanner.gettoken(t);)
 	   {
+
+
 		if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_STR)
 	    {
 	      std::cout << "\"" <<  t.sval_ << "\"";

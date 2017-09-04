@@ -304,6 +304,8 @@ struct frm_row{
     bool in = true;
 };
 
+
+
 bool read_row(ceps::ast::Nodebase_ptr n,std::vector<frm_row>& frm_infos, frm_row& row_info){
  if (n->kind() == ceps::ast::Ast_node_kind::structdef){
   auto & strct = ceps::ast::as_struct_ref(n);
@@ -344,7 +346,7 @@ void make_frm_info(std::vector<frm_row>& frm_infos,ceps::ast::Nodeset frm){
       read_row(r, frm_infos,t);
     }
 }
-
+extern std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
 void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_simulation_core* smc){
     using namespace ceps::ast;
     auto & ns = smc->current_universe();
@@ -374,12 +376,20 @@ void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_sim
       <body>
        )";
 
+    os << R"(
+        <div id="wrapper">
+        <div id="page-wrapper">
+            <div class="row">
+                     <div class="col-lg-2"></div>
+                    <div class="col-lg-8"><p></p>
+    )";
     for(auto frm_ : frames){
         auto frm = frm_["frame"];
         auto comment = frm["comment"];
+        auto value_mappings = frm["value_mappings"];
         std::vector<frm_row> frm_info;
         make_frm_info(frm_info,frm["data"]);
-        os << R"(<div class="panel panel-default">
+        os << R"(<div class="panel panel-info">
           <div class="panel-heading">)";
         os << "Message <strong>"<< name(as_id_ref(frm["id"].nodes()[0]))<<"</strong>";
         os << R"(</div>
@@ -400,7 +410,7 @@ void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_sim
          os << "<td width=\"5%\">";
          os << r.width;
          os << "</td>";
-         os << "<td>";
+         os << "<td width=\"3%\">";
          os << "</td>";
          os << "<td>";
          for (auto e : comment.nodes()){
@@ -416,9 +426,51 @@ void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_sim
          start+=r.width;
         }
         os << "</tbody>";
-        os << R"(</table>
-        </div></div>)";
+        os << R"(</table>)";
+        //os << value_mappings;
+        for(auto sig_mapping : value_mappings ){
+            sig_mapping = sig_mapping["sig"];
+            auto sig_name = name(as_id_ref(sig_mapping["name"].nodes()[0]));
+            os <<
+            R"(
+            <p>
+            <div class="panel panel-default">
+              <div class="panel-heading">)";
+              os << "Detailed info for Signal <strong>"<< sig_name <<"</strong>";
+           os <<"</div>";
+           os << R"(<div class="panel-body">)";
+           os << R"(<table class="table table-striped table-bordered table-condensed table-hover">)";
+           os << "<thead><tr><th>Value</th><th>Description</th></thead>";
+           os << "<tbody>";
+
+           std::vector<std::pair<ceps::ast::Nodebase_ptr,ceps::ast::Nodebase_ptr>> v;
+           for(auto e : sig_mapping[ceps::ast::all{"entry"}]){
+             e = e["entry"];
+             v.push_back(std::make_pair(e["index"].nodes()[0],e["value"].nodes()[0]));
+           }
+
+           for(auto e: v){
+               os << "<tr><td width=\"10%\">";
+               os << default_text_representation(e.first);
+               os << "</td><td>";
+               os << default_text_representation(e.second);
+               os << "</td></tr>";
+           }
+
+
+           os << "</tbody></table>";
+           os <<"</div>";
+           os <<"</div>";
+
+        }
+        os << R"(</div></div>)";
     }
+    os << R"(
+        </div>
+       </div>
+      </div>
+     </div>
+    )";
 
     os << R"(
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

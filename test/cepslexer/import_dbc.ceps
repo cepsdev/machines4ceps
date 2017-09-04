@@ -10,6 +10,10 @@ static_for(e:root.dbc_msg){
      comment{
       root.select("dbc_signal_comment" + text(e.canid.content())).content();      
      };
+     value_mappings{
+      root.select("dbc_value_description_mapping" + text(e.canid.content())).content();
+     };
+
      data{
       static_for(sig : e.sig.sort("start")){
         val content = as_symbol(text(sig.name.content()),"Systemstate");

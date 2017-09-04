@@ -14,6 +14,7 @@
 #include <climits>
 #include <map>
 
+constexpr bool print_debug_info = false;
 
 /*
  *
@@ -91,8 +92,8 @@ template<typename T> struct nonmutable_string
  using size_type = std::size_t;
  using ptr_t = const T*;
 
- const T* ptr_;
- size_type size_;
+ const T* ptr_ = nullptr;
+ size_type size_ = 0;
 
  size_type length() const {return size_;}
  T operator [] (size_type i) const {return ptr_[i];}
@@ -362,6 +363,7 @@ public:
     t.kind() = Token::TOK_UNKNOWN;
     char ch;
     auto start = p_.pos_;
+
     bool starts_with_digit = false;
     for(;p_.get(ch);)
     {
@@ -517,7 +519,7 @@ public:
    typename P::state_t& rewind_state(){return rewind_state_;}
  };
 
- enum {DEFAULT_RW_PROG_BUFFER = 8192};
+ enum {DEFAULT_RW_PROG_BUFFER = 16384};
  enum {MAX_TOKEN_LOOKAHEAD = 1024};
  std::vector<rw_opcode> prog_buffer_;
  std::vector<rw_rule> rw_rules_;
@@ -549,6 +551,7 @@ public:
   if (current_layer()>= matched_tokens_.size())
    for(int i =  matched_tokens_.size()-1 ; i < current_layer();++i)
     matched_tokens_.push_back(std::vector<Token>());
+  if (print_debug_info) std::cout << "current_layer()="<<current_layer()<<std::endl;
   return matched_tokens_[current_layer()];
  }
 
@@ -1266,19 +1269,26 @@ int parse_sideeffect_ASSIGN()
 
  bool rw_rule_fetch_and_dispatch(Token& t, int rwr, int& rwr_ip)
  {
-  auto n = rw_rules_[rwr].body_len_;
-  auto start = rw_rules_[rwr].pattern_ + rw_rules_[rwr].pattern_len_;
-  if (rwr_ip-start >= n ) return false;
+    if (print_debug_info) std::cout << "rwr=" << rwr << std::endl;
+    if (print_debug_info) std::cout << "rwr_ip=" << rwr_ip << std::endl;
 
-  auto const& opcode = prog_buffer_[rwr_ip++];
-  t = opcode.t_;
-  if (t.kind() == Token::TOK_MATCH_REF)
-  {
+    auto n = rw_rules_[rwr].body_len_;
+    if (print_debug_info) std::cout << "n=" << n << std::endl;
 
-   t = matched_tokens()[t.v.ival64_];
+    auto start = rw_rules_[rwr].pattern_ + rw_rules_[rwr].pattern_len_;
+    if (print_debug_info) std::cout << "rwr_ip-start=" << rwr_ip-start << std::endl;
+    if (rwr_ip-start >= n ) return false;
 
-  }
+    auto const& opcode = prog_buffer_[rwr_ip++];
+    t = opcode.t_;
+    if (print_debug_info) std::cout << "t.kind() =" << t.kind() << std::endl;
+    if (t.kind() == Token::TOK_MATCH_REF)
+    {
 
+      if (print_debug_info)std::cout << "t.v.ival64_="<<t.v.ival64_<<std::endl;
+      t = matched_tokens()[t.v.ival64_];
+      if (print_debug_info)std::cout << t.sval_<<std::endl;
+    }
   return true;
  }
 
@@ -1298,7 +1308,7 @@ int parse_sideeffect_ASSIGN()
  };
 
  std::vector<lex_env> lex_envs_;
- size_t max_env_stacking_ = 1024;
+ size_t max_env_stacking_ = 4096;
  int cur_env_ = 0;
 
  bool gettoken(Token& t)
@@ -1338,10 +1348,14 @@ int parse_sideeffect_ASSIGN()
 
  bool gettoken(Token& t,int lexer_id)
  {
+  if (print_debug_info) std::cout << "gettoken(): current_layer_ = " << current_layer_ << std::endl;
+  if (print_debug_info) std::cout << "gettoken(): cur_env_ = " << cur_env_ << std::endl;
 
   auto& env = lex_envs_[current_layer_ = cur_env_];
+
   for(;;)
   {
+   if (print_debug_info) std::cout << "current_layer_=" << current_layer_ << std::endl;
    if (!env.on_enter_executed && rw_rules_.size() > 0)
    {
 	 auto n = rw_rules_.size();
@@ -1361,9 +1375,11 @@ int parse_sideeffect_ASSIGN()
 	 env.on_enter_executed = true;
    }
    /*check whether we have to  write the rhs of a previously matched  pattern.*/
+   if (print_debug_info) std::cout << "==============" <<std::endl;
    if (env.rw_rule_in_execution_ != -1)
    {
     int old_rw_rule_in_execution_ip = env.rw_rule_in_execution_ip_;
+    if (print_debug_info) std::cout << "current_layer_=" << current_layer_ << std::endl;
     if (rw_rule_fetch_and_dispatch(t,env.rw_rule_in_execution_, env.rw_rule_in_execution_ip_))
     {
      if (t.kind() == Token::TOK_SIDEEFFECT_STMTS)
@@ -1380,11 +1396,16 @@ int parse_sideeffect_ASSIGN()
       auto l_id = t.v.ival64_;
 
       auto tt = cur_env_++;
+
+      if (print_debug_info) std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
       bool r = gettoken(t,l_id);
-      cur_env_ = tt;
+      if (print_debug_info) std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+
+      if (print_debug_info) std::cout << "Token::TOK_CALL_LEXER : r = "<< r << " t = " << t.sval_ << std::endl;
+      current_layer_ = cur_env_ = tt;
 
       if (r) { env.rw_rule_in_execution_ip_ = old_rw_rule_in_execution_ip; return true;}
-      else {        
+      else {
         lex_envs_[cur_env_+1] = lex_env();
       }
       continue;
@@ -1441,10 +1462,12 @@ int parse_sideeffect_ASSIGN()
 
    bool dangling_token = false;
 
-   matched_tokens().clear();matched_tokens().push_back(t);
+   matched_tokens().clear();
+   matched_tokens().push_back(t);
+   if (print_debug_info) std::cout << "push matched token layer="<<current_layer_<<" t='" << t.sval_<<"'"<<std::endl;
 
    int else_state = -1;
-   //if(orig_t.sval_=="BO_") std::cout << ">>START MATCH\n";
+
    do
    {
     last_min_matching_idx = min_matching_idx;
@@ -1524,7 +1547,9 @@ int parse_sideeffect_ASSIGN()
     if (active_state_with_composite_pattern){
      dangling_token = gettoken_local(t);
      if (!dangling_token) {active_state_with_composite_pattern = false;}
-     else matched_tokens().push_back(t);
+     else{
+         matched_tokens().push_back(t);
+         if (print_debug_info) std::cout << "push matched token layer="<<current_layer_<<" t='" << t.sval_<<"'"<<std::endl;}
 
     }
     //if(orig_t.sval_=="BO_") std::cout << min_matching_idx << "\n";
@@ -1547,14 +1572,17 @@ int parse_sideeffect_ASSIGN()
     p_.read_state(state_raw_lexer_before_gettoken_local);
    }
 
-   //if (orig_t.sval_ == "VAL_TABLE_") std::cout << "******Selected rule: #" << min_matching_idx  << "\n";
-   //std::cout << "******Token #" << t.kind() << "\n";
+   if (print_debug_info) std::cout << "******Selected rule: #" << min_matching_idx  << std::endl;
+   if (print_debug_info) std::cout << "******Token #" << t.kind() <<" '"<< t.sval_ <<"' "<<t.sval_.length() <<  std::endl;
 
    //INVARIANT: max_matching_idx points to an applicable rewrite rule
    env.rw_rule_in_execution_ = min_matching_idx;
    env.rw_rule_in_execution_ip_ = rw_rules_[env.rw_rule_in_execution_].pattern_ + rw_rules_[env.rw_rule_in_execution_].pattern_len_;
+   if (print_debug_info) std::cout << "env.rw_rule_in_execution_ip_ = " << env.rw_rule_in_execution_ip_ << std::endl;
+
    if (rw_rules_[min_matching_idx].pattern_len_ == 0) { t = orig_t;return r;/*no token consumed*/}
    rw_rules_[env.rw_rule_in_execution_].rewind_state() = state_raw_lexer_before_gettoken_local;
+   if (print_debug_info) std::cout << "!!!" << std::endl;
    continue;
 
   }//for

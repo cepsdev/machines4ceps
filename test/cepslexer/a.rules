@@ -65,7 +65,28 @@ lexer read_signals{
  else => rewind exit .
 }
 
+lexer read_value_description_mapping{
+ ; => exit .
+ integer string => blank entry{index{$0;};value{$1;};}; endl.
+ else => rewind exit .
+}
+
+lexer skip_ns_enumeration{
+ : => exit .
+ any => .
+}
+
 BEGIN{
+ VERSION string => .
+ NS_ :  => call skip_ns_enumeration.
+ BO_ integer VECTOR__INDEPENDENT_SIG_MSG : integer ident => dbc_msg_technical {endl
+  canid{ double_quote $1 double_quote ; };
+  id{$2;};
+  len{$4;};
+  sender{$5;};endl
+  call read_signals
+ }; endl .
+
  BO_ integer ident : integer ident => dbc_msg {endl
   canid{ double_quote $1 double_quote ; };
   id{$2;};
@@ -75,7 +96,8 @@ BEGIN{
  }; endl .
  
  CM_ SG_ any ident string ; => dbc_signal_comment$2{sig{name{$3;};comment{$4;};};};endl .
- 
+ VAL_ CAT_DEF_ => .
+ VAL_ any ident => endl dbc_value_description_mapping$1{ sig{name{$2;}; call read_value_description_mapping }; }; endl.
  any => .
 }
 
