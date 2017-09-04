@@ -296,6 +296,139 @@ void sm4ceps::utils::dump_asciidoc_canlayer_doc(std::ostream& os,State_machine_s
  }
 }
 
+struct frm_row{
+    std::string sig_name;
+    int start = 0;
+    int width;
+    bool sign = true;
+    bool in = true;
+};
+
+bool read_row(ceps::ast::Nodebase_ptr n,std::vector<frm_row>& frm_infos, frm_row& row_info){
+ if (n->kind() == ceps::ast::Ast_node_kind::structdef){
+  auto & strct = ceps::ast::as_struct_ref(n);
+  auto sn = name(strct);
+  if (sn.length() > 3 ){
+   if (sn == "out"){
+    row_info.in = false;
+   } else if (sn == "bit"){
+    row_info.width = 1;
+    row_info.sign = false;
+   } else if (sn == "byte") {
+    row_info.width = 8;
+    row_info.sign = true;
+   } else if (sn.substr(0,3) == "int") {
+    row_info.sign = true;
+    row_info.width = std::stoi(sn.substr(3));
+   } else if (sn.substr(0,4) == "uint") {
+    row_info.sign = false;
+    row_info.width = std::stoi(sn.substr(4));
+   }
+  }
+  for(auto ch : strct.children()){
+   return read_row(ch,frm_infos,row_info);
+  }
+ } else if(n->kind() == ceps::ast::Ast_node_kind::symbol) {
+  row_info.sig_name = ceps::ast::name(ceps::ast::as_symbol_ref(n));
+  frm_infos.push_back(row_info);
+  return true;
+ } else if(n->kind() == ceps::ast::Ast_node_kind::int_literal) {
+  frm_infos.push_back(row_info);
+  return true;
+ }
+}
+
+void make_frm_info(std::vector<frm_row>& frm_infos,ceps::ast::Nodeset frm){
+    for(auto r : frm.nodes()){
+      frm_row t;
+      read_row(r, frm_infos,t);
+    }
+}
+
+void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_simulation_core* smc){
+    using namespace ceps::ast;
+    auto & ns = smc->current_universe();
+    auto frames = ns[all{"frame"}];
+    auto encodings = ns[all{"encoding"}];
+    auto constraints = ns["constraints"];
+
+    os << R"(  <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <title>Bootstrap 101 Template</title>
+
+        <!-- Bootstrap -->
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+      </head>
+      <body>
+       )";
+
+    for(auto frm_ : frames){
+        auto frm = frm_["frame"];
+        auto comment = frm["comment"];
+        std::vector<frm_row> frm_info;
+        make_frm_info(frm_info,frm["data"]);
+        os << R"(<div class="panel panel-default">
+          <div class="panel-heading">)";
+        os << "Message <strong>"<< name(as_id_ref(frm["id"].nodes()[0]))<<"</strong>";
+        os << R"(</div>
+          <div class="panel-body">)";
+        os << R"(<table class="table table-striped table-bordered table-condensed table-hover">)";
+        os << "<thead><tr><th>signal</th><th>startbit</th><th>length (bits)</th><th>signed</th><th>comment</th></tr></thead>";
+        os << "<tbody>";
+        auto start = 0;
+        for(auto r : frm_info ){
+         if (r.sig_name.length() == 0){ start+=r.width; continue;}
+         os << "<tr>";
+         os << "<td width=\"20%\">";
+         os << r.sig_name;
+         os << "</td>";
+         os << "<td width=\"5%\">";
+         os << start;
+         os << "</td>";
+         os << "<td width=\"5%\">";
+         os << r.width;
+         os << "</td>";
+         os << "<td>";
+         os << "</td>";
+         os << "<td>";
+         for (auto e : comment.nodes()){
+             if (e->kind() != Ast_node_kind::structdef) continue;
+             auto & st = as_struct_ref(e);
+             if (name(st) != "sig") continue;
+             auto t = Nodeset{st.children()};
+             if (t["name"].as_str() == r.sig_name)
+                 os << t["comment"].as_str();
+         }
+         os << "</td>";
+         os << "</tr>";
+         start+=r.width;
+        }
+        os << "</tbody>";
+        os << R"(</table>
+        </div></div>)";
+    }
+
+    os << R"(
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="js/bootstrap.min.js"></script>
+      </body>
+    </html> )";
+}
+
 
 
 

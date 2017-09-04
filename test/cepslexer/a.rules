@@ -25,7 +25,7 @@ lexer read_signal_min_max{
 }
 
 lexer read_signal_unit{
- string => unit{$0;} .
+ string => unit{$0;}; .
  else => rewind exit .
 }
 
@@ -66,15 +66,17 @@ lexer read_signals{
 }
 
 BEGIN{
- BO_ integer ident : integer ident => msg {endl
-  canid{$1;};
+ BO_ integer ident : integer ident => dbc_msg {endl
+  canid{ double_quote $1 double_quote ; };
   id{$2;};
   len{$4;};
   sender{$5;};endl
   call read_signals
  }; endl .
  
- //any => .
+ CM_ SG_ any ident string ; => dbc_signal_comment$2{sig{name{$3;};comment{$4;};};};endl .
+ 
+ any => .
 }
 
 %%

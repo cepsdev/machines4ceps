@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
 	    }
 	    else if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_ENDL) std::cout << std::endl;
         else if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_BLANK) std::cout << " ";
+        else if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_DOUBLE_QUOTE) std::cout << "\"";
 	    else std::cout << t.sval_;
 	   }
 

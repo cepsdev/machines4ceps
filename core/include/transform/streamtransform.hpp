@@ -301,7 +301,7 @@ public:
    enum {
     TOK_UNKNOWN=0,TOK_ID = 1,TOK_OP = 2,TOK_STR = 3,TOK_UTF8 = 4, TOK_INT16 = 5, TOK_INT32 = 6, TOK_INT64 = 7, TOK_DOUBLE = 8, TOK_FLOAT = 9,
     TOK_TOK = 10, TOK_LEXCMDS = 11, TOK_ENDL = 12, TOK_MATCH_REF = 13, TOK_SIDEEFFECT_STMTS = 14, TOK_SIDEEFFECT_EXPR = 15,TOK_IGNORE = 16,
-    TOK_MATCH_ANY = 17, TOK_CALL_LEXER, TOK_ELSE, TOK_EXIT, TOK_REWIND, TOK_ON_ENTER,TOK_ON_EXIT,TOK_BLANK
+    TOK_MATCH_ANY = 17, TOK_CALL_LEXER, TOK_ELSE, TOK_EXIT, TOK_REWIND, TOK_ON_ENTER,TOK_ON_EXIT,TOK_BLANK,TOK_DOUBLE_QUOTE
 
     };
    int kind() const {return kind_;}
@@ -375,9 +375,7 @@ public:
           if (not_eof) p_.unget();
           t.kind() = Token::TOK_ID;
           t.sval_ = nonmutable_string<C>(p_.ptr_+start,p_.pos_-start);
-        }
-        else if (ch == '"')
-        {
+         } else if (ch == '"') {
           ++start;
           bool not_eof = true;
           for (; (not_eof = p_.get(ch));)
@@ -1157,12 +1155,15 @@ int parse_sideeffect_ASSIGN()
       t.kind() = Token::TOK_ENDL;
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
       ++body_len;
-    }else if (t.kind() == Token::TOK_ID && t.sval_ == "blank") {
+   } else if (t.kind() == Token::TOK_ID && t.sval_ == "blank") {
        t.kind() = Token::TOK_BLANK;
        prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
        ++body_len;
-     }
-   else if (t.kind() == Token::TOK_TOK && t.sval_ == "$")
+   } else if (t.kind() == Token::TOK_ID && t.sval_ == "double_quote") {
+       t.kind() = Token::TOK_DOUBLE_QUOTE;
+       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
+       ++body_len;
+   } else if (t.kind() == Token::TOK_TOK && t.sval_ == "$")
    {
     if (!gettoken_local(t)) throw match_ex();
     if (t.kind() == Token::TOK_INT64)

@@ -1625,6 +1625,10 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	if (result_cmd_line.dump_asciidoc_can_layer){
 		sm4ceps::utils::dump_asciidoc_canlayer_doc(std::cout,this);
 	}
+    if (result_cmd_line.dump_stddoc_canlayer){
+        sm4ceps::utils::dump_stddoc_canlayer_doc(std::cout,this);
+    }
+
     if(result_cmd_line.ws_api_on){
         ws_api() = new Websocket_interface(this,result_cmd_line.ws_api_port);
         ws_api()->start();
