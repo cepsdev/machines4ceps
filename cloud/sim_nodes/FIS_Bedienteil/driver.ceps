@@ -1,4 +1,4 @@
-transport{id{Channel1;};canbus{bus_id { "vcan1"; };};};
+//transport{id{Channel1;};canbus{bus_id { "vcan1"; };};};
 
 send_periodically{Channel1;CFBP_DigIn_TxPDO_08;0.1*s;};
 
