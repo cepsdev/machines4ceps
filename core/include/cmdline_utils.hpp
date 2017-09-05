@@ -90,19 +90,20 @@ struct Result_process_cmd_line
 
     bool vcan_api_on = false;
     std::string vcan_api_port = "8182";
+    bool dump_stddoc_canlayer = false;
 
-	Result_process_cmd_line() = default;
-	Result_process_cmd_line(bool version_flag_set_,
+    Result_process_cmd_line() = default;
+    Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,
 			bool interactive_mode_,
 			std::string out_path_,
 			std::vector<std::string> definition_file_rel_paths_)
-	:version_flag_set(version_flag_set_),
-	 debug_mode(debug_mode_),
-	 interactive_mode(interactive_mode_) ,
-	 out_path(out_path_),
-	 definition_file_rel_paths(definition_file_rel_paths_)
-	{}
+    :version_flag_set(version_flag_set_),
+     debug_mode(debug_mode_),
+     interactive_mode(interactive_mode_) ,
+     out_path(out_path_),
+     definition_file_rel_paths(definition_file_rel_paths_)
+    {}
 };
 
 Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_cmd_line r = Result_process_cmd_line{});

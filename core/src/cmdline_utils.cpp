@@ -257,6 +257,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 		    else if (arg == "--report_format_ceps") {r.report_format_ceps=true;continue;}
 		    else if (arg == "--print_evaluated_postprocessing_tree") {r.print_evaluated_postprocessing_tree=true;continue;}
 		    else if (arg == "--dump_asciidoc_can_layer") {r.dump_asciidoc_can_layer=true;continue;}
+            else if (arg == "--dump_stddoc_canlayer") {r.dump_stddoc_canlayer=true;continue;}
 		    else if (arg == "--no_warn") {r.no_warn=true;continue;}
 		    else if (arg == "--print_event_signatures") {r.print_event_signatures=true;continue;}
 		    else if (arg == "--post_processing") {post_processing=true;continue;}

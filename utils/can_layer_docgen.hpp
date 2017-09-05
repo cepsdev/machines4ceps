@@ -7,6 +7,7 @@
 namespace sm4ceps {  namespace utils {
 
  void dump_asciidoc_canlayer_doc(std::ostream&,State_machine_simulation_core*);
+ void dump_stddoc_canlayer_doc(std::ostream&,State_machine_simulation_core*);
 
 } }
 
