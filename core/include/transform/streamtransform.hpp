@@ -104,6 +104,10 @@ template<typename T> struct nonmutable_string
  nonmutable_string() = default;
  nonmutable_string(const T* p,size_type s):ptr_(p),size_(s){}
  const T* data() const {return ptr_;}
+ std::string as_str() const {
+     if (data() == ptr_t{} ) return {};
+     return std::string{data(),size_};
+ }
 };
 
 bool operator == (nonmutable_string<char> const &  lhs ,  nonmutable_string<char> const &  rhs);
@@ -133,9 +137,9 @@ template<typename T>struct Memory
 	  return *this;
   }
 
-  T * ptr_;
-  std::intmax_t size_,pos_;
-  bool owner_;
+  T * ptr_ = nullptr;
+  std::intmax_t size_ = 0,pos_ = 0;
+  bool owner_ = false;
 
   std::intmax_t size() const {return size_;}
   std::intmax_t pos() const {return pos_;}
@@ -213,6 +217,7 @@ template<typename P, typename C> class Statefulscanner
 {
  P p_;
 public:
+ std::vector<std::string> pragmas;
 
  struct Tokentable
  {
@@ -449,6 +454,7 @@ public:
           start = p_.pos_;
           if (keyword == "ignore_ws") ignore_space_ = true;
           else if (keyword == "skip_unmatched_tokens") skip_unmatched_tokens_ = true;
+          else pragmas.push_back(keyword.as_str());
           continue;
         }
         else if (ch == '%'  && p_.next_equals('%') && p_.number_of_chars_left_in_line()==1)
@@ -1589,7 +1595,7 @@ int parse_sideeffect_ASSIGN()
  }//gettoken(Token& t)
 };
 
-bool readfile_to_memory(Memory<char>& mem, char* filename );
+bool readfile_to_memory(Memory<char>& mem, const char* filename );
 
 extern const char *   default_ops[];
 

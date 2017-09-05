@@ -347,15 +347,16 @@ void make_frm_info(std::vector<frm_row>& frm_infos,ceps::ast::Nodeset frm){
     }
 }
 extern std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
-void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_simulation_core* smc){
+void sm4ceps::utils::dump_stddoc_canlayer_doc(Result_process_cmd_line const &  cmd_line,std::ostream& os,State_machine_simulation_core* smc){
     using namespace ceps::ast;
     auto & ns = smc->current_universe();
     auto frames = ns[all{"frame"}];
     auto encodings = ns[all{"encoding"}];
     auto constraints = ns["constraints"];
 
-    os << R"(  <!DOCTYPE html>
-    <html lang="en">
+    if(!cmd_line.stddoc_canlayer_no_header_no_footer)
+     os << R"(  <!DOCTYPE html>
+     <html lang="en">
       <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -374,9 +375,8 @@ void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_sim
         <![endif]-->
       </head>
       <body>
-       )";
-
-    os << R"(
+       )" <<
+      R"(
         <div id="wrapper">
         <div id="page-wrapper">
             <div class="row">
@@ -465,14 +465,12 @@ void sm4ceps::utils::dump_stddoc_canlayer_doc(std::ostream& os,State_machine_sim
         }
         os << R"(</div></div>)";
     }
-    os << R"(
+    if(!cmd_line.stddoc_canlayer_no_header_no_footer) os << R"(
         </div>
        </div>
       </div>
      </div>
-    )";
-
-    os << R"(
+    )" << R"(
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->

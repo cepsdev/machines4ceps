@@ -91,6 +91,7 @@ struct Result_process_cmd_line
     bool vcan_api_on = false;
     std::string vcan_api_port = "8182";
     bool dump_stddoc_canlayer = false;
+    bool stddoc_canlayer_no_header_no_footer = true;
 
     Result_process_cmd_line() = default;
     Result_process_cmd_line(bool version_flag_set_,

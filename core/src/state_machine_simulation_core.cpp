@@ -87,6 +87,20 @@ void comm_generic_tcp_in_thread_fn(int id,
 		 State_machine_simulation_core* smc,
 		 sockaddr_storage claddr,int sck,std::string som,std::string eof);
 
+static std::stringstream read(Statefulscanner<Memory<char>,char>& scanner){
+    std::stringstream r;
+    Statefulscanner<Memory<char>,char>::Token t;
+    for(;scanner.gettoken(t);)
+    {
+     if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_STR)
+              r << "\"" <<  t.sval_ << "\"";
+     else if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_ENDL) r << "\n";
+     else if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_BLANK) r << " ";
+     else if (t.kind() == Statefulscanner<Memory<char>,char>::Token::TOK_DOUBLE_QUOTE) r << "\"";
+     else r << t.sval_;
+    }
+    return r;
+}
 
 std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_files(
         std::vector<std::string> const & file_names,
@@ -111,7 +125,60 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 				}
 			}
 			continue;
-		}
+        } else if (file_name.length() > 8 && file_name.substr(file_name.length()-9,9) == ".ceps.lex"){
+            std::shared_ptr<lexer> lex{new lexer};
+            Memory<char> * rules_data = new Memory<char>{};
+            if(!readfile_to_memory(*rules_data , file_name.c_str() )) {delete rules_data;fatal_(ERR_FILE_OPEN_FAILED,file_name);}
+            lex->data_chunks.push_back(rules_data = rules_data);
+            size_t ttt = 0;
+            for(;default_ops[ttt++];);
+            lex->scanner.tokentable().clear_and_read_table(default_ops,--ttt);
+            lex->scanner.activate_toplevel_onexit_trigger(false);
+            lex->scanner.set_input(*rules_data);
+            Statefulscanner<Memory<char>,char>::Token t;
+            try{
+             for(;lex->scanner.gettoken(t););
+            }
+            catch(Statefulscanner<Memory<char>,char>::match_ex & e) {fatal_(ERR_CEPS_PARSER, file_name);}
+            catch(Statefulscanner<Memory<char>,char>::eval_ex & e) {fatal_(ERR_CEPS_PARSER, file_name);}
+            for(auto p : lex->scanner.pragmas){
+                if (p.length() > 4 && p.substr(0,4) =="ext_"){
+                    lex->file_exts.push_back(p.substr(4));
+                }
+            }
+            this->lexers.push_back(lex);
+            continue;
+        } else if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) != ".ceps"){
+            auto ext = file_name.substr(file_name.length()-3,3);
+            auto l = find_lexer_by_file_ext(ext);
+            if(l){
+                Memory<char> * data = new Memory<char>{};
+                if(!readfile_to_memory(*data , file_name.c_str() )) {delete data; fatal_(ERR_FILE_OPEN_FAILED,file_name);}
+                l->data_chunks.push_back(data);
+                l->scanner.set_input(*data);
+
+                try{
+                 auto fs = read(l->scanner);
+                 Ceps_parser_driver driver{ceps_env_current().get_global_symboltable(),fs};
+                 ceps::Cepsparser parser{driver};
+
+                 if (parser.parse() != 0 || driver.errors_occured())
+                     fatal_(ERR_CEPS_PARSER, file_name);
+
+                 ceps::interpreter::evaluate(current_universe(),
+                                             driver.parsetree().get_root(),
+                                             ceps_env_current().get_global_symboltable(),
+                                             ceps_env_current().interpreter_env(),
+                                             &generated_nodes
+                                             );
+
+                }
+                catch(Statefulscanner<Memory<char>,char>::match_ex & e) {fatal_(ERR_CEPS_PARSER, file_name);}
+                catch(Statefulscanner<Memory<char>,char>::eval_ex & e) {fatal_(ERR_CEPS_PARSER, file_name);}
+                continue;
+            }
+        }
+
 		std::fstream def_file{ last_file_processed = file_name};
 		if (!def_file) fatal_(ERR_FILE_OPEN_FAILED,file_name);
 

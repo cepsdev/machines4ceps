@@ -47,6 +47,10 @@
                         </li>
  <% if (sim_core != undefined) { %>                       
                         <li>
+                            <a href="#"><i class="fa fa-info-circle"></i> Documentation<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                              <li><a href="doc_canlayer_all__<%= sim_core.index %>" ><i >&nbsp;</i>CAN Communication Layer</a><li>  
+                            </ul>
                             <a href="#"><i class="fa fa-exchange"></i> Frames<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
 <% sim_core.comm_layer.frames.forEach(function(frame) { %>

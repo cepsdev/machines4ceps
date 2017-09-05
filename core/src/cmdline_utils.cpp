@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright 2014, cpsdev (cepsdev@hotmail.com).
 All rights reserved.
 Redistribution and use in source and binary forms, with or without
@@ -215,7 +215,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 			bool is_output_path = false;
 			bool is_report_out = false;
 
-			if (arg.substr(0,2) == "-o") {is_output_path =  true;ofs = 2;}
+            if (arg == "-o") {r.out_path = argv[++i];continue;}
 			if (arg.substr(0,2) == "-i") {interactive_mode =  true;ofs = 2;continue;}
 			else if (arg.substr(0,18) == "--output_directory") {is_output_path = true;ofs = 18;}
 			else if (arg.substr(0,2) == "-v") {version_flag_set = true;continue;}
@@ -258,6 +258,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 		    else if (arg == "--print_evaluated_postprocessing_tree") {r.print_evaluated_postprocessing_tree=true;continue;}
 		    else if (arg == "--dump_asciidoc_can_layer") {r.dump_asciidoc_can_layer=true;continue;}
             else if (arg == "--dump_stddoc_canlayer") {r.dump_stddoc_canlayer=true;continue;}
+            else if (arg == "--stddoc_canlayer_complete_html_page") {r.stddoc_canlayer_no_header_no_footer=false;continue;}
 		    else if (arg == "--no_warn") {r.no_warn=true;continue;}
 		    else if (arg == "--print_event_signatures") {r.print_event_signatures=true;continue;}
 		    else if (arg == "--post_processing") {post_processing=true;continue;}
@@ -275,11 +276,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 				}
 				continue; 
 			}
-			if (is_output_path)
-				global_out_path = out_path = normalize_path(arg.substr(ofs));
-			else if (is_report_out)
-				get_report_out_dir() = normalize_path(arg.substr(ofs));
-			else
+
 			{
 				bool is_dir = false;
 #ifndef _WIN32
@@ -319,7 +316,6 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 	r.version_flag_set = version_flag_set;
 	r.debug_mode = DEBUG_MODE;
 	r.interactive_mode = interactive_mode;
-	r.out_path = out_path;
 	r.definition_file_rel_paths = definition_file_rel_paths;
 	r.post_processing_rel_paths = post_processing_rel_paths;
 	return r;

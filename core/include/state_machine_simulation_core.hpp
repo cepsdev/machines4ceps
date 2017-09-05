@@ -41,7 +41,7 @@
 #include "core/include/sm_livelog_storage_utils.hpp"
 #include "core/include/api/websocket/ws_api.hpp"
 #include "core/include/api/virtual_can/virtual_can_api.hpp"
-
+#include "core/include/transform/streamtransform.hpp"
 
 namespace log4ceps = log4kmw;
 namespace log4cepsloggers = log4kmw_loggers;
@@ -720,8 +720,24 @@ private:
 	std::vector<std::pair<bool,event_t>> ev_short_circuit_vec_;
 	size_t free_entries_in_short_circuit_vec_ = 32;
 
-
 public:
+        struct lexer{
+            std::vector<Memory<char>*> data_chunks;
+            std::vector<std::string> file_exts;
+            Statefulscanner<Memory<char>,char> scanner;
+        };
+
+private:
+        std::vector<std::shared_ptr<lexer>> lexers;
+public:
+       std::shared_ptr<lexer> find_lexer_by_file_ext(std::string ex){
+        for (auto & e : lexers)
+            for (auto ext: e->file_exts)
+                if (ex == ext) return e;
+        return {};
+       }
+
+
 	bool generate_cpp_code() const {return generate_cpp_code_;}
 	bool& generate_cpp_code() {return generate_cpp_code_;}
 

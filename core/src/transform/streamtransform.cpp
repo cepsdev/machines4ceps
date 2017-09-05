@@ -55,7 +55,7 @@ std::ostream& operator << (std::ostream & o, nonmutable_string<char> const & s)
 }
 
 
-bool readfile_to_memory(Memory<char>& mem, char* filename )
+bool readfile_to_memory(Memory<char>& mem, const char* filename )
 {
   struct stat statbuf;
 

@@ -287,7 +287,7 @@
             let task_id = task_counter++;
             dialog_create_fibex_based_sim.current_step ="upload_files";
             $("#tasks_list").html($("#tasks_list").html()+
-                '<div id="task_info_'+task_id+'" class= "alert alert-warning alert-dismissable">'+
+                '<div id="task_info_'+task_id+'" class= "alert alert-warning alert-dismissable create_sim_status_info">'+
                         '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'+
                         '<div class="panel panel-default"><div class="panel-heading"><h4>Creating Simulation  <strong>'+description.name+'</strong></h4></div>'+
                         '<div class="panel-body">'+
@@ -319,6 +319,17 @@
             );
           
             let ws_cmd = new WebSocket("<%= command_ws_url %>");
+
+            ws_cmd.onerror =  (error) => {
+                $('.create_sim_status_info').remove();
+                $("#tasks_list").html(
+                          $("#tasks_list").html()+
+                          '<div  class= "alert alert-danger alert-dismissable">'+
+                            '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'+
+                            '<strong>Upload failed [Network Error].</strong>' +
+                          '</div>' 
+                        );
+            };
             
             ws_cmd.onopen = function(e){
                 let v = [];

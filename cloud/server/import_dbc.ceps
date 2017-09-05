@@ -1,0 +1,41 @@
+//Extract signals
+static_for(e:root.dbc_msg.sig){
+    as_symbol(text(e.name.content()),"Systemstate") = strip(e.min.content());
+}
+
+//Build frames
+static_for(e:root.dbc_msg){
+    frame{
+     e.id;
+     comment{
+      root.select("dbc_signal_comment" + text(e.canid.content())).content();      
+     };
+     value_mappings{
+      root.select("dbc_value_description_mapping" + text(e.canid.content())).content();
+     };
+
+     data{
+      static_for(sig : e.sig.sort("start")){
+        val content = as_symbol(text(sig.name.content()),"Systemstate");
+        val type = "uint"+text(sig.width.content());
+        make_struct(type,
+         content            
+        );     
+        if (!last){
+           val first_free_bit_after = strip(sig.start.content()) + strip(sig.width.content());
+           val next_occupied_bit = strip(next.start.content());
+           val gap = next_occupied_bit - first_free_bit_after;
+           if (gap > 0){
+               make_struct("uint"+text(gap),0);               
+           }
+        }
+      }
+      
+     };
+    };
+}
+
+
+
+
+

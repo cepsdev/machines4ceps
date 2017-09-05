@@ -1626,7 +1626,12 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		sm4ceps::utils::dump_asciidoc_canlayer_doc(std::cout,this);
 	}
     if (result_cmd_line.dump_stddoc_canlayer){
-        sm4ceps::utils::dump_stddoc_canlayer_doc(std::cout,this);
+        if(result_cmd_line.out_path.length() == 0) sm4ceps::utils::dump_stddoc_canlayer_doc(result_cmd_line,std::cout,this);
+        else {
+            std::ofstream os{result_cmd_line.out_path};
+            if (!os) fatal_(-1,"Failed to create '"+result_cmd_line.out_path+"' (output path)");
+            sm4ceps::utils::dump_stddoc_canlayer_doc(result_cmd_line,os,this);
+        }
     }
 
     if(result_cmd_line.ws_api_on){

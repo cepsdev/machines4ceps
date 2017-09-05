@@ -22,8 +22,10 @@ const ceps_default_args = ["--quiet"];
 const ceps_prelude = "../.ceps/prelude.ceps";
 const ceps_publisher = "../.ceps/publisher.ceps";
 const sim_nodes_root = "../sim_nodes";
-let publish_port_start = 8185;
-let publish_port_delta = 4;
+const dbc_importer = "import_dbc.ceps";
+const dbc_lexer = "dbc.ceps.lex";
+let publish_port_start = 10100;
+let publish_port_delta = 20;
 
 let sim_core_counter = 0;
 let sim_cores = [
@@ -318,6 +320,39 @@ function sim_core_init(sim_core){
  sim_core.ws.send('sim_name',{});
 }
 
+function make_call_sequence(core_info, options){
+ let call_sequence = [];
+ call_sequence.push(`${ceps_prelude}`);
+ call_sequence.push(`${dbc_lexer}`);
+
+ if (options == undefined || options['package_info'] == undefined || options['package_info'])
+    call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,"package.ceps"));
+
+ core_info.src.pkg_info.modules.forEach( (f) => {call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,`${f}`)); });
+ call_sequence.push(`${dbc_importer}`);
+ if (options == undefined || options['start_publisher'] == undefined || options['start_publisher']) call_sequence.push(`${ceps_publisher}`);         
+ if (options == undefined || options['start_ws_api'] == undefined || options['start_ws_api']) {
+     call_sequence.push("--ws_api");     
+     call_sequence.push(`${core_info.src.pkg_info.base_port+3}`);
+ }
+ call_sequence = call_sequence.concat(ceps_default_args);
+ return call_sequence;
+}
+
+function spawn_and_trace_ceps_process(info,call_sequence){
+    let p = spawn(`${ceps_executable}`,call_sequence);
+    p.stdout.on('data', (data) => {
+       console.log(chalk.yellow(`${data}`));
+    });
+    p.stderr.on('data', (data) => {
+       console.log(chalk.redBright(`${data}`));
+    });
+    p.on('close', (code) => {
+        if (code!=0) console.log(chalk.red(`"${info}" exited with code ${code}`));
+        else console.log(chalk.yellow(`"${info}" exited with code ${code}`));
+    });
+    return p;
+}
 
 function check_remote_sim_cores() {
     for(let core_info of sim_cores){
@@ -332,15 +367,8 @@ function check_remote_sim_cores() {
          if (core_info.ws) {core_info.ws.close();}
          core_info.ws = undefined;
          
-         let call_sequence = []; 
-         call_sequence.push(`${ceps_prelude}`);
-         call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,"package.ceps"));
-         core_info.src.pkg_info.modules.forEach( (f) => {call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,`${f}`)); });
-         call_sequence.push(`${ceps_publisher}`);
-         call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,"driver.ceps"));
-         call_sequence.push("--ws_api");
-         call_sequence.push(`${core_info.src.pkg_info.base_port+3}`);
-         call_sequence = call_sequence.concat(ceps_default_args);
+         let call_sequence = make_call_sequence(core_info); 
+         
          console.log(chalk.bold(`${ceps_executable} `,call_sequence.join(" ")));
          let p = spawn(`${ceps_executable}`,call_sequence);
          p.stdout.on('data', (data) => {
@@ -365,13 +393,17 @@ function check_remote_sim_cores() {
           modules += " " + m;
         }
 
-        //overview_gen_script += "cp make_report.ceps "+path.join(sim_nodes_root,core_info.src.path)+"\n";
-        fs.writeFileSync(path.join(sim_nodes_root,core_info.src.path,"make_report.ceps"), 'make_stddoc{out{"overview.ejs";};img_path_prefix{"img/'+core_info.src.pkg_info.uri+'/";}; };');
+        //overview page
+        fs.writeFileSync(path.join(sim_nodes_root,core_info.src.path,"make_report.ceps"), 
+                                   'make_stddoc{out{"overview.ejs";};img_path_prefix{"img/'+core_info.src.pkg_info.uri+'/";}; };');
         overview_gen_script += "cp make_svgs.sh "+path.join(sim_nodes_root,core_info.src.path)+"\n";
         overview_gen_script += "cp basic_style.ceps "+path.join(sim_nodes_root,core_info.src.path)+"\n";
         overview_gen_script += "cp dot_props.ceps "+path.join(sim_nodes_root,core_info.src.path)+"\n";
         overview_gen_script += 'cd '+path.join(sim_nodes_root,core_info.src.path)+"\npwd\n";        
-        overview_gen_script += '../../server/ceps ../../.ceps/prelude.ceps basic_style.ceps dot_props.ceps '+modules+' --ignore_simulations --dot_gen --dot_gen_one_file_per_top_level_statemachine --post_processing make_report.ceps\n';
+        overview_gen_script += '../../server/ceps ../../server/'+dbc_lexer+
+                               ' ../../.ceps/prelude.ceps basic_style.ceps dot_props.ceps '+modules +
+                               ' ../../server/'+ dbc_importer +
+                               ' --ignore_simulations --dot_gen --dot_gen_one_file_per_top_level_statemachine --post_processing make_report.ceps\n';
         overview_gen_script += "./make_svgs.sh\n";
         overview_gen_script += "mkdir -p ../../server/public/img/"+core_info.src.pkg_info.uri+"\n";
         overview_gen_script += "cp *.svg ../../server/public/img/"+core_info.src.pkg_info.uri+"\n";
@@ -388,6 +420,29 @@ function check_remote_sim_cores() {
          overview_gen_process.on('close', (code) => {
             console.log(chalk.yellow("gen_overview_"+core_info.src.pkg_info.uri+".sh exited with code "+`${code}`));
          });
+         //static can layer documentation
+         {
+          try{   
+            let t = path.join(sim_nodes_root,core_info.src.path,"views");
+            try{fs.accessSync(t);} catch (err){fs.mkdirSync(t);}
+            t = path.join(sim_nodes_root,core_info.src.path,"views","documentation");
+            try{fs.accessSync(t);} catch (err){fs.mkdirSync(t);}
+            t = path.join(sim_nodes_root,core_info.src.path,"views","documentation","can_communication_layer");
+            try{fs.accessSync(t);} catch (err){fs.mkdirSync(t);}
+
+            cs = make_call_sequence(core_info,{package_info : false,start_publisher : false,start_ws_api : false });
+            cs.push("--ignore_simulations");
+            cs.push("--dump_stddoc_canlayer");
+            cs.push("-o");
+            cs.push(path.join(sim_nodes_root,core_info.src.path,"views","documentation","can_communication_layer","all.ejs"));           
+            console.log(chalk.bold(`${ceps_executable} `,cs.join(" ")));
+            spawn_and_trace_ceps_process("Process Building CAN Documentation ("+core_info.uri+")" ,cs);
+          } catch (err){
+            console.log(chalk.yellow(`***Warning: Failed to create static can layer documentation. (Simulation ${core_info.uri})`));
+          }
+                  
+         }
+         
         
 
      } else if (core_info.ws === undefined && !core_info.process_launching){
@@ -397,6 +452,9 @@ function check_remote_sim_cores() {
          core_info.ws.on("close", () => {core_info.ws=undefined;} );
      }
     }
+}
+function get_doc_canlayer_all(core_info){
+ return path.join(sim_nodes_root,core_info.src.path,"views","documentation","can_communication_layer","all.ejs");
 }
 
 let app = express();
@@ -442,6 +500,18 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next)
                                  signal:sig,
                                  signal_ws:score.signal_url});   
  }
+});
+
+app.get(/^\/doc_canlayer_all__([0-9]+)$/, function(req, res,next) {
+    let score_idx = req.params[0];
+    let score = undefined;
+    for(let s of sim_cores) if (s.index == score_idx){ score=s;break; }
+    if (score === undefined) {res.status=404;res.send("404");return;} 
+    res.render("doc_canlayer_all",{page_title: score.name +"-"+ "CAN Layer Documentation",
+    sim_name : score.name,
+    sim_core : score,
+    doc_canlayer_all : get_doc_canlayer_all(score)
+    });   
 });
 
 app.get("/:sim/controlpanels/:panel", function(req, res, next) {
