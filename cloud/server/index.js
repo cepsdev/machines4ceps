@@ -519,8 +519,11 @@ app.get("/:sim/controlpanels/:panel", function(req, res, next) {
    if (sim_core === undefined) {res.status=404;res.send("404");return;}
    let f = sim_core.get_view_path(req.params.panel);
    if (f === undefined) {res.status=404;res.send("404");return;}
-   res.render("controlpanel",{ panel_loc:"../"+f,page_title:"xxx", panel_name: req.params.panel , sim_core : sim_core, signal_ws : sim_core.signal_url});   
- 
+   res.render("controlpanel",{ panel_loc:"../"+f,page_title:"xxx", 
+                               panel_name: req.params.panel , 
+                               sim_core : sim_core, 
+                               signal_ws : sim_core.signal_url,
+                               command_ws_url:command_ws_url});    
 });
 
 
@@ -618,6 +621,22 @@ ws_command.on("connection", function connection(ws){
           //ws.send(JSON.stringify({ok:true}));  
         } else if (msg.cmd == "add_files"){
            add_modify_files_simulation(msg,ws);       
+        } else if (msg.cmd == "upload_ctrl_panel_data"){
+            let ctrl_panel_name = msg.ctrl_panel_name;
+            let sim_core_uri = msg.sim_core_uri;
+            let data = msg.data;
+            console.log(msg);
+            let sim_core = get_sim_core_by_uri(sim_core_uri);
+            if (sim_core != undefined){
+                try{
+                    fs.writeFileSync(path.join(sim_nodes_root,sim_core.src.path,"views",ctrl_panel_name+".ejs"),data);
+                    console.log("ok");
+                  } catch (err) {
+                    console.log(err);
+                    ws.send(JSON.stringify({ok:false,reason:"Error Code: '"+err.code+"'"}));return;  
+                  }
+                  ws.send(JSON.stringify({ok:true}));
+            }
         } else if (msg.cmd == "create_control_panel"){
             let ctrl_panel_name = msg.name;
             let sc = get_sim_core_by_name(msg.sim_name);

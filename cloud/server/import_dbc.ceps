@@ -72,6 +72,10 @@ static_for(e:root.dbc_msg){
      send_periodically{as_identifier(text(e.sender.content())+"_out");e.id.content();0.25*s;};    
 }
 
+static_for(e:root.frame_tiggering_generated_by_fibex_import.entry){
+    send_periodically{e.sender_id.content();e.frame_id.content();0.25*s;};    
+}
+
 
 
 

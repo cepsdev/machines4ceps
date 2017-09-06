@@ -41,3 +41,5 @@ sm {
   t{ Initial ; Initial ; as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") ; trigger_msg ;};
  };
 };
+
+macro auto_start{cover{edges_upto_1;};};

@@ -232,7 +232,7 @@ var cepscloud = new Cepscloud();
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="code_save_btn"  data-dismiss="modal">Save</button>
+        <button type="button" class="btn btn-primary" id="code_save_btn"  data-dismiss="modal" onclick="upload_data();">Save</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -260,6 +260,18 @@ var cepscloud = new Cepscloud();
          });}, 2000);
         }) ;
     });
+
+    function upload_data(){
+        let ws_cmd = new WebSocket("<%= command_ws_url %>");
+        ws_cmd.onopen = function (e){
+            ws_cmd.send(JSON.stringify({
+                cmd : "upload_ctrl_panel_data",
+                ctrl_panel_name : "<%= panel_name %>",
+                sim_core_uri: "<%= sim_core.uri %>",
+                data : editor.getValue()
+            }));
+        }
+    }
 </script>
 
 </body>
