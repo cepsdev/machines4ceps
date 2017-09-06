@@ -665,8 +665,9 @@ void downstream_ctrl_multibus(
 			if (r != l) THROW_ERR_INET;
 			if (ext_can) can_message.format = CanFormat::CanFormatExtended;
 			else can_message.format = CanFormat::CanFormatStandard;
-			if(ext_can) can_message.id = frame.can_id | CAN_EFF_FLAG;
+			if (ext_can) can_message.id = frame.can_id  & ~CAN_EFF_FLAG;
 			else can_message.id =  frame.can_id;
+	
 			can_message.length = frame.can_dlc;
 			memcpy(can_message.data, frame.data, frame.can_dlc);
 			auto rw = kmw_api::canwrite(
