@@ -617,6 +617,7 @@ void downstream_ctrl_multibus(
 	ceps::cloud::Downstream_Mapping dm) {
 	INIT_SYS_ERR_HANDLING;
 	constexpr auto CAN_RTR_FLAG = 0x40000000U;
+	constexpr auto CAN_EFF_FLAG = 0x80000000U;
 	auto ext_can = false;
 	for (auto e : ceps::cloud::info_out_channels[sim_core]) {
 		if (e.first == dm.second) {
@@ -631,6 +632,7 @@ void downstream_ctrl_multibus(
 	auto info = net::can::get_local_endpoint_info(dm.first);
 	auto baudrate = info_br2pcan_br[info.br];
 	auto channel = net::can::get_local_endpoint_handle(dm.first);
+	
 	try {
 		if (channel == -1) throw net::exceptions::err_can{ "Couldn't acquire channel handle for '" + dm.first + "'." };
 		auto multibus_queue = kmw_api::canopen(channel);
@@ -651,6 +653,7 @@ void downstream_ctrl_multibus(
 		}
 		for (;;) {
 			std::uint32_t l = 0;
+			
 			auto r = recv(remote_sck, (char*)&l, sizeof(l), 0);
 			if (r != sizeof(l)) THROW_ERR_INET;
 			l = ntohl(l);
@@ -662,13 +665,14 @@ void downstream_ctrl_multibus(
 			if (r != l) THROW_ERR_INET;
 			if (ext_can) can_message.format = CanFormat::CanFormatExtended;
 			else can_message.format = CanFormat::CanFormatStandard;
-			can_message.id = frame.can_id;
+			if(ext_can) can_message.id = frame.can_id | CAN_EFF_FLAG;
+			else can_message.id =  frame.can_id;
 			can_message.length = frame.can_dlc;
 			memcpy(can_message.data, frame.data, frame.can_dlc);
-
 			auto rw = kmw_api::canwrite(
 				multibus_queue,
 				&can_message);
+
 		}
 	}
 	catch (net::exceptions::err_inet const & e) {
