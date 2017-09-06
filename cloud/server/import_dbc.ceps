@@ -35,6 +35,44 @@ static_for(e:root.dbc_msg){
     };
 }
 
+dbc_import_internal_sender_list1{
+  root.dbc_msg.sender.content().sort().unique();     
+};
+
+dbc_import_internal_sender_list{
+  static_for(e:root.dbc_import_internal_sender_list1.content()){
+   if (text(e) != "Vector__XXX"){
+       e;
+   }    
+  }  
+};
+
+static_for(e:root.dbc_import_internal_sender_list.content()){
+    sender
+    {
+    id { as_identifier(text(e)+"_out"); };
+    transport {
+    canbus {
+        extended;
+        //bus_id { "vcan0"; };
+        can_id_mapping{
+         static_for(f:root.dbc_msg){
+            if (text(f.sender.content()) == text(e)){
+                f.id.content();f.canid.content();
+            }
+         }        
+        };
+    };
+    };
+    };
+}
+
+static_for(e:root.dbc_msg){
+    if (text(e.sender.content()) != "Vector__XXX")
+     send_periodically{as_identifier(text(e.sender.content())+"_out");e.id.content();0.25*s;};    
+}
+
+
 
 
 

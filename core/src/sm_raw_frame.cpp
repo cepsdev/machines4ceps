@@ -478,7 +478,7 @@ Rawframe_generator::gen_msg_return_t Podframe_generator::gen_msg(State_machine_s
   auto t = spec_["id"];
   if (t.nodes().size() != 0 && t.nodes()[0]->kind() == ceps::ast::Ast_node_kind::identifier)
 	id = ceps::ast::name(ceps::ast::as_id_ref(t.nodes()[0]));
-		smc->fatal_(-1,"Frame '"+id+"' doesn't contain a data section.");
+  return gen_msg_return_t{0,nullptr};
  }
 
  ceps::ast::Nodebase_ptr frame_pattern = nullptr;

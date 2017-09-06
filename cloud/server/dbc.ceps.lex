@@ -77,6 +77,11 @@ lexer skip_ns_enumeration{
  any => .
 }
 
+lexer read_sender_list{
+ any ; => $0 ; exit .
+ any , => $0 ; .
+}
+
 BEGIN{
  VERSION string => .
  NS_ :  => call skip_ns_enumeration.
@@ -99,6 +104,7 @@ BEGIN{
  CM_ SG_ any ident string ; => dbc_signal_comment$2{sig{name{$3;};comment{$4;};};};endl .
  VAL_ CAT_DEF_ => .
  VAL_ any ident => endl dbc_value_description_mapping$1{ sig{name{$2;}; call read_value_description_mapping }; }; endl.
+ BO_TX_BU_ any : => dbc_sender_ofmsg$1{ call read_sender_list }; .
  any => .
 }
 

@@ -222,11 +222,13 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 			for(std::size_t i = 0; i!=can_id_mapping.nodes().size() && i+1!=can_id_mapping.nodes().size();i+=2){
               auto frame_name_ = can_id_mapping.nodes()[i];
               auto frame_id_ = can_id_mapping.nodes()[i+1];
-              if (frame_name_->kind() != ceps::ast::Ast_node_kind::identifier || frame_id_->kind() != ceps::ast::Ast_node_kind::int_literal)
+              if (frame_name_->kind() != ceps::ast::Ast_node_kind::identifier ||
+                  (frame_id_->kind() != ceps::ast::Ast_node_kind::int_literal && frame_id_->kind() != ceps::ast::Ast_node_kind::string_literal ) )
             	  fatal_(-1,"CAN sender '"+channel_id+"': wrong can id mapping, should be list of identifier/integer pairs.");
               auto frame_name = ceps::ast::name(ceps::ast::as_id_ref(frame_name_));
               channel_frame_name_to_id[channel_id][frame_name] = i / 2;
-              channel_frame_to_id[channel_id][i/2] = ceps::ast::value(ceps::ast::as_int_ref(frame_id_));
+              if (frame_id_->kind() == ceps::ast::Ast_node_kind::int_literal) channel_frame_to_id[channel_id][i/2] = ceps::ast::value(ceps::ast::as_int_ref(frame_id_));
+              else channel_frame_to_id[channel_id][i/2] = std::stol(ceps::ast::value(ceps::ast::as_string_ref(frame_id_)));
 			}
 		}
 
@@ -410,7 +412,8 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 		}
 		pop_frame = false;
 		auto len = frame_size;
-		struct can_frame can_message{0};
+        if (len > 8) continue;
+        can_frame can_message{0};
 		if (header_size == 0 && frame){
 			//fetch can id
 			auto frame_id = std::get<3>(frame_info);
@@ -429,9 +432,10 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 
             if (!is_virtual){
              auto r = write(s, &can_message, sizeof(struct can_frame));
+             auto err = errno;
              if (r != sizeof(struct can_frame)){
 				State_machine_simulation_core::event_t ev;
-				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: write failed.",0};
+                ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: write failed.",err};
 				smc->main_event_queue().push(ev);
 				return;
              }

@@ -948,11 +948,11 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
 	channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length(),frame_id));
 	return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
    } else {
-      std::stringstream ss;
+      /*std::stringstream ss;
       for(auto p: args) ss << *p << ", ";
       ss << "ds="<< ds<<" ";
       ss << "msg_block="<< (long long)std::get<1>(msg_block);
-      smc->fatal_(-1, "send() : failed to insert message into queue. "+ss.str());
+      smc->fatal_(-1, "send() : failed to insert message into queue. "+ss.str());*/
    }
  } else if (args.size() == 3 && args[0]->kind() == ceps::ast::Ast_node_kind::identifier && args[1]->kind() == ceps::ast::Ast_node_kind::identifier
 		    && args[2]->kind() == ceps::ast::Ast_node_kind::byte_array){
