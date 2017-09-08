@@ -350,7 +350,8 @@ struct fibex_signal{
     r.nodes().push_back(frm);
   }
 
-  std::vector<std::pair<std::string,std::string>> frame_id_to_sender;
+  std::vector<std::pair<std::pair<std::string, bool>, std::string>> frame_id_to_sender;
+
 
   auto channels = ns["fx:ELEMENTS"]["fx:CHANNELS"][ceps::ast::all{"fx:CHANNEL"}];
   for(auto e : channels){
@@ -367,18 +368,22 @@ struct fibex_signal{
    if (frame_triggerings.size()){
     auto can_id_mapping = new ceps::ast::Struct("can_id_mapping");
     canbus->children().push_back(can_id_mapping);
+    bool canbus_is_ext = false;
     for(auto e : frame_triggerings){
     	auto ftrig = e["fx:FRAME-TRIGGERING"];
     	auto frame_id = std::stoi(ftrig["fx:IDENTIFIER"]["fx:IDENTIFIER-VALUE"].as_str());
+        auto ext_id = ftrig["fx:IDENTIFIER"]["fx:IDENTIFIER-VALUE"]["@EXTENDED-ADDRESSING"].as_str() == "true";
+        if (ext_id) canbus_is_ext = true;
     	std::string frame_name = "";
     	std::string frame_ref = ftrig["fx:FRAME-REF"]["@ID-REF"];
     	auto it = frm_id_to_frame_name.find(frame_ref);
     	if (it == frm_id_to_frame_name.end()) smc->fatal_(-1,"Import of FIBEX data: channel "+channel["@ID"].as_str() +" frame triggering: frame id '"+frame_ref+"' doesn't exist" );
     	frame_name = it->second;
-        frame_id_to_sender.push_back(std::make_pair(frame_name,channel_id));
+        frame_id_to_sender.push_back(std::make_pair(std::make_pair(frame_name,ext_id),channel_id));
     	can_id_mapping->children().push_back(new ceps::ast::Identifier(frame_name,nullptr,nullptr,nullptr));
     	can_id_mapping->children().push_back(new ceps::ast::Int(frame_id,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr));
     }
+    if (canbus_is_ext) canbus->children().push_back(new ceps::ast::Identifier("extended"));
    }
   }//for
 
@@ -388,7 +393,7 @@ struct fibex_signal{
     auto trigger_mapping = new ceps::ast::Struct("frame_tiggering_generated_by_fibex_import");
     for(auto e : frame_id_to_sender){
         trigger_mapping->children().push_back(new ceps::ast::Struct("entry",
-                                          new ceps::ast::Struct("frame_id",new ceps::ast::Identifier(e.first)),
+                                          new ceps::ast::Struct("frame_id",new ceps::ast::Identifier(e.first.first)),
                                           new ceps::ast::Struct("sender_id",new ceps::ast::Identifier(e.second))));
     }
     r.nodes().push_back(trigger_mapping);
