@@ -32,3 +32,4 @@ out_frames.hpp
 build-*/
 *.pro.user.*
 *.pro.user
+tools/gui/icons
