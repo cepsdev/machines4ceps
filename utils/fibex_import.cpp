@@ -350,6 +350,8 @@ struct fibex_signal{
     r.nodes().push_back(frm);
   }
 
+  std::vector<std::pair<std::string,std::string>> frame_id_to_sender;
+
   auto channels = ns["fx:ELEMENTS"]["fx:CHANNELS"][ceps::ast::all{"fx:CHANNEL"}];
   for(auto e : channels){
    auto channel = channels["fx:CHANNEL"];
@@ -373,12 +375,24 @@ struct fibex_signal{
     	auto it = frm_id_to_frame_name.find(frame_ref);
     	if (it == frm_id_to_frame_name.end()) smc->fatal_(-1,"Import of FIBEX data: channel "+channel["@ID"].as_str() +" frame triggering: frame id '"+frame_ref+"' doesn't exist" );
     	frame_name = it->second;
+        frame_id_to_sender.push_back(std::make_pair(frame_name,channel_id));
     	can_id_mapping->children().push_back(new ceps::ast::Identifier(frame_name,nullptr,nullptr,nullptr));
     	can_id_mapping->children().push_back(new ceps::ast::Int(frame_id,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr));
     }
    }
   }//for
 
+  //write triggering mapping
+  {
+
+    auto trigger_mapping = new ceps::ast::Struct("frame_tiggering_generated_by_fibex_import");
+    for(auto e : frame_id_to_sender){
+        trigger_mapping->children().push_back(new ceps::ast::Struct("entry",
+                                          new ceps::ast::Struct("frame_id",new ceps::ast::Identifier(e.first)),
+                                          new ceps::ast::Struct("sender_id",new ceps::ast::Identifier(e.second))));
+    }
+    r.nodes().push_back(trigger_mapping);
+  }
   //write encodings
   ceps::ast::Struct_ptr encoding = new ceps::ast::Struct("encoding",nullptr,nullptr,nullptr);
 
