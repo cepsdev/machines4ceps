@@ -74,9 +74,8 @@ static_for(e:root.dbc_msg){
 
 static_for(e:root.frame_tiggering_generated_by_fibex_import.entry){
     send_periodically{e.sender_id.content();e.frame_id.content();0.25*s;};    
+
 }
-
-
 
 
 

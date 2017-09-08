@@ -119,7 +119,7 @@ void Virtual_can_interface::handler(int sck){
  std::string unconsumed_data;
  for(;;){
     auto rhr = read_virtual_can_request(sck,unconsumed_data);
-    if (!std::get<0>(rhr)) continue;
+    if (!std::get<0>(rhr)) break;
 
     auto const & attrs = std::get<2>(rhr);
     auto cmd_ = get_virtual_can_attribute_content("cmd",attrs);

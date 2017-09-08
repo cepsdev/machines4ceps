@@ -353,7 +353,6 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 	char* frame = nullptr;
 	size_t frame_size = 0;
 	size_t header_size = 0;
-	bool pop_frame = true;
     bool is_virtual = false;
 
     if (can_bus.length()){
@@ -392,9 +391,10 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 	for (;;)
 	{
 		State_machine_simulation_core::frame_queue_elem_t frame_info;
+        frames->wait_and_pop(frame_info);
 
-		if (pop_frame) {
-			frames->wait_and_pop(frame_info);
+        {
+
             auto new_gtwy_sck = -1;
             if ( 0 <= (new_gtwy_sck = smc->frame_carries_gateway_socket(frame_info))){
                 bool already_registered = false;
@@ -410,7 +410,6 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 			frame = (decltype(frame))std::get<1>(std::get<0>(frame_info));
 			header_size = std::get<2>(frame_info);
 		}
-		pop_frame = false;
 		auto len = frame_size;
         if (len > 8) continue;
         can_frame can_message{0};
@@ -461,7 +460,7 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 			}
 		}
 		if (frame != nullptr) { delete[] frame; frame = nullptr; }
-		pop_frame = true;
+
 	}//for(;;)
 }
 #endif

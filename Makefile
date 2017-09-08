@@ -12,7 +12,7 @@ objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_
   state_machine_simulation_core_guard_handling.o cmdline_utils.o sm_raw_frame.o sm_xml_frame.o pugixml.o  cal_sender.o cal_receiver.o state_machine_simulation_core_plugin_interface.o state_machine_simulation_core_buildsms.o \
   log4kmw_events.o log4kmw_loggers.o log4kmw_records.o log4kmw_states.o log4kmw_serialization.o log4kmw_dynamic_bitset.o log4kmw_record.o log4kmw_utils.o sm_comm_naive_msg_prot.o cppgen.o dotgen.o livelogger.o rdwrn.o \
   sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o sm_sim_core_shadow_states.o sm_sim_process_sm.o concept_dependency_graph.o stddoc.o \
-  ws_api.o virtual_can_api.o
+  ws_api.o virtual_can_api.o streamtransform.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
 CEPSLIB := ../ceps/core/bin$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
@@ -82,7 +82,8 @@ $(TARGET)/ceps: $(objfiles)
 	$(TARGET)/sm_sim_core_shadow_states.o \
 	$(TARGET)/sm_sim_process_sm.o \
 	$(TARGET)/concept_dependency_graph.o \
-    $(TARGET)/ws_api.o \
+	$(TARGET)/streamtransform.o \
+	$(TARGET)/ws_api.o \
 	$(TARGET)/virtual_can_api.o \
 	$(TARGET)/stddoc.o 	-o $(TARGET)/ceps -ldl -lpthread -lrt -lcryptopp
 
@@ -180,6 +181,8 @@ $(TARGET)/ws_api.o: core/src/api/websocket/ws_api.cpp core/include/state_machine
 	$(CXX)   $(cflags) $(includes) core/src/api/websocket/ws_api.cpp -c -o $(TARGET)/ws_api.o	
 $(TARGET)/virtual_can_api.o: core/src/api/virtual_can/virtual_can_api.cpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) core/src/api/virtual_can/virtual_can_api.cpp -c -o $(TARGET)/virtual_can_api.o	
+$(TARGET)/streamtransform.o: core/src/transform/streamtransform.cpp core/include/state_machine_simulation_core.hpp
+	$(CXX)   $(cflags) $(includes) core/src/transform/streamtransform.cpp -c -o $(TARGET)/streamtransform.o	
 
 		
 
