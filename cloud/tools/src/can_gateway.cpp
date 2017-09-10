@@ -448,6 +448,7 @@ ceps::cloud::Sim_Directory ceps::cloud::fetch_directory_entries(ceps::cloud::Sim
 		Sim_Directory::entry e;
 		e.name = name;
 		e.short_name = short_name;
+		if (host[0] == ':') host = sim_core.first + host;
 		e.sim_core = cmdline_read_remote_host(host.c_str());
 		if (e.sim_core.first.length() == 0 || e.sim_core.second.length() == 0) continue;
 		r.entries.push_back(e);
@@ -455,7 +456,38 @@ ceps::cloud::Sim_Directory ceps::cloud::fetch_directory_entries(ceps::cloud::Sim
 	return r;
 }
 
+ceps::cloud::streaming_endpoints_directory ceps::cloud::fetch_streaming_endpoints(ceps::cloud::Simulation_Core sim_core) {
+	INIT_SYS_ERR_HANDLING;
+	int cfd = -1;
+	CLEANUP([&]() {if (cfd != -1) closesocket(cfd); })
 
+	streaming_endpoints_directory r;
+	cfd = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
+	if (cfd == -1) {
+		throw net::exceptions::err_inet{ "Establishing connect to '" + sim_core.first + ":" + sim_core.second + "' failed." };
+	}
+	auto rhr = ceps::cloud::vcan_api::send_cmd(cfd, "get_known_stream_endpoints");
+
+	if (!std::get<0>(rhr)) return r;
+	using namespace std;
+
+	auto raw_data = ceps::cloud::get_virtual_can_attribute_content("known_stream_endpoints", std::get<2>(rhr));
+	for (std::size_t j = 0; raw_data.second.length() > j;) {
+		if (raw_data.second[j] != '$') { ++j; continue; }
+		j += 1;
+		std::string port;
+		std::string host;
+		auto k = j;
+		for (; raw_data.second[k] != '$' && k < raw_data.second.length(); ++k);
+		if (raw_data.second[k] != '$')  continue;
+		host = raw_data.second.substr(j, k - j);
+		if (host[0] == ':') host = sim_core.first + host;
+		auto se = cmdline_read_remote_host(host.c_str());
+		if (se.first.length() == 0 || se.second.length() == 0) continue;
+		r.push_back(se);
+	}
+	return r;
+}
 
 
 void gateway_fn(Simulation_Core sim_core,
