@@ -116,6 +116,14 @@ void Virtual_can_interface::handler(int sck){
  };
  cleanup<decltype(cleanup_f)> cl{cleanup_f};
 
+ std::string hostname;
+ {
+  char buffer[HOST_NAME_MAX+1] ={0};
+  if (0 == gethostname(buffer,HOST_NAME_MAX)){
+      hostname = buffer;
+  }
+ }
+
  std::string unconsumed_data;
  for(;;){
     auto rhr = read_virtual_can_request(sck,unconsumed_data);
@@ -189,7 +197,8 @@ void Virtual_can_interface::handler(int sck){
             response << "$";
             response << simcore.name << "\t";
             response << simcore.short_name << "\t";
-            response << simcore.host_name << ":";
+            if (simcore.host_name != hostname && simcore.host_name != "127.0.0.1") response << simcore.host_name;
+            response << ":";
             response << simcore.port;
             response << "$";
         }
