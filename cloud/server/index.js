@@ -9,6 +9,7 @@ const path = require('path');
 const express = require("express");
 const http = require("http");
 const chalk = require('chalk');
+const dns = require("dns");
 
 
 
@@ -39,15 +40,37 @@ const command_ws_url = "ws://"+host_name+":"+command_port.toString();
 
 
 /*MASTER HUB ===>*/
-
+const master_hub_host = "localhost";
 const master_hub_port = 8181;
+const master_hub_port_wsapi = 8182;
 const master_hub_process_check_interval_ms = 100;
 const master_hub = "hub.ceps";
 let master_hub_process = undefined;
+let streaming_endpoints = [];
+
+function get_streaming_endpoint_by_ip(ipaddr){
+    let r = /^::ffff:([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/;
+    match = r.exec(ipaddr);
+    let to_match = undefined;
+    if (match != undefined){
+        to_match = match[1];
+    } else {
+        r = /^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/; 
+        match = r.exec(ipaddr);
+        if (match != undefined){
+            to_match = match[1];
+        }
+    }
+    if (to_match == undefined) return undefined;
+    for(e of streaming_endpoints) {
+        if (e.host.valueOf() == to_match.valueOf()) return e;
+    }
+    return undefined;
+}
 
 setInterval(()=>{
     if (master_hub_process != undefined) return;
-    let params = [ceps_prelude, master_hub, "--vcan_api", master_hub_port, ceps_default_args ];
+    let params = [ceps_prelude, master_hub, "--vcan_api", master_hub_port,"--ws_api", master_hub_port_wsapi, ceps_default_args ];
     master_hub_process = spawn(`${ceps_executable}`,params);
     master_hub_process.stdout.on('data', (data) => {
        console.log(chalk.yellow(`${data}`));
@@ -60,6 +83,48 @@ setInterval(()=>{
        console.log(chalk.red(`Master Hub exited with code ${code}`));
     });
 
+},master_hub_process_check_interval_ms);
+
+
+let ws_api_master_hub = undefined;//new WebSocket.Server({port: command_port});
+let ws_api_master_hub_open = false;
+setInterval(()=>{
+ if (ws_api_master_hub != undefined) return;
+ ws_api_master_hub_open = false;
+ ws_api_master_hub = new WebSocket("ws://"+master_hub_host+":"+master_hub_port_wsapi);
+ ws_api_master_hub.on("error", () => {ws_api_master_hub=undefined;console.log(chalk.red(`***Error: Master Hub WS_API `));} );
+ ws_api_master_hub.on("open", () => { 
+     ws_api_master_hub_open = true;
+     let ws_endpoint = ws_api_master_hub;
+     let ws_endpoint_on_msg_set = false;
+     let f = () => {
+         if (!ws_endpoint_on_msg_set) ws_endpoint.on("message",(msg)=>{
+             try{
+              let m = JSON.parse(msg);
+              if (m.ok){
+                streaming_endpoints = [];
+                for(e of m.endpoints){
+                    if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(e.host))
+                     streaming_endpoints.push(e);
+                    else dns.resolve4(e.host, (err,a) =>{
+                        if (err != undefined) return;
+                        streaming_endpoints.push({host:a[0],port:e.port});
+                    } );
+                }
+              }
+             } catch (err){
+                console.log(err);                
+             }
+         });
+         ws_endpoint_on_msg_set = true;
+         ws_endpoint.send("GET_KNOWN_STREAMING_ENDPOINTS");         
+         if (ws_endpoint == ws_api_master_hub) setTimeout(f,250);
+     }; 
+     setTimeout(
+         f , 250
+     );
+ } );
+ ws_api_master_hub.on("close", () => {ws_api_master_hub=undefined;} );
 },master_hub_process_check_interval_ms);
 
 /*<== MASTER HUB*/
@@ -458,6 +523,7 @@ function get_doc_canlayer_all(core_info){
 }
 
 let app = express();
+app.set('trust proxy', true);
 let publicPath = path.resolve(__dirname, "public");
 
 app.set("views", path.resolve(__dirname, "views"));
@@ -466,17 +532,22 @@ app.set("view engine", "ejs");
 app.use(express.static(publicPath));
 
 app.get("/", function(req, res) {
-    res.render("index",{ page_title:"Home",
+    let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
+    
+    res.render("index",{ streaming_endpoint:se,
+                         page_title:"Home",
                          sim_cores : sim_cores,
                          sim_core : undefined,
                          command_ws_url:command_ws_url});
 });
 
 app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next) {
+    let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
  if (req.params[3] != undefined) {
     let score = get_sim_core_by_uri(req.params[3]);
     if (score != undefined) {
-         res.render("sim_main",{ page_title: score.name,
+         res.render("sim_main",{ streaming_endpoint:se,
+                                 page_title: score.name,
                                  sim_core : score, 
                                  command_ws_url:command_ws_url,
                                  sim_nodes_root:sim_nodes_root }); 
@@ -495,7 +566,8 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next)
     for (let s of f.signals) if (s.index == sig_idx){sig = s;break;}
    if (sig === undefined) {res.status=404;res.send("404");return;}
    
-   res.render("signal_details",{ page_title: score.name +"-"+ signalname,
+   res.render("signal_details",{ streaming_endpoint:se,
+                                 page_title: score.name +"-"+ signalname,
                                  sim_core : score,
                                  signal:sig,
                                  signal_ws:score.signal_url});   
@@ -503,23 +575,27 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next)
 });
 
 app.get(/^\/doc_canlayer_all__([0-9]+)$/, function(req, res,next) {
+    let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
     let score_idx = req.params[0];
     let score = undefined;
     for(let s of sim_cores) if (s.index == score_idx){ score=s;break; }
     if (score === undefined) {res.status=404;res.send("404");return;} 
-    res.render("doc_canlayer_all",{page_title: score.name +"-"+ "CAN Layer Documentation",
-    sim_name : score.name,
-    sim_core : score,
-    doc_canlayer_all : get_doc_canlayer_all(score)
+    res.render("doc_canlayer_all",{streaming_endpoint:se,
+        page_title: score.name +"-"+ "CAN Layer Documentation",
+        sim_name : score.name,
+        sim_core : score,
+        doc_canlayer_all : get_doc_canlayer_all(score)
     });   
 });
 
 app.get("/:sim/controlpanels/:panel", function(req, res, next) {
+    let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
    let sim_core = get_sim_core_by_uri(req.params.sim);
    if (sim_core === undefined) {res.status=404;res.send("404");return;}
    let f = sim_core.get_view_path(req.params.panel);
    if (f === undefined) {res.status=404;res.send("404");return;}
-   res.render("controlpanel",{ panel_loc:"../"+f,page_title:"xxx", 
+   res.render("controlpanel",{ streaming_endpoint:se,
+                               panel_loc:"../"+f,page_title:"xxx", 
                                panel_name: req.params.panel , 
                                sim_core : sim_core, 
                                signal_ws : sim_core.signal_url,

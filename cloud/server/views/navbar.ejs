@@ -24,7 +24,18 @@
             <% } %>
           </ul>
         </li>
+        <li class="link">
+         <a href="#">
+           <% if (streaming_endpoint != undefined) { %>           
+               <span class="glyphicon glyphicon-transfer" style="color:green;font-size: 1.2em;" data-toggle="tooltip" data-placement="bottom" title="Streaming Enabled"></span>
+            <% } else { %>
+                <span class="glyphicon glyphicon-transfer" style="color:#EE1111;font-size: 1.2em;" data-toggle="tooltip" data-placement="bottom" title="Streaming Disabled. Install/Start the CAN Streamer Tool."></span>
+            <% } %>
+            </a>
+        </li>
       </ul>
+
+      
 
 
 

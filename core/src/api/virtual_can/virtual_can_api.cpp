@@ -231,7 +231,33 @@ void Virtual_can_interface::handler(int sck){
             known_simcores_.entries.push_back(info);
         }
         response << "HTTP/1.1 100\r\n\r\n";
-    }  else return;
+    }  else if (cmd == "register_stream_endpoint") {
+        std::lock_guard<std::mutex> lk(smc_->vcan_wsapi_mutex());
+        auto host = get_virtual_can_attribute_content("host",attrs);
+        if (!host.first) return;
+        auto port = get_virtual_can_attribute_content("port",attrs);
+        if (!port.first) return;
+        std::size_t j = 0;
+        for(;j != smc_->streaming_endpoints_registered_via_vcan_api().size();++j){
+            if (smc_->streaming_endpoints_registered_via_vcan_api()[j].first == host.second) break;
+        }
+        if (j == smc_->streaming_endpoints_registered_via_vcan_api().size())
+            smc_->streaming_endpoints_registered_via_vcan_api().push_back(std::make_pair(host.second,port.second));
+        else smc_->streaming_endpoints_registered_via_vcan_api()[j].second = port.second;
+        response << "HTTP/1.1 100\r\n\r\n";
+    } else if (cmd == "get_known_stream_endpoints") {
+        std::lock_guard<std::mutex> lk(smc_->vcan_wsapi_mutex());
+        response << "HTTP/1.1 100\r\n"<< "known_stream_endpoints:";
+        for (auto s_endpoint : smc_->streaming_endpoints_registered_via_vcan_api()){
+            response << "$";
+            if (s_endpoint.first != hostname && s_endpoint.first != "127.0.0.1") response << s_endpoint.first;
+            response << ":";
+            response << s_endpoint.second;
+            response << "$";
+        }
+        response << "\r\n";
+        response <<"\r\n";
+    } else return;
     auto r = send(sck,response.str().c_str(),response.str().length(),0);
     if (r != (ssize_t)response.str().length()) return;
  }

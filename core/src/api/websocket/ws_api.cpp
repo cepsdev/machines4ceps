@@ -471,7 +471,18 @@ void Websocket_interface::handler(int sck){
           smc_->enqueue_event(ev);
           reply = "{\"ok\": true }";
         }
-     }
+     } else if (cmd[0] == "GET_KNOWN_STREAMING_ENDPOINTS") {
+         reply = "{\"ok\": true,\n\"endpoints\":[";
+         std::lock_guard<std::mutex> lk(smc_->vcan_wsapi_mutex());
+         size_t i = 0;
+         for( auto e : smc_->streaming_endpoints_registered_via_vcan_api()){
+             bool last = i + 1 == smc_->streaming_endpoints_registered_via_vcan_api().size();
+             reply+="{\"host\":\""+e.first+"\",\"port\":\""+e.second+"\"}";
+             if (!last) reply += ",";
+             ++i;
+         }
+         reply += "]}";
+      }
     }//cmd.size()!=0
     if(!send_reply(reply)) break;
    }

@@ -245,8 +245,11 @@ private:
     Websocket_interface* &  ws_api(){return ws_api_;}
     Virtual_can_interface* vcan_api_ = nullptr;
     Virtual_can_interface* &  vcan_api(){return vcan_api_;}
-
+    std::vector< std::pair<std::string,std::string> > streaming_endpoints_registered_via_vcan_api_;
+    mutable std::mutex vcan_wsapi_mutex_;
 public:
+    std::mutex& vcan_wsapi_mutex() {return vcan_wsapi_mutex_;}
+    std::vector< std::pair<std::string,std::string> >& streaming_endpoints_registered_via_vcan_api(){return streaming_endpoints_registered_via_vcan_api_;}
     std::map<std::string /*channel*/ , std::map<std::string /*systemstate*/, std::map< int, ceps::ast::Nodebase_ptr> > > out_encodings;
     livelog::Livelogger* live_logger(){return live_logger_;}
     sm4ceps::Livelogger_source* live_logger_out() {return livelogger_source_;}
