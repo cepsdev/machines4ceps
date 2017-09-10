@@ -201,8 +201,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 	bool version_flag_set = false;
 	bool interactive_mode = false;
 	bool post_processing = false;
-	
-	string out_path = "";
+
 	std::vector<std::string> definition_file_rel_paths;
 	std::vector<std::string> post_processing_rel_paths;
 
@@ -211,20 +210,15 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 	for(int i = 1; i < argc;++i)
 	{
 			string arg{argv[i]};
-			int ofs = 0;
-			bool is_output_path = false;
-			bool is_report_out = false;
 
             if (arg == "-o") {r.out_path = argv[++i];continue;}
-			if (arg.substr(0,2) == "-i") {interactive_mode =  true;ofs = 2;continue;}
-			else if (arg.substr(0,18) == "--output_directory") {is_output_path = true;ofs = 18;}
+            if (arg.substr(0,2) == "-i") {interactive_mode =  true;continue;}
 			else if (arg.substr(0,2) == "-v") {version_flag_set = true;continue;}
 			else if (arg.substr(0,9) == "--version") {version_flag_set = true;continue;}
 			else if (arg == "-d" || arg == "--debug"){DEBUG_MODE = true; continue; }
 			else if (arg == "--print-no-header-in-sql"){print_header_in_sql_files = false;continue;}
 			else if (arg == "--print-header-in-sql"){print_header_in_sql_files = true;continue;}
 			else if (arg == "--dont_increment_sequencer"){DONT_INCREMENT_SEQUENCER = true;continue;}
-			else if (arg.substr(0,18) == "--report_directory") {is_report_out = true; ofs = 18;}
 			else if (arg == "--server") {r.start_in_server_mode = true;continue;}
 			//else if (arg.substr(0,6) == "--port") {r.server_port = arg.substr(6); continue;}
 			else if (arg.substr(0,5) == "--rip") {r.remote_nodes.push_back(std::make_pair(arg.substr(5), std::string{}));continue;}

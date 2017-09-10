@@ -324,7 +324,7 @@ public:
        else if (kind_== TOK_INT32) return 0 == v.ival32_;
        else if (kind_== TOK_INT16) return 0 == v.ival16_;
       }
-      else return sval_.size() == 0;
+      return sval_.size() == 0;
    }
 
    bool bool_value() const { return !is_zero(); }
@@ -518,7 +518,7 @@ public:
    rw_rule() = default;
    rw_rule(rw_rule const &) = default;
    rw_rule(int lexer_id,bool active, int pattern, int pattern_len, int body_len):
-    lexer_id_(lexer_id),active_(active), pattern_(pattern), pattern_len_(pattern_len), body_len_(body_len)
+    active_(active), lexer_id_(lexer_id), pattern_(pattern), pattern_len_(pattern_len), body_len_(body_len)
     {}
    int lexer_id() const {return lexer_id_;}
    int& lexer_id()  {return lexer_id_;}
@@ -554,7 +554,7 @@ public:
  int current_layer() const {return current_layer_;}
  int& current_layer() {return current_layer_;}
  std::vector<Token>& matched_tokens(){
-  if (current_layer()>= matched_tokens_.size())
+  if ((ssize_t)current_layer()>= matched_tokens_.size())
    for(int i =  matched_tokens_.size()-1 ; i < current_layer();++i)
     matched_tokens_.push_back(std::vector<Token>());
   if (print_debug_info) std::cout << "current_layer()="<<current_layer()<<std::endl;
@@ -592,14 +592,15 @@ public:
 
  bool expr_parser_match(int kind, const char* content = nullptr, bool check = true, bool b_call_gettoken = true, bool b_throw = true)
  {
-  if (check)
-   if ( kind != expr_parser_lookahead_.kind() ||  content != nullptr && expr_parser_lookahead_.sval_ != content )
-    {if (b_throw) if (content) throw match_ex{std::string("Expected ")+content}; else throw match_ex{std::to_string(kind)}; return false;}
-
-  if (b_call_gettoken)
+  if (check){
+   if ( kind != expr_parser_lookahead_.kind() ||  (content != nullptr && expr_parser_lookahead_.sval_ != content) )
+    {if (b_throw && content) throw match_ex{std::string("Expected ")+content}; else if (b_throw) throw match_ex{std::to_string(kind)}; return false;}
+  }
+  if (b_call_gettoken){
    if (!gettoken_local(expr_parser_lookahead_)) {
-     if (b_throw) if (content) throw match_ex{std::string("Expected ")+content}; else throw match_ex{std::to_string(kind)}; return false;
+     if (b_throw && content) throw match_ex{std::string("Expected ")+content}; else if (b_throw) throw match_ex{std::to_string(kind)}; return false;
      }
+  }
 
   return true;
  }

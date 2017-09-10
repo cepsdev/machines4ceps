@@ -224,7 +224,7 @@ void Virtual_can_interface::handler(int sck){
         response << "HTTP/1.1 100\r\n\r\n";
     }  else return;
     auto r = send(sck,response.str().c_str(),response.str().length(),0);
-    if (r != response.str().length()) return;
+    if (r != (ssize_t)response.str().length()) return;
  }
 }
 

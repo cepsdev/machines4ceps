@@ -169,15 +169,11 @@ static void make_content_sm(State_machine* sm,
    rows
   };
 
- Nodebase_ptr sm_details_div = nullptr;
-
- /*<div class="panel panel-default">
-   <div class="panel-heading">Panel Heading</div>
-   <div class="panel-body">Panel Content</div>
- </div>*/
+ /*Nodebase_ptr sm_details_div = nullptr;
 
  if (table) sm_details_div = (new strct{"div",strct{"attr",strct{"class","panel panel-default"}},table})->p_strct;
  else sm_details_div = (new strct{"div",strct{"attr",strct{"class","sm_details"}}})->p_strct;
+ */
 
  auto dot_div = make_sm_dot_graph_link(sm,smc,img_path_prefix+replace_all(name,".","__"));
  content.push_back(

@@ -69,7 +69,7 @@ bool readfile_to_memory(Memory<char>& mem, const char* filename )
   mem.size_ = statbuf.st_size;
   mem.pos_ = 0;
   intmax_t readbytes_total = 0;
-  for(intmax_t readbytes = 0;readbytes = read(inputfd,mem.ptr_ + readbytes_total, mem.size_-readbytes_total);readbytes_total+=readbytes);
+  for(intmax_t readbytes = 0;(readbytes = read(inputfd,mem.ptr_ + readbytes_total, mem.size_-readbytes_total));readbytes_total+=readbytes);
 
 
   return true;
