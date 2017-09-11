@@ -54,6 +54,15 @@
 <script>
     $(document).ready(function(){
         setup_ctrl_panel_logic();
+        let ws_se = undefined;
+        let ws_se_host = "<%= streaming_endpoint_host %>";
+        let ws_se_port = "<%= streaming_endpoint_port %>";
+        if (ws_se_host.length != 0){
+           ws_se = new WebSocket("ws://"+ws_se_host+":"+ws_se_port); 
+           ws_se.onopen = function(e){
+                console.log("Connected via websocket @"+ws_se_host+".");
+           };
+        }       
     });
 </script>
 </body>
