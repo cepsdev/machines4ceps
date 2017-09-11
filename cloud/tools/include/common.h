@@ -139,7 +139,10 @@
 			 std::vector<entry> entries;
 		 };
 
+		 using streaming_endpoints_directory = std::vector<std::pair<std::string, std::string>>;
+
 		 Sim_Directory fetch_directory_entries(Simulation_Core sim_core);
+		 streaming_endpoints_directory fetch_streaming_endpoints(Simulation_Core sim_core);
 
 		 inline Simulation_Core& sim_core(std::pair<Downstream_Mapping, Simulation_Core> & x) { return x.second; }
 		 inline Downstream_Mapping& down_stream(std::pair<Downstream_Mapping, Simulation_Core> & x) { return x.first; }
