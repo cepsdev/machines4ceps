@@ -1,4 +1,6 @@
 #include "common.h"
+#include "ws_api.h"
+
 #pragma comment(lib, "ws2_32.lib")
 
 
@@ -673,7 +675,6 @@ void downstream_ctrl_multibus(
 			auto rw = kmw_api::canwrite(
 				multibus_queue,
 				&can_message);
-
 		}
 	}
 	catch (net::exceptions::err_inet const & e) {
@@ -694,6 +695,7 @@ int main(int argc, char* argv[])
 		return p.second + "@" + p.first.first + ":" + p.first.second;
 	};
 	bool wsa_startup_successful = false;
+	bool run_as_server = false;
 	CLEANUP([&](){if (wsa_startup_successful) WSACleanup(); })
 
 #ifdef PCAN_API    
@@ -728,10 +730,11 @@ int main(int argc, char* argv[])
 			fatal("WSAStartup failed with error: " + std::to_string(err));
 	}
 
-
+	ceps::cloud::Simulation_Core directory_server;
 	for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
-		if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
+		if (token == "--run_as_server") run_as_server = true;
+		else if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
 			std::cout << "Available local communication endpoints:\n";
 			for (auto e : ceps::cloud::sys_info_available_ifs) std::cout << "\t" << e << "\n";
 		}
@@ -741,24 +744,37 @@ int main(int argc, char* argv[])
 			if (sim_core == ceps::cloud::Simulation_Core{}) fatal("[USER ERROR] Erroneous host name:'" + std::string{ argv[i] }+"'.");
 			ceps::cloud::sim_cores.insert(sim_core);
 		}
-		else if (token == "-directory") {
-			auto sim_core = ceps::cloud::cmdline_read_remote_host(argv[++i]);
-			if (sim_core == ceps::cloud::Simulation_Core{}) fatal("[USER ERROR] Erroneous host name:'" + std::string{ argv[i] }+"'.");
+		else if (token == "-directory" || token == "--directory" || token == "-d") {
+			directory_server = ceps::cloud::cmdline_read_remote_host(argv[++i]);
+			if (directory_server == ceps::cloud::Simulation_Core{}) fatal("[USER ERROR] Erroneous host name:'" + std::string{ argv[i] }+"'.");
 			try{
-				auto dir = ceps::cloud::fetch_directory_entries(sim_core);
+				auto dir = ceps::cloud::fetch_directory_entries(directory_server);
 				for (auto e : dir.entries) {
 					ceps::cloud::sim_cores.insert(e.sim_core);
 					ceps::cloud::global_directory.push_back(e);
 				}
 			}
 			catch (net::exceptions::err_inet & e) {
-				throw net::exceptions::err_inet("(" + sim_core.first + ":" + sim_core.second + ") " + e.what());
+				throw net::exceptions::err_inet("(" + directory_server.first + ":" + directory_server.second + ") " + e.what());
 			}
 			catch (ceps::cloud::exceptions::err_vcan_api const & e) {
 				fatal(std::string{ "[VCAN_API ERROR] " }+e.what());
 			}
 		}
+		else if (token == "--print_known_streaming_endpoints") {
+			auto l = ceps::cloud::fetch_streaming_endpoints(directory_server);
+			if (l.size() == 0)
+				std::cout << "No known streaming endpoints.\n";
+			else {
+				std::cout << "Streaming endpoints:\n";
+				for (auto & e : l) {
+					std::cout << "\t" << e.first << ":" << e.second << "\n";
+				}
+			}
+		}
 	}
+
+	
 
 	for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
@@ -818,8 +834,16 @@ int main(int argc, char* argv[])
 				if (mappings.empty()) std::cout << "No mappings defined at all.\n";
 			}
 		}
-		if (mappings.empty()) warn(std::string{ "No mappings defined." },true);
+		if (mappings.empty() && !run_as_server) warn(std::string{ "No mappings defined." },true);
 		//Ready to run
+		if (run_as_server) {
+			Websocket_interface ws_api{ directory_server.first,directory_server.second };
+			auto t = ws_api.start();
+			if (t != nullptr) t->join();
+			else return 1;
+			return 0;
+		}
+
 		std::vector<std::thread*> downstream_threads;
 		std::vector<std::thread*> upstream_threads;
 		std::vector<std::thread*> route_threads;
