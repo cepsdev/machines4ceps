@@ -535,6 +535,8 @@ app.get("/", function(req, res) {
     let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
     
     res.render("index",{ streaming_endpoint:se,
+         streaming_endpoint_host: se == undefined ? undefined : se.host,
+        streaming_endpoint_port: se == undefined ? undefined : se.port,
                          page_title:"Home",
                          sim_cores : sim_cores,
                          sim_core : undefined,
@@ -546,7 +548,18 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next)
  if (req.params[3] != undefined) {
     let score = get_sim_core_by_uri(req.params[3]);
     if (score != undefined) {
+         if (se != undefined) {
+            /* console.log("!!!!!!!!");
+             let ws_se = new WebSocket("ws://"+se.host+":"+se.port);
+             ws_se.on("open",() => {
+                 console.log("Connected @"+se.host+":"+se.port);
+             });
+             ws_se.on("error",()=>{});*/
+         }
+
          res.render("sim_main",{ streaming_endpoint:se,
+            streaming_endpoint_host: se == undefined ? undefined : se.host,
+            streaming_endpoint_port: se == undefined ? undefined : se.port,
                                  page_title: score.name,
                                  sim_core : score, 
                                  command_ws_url:command_ws_url,
@@ -567,6 +580,8 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next)
    if (sig === undefined) {res.status=404;res.send("404");return;}
    
    res.render("signal_details",{ streaming_endpoint:se,
+                                    streaming_endpoint_host: se == undefined ? undefined :se.host,
+                                    streaming_endpoint_port: se == undefined ? undefined : se.port,
                                  page_title: score.name +"-"+ signalname,
                                  sim_core : score,
                                  signal:sig,
@@ -581,6 +596,8 @@ app.get(/^\/doc_canlayer_all__([0-9]+)$/, function(req, res,next) {
     for(let s of sim_cores) if (s.index == score_idx){ score=s;break; }
     if (score === undefined) {res.status=404;res.send("404");return;} 
     res.render("doc_canlayer_all",{streaming_endpoint:se,
+        streaming_endpoint_host: se == undefined ? undefined : se.host,
+        streaming_endpoint_port: se == undefined ? undefined : se.port,
         page_title: score.name +"-"+ "CAN Layer Documentation",
         sim_name : score.name,
         sim_core : score,
@@ -595,6 +612,8 @@ app.get("/:sim/controlpanels/:panel", function(req, res, next) {
    let f = sim_core.get_view_path(req.params.panel);
    if (f === undefined) {res.status=404;res.send("404");return;}
    res.render("controlpanel",{ streaming_endpoint:se,
+                               streaming_endpoint_host: se == undefined ? undefined : se.host,
+                               streaming_endpoint_port: se == undefined ? undefined : se.port,
                                panel_loc:"../"+f,page_title:"xxx", 
                                panel_name: req.params.panel , 
                                sim_core : sim_core, 
