@@ -302,6 +302,7 @@ struct frm_row{
     int width;
     bool sign = true;
     bool in = true;
+    bool skip = false;
 };
 
 
@@ -327,9 +328,10 @@ bool read_row(ceps::ast::Nodebase_ptr n,std::vector<frm_row>& frm_infos, frm_row
     row_info.width = std::stoi(sn.substr(4));
    }
   }
-  for(auto ch : strct.children()){
-   return read_row(ch,frm_infos,row_info);
-  }
+  if (strct.children().size())
+   return read_row(strct.children()[0],frm_infos,row_info);
+
+  return false;
  } else if(n->kind() == ceps::ast::Ast_node_kind::symbol) {
   row_info.sig_name = ceps::ast::name(ceps::ast::as_symbol_ref(n));
   frm_infos.push_back(row_info);
@@ -337,7 +339,12 @@ bool read_row(ceps::ast::Nodebase_ptr n,std::vector<frm_row>& frm_infos, frm_row
  } else if(n->kind() == ceps::ast::Ast_node_kind::int_literal) {
   frm_infos.push_back(row_info);
   return true;
+ } else {
+  row_info.skip = true;
+  frm_infos.push_back(row_info);
+  return true;
  }
+ return false;
 }
 
 void make_frm_info(std::vector<frm_row>& frm_infos,ceps::ast::Nodeset frm){
@@ -400,6 +407,7 @@ void sm4ceps::utils::dump_stddoc_canlayer_doc(Result_process_cmd_line const &  c
         auto start = 0;
         for(auto r : frm_info ){
          if (r.sig_name.length() == 0){ start+=r.width; continue;}
+         if (r.skip){ start+=r.width; continue;}
          os << "<tr>";
          os << "<td width=\"20%\">";
          os << r.sig_name;

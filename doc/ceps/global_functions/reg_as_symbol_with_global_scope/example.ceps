@@ -1,0 +1,12 @@
+kind Systemstate;
+Systemstate a;
+
+a = 1.0;
+
+reg_as_symbol_with_global_scope("b","Systemstate");
+
+as_symbol("c","Systemstate") = 3.0;
+gaga{
+ reg_as_symbol_with_global_scope("c","Systemstate");
+};
+

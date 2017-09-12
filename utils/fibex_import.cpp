@@ -299,15 +299,26 @@ struct fibex_signal{
     ceps::ast::Struct_ptr data = new ceps::ast::Struct("data",nullptr,nullptr,nullptr);frm->children().push_back(data);
     ceps::ast::Struct_ptr payload;
     data->children().push_back(payload = new ceps::ast::Struct("payload",nullptr,nullptr,nullptr));
-    ceps::ast::Struct_ptr in;
+
+    /*ceps::ast::Struct_ptr in;
     payload->children().push_back(in = new ceps::ast::Struct("in",nullptr,nullptr,nullptr));
     ceps::ast::Struct_ptr out;
-    payload->children().push_back(out = new ceps::ast::Struct("out",nullptr,nullptr,nullptr));
-
+    payload->children().push_back(out = new ceps::ast::Struct("out",nullptr,nullptr,nullptr));*/
+    auto out = data;
+    size_t bit_offs_last_valid = 0;
     for(auto & pdu_inst:e.pdus){
         size_t bit_offs = pdu_inst.second;
         for(auto & pdu_sig : pdu_inst.first.sig_instances){
+         size_t written_bits = 0;
          bit_offs += pdu_sig.bitposition;
+         if (bit_offs > bit_offs_last_valid){
+             auto j = bit_offs - bit_offs_last_valid;
+             out->children().push_back(
+                     new ceps::ast::Struct("uint"+std::to_string(j),
+                                           new ceps::ast::Identifier( "any" ,nullptr,nullptr,nullptr))
+                    );
+
+         }
          std::string bitwidth;
          if (sig_vec[pdu_sig.sigidx].encoding.bit_length == "1")
         	 bitwidth ="bit";
@@ -320,6 +331,10 @@ struct fibex_signal{
                 )
          );
 
+         written_bits += std::stoi(sig_vec[pdu_sig.sigidx].encoding.bit_length);
+
+
+
          if (pdu_sig.pdu_refs.size()){
         	for(auto pdu_ref_entry : pdu_sig.pdu_refs ) {
         		auto ref = pdu_ref_entry.first;
@@ -329,6 +344,7 @@ struct fibex_signal{
         		 for(auto & sub_pdu_sig : sub_pdu.sig_instances){
         			 bit_offs += sub_pdu_sig.bitposition;
         			 std::string bitwidth;
+                     written_bits += std::stoi(sig_vec[sub_pdu_sig.sigidx].encoding.bit_length);
         			 if (sig_vec[sub_pdu_sig.sigidx].encoding.bit_length == "1")
         			  bitwidth ="bit";
         			 else
@@ -344,6 +360,7 @@ struct fibex_signal{
         		}
         	}
          }
+         bit_offs_last_valid = bit_offs + written_bits;
        }
     }
 

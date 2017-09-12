@@ -1,0 +1,15 @@
+
+
+
+
+  cangateway.exe --> register @ cepsdirectory via vcan_api 
+  cepsdirectory manages a lookup table listing all known hosts ( name,port )
+
+  cangateway.exe offers a websocket_api for managing stream connections
+
+  ceps@nodejs asks cepsdirectory for list of known remote hosts, iterates through thsi list
+  while connecting via websocet to each host pulling streaming information
+
+ 
+
+

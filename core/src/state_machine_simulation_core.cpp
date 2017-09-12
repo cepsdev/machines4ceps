@@ -171,7 +171,6 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
                                              ceps_env_current().interpreter_env(),
                                              &generated_nodes
                                              );
-
                 }
                 catch(Statefulscanner<Memory<char>,char>::match_ex & e) {fatal_(ERR_CEPS_PARSER, file_name);}
                 catch(Statefulscanner<Memory<char>,char>::eval_ex & e) {fatal_(ERR_CEPS_PARSER, file_name);}
@@ -184,16 +183,20 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 
 		Ceps_parser_driver driver{ceps_env_current().get_global_symboltable(),def_file};
 		ceps::Cepsparser parser{driver};
-
 		if (parser.parse() != 0 || driver.errors_occured())
 			fatal_(ERR_CEPS_PARSER, file_name);
-
 		ceps::interpreter::evaluate(current_universe(),
 									driver.parsetree().get_root(),
 									ceps_env_current().get_global_symboltable(),
 									ceps_env_current().interpreter_env(),
 									&generated_nodes
 									);
+        /*std::cout << "!!!!!!!!!!!!" << std::endl;
+        for (auto e : ceps_env_current().get_global_symboltable().scopes[0]->name_to_symbol ){
+            std::cout << e.first << std::endl;
+        }*/
+
+
 	}//for
 	return generated_nodes;
 }//process_files

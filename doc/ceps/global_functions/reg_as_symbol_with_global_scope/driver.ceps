@@ -1,0 +1,8 @@
+//c = 4.0; b = c + 1.0;
+
+Simulation{
+ //print(a,"\n");
+ //print(b,"\n");
+ print(as_symbol("c","Systemstate"),"\n");
+ print(c,"\n");
+};
