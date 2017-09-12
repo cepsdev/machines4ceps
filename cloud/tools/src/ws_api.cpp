@@ -313,10 +313,8 @@ void Websocket_interface::handler(int sck) {
 				for (std::size_t i = 1; i != cmd.size(); ++i) if (cmd[i].length()) { args.push_back(cmd[i]); }
 				//std::cout << args.size() << std::endl;
 
-				if (cmd[0] == "GET_UPDATE" && args.size() == 0) {
-					reply = "{\"ok\":true, \"signals\" : [";
-					
-					reply += "]}";
+				if (cmd[0] == "GET_INFO" && args.size() == 0) {
+					reply = "{\"ok\":true, \"value\" : \"cepSCloud CAN Streamer (C) Tomas Prerovsky <tomas.prerovsky@gmail.com>, ALL RIGHTS RESERVED.\"}";
 				}
 			}//cmd.size()!=0
 			if (!send_reply(reply)) break;
@@ -339,33 +337,34 @@ void Websocket_interface::dispatcher() {
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_family = AF_INET;
 	hints.ai_flags = AI_PASSIVE;// | AI_NUMERICSERV;
-	if (getaddrinfo("localhost",(port_.length()) ?  port_.c_str() : nullptr, &hints, &result) != 0)
-		return;// smc_->fatal_(-1, "getaddrinfo failed");
-	int optval = 1;
-	for (rp = result; rp; rp = rp->ai_next)
-	{
-		
-		lfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-		if (lfd == -1) continue;
-		if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)))exit(1);// smc_->fatal_(-1, "setsockopt");
-		
-		if (bind(lfd, rp->ai_addr, rp->ai_addrlen) == 0) break;
-		close(lfd);
-	}
-	if (!rp) return;// smc_->fatal_(-1, "Websocket_interface::dispatcher(): Could not bind socket to any address.port=" + port_);
-	if (listen(lfd, 128) == -1) return; //smc_->fatal_(-1, "listen");
-	freeaddrinfo(result);
-	int listening_port;
+
 	std::string hostname;
+
+	{
+		char buffer[512] = { 0 };
+		if (gethostname(buffer, 512) != 0) throw net::exceptions::err_inet{ "WS_API getsockname failed." };
+		hostname = buffer;
+	}
+
+	
+	struct sockaddr_in sa = { 0 };
+	sa.sin_family = AF_INET;
+	lfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (lfd == -1) throw net::exceptions::err_inet{"socket() failed"};
+	if (bind(lfd, (struct sockaddr*) &sa, sizeof(sa)) != 0) throw net::exceptions::err_inet{ "bind() failed" };
+	if (listen(lfd, 128) == -1) throw net::exceptions::err_inet{ "listen() failed" };
+
+	int listening_port;
 	{
 		struct sockaddr_in sin;
 		socklen_t len = sizeof(sin);
 		if (getsockname(lfd, (struct sockaddr *)&sin,&len ) != 0)
 			throw net::exceptions::err_inet{ "WS_API getsockname failed." };
 		listening_port = ntohs(sin.sin_port);
+
 		char buffer[512] = { 0 };
-		if ( gethostname(buffer,512) != 0) throw net::exceptions::err_inet{ "WS_API getsockname failed." };
-		hostname = buffer;
+		inet_ntop(AF_INET, &sin.sin_addr, buffer, 512);
+		//std::cout << buffer << std::endl;
 	}
 
 	{
@@ -383,7 +382,7 @@ void Websocket_interface::dispatcher() {
 	}
 
 	for (;;)
-	{
+	{		
 		cfd = accept(lfd, (struct sockaddr*) &claddr, &addrlen);
 		if (cfd == -1)  continue;
 		{
