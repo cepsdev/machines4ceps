@@ -493,6 +493,7 @@ Rawframe_generator::gen_msg_return_t Podframe_generator::gen_msg(State_machine_s
  bzero(data,chunk_size);
  std::uint32_t info = 0;
  fill_raw_chunk(encoding,header_length_, smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0,&info);
+ delete frame_pattern;
  scope.children().clear();
  if (info & Rawframe_generator::IS_BINARY) info = Rawframe_generator::IS_BINARY;
  return gen_msg_return_t{info,(void*)data};

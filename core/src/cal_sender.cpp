@@ -457,9 +457,9 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 				ev.error_ = new State_machine_simulation_core::error_t{"comm_sender_socket_can() terminated: write failed.",0};
 				smc->main_event_queue().push(ev);
 				return;
-			}
+            }
 		}
-		if (frame != nullptr) { delete[] frame; frame = nullptr; }
+        if (frame != nullptr) { delete[] frame; frame = nullptr; }
 
 	}//for(;;)
 }

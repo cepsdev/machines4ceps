@@ -924,7 +924,6 @@ static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulatio
 }
 
 static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
-
  if(args.size() == 2
 	&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
 	&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier) {
@@ -946,7 +945,7 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
 	  frame_id = it->second;
 	}
 	channel->push(std::make_tuple(msg_block,ds,it_frame_gen->second->header_length(),frame_id));
-	return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+    return nullptr;
    } else {
       /*std::stringstream ss;
       for(auto p: args) ss << *p << ", ";
@@ -974,7 +973,7 @@ static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm
 	 for(auto e : args) ss <<"   "<< *e << "\n";
 	 smc->fatal_(-1, " send() : wrong number/types of arguments.\n   Current arguments are:\n"+ss.str());
  }
- return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
+ return nullptr;
 }
 
 static std::size_t breakup_byte_sequence_helper(

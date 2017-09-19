@@ -963,7 +963,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 					this->kill_named_timer(timer_id);
 				}
 			} else{
-				eval_locked_ceps_expr(this,containing_smp,n,nullptr);
+                auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
+                if(r) delete r;
 			}
 		}
 	}
