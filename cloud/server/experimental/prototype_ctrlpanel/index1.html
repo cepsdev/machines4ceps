@@ -1,0 +1,449 @@
+﻿<!DOCTYPE html>
+<html lang=en>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="(c) ceps technologies, all rights reserved">
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- link href="datatables/css/dataTables.material.min.css" rel="stylesheet" -->
+    <!-- link href="datatables/css/jquery.dataTables.min.css" rel="stylesheet" -->
+    <link href="datatables/css/dataTables.bootstrap.min.css" rel="stylesheet" >
+    <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
+
+    <style>
+        .baseWidget {
+            border: 1px solid;
+            height: 50px;
+            width: 100px;
+            resize: both;
+            overflow: auto;
+            float: left;
+            margin: 4px;
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+        }
+
+
+            .baseWidget .header {
+                background-color:gray;
+                color: white;
+                padding: 8px;
+                border-top: 4px;
+                height: 18px;
+                border-color: inherit;
+                cursor: pointer;
+                font-size: 10.75px;
+                line-height: 1px;
+            }
+        .baseWidget-content {
+            margin: 2px;
+            padding: 4px;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
+        .baseWidget-edit {
+            margin: 2px;
+            padding: 4px;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .toggle-signal {
+            width: 200px;
+            height: 80px;
+        }
+
+        .calColor2 {
+            border: 2px solid #0064CD;
+            background-color: #4da3ff;
+        }
+
+        .ggbaseWidget {
+            border-radius: 5px;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+        }
+
+
+
+        .funkyradio div {
+            clear: both;
+            overflow: hidden;
+        }
+
+        .funkyradio label {
+            width: 100%;
+            border-radius: 3px;
+            border: 1px solid #D1D3D4;
+            font-weight: normal;
+        }
+
+        .funkyradio input[type="radio"]:empty,
+        .funkyradio input[type="checkbox"]:empty {
+            display: none;
+        }
+
+            .funkyradio input[type="radio"]:empty ~ label,
+            .funkyradio input[type="checkbox"]:empty ~ label {
+                position: relative;
+                line-height: 2.5em;
+                text-indent: 3.25em;
+                margin-top: 2em;
+                cursor: pointer;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+                .funkyradio input[type="radio"]:empty ~ label:before,
+                .funkyradio input[type="checkbox"]:empty ~ label:before {
+                    position: absolute;
+                    display: block;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    content: '';
+                    width: 2.5em;
+                    background: #D1D3D4;
+                    border-radius: 3px 0 0 3px;
+                }
+
+        .funkyradio input[type="radio"]:hover:not(:checked) ~ label,
+        .funkyradio input[type="checkbox"]:hover:not(:checked) ~ label {
+            color: #888;
+        }
+
+            .funkyradio input[type="radio"]:hover:not(:checked) ~ label:before,
+            .funkyradio input[type="checkbox"]:hover:not(:checked) ~ label:before {
+                content: '\2714';
+                text-indent: .9em;
+                color: #C2C2C2;
+            }
+
+        .funkyradio input[type="radio"]:checked ~ label,
+        .funkyradio input[type="checkbox"]:checked ~ label {
+            color: #777;
+        }
+
+            .funkyradio input[type="radio"]:checked ~ label:before,
+            .funkyradio input[type="checkbox"]:checked ~ label:before {
+                content: '\2714';
+                text-indent: .9em;
+                color: #333;
+                background-color: #ccc;
+            }
+
+        .funkyradio input[type="radio"]:focus ~ label:before,
+        .funkyradio input[type="checkbox"]:focus ~ label:before {
+            box-shadow: 0 0 0 3px #999;
+        }
+
+        .funkyradio-default input[type="radio"]:checked ~ label:before,
+        .funkyradio-default input[type="checkbox"]:checked ~ label:before {
+            color: #333;
+            background-color: #ccc;
+        }
+
+        .funkyradio-primary input[type="radio"]:checked ~ label:before,
+        .funkyradio-primary input[type="checkbox"]:checked ~ label:before {
+            color: #fff;
+            background-color: #337ab7;
+        }
+
+        .funkyradio-success input[type="radio"]:checked ~ label:before,
+        .funkyradio-success input[type="checkbox"]:checked ~ label:before {
+            color: #fff;
+            background-color: #5cb85c;
+        }
+
+        .funkyradio-danger input[type="radio"]:checked ~ label:before,
+        .funkyradio-danger input[type="checkbox"]:checked ~ label:before {
+            color: #fff;
+            background-color: #d9534f;
+        }
+
+        .funkyradio-warning input[type="radio"]:checked ~ label:before,
+        .funkyradio-warning input[type="checkbox"]:checked ~ label:before {
+            color: #fff;
+            background-color: #f0ad4e;
+        }
+
+        .funkyradio-info input[type="radio"]:checked ~ label:before,
+        .funkyradio-info input[type="checkbox"]:checked ~ label:before {
+            color: #fff;
+            background-color: #5bc0de;
+        }
+
+    </style>
+
+
+    <title>Prototype Control Panel</title>
+
+</head>
+
+<body>
+    
+    <div class="row">
+        <div class="col-xs-6 col-sm-2"></div>
+        <div class="col-xs-6 col-sm-8">
+            <h2>Control Panel </h2>
+        </div>
+        <div class="col-xs-6 col-sm-2"></div>
+    </div>
+    <div class="row">
+        <div class="col-xs-6 col-sm-2"></div>
+        <div class="col-xs-6 col-sm-8">
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background-color:white;">
+                    <div class="btn-toolbar" role="toolbar">
+                        <div class="btn-group btn-group-xs" role="group">
+                            <button id ="ctrl_panel_editor_btn_add" type="button" class ="btn btn-default btn-xs" ><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                            <button id ="ctrl_panel_editor_btn_add_paragraph" type="button" class="btn btn-default btn-xs"><i class="fa fa-paragraph" aria-hidden="true"></i></button>                            
+                        </div>                        
+                    </div>
+                </div>
+                <div id="ctrl_panel_editor" class="panel-body" contenteditable="true">
+                   
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-6 col-sm-2"></div>
+    </div>
+
+
+
+
+
+    <!-- Set Type of Widget -->
+    <div class="modal fade" id="dlg_set_widget_type" tabindex="-1" role="dialog" aria-labelledby="dlg_set_widget_type_label">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_set_widget_type_label">What should the widget do ?</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="funkyradio">
+                        <div class="funkyradio-primary">
+                            <input type="radio" name="radio" id="dlg_set_widget_type_r1" checked/>
+                            <label for="dlg_set_widget_type_r1">Toggle a Signal</label>
+                        </div>
+                        <div class="funkyradio-primary">
+                            <input type="radio" name="radio" id="dlg_set_widget_type_r2" />
+                            <label for="dlg_set_widget_type_r2">Show the value of a Signal</label>
+                        </div>
+                        <div class="funkyradio-primary">
+                            <input type="radio" name="radio" id="dlg_set_widget_type_r3" />
+                            <label for="dlg_set_widget_type_r3">Plot a Signal</label>
+                        </div>
+                        <div class="funkyradio-primary">
+                            <input type="radio" name="radio" id="dlg_set_widget_type_r4" />
+                            <label for="dlg_set_widget_type_r4">Trigger an Event</label>
+                        </div>
+                        <div class="funkyradio-primary">
+                            <input type="radio" name="radio" id="dlg_set_widget_type_r5" />
+                            <label for="dlg_set_widget_type_r5">Execute a Script</label>
+                        </div>
+                    </div>
+                   
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_set_widget_type_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="dlg_set_widget_type_btn_ok" type="button" class="btn btn-primary">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Select a Signal -->
+    <div class="modal fade" id="dlg_select_a_signal" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_signal_label">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_select_a_signal_label">Choose a Signal</h4>
+                </div>
+                <div id="dlg_select_a_signal_body" class="modal-body">
+                    <table id="dlg_select_a_signal_table" class="table table-striped table-bordered" width="100%"></table> 
+
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <script src="jquery/js/jquery.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="jquery-ui/jquery-ui.min.js"></script>
+    <script src="datatables/js/jquery.dataTables.min.js"></script>
+    <script src="datatables-plugins/dataTables.bootstrap.min.js"></script>
+    <script src="datatables-responsive/dataTables.responsive.js"></script>
+
+
+    <script>
+        var dlg_select_a_signal_table_dataset = [];
+        var handle_signal_select = undefined;
+
+        var dlg_select_a_signal_table_columns = [
+            { title: "Name" },
+            { title: "Comment" },
+        ];
+
+        function Signalinfo(n,v,c,s,r,f,i) {
+            this.name = n;
+            this.value = v;
+            this.comment = c;
+            this.sender = s;
+            this.receiver = r;
+            this.frames = f;
+            this.info = i;
+        }
+
+        var signals = [];
+        var signals_dt = undefined;
+        const slider_granularity_default = 4096;
+
+        function generate_test_data() {
+            signals = [
+                new Signalinfo("Signal A",0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], {type:"float",min:0,max:2}),
+                new Signalinfo("Signal B",2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal C",11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit:"kg" })];
+        }
+        generate_test_data();
+
+        function get_signal_by_name(n) {
+            for (let e of signals) if (e.name == n) return e;
+            return undefined;
+        }
+        
+        
+        function dlg_select_a_signal_populate_dataset(){
+            ds = [];
+           
+            for (let sig of signals) {               
+                ds.push(["<a href='#' onclick='handle_signal_select(\"" + sig.name+"\");'>"+sig.name+"</a>",sig.comment]);
+            }
+
+            return ds;            
+        }
+
+        function Widget(id) { this.type_ = "undefined"; }
+        Widget.prototype.type = function () { return this.type_; }
+        Widget.prototype.set_type = function (t) { this.type_ = t; }
+
+        function dlg_set_widget_type_get_results() {
+            return {
+                toggle_signal: $("#dlg_set_widget_type_r1").is(":checked"),
+                show_signal: $("#dlg_set_widget_type_r2").is(":checked"),
+                plot_signal: $("#dlg_set_widget_type_r3").is(":checked"),
+                trigger_event: $("#dlg_set_widget_type_r4").is(":checked"),
+                run_script: $("#dlg_set_widget_type_r5").is(":checked")
+            };
+        }
+
+        function setup_toggle_widget(widget_id, signal) {
+            $(`#header_of_${widget_id}`).html(signal.name);
+            $(`#${widget_id}`).addClass("toggle-signal");
+            $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
+
+            $(`#content_of_${widget_id}`).html("<table><tr><td width='50%'>" + "<div id='dummy_" + widget_id + "'> </div>" + "</td><td width='50%'>" +
+                `<div class="input-group input-group-sm baseWidget-edit">
+                    <input type="text" class="form-control" placeholder="..." >
+                        <span class="input-group-addon" >unit</span>
+               </div>`+ "</td></tr></table>");
+            if (signal.info.type == "float" && signal.info.vm == undefined) {
+       
+                $("#dummy_" + widget_id).slider({ min: 0, max: slider_granularity_default - 1});
+            }
+        }
+
+        
+        function handle_properties_widget(widget_id) {
+            event.preventDefault();
+            let is_not_initialized = $("#" + widget_id).hasClass("baseWidget-not-initialized");
+            if (is_not_initialized) {
+                $('#dlg_set_widget_type_btn_ok').unbind("click");
+                $('#dlg_set_widget_type_btn_ok').click((ev) => {
+                    $('#dlg_set_widget_type').modal('hide');
+                    let r = dlg_set_widget_type_get_results();
+                    
+
+                    if (signals_dt == undefined) {
+                        dlg_select_a_signal_table_dataset = dlg_select_a_signal_populate_dataset();
+                        signals_dt = $('#dlg_select_a_signal_table').DataTable({
+                            select: {
+                                style: 'single'
+                            },
+                            data: dlg_select_a_signal_table_dataset,
+                            columns: dlg_select_a_signal_table_columns
+                        });
+                    }
+                    handle_signal_select = function (sig_id) {
+                        $('#dlg_select_a_signal').modal('hide');
+                        var s = get_signal_by_name(sig_id);
+                        setup_toggle_widget( widget_id,s);
+                    }
+                    $('#dlg_select_a_signal').modal('show');
+                });
+                $('#dlg_set_widget_type').modal('show');
+            }
+        }
+
+        function CtrlPanelComponentTemplates() {
+            this.id_counter = 0;
+        }
+        CtrlPanelComponentTemplates.prototype.baseWidget = function () {
+            this.id_counter++;
+            return `<div id="widget_${this.id_counter}" class="baseWidget baseWidget-not-initialized" draggable="true">
+                    <div id="header_of_widget_${this.id_counter}" class="header" contenteditable="false" onclick="handle_properties_widget('widget_${this.id_counter}')">Widget</div>
+                    <div id="content_of_widget_${this.id_counter}" class="baseWidget-content"></div>   
+                    </div>`;
+        }
+        CtrlPanelComponentTemplates.prototype.paragraph = function () {
+            return `<br>`;
+        }
+
+        function CtrlPanelEditor(ctrl_editor_component, widget_templates) {
+            this.ctrl_editor_component_ = ctrl_editor_component;
+            this.widget_templates_ = widget_templates;
+        }
+        CtrlPanelEditor.prototype.view = function () { return this.ctrl_editor_component_; }
+        CtrlPanelEditor.prototype.widgetTemplates = function () { return this.widget_templates_; }
+        CtrlPanelEditor.prototype.addWidget = function () {
+            this.ctrl_editor_component_.append(this.widgetTemplates().baseWidget());
+        }
+        CtrlPanelEditor.prototype.addParagraph = function () {
+            this.ctrl_editor_component_.append(this.widgetTemplates().paragraph());
+        }
+
+        let ctrlPanelEditor = undefined;
+    </script>
+
+    <script>
+        $(document).ready(() => {
+            ctrlPanelEditor = new CtrlPanelEditor($('#ctrl_panel_editor'), new CtrlPanelComponentTemplates() );
+            $('#ctrl_panel_editor_btn_add').on('click', (ev) => {
+                ctrlPanelEditor.addWidget();
+            });
+            $('#ctrl_panel_editor_btn_add_paragraph').on('click', (ev) => {
+                ctrlPanelEditor.addParagraph();
+            });
+
+
+        });
+    </script>
+</body>
+
+</html>
