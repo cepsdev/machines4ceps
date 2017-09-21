@@ -253,25 +253,26 @@
         </div>
 
 
+    <!---------------------------- COMPONENT: Prop_panel ---------------------------->
     <div id="widget_properties_panel" class="panel panel-primary">
         <div class="panel-heading" id="widget_properties_panel_header">
             Widget Properties
         </div>
         <div class="panel-body">             
                 <div class="input-group" style="width:100%;">
-                        <select id="select_widget_type" class="form-control" disabled>
+                        <select id="select_widget_type" class="form-control widget-properties-panel-input" disabled>
                             <option>Modify/View Signal</option>
                             <option>Trigger Event</option>
                             <option>Run Script</option>
                         </select>
                 </div>
                 <hr />
-                <div id="details_for_sel_1" style="display:none">
+                <div id="details_for_sel_1" class="widget-properties-panel-details" style="display:none">
                     <table width="100%">
                         <tr><td>
                             <div class="input-group">
                                 <span class="input-group-addon" id="sizing-addon1">Signal</span>
-                                <select id="select_signal" class="form-control" aria-describedby="sizing-addon1">
+                                <select id="select_signal" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
                                     <option>Signal A</option>
                                     <option>Signal B</option>
                                     <option>Signal C</option>
@@ -282,7 +283,7 @@
                             </td>
                             <td>&nbsp;</td>
                             <td width="60px">
-                            <button type="button" class="btn btn-default" aria-label="Left Align">
+                            <button id = "btn_signal_search" type="button" class="btn btn-default" aria-label="Left Align">
                                 <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                             </button>
                             </td>
@@ -291,7 +292,7 @@
                     <p></p>
                     <div class="input-group">
                         <span class="input-group-addon" id="sizing-addon1">What</span>
-                        <select id="select_sig_subtype" class="form-control" aria-describedby="sizing-addon1">
+                        <select id="select_sig_subtype" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
                             <option>Toggle</option>
                             <option>Watch Only</option>
                             <option>Plot</option>
@@ -300,19 +301,46 @@
                     <p></p>
                     <div class="input-group">
                         <span class="input-group-addon" id="sizing-addon1">Update Behaviour</span>
-                        <select class="form-control" aria-describedby="sizing-addon1">
-                            <option>Automatically</option>
+                        <select id="select_update_behaviour" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
+                            <option selected>Automatically</option>
                             <option>On Trigger</option>
                         </select>
                     </div>
                     <p></p>
-                    <button type="button" style="width:100%" class="btn btn-default">
+                    <button id ="btn_update_signal_value" type="button" style="width:100%" class="btn btn-default" disabled>
                         Update Signal Value
                     </button>
                 </div>
-
-      </div>
+                <div id="details_for_sel_2" style="display:none" class="widget-properties-panel-details">
+                </div>
+                <div id="details_for_sel_3" style="display:none" class="widget-properties-panel-details">
+                </div>
+            </div>
     </div>
+    <!---------------------------- COMPONENT: Prop_panel ---------------------------->
+
+    
+
+    <!---------------------------- COMPONENT: Choose Signal ---------------------------->
+    <div class="modal fade" id="dlg_select_a_signal" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_signal_label">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_select_a_signal_label">Choose a Signal</h4>
+                </div>
+                <div id="dlg_select_a_signal_body" class="modal-body">
+                    <table id="dlg_select_a_signal_table" class="table table-striped table-bordered" width="100%"></table>
+
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!---------------------------- COMPONENT: Choose Signal ---------------------------->
 
 
 
@@ -351,8 +379,26 @@
         
         var prop_panel = undefined;
         var prop_panel_header = undefined;
+        var widget_infos = [];
+
         function init_widget_properties_panel() {
             prop_panel = $('#widget_properties_panel'); 
+            $(prop_panel).find("#btn_signal_search").on('click', (ev) => {
+                $('#dlg_select_a_signal').modal('show');
+                if (signals_dt == undefined) {
+                    dlg_select_a_signal_table_dataset = dlg_select_a_signal_populate_dataset();
+                    signals_dt = $('#dlg_select_a_signal_table').DataTable({
+                        select: {
+                            style: 'single'
+                        },
+                        data: dlg_select_a_signal_table_dataset,
+                        columns: dlg_select_a_signal_table_columns
+                    });
+                }
+            });
+            $(".widget-properties-panel-input").change(() => {
+                on_prop_panel_change();
+            });
             prop_panel_header = $('#widget_properties_panel_header'); 
             prop_panel_header.mousedown((ev) => {
                 let p = $('#widget_properties_panel_header').offset();
@@ -367,6 +413,17 @@
                 });
             });
         }
+
+        function handle_signal_select(sig_name) {
+            console.log(sig_name);
+            $('#dlg_select_a_signal').modal('hide');
+            let widget = $(".baseWidget-selected").first();
+            let info = widget_properties_panel_extract_settings();
+            info.sig_name = sig_name;
+            save_widget_info(widget, info);
+            update_prop_panel(widget);
+        }
+
         function get_widget_info(widget) {
             if (widget === undefined) return { valid: false };
             if (!widget.hasClass("baseWidget")) return { valid: false };
@@ -381,38 +438,143 @@
                 toggle_sig : false,
                 update_sig_automatically : false
             };
+            let widget_id = widget.attr("id");
+            for (let e of widget_infos) {
+                if (e.id == widget_id) {
+                    return e.info;
+                }
+            }
+            return { valid: false };
+        }
+        function save_widget_info(widget,info) {
+            let widget_id = widget.attr("id");
+            for (let e of widget_infos) {
+                if (e.id == widget_id) {
+                    e.info = info;
+                    return true;
+                }
+            }
+            widget_infos.push({id:widget_id, info : info});
+        }
 
-            return { valid: true };
+        function widget_properties_panel_extract_settings() {
+            let type_ctrl = $(prop_panel).find("#select_widget_type");
+            if (type_ctrl.length != 1) throw "Internal Error";
+            let type = type_ctrl.find(":selected").text();
+            if (type == "Modify/View Signal") {
+                let sig_name = $(prop_panel).find("#select_signal").find(":selected").text();
+                let sub_type = $(prop_panel).find("#select_sig_subtype").find(":selected").text();
+                let update_behaviour = $(prop_panel).find("#select_update_behaviour").find(":selected").text();
+
+                return {
+                    valid: true,
+                    type: { sig: true, ev: false, script: false },
+                    doc: undefined,
+                    sig_name: sig_name,
+                    ev_name: undefined,
+                    do_plot: sub_type=="Plot",
+                    watch_only: sub_type == "Watch Only",
+                    toggle_sig: sub_type == "Toggle",
+                    update_sig_automatically: update_behaviour == "Automatically"
+                };
+            } else if (type == "Trigger Event") {
+                return {
+                    valid: true,
+                    type: { sig: false, ev: true, script: false },
+                    doc: undefined,
+                    sig_name: undefined,
+                    ev_name: undefined,
+                    do_plot: false,
+                    watch_only: false,
+                    toggle_sig: false,
+                    update_sig_automatically: false
+                };
+            } else if (type == "Run Script") {
+                return {
+                    valid: true,
+                    type: { sig: false, ev: false, script: true },
+                    doc: undefined,
+                    sig_name: undefined,
+                    ev_name: undefined,
+                    do_plot: false,
+                    watch_only: false,
+                    toggle_sig: false,
+                    update_sig_automatically: false
+                };
+            } else throw "Internal Error";
+        }
+
+        function on_prop_panel_change() {
+            let widget = $(".baseWidget-selected").first();
+            let info = widget_properties_panel_extract_settings();
+            save_widget_info(widget, info);
+            update_prop_panel(widget);
+        }
+
+        function helper_build_sel_html(list, selected) {
+            let r = "";
+            for (let i = 0; i != list.length; ++i) {
+                if (i != selected) r += "<option value=\"" + list[i] + "\" >" + list[i] + "</option>";
+                else r += "<option value=\"" + list[i] + "\" selected >" + list[i] + "</option>";
+            }
+            return r;
         }
 
         function update_prop_panel(widget) {
             let info = get_widget_info(widget);
             let update_widget = false;
+            let widget_id = widget.attr("id");
            
             if (!info.valid) return;
             if (!info.type.sig && !info.type.ev && !info.type.script) {
                 update_widget = true; info.type.sig = true;
             }
-            if (info.type.sig) {
-                $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").css("display", "block");
+            $(prop_panel).find(".widget-properties-panel-details").css("display", "none");
+            $(prop_panel).find("#select_widget_type").removeAttr('disabled'); 
+            if (info.type.sig) $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").css("display", "block");
+
+            if (info.type.sig) {                
                 let sig_sel = $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").first().find("#select_signal").first();
                 let sig_sel_html = "";
                 signals.forEach((e) => { sig_sel_html += "<option value=\""+e.name+"\" "+ (e.name == info.sig_name ? " selected >":">")  + e.name +"</option>"; }  )
                 sig_sel.html(sig_sel_html);
+                sig_subtype_sel = $(prop_panel).find("#select_sig_subtype");
+                {
+                    let sig_subtype_sel_idx = 0;
+                    if (!update_widget) {
+                        if (info.toggle_sig) sig_subtype_sel_idx = 0;
+                        else if (info.watch_only) sig_subtype_sel_idx = 1;
+                        else if (info.do_plot) sig_subtype_sel_idx = 2;
+                    }
+                    sig_subtype_sel.html(helper_build_sel_html(["Toggle", "Watch Only", "Plot"], sig_subtype_sel_idx));
+                }
+                {
+                    let update_behaviour_sel = $(prop_panel).find("#select_update_behaviour");
+                    let i = 0;
+                    if (!update_widget) if (info.update_sig_automatically) i = 0; else i = 1;
+                    update_behaviour_sel.html((helper_build_sel_html(["Automatically", "On Trigger"], i)));
+                }
+
             }
+
+            if (!update_widget)
+                if (info.type.sig && info.update_sig_automatically) $(prop_panel).find("#btn_update_signal_value").removeAttr("disabled");
+                else if (info.type.sig && !info.update_sig_automatically) $(prop_panel).find("#btn_update_signal_value").removeAttr("disabled").attr("disabled","");
+
+
+            if (update_widget) {
+                widget.removeClass("baseWidget-not-initialized");
+                let new_info = widget_properties_panel_extract_settings();
+                save_widget_info(widget,new_info);
+            }            
         }
     </script>
     <!---------------------- widget_properties_panel ----------------------->
-
-
-
-
-
-
+    
 
     <script>
         var dlg_select_a_signal_table_dataset = [];
-        var handle_signal_select = undefined;
+        
 
         var dlg_select_a_signal_table_columns = [
             { title: "Name" },
