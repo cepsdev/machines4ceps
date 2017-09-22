@@ -643,28 +643,28 @@
         function generate_test_data() {
             signals = [
                 new Signalinfo("Signal A", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], {type:"float",min:-2,max:2}),
-                new Signalinfo("Signal B", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal B", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10 }),
                 new Signalinfo("Signal C", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
                 new Signalinfo("Signal D", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal E", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal E", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ val: 0, name: "a" }, { val:1, name: "b" }, { val:2, name:"c" }] }),
                 new Signalinfo("Signal F", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
                 new Signalinfo("Signal G", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal H", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal H", 2, 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ val: 0, name: "a" }, { val: 1, name: "b" }, { val: 2, name: "c" }] }),
                 new Signalinfo("Signal I", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
                 new Signalinfo("Signal J", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal K", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal K", 2, 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ val: 0, name: "a" }, { val: 1, name: "b" }, { val: 2, name: "c" }] }),
                 new Signalinfo("Signal L", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
                 new Signalinfo("Signal M", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal N", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal N", 2, 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ val: 0, name: "a" }, { val: 1, name: "b" }, { val: 2, name: "c" }] }),
                 new Signalinfo("Signal O", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
                 new Signalinfo("Signal P", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal Q", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal Q", 2, 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ val: 0, name: "a" }, { val: 1, name: "b" }, { val: 2, name: "c" }] }),
                 new Signalinfo("Signal R", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
                 new Signalinfo("Signal S", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal T", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal T", 2, 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ val: 0, name: "a" }, { val: 1, name: "b" }, { val: 2, name: "c" }] }),
                 new Signalinfo("Signal U", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
                 new Signalinfo("Signal V", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal W", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal W", 2, 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ val: 0, name: "a" }, { val: 1, name: "b" }, { val: 2, name: "c" }] }),
                 new Signalinfo("Signal X", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" })
             ];
         }
@@ -684,21 +684,24 @@
 
         function map_sig_target_value_to_range(signal, r) {
             let rr = ((signal.target_value - signal.info.min) / (signal.info.max - signal.info.min)) * r;
-            if (signal.info.type == "float")
-                return rr;
+            return rr;
         }
 
         function map_sig_value_to_range(signal, r) {
             let rr = ((signal.value - signal.info.min) / (signal.info.max - signal.info.min)) * r;
-            if (signal.info.type == "float")
-                return rr;
+            return rr;
         }
-        
 
         function map_range_index_to_value(signal, r, i) {
             let rr = ((i / r) * (signal.info.max - signal.info.min)) + signal.info.min;
             if (signal.info.type == "float")
-                return Math.round(rr*10000)/10000.0;
+                return Math.round(rr * 10000) / 10000.0;
+            if (signal.info.type == "int") {
+                rr = Math.min(Math.round(rr), signal.info.max);
+                if (rr < signal.info.min) rr = signal.info.min;
+                return rr;
+            }
+            else return rr;
         }
 
         generate_test_data();
@@ -733,27 +736,111 @@
             };
         }
 
+        function helper_make_toggle_widget_sel_list(signal,v) {
+            let l = ["- No Mapping Available -"];
+            let sel_index = 0;
+            let i = 1;
+            for (e of signal.info.vm) {
+                l.push(e.name);
+                if (Math.abs(v) < Number.MIN_VALUE)
+                { if (Math.abs(v - e.val) <= Number.MIN_VALUE) sel_index = i; }
+                else
+                { if (Math.abs(v - e.val) / Math.abs(v) <= Number.MIN_VALUE) sel_index = i; }
+                ++i;
+            }
+            return [l,sel_index];
+        }
+
+        function helper_make_toggle_widget_content(widget_id, signal) {
+            let widget_content = "";
+            if (signal.info.vm && signal.info.vm.length > 0) {
+                let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
+                widget_content =
+                `<table>
+                  <tr>
+                   <td width='50%'>
+                     <div id='dummy_${widget_id}'></div>
+                   </td><td width='50%'> 
+                    <div class="input-group input-group-sm baseWidget-edit">
+                        <select id="${widget_id}_select_ctrl" class="form-control">
+                          ${helper_build_sel_html(l, sel_index)}
+                        </select>
+                        <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  enabled>${signal.target_value}</textarea>
+                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit : "Scalar"}</span>
+                    </div>
+                  </td>
+                 </tr>
+                </table>`;
+
+            } else {
+                widget_content =
+                    `<table><tr><td width='50%'><div id='dummy_${widget_id}'></div></td><td width='50%'> 
+                    <div class="input-group input-group-sm baseWidget-edit">
+                    <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  enabled>${signal.target_value}</textarea>
+                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit : "Scalar"}</span>
+               </div></td></tr></table>`;
+            }
+            return widget_content;
+        }
+
         function setup_toggle_widget(widget_id, signal) {
             $(`#header_of_${widget_id}`).html(signal.name);
             $(`#${widget_id}`).addClass("toggle-signal");
             $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
-            $(`#content_of_${widget_id}`).html("<table><tr><td width='50%'>" + "<div id='dummy_" + widget_id + "'> </div>" + "</td><td width='50%'>" +
-                `<div class="input-group input-group-sm baseWidget-edit">
-                    <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  enabled>${signal.target_value}</textarea>
-                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit:""}</span>
-               </div>`+ "</td></tr></table>");
-            if (signal.info.type == "float" && signal.info.vm == undefined) {
+            let widget_content = helper_make_toggle_widget_content(widget_id, signal);
+
+            $(`#content_of_${widget_id}`).html(widget_content);
+            if (signal.info.type == "float") {
                 let s = $("#dummy_" + widget_id).slider(
                     {
                         min: 0,
                         max: slider_granularity_default - 1,
                         value: map_sig_target_value_to_range(signal, slider_granularity_default - 1),
                         slide: function (ev, ui) {
-                            let v = map_range_index_to_value(signal, slider_granularity_default - 1, ui.value);                            
+                            let v = map_range_index_to_value(signal, slider_granularity_default - 1, ui.value);
                             $("#" + widget_id + "_text_ctrl").val(v.toString());
                             set_signal_target_value(widget_id, v, signal.name);
-                         }
-                    });                
+                        }
+                    });
+                save_widget_ext(widget_id, {
+                    slider: s,
+                    slider_range: slider_granularity_default - 1,
+                    set_value: function (v) {
+                        $("#" + widget_id + "_text_ctrl").val(v.toString());
+                        let vv = map_sig_target_value_to_range(signal, slider_granularity_default - 1);
+                        $(s).slider("value", vv);
+                    }
+                });
+            } else if (signal.info.type == "int") {
+                let gran = Math.min(slider_granularity_default - 1, (signal.info.max - signal.info.min));
+                let s = $("#dummy_" + widget_id).slider(
+                    {
+                        min: 0,
+                        max: gran,
+                        value: map_sig_target_value_to_range(signal, gran),
+                        slide: function (ev, ui) {
+                            let v = map_range_index_to_value(signal, gran, ui.value);
+                            $("#" + widget_id + "_text_ctrl").val(v.toString());
+                            set_signal_target_value(widget_id, v, signal.name);
+                            let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
+                            $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
+                        }
+                    });
+                $(`#${widget_id}_select_ctrl`).change( function (ev) {
+                    let v_str = $(`#${widget_id}_select_ctrl`).find(":selected").text();
+                    let [l, old_idx] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
+                    let new_idx = 0;
+                    for (let i = 0; i != signal.info.vm.length; ++i) if (signal.info.vm[i].name == v_str) { new_idx = i + 1; break; }
+                    if (new_idx == 0 && old_idx != 0) {
+                        let s = signal.info.vm[old_idx - 1].name;
+                        $(`#${widget_id}_select_ctrl option[value='${s}']`).prop('selected', true);
+                    } else if (new_idx != 0) {
+                        signal.target_value = signal.info.vm[new_idx - 1].val;
+                        $("#" + widget_id + "_text_ctrl").val(signal.target_value.toString());
+                        let vv = map_sig_target_value_to_range(signal, gran);
+                        $(s).slider("value", vv);
+                    }
+                });
                 save_widget_ext(widget_id, {
                     slider: s,
                     slider_range: slider_granularity_default - 1,
@@ -809,7 +896,7 @@
         }
         CtrlPanelComponentTemplates.prototype.baseWidget = function () {
             this.id_counter++;
-            return `<div id="widget_${this.id_counter}" class="baseWidget baseWidget-not-initialized" draggable="true">
+            return `<div id="widget_${this.id_counter}" class="baseWidget baseWidget-not-initialized">
                     <div id="header_of_widget_${this.id_counter}" class="header" contenteditable="false" onclick="handle_widget_click_header('widget_${this.id_counter}',event)"> <i>Click to configure...</i> </div>
                     <div id="content_of_widget_${this.id_counter}" class="baseWidget-content"></div>   
                     </div>`;
