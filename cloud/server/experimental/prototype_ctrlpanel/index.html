@@ -19,8 +19,8 @@
        #widget_properties_panel {
             position: absolute;
             left: 30px;
-            top: 60px;
-            width:200px;
+            top: 190px;
+            width:280px;
             resize: both;
             overflow: auto;
             box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
@@ -31,8 +31,8 @@
        }        
        .baseWidget {
             border: 1px solid;
-            height: 50px;
-            width: 100px;
+            height: 60px;
+            width: 160px;
             resize: both;
             overflow: auto;
             float: left;
@@ -244,7 +244,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id="ctrl_panel_editor" class="panel-body" contenteditable="true">
+                    <div id="ctrl_panel_editor" class="panel-body" >
 
                     </div>
                 </div>
@@ -254,16 +254,17 @@
 
 
     <!---------------------------- COMPONENT: Prop_panel ---------------------------->
-    <div id="widget_properties_panel" class="panel panel-primary">
+    <div id="widget_properties_panel" class="panel panel-primary" style="display:none;">
         <div class="panel-heading" id="widget_properties_panel_header">
             Widget Properties
         </div>
         <div class="panel-body">             
                 <div class="input-group" style="width:100%;">
                         <select id="select_widget_type" class="form-control widget-properties-panel-input" disabled>
-                            <option>Modify/View Signal</option>
-                            <option>Trigger Event</option>
-                            <option>Run Script</option>
+                            <option value="Choose ..." >Choose ...</option>
+                            <option value="Modify/View Signal">Modify/View Signal</option>
+                            <option value="Trigger Event">Trigger Event</option>
+                            <option value="Run Script">Run Script</option>
                         </select>
                 </div>
                 <hr />
@@ -359,9 +360,10 @@
     
     <!---------------------- Signals ----------------------->
     <script>
-        function Signalinfo(n, v, c, s, r, f, i) {
+        function Signalinfo(n, v, tv, c, s, r, f, i) {
             this.name = n;
             this.value = v;
+            this.target_value = tv;
             this.comment = c;
             this.sender = s;
             this.receiver = r;
@@ -415,7 +417,6 @@
         }
 
         function handle_signal_select(sig_name) {
-            console.log(sig_name);
             $('#dlg_select_a_signal').modal('hide');
             let widget = $(".baseWidget-selected").first();
             let info = widget_properties_panel_extract_settings();
@@ -428,7 +429,7 @@
             if (widget === undefined) return { valid: false };
             if (!widget.hasClass("baseWidget")) return { valid: false };
             if (widget.hasClass("baseWidget-not-initialized")) return {
-                valid: true,
+                valid: false,
                 type: { sig: false, ev: false, script: false },
                 doc: undefined,
                 sig_name: undefined,
@@ -446,21 +447,49 @@
             }
             return { valid: false };
         }
-        function save_widget_info(widget,info) {
+        function save_widget_info(widget, info) {
+            info.valid = info.type.sig || info.type.ev || info.type.script;
             let widget_id = widget.attr("id");
             for (let e of widget_infos) {
                 if (e.id == widget_id) {
                     e.info = info;
+                    update_widget_ctrl(widget, info);
                     return true;
                 }
             }
-            widget_infos.push({id:widget_id, info : info});
+            widget_infos.push({ id: widget_id, info: info });
+            update_widget_ctrl(widget, info);
+            return true;
+        }
+
+        function save_widget_ext(widget_id, ext) {
+            for (let e of widget_infos) {
+                if (e.id == widget_id) {
+                    e.ext = ext;
+                    return;
+                }
+            }
+            throw "Internal Error:" + widget_id;
+        }
+
+        function update_widget_ctrl(widget, info) {
+            let widget_id = widget.attr("id");
+            if (info == undefined)
+                info = get_widget_info(widget);
+            if (info.type.sig) {
+                if (info.toggle_sig) {
+                    setup_toggle_widget(widget_id, get_signal_by_name(info.sig_name));
+                } else if (info.watch_only) {
+                    setup_view_signal_widget(widget_id, get_signal_by_name(info.sig_name));
+                }
+            }
         }
 
         function widget_properties_panel_extract_settings() {
             let type_ctrl = $(prop_panel).find("#select_widget_type");
             if (type_ctrl.length != 1) throw "Internal Error";
             let type = type_ctrl.find(":selected").text();
+            
             if (type == "Modify/View Signal") {
                 let sig_name = $(prop_panel).find("#select_signal").find(":selected").text();
                 let sub_type = $(prop_panel).find("#select_sig_subtype").find(":selected").text();
@@ -501,7 +530,19 @@
                     toggle_sig: false,
                     update_sig_automatically: false
                 };
-            } else throw "Internal Error";
+            }
+            
+            return {
+                valid: false,
+                type: { sig: false, ev: false, script: false },
+                doc: undefined,
+                sig_name: undefined,
+                ev_name: undefined,
+                do_plot: false,
+                watch_only: false,
+                toggle_sig: false,
+                update_sig_automatically: false
+            };
         }
 
         function on_prop_panel_change() {
@@ -524,14 +565,29 @@
             let info = get_widget_info(widget);
             let update_widget = false;
             let widget_id = widget.attr("id");
-           
-            if (!info.valid) return;
-            if (!info.type.sig && !info.type.ev && !info.type.script) {
-                update_widget = true; info.type.sig = true;
+
+            $(prop_panel).css("display", "block");
+            if (!info.valid) {
+                $(prop_panel).find(".widget-properties-panel-details").css("display", "none");
+                update_widget = true;
+            }           
+            
+            $(prop_panel).find("#select_widget_type").removeAttr('disabled');
+            {
+                let widget_type_sel = $(prop_panel).find("#select_widget_type");
+                let i = 0;
+                if (info.type.sig) i = 1;
+                else if (info.type.ev) i = 2;
+                else if (info.type.script) i = 3;
+                widget_type_sel.html(helper_build_sel_html(["Choose ...", "Modify/View Signal", "Trigger Event","Run Script"], i));
             }
-            $(prop_panel).find(".widget-properties-panel-details").css("display", "none");
-            $(prop_panel).find("#select_widget_type").removeAttr('disabled'); 
+
+            $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").css("display", "none");
+            $(prop_panel).children(".panel-body").first().children("#details_for_sel_2").css("display", "none");
+            $(prop_panel).children(".panel-body").first().children("#details_for_sel_3").css("display", "none");
             if (info.type.sig) $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").css("display", "block");
+            if (info.type.ev) $(prop_panel).children(".panel-body").first().children("#details_for_sel_2").css("display", "block");
+            if (info.type.script) $(prop_panel).children(".panel-body").first().children("#details_for_sel_3").css("display", "block");
 
             if (info.type.sig) {                
                 let sig_sel = $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").first().find("#select_signal").first();
@@ -563,9 +619,9 @@
 
 
             if (update_widget) {
-                widget.removeClass("baseWidget-not-initialized");
                 let new_info = widget_properties_panel_extract_settings();
-                save_widget_info(widget,new_info);
+                if (new_info.valid) widget.removeClass("baseWidget-not-initialized");
+                save_widget_info(widget, new_info);
             }            
         }
     </script>
@@ -585,32 +641,65 @@
 
         function generate_test_data() {
             signals = [
-                new Signalinfo("Signal A",0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], {type:"float",min:0,max:2}),
-                new Signalinfo("Signal B",2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal C", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
-                new Signalinfo("Signal D", 0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal E", 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal F", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
-                new Signalinfo("Signal G", 0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal H", 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal I", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
-                new Signalinfo("Signal J", 0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal K", 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal L", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
-                new Signalinfo("Signal M", 0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal N", 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal O", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
-                new Signalinfo("Signal P", 0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal Q", 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal R", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
-                new Signalinfo("Signal S", 0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal T", 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal U", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
-                new Signalinfo("Signal V", 0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
-                new Signalinfo("Signal W", 2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
-                new Signalinfo("Signal X", 11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" })
+                new Signalinfo("Signal A", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], {type:"float",min:-2,max:2}),
+                new Signalinfo("Signal B", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal C", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
+                new Signalinfo("Signal D", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
+                new Signalinfo("Signal E", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal F", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
+                new Signalinfo("Signal G", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
+                new Signalinfo("Signal H", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal I", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
+                new Signalinfo("Signal J", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
+                new Signalinfo("Signal K", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal L", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
+                new Signalinfo("Signal M", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
+                new Signalinfo("Signal N", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal O", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
+                new Signalinfo("Signal P", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
+                new Signalinfo("Signal Q", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal R", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
+                new Signalinfo("Signal S", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
+                new Signalinfo("Signal T", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal U", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" }),
+                new Signalinfo("Signal V", 0.5,0.5, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 2 }),
+                new Signalinfo("Signal W", 2,2, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "int", min: 0, max: 10, vm: [{ 0: "a" }, { 1: "b" }, { 2: "c" }] }),
+                new Signalinfo("Signal X", 11.1,11.1, "aksdhkja asjkhdjkshdaakj",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: 0, max: 20, unit: "kg" })
             ];
         }
+
+        function set_signal_target_value(widget_id, tv, signal_name) {
+            
+            let sig = get_signal_by_name(signal_name);
+            sig.target_value = tv;
+            for (let e of widget_infos) {
+                if (e.id == widget_id) continue;
+             
+                if (e.info.type.sig && e.info.toggle_sig && (e.info.sig_name == signal_name) ) {
+                    e.ext.set_value(tv);
+                }
+            }
+        }
+
+        function map_sig_target_value_to_range(signal, r) {
+            let rr = ((signal.target_value - signal.info.min) / (signal.info.max - signal.info.min)) * r;
+            if (signal.info.type == "float")
+                return rr;
+        }
+
+        function map_sig_value_to_range(signal, r) {
+            let rr = ((signal.value - signal.info.min) / (signal.info.max - signal.info.min)) * r;
+            if (signal.info.type == "float")
+                return rr;
+        }
+        
+
+        function map_range_index_to_value(signal, r, i) {
+            let rr = ((i / r) * (signal.info.max - signal.info.min)) + signal.info.min;
+            if (signal.info.type == "float")
+                return Math.round(rr*10000)/10000.0;
+        }
+
         generate_test_data();
 
         function get_signal_by_name(n) {
@@ -647,15 +736,60 @@
             $(`#header_of_${widget_id}`).html(signal.name);
             $(`#${widget_id}`).addClass("toggle-signal");
             $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
-
             $(`#content_of_${widget_id}`).html("<table><tr><td width='50%'>" + "<div id='dummy_" + widget_id + "'> </div>" + "</td><td width='50%'>" +
                 `<div class="input-group input-group-sm baseWidget-edit">
-                    <input type="text" class="form-control" placeholder="..." >
-                        <span class="input-group-addon" >unit</span>
+                    <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  enabled>${signal.target_value}</textarea>
+                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit:""}</span>
                </div>`+ "</td></tr></table>");
             if (signal.info.type == "float" && signal.info.vm == undefined) {
-       
-                $("#dummy_" + widget_id).slider({ min: 0, max: slider_granularity_default - 1});
+                let s = $("#dummy_" + widget_id).slider(
+                    {
+                        min: 0,
+                        max: slider_granularity_default - 1,
+                        value: map_sig_target_value_to_range(signal, slider_granularity_default - 1),
+                        slide: function (ev, ui) {
+                            let v = map_range_index_to_value(signal, slider_granularity_default - 1, ui.value);                            
+                            $("#" + widget_id + "_text_ctrl").val(v.toString());
+                            set_signal_target_value(widget_id, v, signal.name);
+                         }
+                    });                
+                save_widget_ext(widget_id, {
+                    slider: s,
+                    slider_range: slider_granularity_default - 1,
+                    set_value: function (v) {
+                        $("#" + widget_id + "_text_ctrl").val(v.toString());
+                        let vv = map_sig_target_value_to_range(signal, slider_granularity_default - 1);
+                        $(s).slider("value", vv);
+                    }
+                });
+            }
+        }
+        function setup_view_signal_widget(widget_id, signal) {
+            $(`#header_of_${widget_id}`).html(signal.name);
+            $(`#${widget_id}`).addClass("toggle-signal");
+            $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
+            $(`#content_of_${widget_id}`).html("<table><tr><td width='50%'>" + "<div id='dummy_" + widget_id + "'> </div>" + "</td><td width='50%'>" +
+                `<div class="input-group input-group-sm baseWidget-edit">
+                    <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  disabled>${signal.target_value}</textarea>
+                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit : ""}</span>
+               </div>`+ "</td></tr></table>");
+            if (signal.info.type == "float" && signal.info.vm == undefined) {
+                let s = $("#dummy_" + widget_id).slider(
+                    {
+                        min: 0,
+                        max: slider_granularity_default - 1,
+                        value: map_sig_value_to_range(signal, slider_granularity_default - 1),
+                        disabled:true
+                    });
+                save_widget_ext(widget_id, {
+                    slider: s,
+                    slider_range: slider_granularity_default - 1,
+                    set_value: function (v) {
+                        $("#" + widget_id + "_text_ctrl").val(v.toString());
+                        let vv = map_sig_value_to_range(signal, slider_granularity_default - 1);
+                        $(s).slider("value", vv);
+                    }
+                });
             }
         }
 
@@ -675,7 +809,7 @@
         CtrlPanelComponentTemplates.prototype.baseWidget = function () {
             this.id_counter++;
             return `<div id="widget_${this.id_counter}" class="baseWidget baseWidget-not-initialized" draggable="true">
-                    <div id="header_of_widget_${this.id_counter}" class="header" contenteditable="false" onclick="handle_widget_click_header('widget_${this.id_counter}',event)">Widget</div>
+                    <div id="header_of_widget_${this.id_counter}" class="header" contenteditable="false" onclick="handle_widget_click_header('widget_${this.id_counter}',event)"> <i>Click to configure...</i> </div>
                     <div id="content_of_widget_${this.id_counter}" class="baseWidget-content"></div>   
                     </div>`;
         }
