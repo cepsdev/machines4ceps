@@ -29,7 +29,7 @@
  
        #widget_properties_panel .panel-heading {
             cursor: pointer;
-       }        
+       }
        .baseWidget {
             border: 1px solid;
             height: 60px;
@@ -40,7 +40,14 @@
             margin: 4px;
             box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
             cursor: pointer;
-       }
+            transition: opacity 0.4s;
+        }
+
+        .baseWidget-remove {
+            transition-timing-function: ease;
+            opacity: 0.0;
+        }
+
        .baseWidget .header {
             background-color:gray;
             color: white;
@@ -93,6 +100,26 @@
             height: 80px;
         }
 
+        .prop-panel {
+            transition: opacity 0.7s, transform 0.5s;
+            opacity: 1.0;
+        }
+
+        .prop-panel:hover {
+        }
+
+        .prop-panel-transition-1 {
+            transition-timing-function: ease;
+            opacity: 0.0;
+            transform: rotate3d(1, 2, -1, 1180deg);
+        }
+
+        .prop-panel-transition-2 {
+            transition-timing-function: ease;
+            opacity: 1.0;
+            transform : unset;
+        }
+
         .calColor2 {
             border: 2px solid #0064CD;
             background-color: #4da3ff;
@@ -103,123 +130,8 @@
             -moz-border-radius: 5px;
             -webkit-border-radius: 5px;
         }
-
-
-
-        .funkyradio div {
-            clear: both;
-            overflow: hidden;
-        }
-
-        .funkyradio label {
-            width: 100%;
-            border-radius: 3px;
-            border: 1px solid #D1D3D4;
-            font-weight: normal;
-        }
-
-        .funkyradio input[type="radio"]:empty,
-        .funkyradio input[type="checkbox"]:empty {
-            display: none;
-        }
-
-            .funkyradio input[type="radio"]:empty ~ label,
-            .funkyradio input[type="checkbox"]:empty ~ label {
-                position: relative;
-                line-height: 2.5em;
-                text-indent: 3.25em;
-                margin-top: 2em;
-                cursor: pointer;
-                -webkit-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-
-                .funkyradio input[type="radio"]:empty ~ label:before,
-                .funkyradio input[type="checkbox"]:empty ~ label:before {
-                    position: absolute;
-                    display: block;
-                    top: 0;
-                    bottom: 0;
-                    left: 0;
-                    content: '';
-                    width: 2.5em;
-                    background: #D1D3D4;
-                    border-radius: 3px 0 0 3px;
-                }
-
-        .funkyradio input[type="radio"]:hover:not(:checked) ~ label,
-        .funkyradio input[type="checkbox"]:hover:not(:checked) ~ label {
-            color: #888;
-        }
-
-            .funkyradio input[type="radio"]:hover:not(:checked) ~ label:before,
-            .funkyradio input[type="checkbox"]:hover:not(:checked) ~ label:before {
-                content: '\2714';
-                text-indent: .9em;
-                color: #C2C2C2;
-            }
-
-        .funkyradio input[type="radio"]:checked ~ label,
-        .funkyradio input[type="checkbox"]:checked ~ label {
-            color: #777;
-        }
-
-            .funkyradio input[type="radio"]:checked ~ label:before,
-            .funkyradio input[type="checkbox"]:checked ~ label:before {
-                content: '\2714';
-                text-indent: .9em;
-                color: #333;
-                background-color: #ccc;
-            }
-
-        .funkyradio input[type="radio"]:focus ~ label:before,
-        .funkyradio input[type="checkbox"]:focus ~ label:before {
-            box-shadow: 0 0 0 3px #999;
-        }
-
-        .funkyradio-default input[type="radio"]:checked ~ label:before,
-        .funkyradio-default input[type="checkbox"]:checked ~ label:before {
-            color: #333;
-            background-color: #ccc;
-        }
-
-        .funkyradio-primary input[type="radio"]:checked ~ label:before,
-        .funkyradio-primary input[type="checkbox"]:checked ~ label:before {
-            color: #fff;
-            background-color: #337ab7;
-        }
-
-        .funkyradio-success input[type="radio"]:checked ~ label:before,
-        .funkyradio-success input[type="checkbox"]:checked ~ label:before {
-            color: #fff;
-            background-color: #5cb85c;
-        }
-
-        .funkyradio-danger input[type="radio"]:checked ~ label:before,
-        .funkyradio-danger input[type="checkbox"]:checked ~ label:before {
-            color: #fff;
-            background-color: #d9534f;
-        }
-
-        .funkyradio-warning input[type="radio"]:checked ~ label:before,
-        .funkyradio-warning input[type="checkbox"]:checked ~ label:before {
-            color: #fff;
-            background-color: #f0ad4e;
-        }
-
-        .funkyradio-info input[type="radio"]:checked ~ label:before,
-        .funkyradio-info input[type="checkbox"]:checked ~ label:before {
-            color: #fff;
-            background-color: #5bc0de;
-        }
-
     </style>
-
-
     <title>Prototype Control Panel</title>
-
 </head>
 
 <body>
@@ -241,7 +153,7 @@
                         <div class="btn-toolbar" role="toolbar">
                             <div class="btn-group btn-group-xs" role="group">
                                 <button id="ctrl_panel_editor_btn_add" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
-                                <button id="ctrl_panel_editor_btn_add_paragraph" type="button" class="btn btn-default btn-xs"><i class="fa fa-paragraph" aria-hidden="true"></i></button>
+                                <!--button id="ctrl_panel_editor_btn_add_paragraph" type="button" class="btn btn-default btn-xs"><i class="fa fa-paragraph" aria-hidden="true"></i></button-->
                             </div>
                         </div>
                     </div>
@@ -255,9 +167,12 @@
 
 
     <!---------------------------- COMPONENT: Prop_panel ---------------------------->
-    <div id="widget_properties_panel" class="panel panel-primary" style="display:none;">
+    <div id="widget_properties_panel" class="panel panel-primary prop-panel" style="display:none;width:400px;">
         <div class="panel-heading" id="widget_properties_panel_header">
             Widget Properties
+            <button type="button" class="close" aria-label="Close" onclick="close_widget_properties_panel();">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
         <div class="panel-body">             
                 <div class="input-group" style="width:100%;">
@@ -292,7 +207,7 @@
                         </tr>
                     </table>
                     <p></p>
-                    <div class="input-group">
+                    <div class="input-group" style="display:none;">
                         <span class="input-group-addon" id="sizing-addon1">What</span>
                         <select id="select_sig_subtype" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
                             <option>Toggle</option>
@@ -301,22 +216,73 @@
                         </select>
                     </div>
                     <p></p>
-                    <div class="input-group">
-                        <span class="input-group-addon" id="sizing-addon1">Update Behaviour</span>
-                        <select id="select_update_behaviour" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
-                            <option selected>Automatically</option>
-                            <option>On Trigger</option>
-                        </select>
+
+
+
+                    <div class="panel-group" id="accordion_sel_1" role="tablist" aria-multiselectable="true">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading" role="tab" id="accordion_sel_1_1_heading">
+                                <h6 class="panel-title">
+                                    <a role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_1_collapse" aria-expanded="true" aria-controls="accordion_sel_1_1_collapse">
+                                        Toggle Signal / Watch Signal
+                                    </a>
+                                </h6>
+                            </div>
+                            <div id="accordion_sel_1_1_collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="accordion_sel_1_1_heading">
+                                <div class="panel-body">
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon1">Display Format</span>
+                                        <select id="select_display_format" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1" disabled>
+                                            <option>Decimal</option>
+                                            <option>Hexadecimal</option>
+                                            <option>Binary</option>
+                                            <option>Octal</option>
+                                        </select>
+                                    </div>
+                                    <p></p>
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon1">Update Value</span>
+                                        <select id="select_update_behaviour" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
+                                            <option selected>Automatically</option>
+                                            <option>On Trigger</option>
+                                            <option>Watch Only</option>
+                                        </select>
+                                    </div>                                    
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel panel-primary">
+                            <div class="panel-heading" role="tab" id="accordion_sel_1_2_heading">
+                                <h4 class="panel-title">
+                                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_2_collapse" aria-expanded="false" aria-controls="accordion_sel_1_2_collapse">
+                                        Plot Signal
+                                    </a>
+                                </h4>
+                            </div>
+                            <div id="accordion_sel_1_2_collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="accordion_sel_1_2_heading">
+                                <div class="panel-body">
+                                    &nbsp;
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p></p>
-                    <button id ="btn_update_signal_value" type="button" style="width:100%" class="btn btn-default" disabled>
-                        Update Signal Value
-                    </button>
+                         
+
+
+
+
                 </div>
+               
+            
+            
+            
+            
+            
                 <div id="details_for_sel_2" style="display:none" class="widget-properties-panel-details">
                 </div>
                 <div id="details_for_sel_3" style="display:none" class="widget-properties-panel-details">
                 </div>
+
             </div>
     </div>
     <!---------------------------- COMPONENT: Prop_panel ---------------------------->
@@ -345,6 +311,8 @@
     <!---------------------------- COMPONENT: Choose Signal ---------------------------->
 
 
+
+    
 
 
 
@@ -383,6 +351,15 @@
         var prop_panel = undefined;
         var prop_panel_header = undefined;
         var widget_infos = [];
+
+        function close_widget_properties_panel() {
+            $("#widget_properties_panel").removeClass("prop-panel-transition-1");
+            $("#widget_properties_panel").removeClass("prop-panel-transition-2");
+            $("#widget_properties_panel").addClass("prop-panel-transition-1");
+            /*$('#widget_properties_panel').css('width', '0');
+            $('#widget_properties_panel').css('height', '0');*/
+            $(".baseWidget-selected").removeClass("baseWidget-selected");
+        }
 
         function init_widget_properties_panel() {
             prop_panel = $('#widget_properties_panel'); 
@@ -428,6 +405,15 @@
 
         function get_widget_info(widget) {
             if (widget === undefined) return { valid: false };
+            if (typeof widget == "string") {
+                let widget_id = widget;
+                for (let e of widget_infos) {
+                    if (e.id == widget_id) {
+                        return e.info;
+                    }
+                }
+                return { valid: false };
+            }
             if (!widget.hasClass("baseWidget")) return { valid: false };
             if (widget.hasClass("baseWidget-not-initialized")) return {
                 valid: false,
@@ -438,7 +424,8 @@
                 do_plot: false,
                 watch_only: false,
                 toggle_sig : false,
-                update_sig_automatically : false
+                update_sig_automatically: false,
+                display : "Decimal"
             };
             let widget_id = widget.attr("id");
             for (let e of widget_infos) {
@@ -495,6 +482,14 @@
                 let sig_name = $(prop_panel).find("#select_signal").find(":selected").text();
                 let sub_type = $(prop_panel).find("#select_sig_subtype").find(":selected").text();
                 let update_behaviour = $(prop_panel).find("#select_update_behaviour").find(":selected").text();
+                let display_format = $(prop_panel).find("#select_display_format").find(":selected").text();
+
+
+                let class_list = $('#accordion_sel_1_1_collapse').attr('class').split(/\s+/);
+                console.log("1:", class_list);
+                class_list = $('#accordion_sel_1_2_collapse').attr('class').split(/\s+/);
+                console.log("2:", class_list);
+                
 
                 return {
                     valid: true,
@@ -505,7 +500,8 @@
                     do_plot: sub_type=="Plot",
                     watch_only: sub_type == "Watch Only",
                     toggle_sig: sub_type == "Toggle",
-                    update_sig_automatically: update_behaviour == "Automatically"
+                    update_sig_automatically: update_behaviour == "Automatically",
+                    display: display_format
                 };
             } else if (type == "Trigger Event") {
                 return {
@@ -563,15 +559,28 @@
         }
 
         function update_prop_panel(widget) {
+            
             let info = get_widget_info(widget);
             let update_widget = false;
             let widget_id = widget.attr("id");
+            //console.log(info);
 
             $(prop_panel).css("display", "block");
             if (!info.valid) {
                 $(prop_panel).find(".widget-properties-panel-details").css("display", "none");
                 update_widget = true;
-            }           
+            } else {
+                if (info.sig_name != undefined) {
+                    let s = get_signal_by_name(info.sig_name);
+                    if (s != undefined && s.info.type == "int") {
+                        $("#select_display_format").removeAttr("disabled"); $("#select_display_format").removeAttr("enabled");
+                        $("#select_display_format").attr("enabled", "true");
+                    } else {
+                        $("#select_display_format").removeAttr("disabled"); $("#select_display_format").removeAttr("enabled");
+                        $("#select_display_format").attr("disabled", "true");
+                    }
+                }
+            }        
             
             $(prop_panel).find("#select_widget_type").removeAttr('disabled');
             {
@@ -605,13 +614,22 @@
                     }
                     sig_subtype_sel.html(helper_build_sel_html(["Toggle", "Watch Only", "Plot"], sig_subtype_sel_idx));
                 }
+                
                 {
                     let update_behaviour_sel = $(prop_panel).find("#select_update_behaviour");
                     let i = 0;
                     if (!update_widget) if (info.update_sig_automatically) i = 0; else i = 1;
-                    update_behaviour_sel.html((helper_build_sel_html(["Automatically", "On Trigger"], i)));
+                    update_behaviour_sel.html((helper_build_sel_html(["Automatically", "On Trigger","Watch Only"], i)));
                 }
 
+                {
+                    let display_format_sel = $(prop_panel).find("#select_display_format");
+                    let i = 0;
+                    if (info.display == "Hexadecimal") i = 1;
+                    else if (info.display == "Binary") i = 2;
+                    else if (info.display == "Octal") i = 3;
+                    display_format_sel.html((helper_build_sel_html(["Decimal", "Hexadecimal", "Binary", "Octal"], i)));
+                }
             }
 
             if (!update_widget)
@@ -750,23 +768,33 @@
             }
             return [l,sel_index];
         }
+        function helper_display_unit_and_format(unit, format){
+            let r = "";
+            if (unit == undefined || unit.length == 0) r += "scalar"; else r += unit;
+            if (format == "Hexadecimal") r += " <small>( hex. )</small>";
+            else if (format == "Octal") r += " <small>( oct. )</small>";
+            else if (format == "Binary") r += " <small>( bin. )</small>";
+            else r += " <small>( dec. )</small>";
+            return r;
+        }
 
         function helper_make_toggle_widget_content(widget_id, signal) {
             let widget_content = "";
-            if (signal.info.vm && signal.info.vm.length > 0) {
+            if (signal.info.vm != undefined && signal.info.vm.length > 0) {
                 let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
                 widget_content =
-                `<table>
+                `<table width='100%'>
                   <tr>
                    <td width='50%'>
                      <div id='dummy_${widget_id}'></div>
-                   </td><td width='50%'> 
-                    <div class="input-group input-group-sm baseWidget-edit">
-                        <select id="${widget_id}_select_ctrl" class="form-control">
+                   </td>
+                   <td width='50%'>
+                   <div id="${widget_id}_input_group" class="input-group input-group-sm baseWidget-edit">
+                       <select id="${widget_id}_select_ctrl" class="form-control">
                           ${helper_build_sel_html(l, sel_index)}
                         </select>
-                        <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  enabled>${signal.target_value}</textarea>
-                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit : "Scalar"}</span>
+                        <input type ="text"style="width:100%;" id="${widget_id}_text_ctrl" class="form-control" value="${sig_value_text_representation(signal, signal.target_value, get_widget_info(widget_id).display)}" enabled>
+                        <span class="input-group-addon" >${helper_display_unit_and_format(signal.info.unit, get_widget_info(widget_id).display)}</span>                        
                     </div>
                   </td>
                  </tr>
@@ -776,15 +804,53 @@
                 widget_content =
                     `<table><tr><td width='50%'><div id='dummy_${widget_id}'></div></td><td width='50%'> 
                     <div class="input-group input-group-sm baseWidget-edit">
-                    <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  enabled>${signal.target_value}</textarea>
-                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit : "Scalar"}</span>
+                    <input type ="text"style="width:100%;" id="${widget_id}_text_ctrl" class="form-control" value="${signal.target_value}" enabled>
+                        <span class="input-group-addon" >${ helper_display_unit_and_format(signal.info.unit, get_widget_info(widget_id).display) }</span>
                </div></td></tr></table>`;
             }
             return widget_content;
         }
 
+        function validate_input(signal, text,format) {
+            let v = NaN;
+            if (signal.type == "float") {
+
+            } else if (signal.info.type == "int") {
+                
+                if (format == "Hexadecimal") {
+                    if (text.match(/^(\-)?([0-9]|a|b|c|d|e|f)+$/)) v = parseInt(text, 16);
+                } else if (format == "Octal") {
+                    if (text.match(/^(\-)?([0-7])+$/))v = parseInt(text, 8);
+                } else if (format == "Binary") {
+                    if (text.match(/^(\-)?([0-1])+$/))v = parseInt(text, 2);
+                } else {
+                    if (text.match(/^(\-)?([0-9])+$/)) v = parseInt(text);
+                }
+                if (!isNaN(v)) {
+                    if (signal.info.min != undefined)
+                        if (v < signal.info.min) return [false, v, "Too Small."];
+                    if (signal.info.max != undefined)
+                        if (v > signal.info.max) return [false, v, "Too Big."];
+                }
+            }
+            return [!isNaN(v),v, text.length==0 ? "No Input" : "That's not a number"];
+        }
+        function sig_value_text_representation(signal, v, format) {
+            if (signal.info.type == "int") {
+                if (format == "Hexadecimal") return v.toString(16);
+                else if (format == "Octal") return v.toString(8);
+                else if (format == "Binary") return v.toString(2);                 
+            }
+            return v.toString();
+        }
+
         function setup_toggle_widget(widget_id, signal) {
-            $(`#header_of_${widget_id}`).html(signal.name);
+            $(`#header_of_${widget_id}`).html(
+                signal.name +
+                `<button type="button" class="btn btn-xs close" aria-label="Close" onclick="close_widget(event,'${widget_id}');" style="transform: translateY(-11px);">
+                    <span aria-hidden="true" class="small" >&times;</span>
+                </button>`
+                );
             $(`#${widget_id}`).addClass("toggle-signal");
             $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
             let widget_content = helper_make_toggle_widget_content(widget_id, signal);
@@ -820,10 +886,14 @@
                         value: map_sig_target_value_to_range(signal, gran),
                         slide: function (ev, ui) {
                             let v = map_range_index_to_value(signal, gran, ui.value);
-                            $("#" + widget_id + "_text_ctrl").val(v.toString());
+                            let v_text = sig_value_text_representation(signal,v, get_widget_info(widget_id).display);
+                            $("#" + widget_id + "_text_ctrl").val(v_text);
                             set_signal_target_value(widget_id, v, signal.name);
-                            let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
-                            $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
+
+                            if (signal.info.vm != undefined && signal.info.vm.length > 0) {
+                                let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
+                                $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
+                            }
                         }
                     });
                 $(`#${widget_id}_select_ctrl`).change( function (ev) {
@@ -835,18 +905,44 @@
                         let s = signal.info.vm[old_idx - 1].name;
                         $(`#${widget_id}_select_ctrl option[value='${s}']`).prop('selected', true);
                     } else if (new_idx != 0) {
-                        signal.target_value = signal.info.vm[new_idx - 1].val;
-                        $("#" + widget_id + "_text_ctrl").val(signal.target_value.toString());
+                        set_signal_target_value(widget_id, signal.info.vm[new_idx - 1].val, signal.name);
+                        let v_text = sig_value_text_representation(signal, signal.target_value, get_widget_info(widget_id).display);
+                        $("#" + widget_id + "_text_ctrl").val(v_text);
                         let vv = map_sig_target_value_to_range(signal, gran);
                         $(s).slider("value", vv);
+                    }
+                });
+                $(`#${widget_id}_text_ctrl`).on('input', function (ev) {
+                    let [ok,v, msg] = validate_input(signal, $(`#${widget_id}_text_ctrl`).val(), get_widget_info(widget_id).display);
+                    $("#" + widget_id + "_input_group").removeClass("has-error");
+                    if (!ok) {
+                        $("#" + widget_id + "_input_group").addClass("has-error");
+                        $("#" + widget_id + "_text_ctrl").popover({ placement: 'left' });
+                        $("#" + widget_id + "_text_ctrl").attr("title", "1111111");
+                        $("#" + widget_id + "_text_ctrl").attr("data-content", msg);
+                        $("#" + widget_id + "_text_ctrl").popover('show');
+                    } else {
+                        $("#" + widget_id + "_text_ctrl").popover('hide');
+                        set_signal_target_value(widget_id, v, signal.name);
+                        let vv = map_sig_target_value_to_range(signal, gran);
+                        $(s).slider("value", vv);
+                        if (signal.info.vm != undefined && signal.info.vm.length > 0) {
+                            let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
+                            $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
+                        }
                     }
                 });
                 save_widget_ext(widget_id, {
                     slider: s,
                     slider_range: slider_granularity_default - 1,
                     set_value: function (v) {
-                        $("#" + widget_id + "_text_ctrl").val(v.toString());
-                        let vv = map_sig_target_value_to_range(signal, slider_granularity_default - 1);
+                        let v_text = sig_value_text_representation(signal, v, get_widget_info(widget_id).display);
+                        $("#" + widget_id + "_text_ctrl").val(v_text);
+                        if (signal.info.vm != undefined && signal.info.vm.length > 0) {
+                            let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
+                            $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
+                        }
+                        let vv = map_sig_target_value_to_range(signal, gran);
                         $(s).slider("value", vv);
                     }
                 });
@@ -882,11 +978,17 @@
         }
 
         
-        function handle_widget_click_header(widget_id,ev) {
+        function handle_widget_click_header(widget_id, ev) {
+            
             event.preventDefault();
             $(".baseWidget-selected").removeClass("baseWidget-selected");
             let widget = $("#" + widget_id); 
             widget.addClass("baseWidget-selected");
+
+            $("#widget_properties_panel").removeClass("prop-panel-transition-1");
+            $("#widget_properties_panel").removeClass("prop-panel-transition-2");
+            $("#widget_properties_panel").addClass("prop-panel-transition-2");
+
             update_prop_panel(widget);
             return false;
         }
@@ -894,10 +996,26 @@
         function CtrlPanelComponentTemplates() {
             this.id_counter = 0;
         }
+
+        function close_widget(ev,widget_id) {
+            ev.stopPropagation();
+            $("#" + widget_id).addClass("baseWidget-remove");
+            
+            setTimeout(() => {
+                $("#" + widget_id).remove();
+            }, 500);
+            return false;
+        }
+
         CtrlPanelComponentTemplates.prototype.baseWidget = function () {
             this.id_counter++;
             return `<div id="widget_${this.id_counter}" class="baseWidget baseWidget-not-initialized">
-                    <div id="header_of_widget_${this.id_counter}" class="header" contenteditable="false" onclick="handle_widget_click_header('widget_${this.id_counter}',event)"> <i>Click to configure...</i> </div>
+                    <div id="header_of_widget_${this.id_counter}" class="header" onclick="handle_widget_click_header('widget_${this.id_counter}',event)"> 
+                      <i>Click to configure...</i>
+                      <button type="button" class="btn btn-xs close" aria-label="Close" onclick="close_widget(event,'widget_${this.id_counter}');" style="transform: translateY(-11px);">
+                        <span aria-hidden="true" class="small" >&times;</span>
+                      </button>
+                    </div>
                     <div id="content_of_widget_${this.id_counter}" class="baseWidget-content"></div>   
                     </div>`;
         }
@@ -929,6 +1047,7 @@
         $(document).ready(() => {
             //$(document).click(() => { $(".baseWidget-selected").removeClass("baseWidget-selected"); });
             init_widget_properties_panel();
+           
             
             ctrlPanelEditor = new CtrlPanelEditor($('#ctrl_panel_editor'), new CtrlPanelComponentTemplates() );
             $('#ctrl_panel_editor_btn_add').on('click', (ev) => {
@@ -937,6 +1056,9 @@
             $('#ctrl_panel_editor_btn_add_paragraph').on('click', (ev) => {
                 ctrlPanelEditor.addParagraph();
             });
+            $('#accordion_sel_1').on('hidden.bs.collapse', function (e) {
+                setTimeout(() => { on_prop_panel_change(); }, 250);
+            })
         });
     </script>
 </body>
