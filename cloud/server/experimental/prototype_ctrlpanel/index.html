@@ -13,123 +13,9 @@
     <!-- link href="datatables/css/jquery.dataTables.min.css" rel="stylesheet" -->
     <link href="datatables/css/dataTables.bootstrap.min.css" rel="stylesheet" >
     <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
-    
+    <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
 
     <style>
-        #widget_properties_panel {
-            position: absolute;
-            left: 30px;
-            top: 190px;
-            width: 280px;
-            resize: both;
-            overflow: auto;
-            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
-            z-index: 1000;
-        }
- 
-       #widget_properties_panel .panel-heading {
-            cursor: pointer;
-       }
-       .baseWidget {
-            border: 1px solid;
-            height: 60px;
-            width: 160px;
-            resize: both;
-            overflow: auto;
-            float: left;
-            margin: 4px;
-            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
-            cursor: pointer;
-            transition: opacity 0.4s;
-        }
-
-        .baseWidget-remove {
-            transition-timing-function: ease;
-            opacity: 0.0;
-        }
-
-       .baseWidget .header {
-            background-color:gray;
-            color: white;
-            padding: 8px;
-            border-top: 4px;
-            height: 18px;
-            border-color: inherit;
-            cursor: pointer;
-            font-size: 10.75px;
-            line-height: 1px;
-       }
-
-       .baseWidget:hover  {
-            box-shadow: 0 2px 8px 0 rgba(0, 0, 20, 0.2), 0 3px 10px 0 rgba(0, 0, 20, 0.19);
-            border-color :lightslategrey;
-       }
-
-       .baseWidget:hover .header {
-                background-color: lightslategrey;
-        }
-
-
-       .baseWidget-selected {
-            font-weight: bold;
-       }
-
-       .baseWidget-selected .header {
-            background-color: lightsteelblue;
-       }
-
-       .baseWidget-selected:hover .header {
-            background-color: lightsteelblue;
-       }
-       .baseWidget-content {
-            margin: 2px;
-            padding: 4px;
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-        
-        .baseWidget-edit {
-            margin: 2px;
-            padding: 4px;
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-
-        .toggle-signal {
-            width: 200px;
-            height: 80px;
-        }
-
-        .prop-panel {
-            transition: opacity 0.7s, transform 0.5s;
-            opacity: 1.0;
-        }
-
-        .prop-panel:hover {
-        }
-
-        .prop-panel-transition-1 {
-            transition-timing-function: ease;
-            opacity: 0.0;
-            transform: rotate3d(1, 2, -1, 1180deg);
-        }
-
-        .prop-panel-transition-2 {
-            transition-timing-function: ease;
-            opacity: 1.0;
-            transform : unset;
-        }
-
-        .calColor2 {
-            border: 2px solid #0064CD;
-            background-color: #4da3ff;
-        }
-
-        .ggbaseWidget {
-            border-radius: 5px;
-            -moz-border-radius: 5px;
-            -webkit-border-radius: 5px;
-        }
     </style>
     <title>Prototype Control Panel</title>
 </head>
@@ -224,7 +110,7 @@
                             <div class="panel-heading" role="tab" id="accordion_sel_1_1_heading">
                                 <h6 class="panel-title">
                                     <a role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_1_collapse" aria-expanded="true" aria-controls="accordion_sel_1_1_collapse">
-                                        Toggle Signal / Watch Signal
+                                        Toggle
                                     </a>
                                 </h6>
                             </div>
@@ -251,15 +137,39 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="panel panel-primary">
                             <div class="panel-heading" role="tab" id="accordion_sel_1_2_heading">
                                 <h4 class="panel-title">
                                     <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_2_collapse" aria-expanded="false" aria-controls="accordion_sel_1_2_collapse">
-                                        Plot Signal
+                                        Watch
                                     </a>
                                 </h4>
                             </div>
                             <div id="accordion_sel_1_2_collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="accordion_sel_1_2_heading">
+                                <div class="panel-body">
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon1">Display Format</span>
+                                        <select id="select_display_format_watch_only" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1" disabled>
+                                            <option>Decimal</option>
+                                            <option>Hexadecimal</option>
+                                            <option>Binary</option>
+                                            <option>Octal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel panel-primary">
+                            <div class="panel-heading" role="tab" id="accordion_sel_1_3_heading">
+                                <h4 class="panel-title">
+                                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_3_collapse" aria-expanded="false" aria-controls="accordion_sel_1_3_collapse">
+                                        Plot
+                                    </a>
+                                </h4>
+                            </div>
+                            <div id="accordion_sel_1_3_collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="accordion_sel_1_3_heading">
                                 <div class="panel-body">
                                     &nbsp;
                                 </div>
@@ -323,9 +233,10 @@
     <script src="datatables/js/jquery.dataTables.min.js"></script>
     <script src="datatables-plugins/dataTables.bootstrap.min.js"></script>
     <script src="datatables-responsive/dataTables.responsive.js"></script>
-
-
-    
+    <script src="chartjs/Chart.js"></script>
+    <script src="cepscloud-ui/widget_properties_panel.js"></script>
+    <script src="cepscloud-ui/widget_toggle_signal.js"></script>
+    <script src="cepscloud-ui/widget_plot_signal.js"></script>
     
     <!---------------------- Signals ----------------------->
     <script>
@@ -345,302 +256,6 @@
     <!---------------------- Signals ----------------------->
     
     
-    <!---------------------- widget_properties_panel ----------------------->
-    <script>
-        
-        var prop_panel = undefined;
-        var prop_panel_header = undefined;
-        var widget_infos = [];
-
-        function close_widget_properties_panel() {
-            $("#widget_properties_panel").removeClass("prop-panel-transition-1");
-            $("#widget_properties_panel").removeClass("prop-panel-transition-2");
-            $("#widget_properties_panel").addClass("prop-panel-transition-1");
-            /*$('#widget_properties_panel').css('width', '0');
-            $('#widget_properties_panel').css('height', '0');*/
-            $(".baseWidget-selected").removeClass("baseWidget-selected");
-        }
-
-        function init_widget_properties_panel() {
-            prop_panel = $('#widget_properties_panel'); 
-            $(prop_panel).find("#btn_signal_search").on('click', (ev) => {
-                $('#dlg_select_a_signal').modal('show');
-                if (signals_dt == undefined) {
-                    dlg_select_a_signal_table_dataset = dlg_select_a_signal_populate_dataset();
-                    signals_dt = $('#dlg_select_a_signal_table').DataTable({
-                        select: {
-                            style: 'single'
-                        },
-                        data: dlg_select_a_signal_table_dataset,
-                        columns: dlg_select_a_signal_table_columns
-                    });
-                }
-            });
-            $(".widget-properties-panel-input").change(() => {
-                on_prop_panel_change();
-            });
-            prop_panel_header = $('#widget_properties_panel_header'); 
-            prop_panel_header.mousedown((ev) => {
-                let p = $('#widget_properties_panel_header').offset();
-                let dx = ev.pageX - p.left;
-                let dy = ev.pageY - p.top;
-
-                $(document).mousemove((ev) => {
-                    $('#widget_properties_panel').offset({top:ev.pageY-dy,left:ev.pageX-dx});
-                });
-                $(document).mouseup((ev) => {
-                    $(document).unbind("mouseup").unbind("mousemove");
-                });
-            });
-        }
-
-        function handle_signal_select(sig_name) {
-            $('#dlg_select_a_signal').modal('hide');
-            let widget = $(".baseWidget-selected").first();
-            let info = widget_properties_panel_extract_settings();
-            info.sig_name = sig_name;
-            save_widget_info(widget, info);
-            update_prop_panel(widget);
-        }
-
-        function get_widget_info(widget) {
-            if (widget === undefined) return { valid: false };
-            if (typeof widget == "string") {
-                let widget_id = widget;
-                for (let e of widget_infos) {
-                    if (e.id == widget_id) {
-                        return e.info;
-                    }
-                }
-                return { valid: false };
-            }
-            if (!widget.hasClass("baseWidget")) return { valid: false };
-            if (widget.hasClass("baseWidget-not-initialized")) return {
-                valid: false,
-                type: { sig: false, ev: false, script: false },
-                doc: undefined,
-                sig_name: undefined,
-                ev_name: undefined,
-                do_plot: false,
-                watch_only: false,
-                toggle_sig : false,
-                update_sig_automatically: false,
-                display : "Decimal"
-            };
-            let widget_id = widget.attr("id");
-            for (let e of widget_infos) {
-                if (e.id == widget_id) {
-                    return e.info;
-                }
-            }
-            return { valid: false };
-        }
-        function save_widget_info(widget, info) {
-            info.valid = info.type.sig || info.type.ev || info.type.script;
-            let widget_id = widget.attr("id");
-            for (let e of widget_infos) {
-                if (e.id == widget_id) {
-                    e.info = info;
-                    update_widget_ctrl(widget, info);
-                    return true;
-                }
-            }
-            widget_infos.push({ id: widget_id, info: info });
-            update_widget_ctrl(widget, info);
-            return true;
-        }
-
-        function save_widget_ext(widget_id, ext) {
-            for (let e of widget_infos) {
-                if (e.id == widget_id) {
-                    e.ext = ext;
-                    return;
-                }
-            }
-            throw "Internal Error:" + widget_id;
-        }
-
-        function update_widget_ctrl(widget, info) {
-            let widget_id = widget.attr("id");
-            if (info == undefined)
-                info = get_widget_info(widget);
-            if (info.type.sig) {
-                if (info.toggle_sig) {
-                    setup_toggle_widget(widget_id, get_signal_by_name(info.sig_name));
-                } else if (info.watch_only) {
-                    setup_view_signal_widget(widget_id, get_signal_by_name(info.sig_name));
-                }
-            }
-        }
-
-        function widget_properties_panel_extract_settings() {
-            let type_ctrl = $(prop_panel).find("#select_widget_type");
-            if (type_ctrl.length != 1) throw "Internal Error";
-            let type = type_ctrl.find(":selected").text();
-            
-            if (type == "Modify/View Signal") {
-                let sig_name = $(prop_panel).find("#select_signal").find(":selected").text();
-                let sub_type = $(prop_panel).find("#select_sig_subtype").find(":selected").text();
-                let update_behaviour = $(prop_panel).find("#select_update_behaviour").find(":selected").text();
-                let display_format = $(prop_panel).find("#select_display_format").find(":selected").text();
-
-
-                
-
-                return {
-                    valid: true,
-                    type: { sig: true, ev: false, script: false },
-                    doc: undefined,
-                    sig_name: sig_name,
-                    ev_name: undefined,
-                    do_plot: sub_type=="Plot",
-                    watch_only: sub_type == "Watch Only",
-                    toggle_sig: sub_type == "Toggle",
-                    update_sig_automatically: update_behaviour == "Automatically",
-                    display: display_format
-                };
-            } else if (type == "Trigger Event") {
-                return {
-                    valid: true,
-                    type: { sig: false, ev: true, script: false },
-                    doc: undefined,
-                    sig_name: undefined,
-                    ev_name: undefined,
-                    do_plot: false,
-                    watch_only: false,
-                    toggle_sig: false,
-                    update_sig_automatically: false
-                };
-            } else if (type == "Run Script") {
-                return {
-                    valid: true,
-                    type: { sig: false, ev: false, script: true },
-                    doc: undefined,
-                    sig_name: undefined,
-                    ev_name: undefined,
-                    do_plot: false,
-                    watch_only: false,
-                    toggle_sig: false,
-                    update_sig_automatically: false
-                };
-            }
-            
-            return {
-                valid: false,
-                type: { sig: false, ev: false, script: false },
-                doc: undefined,
-                sig_name: undefined,
-                ev_name: undefined,
-                do_plot: false,
-                watch_only: false,
-                toggle_sig: false,
-                update_sig_automatically: false
-            };
-        }
-
-        function on_prop_panel_change() {
-            let widget = $(".baseWidget-selected").first();
-            let info = widget_properties_panel_extract_settings();
-            save_widget_info(widget, info);
-            update_prop_panel(widget);
-        }
-
-        function helper_build_sel_html(list, selected) {
-            let r = "";
-            for (let i = 0; i != list.length; ++i) {
-                if (i != selected) r += "<option value=\"" + list[i] + "\" >" + list[i] + "</option>";
-                else r += "<option value=\"" + list[i] + "\" selected >" + list[i] + "</option>";
-            }
-            return r;
-        }
-
-        function update_prop_panel(widget) {
-            
-            let info = get_widget_info(widget);
-            let update_widget = false;
-            let widget_id = widget.attr("id");
-            //console.log(info);
-
-            $(prop_panel).css("display", "block");
-            if (!info.valid) {
-                $(prop_panel).find(".widget-properties-panel-details").css("display", "none");
-                update_widget = true;
-            } else {
-                if (info.sig_name != undefined) {
-                    let s = get_signal_by_name(info.sig_name);
-                    if (s != undefined && s.info.type == "int") {
-                        $("#select_display_format").removeAttr("disabled"); $("#select_display_format").removeAttr("enabled");
-                        $("#select_display_format").attr("enabled", "true");
-                    } else {
-                        $("#select_display_format").removeAttr("disabled"); $("#select_display_format").removeAttr("enabled");
-                        $("#select_display_format").attr("disabled", "true");
-                    }
-                }
-            }        
-            
-            $(prop_panel).find("#select_widget_type").removeAttr('disabled');
-            {
-                let widget_type_sel = $(prop_panel).find("#select_widget_type");
-                let i = 0;
-                if (info.type.sig) i = 1;
-                else if (info.type.ev) i = 2;
-                else if (info.type.script) i = 3;
-                widget_type_sel.html(helper_build_sel_html(["Choose ...", "Modify/View Signal", "Trigger Event","Run Script"], i));
-            }
-
-            $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").css("display", "none");
-            $(prop_panel).children(".panel-body").first().children("#details_for_sel_2").css("display", "none");
-            $(prop_panel).children(".panel-body").first().children("#details_for_sel_3").css("display", "none");
-            if (info.type.sig) $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").css("display", "block");
-            if (info.type.ev) $(prop_panel).children(".panel-body").first().children("#details_for_sel_2").css("display", "block");
-            if (info.type.script) $(prop_panel).children(".panel-body").first().children("#details_for_sel_3").css("display", "block");
-
-            if (info.type.sig) {                
-                let sig_sel = $(prop_panel).children(".panel-body").first().children("#details_for_sel_1").first().find("#select_signal").first();
-                let sig_sel_html = "";
-                signals.forEach((e) => { sig_sel_html += "<option value=\""+e.name+"\" "+ (e.name == info.sig_name ? " selected >":">")  + e.name +"</option>"; }  )
-                sig_sel.html(sig_sel_html);
-                sig_subtype_sel = $(prop_panel).find("#select_sig_subtype");
-                {
-                    let sig_subtype_sel_idx = 0;
-                    if (!update_widget) {
-                        if (info.toggle_sig) sig_subtype_sel_idx = 0;
-                        else if (info.watch_only) sig_subtype_sel_idx = 1;
-                        else if (info.do_plot) sig_subtype_sel_idx = 2;
-                    }
-                    sig_subtype_sel.html(helper_build_sel_html(["Toggle", "Watch Only", "Plot"], sig_subtype_sel_idx));
-                }
-                
-                {
-                    let update_behaviour_sel = $(prop_panel).find("#select_update_behaviour");
-                    let i = 0;
-                    if (!update_widget) if (info.update_sig_automatically) i = 0; else i = 1;
-                    update_behaviour_sel.html((helper_build_sel_html(["Automatically", "On Trigger","Watch Only"], i)));
-                }
-
-                {
-                    let display_format_sel = $(prop_panel).find("#select_display_format");
-                    let i = 0;
-                    if (info.display == "Hexadecimal") i = 1;
-                    else if (info.display == "Binary") i = 2;
-                    else if (info.display == "Octal") i = 3;
-                    display_format_sel.html((helper_build_sel_html(["Decimal", "Hexadecimal", "Binary", "Octal"], i)));
-                }
-            }
-
-            if (!update_widget)
-                if (info.type.sig && info.update_sig_automatically) $(prop_panel).find("#btn_update_signal_value").removeAttr("disabled");
-                else if (info.type.sig && !info.update_sig_automatically) $(prop_panel).find("#btn_update_signal_value").removeAttr("disabled").attr("disabled","");
-
-
-            if (update_widget) {
-                let new_info = widget_properties_panel_extract_settings();
-                if (new_info.valid) widget.removeClass("baseWidget-not-initialized");
-                save_widget_info(widget, new_info);
-            }            
-        }
-    </script>
-    <!---------------------- widget_properties_panel ----------------------->
     
 
     <script>
@@ -840,110 +455,6 @@
             return v.toString();
         }
 
-        function setup_toggle_widget(widget_id, signal) {
-            $(`#header_of_${widget_id}`).html(
-                signal.name +
-                `<button type="button" class="btn btn-xs close" aria-label="Close" onclick="close_widget(event,'${widget_id}');" style="transform: translateY(-11px);">
-                    <span aria-hidden="true" class="small" >&times;</span>
-                </button>`
-                );
-            $(`#${widget_id}`).addClass("toggle-signal");
-            $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
-            let widget_content = helper_make_toggle_widget_content(widget_id, signal);
-
-            $(`#content_of_${widget_id}`).html(widget_content);
-            if (signal.info.type == "float") {
-                let s = $("#dummy_" + widget_id).slider(
-                    {
-                        min: 0,
-                        max: slider_granularity_default - 1,
-                        value: map_sig_target_value_to_range(signal, slider_granularity_default - 1),
-                        slide: function (ev, ui) {
-                            let v = map_range_index_to_value(signal, slider_granularity_default - 1, ui.value);
-                            $("#" + widget_id + "_text_ctrl").val(v.toString());
-                            set_signal_target_value(widget_id, v, signal.name);
-                        }
-                    });
-                save_widget_ext(widget_id, {
-                    slider: s,
-                    slider_range: slider_granularity_default - 1,
-                    set_value: function (v) {
-                        $("#" + widget_id + "_text_ctrl").val(v.toString());
-                        let vv = map_sig_target_value_to_range(signal, slider_granularity_default - 1);
-                        $(s).slider("value", vv);
-                    }
-                });
-            } else if (signal.info.type == "int") {
-                let gran = Math.min(slider_granularity_default - 1, (signal.info.max - signal.info.min));
-                let s = $("#dummy_" + widget_id).slider(
-                    {
-                        min: 0,
-                        max: gran,
-                        value: map_sig_target_value_to_range(signal, gran),
-                        slide: function (ev, ui) {
-                            let v = map_range_index_to_value(signal, gran, ui.value);
-                            let v_text = sig_value_text_representation(signal,v, get_widget_info(widget_id).display);
-                            $("#" + widget_id + "_text_ctrl").val(v_text);
-                            set_signal_target_value(widget_id, v, signal.name);
-
-                            if (signal.info.vm != undefined && signal.info.vm.length > 0) {
-                                let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
-                                $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
-                            }
-                        }
-                    });
-                $(`#${widget_id}_select_ctrl`).change( function (ev) {
-                    let v_str = $(`#${widget_id}_select_ctrl`).find(":selected").text();
-                    let [l, old_idx] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
-                    let new_idx = 0;
-                    for (let i = 0; i != signal.info.vm.length; ++i) if (signal.info.vm[i].name == v_str) { new_idx = i + 1; break; }
-                    if (new_idx == 0 && old_idx != 0) {
-                        let s = signal.info.vm[old_idx - 1].name;
-                        $(`#${widget_id}_select_ctrl option[value='${s}']`).prop('selected', true);
-                    } else if (new_idx != 0) {
-                        set_signal_target_value(widget_id, signal.info.vm[new_idx - 1].val, signal.name);
-                        let v_text = sig_value_text_representation(signal, signal.target_value, get_widget_info(widget_id).display);
-                        $("#" + widget_id + "_text_ctrl").val(v_text);
-                        let vv = map_sig_target_value_to_range(signal, gran);
-                        $(s).slider("value", vv);
-                    }
-                });
-                $(`#${widget_id}_text_ctrl`).on('input', function (ev) {
-                    let [ok,v, msg] = validate_input(signal, $(`#${widget_id}_text_ctrl`).val(), get_widget_info(widget_id).display);
-                    $("#" + widget_id + "_input_group").removeClass("has-error");
-                    if (!ok) {
-                        $("#" + widget_id + "_input_group").addClass("has-error");
-                        $("#" + widget_id + "_text_ctrl").popover({ placement: 'left' });
-                        $("#" + widget_id + "_text_ctrl").attr("title", "1111111");
-                        $("#" + widget_id + "_text_ctrl").attr("data-content", msg);
-                        $("#" + widget_id + "_text_ctrl").popover('show');
-                    } else {
-                        $("#" + widget_id + "_text_ctrl").popover('hide');
-                        set_signal_target_value(widget_id, v, signal.name);
-                        let vv = map_sig_target_value_to_range(signal, gran);
-                        $(s).slider("value", vv);
-                        if (signal.info.vm != undefined && signal.info.vm.length > 0) {
-                            let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
-                            $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
-                        }
-                    }
-                });
-                save_widget_ext(widget_id, {
-                    slider: s,
-                    slider_range: slider_granularity_default - 1,
-                    set_value: function (v) {
-                        let v_text = sig_value_text_representation(signal, v, get_widget_info(widget_id).display);
-                        $("#" + widget_id + "_text_ctrl").val(v_text);
-                        if (signal.info.vm != undefined && signal.info.vm.length > 0) {
-                            let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
-                            $(`#${widget_id}_select_ctrl`).html(helper_build_sel_html(l, sel_index));
-                        }
-                        let vv = map_sig_target_value_to_range(signal, gran);
-                        $(s).slider("value", vv);
-                    }
-                });
-            }
-        }
         function setup_view_signal_widget(widget_id, signal) {
             $(`#header_of_${widget_id}`).html(signal.name);
             $(`#${widget_id}`).addClass("toggle-signal");
@@ -1052,27 +563,6 @@
             $('#ctrl_panel_editor_btn_add_paragraph').on('click', (ev) => {
                 ctrlPanelEditor.addParagraph();
             });
-            $('#accordion_sel_1').on('hidden.bs.collapse', function (e) {
-                // setTimeout(() => { on_prop_panel_change(); }, 250);
-            });
-
-            setInterval(() => {
-                function get_accordion_status(l) {
-                    //let l = ["accordion_sel_1_1_collapse", "accordion_sel_1_2_collapse"];
-                    let r = []; 
-                    for (let e of l){
-                        let cl = $('#'+ e).attr('class').split(/\s+/);
-                        let open = false;
-                        for (let ee of cl) { if (ee == "in") { open = true; break; } }
-                        r.push(open);
-                    }
-                    return r;
-                }
-                let t = get_accordion_status(["accordion_sel_1_1_collapse", "accordion_sel_1_2_collapse"]);
-                console.log(t[0],t[1]);
-            }, 50);
-
-            
         });
     </script>
 </body>
