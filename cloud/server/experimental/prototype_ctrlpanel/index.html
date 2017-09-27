@@ -485,10 +485,6 @@
                 let display_format = $(prop_panel).find("#select_display_format").find(":selected").text();
 
 
-                let class_list = $('#accordion_sel_1_1_collapse').attr('class').split(/\s+/);
-                console.log("1:", class_list);
-                class_list = $('#accordion_sel_1_2_collapse').attr('class').split(/\s+/);
-                console.log("2:", class_list);
                 
 
                 return {
@@ -1057,8 +1053,26 @@
                 ctrlPanelEditor.addParagraph();
             });
             $('#accordion_sel_1').on('hidden.bs.collapse', function (e) {
-                setTimeout(() => { on_prop_panel_change(); }, 250);
-            })
+                // setTimeout(() => { on_prop_panel_change(); }, 250);
+            });
+
+            setInterval(() => {
+                function get_accordion_status(l) {
+                    //let l = ["accordion_sel_1_1_collapse", "accordion_sel_1_2_collapse"];
+                    let r = []; 
+                    for (let e of l){
+                        let cl = $('#'+ e).attr('class').split(/\s+/);
+                        let open = false;
+                        for (let ee of cl) { if (ee == "in") { open = true; break; } }
+                        r.push(open);
+                    }
+                    return r;
+                }
+                let t = get_accordion_status(["accordion_sel_1_1_collapse", "accordion_sel_1_2_collapse"]);
+                console.log(t[0],t[1]);
+            }, 50);
+
+            
         });
     </script>
 </body>
