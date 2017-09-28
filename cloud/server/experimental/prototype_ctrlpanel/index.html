@@ -1,6 +1,13 @@
 ﻿<!DOCTYPE html>
 <html lang=en>
+<!-- 
+    
+    Cool effects
 
+    https://blog.trackduck.com/2015/06/10/15-impressive-pop-animation-effects-codepen/
+    
+    
+    -->
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -20,6 +27,22 @@
     <title>Prototype Control Panel</title>
 </head>
 
+<script>
+    var global_observer_handlers = [];
+
+    function register_observer(name, fn) {
+        for (let e of global_observer_handlers)
+            if (e.name == name) { e.handler = fn; return; }
+        if (fn == undefined) return;
+        for (let e of global_observer_handlers)
+            if (e.handler == undefined) { e.name = name; e.handler = fn; return; }
+
+        global_observer_handlers.push({name:name, handler:fn});
+    }
+
+    function unregister_observer(name) { register_observer(name, undefined); }
+
+</script>
 <body>
 
     <div class="row">
@@ -554,7 +577,10 @@
         $(document).ready(() => {
             //$(document).click(() => { $(".baseWidget-selected").removeClass("baseWidget-selected"); });
             init_widget_properties_panel();
-           
+            setInterval(() => {
+                for (let e of global_observer_handlers) if (e.handler != undefined) e.handler();
+             }
+            , 10);           
             
             ctrlPanelEditor = new CtrlPanelEditor($('#ctrl_panel_editor'), new CtrlPanelComponentTemplates() );
             $('#ctrl_panel_editor_btn_add').on('click', (ev) => {
