@@ -1,0 +1,146 @@
+frame{
+ id{publisher_comm_layer_frames_reply;};
+ data{
+ "[";
+  static_for(e : root.frame) {
+   "{";
+    "\"name\":";"\"";text(e.id.content());"\"";
+    ",";
+    "\"signals\":";
+    "[";
+    static_for(ee : e.data.fetch_recursively_symbols().is_kind("Systemstate").to_text().sort().unique()){
+     "{"; "\"name\":"; "\"";ee;"\""; "}"; if(!last)",";
+    }
+    "]";
+   "}"; if(!last)",";
+  }
+  "]";
+ };
+};
+
+
+frame{
+ id{publisher_internal_frm;};
+ data{ };
+};
+
+
+//Remote Cmds
+
+Event pub_remote_cmd;
+
+receiver
+{
+ id { publisher_cmd_in; };
+ when { publisher_internal_frm; };
+ emit { pub_remote_cmd; };
+ transport
+ {
+  websocket_server;
+  generic_tcp_in
+  {
+   port { publisher_cmd_port; };
+   ip { "127.0.0.1"; };
+  };
+ };
+};
+
+sender
+{
+ id{publisher_cmd_out;};
+ transport {use { publisher_cmd_in; };};
+};
+
+Systemstate publisher_remote_cmd_handler_eval_result;
+
+frame{
+ id{publisher_remote_cmd_handler_reply;};
+ data{
+  "{";
+  if (is_error(publisher_remote_cmd_handler_eval_result)){
+   "\"error\":1,";
+   "\"result\":";"\"";error_msg(publisher_remote_cmd_handler_eval_result);"\"";
+  } else {
+  "\"error\":0,";
+  "\"result\":";"\"";as_text(publisher_remote_cmd_handler_eval_result);"\"";
+  }
+  "}";
+ };
+};
+
+statemachine{
+ publisher_remote_cmd_handler;
+ cover{edges_upto_1;};
+ states{Initial;};
+ Actions{
+  msg_arrived{
+   print("Received cmd: '", argv(1),"'\n");
+   publisher_remote_cmd_handler_eval_result = eval_fragment(argv(1));
+   send(publisher_remote_cmd_handler_reply,publisher_cmd_out);
+  };
+ };
+ t{Initial;Initial;pub_remote_cmd;msg_arrived;};
+};
+
+
+
+Event pub_request;
+
+
+
+frame{
+ id{publisher_sim_name_reply;};
+ data{
+  text(root.package.name.content());
+ };
+};
+
+frame{
+ id{publisher_sim_uri_reply;};
+ data{
+  text(root.package.uri.content());
+ };
+};
+
+receiver
+{
+ id { publisher_in; };
+ when { publisher_internal_frm; };
+ emit { pub_request; };
+ transport
+ {
+  websocket_server;
+  generic_tcp_in
+  {
+   port { publisher_baseport; };
+   ip { "127.0.0.1"; };
+  };
+ };
+};
+
+sender
+{
+ id{publisher_out;};
+ transport {use { publisher_in; };};
+};
+
+statemachine{
+ publisher_dispatcher;
+ cover{edges_upto_1;};
+ states{Initial;};
+ Actions{
+  msg_arrived{
+   print("Received data: ", argv(1),"\n");
+   if (argv(1) == "sim_name"){
+    send(publisher_sim_name_reply,publisher_out);
+   } else if (argv(1) == "comm_layer_frames"){
+    send(publisher_comm_layer_frames_reply,publisher_out);
+   } else if (argv(1) == "sim_uri"){
+    send(publisher_sim_uri_reply,publisher_out);
+   }
+  };
+ };
+ t{Initial;Initial;pub_request;msg_arrived;};
+};
+
+

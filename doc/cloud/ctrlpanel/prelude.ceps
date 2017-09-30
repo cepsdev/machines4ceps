@@ -1,0 +1,62 @@
+kind Systemstate;
+kind Event;
+kind Guard;
+
+Event EXIT;
+
+macro timeout { 
+ start_timer(hd(arglist),EXIT);
+};
+
+macro send_periodically{
+sm {
+  as_identifier(text(hd(tail(arglist)))+"_sender__");
+  cover{edges_upto_1;};
+  states{
+   Initial;
+  };
+  on_enter{
+   start_periodic_timer(hd(tail(tail(arglist))),as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") );
+  };
+  Actions{
+   trigger_msg{send(hd(tail(arglist)),hd(arglist));};
+  };
+  t{ Initial ; Initial ; as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") ; trigger_msg ;};
+ };
+};
+
+macro send_periodically2{
+sm {
+  as_identifier(text(hd(tail(tail(tail(arglist))))));
+  cover{edges_upto_1;};
+  states{
+   Initial;
+  };
+  on_enter{
+   start_periodic_timer(hd(tail(tail(arglist))),as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") );
+  };
+  Actions{
+   trigger_msg{send(hd(tail(arglist)),hd(arglist));};
+  };
+  t{ Initial ; Initial ; as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") ; trigger_msg ;};
+ };
+};
+
+macro send_periodically_with_guard{
+sm {
+  as_identifier(text(hd(tail(arglist)))+"_sender__");
+  cover{edges_upto_1;};
+  states{
+   Initial;
+  };
+  on_enter{
+   start_periodic_timer(hd(tail(tail(arglist))),as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") );
+  };
+  Actions{
+   trigger_msg{send(hd(tail(arglist)),hd(arglist));};
+  };
+  t{ Initial ; Initial ; as_symbol("ev_trigger_"+text(hd(tail(arglist))),"Event") ; trigger_msg ;};
+ };
+};
+
+macro auto_start{cover{edges_upto_1;};};

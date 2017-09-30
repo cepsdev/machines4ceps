@@ -482,6 +482,18 @@ void Websocket_interface::handler(int sck){
              ++i;
          }
          reply += "]}";
+      } else if (cmd[0] == "QUERY") {
+         std::string query;
+         for(auto const & s : args)
+             query += s +" ";
+
+         reply = "{\"ok\": true,\n";
+         reply += "query:\"";
+         reply += query;
+         reply += "\",\n";
+         reply +="\"result\":[";
+
+         reply += "]}";
       }
     }//cmd.size()!=0
     if(!send_reply(reply)) break;
