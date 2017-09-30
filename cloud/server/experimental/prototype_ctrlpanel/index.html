@@ -21,7 +21,7 @@
     <link href="datatables/css/dataTables.bootstrap.min.css" rel="stylesheet" >
     <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
     <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
-
+    <link href="animate/animate.css" rel="stylesheet">
     <style>
     </style>
     <title>Prototype Control Panel</title>
@@ -75,152 +75,35 @@
         </div>
 
 
-    <!---------------------------- COMPONENT: Prop_panel ---------------------------->
-    <div id="widget_properties_panel" class="panel panel-primary prop-panel" style="display:none;width:400px;">
-        <div class="panel-heading" id="widget_properties_panel_header">
-            Widget Properties
-            <button type="button" class="close" aria-label="Close" onclick="close_widget_properties_panel();">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <div class="panel-body">             
-                <div class="input-group" style="width:100%;">
-                        <select id="select_widget_type" class="form-control widget-properties-panel-input" disabled>
-                            <option value="Choose ..." >Choose ...</option>
-                            <option value="Modify/View Signal">Modify/View Signal</option>
-                            <option value="Trigger Event">Trigger Event</option>
-                            <option value="Run Script">Run Script</option>
-                        </select>
+
+    <!---------------------------- COMPONENT: Login ---------------------------->
+    <div class="modal fade" id="dlg_login" tabindex="-1" role="dialog" aria-labelledby="dlg_login">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_select_a_signal_label">Login</h4>
                 </div>
-                <hr />
-                <div id="details_for_sel_1" class="widget-properties-panel-details" style="display:none">
-                    <table width="100%">
-                        <tr><td>
-                            <div class="input-group">
-                                <span class="input-group-addon" id="sizing-addon1">Signal</span>
-                                <select id="select_signal" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
-                                    <option>Signal A</option>
-                                    <option>Signal B</option>
-                                    <option>Signal C</option>
-                                    <option>Signal D</option>
-                                    <option>Signal E</option>
-                                </select>
-                            </div>
-                            </td>
-                            <td>&nbsp;</td>
-                            <td width="60px">
-                            <button id = "btn_signal_search" type="button" class="btn btn-default" aria-label="Left Align">
-                                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                            </button>
-                            </td>
-                        </tr>
-                    </table>
-                    <p></p>
-                    <div class="input-group" style="display:none;">
-                        <span class="input-group-addon" id="sizing-addon1">What</span>
-                        <select id="select_sig_subtype" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
-                            <option>Toggle</option>
-                            <option>Watch Only</option>
-                            <option>Plot</option>
-                        </select>
-                    </div>
-                    <p></p>
-
-
-
-                    <div class="panel-group" id="accordion_sel_1" role="tablist" aria-multiselectable="true">
-                        <div class="panel panel-primary">
-                            <div class="panel-heading" role="tab" id="accordion_sel_1_1_heading">
-                                <h6 class="panel-title">
-                                    <a role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_1_collapse" aria-expanded="true" aria-controls="accordion_sel_1_1_collapse">
-                                        Toggle
-                                    </a>
-                                </h6>
-                            </div>
-                            <div id="accordion_sel_1_1_collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="accordion_sel_1_1_heading">
-                                <div class="panel-body">
-                                    <div class="input-group">
-                                        <span class="input-group-addon" id="sizing-addon1">Display Format</span>
-                                        <select id="select_display_format" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1" disabled>
-                                            <option>Decimal</option>
-                                            <option>Hexadecimal</option>
-                                            <option>Binary</option>
-                                            <option>Octal</option>
-                                        </select>
-                                    </div>
-                                    <p></p>
-                                    <div class="input-group">
-                                        <span class="input-group-addon" id="sizing-addon1">Update Value</span>
-                                        <select id="select_update_behaviour" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
-                                            <option selected>Automatically</option>
-                                            <option>On Trigger</option>
-                                            <option>Watch Only</option>
-                                        </select>
-                                    </div>                                    
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="panel panel-primary">
-                            <div class="panel-heading" role="tab" id="accordion_sel_1_2_heading">
-                                <h4 class="panel-title">
-                                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_2_collapse" aria-expanded="false" aria-controls="accordion_sel_1_2_collapse">
-                                        Watch
-                                    </a>
-                                </h4>
-                            </div>
-                            <div id="accordion_sel_1_2_collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="accordion_sel_1_2_heading">
-                                <div class="panel-body">
-                                    <div class="input-group">
-                                        <span class="input-group-addon" id="sizing-addon1">Display Format</span>
-                                        <select id="select_display_format_watch_only" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1" disabled>
-                                            <option>Decimal</option>
-                                            <option>Hexadecimal</option>
-                                            <option>Binary</option>
-                                            <option>Octal</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="panel panel-primary">
-                            <div class="panel-heading" role="tab" id="accordion_sel_1_3_heading">
-                                <h4 class="panel-title">
-                                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion_sel_1" href="#accordion_sel_1_3_collapse" aria-expanded="false" aria-controls="accordion_sel_1_3_collapse">
-                                        Plot
-                                    </a>
-                                </h4>
-                            </div>
-                            <div id="accordion_sel_1_3_collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="accordion_sel_1_3_heading">
-                                <div class="panel-body">
-                                    &nbsp;
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                         
-
-
-
-
+                <div id="dlg_select_a_signal_body" class="modal-body">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-log-in"></i></span>
+                        <input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder="">
+                    </div>                      
                 </div>
-               
-            
-            
-            
-            
-            
-                <div id="details_for_sel_2" style="display:none" class="widget-properties-panel-details">
+                <div class="modal-footer">
+                    <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary" onclick="login($('#sim_url').val());">Ok</button>
                 </div>
-                <div id="details_for_sel_3" style="display:none" class="widget-properties-panel-details">
-                </div>
-
             </div>
+        </div>
     </div>
-    <!---------------------------- COMPONENT: Prop_panel ---------------------------->
+    <!---------------------------- COMPONENT: Login ---------------------------->
 
-    
+
+
+
+
+ 
 
     <!---------------------------- COMPONENT: Choose Signal ---------------------------->
     <div class="modal fade" id="dlg_select_a_signal" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_signal_label">
@@ -257,10 +140,11 @@
     <script src="datatables-plugins/dataTables.bootstrap.min.js"></script>
     <script src="datatables-responsive/dataTables.responsive.js"></script>
     <script src="chartjs/Chart.js"></script>
+    <script src="bootstrap-notify/bootstrap-notify.js"></script>
     <script src="cepscloud-ui/widget_properties_panel.js"></script>
     <script src="cepscloud-ui/widget_toggle_signal.js"></script>
     <script src="cepscloud-ui/widget_plot_signal.js"></script>
-    
+
     <!---------------------- Signals ----------------------->
     <script>
         function Signalinfo(n, v, tv, c, s, r, f, i) {
@@ -570,10 +454,55 @@
     </script>
 
     <script>
-        $(function () {
-           
-        });
+        var connected = false;
+        var remote_url = undefined;
 
+
+        function fetch_data_from_remote(ws) {
+            ws.send("QUERY abc");
+            ws.addEventListener("message", (ev) => {
+               
+            });
+        }
+
+
+        function do_login(url) {
+            remote_url = url;          
+            connected = false;
+            (() =>
+            {
+                let socket = new WebSocket("ws://"+url);
+                socket.addEventListener("open", (ev) => {
+                    $.notify({/* options*/message: 'Connected with \'' + url +  `'`
+                    },
+                        {/*settings*/ type: 'success', showProgressbar: false,delay : 2000,
+                            animate: { enter: 'animated rollIn', exit: 'animated rollOut' }
+                        }
+                    );
+                    fetch_data_from_remote(socket);
+                });
+                
+                socket.addEventListener("close", (ev) => {  });
+                socket.addEventListener("error", (ev) => {
+                    
+                    $.notify({/* options*/message: 'Failed to connect with \'' + url +
+                        `' <p></p><button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick="do_login('${remote_url}');">Try again</button>&nbsp;&nbsp;`
+                    },
+                        {/*settings*/ delay: 0, type: 'danger', showProgressbar: false,
+                            animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
+                        }
+                    );                    
+                });                
+            })();
+        }
+
+        function login(url) {
+            $('#dlg_login').modal('hide');
+            do_login(url);
+        }
+
+
+        
         $(document).ready(() => {
             //$(document).click(() => { $(".baseWidget-selected").removeClass("baseWidget-selected"); });
             init_widget_properties_panel();
@@ -589,6 +518,10 @@
             $('#ctrl_panel_editor_btn_add_paragraph').on('click', (ev) => {
                 ctrlPanelEditor.addParagraph();
             });
+            if (!connected)
+                setTimeout(() => {
+                    $('#dlg_login').modal('show');
+                }, 100);
         });
     </script>
 </body>
