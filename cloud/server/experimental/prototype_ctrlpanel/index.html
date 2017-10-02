@@ -87,7 +87,9 @@
                 <div id="dlg_select_a_signal_body" class="modal-body">
                     <div class="input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-log-in"></i></span>
-                        <input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder="">
+                        <!--input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder=""-->
+                        <input id="sim_url" type="text" class="form-control" name="user" value="localhost:10163" placeholder="">
+
                     </div>                      
                 </div>
                 <div class="modal-footer">
@@ -240,7 +242,7 @@
             else return rr;
         }
 
-        generate_test_data();
+        //generate_test_data();
 
         function get_signal_by_name(n) {
             for (let e of signals) if (e.name == n) return e;
@@ -453,15 +455,48 @@
         let ctrlPanelEditor = undefined;
     </script>
 
+
+
+    <script>
+        function traverse_ceps_as_json(doc, f) {
+            if (doc === undefined) return true;
+            if (Object.prototype.toString.call(doc) == "[object Array]") {
+                for (let e of doc) {
+                    if (!f(e)) return false;
+                    if(!traverse_ceps_as_json(e, f)) return false;
+                }
+                return true;
+            } else if (doc.content) {
+                return(traverse_ceps_as_json(doc.content, f));
+            }
+            return f(doc);
+        }
+
+    </script>
+
     <script>
         var connected = false;
         var remote_url = undefined;
 
 
         function fetch_data_from_remote(ws) {
-            ws.send("QUERY abc");
+            ws.send("QUERY root.frame;");
             ws.addEventListener("message", (ev) => {
-               
+                let msg = JSON.parse(ev.data);
+                //console.log(ev.data);
+                if (msg.ok) {
+                    let set_of_signals = new Set();
+                    traverse_ceps_as_json(msg.sresult, (entry) => {
+                        if (entry.type != undefined) if (entry.type == "symbol" && entry.kind == "Systemstate") {
+                            set_of_signals.add(entry.name);
+                        }
+                        return true;
+                    });
+                    let list_of_signals = Array.from(set_of_signals).sort();
+                    for (let s_name of list_of_signals) {
+                        signals.push(new Signalinfo(s_name, undefined, undefined, "",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: undefined, max: undefined }));
+                    }
+                }
             });
         }
 
