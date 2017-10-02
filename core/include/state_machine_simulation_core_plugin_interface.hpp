@@ -5,6 +5,8 @@
 #include <vector>
 #include <cmath>
 
+class State_machine_simulation_core;
+
 namespace sm4ceps_plugin_int{
  struct Variant{
   double dv_ = 0.0;
@@ -98,6 +100,11 @@ namespace sm4ceps_plugin_int{
    void set_handler(glob_handler_t h) {handler = h;}
    virtual Framecontext* clone() = 0;
    virtual ~Framecontext(){}
+ };
+
+ class Executioncontext{
+ public:
+     virtual void run(State_machine_simulation_core* ctxt) = 0;
  };
 
 

@@ -333,6 +333,7 @@ public:
 		sm4ceps_plugin_int::Framecontext* frmctxt_ = nullptr;
 		sm4ceps_plugin_int::Variant (*glob_func_)()  = nullptr;
 		error_t* error_ = nullptr;
+                sm4ceps_plugin_int::Executioncontext* exec = nullptr;
 		event_t() = default;
 		event_t(const event_t &) = default;
 		event_t& operator = (const event_t &) = default;

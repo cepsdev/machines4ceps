@@ -1,0 +1,4 @@
+kind Systemstate;
+Systemstate A,B,C,D;
+frame{id{frm_1;}; };
+frame{id{frm_2;}; };

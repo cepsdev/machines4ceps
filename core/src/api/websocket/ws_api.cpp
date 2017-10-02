@@ -272,6 +272,134 @@ static void comm_act_as_websocket_server(State_machine_simulation_core::dispatch
 }
 
 
+bool send_ws_text_msg(int sck, std::string const & msg){
+    auto len = msg.length();
+    bool fin = true;
+    bool ext1_len = len >= 126 && len <= 65535;
+    bool ext2_len = len > 65535;
+
+    std::uint16_t header = 0;
+    if (fin) header |= 0x80;
+    if(!ext1_len && !ext2_len) header |= len << 8;
+    else if (ext1_len) header |= 126 << 8;
+    else header |= 127 << 8;
+    header |= 1;
+    auto wr = write(sck, &header,sizeof header );
+    if(wr != sizeof header) return false;
+    if (ext1_len)
+    {
+      std::uint16_t v = len;v = htons(v);
+      if( (wr = write(sck, &v,sizeof v )) != sizeof v) return false;
+    }
+    if (ext2_len)
+    {
+      std::uint64_t v = len;v = htobe64(v);
+      if( (wr = write(sck, &v,sizeof v )) != sizeof v) return false;
+    }
+    if ( (wr = write(sck, msg.c_str(),len )) != (int)len) return false;
+    return true;
+}
+
+static std::string escape_json_string(std::string const & s){
+    bool transform_necessary = false;
+    for(std::size_t i = 0; i!=s.length();++i){
+        auto ch = s[i];
+        if (ch == '\n' || ch == '\t'|| ch == '\r' || ch == '"' || ch == '\\'){
+            transform_necessary = true; break;
+        }
+    }
+    if (!transform_necessary) return s;
+
+    std::stringstream ss;
+    for(std::size_t i = 0; i!=s.length();++i){
+        char buffer[2] = {0};
+        char ch = buffer[0] = s[i];
+        if (ch == '\n') ss << "\\n";
+        else if (ch == '\t') ss << "\\t";
+        else if (ch == '\r' ) ss << "\\r";
+        else if (ch == '"') ss << "\\\"";
+        else if (ch == '\\') ss << "\\\\";
+        else ss << buffer;
+    }
+    return ss.str();
+}
+
+static void ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
+    using namespace ceps::ast;
+    if (n->kind() == Ast_node_kind::int_literal)
+        s << value(as_int_ref(n));
+    else if (n->kind() == Ast_node_kind::float_literal)
+        s << value(as_double_ref(n));
+    else if (n->kind() == Ast_node_kind::string_literal)
+        s << "\"" <<  escape_json_string(value(as_string_ref(n))) << "\"";
+    else if (n->kind() == Ast_node_kind::identifier)
+        s << "\"" <<  escape_json_string(name(as_id_ref(n))) << "\"";
+    else if (n->kind() == Ast_node_kind::structdef){
+        auto & st = as_struct_ref(n);
+        s << "{ \"type\":\"struct\", \"name\":" <<"\""<< name(st) << "\",\"content\":[";
+        for(std::size_t i = 0; i != st.children().size();++i){
+            auto nn = st.children()[i];
+            if(!nn) continue;
+            ceps2json(s,nn);if (1+i != st.children().size()) s << ",";
+        }
+        s << "]}";
+    }
+    else if (n->kind() == Ast_node_kind::symbol){
+        auto & sy = as_symbol_ref(n);
+        s << "{ \"type\":\"symbol\",\"kind\":" << "\""<< kind(sy) << "\", \"name\":" <<"\""<< name(sy) << "\"}";
+    }
+}
+
+class Execute_query : public sm4ceps_plugin_int::Executioncontext {
+    std::string query;
+    int sck;
+ public:
+    Execute_query() = default;
+    Execute_query(std::string q, int s):query{q}, sck{s}{}
+    void  run(State_machine_simulation_core* ctxt){
+      std::string r;
+
+      std::stringstream s;
+      s << query;
+      try {
+       Ceps_parser_driver driver{ctxt->ceps_env_current().get_global_symboltable(),s};
+       ceps::Cepsparser parser{driver};
+       if (parser.parse() != 0 || driver.errors_occured()){
+         r = "{ \"ok\": false, \"reason\": \"\" }";
+       } else {
+         std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
+         ceps::interpreter::evaluate_without_modifying_universe(ctxt->current_universe(),
+                                  driver.parsetree().get_root(),
+                                  ctxt->ceps_env_current().get_global_symboltable(),
+                                  ctxt->ceps_env_current().interpreter_env(),
+                                  &generated_nodes
+                                  );
+         std::stringstream out;
+         for(std::size_t i = 0; i != generated_nodes.size();++i){
+             auto e = generated_nodes[i];
+             if (e) ceps2json(out,e);
+             if (1 + i != generated_nodes.size()) out << ",";
+         }
+         r = "{ \"ok\": true,";
+         r += " \"number_toplevel_nodes\":"+std::to_string(generated_nodes.size())+",";
+         r += " \"sresult\":["+out.str()+"]";
+         r += "}";
+         //std::cout << out.str() << std::endl;
+         //for(auto e : generated_nodes) delete e;
+       }
+      }
+      catch (ceps::interpreter::semantic_exception & se)
+      {
+          r = "{ \"ok\": false,\"exception\":\"ceps::interpreter::semantic_exception\",  \"reason\": \""+std::string{se.what()}+"\" }";
+      }
+      catch (std::runtime_error & re)
+      {
+          r = "{ \"ok\": false,\"exception\":\"ceps::interpreter::semantic_exception\", \"reason\": \""+std::string{re.what()}+"\" }";
+      }
+      if(!send_ws_text_msg(sck,r)) closesocket(sck);
+    }
+};
+
 void Websocket_interface::handler(int sck){
  using wstable_t = std::vector<State_machine_simulation_core::global_states_t::iterator>;
  auto period = std::shared_ptr<std::chrono::microseconds>(new std::chrono::microseconds{1000});
@@ -487,13 +615,11 @@ void Websocket_interface::handler(int sck){
          for(auto const & s : args)
              query += s +" ";
 
-         reply = "{\"ok\": true,\n";
-         reply += "query:\"";
-         reply += query;
-         reply += "\",\n";
-         reply +="\"result\":[";
-
-         reply += "]}";
+         State_machine_simulation_core::event_t ev;
+         auto exec = new Execute_query{query,sck};
+         ev.exec = exec;
+         smc_->enqueue_event(ev);
+         continue;
       }
     }//cmd.size()!=0
     if(!send_reply(reply)) break;
