@@ -31,11 +31,6 @@
                             <div class="input-group">
                                 <span class="input-group-addon" id="sizing-addon1">Signal</span>
                                 <select id="select_signal" class="form-control widget-properties-panel-input" aria-describedby="sizing-addon1">
-                                    <option>Signal A</option>
-                                    <option>Signal B</option>
-                                    <option>Signal C</option>
-                                    <option>Signal D</option>
-                                    <option>Signal E</option>
                                 </select>
                             </div>
                             </td>
@@ -222,6 +217,7 @@
 
         function get_widget_info(widget) {
             if (widget === undefined) return {valid: false };
+
             if (typeof widget == "string") {
             let widget_id = widget;
                 for (let e of widget_infos) {
@@ -231,7 +227,14 @@
                 }
                 return {valid: false };
             }
-            if (!widget.hasClass("baseWidget")) return {valid: false };
+            let widget_id = widget.attr("id");
+            for (let e of widget_infos) {
+                if (e.id == widget_id) {
+                    return e.info;
+                }
+            }
+
+            if (!widget.hasClass("baseWidget")) return { valid: false };
             if (widget.hasClass("baseWidget-not-initialized")) return {
             valid: false,
                 type: {sig: false, ev: false, script: false },
@@ -244,14 +247,9 @@
                 update_sig_automatically: false,
                 display : "Decimal"
             };
-            let widget_id = widget.attr("id");
-            for (let e of widget_infos) {
-                if (e.id == widget_id) {
-                    return e.info;
-                }
-            }
             return {valid: false };
         }
+
         function save_widget_info(widget, info, update_ctrl) {
             info.valid = info.type.sig || info.type.ev || info.type.script;
             let widget_id = widget.attr("id");
@@ -281,7 +279,7 @@
             let widget_id = widget.attr("id");
             if (info == undefined)
                 info = get_widget_info(widget);
-            if (info.type.sig) {
+            if (info.type.sig && info.sig_name != undefined) {
                 if (info.toggle_sig) {
                     setup_toggle_widget(widget_id, get_signal_by_name(info.sig_name));
                 } else if (info.watch_only) {
@@ -297,10 +295,11 @@
             let type_ctrl = $(prop_panel).find("#select_widget_type");
             if (type_ctrl.length != 1) throw "Internal Error";
             let type = type_ctrl.find(":selected").text();
-
+            console.log(type);
             if (type == "Modify/View Signal") {
-
+                console.log("Enter Modify/View Signal");
                 let sig_name = $(prop_panel).find("#select_signal").find(":selected").text();
+                if (sig_name != undefined && sig_name.length == 0) sig_name = undefined;
                 let sub_type = widget_panel_accordion_active;
 
 
@@ -361,7 +360,9 @@
         function on_prop_panel_change() {
             let widget = $(".baseWidget-selected").first();
             let info = widget_properties_panel_extract_settings();
+            console.log("prop_panel_change()",info);
             save_widget_info(widget, info);
+            console.log("prop_panel_change() 2", info);
             update_prop_panel(widget);
         }
 
@@ -379,7 +380,7 @@ function update_prop_panel(widget) {
     let info = get_widget_info(widget);
     let update_widget = false;
     let widget_id = widget.attr("id");
-    //console.log(info);
+    console.log(info);
 
     $(prop_panel).css("display", "block");
     if (!info.valid) {
