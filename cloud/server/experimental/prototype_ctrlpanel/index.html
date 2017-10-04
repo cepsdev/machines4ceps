@@ -88,7 +88,7 @@
                     <div class="input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-log-in"></i></span>
                         <!--input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder=""-->
-                        <input id="sim_url" type="text" class="form-control" name="user" value="localhost:10163" placeholder="">
+                        <input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:1063" placeholder="">
 
                     </div>                      
                 </div>
@@ -158,6 +158,8 @@
             this.receiver = r;
             this.frames = f;
             this.info = i;
+            this.observed_min = undefined;
+            this.observed_max = undefined;
         }
         var signals = [];
         var signals_dt = undefined;
@@ -221,17 +223,38 @@
         }
 
         function map_sig_target_value_to_range(signal, r) {
-            let rr = ((signal.target_value - signal.info.min) / (signal.info.max - signal.info.min)) * r;
+            let mx = signal.info.max;
+            let mn = signal.info.min;
+            let d = 0;
+            if (mx == undefined) mx = Math.round(Math.pow(2,31));
+            if (mn == undefined) mn = -Math.round(Math.pow(2, 31))+1;
+        
+            d = (mx - mn);
+            let rr = ((signal.target_value - mn) / d) * r;
             return rr;
         }
 
         function map_sig_value_to_range(signal, r) {
-            let rr = ((signal.value - signal.info.min) / (signal.info.max - signal.info.min)) * r;
+            let mx = signal.info.max;
+            let mn = signal.info.min;
+            let d = 0;
+            if (mx == undefined) mx = Math.round(Math.pow(2, 31));
+            if (mn == undefined) mn = -Math.round(Math.pow(2, 31)) + 1;
+            d = (mx - mn);
+
+            let rr = ((signal.value - mn) / (dx)) * r;
             return rr;
         }
 
         function map_range_index_to_value(signal, r, i) {
-            let rr = ((i / r) * (signal.info.max - signal.info.min)) + signal.info.min;
+            let mx = signal.info.max;
+            let mn = signal.info.min;
+            let d = 0;
+            if (mx == undefined) mx = Math.round(Math.pow(2, 31));
+            if (mn == undefined) mn = -Math.round(Math.pow(2, 31)) + 1;
+            d = (mx - mn);
+
+            let rr = ((i / r) * d) + mn;
             if (signal.info.type == "float")
                 return Math.round(rr * 10000) / 10000.0;
             if (signal.info.type == "int") {
@@ -298,12 +321,21 @@
             return r;
         }
 
+        function helper_make_widget_content_with_loader() {
+            return `<table width="100%" valign="center"><tr><td width="70px"><div class="loader" style="float: left;"></div></td><td width="15px"></td><td align="left"><h4><span class="label label-default">Fetching Data</span></h4></td></tr></table>`;
+        }
+
         function helper_make_toggle_widget_content(widget_id, signal) {
             let widget_content = "";
-            if (signal.info.vm != undefined && signal.info.vm.length > 0) {
-                let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
-                widget_content =
-                `<table width='100%'>
+            if (signal.value == undefined) {
+                widget_content = helper_make_widget_content_with_loader();                    
+            }
+            else {
+                if (signal.info.vm != undefined && signal.info.vm.length > 0) {
+                    let [l, sel_index] = helper_make_toggle_widget_sel_list(signal, signal.target_value);
+                    widget_content =
+                        `
+                 <table width='100%'>
                   <tr>
                    <td width='50%'>
                      <div id='dummy_${widget_id}'></div>
@@ -320,21 +352,31 @@
                  </tr>
                 </table>`;
 
-            } else {
-                widget_content =
-                    `<table><tr><td width='50%'><div id='dummy_${widget_id}'></div></td><td width='50%'> 
-                    <div class="input-group input-group-sm baseWidget-edit">
-                    <input type ="text"style="width:100%;" id="${widget_id}_text_ctrl" class="form-control" value="${signal.target_value}" enabled>
-                        <span class="input-group-addon" >${ helper_display_unit_and_format(signal.info.unit, get_widget_info(widget_id).display) }</span>
-               </div></td></tr></table>`;
+                } else {
+                    widget_content =
+                        `
+                <table width="100%">
+                 <tr>
+                  <td style="min-width:30px;width:50%;">
+                   <div id='dummy_${widget_id}'></div>
+                  </td>
+                  <td style="min-width:160px;width:50%;"> 
+                   <div id="${widget_id}_input_group" class="input-group input-group-sm baseWidget-edit">
+                    <input type ="text"style="width:100%;" id="${widget_id}_text_ctrl" class="form-control" value="${sig_value_text_representation(signal, signal.target_value, get_widget_info(widget_id).display)}" enabled>
+                    <span class="input-group-addon" >${ helper_display_unit_and_format(signal.info.unit, get_widget_info(widget_id).display)}</span>
+                   </div>
+                  </td>
+                 </tr>
+                </table>`;
+                }
             }
             return widget_content;
         }
 
-        function validate_input(signal, text,format) {
+        function validate_input(signal, text, format) {
             let v = NaN;
-            if (signal.type == "float") {
-
+            if (signal.info.type == "float") {
+                v = parseFloat(text);
             } else if (signal.info.type == "int") {
                 
                 if (format == "Hexadecimal") {
@@ -346,13 +388,17 @@
                 } else {
                     if (text.match(/^(\-)?([0-9])+$/)) v = parseInt(text);
                 }
-                if (!isNaN(v)) {
-                    if (signal.info.min != undefined)
-                        if (v < signal.info.min) return [false, v, "Too Small."];
-                    if (signal.info.max != undefined)
-                        if (v > signal.info.max) return [false, v, "Too Big."];
-                }
             }
+            if (!isNaN(v)) {
+                let mx = signal.info.max;
+                let mn = signal.info.min;
+                if (mx == undefined) mx = Math.round(Math.pow(2, 31));
+                if (mn == undefined) mn = -Math.round(Math.pow(2, 31)) + 1;
+
+                if (v < mn) return [false, v, "Too Small."];
+                if (v > mx) return [false, v, "Too Big."];
+            }
+
             return [!isNaN(v),v, text.length==0 ? "No Input" : "That's not a number"];
         }
         function sig_value_text_representation(signal, v, format) {
@@ -368,6 +414,9 @@
             $(`#header_of_${widget_id}`).html(signal.name);
             $(`#${widget_id}`).addClass("toggle-signal");
             $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
+            if (signal.value == undefined) {
+                $(`#content_of_${widget_id}`).html(helper_make_widget_content_with_loader()); return;
+            }              
             $(`#content_of_${widget_id}`).html("<table><tr><td width='50%'>" + "<div id='dummy_" + widget_id + "'> </div>" + "</td><td width='50%'>" +
                 `<div class="input-group input-group-sm baseWidget-edit">
                     <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  disabled>${signal.target_value}</textarea>
@@ -477,14 +526,38 @@
     <script>
         var connected = false;
         var remote_url = undefined;
+        var simcore_ws = undefined;
 
+        function simcore_ws_process_messages(ev) {
+            let msg = JSON.parse(ev.data);
+            if (!msg.ok) return;
+            if (msg.signals) {
+               for (let s of msg.signals) {
+                   let sig = get_signal_by_name(s.name);
+                   if (!sig) continue;
+                   sig.value = s.value;
+                   if (sig.target_value == undefined) sig.target_value = sig.value;
+                   if (sig.observed_min == undefined || sig.observed_max == undefined) {
+                       sig.observed_min = sig.value;
+                       sig.observed_max = sig.value;
+                   } else {
+                       sig.observed_min = Math.min(sig.value, sig.observed_min);
+                       sig.observed_max = Math.max(sig.value, sig.observed_max);
+                   }
+               }
+            }
+        }
 
         function fetch_data_from_remote(ws) {
             ws.send("QUERY root.frame;");
-            ws.addEventListener("message", (ev) => {
+            function process_frames_resultset(ev) {
                 let msg = JSON.parse(ev.data);
                 //console.log(ev.data);
                 if (msg.ok) {
+                    ws.removeEventListener("message", process_frames_resultset);
+                    ws.addEventListener("message", simcore_ws_process_messages);
+                    simcore_ws = ws;
+                    connected = true;
                     let set_of_signals = new Set();
                     traverse_ceps_as_json(msg.sresult, (entry) => {
                         if (entry.type != undefined) if (entry.type == "symbol" && entry.kind == "Systemstate") {
@@ -497,7 +570,49 @@
                         signals.push(new Signalinfo(s_name, undefined, undefined, "",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: undefined, max: undefined }));
                     }
                 }
-            });
+            };
+
+            ws.addEventListener("message", process_frames_resultset );
+        }
+        var login_retry_timeout = undefined;
+        function stop_login_retry_timeout() {
+            if (login_retry_timeout == undefined) return;
+            window.clearTimeout(login_retry_timeout);
+            login_retry_timeout = undefined;
+        }
+
+        function enter_credentials() {
+           $('#dlg_login').modal('show');
+        }
+
+        var failed_connect_notification_container = undefined;
+        function show_failed_connect_notification(url) {
+            if (failed_connect_notification_container != undefined) {
+                failed_connect_notification_container.close();
+            }
+            var time_elapsed_to_retry_connect = 10;
+            function time_elapsed_to_retry_connect_fn(){
+                --time_elapsed_to_retry_connect;
+                if (time_elapsed_to_retry_connect <= 0) {
+                    if (failed_connect_notification_container != undefined) {
+                        failed_connect_notification_container.close();
+                        setTimeout(() => { do_login(remote_url); }, 1500);
+                    }
+                } else {
+                    $("#info_btn_log_again").html(time_elapsed_to_retry_connect.toString());
+                    login_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
+                }
+            }
+            login_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
+            failed_connect_notification_container=
+            $.notify({/* options*/message: 'Failed to connect with \'' + url +
+                `' <p></p><button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick="stop_login_retry_timeout();do_login('${remote_url}');">Try again in <span id="info_btn_log_again">${time_elapsed_to_retry_connect}</span> seconds</button>&nbsp;&nbsp;` +
+                `<button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick=" stop_login_retry_timeout();enter_credentials();">Reenter Credentials</button>`
+            },
+                {/*settings*/ delay: 0, type: 'danger', showProgressbar: false,
+                    animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
+                }
+            );                    
         }
 
 
@@ -508,8 +623,7 @@
             {
                 let socket = new WebSocket("ws://"+url);
                 socket.addEventListener("open", (ev) => {
-                    $.notify({/* options*/message: 'Connected with \'' + url +  `'`
-                    },
+                    $.notify({/* options*/message: 'Connected with \'' + url +  `'`},
                         {/*settings*/ type: 'success', showProgressbar: false,delay : 2000,
                             animate: { enter: 'animated rollIn', exit: 'animated rollOut' }
                         }
@@ -517,17 +631,21 @@
                     fetch_data_from_remote(socket);
                 });
                 
-                socket.addEventListener("close", (ev) => {  });
-                socket.addEventListener("error", (ev) => {
-                    
-                    $.notify({/* options*/message: 'Failed to connect with \'' + url +
-                        `' <p></p><button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick="do_login('${remote_url}');">Try again</button>&nbsp;&nbsp;`
-                    },
-                        {/*settings*/ delay: 0, type: 'danger', showProgressbar: false,
-                            animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
-                        }
-                    );                    
-                });                
+                socket.addEventListener("close", (ev) => {
+                    connected = false;
+                    simcore_ws = undefined;
+                    let l = $(".depend-on-signal-data");
+                    console.log(l);
+                    for (let e of l) {
+                        $(e).addClass("waiting-for-data");
+                    }
+                    for (let s of signals) {
+                        s.value = undefined;
+                    }
+                    setTimeout(() => { for (let e of l) update_widget_ctrl($(e)); }, 10);
+                    show_failed_connect_notification(url);
+                });
+                socket.addEventListener("error", (ev) => { connected = false; simcore_ws = undefined; });                
             })();
         }
 
@@ -543,8 +661,23 @@
             init_widget_properties_panel();
             setInterval(() => {
                 for (let e of global_observer_handlers) if (e.handler != undefined) e.handler();
-             }
-            , 10);           
+             } , 10);
+
+            setInterval(() => {
+                
+                let not_connected_widgets = $(".waiting-for-data");
+                if (not_connected_widgets.length && connected && simcore_ws) {
+                    console.log(not_connected_widgets);
+                    for (let e of not_connected_widgets) {
+                        let signal_name = $(e).attr("attached-signal");
+                        let sig = get_signal_by_name(signal_name);
+                        if (sig.value != undefined) {
+                            $(e).removeClass("waiting-for-data");
+                            setTimeout(() => { update_widget_ctrl($(e)); }, 10);
+                        } else simcore_ws.send("WATCH "+signal_name);
+                    }                    
+                }
+            } , 500);    
             
             ctrlPanelEditor = new CtrlPanelEditor($('#ctrl_panel_editor'), new CtrlPanelComponentTemplates() );
             $('#ctrl_panel_editor_btn_add').on('click', (ev) => {

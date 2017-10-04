@@ -2,10 +2,11 @@
         var prop_panel = undefined;
         var prop_panel_header = undefined;
         var widget_infos = [];
+        const ACC_TAB_NONE = -1;
         const ACC_TAB_TOGGLE_SIGNAL = 0;
         const ACC_TAB_WATCH_SIGNAL  = 1;
         const ACC_TAB_PLOT          = 2;
-        var widget_panel_accordion_active = ACC_TAB_TOGGLE_SIGNAL;
+        var widget_panel_accordion_active = ACC_TAB_NONE;
         var widget_panel_accordion_active_last = widget_panel_accordion_active;
         var widget_panel_html = 
 `   <div id="widget_properties_panel" class="panel panel-primary prop-panel" style="display:none;width:400px;">
@@ -52,9 +53,6 @@
                         </select>
                     </div>
                     <p></p>
-
-
-
                     <div class="panel-group" id="accordion_sel_1" role="tablist" aria-multiselectable="true">
                         <div class="panel panel-primary">
                             <div class="panel-heading" role="tab" id="accordion_sel_1_1_heading">
@@ -64,7 +62,7 @@
                                     </a>
                                 </h6>
                             </div>
-                            <div id="accordion_sel_1_1_collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="accordion_sel_1_1_heading">
+                            <div id="accordion_sel_1_1_collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="accordion_sel_1_1_heading">
                                 <div class="panel-body">
                                     <div class="input-group">
                                         <span class="input-group-addon" id="sizing-addon1">Display Format</span>

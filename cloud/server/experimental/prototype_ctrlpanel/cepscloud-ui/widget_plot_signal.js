@@ -1,4 +1,5 @@
 function helper_make_plot_widget_content(widget_id, signal) {
+    if (signal.value == undefined) return helper_make_widget_content_with_loader();
     let r = `
     <div>
         <canvas id="${widget_id}_plot_canvas"></canvas>
@@ -23,6 +24,7 @@ function setup_plot_signal_widget(widget_id, signal) {
     $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
     let widget_content = helper_make_plot_widget_content(widget_id, signal);
     $(`#content_of_${widget_id}`).html(widget_content);
+    if (signal.value == undefined) return;
 
     var ctx = document.getElementById(widget_id + "_plot_canvas").getContext("2d");
     let config = {
