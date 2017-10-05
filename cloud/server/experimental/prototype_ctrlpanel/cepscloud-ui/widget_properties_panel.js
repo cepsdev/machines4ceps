@@ -281,7 +281,7 @@
                 if (info.toggle_sig) {
                     setup_toggle_widget(widget_id, get_signal_by_name(info.sig_name));
                 } else if (info.watch_only) {
-                    setup_view_signal_widget(widget_id, get_signal_by_name(info.sig_name));
+                    setup_toggle_widget(widget_id, get_signal_by_name(info.sig_name),true);
                 } else if (info.do_plot) {
                     setup_plot_signal_widget(widget_id, get_signal_by_name(info.sig_name));
                 }

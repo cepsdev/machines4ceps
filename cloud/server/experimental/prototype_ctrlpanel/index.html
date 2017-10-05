@@ -170,8 +170,7 @@
     
 
     <script>
-        var dlg_select_a_signal_table_dataset = [];
-        
+        var dlg_select_a_signal_table_dataset = [];        
 
         var dlg_select_a_signal_table_columns = [
             { title: "Name" },
@@ -209,13 +208,11 @@
             ];
         }
 
-        function set_signal_target_value(widget_id, tv, signal_name) {
-            
+        function set_signal_target_value(widget_id, tv, signal_name) {            
             let sig = get_signal_by_name(signal_name);
             sig.target_value = tv;
             for (let e of widget_infos) {
-                if (e.id == widget_id) continue;
-             
+                if (e.id == widget_id) continue;             
                 if (e.info.type.sig && e.info.toggle_sig && (e.info.sig_name == signal_name) ) {
                     e.ext.set_value(tv);
                 }
@@ -242,7 +239,7 @@
             if (mn == undefined) mn = -Math.round(Math.pow(2, 31)) + 1;
             d = (mx - mn);
 
-            let rr = ((signal.value - mn) / (dx)) * r;
+            let rr = ((signal.value - mn) / (d)) * r;
             return rr;
         }
 
@@ -311,6 +308,7 @@
             }
             return [l,sel_index];
         }
+
         function helper_display_unit_and_format(unit, format){
             let r = "";
             if (unit == undefined || unit.length == 0) r += "scalar"; else r += unit;
@@ -322,10 +320,16 @@
         }
 
         function helper_make_widget_content_with_loader() {
-            return `<table width="100%" valign="center"><tr><td width="70px"><div class="loader" style="float: left;"></div></td><td width="15px"></td><td align="left"><h4><span class="label label-default">Fetching Data</span></h4></td></tr></table>`;
+            return `<table width="100%" valign="center">
+                     <tr>
+                      <td width="70px"><div class="loader" style="float: left;"></div></td>
+                      <td width="15px"></td><td align="left"><h4><span class="label label-default">Fetching Data</span></h4></td>
+                     </tr>
+                    </table>`;
         }
 
-        function helper_make_toggle_widget_content(widget_id, signal) {
+        function helper_make_toggle_widget_content(widget_id, signal, watch) {
+            if (watch == undefined) watch = false;
             let widget_content = "";
             if (signal.value == undefined) {
                 widget_content = helper_make_widget_content_with_loader();                    
@@ -345,7 +349,9 @@
                        <select id="${widget_id}_select_ctrl" class="form-control">
                           ${helper_build_sel_html(l, sel_index)}
                         </select>
-                        <input type ="text"style="width:100%;" id="${widget_id}_text_ctrl" class="form-control" value="${sig_value_text_representation(signal, signal.target_value, get_widget_info(widget_id).display)}" enabled>
+                        <input type ="text" style="width:100%;" id="${widget_id}_text_ctrl" 
+                               class="form-control" value="${sig_value_text_representation(signal, (watch?signal.value:signal.target_value), get_widget_info(widget_id).display)}" 
+                               ${watch ? "disabled" : "enabled"}>
                         <span class="input-group-addon" >${helper_display_unit_and_format(signal.info.unit, get_widget_info(widget_id).display)}</span>                        
                     </div>
                   </td>
@@ -362,7 +368,11 @@
                   </td>
                   <td style="min-width:160px;width:50%;"> 
                    <div id="${widget_id}_input_group" class="input-group input-group-sm baseWidget-edit">
-                    <input type ="text"style="width:100%;" id="${widget_id}_text_ctrl" class="form-control" value="${sig_value_text_representation(signal, signal.target_value, get_widget_info(widget_id).display)}" enabled>
+                    <input type ="text" style="width:100%;"
+                           id="${widget_id}_text_ctrl" 
+                           class="form-control"
+                           value="${sig_value_text_representation(signal, (watch?signal.value:signal.target_value), get_widget_info(widget_id).display)}" 
+                           ${watch ? "disabled" : "enabled"}>
                     <span class="input-group-addon" >${ helper_display_unit_and_format(signal.info.unit, get_widget_info(widget_id).display)}</span>
                    </div>
                   </td>
@@ -409,39 +419,6 @@
             }
             return v.toString();
         }
-
-        function setup_view_signal_widget(widget_id, signal) {
-            $(`#header_of_${widget_id}`).html(signal.name);
-            $(`#${widget_id}`).addClass("toggle-signal");
-            $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
-            if (signal.value == undefined) {
-                $(`#content_of_${widget_id}`).html(helper_make_widget_content_with_loader()); return;
-            }              
-            $(`#content_of_${widget_id}`).html("<table><tr><td width='50%'>" + "<div id='dummy_" + widget_id + "'> </div>" + "</td><td width='50%'>" +
-                `<div class="input-group input-group-sm baseWidget-edit">
-                    <textarea id="${widget_id}_text_ctrl" rows="1" class="form-control"  disabled>${signal.target_value}</textarea>
-                        <span class="input-group-addon" >${signal.info.unit != undefined ? signal.info.unit : ""}</span>
-               </div>`+ "</td></tr></table>");
-            if (signal.info.type == "float" && signal.info.vm == undefined) {
-                let s = $("#dummy_" + widget_id).slider(
-                    {
-                        min: 0,
-                        max: slider_granularity_default - 1,
-                        value: map_sig_value_to_range(signal, slider_granularity_default - 1),
-                        disabled:true
-                    });
-                save_widget_ext(widget_id, {
-                    slider: s,
-                    slider_range: slider_granularity_default - 1,
-                    set_value: function (v) {
-                        $("#" + widget_id + "_text_ctrl").val(v.toString());
-                        let vv = map_sig_value_to_range(signal, slider_granularity_default - 1);
-                        $(s).slider("value", vv);
-                    }
-                });
-            }
-        }
-
         
         function handle_widget_click_header(widget_id, ev) {
             
@@ -544,6 +521,14 @@
                        sig.observed_min = Math.min(sig.value, sig.observed_min);
                        sig.observed_max = Math.max(sig.value, sig.observed_max);
                    }
+
+
+                   for (let wi of widget_infos) {
+                       if (wi.info.type.sig && !wi.info.toggle_sig && (wi.info.sig_name == s.name)) {
+                           if (wi.ext && wi.ext.set_value) wi.ext.set_value(sig.value);
+                       }
+                   }
+
                }
             }
         }

@@ -1,4 +1,6 @@
-function setup_toggle_widget(widget_id, signal) {
+function setup_toggle_widget(widget_id, signal, watch) {
+    if (watch == undefined) watch = false;
+
     $(`#header_of_${widget_id}`).html(
         signal.name +
         `<button type="button" class="btn btn-xs close" aria-label="Close" onclick="close_widget(event,'${widget_id}');" style="transform: translateY(-11px);">
@@ -10,7 +12,7 @@ function setup_toggle_widget(widget_id, signal) {
     $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
     $(`#${widget_id}`).removeClass("waiting-for-data");
 
-    let widget_content = helper_make_toggle_widget_content(widget_id, signal);
+    let widget_content = helper_make_toggle_widget_content(widget_id, signal,watch);
 
     $(`#content_of_${widget_id}`).html(widget_content);
 
@@ -45,14 +47,16 @@ function setup_toggle_widget(widget_id, signal) {
                 min: 0,
                 max: slider_granularity_default - 1,
                 value: map_sig_target_value_to_range(signal, slider_granularity_default - 1),
-                slide: on_thumb_moved
+                slide: on_thumb_moved,
+                disabled: watch
             });
         save_widget_ext(widget_id, {
             slider: s,
-            slider_range: slider_granularity_default - 1,
+            slider_range: gran,
             set_value: function (v) {
-                $("#" + widget_id + "_text_ctrl").val(v.toString());
-                let vv = map_sig_target_value_to_range(signal, slider_granularity_default - 1);
+                let v_text = sig_value_text_representation(signal, v, get_widget_info(widget_id).display);
+                $("#" + widget_id + "_text_ctrl").val(v_text);
+                let vv = map_sig_value_to_range(signal, gran);
                 $(s).slider("value", vv);
             }
         });
@@ -63,7 +67,8 @@ function setup_toggle_widget(widget_id, signal) {
                 min: 0,
                 max: gran,
                 value: map_sig_target_value_to_range(signal, gran),
-                slide: on_thumb_moved
+                slide: on_thumb_moved,
+                disabled: watch
             });
         $(`#${widget_id}_select_ctrl`).change(function (ev) {
             let v_str = $(`#${widget_id}_select_ctrl`).find(":selected").text();
@@ -83,7 +88,7 @@ function setup_toggle_widget(widget_id, signal) {
         });
         save_widget_ext(widget_id, {
             slider: s,
-            slider_range: slider_granularity_default - 1,
+            slider_range: gran,
             set_value: function (v) {
                 let v_text = sig_value_text_representation(signal, v, get_widget_info(widget_id).display);
                 $("#" + widget_id + "_text_ctrl").val(v_text);

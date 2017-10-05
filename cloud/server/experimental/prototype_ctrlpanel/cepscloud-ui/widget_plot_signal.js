@@ -24,7 +24,15 @@ function setup_plot_signal_widget(widget_id, signal) {
     $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
     let widget_content = helper_make_plot_widget_content(widget_id, signal);
     $(`#content_of_${widget_id}`).html(widget_content);
-    if (signal.value == undefined) return;
+
+    $(`#${widget_id}`).removeClass("depend-on-signal-data").addClass("depend-on-signal-data");
+    $(`#${widget_id}`).removeClass("waiting-for-data");
+
+    if (signal.value == undefined) {
+        $(`#${widget_id}`).addClass("waiting-for-data");
+        $(`#${widget_id}`).attr("attached-signal", signal.name);
+        return;
+    }
 
     var ctx = document.getElementById(widget_id + "_plot_canvas").getContext("2d");
     let config = {
@@ -71,7 +79,7 @@ function setup_plot_signal_widget(widget_id, signal) {
     let counter = 0;
     widget_info.plot_config.update = setInterval(
         () => {
-            let v = signal.target_value;
+            let v = signal.value;
             widget_info.plot_config.data.push(v);
             ++widget_info.plot_config.ticker;
             if (chart.data.labels.length < widget_info.plot_config.points_in_view) chart.data.labels.push("");
