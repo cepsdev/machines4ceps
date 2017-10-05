@@ -1,0 +1,23 @@
+kind Event;
+Event Wiggle;
+
+Systemstate t;
+t = 0.0;
+
+sm{
+ State_wiggling;
+ auto_start{};
+ states{Initial;A;};
+ on_enter{
+  start_periodic_timer(0.01*s,Wiggle);
+ };
+ 
+ Actions{
+  do_wiggle{
+   t = t + 0.01;
+   ABSFullyOperational = sin(3.0*t);
+  };
+ };
+ 
+ t{Initial;Initial;Wiggle;do_wiggle;};
+};
