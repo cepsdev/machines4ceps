@@ -1,0 +1,12 @@
+"BMBMBMBMNBMNBMNBMN";
+
+static_for(e : root.ctrlpanels.ctrlpanel)
+{
+e;
+}
+
+
+"AANMANAMN;AN;MAN;AN;A";
+
+root.ctrlpanels.content();
+

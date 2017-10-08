@@ -1,0 +1,24 @@
+ctrlpanels{
+ ctrlpanel{
+  widget{
+   id  {widget_1;};
+   type{toggle_signal;};
+   associated_systemstate{ABSFullyOperational;};
+   style{width{300;};height{120;};};
+  };
+  widget{
+   id{widget_2;};
+   type{watch_signal;};
+   associated_systemstate{ABSFullyOperational;};
+   style{width{300;};height{120;};};
+   
+  };
+  widget{
+   id{widget_3;};
+   type{plot_signal;};
+   associated_systemstate{ABSFullyOperational;};
+   style{width{800;};height{550;};};
+   
+  };
+ };
+};
