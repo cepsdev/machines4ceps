@@ -554,7 +554,7 @@ void Websocket_interface::handler(int sck){
         int v;
         v =  std::stoi(args[0]);
 
-        if (v >= 100) {
+        if (v >= 10) {
             reply = "{\"ok\": true}";
             std::lock_guard<std::mutex> g2(*watched_signals_m);
             *period = std::chrono::microseconds{1000*v};

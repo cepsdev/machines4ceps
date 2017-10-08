@@ -174,7 +174,7 @@ do{
                  delete eev.exec;
              }
 
-             if (ev.sid_.length() == 0) continue;
+             if (eev.id_.length() == 0) continue;
 
 			 ev.sid_ = eev.id_;
              if (map_ceps_payload_to_native_ && eev.payload_.size()){
