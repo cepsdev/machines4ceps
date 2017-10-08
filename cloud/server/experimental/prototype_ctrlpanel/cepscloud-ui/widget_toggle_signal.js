@@ -13,7 +13,7 @@ function setup_toggle_widget(widget_id, signal, watch) {
     $(`#${widget_id}`).removeClass("waiting-for-data");
 
     let widget_content = helper_make_toggle_widget_content(widget_id, signal,watch);
-
+ 
     $(`#content_of_${widget_id}`).html(widget_content);
 
     if (signal.value == undefined) {
@@ -21,6 +21,7 @@ function setup_toggle_widget(widget_id, signal, watch) {
         $(`#${widget_id}`).attr("attached-signal",signal.name);
         return;
     }
+
 
     let gran = slider_granularity_default - 1;
     if (signal.info.type == "int") gran = Math.min(slider_granularity_default - 1, (signal.info.max - signal.info.min));

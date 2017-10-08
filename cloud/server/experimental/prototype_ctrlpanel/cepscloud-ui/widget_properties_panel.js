@@ -234,7 +234,7 @@
 
             if (!widget.hasClass("baseWidget")) return { valid: false };
             if (widget.hasClass("baseWidget-not-initialized")) return {
-            valid: false,
+                valid: false,
                 type: {sig: false, ev: false, script: false },
                 doc: undefined,
                 sig_name: undefined,
@@ -250,8 +250,12 @@
 
         function save_widget_info(widget, info, update_ctrl) {
             info.valid = info.type.sig || info.type.ev || info.type.script;
-            let widget_id = widget.attr("id");
-              for (let e of widget_infos) {
+
+            let widget_id = undefined;
+            if (typeof widget == "string") widget_id = widget;
+            else widget_id = widget.attr("id");
+
+            for (let e of widget_infos) {
                 if (e.id == widget_id) {
                   e.info = info;
                   if (update_ctrl == undefined || update_ctrl) update_widget_ctrl(widget, info);
@@ -274,7 +278,7 @@
         }
 
         function update_widget_ctrl(widget, info) {
-            let widget_id = widget.attr("id");
+            let widget_id = (typeof widget == "string") ? widget : widget.attr("id");
             if (info == undefined)
                 info = get_widget_info(widget);
             if (info.type.sig && info.sig_name != undefined) {
