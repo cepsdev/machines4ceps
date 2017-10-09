@@ -42,13 +42,18 @@
 
     function unregister_observer(name) { register_observer(name, undefined); }
 
+    function set_page_title(s) {
+        $("#page_title").html(s);
+    }
 </script>
+
+
 <body>
 
     <div class="row">
         <div class="col-xs-6 col-sm-2"></div>
         <div class="col-xs-6 col-sm-8">
-            <h2>Control Panel </h2>
+            <h2><span id="page_title">Control Panel</span></h2>
         </div>
         <div class="col-xs-6 col-sm-2"></div>
     </div>
@@ -64,7 +69,9 @@
                                 <button id="ctrl_panel_editor_btn_add" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
                                 <!--button id="ctrl_panel_editor_btn_add_paragraph" type="button" class="btn btn-default btn-xs"><i class="fa fa-paragraph" aria-hidden="true"></i></button-->
                             </div>
-                        </div>
+                            <div class="btn-group btn-group-xs" role="group">
+                                <button id="ctrl_panel_editor_btn_save" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span></button>
+                            </div>
                     </div>
                     <div id="ctrl_panel_editor" class="panel-body" >
 
@@ -121,7 +128,6 @@
                 </div>
                 <div class="modal-footer">
                     <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary">Ok</button>
                 </div>
             </div>
         </div>
@@ -142,13 +148,35 @@
                 </div>
                 <div class="modal-footer">
                     <button id="dlg_select_a_ctrlpanel_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button id="dlg_select_a_ctrlpanel_btn_ok" type="button" class="btn btn-primary">Ok</button>
-                </div>
+                 </div>
             </div>
         </div>
     </div>
     <!---------------------------- COMPONENT: Choose Control Panel ---------------------------->
        
+    <!---------------------------- COMPONENT: Save Control Panel ---------------------------->
+        <div class="modal fade" id="dlg_save_control_panel" tabindex="-1" role="dialog" aria-labelledby="dlg_save_control_panel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="dlg_save_control_panel_label">Save Control Panel</h4>
+                    </div>
+                    <div id="dlg_save_control_panel_body" class="modal-body">
+                        <div class="form-group">
+                            <label for="save_control_panel_name">Name</label>
+                            <!--input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder=""-->
+                            <input id="save_control_panel_name" type="text" class="form-control" name="save_control_panel_name" value="" placeholder="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary" onclick="$('#dlg_save_control_panel').modal('hide');save_active_control_panel($('#save_control_panel_name').val());">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+     <!---------------------------- COMPONENT: Save Control Panel ---------------------------->
 
 
 
@@ -273,8 +301,8 @@
         }
 
         function load_ctrlpanel_given_id(id) {
-                    $("#dlg_select_a_ctrlpanel").modal("hide");
-                let cpnl_info = undefined;
+            $("#dlg_select_a_ctrlpanel").modal("hide");
+            let cpnl_info = undefined;
             for (let e of ctrlpanel_infos) {
                 if (e.id == id) {
                     cpnl_info = e;
@@ -609,10 +637,13 @@
             return `<br>`;
         }
 
-        function CtrlPanelEditor(ctrl_editor_component, widget_templates) {
+        function CtrlPanelEditor(ctrl_editor_component, widget_templates, name) {
             this.ctrl_editor_component_ = ctrl_editor_component;
             this.widget_templates_ = widget_templates;
+            this.name = name;
         }
+        CtrlPanelEditor.prototype.set_name = function (n) { this.name = n; if (n != undefined) set_page_title("Control Panel <strong>" + n + "</strong>"); else set_page_title("Control Panel <i style='color:red;'> - No Title - </i>");}
+        CtrlPanelEditor.prototype.get_name = function () { return this.name; }
         CtrlPanelEditor.prototype.view = function () { return this.ctrl_editor_component_; }
         CtrlPanelEditor.prototype.widgetTemplates = function () { return this.widget_templates_; }
         CtrlPanelEditor.prototype.addWidget = function () {
@@ -831,12 +862,20 @@
             } , 500);    
             
             ctrlPanelEditor = new CtrlPanelEditor($('#ctrl_panel_editor'), new CtrlPanelComponentTemplates() );
+
             $('#ctrl_panel_editor_btn_add').on('click', (ev) => {
                 ctrlPanelEditor.addWidget();
             });
             $('#ctrl_panel_editor_btn_add_paragraph').on('click', (ev) => {
                 ctrlPanelEditor.addParagraph();
             });
+            $('#ctrl_panel_editor_btn_save').on('click', (ev) => {
+                if (ctrlPanelEditor.get_name() != undefined) 
+                    $("#save_control_panel_name").val(ctrlPanelEditor.get_name());
+                else
+                    $("#save_control_panel_name").attr("placeholder","Control panel's name comes here ...");
+                $("#dlg_save_control_panel").modal("show");
+            });            
             if (!connected)
                 setTimeout(() => {
                     $('#dlg_login').modal('show');
