@@ -41,6 +41,8 @@ void comm_receiver_kmw_multibus(int id,
 void comm_receiver_socket_can(int id,
 	std::string bus_id,
 	State_machine_simulation_core* smc,
+    std::unordered_map<int,std::uint32_t> frame2id,
+    std::string channel_id,
     bool extended_can_id,
     int sock);
 namespace sockcan{
@@ -168,10 +170,31 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 					if (it_func == global_funcs().end()) fatal_(-1, "Receiver definition: on_msg : function unknown.");
 					ctxt->handler.push_back(std::make_pair(it_frame->second, it_func->second));
 				}
+
+
+                //Handling of can_id_mapping
+
+                auto can_id_mapping = ns["transport"]["canbus"]["can_id_mapping"];
+                if (can_id_mapping.size()){
+
+                    for(std::size_t i = 0; i!=can_id_mapping.nodes().size() && i+1!=can_id_mapping.nodes().size();i+=2){
+                      auto frame_name_ = can_id_mapping.nodes()[i];
+                      auto frame_id_ = can_id_mapping.nodes()[i+1];
+                      if (frame_name_->kind() != ceps::ast::Ast_node_kind::identifier ||
+                          (frame_id_->kind() != ceps::ast::Ast_node_kind::int_literal && frame_id_->kind() != ceps::ast::Ast_node_kind::string_literal ) )
+                          fatal_(-1,"CAN sender '"+channel_id+"': wrong can id mapping, should be list of identifier/integer pairs.");
+                      auto frame_name = ceps::ast::name(ceps::ast::as_id_ref(frame_name_));
+                      channel_frame_name_to_id[channel_id][frame_name] = i / 2;
+                      if (frame_id_->kind() == ceps::ast::Ast_node_kind::int_literal) channel_frame_to_id[channel_id][i/2] = ceps::ast::value(ceps::ast::as_int_ref(frame_id_));
+                      else channel_frame_to_id[channel_id][i/2] = std::stol(ceps::ast::value(ceps::ast::as_string_ref(frame_id_)));
+                    }
+                }
+
+
 				if (start_comm_threads()){
                  if(can_bus.length()) comm_threads.push_back(new std::thread{ comm_receiver_socket_can,
 					dispatcher_id,
-                    can_bus, this, extended , -1});
+                    can_bus, this, channel_frame_to_id[channel_id],channel_id, extended , -1});
 				 running_as_node() = true;
 				}
 			}
@@ -180,6 +203,35 @@ bool State_machine_simulation_core::handle_userdefined_receiver_definition(std::
 	}
 	return false;
 }
+
+
+
+
+class Read_CAN_frame : public sm4ceps_plugin_int::Executioncontext {
+    std::string channel_id;
+    int frame_id;
+    char* data;
+    int len;
+ public:
+    Read_CAN_frame() = default;
+    Read_CAN_frame(std::string ch_id, char * d,int l,int frid):channel_id{ch_id},frame_id{frid},len{l},data{d}
+    {
+
+    }
+    void run(State_machine_simulation_core* ctxt){
+        std::string frame_name;
+        for(auto e : ctxt->channel_frame_name_to_id[channel_id]) if (e.second == frame_id) {frame_name = e.first;break;}
+        if (!frame_name.length()) return;
+        auto it_frame = ctxt->frame_generators().find(frame_name);
+        if (it_frame == ctxt->frame_generators().end()) return;
+        std::vector<std::string> params;
+        std::vector<ceps::ast::Nodebase_ptr> payload;
+        it_frame->second->read_msg(data,len,
+                                    ctxt,
+                                    params,
+                                    payload);
+    }
+};
 
 
 #ifdef USE_KMW_MULTIBUS
@@ -228,11 +280,17 @@ void comm_receiver_kmw_multibus(int id,
 	}
 }
 #else
+
+
+
+
 constexpr int CAN_MSG_SIZE = 13;
 //#define DEBUG std::cout
 void comm_receiver_socket_can(int id,
 	std::string can_bus,
 	State_machine_simulation_core* smc,
+    std::unordered_map<int,std::uint32_t> frame2id,
+    std::string channel_id,
     bool extended_can_id,
     int sock){
 	int s = 0;
@@ -298,6 +356,18 @@ void comm_receiver_socket_can(int id,
                can_frame_id(can_id);
                can_frame_payload(any);
               };*/
+            for(auto c : frame2id){
+                if ((int)can_message.can_id == c.second){
+                    //We found a matching frame
+                    char* buf = new char[can_message.can_dlc];
+                    memcpy(buf,can_message.data, can_message.can_dlc);
+                    auto e = new Read_CAN_frame(channel_id,buf,can_message.can_dlc,c.first);
+                    State_machine_simulation_core::event_t ev;
+                    ev.exec = e;
+                    current_smc->enqueue_event(ev);
+                    continue;
+                }
+            }
 			State_machine_simulation_core::event_t ev;
 			ev.id_ = "can_frame_received";
 			ev.payload_.push_back(new ceps::ast::Identifier(in_ctxt->id_));

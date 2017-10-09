@@ -786,8 +786,8 @@ int read_raw_chunk(size_t& header_length,State_machine_simulation_core* smc,
 
 bool Podframe_generator::read_msg(char* data,size_t size,
 		                          State_machine_simulation_core* smc,
-		                          std::vector<std::string> params,
-		                          std::vector<ceps::ast::Nodebase_ptr>& payload)
+                                  std::vector<std::string> ,
+                                  std::vector<ceps::ast::Nodebase_ptr>& )
 {
 	if (data == nullptr || size == 0) return true;
 

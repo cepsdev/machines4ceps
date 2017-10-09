@@ -1,0 +1,7 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Systemstate a_signal;
+
+a_signal = 1;

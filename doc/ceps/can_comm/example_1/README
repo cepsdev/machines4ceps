@@ -1,0 +1,12 @@
+Demonstrates data exchange via CAN
+
+To run this example you need to setup a loopback CAN interface first,
+e.g. by using the scripts included in sm4ceps/test/setup.
+
+Start the sender resp. receiver by executing the shell scripts
+start_sender.sh resp. start_reciver.sh.
+
+
+
+
+

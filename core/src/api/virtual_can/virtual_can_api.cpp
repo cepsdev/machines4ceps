@@ -11,6 +11,8 @@
 extern void comm_receiver_socket_can(int id,
     std::string bus_id,
     State_machine_simulation_core* smc,
+    std::unordered_map<int,std::uint32_t> frame2id,
+    std::string channel_id,
     bool extended_can_id,
     int sock);
 /*
@@ -173,6 +175,8 @@ void Virtual_can_interface::handler(int sck){
         comm_receiver_socket_can(dispatcher_ctxt->handle(),
             "",
             smc_,
+            smc_->channel_frame_to_id[in_channel_name],
+            in_channel_name,
             dispatcher_ctxt->can_extended(),
             sck);
     } else if (cmd == "get_known_sim_cores") {
