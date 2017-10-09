@@ -1,6 +1,7 @@
 function build_ctrlpanel_from_json(container, descr) {
     let t = 50;
     container.set_name(ctrlpanel_info_get_name(descr));
+    container.clear();
     for (let e of descr.content) {
         let info = ctrlpanel_info_get_widget_descr(e);
         

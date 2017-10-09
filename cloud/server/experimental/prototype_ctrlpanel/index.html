@@ -71,6 +71,7 @@
                             </div>
                             <div class="btn-group btn-group-xs" role="group">
                                 <button id="ctrl_panel_editor_btn_save" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span></button>
+                                <button id="ctrl_panel_editor_btn_load" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></button>
                             </div>
                     </div>
                     <div id="ctrl_panel_editor" class="panel-body" >
@@ -645,6 +646,10 @@
         CtrlPanelEditor.prototype.set_name = function (n) { this.name = n; if (n != undefined) set_page_title("Control Panel <strong>" + n + "</strong>"); else set_page_title("Control Panel <i style='color:red;'> - No Title - </i>");}
         CtrlPanelEditor.prototype.get_name = function () { return this.name; }
         CtrlPanelEditor.prototype.view = function () { return this.ctrl_editor_component_; }
+        CtrlPanelEditor.prototype.clear = function () {
+            widget_infos = [];
+            $(this.ctrl_editor_component_).html("");
+        }
         CtrlPanelEditor.prototype.widgetTemplates = function () { return this.widget_templates_; }
         CtrlPanelEditor.prototype.addWidget = function () {
             let r = this.widgetTemplates().baseWidget();
@@ -875,7 +880,11 @@
                 else
                     $("#save_control_panel_name").attr("placeholder","Control panel's name comes here ...");
                 $("#dlg_save_control_panel").modal("show");
-            });            
+            });
+            $('#ctrl_panel_editor_btn_load').on('click', (ev) => {
+                $("#dlg_select_a_ctrlpanel").modal("show");
+            });      
+
             if (!connected)
                 setTimeout(() => {
                     $('#dlg_login').modal('show');
