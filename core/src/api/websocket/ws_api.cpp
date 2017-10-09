@@ -400,6 +400,44 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
     }
 };
 
+
+class Execute_push : public sm4ceps_plugin_int::Executioncontext {
+    std::string query;
+    int sck;
+ public:
+    Execute_push() = default;
+    Execute_push(std::string q, int s):query{q}, sck{s}{}
+    void run(State_machine_simulation_core* ctxt){
+      std::string r;
+
+      std::stringstream s;
+      s << query;
+      try {
+       Ceps_parser_driver driver{ctxt->ceps_env_current().get_global_symboltable(),s};
+       ceps::Cepsparser parser{driver};
+       if (parser.parse() != 0 || driver.errors_occured()){
+         r = "{ \"ok\": false, \"reason\": \"\" }";
+       } else {
+         ceps::interpreter::evaluate(ctxt->current_universe(),
+                                  driver.parsetree().get_root(),
+                                  ctxt->ceps_env_current().get_global_symboltable(),
+                                  ctxt->ceps_env_current().interpreter_env(),
+                                  nullptr
+                                  );
+         r = "{ \"ok\": true }";
+       }
+      }
+      catch (ceps::interpreter::semantic_exception & se)
+      {
+          r = "{ \"ok\": false,\"exception\":\"ceps::interpreter::semantic_exception\",  \"reason\": \""+std::string{se.what()}+"\" }";
+      }
+      catch (std::runtime_error & re)
+      {
+          r = "{ \"ok\": false,\"exception\":\"ceps::interpreter::semantic_exception\", \"reason\": \""+std::string{re.what()}+"\" }";
+      }
+      if(!send_ws_text_msg(sck,r)) closesocket(sck);
+    }
+};
 void Websocket_interface::handler(int sck){
  using wstable_t = std::vector<State_machine_simulation_core::global_states_t::iterator>;
  auto period = std::shared_ptr<std::chrono::microseconds>(new std::chrono::microseconds{1000});
@@ -521,7 +559,12 @@ void Websocket_interface::handler(int sck){
     std::vector<std::string> cmd;
     for(;hs;){
         std::string l;
-        hs >> l;cmd.push_back(l);
+        hs >> l;
+        cmd.push_back(l);
+        if (cmd.size() == 1 && cmd[0] == "PUSH"){
+            cmd.push_back(s.substr(5));
+            break;
+        }
     }
     //std::cout << s  << std::endl;
     std::string reply = "{\"ok\": false}";
@@ -617,6 +660,13 @@ void Websocket_interface::handler(int sck){
 
          State_machine_simulation_core::event_t ev;
          auto exec = new Execute_query{query,sck};
+         ev.exec = exec;
+         smc_->enqueue_event(ev);
+         continue;
+      } else if (cmd[0] == "PUSH") {
+
+         State_machine_simulation_core::event_t ev;
+         auto exec = new Execute_push{cmd[1],sck};
          ev.exec = exec;
          smc_->enqueue_event(ev);
          continue;

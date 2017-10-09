@@ -21,4 +21,15 @@ ctrlpanels{
    
   };
  };
+ ctrlpanel{
+  name{"control panel (ABSFullyOperational)";};
+  widget{
+   id{widget_3;};
+   type{plot_signal;};
+   associated_systemstate{ABSFullyOperational;};
+   style{width{800;};height{550;};};
+   
+  };
+ };
+
 };
