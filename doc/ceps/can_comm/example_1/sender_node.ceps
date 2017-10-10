@@ -12,7 +12,7 @@ sm{
   };
   send_frame{
    increment_a_signal();
-   send(myframe,can_out);
+   send(myframe,channel1_out);
   };
  };
  t{Initial;Initial;TimeUp;send_frame;};

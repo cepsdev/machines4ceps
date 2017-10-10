@@ -343,6 +343,47 @@ static void ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
             ceps2json(s,nn);if (1+i != st.children().size()) s << ",";
         }
         s << "]}";
+    } else if (n->kind() == Ast_node_kind::binary_operator){
+        auto& bop = as_binop_ref(n);
+        auto what_op = op(bop);
+        s << "{\"type\":\"binop\",\"name\":";
+        if (ceps::Cepsparser::token::REL_OP_GT_EQ == what_op)
+            s << "\">=\",";
+        else if (ceps::Cepsparser::token::REL_OP_EQ == what_op)
+            s << "\"==\",";
+        else if (ceps::Cepsparser::token::REL_OP_GT == what_op)
+            s << "\">\",";
+        else if (ceps::Cepsparser::token::REL_OP_LT== what_op)
+            s << "\"<\",";
+        else if (ceps::Cepsparser::token::REL_OP_LT_EQ == what_op)
+            s << "\"<=\",";
+        else if (ceps::Cepsparser::token::REL_OP_NEQ == what_op)
+            s << "\"!=\",";
+        else if ('+' == what_op)
+            s << "\"+\",";
+        else if ('-' == what_op)
+            s << "\"-\",";
+        else if ('*' == what_op)
+            s << "\"*\",";
+        else if ('/' == what_op)
+            s << "\"/\",";
+        else if ('&' == what_op)
+            s << "\"&&\",";
+        else if ('|' == what_op)
+            s << "\"||\",";
+        else s << "\"?\",";
+        s << "\"left\":";ceps2json(s,bop.left());s << ",";
+        s << "\"right\":";ceps2json(s,bop.right());
+        s << "}";
+    } else if (n->kind() == Ast_node_kind::scope){
+        auto & scp = as_scope_ref(n);
+        s << "{ \"type\":\"scope\", \"content\":[";
+        for(std::size_t i = 0; i != scp.children().size();++i){
+            auto nn = scp.children()[i];
+            if(!nn) continue;
+            ceps2json(s,nn);if (1+i != scp.children().size()) s << ",";
+        }
+        s << "]}";
     }
     else if (n->kind() == Ast_node_kind::symbol){
         auto & sy = as_symbol_ref(n);

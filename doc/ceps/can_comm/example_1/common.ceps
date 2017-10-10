@@ -5,3 +5,19 @@ kind Systemstate;
 Systemstate a_signal;
 
 a_signal = 1;
+
+constraints{
+ a_signal <= 100;
+};
+constraints{
+ a_signal >= -100;
+};
+
+partition{
+ of{a_signal;};
+ {a_signal <= -10; niedrig;};
+ {a_signal == 0; a; };
+ {a_signal == 1; b; };
+ {a_signal == 2; c; };
+ {a_signal >= 10; hoch;};
+};

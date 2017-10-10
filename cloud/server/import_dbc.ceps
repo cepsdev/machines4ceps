@@ -2,6 +2,10 @@
 static_for(e:root.dbc_msg.sig){
     as_symbol(text(e.name.content()),"Systemstate") = strip(e.min.content());
     reg_as_symbol_with_global_scope(text(e.name.content()),"Systemstate");
+    constraints{
+      as_symbol(text(e.name.content()),"Systemstate") >= strip(e.min.content());
+      strip(e.max.content()) >= as_symbol(text(e.name.content()),"Systemstate");
+    };
 }
 
 //Build frames
@@ -35,7 +39,16 @@ static_for(e:root.dbc_msg){
      };
     };
 }
-
+static_for(e:root.dbc_msg){
+    static_for(h:root.select("dbc_value_description_mapping" + text(e.canid.content()))){
+        partition{
+            of{h.sig.name.content();};
+            static_for(entry:h.sig.entry){
+                {as_symbol(text(strip(h.sig.name.content())),"Systemstate") == strip(entry.index.content());as_identifier(strip(entry.value.content()));}
+            }
+        };
+    }
+}
 dbc_import_internal_sender_list1{
   root.dbc_msg.sender.content().sort().unique();     
 };
