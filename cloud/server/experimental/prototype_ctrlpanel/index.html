@@ -331,6 +331,7 @@
             this.info = i;
             this.observed_min = undefined;
             this.observed_max = undefined;
+            this.target_value_changed = false;
         }
         var signals = [];
         var signals_dt = undefined;
@@ -382,12 +383,24 @@
         function set_signal_target_value(widget_id, tv, signal_name) {            
             let sig = get_signal_by_name(signal_name);
             sig.target_value = tv;
+            sig.target_value_changed = true;
             for (let e of widget_infos) {
                 if (e.id == widget_id) continue;             
                 if (e.info.type.sig && e.info.toggle_sig && (e.info.sig_name == signal_name) ) {
                     e.ext.set_value(tv);
                 }
             }
+            if (simcore_ws && connected) setTimeout(
+                () => {
+                    let cmd = "SET_VALUE_NO_REPLY";
+                    cmd += " " + sig.name;
+                    if (sig.info.type == "float") cmd += " number";
+                    else cmd += " int";
+                    cmd += " " + sig.target_value.toString();
+                    sig.target_value_changed = false;                    
+                    simcore_ws.send(cmd);
+                }, 0
+            );
         }
 
         function map_sig_target_value_to_range(signal, r) {

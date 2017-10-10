@@ -26,7 +26,8 @@ function build_ctrlpanel_from_json(container, descr) {
         if (info[1].style != undefined && info[1].style.width != undefined) $("#" + widget).css("width", info[1].style.width);
         if (info[1].style != undefined && info[1].style.height != undefined) $("#" + widget).css("height", info[1].style.height);
 
-        setTimeout(() => { save_widget_info(widget, widget_info, true); }, t);
+        //setTimeout(() => { save_widget_info(widget, widget_info, true); }, t);
+        save_widget_info(widget, widget_info, true);
         t += 50;
         //save_widget_info(widget, widget_info, true);
     }
