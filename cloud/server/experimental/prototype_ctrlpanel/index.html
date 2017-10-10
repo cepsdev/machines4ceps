@@ -85,7 +85,7 @@
 
 
     <!---------------------------- COMPONENT: Login ---------------------------->
-    <div class="modal fade" id="dlg_login" tabindex="-1" role="dialog" aria-labelledby="dlg_login">
+    <div class="modal fade" id="dlg_login" tabindex="-1" role="dialog" aria-labelledby="dlg_login" style="z-index: 10000;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -116,7 +116,7 @@
  
 
     <!---------------------------- COMPONENT: Choose Signal ---------------------------->
-    <div class="modal fade" id="dlg_select_a_signal" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_signal_label">
+    <div class="modal fade" id="dlg_select_a_signal" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_signal_label" style="z-index: 10000;">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -137,7 +137,7 @@
 
 
     <!---------------------------- COMPONENT: Choose Control Panel ---------------------------->
-    <div class="modal fade" id="dlg_select_a_ctrlpanel" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_ctrlpanel_label">
+    <div class="modal fade" id="dlg_select_a_ctrlpanel" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_ctrlpanel_label" style="z-index: 10000;">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -156,7 +156,7 @@
     <!---------------------------- COMPONENT: Choose Control Panel ---------------------------->
        
     <!---------------------------- COMPONENT: Save Control Panel ---------------------------->
-        <div class="modal fade" id="dlg_save_control_panel" tabindex="-1" role="dialog" aria-labelledby="dlg_save_control_panel">
+        <div class="modal fade" id="dlg_save_control_panel" tabindex="-1" role="dialog" aria-labelledby="dlg_save_control_panel" style="z-index: 10000;">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -197,6 +197,8 @@
 
     <script>
         let ctrlPanelEditor = undefined;
+        let partitions = [];
+        let constraints = [];
     </script>
 
     <!---------------------- Persistence ----------------------->
@@ -335,6 +337,9 @@
         }
         var signals = [];
         var signals_dt = undefined;
+
+
+
     </script>
     <!---------------------- Signals ----------------------->
     
@@ -451,6 +456,62 @@
         function get_signal_by_name(n) {
             for (let e of signals) if (e.name == n) return e;
             return undefined;
+        }
+
+        function apply_constraints_to_signals(constraints) {
+            for (let expr of constraints) {
+                if (expr.type == "binop") {
+                    let lhs = expr.left;
+                    let rhs = expr.right;
+                    if (expr.name == "<=") { expr.name = ">="; let t = rhs; rhs = lhs; lhs = t; }
+                    if (expr.name == "<") { expr.name = ">"; let t = rhs; rhs = lhs; lhs = t; }
+                    if (lhs.type == "symbol" && lhs.kind == "Systemstate") {
+                        sig = get_signal_by_name(lhs.name); if (sig == undefined) continue;
+                        if (expr.name == ">=" || expr.name == ">") {
+                            let t = sig.info.min;
+                            if (sig.info.min != undefined) sig.info.min = Math.max(sig.info.min, rhs);
+                            else sig.info.min = rhs;
+                            if (sig.info.min == undefined) sig.info.min = t;
+                        }
+                    } else if (rhs.type == "symbol" && rhs.kind == "Systemstate") {
+                        sig = get_signal_by_name(rhs.name); if (sig == undefined) continue;
+                        if (expr.name == ">=" || expr.name == ">"){
+                            let t = sig.info.max;
+                            if (sig.info.max != undefined) sig.info.max = Math.min(sig.max, lhs);
+                            else sig.info.max = lhs;
+                            if (sig.info.max == undefined) sig.info.max = t;
+                        }
+                    }
+                }
+            }
+        }
+
+        function apply_partitions_to_signals(partitions) {
+            function get_signal(cont) {
+                for (let e of cont) {
+                    if (e.type == "struct" && e.name == "of")
+                        return get_signal_by_name(e.content[0]);
+                }
+                return undefined;
+            }
+            for (let p of partitions) {
+                let sig = get_signal(p.content);
+                sig.info.vm = [];
+                for (let e of p.content) {
+                    if (e.type == "scope" && e.content.length > 1) {
+                        let expr = e.content[0];
+                        if (expr.type != "binop" || expr.name != "==") continue;
+                        let lhs = expr.left;
+                        let rhs = expr.right;
+                        if (typeof lhs != "number")[lhs, rhs] = [rhs, lhs];
+                        if (typeof lhs != "number") continue;
+                        if (rhs.type != "symbol" || rhs.kind != "Systemstate" || rhs.name != sig.name) continue;
+                        sig.info.vm.push({ val: lhs, name: e.content[1]});                      
+                    }
+                }
+                console.log(p);
+                console.log(sig);
+            }
         }
         
         
@@ -569,6 +630,18 @@
             return widget_content;
         }
 
+        function check_constraints(signal, v) {
+            if (signal == undefined || signal.info == undefined) return [true];
+            let mx = signal.info.max;
+            let mn = signal.info.min;
+            if (mx == undefined) mx = Math.round(Math.pow(2, 31));
+            if (mn == undefined) mn = -Math.round(Math.pow(2, 31)) + 1;
+
+            if (v < mn) return [false, "Too Small."];
+            if (v > mx) return [false, "Too Big."];
+            return [true];
+        }
+
         function validate_input(signal, text, format) {
             let v = NaN;
             if (signal.info.type == "float") {
@@ -586,13 +659,8 @@
                 }
             }
             if (!isNaN(v)) {
-                let mx = signal.info.max;
-                let mn = signal.info.min;
-                if (mx == undefined) mx = Math.round(Math.pow(2, 31));
-                if (mn == undefined) mn = -Math.round(Math.pow(2, 31)) + 1;
-
-                if (v < mn) return [false, v, "Too Small."];
-                if (v > mx) return [false, v, "Too Big."];
+                let r = check_constraints(signal,v);
+                if (!r[0]) return [r[0], v, r[1]];
             }
 
             return [!isNaN(v),v, text.length==0 ? "No Input" : "That's not a number"];
@@ -734,8 +802,42 @@
             simcore_ws = ws;
             connected = true;
             if (new_remote_site) {
-                setTimeout(() => { choose_ctrlpanel_dlg(); }, 1000);
+                if (get_ctrlpanel_infos().length) setTimeout(() => { choose_ctrlpanel_dlg(); }, 1000);
             }
+        }
+
+        function fetch_partitions(ws) {
+            function h(m) {
+                ws.removeEventListener("message", h);
+                partitions = [];
+                try {
+                    let msg = JSON.parse(m.data);
+                    if (msg.ok) {
+                        partitions = msg.sresult;
+                        apply_partitions_to_signals(partitions);
+                    }
+                } catch (err) { console.log(err);}
+                finish_prologue(ws);
+            }
+            ws.send('QUERY root.as_identifier("partition");');
+            ws.addEventListener("message", h);
+        }
+
+        function fetch_constraints(ws) {
+            function h(m) {
+                constraints = [];
+                ws.removeEventListener("message", h);
+                try {
+                    let msg = JSON.parse(m.data);
+                    if (msg.ok) {
+                        constraints = msg.sresult;
+                        apply_constraints_to_signals(constraints);
+                    }
+                } catch (err) { console.log(err); }
+                fetch_partitions(ws);
+            }
+            ws.send("QUERY root.constraints.content();");
+            ws.addEventListener("message", h);
         }
 
         function fetch_data_from_remote(ws) {
@@ -743,12 +845,11 @@
             function process_ctrlpanels_resultset(ev) {
                 let msg = JSON.parse(ev.data);
                 if (msg.ok) {
-                    for (let cpldescr of msg.sresult)
-                        console.log(cpldescr);
                     set_ctrlpanel_infos(msg.sresult);
                 }
                 ws.removeEventListener("message", process_ctrlpanels_resultset);
-                finish_prologue(ws);
+                fetch_constraints(ws);
+                //finish_prologue(ws);
             }
             function process_frames_resultset(ev) {
                 let msg = JSON.parse(ev.data);
@@ -835,7 +936,6 @@
                     connected = false;
                     simcore_ws = undefined;
                     let l = $(".depend-on-signal-data");
-                    console.log(l);
                     for (let e of l) {
                         $(e).addClass("waiting-for-data");
                     }
@@ -867,8 +967,7 @@
                 
                 let not_connected_widgets = $(".waiting-for-data");
                 if (not_connected_widgets.length && connected && simcore_ws) {
-                    console.log(not_connected_widgets);
-                    for (let e of not_connected_widgets) {
+                     for (let e of not_connected_widgets) {
                         let signal_name = $(e).attr("attached-signal");
                         let sig = get_signal_by_name(signal_name);
                         if (sig.value != undefined) {

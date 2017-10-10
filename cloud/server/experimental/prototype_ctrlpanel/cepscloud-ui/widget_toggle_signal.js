@@ -42,6 +42,28 @@ function setup_toggle_widget(widget_id, signal, watch) {
         }
     };
     let s = undefined;
+    let popover_active = false;
+
+    function check_validity(v) {
+        let r = check_constraints(signal, v);
+        if (!r[0]) {
+            $("#" + widget_id + "_text_ctrl").attr("data-content", r[1]);
+            if (!popover_active) {
+                $("#" + widget_id + "_input_group").addClass("has-error");
+                $("#" + widget_id + "_text_ctrl").popover({ placement: 'auto right' });
+                $("#" + widget_id + "_text_ctrl").attr("title", "");
+                $("#" + widget_id + "_text_ctrl").popover('show');
+            }
+            popover_active = true;
+        } else {
+            if (popover_active) {
+                $("#" + widget_id + "_text_ctrl").popover('destroy');
+                $("#" + widget_id + "_input_group").removeClass("has-error");
+            }
+            popover_active = false;
+        }
+    };
+
     if (signal.info.type == "float") {
         s = $("#dummy_" + widget_id).slider(
             {
@@ -54,11 +76,13 @@ function setup_toggle_widget(widget_id, signal, watch) {
         save_widget_ext(widget_id, {
             slider: s,
             slider_range: gran,
+            
             set_value: function (v) {
                 let v_text = sig_value_text_representation(signal, v, get_widget_info(widget_id).display);
                 $("#" + widget_id + "_text_ctrl").val(v_text);
                 let vv = map_sig_value_to_range(signal, gran);
                 $(s).slider("value", vv);
+                check_validity(v);
             }
         });
     } else if (signal.info.type == "int") {
@@ -99,11 +123,20 @@ function setup_toggle_widget(widget_id, signal, watch) {
                 }
                 let vv = map_sig_target_value_to_range(signal, gran);
                 $(s).slider("value", vv);
+                let r = check_constraints(signal, v);
+                if (!r[0]) {
+                    $("#" + widget_id + "_input_group").addClass("has-error");
+                    $("#" + widget_id + "_text_ctrl").popover({ placement: 'auto right' });
+                    $("#" + widget_id + "_text_ctrl").attr("title", "");
+                    $("#" + widget_id + "_text_ctrl").attr("data-content", r[1]);
+                    $("#" + widget_id + "_text_ctrl").popover('show');
+                } else $("#" + widget_id + "_text_ctrl").popover('destroy');
             }
         });
     }
     $(`#${widget_id}_text_ctrl`).on('input', function (ev) {
         let [ok, v, msg] = validate_input(signal, $(`#${widget_id}_text_ctrl`).val(), get_widget_info(widget_id).display);
+       
         $("#" + widget_id + "_input_group").removeClass("has-error");
         if (!ok) {
             $("#" + widget_id + "_input_group").addClass("has-error");

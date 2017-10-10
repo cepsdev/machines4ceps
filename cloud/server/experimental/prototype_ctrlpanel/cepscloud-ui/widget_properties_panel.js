@@ -297,9 +297,7 @@
             let type_ctrl = $(prop_panel).find("#select_widget_type");
             if (type_ctrl.length != 1) throw "Internal Error";
             let type = type_ctrl.find(":selected").text();
-            console.log(type);
             if (type == "Modify/View Signal") {
-                console.log("Enter Modify/View Signal");
                 let sig_name = $(prop_panel).find("#select_signal").find(":selected").text();
                 if (sig_name != undefined && sig_name.length == 0) sig_name = undefined;
                 let sub_type = widget_panel_accordion_active;
@@ -362,9 +360,7 @@
         function on_prop_panel_change() {
             let widget = $(".baseWidget-selected").first();
             let info = widget_properties_panel_extract_settings();
-            console.log("prop_panel_change()",info);
             save_widget_info(widget, info);
-            console.log("prop_panel_change() 2", info);
             update_prop_panel(widget);
         }
 
@@ -382,8 +378,6 @@ function update_prop_panel(widget) {
     let info = get_widget_info(widget);
     let update_widget = false;
     let widget_id = widget.attr("id");
-    console.log(info);
-
     $(prop_panel).css("display", "block");
     if (!info.valid) {
         $(prop_panel).find(".widget-properties-panel-details").css("display", "none");
