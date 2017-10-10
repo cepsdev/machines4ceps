@@ -554,6 +554,7 @@ void Websocket_interface::handler(int sck){
     s.resize(payload.size());
     for(size_t j = 0; j < payload.size();++j)s[j] = payload[j];
     //handle command
+    //std::cout << s << std::endl;
 
     std::stringstream hs{s};
     std::vector<std::string> cmd;
@@ -566,7 +567,6 @@ void Websocket_interface::handler(int sck){
             break;
         }
     }
-    //std::cout << s  << std::endl;
     std::string reply = "{\"ok\": false}";
 
     if (cmd.size() != 0){
@@ -602,30 +602,33 @@ void Websocket_interface::handler(int sck){
             std::lock_guard<std::mutex> g2(*watched_signals_m);
             *period = std::chrono::microseconds{1000*v};
         }
-     } else if (cmd[0] == "SET_VALUE" && args.size() == 3) {
+     } else if ( (cmd[0] == "SET_VALUE" || cmd[0] == "SET_VALUE_NO_REPLY") && args.size() == 3) {
          auto const & name = args[0];
          auto const & type = args[1];
          auto const & value = args[2];
+         //std::cout << name << "/" <<type << "/"<< value << std::endl;
          std::lock_guard<std::recursive_mutex>g(smc_->states_mutex());
          auto it = smc_->get_global_states().find(name);
+         if (it == smc_->get_global_states().end()) std::cout << "not found" << std::endl;
          if (it != smc_->get_global_states().end()){
+          reply = "{\"ok\": true}";
           try{
               if (type == "number" || type == "double"){
                if (it->second->kind() == ceps::ast::Ast_node_kind::float_literal){
                  auto v = std::stod(value);
                  ceps::ast::value(ceps::ast::as_double_ref(it->second)) = v;
-                 reply = "{\"ok\": true}";
+               } else if (it->second->kind() == ceps::ast::Ast_node_kind::int_literal){
+                 auto v = (int)std::stod(value);
+                 ceps::ast::value(ceps::ast::as_int_ref(it->second)) = v;
                }
               }else if (type == "int"){
                if (it->second->kind() == ceps::ast::Ast_node_kind::int_literal){
                  auto v = std::stoi(value);
                  ceps::ast::value(ceps::ast::as_int_ref(it->second)) = v;
-                 reply = "{\"ok\": true}";
                }
               }else if (type == "string"){
                if (it->second->kind() == ceps::ast::Ast_node_kind::string_literal){
                  ceps::ast::value(ceps::ast::as_string_ref(it->second)) = value;
-                 reply = "{\"ok\": true}";
                }
               }
              } catch (std::invalid_argument e1) {
@@ -634,6 +637,7 @@ void Websocket_interface::handler(int sck){
                reply = "{\"ok\": false,\"reason\":\"out of range\"}";
              }
          }
+         if (cmd[0] == "SET_VALUE_NO_REPLY") continue;
       } else if (cmd[0] == "EVENT" && args.size()) {
         auto const & name = args[0];
         if (args.size() == 1){
@@ -672,6 +676,7 @@ void Websocket_interface::handler(int sck){
          continue;
       }
     }//cmd.size()!=0
+    //std::cout << reply << std::endl;
     if(!send_reply(reply)) break;
    }
   }//for
