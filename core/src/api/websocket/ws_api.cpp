@@ -441,6 +441,31 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
     }
 };
 
+class Execute_report : public sm4ceps_plugin_int::Executioncontext {
+    int sck;
+ public:
+    Execute_report() = default;
+    Execute_report(int s): sck{s}{}
+    void  run(State_machine_simulation_core* ctxt){
+      std::string r;
+
+      std::stringstream out;
+      auto ns = ctxt->make_report();
+
+      for(std::size_t i = 0; i != ns.nodes().size();++i){
+          auto e = ns.nodes()[i];
+          if (e) ceps2json(out,e);
+          if (1 + i != ns.nodes().size()) out << ",";
+      }
+      r = "{ \"ok\": true,";
+      r += " \"number_toplevel_nodes\":"+std::to_string(ns.nodes().size())+",";
+      r += " \"sresult\":["+out.str()+"]";
+      r += "}";
+
+      if(!send_ws_text_msg(sck,r)) closesocket(sck);
+    }
+};
+
 
 class Execute_push : public sm4ceps_plugin_int::Executioncontext {
     std::string query;
@@ -466,6 +491,27 @@ class Execute_push : public sm4ceps_plugin_int::Executioncontext {
                                   nullptr
                                   );
          r = "{ \"ok\": true }";
+         int ctr = ctxt->push_modules.size();
+         std::string t;
+         for(;;++ctr){
+             t = std::to_string(ctr)+".ceps";
+             bool found = false;
+             for(auto&e:ctxt->push_modules) if (e == t){break;found=true;}
+             if (found)continue;
+             std::ofstream of{ctxt->push_dir+t};
+             if (!of) return;
+             of << query;
+             break;
+         }
+         std::ofstream of{ctxt->push_dir + "package.ceps"};
+         if(!of) return;
+         of << "package{\n";
+         of << " modules{\n";
+         for (auto&e : ctxt->push_modules)
+            of << "  \""<<e<<"\";\n";
+         of << "  \""<<t<<"\";\n";
+         of << " };";
+         of << "\n};";
        }
       }
       catch (ceps::interpreter::semantic_exception & se)
@@ -715,7 +761,13 @@ void Websocket_interface::handler(int sck){
          ev.exec = exec;
          smc_->enqueue_event(ev);
          continue;
-      }
+      } else if (cmd[0] == "REPORT") {
+       State_machine_simulation_core::event_t ev;
+       auto exec_report = new Execute_report{sck};
+       ev.exec = exec_report;
+       smc_->enqueue_event(ev);
+       continue;
+    }
     }//cmd.size()!=0
     //std::cout << reply << std::endl;
     if(!send_reply(reply)) break;

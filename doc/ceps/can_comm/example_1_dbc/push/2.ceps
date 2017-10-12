@@ -1,0 +1,8 @@
+ctrlpanels{
+ctrlpanel{name{"a";};
+ widget{
+  type{toggle_signal;};
+  associated_systemstate{as_symbol("a_signal","Systemstate");};
+  style{width{"200px";};height{"80px";};};    
+ };
+};};

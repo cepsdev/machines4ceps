@@ -23,6 +23,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <dirent.h>
 
 #else
 
@@ -1103,9 +1104,9 @@ void init_state_machine_simulation(	int argc,
 		 }
 
     ceps::interpreter::register_struct_rewrite_rule(
-    		smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);
+            smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);
     ceps::interpreter::register_struct_rewrite_rule(
-    		smc->ceps_env_current().get_global_symboltable(),"cover_path", sm4ceps::modelling::cover_path, smc);
+            smc->ceps_env_current().get_global_symboltable(),"cover_path", sm4ceps::modelling::cover_path, smc);
 
     ceps::interpreter::register_struct_rewrite_rule(
     		smc->ceps_env_current().get_global_symboltable(),"build_concept_dependency_graph", sm4ceps::utils::build_concept_dependency_graph, smc);
@@ -1114,7 +1115,48 @@ void init_state_machine_simulation(	int argc,
 
     smc->ceps_env_current().interpreter_env().reg_sym_undefined_clbk(sym_undefined_clbk,smc);
 
-	smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);
+
+
+    if (result_cmd_line.push_dir.length()){
+        auto r = opendir(result_cmd_line.push_dir.c_str());
+        if (r == NULL){
+           auto rr = mkdir(result_cmd_line.push_dir.c_str(),S_ISUID | S_ISGID| S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH );
+           if (rr != 0)
+               smc->fatal_(-1,"mkdir failed (--push_dir)");
+           r = opendir(result_cmd_line.push_dir.c_str());
+           if (r == NULL) smc->fatal_(-1,"opendir failed (--push_dir)");
+        }
+        closedir(r);
+        {
+            std::string push_package_file;
+            std::string push_dir = push_package_file=result_cmd_line.push_dir+(result_cmd_line.push_dir[result_cmd_line.push_dir.length()-1]!='/'?"/":"");
+            smc->push_dir = push_dir;
+            std::ifstream f{push_dir+"package.ceps"};
+            if (f){
+                Ceps_parser_driver driver{smc->ceps_env_current().get_global_symboltable(),f};
+                ceps::Cepsparser parser{driver};
+                if (parser.parse() != 0 || driver.errors_occured())
+                    smc->fatal_(State_machine_simulation_core::ERR_CEPS_PARSER, push_package_file);
+                std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
+                ceps::interpreter::evaluate_without_modifying_universe(smc->current_universe(),
+                                            driver.parsetree().get_root(),
+                                            smc->ceps_env_current().get_global_symboltable(),
+                                            smc->ceps_env_current().interpreter_env(),
+                                            &generated_nodes
+                                            );
+                ceps::ast::Nodeset ns(generated_nodes);
+                auto modules = ns["package"]["modules"];
+                for(auto e : modules.nodes()){
+                    if (e->kind() != ceps::ast::Ast_node_kind::string_literal) continue;
+                    result_cmd_line.definition_file_rel_paths.push_back(push_dir+ceps::ast::value(ceps::ast::as_string_ref(e)));
+                    smc->push_modules.push_back(ceps::ast::value(ceps::ast::as_string_ref(e)));
+                }
+            }
+        }
+    }
+
+    smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);
+
 }
 
 
@@ -1594,9 +1636,7 @@ static inline State_machine* get_toplevel(State_machine* sm){
  for(;sm->parent();sm = sm->parent());return sm;
 }
 
-ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd_line const& /*result_cmd_line*/,
-                        ceps::Ceps_Environment& /*ceps_env*/,
-                        ceps::ast::Nodeset& /*universe*/){
+ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	using namespace ceps::ast;
 	ceps::ast::Nodeset result;
 
@@ -1654,6 +1694,7 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 
 	for (auto sm : statemachines()){
 		if (sm.second->parent() != nullptr) continue;
+        if (0 == sm_states_covered[sm.second] + sm_states_not_covered[sm.second]) continue;
 		double ratio = (double)sm_states_covered[sm.second] / (double)(sm_states_covered[sm.second] + sm_states_not_covered[sm.second]);
 		toplevel_state_machines_state_coverage_stats.push_back(
 		 (new strct{sm.first,ratio })->p_strct
@@ -1685,7 +1726,7 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 		   }
 		   else {
 			   transition_coverage_missing_list.push_back(ctx.start_of_covering_transitions + i);
-			   ++sm_transitions_not_covered[sms];
+               ++sm_transitions_not_covered[sms];
 		   }
 		   ++number_of_transitions_to_cover;
 	   }
@@ -1693,7 +1734,9 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 
 	for (auto sm : statemachines()){
 		if (sm.second->parent() != nullptr) continue;
+        if (0 == sm_transitions_covered[sm.second] + sm_transitions_not_covered[sm.second]) continue;
 		double ratio = (double)sm_transitions_covered[sm.second] / (double)(sm_transitions_covered[sm.second] + sm_transitions_not_covered[sm.second]);
+
 		toplevel_state_machines_transition_coverage_stats.push_back(
 		 (new strct{sm.first,ratio })->p_strct
 		);
@@ -1740,7 +1783,7 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(Result_process_cmd
 void State_machine_simulation_core::print_report(Result_process_cmd_line const& result_cmd_line,
 						ceps::Ceps_Environment& ceps_env,
 						ceps::ast::Nodeset& universe){
- ceps::ast::Nodeset report = make_report(result_cmd_line, ceps_env, universe);
+ ceps::ast::Nodeset report = make_report();
  current_universe().nodes().insert(current_universe().nodes().end(), report.nodes().begin(),report.nodes().end());
  std::ostream& os = std::cout;
  ::print_report(os,report,result_cmd_line);

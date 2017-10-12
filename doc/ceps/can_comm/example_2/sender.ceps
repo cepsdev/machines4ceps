@@ -1,0 +1,9 @@
+sender
+{
+  id { CFBP_out; };
+  transport { 
+   canbus { 
+    bus_id { "vcan0"; };    
+   }; 
+  };
+};

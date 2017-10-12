@@ -303,10 +303,10 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,cep
 			if (t.smp != smp) break;
 			if (temp[t.to] && ev_id == 0 && t.ev == 0 && t.from == t.to && t.guard == nullptr && t.script_guard.length() == 0) continue;
 			if (t.ev == ev_id && t.from == s){
-				if (!t.script_guard.empty()){
+                if (!t.script_guard.empty()){
 					State_machine_simulation_core::states_t st;
-                bool r = smc->eval_guard(ceps_env,t.script_guard,st);
-                if (r){triggered_transitions[triggered_transitions_end++]=i;triggered=true;}
+                    bool r = smc->eval_guard(ceps_env,t.script_guard,st);
+                    if (r){triggered_transitions[triggered_transitions_end++]=i;triggered=true;}
 				} else if (t.guard == nullptr || (*t.guard)() )  {
 					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
 				}
