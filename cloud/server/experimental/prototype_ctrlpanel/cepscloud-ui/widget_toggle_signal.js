@@ -1,3 +1,9 @@
+function limit_to_n_characters(s, n) {
+    if (s.length < n) return s;
+    return s.substr(0, n)+"...";
+}
+
+
 function setup_toggle_widget(widget_id, signal, watch) {
     if (watch == undefined) watch = false;
 
@@ -20,6 +26,12 @@ function setup_toggle_widget(widget_id, signal, watch) {
         $(`#${widget_id}`).addClass("waiting-for-data");
         $(`#${widget_id}`).attr("attached-signal",signal.name);
         return;
+    }
+
+    if (signal.comment != undefined) {
+        $(`#header_of_${widget_id}`).html(limit_to_n_characters(signal.name + "( " + signal.comment + " )", 40) + `<button type="button" class="btn btn-xs close" aria-label="Close" onclick="close_widget(event,'${widget_id}');" style="transform: translateY(-11px);">
+                    <span aria-hidden="true" class="small" >&times;</span>
+                </button>`);
     }
 
 
@@ -63,13 +75,23 @@ function setup_toggle_widget(widget_id, signal, watch) {
             popover_active = false;
         }
     };
+    //console.log(Math.round(map_sig_target_value_to_range(signal, slider_granularity_default - 1)));
+    let min_is_max = false;
+    let min_is_bigger_max = false;
+
+    if (signal.info.min != undefined && signal.info.max != undefined)
+      if (signal.info.min == signal.info.max) min_is_max = true;
+        else if (signal.info.min > signal.info.max) min_is_bigger_max = true;
+
+    if (min_is_max) warn(signal.name + ": Minimum equals Maximum in constraints definition of this signal!");
+    if (min_is_bigger_max) fatal(signal.name + ": Minimum strictly greater than Maximum in constraints definition of this signal!");
 
     if (signal.info.type == "float") {
         s = $("#dummy_" + widget_id).slider(
             {
                 min: 0,
-                max: slider_granularity_default - 1,
-                value: map_sig_target_value_to_range(signal, slider_granularity_default - 1),
+                max: min_is_max ? 0 : slider_granularity_default - 1,
+                value:  Math.round(map_sig_target_value_to_range(signal, slider_granularity_default - 1)),
                 slide: on_thumb_moved,
                 disabled: watch
             });

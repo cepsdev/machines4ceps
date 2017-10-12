@@ -45,6 +45,15 @@
     function set_page_title(s) {
         $("#page_title").html(s);
     }
+
+    function warn(s) {
+        $.notify({/* options*/message: s
+        },
+            {/*settings*/ delay: 10000, type: 'warning', showProgressbar: false,
+                animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
+            }
+        );        
+    }
 </script>
 
 
@@ -416,6 +425,7 @@
             if (mn == undefined) mn = -Math.round(Math.pow(2, 31))+1;
         
             d = (mx - mn);
+            if (d == 0) return 0;
             let rr = ((signal.target_value - mn) / d) * r;
             return rr;
         }
@@ -509,8 +519,6 @@
                         sig.info.vm.push({ val: lhs, name: e.content[1]});                      
                     }
                 }
-                console.log(p);
-                console.log(sig);
             }
         }
         
@@ -712,8 +720,11 @@
                         <span aria-hidden="true" class="small" >&times;</span>
                       </button>
                     </div>
-                    <div id="content_of_widget_${this.id_counter}" class="baseWidget-content"></div>   
-                    </div>`];
+                    <div id="content_of_widget_${this.id_counter}" class="baseWidget-content"></div>
+                    <div id="footer_of_widget_${this.id_counter}" class="baseWidget-footer"></div>   
+                    </div>
+                    </div>
+                    `];
         }
         CtrlPanelComponentTemplates.prototype.paragraph = function () {
             return `<br>`;
@@ -853,7 +864,7 @@
             }
             function process_frames_resultset(ev) {
                 let msg = JSON.parse(ev.data);
-                //console.log(ev.data);
+                //console.log(msg);
                 if (msg.ok) {
                     ws.removeEventListener("message", process_frames_resultset);
                     let set_of_signals = new Set();
@@ -865,8 +876,26 @@
                     });
                     let list_of_signals = Array.from(set_of_signals).sort();
                     for (let s_name of list_of_signals) {
-                        signals.push(new Signalinfo(s_name, undefined, undefined, "",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: undefined, max: undefined }));
+                        signals.push(new Signalinfo(s_name, undefined, undefined, /*comment*/"",/*sender*/[],/*receiver*/[],/*frames*/[], { type: "float", min: undefined, max: undefined }));
                     }
+                    traverse_ceps_as_json(msg.sresult, (entry) => {
+                        if (entry.type != undefined && entry.type == "struct" && entry.name == "comment") {
+                            for (let e of entry.content) {
+                                if (e.type == undefined || e.type != "struct" || e.name != "sig") continue;
+                                let sig = undefined;
+                                let comment = undefined;
+                                for (let ee of e.content) {
+                                    if (ee.type == undefined || ee.type != "struct") continue;
+                                    if (ee.name == "name") sig = get_signal_by_name(ee.content[0]);
+                                    else if (ee.name == "comment") comment = ee.content[0];
+                                }
+                                if (comment != undefined && sig != undefined)
+                                    sig.comment = comment;
+                            }
+                            return false;
+                        }
+                        return true;
+                    });
                     ws.addEventListener("message", process_ctrlpanels_resultset);
                     ws.send("QUERY root.ctrlpanels.content();");
                 }
