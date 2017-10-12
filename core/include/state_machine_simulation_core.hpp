@@ -167,6 +167,8 @@ public:
                 return std::get<3>(frm);
             return -1;
         }
+        std::vector<std::string> push_modules;
+        std::string push_dir;
 private:
 	std::map<std::string,State_machine*> statemachines_;
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
@@ -658,9 +660,7 @@ public:
 			                                     states_t& states_in,
 			                                     ceps::Ceps_Environment& ceps_env,
 			                                     ceps::ast::Nodeset& universe);
-	ceps::ast::Nodeset make_report(Result_process_cmd_line const& result_cmd_line,
-							ceps::Ceps_Environment& ceps_env,
-							ceps::ast::Nodeset& universe);
+        ceps::ast::Nodeset make_report();
 	void print_report(Result_process_cmd_line const& result_cmd_line,
 							ceps::Ceps_Environment& ceps_env,
 							ceps::ast::Nodeset& universe);

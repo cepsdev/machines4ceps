@@ -17,7 +17,19 @@ ceps::ast::Nodeset sm4ceps::modelling::standard_value_partition_sm(ceps::ast::St
 	 }
  }
 
- auto gen_sm = sm("mod_gen_stdvpart_"+part_id);
+ if (part_id.length() == 0){
+     for(auto e: what->children()){
+         if ( e->kind() == Ast_node_kind::structdef) {
+             auto& st = ceps::ast::as_struct_ref(e);
+             if (ceps::ast::name(st) != "of") continue;
+             if (st.children().size() > 0 && st.children()[0]->kind() == ceps::ast::Ast_node_kind::identifier);
+             part_id = name(as_id_ref(st.children()[0]));
+             break;
+         }
+     }
+ }
+
+ auto gen_sm = sm("partition_sm_"+part_id);
  int range_counter = 0;
  std::map<std::string,ceps::ast::Nodebase_ptr> range2guard;
  std::map<ceps::ast::Struct_ptr,ceps::ast::Nodebase_ptr> range_sm2guard;

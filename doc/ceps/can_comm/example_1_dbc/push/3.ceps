@@ -1,0 +1,13 @@
+ctrlpanels{
+ctrlpanel{name{"aa";};
+ widget{
+  type{toggle_signal;};
+  associated_systemstate{as_symbol("a_signal","Systemstate");};
+  style{width{"200px";};height{"80px";};};    
+ };
+ widget{
+  type{plot_signal;};
+  associated_systemstate{as_symbol("a_signal","Systemstate");};
+  style{width{"714px";};height{"432px";};};    
+ };
+};};

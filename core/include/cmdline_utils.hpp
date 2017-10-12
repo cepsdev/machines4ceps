@@ -38,73 +38,67 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct Result_process_cmd_line
 {
-	bool version_flag_set = false;
-	bool debug_mode = false;
-	bool interactive_mode = false;
-	std::string out_path;
-	std::vector<std::string> definition_file_rel_paths;
-	std::vector<std::string> post_processing_rel_paths;
-
-	bool start_in_server_mode = false;
-	std::vector< std::pair<std::string,std::string>> remote_nodes;
-	std::string server_port;
-	bool quiet = false;
-	bool logtrace = false;
-	std::string monitor = "";
-	bool run_as_monitor = false;
-	std::string monitored_node_ip;
-	std::string monitored_node_port;
-	std::vector<std::string> plugins;
-	std::string timeout;
-	std::string port;
-	bool print_transition_tables = false;
-	bool ignore_unresolved_state_id_in_directives = false;
-	bool cppgen = false;
-	bool cppgen_ignore_print = false;
-	bool cppgen_statemachines = false;
-    bool enforce_native = false;
-    bool ignore_simulations = false;
-    bool print_statemachines = false;
-    bool dot_gen = false;
-    bool dot_gen_one_file_per_top_level_statemachine = false;
-
-    bool print_evaluated_input_tree = false;
-    bool print_evaluated_postprocessing_tree = false;
-    bool print_signal_generators = false;
-
-    std::string live_log_port = "3000";
-    bool live_log = false;
-
-    bool report_format_sexpression = false;
-    bool report_verbose = false;
-    bool report_format_xml = false;
-    bool report_format_json = false;
-    bool report_format_ceps = false;
-
-    bool dump_asciidoc_can_layer = false;
-    bool no_warn = false;
-    bool print_event_signatures = false;
-    std::string package_file;
-    bool ws_api_on = false;
-    std::string ws_api_port = "8181";
-
-    bool vcan_api_on = false;
-    std::string vcan_api_port = "8182";
-    bool dump_stddoc_canlayer = false;
-    bool stddoc_canlayer_no_header_no_footer = true;
-
-    Result_process_cmd_line() = default;
-    Result_process_cmd_line(bool version_flag_set_,
+   bool version_flag_set = false;
+   bool debug_mode = false;
+   bool interactive_mode = false;
+   std::string out_path;
+   std::vector<std::string> definition_file_rel_paths;
+   std::vector<std::string> post_processing_rel_paths;
+   bool start_in_server_mode = false;
+   std::vector< std::pair<std::string,std::string>> remote_nodes;
+   std::string server_port;
+   bool quiet = false;
+   bool logtrace = false;
+   std::string monitor = "";
+   bool run_as_monitor = false;
+   std::string monitored_node_ip;
+   std::string monitored_node_port;
+   std::vector<std::string> plugins;
+   std::string timeout;
+   std::string port;
+   bool print_transition_tables = false;
+   bool ignore_unresolved_state_id_in_directives = false;
+   bool cppgen = false;
+   bool cppgen_ignore_print = false;
+   bool cppgen_statemachines = false;
+   bool enforce_native = false;
+   bool ignore_simulations = false;
+   bool print_statemachines = false;
+   bool dot_gen = false;
+   bool dot_gen_one_file_per_top_level_statemachine = false;
+   bool print_evaluated_input_tree = false;
+   bool print_evaluated_postprocessing_tree = false;
+   bool print_signal_generators = false;
+   std::string live_log_port = "3000";
+   bool live_log = false;
+   bool report_format_sexpression = false;
+   bool report_verbose = false;
+   bool report_format_xml = false;
+   bool report_format_json = false;
+   bool report_format_ceps = false;
+   bool dump_asciidoc_can_layer = false;
+   bool no_warn = false;
+   bool print_event_signatures = false;
+   std::string package_file;
+   bool ws_api_on = false;
+   std::string ws_api_port = "8181";
+   bool vcan_api_on = false;
+   std::string vcan_api_port = "8182";
+   bool dump_stddoc_canlayer = false;
+   bool stddoc_canlayer_no_header_no_footer = true;
+   std::string push_dir;
+   Result_process_cmd_line() = default;
+   Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,
 			bool interactive_mode_,
 			std::string out_path_,
 			std::vector<std::string> definition_file_rel_paths_)
-    :version_flag_set(version_flag_set_),
+   :version_flag_set(version_flag_set_),
      debug_mode(debug_mode_),
      interactive_mode(interactive_mode_) ,
      out_path(out_path_),
      definition_file_rel_paths(definition_file_rel_paths_)
-    {}
+   {}
 };
 
 Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_cmd_line r = Result_process_cmd_line{});
