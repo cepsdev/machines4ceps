@@ -22,7 +22,7 @@ ceps::ast::Nodeset sm4ceps::modelling::standard_value_partition_sm(ceps::ast::St
          if ( e->kind() == Ast_node_kind::structdef) {
              auto& st = ceps::ast::as_struct_ref(e);
              if (ceps::ast::name(st) != "of") continue;
-             if (st.children().size() > 0 && st.children()[0]->kind() == ceps::ast::Ast_node_kind::identifier);
+             if (st.children().size() == 0 || st.children()[0]->kind() != ceps::ast::Ast_node_kind::identifier) continue;
              part_id = name(as_id_ref(st.children()[0]));
              break;
          }
