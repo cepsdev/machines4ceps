@@ -45,6 +45,11 @@
     line-height: 1px;
 }
 
+.baseWidget-footer {
+   
+    bottom:0;
+}
+
 .baseWidget:hover {
     box-shadow: 0 2px 8px 0 rgba(0, 0, 20, 0.2), 0 3px 10px 0 rgba(0, 0, 20, 0.19);
     border-color: lightslategrey;
