@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>cepS Demo</title>
+  <meta charset="utf-8">
+  <script>
+   
+   var ws_url = "ws://localhost:1063/";
+   var can_sig_name = "CFBP_DigIn063";
+   // New can_frame was send when
+   // frame_indicator_previous != frame_indicator
+   var frame_indicator_previous = 0;
+   var frame_indicator = 0;
+   var ws = undefined;
+   
+   //ws.onopen = function(e)
+   //{
+   //  console.log('Connection to server opened.');
+   //  ws.send("WATCH CFBP_DigIn063");
+   //  ws.send("SET_VALUE CFBP_DigIn063 number 1");
+   //  ws.send("GET_UPDATE 1000");
+   //  ws.send("EVENT Start");
+   //  setTimeout(() => {ws.send("EVENT Stop");}, 3000)
+   //}
+   
+   function setSignal(value)
+   {
+     if(ws == undefined) return
+     ws.send("SET_VALUE " + can_sig_name + " number " + value.toString());
+   }
+   
+   function connectDisconnect()
+   {
+     if(ws == undefined)
+     {
+       ws = new WebSocket(ws_url);
+     
+       ws.onerror = function(e){
+         window.alert("Verbindungsfehler!");
+         console.log("Websocket error.");
+         ws = undefined;
+         
+         btn = document.getElementById("connect");
+         btn.value = "Verbinden";
+       }
+       
+       ws.onopen = function(e){
+         console.log('Connection to server opened.');
+         ws.send("WATCH " + can_sig_name +" frame_sent");
+         ws.send("GET_UPDATE 50");
+       }
+       
+       ws.addEventListener("message", (e) => {
+         var msg = JSON.parse(e.data);
+         var new_frame = false;
+         var sig_val = 0;
+         
+         if(msg.signals)
+         {
+           for(sig of msg.signals)
+           {
+
+             if(sig.name == can_sig_name)
+             {
+               sig_val = sig.value;
+             }
+             else if(sig.name == "frame_sent")
+             {
+               frame_indicator = sig.value;
+               if(frame_indicator_previous != frame_indicator)
+               {
+                 new_frame = true;
+               }
+               frame_indicator_previous = frame_indicator;
+             }
+           }
+           
+           //Only update signal value when new frame was sent
+           if(new_frame)
+           {
+             console.log("new frame");
+             display = document.getElementById("cur_value");
+             display.value = sig_val.toString();
+           }
+         }
+       //console.log(msg);
+       });
+       
+       btn = document.getElementById("connect");
+       btn.value = "Trennen";
+     }
+     else
+     {
+       ws.close();
+       ws = undefined;
+       console.log("Closed connection");
+       
+       btn = document.getElementById("connect");
+       btn.value = "Verbinden";
+     }
+   }
+   
+   //Start stop sending can frames
+   function startStop()
+   {
+     btn = document.getElementById("start_stop");
+     if(ws != undefined)
+     {
+       if(btn.value == "Simulation starten")
+       {
+         ws.send("EVENT Start");
+         btn.value = "Simulation stoppen";
+       }
+       else
+       {
+         ws.send("EVENT Stop");
+         btn.value = "Simulation starten";
+       }
+     }
+     else
+     {
+       btn.value = "Simulation starten";
+     }
+   }
+   
+
+   //ws.onmessage = function(e)
+   //{
+     //var msg = JSON.parse(e.data);
+   //  var msg = e.data;
+   //  console.log(msg);
+   //}
+  </script>
+</head>
+<body>
+  <h2>Simulation Feststellbremse</h2>
+  <div>
+    <input id="connect" type="button" value="Verbinden"
+     onclick="connectDisconnect();">
+    <input id="start_stop" type="button" value="Simulation starten" onclick="startStop();">
+  </div>
+  <div>
+  Signal CFBP_DigIn063
+  </div>
+  <div>
+    <label>Wert Einstellen</label>
+    <input id="change" type="number" min="0" max="4" step="1" value="0"
+     onchange="setSignal(this.value);">
+  </div>
+  <div>
+    <label>Aktueller Wert</label>
+    <input id="cur_value" type="text" value="0" readonly>
+  </div>
+
+</body>

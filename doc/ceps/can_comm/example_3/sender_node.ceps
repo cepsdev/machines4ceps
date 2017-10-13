@@ -1,0 +1,35 @@
+Event TimeUp;
+Event Start;
+Event Stop;
+
+
+sm{
+ S;
+ states{Initial;Sending;Final;};
+ on_enter{
+  start_periodic_timer(0.1*s,TimeUp);
+ };
+ Actions{
+    increment_frame_sent{
+      frame_sent = frame_sent + 1;
+  };
+  send_frame{
+    static_for(e:root.frame){
+      //print(text(e.id.content()),"\n");
+      send(as_identifier(text(e.id.content())), CFBP_out);
+    }
+   increment_frame_sent();
+   //send(myframe,can_out);
+  };
+ };
+ //t{Initial;Initial;TimeUp;send_frame;};
+ t{Initial;Sending;Start;};
+ t{Sending;Sending;TimeUp;send_frame;};
+ t{Sending;Final;Stop;};
+ t{Final;Initial;};
+};
+
+
+Simulation{
+ Start{S;};
+};

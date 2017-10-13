@@ -17,7 +17,7 @@ const dns = require("dns");
 
 
 
-const host_name = os.hostname();
+const host_name = "pc295"//os.hostname();
 const ceps_executable = "./ceps";
 const ceps_default_args = ["--quiet"];
 const ceps_prelude = "../.ceps/prelude.ceps";

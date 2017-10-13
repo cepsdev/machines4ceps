@@ -1,0 +1,6 @@
+kind Systemstate;
+kind Event;
+kind Guard;
+
+Systemstate frame_sent;
+frame_sent = 0;
