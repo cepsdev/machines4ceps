@@ -1,0 +1,24 @@
+Event TimeUp;
+
+sm{
+ S;
+ states{Initial;};
+ on_enter{
+  start_periodic_timer(1.0*s,TimeUp);
+ };
+ Actions{
+  increment_a_signal{
+   a_signal = a_signal + 1;
+  };
+  send_frame{
+   increment_a_signal();
+   send(myframe,channel1_out);
+  };
+ };
+ t{Initial;Initial;TimeUp;send_frame;};
+};
+
+
+Simulation{
+ Start{S;};
+};

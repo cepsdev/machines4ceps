@@ -41,6 +41,11 @@ public:
     Virtual_can_interface(State_machine_simulation_core* smc,std::string port = "8183"):smc_{smc},port_{port}{}
     ceps::ast::Nodeset& hub_directory();
     void start();
+    directory_of_known_simcores& known_simcores(){
+        return known_simcores_;
+    }
+    bool& reset_directory_of_known_simcores() { return reset_directory_of_known_simcores_; }
+    std::string& port() {return port_;}
 };
 
 #endif

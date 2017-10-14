@@ -1646,7 +1646,20 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         if (vcan_api_port.length())
             vcan_api() = new Virtual_can_interface(this,vcan_api_port);
         else vcan_api() = new Virtual_can_interface(this,result_cmd_line.vcan_api_port);
-        vcan_api()->hub_directory() = simcore_directory;
+        if (simcore_directory.empty()){
+            directory_of_known_simcores::simcore_info info;
+            char buffer[1025] = {0};
+            if (0 != gethostname(buffer,1024)) fatal_(-1,"gethostname() failed");
+            info.host_name = buffer;
+            info.port = vcan_api()->port();
+            if (ns["package"]["name"].as_str().length() == 0) info.name = info.host_name+"_at_"+info.port;
+            else info.name = ns["package"]["name"].as_str();
+            if (ns["package"]["uri"].as_str().length() == 0) info.short_name = info.name;
+            else info.short_name = ns["package"]["uri"].as_str();
+            vcan_api()->known_simcores().entries.push_back(info);
+            vcan_api()->reset_directory_of_known_simcores() = false;
+        }
+        else vcan_api()->hub_directory() = simcore_directory;
         vcan_api()->start();
         running_as_node() = true;
         auto vcan_api_directory = ns["package"]["directory_master"];

@@ -1,0 +1,20 @@
+Event TimeUp;
+
+sm{
+ S;
+ states{Initial;};
+ on_enter{
+  start_periodic_timer(1.0*s,TimeUp);
+ };
+ Actions{
+  print_a_signal{
+   print("a_signal = ",a_signal,"\n");
+  };
+ };
+ t{Initial;Initial;TimeUp;print_a_signal;};
+};
+
+
+Simulation{
+ Start{S;};
+};
