@@ -767,7 +767,7 @@ void Websocket_interface::handler(int sck){
        ev.exec = exec_report;
        smc_->enqueue_event(ev);
        continue;
-    }
+     }
     }//cmd.size()!=0
     //std::cout << reply << std::endl;
     if(!send_reply(reply)) break;
