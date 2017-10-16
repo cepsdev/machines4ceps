@@ -419,8 +419,8 @@ ceps::cloud::Sim_Directory ceps::cloud::fetch_directory_entries(ceps::cloud::Sim
 		throw net::exceptions::err_inet{ "Establishing connect to '" + sim_core.first + ":" + sim_core.second + "' failed." };
 	}
 	auto rhr = ceps::cloud::vcan_api::send_cmd(cfd, "get_known_sim_cores");
-
 	if (!std::get<0>(rhr)) return r;
+
 	using namespace std;
 
 	auto raw_data = ceps::cloud::get_virtual_can_attribute_content("known_sim_cores", std::get<2>(rhr));

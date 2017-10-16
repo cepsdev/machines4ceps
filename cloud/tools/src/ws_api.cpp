@@ -212,7 +212,11 @@ static std::pair<bool, websocket_frame> read_websocket_frame(int sck) {
 	return { true,r };
 }
 
-
+static std::string get_sim_name(ceps::cloud::Simulation_Core s) {
+	auto const & d = ceps::cloud::get_direntry(s);
+	if (!d.first) return s.first + ":" + s.second;
+	return d.second.name + "@" + s.first + ":" + s.second;
+}
 
 void Websocket_interface::handler(int sck) {
 	
@@ -314,7 +318,53 @@ void Websocket_interface::handler(int sck) {
 				//std::cout << args.size() << std::endl;
 
 				if (cmd[0] == "GET_INFO" && args.size() == 0) {
-					reply = "{\"ok\":true, \"value\" : \"cepSCloud CAN Streamer (C) Tomas Prerovsky <tomas.prerovsky@gmail.com>, ALL RIGHTS RESERVED.\"}";
+					reply = "{\"ok\":true, \"value\" : \"cepSCloud's Virtual CAN Gateway (C) Tomas Prerovsky <tomas.prerovsky@gmail.com>, ALL RIGHTS RESERVED.\"}";
+				}
+				else if (cmd[0] == "GET_CONFIGURATION") {
+					std::stringstream sreply;
+					sreply << "\"simcore_infos\": [";
+
+					for (auto s : ceps::cloud::sim_cores) {
+						sreply << "{";
+						auto const & d = ceps::cloud::get_direntry(s);
+						sreply << "\"name\": \"" << get_sim_name(s) << "\",";
+						sreply << "\"out\": [";
+						for (std::size_t i = 0; i != ceps::cloud::info_out_channels[s].size();++i) {
+							auto e = ceps::cloud::info_out_channels[s][i];
+							sreply << "{ \"name\" : \"" << e.first << "\", \"type\": \"" << e.second << "\"}";
+							if (i + 1 != ceps::cloud::info_out_channels[s].size()) sreply << ",";
+						}
+						sreply << "],";
+						sreply << "\"in\": [";
+						for (std::size_t i = 0; i != ceps::cloud::info_in_channels[s].size(); ++i) {
+							auto e = ceps::cloud::info_in_channels[s][i];
+							sreply << "{ \"name\" : \"" << e.first << "\", \"type\": \"" << e.second << "\"}";
+							if (i + 1 != ceps::cloud::info_in_channels[s].size()) sreply << ",";
+						}
+						sreply << "]";
+						sreply << "}";
+					}
+
+					sreply << "],";
+
+					sreply << "\"local_endpoints\": [";
+					for (std::size_t i = 0; ceps::cloud::sys_info_available_ifs.size() != i;++i) {
+						auto e = ceps::cloud::sys_info_available_ifs[i];
+						sreply << "\"" << e << "\"";
+						if (i + 1 != ceps::cloud::sys_info_available_ifs.size()) sreply << ",";
+					}
+					sreply << "],";
+
+					sreply << "\"downstreams\": {";
+					sreply << "},";
+
+					sreply << "\"upstreams\": {";
+					sreply << "},";
+
+					sreply << "\"routes\": {";
+					sreply << "}";
+
+					reply = "{\"ok\":true, \"value\" : {"+sreply.str()+"} }";
 				}
 			}//cmd.size()!=0
 			if (!send_reply(reply)) break;
