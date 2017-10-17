@@ -230,6 +230,17 @@ static std::string get_sim_name(ceps::cloud::Simulation_Core s) {
 	return d.second.name + "@" + s.first + ":" + s.second;
 }
 
+
+std::mutex glbl_mtx;
+std::vector<std::thread*> downstream_threads;
+std::vector<std::thread*> upstream_threads;
+std::vector<std::thread*> route_threads;
+
+std::vector<std::pair<ceps::cloud::Simulation_Core, ceps::cloud::Stream_Mapping>> down_streams;
+std::vector<std::pair<ceps::cloud::Simulation_Core, ceps::cloud::Stream_Mapping>> up_streams;
+std::vector<ceps::cloud::Route> routes;
+
+
 void Websocket_interface::handler(int sck) {
 	
 	auto shutdown_update_thread = std::shared_ptr<std::atomic_bool>(new std::atomic_bool{ false });
@@ -296,12 +307,6 @@ void Websocket_interface::handler(int sck) {
 		return true;
 	};
 
-	std::vector<std::thread*> downstream_threads;
-	std::vector<std::thread*> upstream_threads;
-	std::vector<std::thread*> route_threads;
-
-	
-
 	for (;;) {
 		auto frm = read_websocket_frame(sck);
 		if (!frm.first) break;
@@ -337,6 +342,8 @@ void Websocket_interface::handler(int sck) {
 					reply = "{\"ok\":true, \"value\" : \"cepSCloud's Virtual CAN Gateway (C) Tomas Prerovsky <tomas.prerovsky@gmail.com>, ALL RIGHTS RESERVED.\"}";
 				}
 				else if (cmd[0] == "CONFIG_DOWN_STREAM") {
+					std::lock_guard<std::mutex> g(glbl_mtx);
+					down_streams.clear();
 					std::stringstream in{ s };
 					std::string l;
 					in >> l;
@@ -359,28 +366,29 @@ void Websocket_interface::handler(int sck) {
 									break;
 								}
 							}
-							
-#ifdef PCAN_API
-							if (pcan_api::is_pcan(local_channel))
+							down_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));							
+                            #ifdef PCAN_API
+							 if (pcan_api::is_pcan(local_channel))
 								downstream_threads.push_back(new std::thread{
 								 downstream_ctrl,
 								 sim_core,
 								 ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{channel}}
-							});
-#endif
-#ifdef KMW_MULTIBUS_API
-							if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
+							 });
+                            #endif
+                            #ifdef KMW_MULTIBUS_API
+							 if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
 								downstream_threads.push_back(new std::thread{
 								 downstream_ctrl_multibus,
 								 sim_core,
 								 ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel }} 
-							});
-#endif
+							 });
+                            #endif
 							reply = "{\"ok\":true}";
 						}
 					}
 
 				} else if (cmd[0] == "GET_CONFIGURATION") {
+					std::lock_guard<std::mutex> g(glbl_mtx);
 					std::stringstream sreply;
 					sreply << "\"simcore_infos\": [";
 
@@ -415,14 +423,54 @@ void Websocket_interface::handler(int sck) {
 					}
 					sreply << "],";
 
-					sreply << "\"downstreams\": {";
-					sreply << "},";
+					sreply << "\"downstreams\": [";
+					for (std::size_t i = 0; i != down_streams.size(); ++i) {
+						auto const & e = down_streams[i];
+						sreply << "{";
+						sreply << "\"sim_name\": \"" << get_sim_name(e.first) << "\" ,";
+						sreply << "\"host\": \"" << e.first.first << "\" ,";
+						sreply << "\"port\": \"" << e.first.second << "\" ,";
+						sreply << "\"channel\": \"" << e.second.second << "\" ,";
+						sreply << "\"local_channel\": \"" << e.second.first << "\"";
+						sreply << "}";
+						if (i + 1 != down_streams.size()) sreply << ",";					
+					}
+					sreply << "],";
 
-					sreply << "\"upstreams\": {";
-					sreply << "},";
+					sreply << "\"upstreams\": [";
+					for (std::size_t i = 0; i != up_streams.size(); ++i) {
+						auto const & e = up_streams[i];
+						sreply << "{";
+						sreply << "\"sim_name\": \"" << get_sim_name(e.first) << "\" ,";
+						sreply << "\"host\": \"" << e.first.first << "\" ,";
+						sreply << "\"port\": \"" << e.first.second << "\" ,";
+						sreply << "\"channel\": \"" << e.second.second << "\" ,";
+						sreply << "\"local_channel\": \"" << e.second.first << "\"";
+						sreply << "}";
+						if (i + 1 != up_streams.size()) sreply << ",";
+					}
+					sreply << "],";
 
-					sreply << "\"routes\": {";
-					sreply << "}";
+					sreply << "\"routes\": [";
+					for (std::size_t i = 0; i != routes.size(); ++i) {
+						const auto& e = routes[i];
+						sreply << "{ \"from\":";
+						 sreply << "{\"sim_name\": \"" << get_sim_name(e.from.first) << "\" ,";
+						 sreply << "\"host\": \"" << e.from.first.first << "\" ,";
+						 sreply << "\"port\": \"" << e.from.first.second << "\" ,";
+						 sreply << "\"channel\": \"" << e.from.second << "\" ,";
+						 sreply << "}";
+						sreply << "},";
+						sreply << "{ \"to\":";
+						sreply << "{\"sim_name\": \"" << get_sim_name(e.to.first) << "\" ,";
+						sreply << "\"host\": \"" << e.to.first.first << "\" ,";
+						sreply << "\"port\": \"" << e.to.first.second << "\" ,";
+						sreply << "\"channel\": \"" << e.to.second << "\" ,";
+						sreply << "}";
+						sreply << "},";
+						if (i + 1 != routes.size()) sreply << ",";
+					}
+					sreply << "]";
 
 					reply = "{\"ok\":true, \"value\" : {"+sreply.str()+"} }";
 				}
