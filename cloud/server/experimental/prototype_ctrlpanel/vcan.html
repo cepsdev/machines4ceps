@@ -293,14 +293,50 @@
             ep.ws.send(cmd);
         }
 
-        function check_streaming_endpoint_complete(id) {      
+        function check_streaming_endpoint_complete(id) {
+            let ready_for_upload = true;
+            parents = [];            
             for (let e of $(".strm_endpoint_cfg_btn")) {
-                if ($(e).hasClass("dwnstrm_trgt"))
-                    if ($(e).attr("local_channel") == undefined) return;
-                if ($(e).hasClass("dwnstrm_src"))
-                    if ($(e).attr("channel") == undefined || $(e).attr("sim_name") == undefined) return;
+                
+                let entry_incomplete = false;
+                if ($(e).hasClass("dwnstrm_trgt")) {
+                    if ($(e).attr("local_channel") == undefined) {
+                        ready_for_upload = false; entry_incomplete = true;
+                    }
+                }
+
+                if ($(e).hasClass("dwnstrm_src")) {
+                    if ($(e).attr("channel") == undefined || $(e).attr("sim_name") == undefined) {
+                        ready_for_upload = false; entry_incomplete = true;
+                    }
+                }
+                let parent = $(e).parent();
+                for (; parent && !parent.hasClass("alert"); parent = $(parent).parent());
+                let parent_found_in_list = false;
+                for (let p of parents) {
+                    if ($(p.p).attr("id") == $(parent).attr("id")) {
+                        if (p.complete && entry_incomplete) p.complete = false;
+                        parent_found_in_list = true;
+                        break;
+                    }
+                }
+                if (!parent_found_in_list) {
+                    parents.push({p:parent,complete:!entry_incomplete});
+                }
             }
-            $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", false);
+            for (let e of parents) {
+                if (e.complete) {
+                    $(e.p).removeClass("alert-warning").removeClass("alert-info").addClass("alert-info");
+                } else {
+                    $(e.p).removeClass("alert-warning").removeClass("alert-info").addClass("alert-warning");
+                }
+            }
+            if (ready_for_upload) {
+
+            }
+
+            if (ready_for_upload) $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", false);
+            else $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
         }
 
         function set_dwn_strm_src(id, conn_id, sim_name, channel) {
@@ -371,18 +407,23 @@
         }
 
         function handle_add_down_streams(id) {
+            $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
             let ep = get_endpoint_info(id);
             ++ctr;
-            $(`#down_streams_${id}`).append(`<div class="alert alert-info alert-dismissible down-streams-${id}" role="alert">
-                     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                     <table width="100%"><tr><td width="40%">
-                      <div class="btn-group btn-group-lg" role="group" aria-label="...">
-                      <button id="dwn_strm_src_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn dwnstrm_src" onclick="sl_dwn_strm_src(${id},${ctr});" >Select Source ...</button></div>
-                     </td><td><span class="glyphicon glyphicon-arrow-right btn-lg" aria-hidden="true"></span></td><td width="40%">                    
-                     <div class="btn-group btn-group-lg navbar-right" role="group" aria-label="...">
-                      <button id="dwn_strm_trgt_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn dwnstrm_trgt" onclick="sl_dwn_strm_trgt(${id},${ctr});">Select Local Endpoint ...</button></div>
-                    </td></tr></table>
-                   </div>`);
+            $(`#down_streams_${id}`).append(
+                `<div class="alert alert-warning alert-dismissible down-streams-${id}" role="alert" id="dwn_strm_entry_${id}_${ctr}">
+                  <button type="button"
+                      class="close" data-dismiss="alert" aria-label="Close"
+                      onclick="$('#dwn_strm_entry_${id}_${ctr}').remove();check_streaming_endpoint_complete(${id});" ><span aria-hidden="true">&times;</span></button>
+                       <table width="100%"><tr><td width="40%">
+                        <div class="btn-group btn-group-lg" role="group" aria-label="...">
+                        <button id="dwn_strm_src_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn dwnstrm_src" onclick="sl_dwn_strm_src(${id},${ctr});" >Select Source ...</button></div>
+                        </td><td><span class="glyphicon glyphicon-arrow-right btn-lg" aria-hidden="true"></span></td><td width="40%">                    
+                        <div class="btn-group btn-group-lg navbar-right" role="group" aria-label="...">
+                        <button id="dwn_strm_trgt_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn dwnstrm_trgt" onclick="sl_dwn_strm_trgt(${id},${ctr});">Select Local Endpoint ...</button></div>
+                        </td></tr>
+                       </table>
+                 </div>`);
         }
 
         function handle_add_up_streams(id) {
