@@ -91,7 +91,7 @@ static void init_pcan_dll() {
 }
 
 #ifdef KMW_MULTIBUS_API
-static HINSTANCE kmw_multibus_dll = nullptr;
+HINSTANCE kmw_multibus_dll = nullptr;
 static void init_kmw_multibus_dll() {
 	kmw_multibus_dll = LoadLibrary("Multibus");
 	if (kmw_multibus_dll == nullptr) warn("No KMW Multibus library found: LoadLibrary('Multibus') failed.",false);
