@@ -254,6 +254,9 @@
             return s.substr(0, n) + "...";
         }
 
+        function endpoint_config_reset_to_remote_settings(id) {
+            let ep = get_endpoint_info(id);
+        }
 
         function endpoint_config_do_upload(id) {
             let ep = get_endpoint_info(id);
@@ -281,7 +284,7 @@
                 ep.ws.removeEventListener("message", h);
                 let msg = JSON.parse(m.data);
                 
-                if (!msg.ok) return;
+                if (!msg.ok) { console.log(msg); return; }
                 $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
                 $.notify({/* options*/message: 'Changes successfully applied  to \'' + glob_endpoints[id].host + ":"+glob_endpoints[id].port + `'` },
                     {/*settings*/ type: 'success', showProgressbar: false, delay: 2000,
@@ -424,6 +427,7 @@
                         </td></tr>
                        </table>
                  </div>`);
+            return ctr;
         }
 
         function handle_add_up_streams(id) {
@@ -433,6 +437,16 @@
         function handle_add_route(id) {
 
         }
+
+        function build_endpoint_ctrl_from_data(id, data) {
+            $(`#down_streams_${id}`).html();
+            for (let e of data.downstreams) {
+                let conn_id = handle_add_down_streams(id);
+                set_dwn_strm_src(id, conn_id, e.sim_name, e.channel);
+                set_dwn_strm_trgt(id, conn_id, e.local_channel);
+            }
+        }
+
 
         function helper_endpoint_ctrl_main_html(id) {
             return `<div class="panel panel-default">
@@ -531,6 +545,8 @@
                             //console.log(msg);
                             endpoint_info.push({id:i,ws:socket,config:msg});
                             $(`#endpoint_config_panel_${i}_main`).html(helper_endpoint_ctrl_main_html(i));
+                            $(`#endpoint_config_panel_${i}_btn_refresh`).attr("disabled", false);
+                            build_endpoint_ctrl_from_data(i,msg.value);
                         }
        
                         socket.send("GET_CONFIGURATION");
@@ -553,7 +569,7 @@
                        <div class="btn-toolbar" role="toolbar">
                          <h3 class="navbar-text navbar-right">${e.host + ':' + e.port}&nbsp;&nbsp;</h3>
                          <div class="btn-group btn-lg" role="group">
-                           <button id="endpoint_config_panel_${i}_btn_refresh" type="button" class="btn btn-default btn-lg" disabled><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
+                           <button id="endpoint_config_panel_${i}_btn_refresh" type="button" class="btn btn-default btn-lg" onclick="endpoint_config_reset_to_remote_settings(${i});" disabled><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>
                            <button id="endpoint_config_panel_${i}_btn_upload" type="button" class="btn btn-default btn-lg" onclick="endpoint_config_do_upload(${i});"  disabled><span class="glyphicon glyphicon-upload" aria-hidden="true"></span></button>
                          </div>
                        </div>
