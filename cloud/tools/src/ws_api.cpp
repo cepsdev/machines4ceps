@@ -382,10 +382,10 @@ void Websocket_interface::handler(int sck) {
 								 sim_core,
 								 ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel }} 
 							 });
-                            #endif
-							reply = "{\"ok\":true}";
+                            #endif							
 						}
 					}
+					reply = "{\"ok\":true}";
 
 				} else if (cmd[0] == "GET_CONFIGURATION") {
 					std::lock_guard<std::mutex> g(glbl_mtx);
