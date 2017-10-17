@@ -18,9 +18,21 @@
 
 #ifdef _WIN32
  using ssize_t = long long;
-
 #endif
 
+#ifdef KMW_MULTIBUS_API
+ extern HINSTANCE kmw_multibus_dll;
+#endif
+
+extern void downstream_ctrl(
+	 ceps::cloud::Simulation_Core sim_core,
+	 ceps::cloud::Downstream_Mapping dm);
+
+#ifdef KMW_MULTIBUS_API
+extern void downstream_ctrl_multibus(
+	ceps::cloud::Simulation_Core sim_core,
+	ceps::cloud::Downstream_Mapping dm);
+#endif
 /*
 * http/websocket routines
 */
@@ -284,6 +296,10 @@ void Websocket_interface::handler(int sck) {
 		return true;
 	};
 
+	std::vector<std::thread*> downstream_threads;
+	std::vector<std::thread*> upstream_threads;
+	std::vector<std::thread*> route_threads;
+
 	
 
 	for (;;) {
@@ -320,7 +336,51 @@ void Websocket_interface::handler(int sck) {
 				if (cmd[0] == "GET_INFO" && args.size() == 0) {
 					reply = "{\"ok\":true, \"value\" : \"cepSCloud's Virtual CAN Gateway (C) Tomas Prerovsky <tomas.prerovsky@gmail.com>, ALL RIGHTS RESERVED.\"}";
 				}
-				else if (cmd[0] == "GET_CONFIGURATION") {
+				else if (cmd[0] == "CONFIG_DOWN_STREAM") {
+					std::stringstream in{ s };
+					std::string l;
+					in >> l;
+					while (in) {
+						char buffer[2049] = { 0 };
+						in.getline(buffer, 2048);
+						l = buffer;
+						if (l == "ENTRY") {
+							std::string sim_name;
+							std::string channel;
+							std::string local_channel;
+							
+							in.getline(buffer, 2048); sim_name = buffer;
+							in.getline(buffer, 2048); channel = buffer;
+							in.getline(buffer, 2048); local_channel = buffer;
+							ceps::cloud::Simulation_Core sim_core;
+							for (auto s : ceps::cloud::sim_cores) {
+								if (get_sim_name(s) == sim_name) {
+									sim_core = s;
+									break;
+								}
+							}
+							
+#ifdef PCAN_API
+							if (pcan_api::is_pcan(local_channel))
+								downstream_threads.push_back(new std::thread{
+								 downstream_ctrl,
+								 sim_core,
+								 ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{channel}}
+							});
+#endif
+#ifdef KMW_MULTIBUS_API
+							if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
+								downstream_threads.push_back(new std::thread{
+								 downstream_ctrl_multibus,
+								 sim_core,
+								 ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel }} 
+							});
+#endif
+							reply = "{\"ok\":true}";
+						}
+					}
+
+				} else if (cmd[0] == "GET_CONFIGURATION") {
 					std::stringstream sreply;
 					sreply << "\"simcore_infos\": [";
 
