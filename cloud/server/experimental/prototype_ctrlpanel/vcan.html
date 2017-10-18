@@ -84,9 +84,9 @@
                 <div id="dlg_select_a_signal_body" class="modal-body">
                     <div class="input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-log-in"></i></span>
-                        <!--input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder=""-->
-                        <input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:1063" placeholder="">
-
+                        <!-- input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder="" -->
+                        <!-- input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:1063" placeholder="" -->
+                        <input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:1065" placeholder="">
                     </div>                      
                 </div>
                 <div class="modal-footer">
@@ -260,7 +260,7 @@
 
         function endpoint_config_do_upload(id) {
             let ep = get_endpoint_info(id);
-            let cmd = "CONFIG_DOWN_STREAM\n";
+            let cmd = "CONFIG_STREAMS\n";
             for (let e of $(`.down-streams-${id}`)) {
                 let sim_name = undefined;
                 let channel = undefined;
@@ -274,12 +274,32 @@
                 }
 
                 if (sim_name && channel && local_channel) {
-                    cmd += "ENTRY\n";
+                    cmd += "CONFIG_DOWN_STREAM\nENTRY\n";
                     cmd += sim_name + "\n";
                     cmd += channel + "\n";
                     cmd += local_channel + "\n";
                 }
             }
+            for (let e of $(`.up-streams-${id}`)) {
+                let sim_name = undefined;
+                let channel = undefined;
+                let local_channel = undefined;
+                for (let a of $(e).find(`.upstrm_trgt`)) {
+                    sim_name = $(a).attr("sim_name");
+                    channel = $(a).attr("channel");
+                }
+                for (let a of $(e).find(`.upstrm_src`)) {
+                    local_channel = $(a).attr("local_channel");
+                }
+
+                if (sim_name && channel && local_channel) {
+                    cmd += "CONFIG_UP_STREAM\nENTRY\n";
+                    cmd += sim_name + "\n";
+                    cmd += channel + "\n";
+                    cmd += local_channel + "\n";
+                }
+            }
+
             function h(m) {
                 ep.ws.removeEventListener("message", h);
                 let msg = JSON.parse(m.data);
@@ -293,6 +313,7 @@
                 );
             }
             ep.ws.addEventListener("message", h);
+            console.log(cmd);
             ep.ws.send(cmd);
         }
 
@@ -334,26 +355,64 @@
                     $(e.p).removeClass("alert-warning").removeClass("alert-info").addClass("alert-warning");
                 }
             }
-            if (ready_for_upload) {
-
-            }
-
+                        
             if (ready_for_upload) $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", false);
             else $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
         }
 
-        function set_dwn_strm_src(id, conn_id, sim_name, channel) {
-            $(`#dwn_strm_src_btn_${id}_${conn_id}`).attr("sim_name", sim_name);
-            $(`#dwn_strm_src_btn_${id}_${conn_id}`).attr("channel", channel);
-            $(`#dwn_strm_src_btn_${id}_${conn_id}`).text(first_n_chars(channel + "(" + sim_name + ")", 30));
-            check_streaming_endpoint_complete(id);
+        function set_strm_src(id, conn_id, info , check_completeness, which) {
+            let short = which;
+            if (which == "down") short = "dwn";
+            else if (which == "route") short = "rt";
+
+            if (info.sim_name != undefined) {
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).attr("sim_name", info.sim_name);
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).attr("channel", info.channel);
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).text(first_n_chars(info.channel + "(" + info.sim_name + ")", 30));
+            }
+
+            if (info.local_channel != undefined) {
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).attr("local_channel", info.local_channel);
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).text(first_n_chars(info.local_channel, 20));
+            }
+            if (check_completeness == undefined || check_completeness) check_streaming_endpoint_complete(id);
         }
 
-        function set_dwn_strm_trgt(id, conn_id, channel) {
-            $(`#dwn_strm_trgt_btn_${id}_${conn_id}`).attr("local_channel", channel);
-            $(`#dwn_strm_trgt_btn_${id}_${conn_id}`).text(first_n_chars(channel, 20));
-            check_streaming_endpoint_complete(id);
+        function set_strm_trgt(id, conn_id, info , check_completeness, which) {
+            let short = which;
+            if (which == "down") short = "dwn";
+            else if (which == "route") short = "rt";
+
+            if (info.sim_name != undefined) {
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).attr("sim_name", info.sim_name);
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).attr("channel", info.channel);
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).text(first_n_chars(info.channel + "(" + info.sim_name + ")", 30));
+            }
+
+            if (info.local_channel != undefined) {
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).attr("local_channel", info.local_channel);
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).text(first_n_chars(info.local_channel, 20));
+            }
+            if (check_completeness == undefined || check_completeness) check_streaming_endpoint_complete(id);
         }
+
+
+        function set_dwn_strm_src(id, conn_id, sim_name, channel, check_completeness) {
+            set_strm_src(id, conn_id, { sim_name: sim_name, channel: channel } , check_completeness, "down");
+        }
+
+        function set_dwn_strm_trgt(id, conn_id, channel, check_completeness) {
+            set_strm_trgt(id, conn_id, { local_channel:channel }, check_completeness, "down");
+        }
+
+        function set_up_strm_src(id, conn_id, local_channel, check_completeness) {
+            set_strm_src(id, conn_id, {local_channel:local_channel} , check_completeness, "up");
+        }
+
+        function set_up_strm_trgt(id, conn_id, sim_name, channel, check_completeness) {
+            set_strm_trgt(id, conn_id, { sim_name: sim_name, channel: channel } , check_completeness, "up");
+        }
+
 
         function sl_dwn_strm_src(id,conn_id) {
             let ep = get_endpoint_info(id);
@@ -409,21 +468,91 @@
             }
         }
 
-        function handle_add_down_streams(id) {
+
+        function sl_up_strm_trgt(id, conn_id) {
+            let ep = get_endpoint_info(id);
+
+            let sim_name = $(`#up_strm_trgt_btn_${id}_${conn_id}`).attr("sim_name");
+            let channel = $(`#up_strm_trgt_btn_${id}_${conn_id}`).attr("channel");
+
+            let dt = [];
+            for (let s of ep.config.value.simcore_infos) {
+                for (let ch of s.in) {
+                    if (s.name == sim_name && channel == ch.name)
+                        dt.push([`<strong>` + s.name + `</strong>`, `<strong>` + ch.name + "</strong>", `<strong>` + ch.type + `<strong>`]);
+                    else dt.push([s.name, `<a href='#' onclick='$("#dlg_select_remote_endpoint_out").modal("hide");set_up_strm_trgt(${id},${conn_id},"${s.name}","${ch.name}");'>` + ch.name + "</a>", ch.type]);
+                }
+            }
+            $("#dlg_select_remote_endpoint_out").modal("show");
+            if (ep.tbl_dt == undefined)
+                ep.tbl_dt = $('#dlg_select_remote_endpoint_out_table').DataTable({
+                    select: {
+                        style: 'single'
+                    },
+                    data: dt,
+                    columns: [{ title: "Simulation" }, { title: "Communication Endpoint" }, { title: "Type" }]
+                });
+            else {
+                $('#dlg_select_remote_endpoint_out_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+
+        function sl_up_strm_src(id, conn_id) {
+            let ep = get_endpoint_info(id);
+            let local_channel = $(`#up_strm_trgt_btn_${id}_${conn_id}`).attr("local_channel");
+
+            let dt = [];
+            for (let s of ep.config.value.local_endpoints) {
+                if (s == local_channel)
+                    dt.push([`<strong>` + s + `</strong>`]);
+                else dt.push([`<a href='#' onclick='$("#dlg_select_local_endpoint").modal("hide");set_up_strm_src(${id},${conn_id},"${s}");'>` + s + "</a>"]);
+            }
+            $("#dlg_select_local_endpoint").modal("show");
+
+            if (ep.loc_channel_tbl_dt == undefined)
+                ep.loc_channel_tbl_dt = $('#dlg_select_local_endpoint_table').DataTable({
+                    select: {
+                        style: 'single'
+                    },
+                    data: dt,
+                    columns: [{ title: "Name" }]
+                });
+            else {
+                $('#dlg_select_local_endpoint_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+        function handle_stream(id, which) {
             $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
             let ep = get_endpoint_info(id);
             ++ctr;
-            $(`#down_streams_${id}`).append(
-                `<div class="alert alert-warning alert-dismissible down-streams-${id}" role="alert" id="dwn_strm_entry_${id}_${ctr}">
+            let short = which;
+            if (which == "down") short = "dwn";
+            else if (which == "route") short = "rt";
+
+            let src_txt = "Select Source (Remote) ...";
+            let target_txt = "Select Target (Local) ...";
+
+            if (which == "up") {
+                src_txt = "Select Source (Local) ...";
+                target_txt = "Select Target (Remote) ...";
+            } else if (which == "route") {
+                src_txt = "Select Source (Remote) ...";
+                target_txt = "Select Target (Remote) ...";
+            }
+            
+            $(`#${which}_streams_${id}`).append(
+                `<div class="alert alert-warning alert-dismissible ${which}-streams-${id}" role="alert" id="${short}_strm_entry_${id}_${ctr}">
                   <button type="button"
                       class="close" data-dismiss="alert" aria-label="Close"
-                      onclick="$('#dwn_strm_entry_${id}_${ctr}').remove();check_streaming_endpoint_complete(${id});" ><span aria-hidden="true">&times;</span></button>
+                      onclick="$('#${short}_strm_entry_${id}_${ctr}').remove();check_streaming_endpoint_complete(${id});" ><span aria-hidden="true">&times;</span></button>
                        <table width="100%"><tr><td width="40%">
                         <div class="btn-group btn-group-lg" role="group" aria-label="...">
-                        <button id="dwn_strm_src_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn dwnstrm_src" onclick="sl_dwn_strm_src(${id},${ctr});" >Select Source ...</button></div>
+                        <button id="${short}_strm_src_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn ${short}strm_src" onclick="sl_${short}_strm_src(${id},${ctr});" >${src_txt}</button></div>
                         </td><td><span class="glyphicon glyphicon-arrow-right btn-lg" aria-hidden="true"></span></td><td width="40%">                    
                         <div class="btn-group btn-group-lg navbar-right" role="group" aria-label="...">
-                        <button id="dwn_strm_trgt_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn dwnstrm_trgt" onclick="sl_dwn_strm_trgt(${id},${ctr});">Select Local Endpoint ...</button></div>
+                        <button id="${short}_strm_trgt_btn_${id}_${ctr}" type="button" class="btn btn-default ${short}_endpoint_cfg_btn ${short}strm_trgt" onclick="sl_${short}_strm_trgt(${id},${ctr});">${target_txt}</button></div>
                         </td></tr>
                        </table>
                  </div>`);
@@ -431,29 +560,72 @@
         }
 
         function handle_add_up_streams(id) {
-
+            return handle_stream(id, "up");
         }
 
+        function handle_add_down_streams(id) {
+            return handle_stream(id, "down");
+        }
+                
         function handle_add_route(id) {
 
         }
 
+        function get_all_out_channels(id) {
+            let ep = get_endpoint_info(id);
+            let r = [];
+            for (let e of ep.config.value.simcore_infos) {
+                for (let ee of e.out) {
+                    ee.sim_name = e.name;
+                    r.push(ee);
+                }
+            }
+            return r;
+        }
+
+        function get_all_in_channels(id) {
+            let ep = get_endpoint_info(id);
+            let r = [];
+            for (let e of ep.config.value.simcore_infos) {
+                for (let ee of e.in) {
+                    ee.sim_name = e.name;
+                    r.push(ee);
+                }
+            }
+            return r;
+        }
+
         function build_endpoint_ctrl_from_data(id, data) {
             $(`#down_streams_${id}`).html();
+            $(`#up_streams_${id}`).html();
+            $(`#routes_${id}`).html();
+
             for (let e of data.downstreams) {
                 let conn_id = handle_add_down_streams(id);
                 set_dwn_strm_src(id, conn_id, e.sim_name, e.channel);
                 set_dwn_strm_trgt(id, conn_id, e.local_channel);
             }
-        }
 
+            for (let e of data.upstreams) {
+                let conn_id = handle_add_up_streams(id);
+                set_up_strm_src(id, conn_id , e.local_channel);
+                set_up_strm_trgt(id, conn_id, conn_id, e.sim_name, e.channel );
+            }
+
+            let o_channels = get_all_out_channels(id);
+            let in_channels = get_all_in_channels(id);
+            $(`#add_down_streams_btn_${id}`).attr("disabled", 0 == o_channels);
+            $(`#add_up_streams_btn_${id}`).attr("disabled", 0 == in_channels);
+            $(`#add_routes_btn_${id}`).attr("disabled", 0 == in_channels || 0 == o_channels);
+            $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
+        }
 
         function helper_endpoint_ctrl_main_html(id) {
             return `<div class="panel panel-default">
                 <div class="panel-heading">
                     <div class="btn-toolbar" role="toolbar">
                         <h3 class="navbar-text navbar-right">Downstreams&nbsp;&nbsp;</h3>
-                        <button type="button" class="btn btn-default" onclick="handle_add_down_streams(${id})"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                        <button type="button" class="btn btn-default" id="add_down_streams_btn_${id}" onclick="handle_add_down_streams(${id})" disabled><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
                     </div>
                 </div>
                 <div class="panel-body" id="down_streams_${id}">
@@ -464,7 +636,7 @@
                     <div class="panel-heading">
                         <div class="btn-toolbar" role="toolbar">
                             <h3 class="navbar-text navbar-right">Upstreams&nbsp;&nbsp;</h3>
-                            <button type="button" class="btn btn-default" onclick="handle_add_up_streams(${id})"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                            <button type="button" class="btn btn-default" id="add_up_streams_btn_${id}" onclick="handle_add_up_streams(${id})" disabled><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
                         </div>
                     </div>
                     <div class="panel-body" id="up_streams_${id}">
@@ -475,7 +647,7 @@
                     <div class="panel-heading">
                         <div class="btn-toolbar" role="toolbar">
                             <h3 class="navbar-text navbar-right">Routes&nbsp;&nbsp;</h3>
-                            <button type="button" class="btn btn-default" onclick="handle_add_route(${id})"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                            <button type="button" class="btn btn-default" id="add_routes_btn_${id}" onclick="handle_add_route(${id})" disabled><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
                         </div>
                     </div>
                     <div class="panel-body" id="routes_${id}">
