@@ -740,6 +740,18 @@ int read_raw_chunk(size_t& header_length, State_machine_simulation_core* smc,
 				std::string s;
 				auto w = smc->get_global_states()[s = ceps::ast::name(ceps::ast::as_symbol_ref(p))];
 				smc->global_systemstates_prev()[s] = w;
+                if (signed_value){
+                    if (bit_width == 8) v = (std::int8_t)v;
+                    else if (bit_width == 16) v = (std::int16_t)v;
+                    else if (bit_width == 32) v = (std::int32_t)v;
+                    else {
+                        std::int64_t u = -1;
+                        std::uint64_t uu = u;
+                        uu = uu << bit_width;
+                        v = ((std::uint64_t)v) | uu;
+                    }
+                }
+
 
 				if (w == nullptr || w->kind() != ceps::ast::Ast_node_kind::int_literal) 
 					smc->get_global_states()[s] =
