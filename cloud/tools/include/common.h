@@ -103,6 +103,10 @@
 
 #define CLEANUP(x)  auto destructor = x; cleanup<decltype(destructor)> trigger_destructor{ destructor };
 
+
+ std::uint64_t increase_current_token();
+ std::uint64_t get_current_token();
+ 
  namespace ceps {
 	 namespace cloud {
 		 extern std::vector<std::string> sys_info_available_ifs;
