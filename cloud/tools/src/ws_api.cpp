@@ -25,12 +25,15 @@
 #endif
 
 extern void downstream_ctrl(
-	 ceps::cloud::Simulation_Core sim_core,
-	 ceps::cloud::Downstream_Mapping dm);
+	 ceps::cloud::Simulation_Core,
+	 ceps::cloud::Downstream_Mapping);
 
 extern void upstream_ctrl(
-	ceps::cloud::Simulation_Core sim_core,
-	ceps::cloud::Upstream_Mapping um);
+	ceps::cloud::Simulation_Core,
+	ceps::cloud::Upstream_Mapping);
+
+extern void r2r_ctrl(
+	ceps::cloud::Route);
 
 #ifdef KMW_MULTIBUS_API
 extern void downstream_ctrl_multibus(
@@ -388,17 +391,44 @@ void Websocket_interface::handler(int sck) {
 							std::string sim_name;
 							std::string channel;
 							std::string local_channel;
-							
-							in.getline(buffer, 2048); sim_name = buffer;
-							in.getline(buffer, 2048); channel = buffer;
-							in.getline(buffer, 2048); local_channel = buffer;
+							std::string sim_name_from;
+							std::string channel_from;
+							std::string sim_name_to;
+							std::string channel_to;
 							ceps::cloud::Simulation_Core sim_core;
-							for (auto s : ceps::cloud::sim_cores) {
-								if (get_sim_name(s) == sim_name) {
-									sim_core = s;
-									break;
+							ceps::cloud::Simulation_Core sim_core_from;
+							ceps::cloud::Simulation_Core sim_core_to;
+
+
+							if (!config_route) {
+								in.getline(buffer, 2048); sim_name = buffer;
+								in.getline(buffer, 2048); channel = buffer;
+								in.getline(buffer, 2048); local_channel = buffer;
+								for (auto s : ceps::cloud::sim_cores) {
+									if (get_sim_name(s) == sim_name) {
+										sim_core = s;
+										break;
+									}
+								}
+							} else {
+								in.getline(buffer, 2048); sim_name_from = buffer;
+								in.getline(buffer, 2048); channel_from = buffer;
+								in.getline(buffer, 2048); sim_name_to = buffer;
+								in.getline(buffer, 2048); channel_to = buffer;
+								for (auto s : ceps::cloud::sim_cores) {
+									if (get_sim_name(s) == sim_name_from) {
+										sim_core_from = s;
+										break;
+									}
+								}
+								for (auto s : ceps::cloud::sim_cores) {
+									if (get_sim_name(s) == sim_name_to) {
+										sim_core_to = s;
+										break;
+									}
 								}
 							}
+
 							if (config_down_stream) {
 								down_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
 #ifdef PCAN_API
@@ -437,7 +467,14 @@ void Websocket_interface::handler(int sck) {
 								});
 #endif					
 							}
-
+							if (config_route) {
+								auto rt = ceps::cloud::Route{ std::make_pair(sim_core_from,channel_from), std::make_pair(sim_core_to,channel_to) };
+								routes.push_back(rt);	
+								route_threads.push_back(new std::thread{
+									r2r_ctrl,
+									rt
+								});
+							}
 						}
 					}
 					reply = "{\"ok\":true}";
@@ -446,8 +483,11 @@ void Websocket_interface::handler(int sck) {
 					std::lock_guard<std::mutex> g(glbl_mtx);
 					std::stringstream sreply;
 					sreply << "\"simcore_infos\": [";
-
-					for (auto s : ceps::cloud::sim_cores) {
+					std::vector<ceps::cloud::Simulation_Core> scores;
+					std::copy(ceps::cloud::sim_cores.begin(), ceps::cloud::sim_cores.end(), std::back_inserter(scores));
+					
+					for (std::size_t si = 0; si != scores.size(); ++si) {
+						auto & s = scores[si];
 						sreply << "{";
 						auto const & d = ceps::cloud::get_direntry(s);
 						sreply << "\"name\": \"" << get_sim_name(s) << "\",";
@@ -466,6 +506,7 @@ void Websocket_interface::handler(int sck) {
 						}
 						sreply << "]";
 						sreply << "}";
+						if (si + 1 != scores.size()) sreply << ",";
 					}
 
 					sreply << "],";
@@ -513,16 +554,15 @@ void Websocket_interface::handler(int sck) {
 						 sreply << "{\"sim_name\": \"" << get_sim_name(e.from.first) << "\" ,";
 						 sreply << "\"host\": \"" << e.from.first.first << "\" ,";
 						 sreply << "\"port\": \"" << e.from.first.second << "\" ,";
-						 sreply << "\"channel\": \"" << e.from.second << "\" ,";
+						 sreply << "\"channel\": \"" << e.from.second << "\"";
+						 sreply << "},";
+						sreply << "\"to\":";
+						 sreply << "{\"sim_name\": \"" << get_sim_name(e.to.first) << "\" ,";
+						 sreply << "\"host\": \"" << e.to.first.first << "\" ,";
+						 sreply << "\"port\": \"" << e.to.first.second << "\" ,";
+						 sreply << "\"channel\": \"" << e.to.second << "\"";
 						 sreply << "}";
-						sreply << "},";
-						sreply << "{ \"to\":";
-						sreply << "{\"sim_name\": \"" << get_sim_name(e.to.first) << "\" ,";
-						sreply << "\"host\": \"" << e.to.first.first << "\" ,";
-						sreply << "\"port\": \"" << e.to.first.second << "\" ,";
-						sreply << "\"channel\": \"" << e.to.second << "\" ,";
 						sreply << "}";
-						sreply << "},";
 						if (i + 1 != routes.size()) sreply << ",";
 					}
 					sreply << "]";

@@ -311,6 +311,7 @@ void upstream_ctrl(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Upstream_Mapping um) {
 	INIT_SYS_ERR_HANDLING
+	auto cur_token = get_current_token();
 	auto remote_sck = -1;
 	constexpr auto CAN_RTR_FLAG = 0x40000000U;
 	CLEANUP([&]() {
@@ -367,6 +368,7 @@ void upstream_ctrl(
 					if (rr != PCAN_ERROR_OK && rr != PCAN_ERROR_BUSLIGHT && rr != PCAN_ERROR_BUSHEAVY) {
 						if (can_message.ID == 0) break;
 					}
+					if (cur_token != get_current_token()) break;
 					if (rr != PCAN_ERROR_QRCVEMPTY) {
 						can_frame frame = { 0 };
 						frame.can_id = can_message.ID;
@@ -376,6 +378,7 @@ void upstream_ctrl(
 						auto r = send(remote_sck, (char*)&frame, sizeof(frame), 0); STORE_SYS_ERR; if (r != sizeof(frame)) THROW_ERR_INET;
 					}
 				} while (rr != PCAN_ERROR_QRCVEMPTY);
+				if (cur_token != get_current_token()) break;
 			}
 		}
 	}
@@ -417,7 +420,8 @@ void upstream_ctrl_kmw(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Upstream_Mapping um) {
 	INIT_SYS_ERR_HANDLING
-		auto remote_sck = -1;
+	auto cur_token = get_current_token();
+    auto remote_sck = -1;
 	constexpr auto CAN_RTR_FLAG = 0x40000000U;
 	CLEANUP([&]() {
 		if (remote_sck != -1)closesocket(remote_sck);
@@ -443,7 +447,6 @@ void upstream_ctrl_kmw(
 			cmd << "HTTP/1.1 100\r\n";
 			cmd << "cmd: subscribe_in_channel\r\n";
 			cmd << "in_channel: " << um.second << "\r\n\r\n";
-
 			auto r = send(remote_sck, cmd.str().c_str(), cmd.str().length(), 0); STORE_SYS_ERR;
 			if (r != cmd.str().length()) {
 				THROW_ERR_INET;
@@ -452,6 +455,10 @@ void upstream_ctrl_kmw(
 			kmw_remote_inf_is_canx[canbus_queue] = ext_can;
 		    kmw_api::caninstall(canbus_queue, canbus_read_callback, canbus_flush_callback);
 			for (; ;) {
+				if (cur_token != get_current_token()) {
+					kmw_api::caninstall(canbus_queue, nullptr, nullptr);
+					break; 
+				}
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
 		}
@@ -472,6 +479,7 @@ void upstream_ctrl_kmw(
 void r2r_ctrl(
 	ceps::cloud::Route um) {
 	INIT_SYS_ERR_HANDLING;
+	auto cur_token = get_current_token();
 	auto remote_sck_from = -1;
 	auto remote_sck_to = -1;
 
@@ -526,6 +534,7 @@ void r2r_ctrl(
 			if(sizeof(frame) != l) THROW_ERR_INET;
 			r = recv(remote_sck_from, (char*)&frame, l, 0);
 			if (r != l) THROW_ERR_INET;
+			if (cur_token != get_current_token()) break;
 			r = send(remote_sck_to, (char*)&frame, sizeof(frame), 0); STORE_SYS_ERR; if (r != sizeof(frame)) THROW_ERR_INET;
 		}
 	}
@@ -545,6 +554,7 @@ void downstream_ctrl(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Downstream_Mapping dm) {
 	INIT_SYS_ERR_HANDLING;
+	auto cur_token = get_current_token();
 	constexpr auto CAN_RTR_FLAG = 0x40000000U;
 	auto ext_can = false;
 	for (auto e : ceps::cloud::info_out_channels[sim_core]) {
@@ -598,6 +608,7 @@ void downstream_ctrl(
 			
 			if (ext_can) can_message.MSGTYPE |= PCAN_MESSAGE_EXTENDED;
 			memcpy(can_message.DATA, buffer + 8, len);
+			if (cur_token != get_current_token()) break;
 			auto wr = pcan_api::write(channel, &can_message);
 			if (wr != PCAN_ERROR_OK) {
 				throw net::exceptions::err_can{ "Write failed, endpoint is '" + dm.first + "', errormessage: " + pcan_errcode2text[rinit] + "." };
@@ -618,6 +629,8 @@ void downstream_ctrl_multibus(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Downstream_Mapping dm) {
 	INIT_SYS_ERR_HANDLING;
+	auto cur_token = get_current_token();
+
 	constexpr auto CAN_RTR_FLAG = 0x40000000U;
 	constexpr auto CAN_EFF_FLAG = 0x80000000U;
 	auto ext_can = false;
@@ -672,6 +685,7 @@ void downstream_ctrl_multibus(
 	
 			can_message.length = frame.can_dlc;
 			memcpy(can_message.data, frame.data, frame.can_dlc);
+			if (cur_token != get_current_token()) break;
 			auto rw = kmw_api::canwrite(
 				multibus_queue,
 				&can_message);
