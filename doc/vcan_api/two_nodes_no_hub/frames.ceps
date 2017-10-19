@@ -2,7 +2,7 @@ frame{
    id{myframe;};
    data{
      payload{
-      uint8{
+      int8{
        in{a_signal;};
        out{a_signal;};
       };     

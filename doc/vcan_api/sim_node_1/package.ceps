@@ -1,8 +1,0 @@
-package {
- name { "sim_node_1"; };
- uri { "sim_node_1";};
- vcan_api_port {"1064";};
- ws_api_port {"1063";};
- vcan_api_host_name {"tomas-cepsdev-win";};
- //directory_master{ host_name{"tomas-cepsdev-win";};port{"8181";}; };
-};

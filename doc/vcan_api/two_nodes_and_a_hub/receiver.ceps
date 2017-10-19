@@ -1,0 +1,12 @@
+
+receiver
+{
+  id { can_in; };
+  transport { 
+   canbus {
+    can_id_mapping{
+     myframe; 0x601;
+    };
+   }; 
+  };
+};

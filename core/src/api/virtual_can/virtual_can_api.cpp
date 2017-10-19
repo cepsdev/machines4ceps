@@ -58,13 +58,12 @@ static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string
   buffer.append(buf);
   if(req_complete) break;
  }
-
  if (req_complete) {
   header_t header;
   std::string first_line;
   size_t line_start = 0;
   for(size_t i = 0; i < buffer.length();++i){
-	if (i+1 < buffer.length() && buffer[i] == '\r' && buffer[i+1] == '\n' ){
+    if (i+1 < buffer.length() && buffer[i] == '\r' && buffer[i+1] == '\n' ){
 		if (line_start == 0) first_line = buffer.substr(line_start,i);
 		else if (line_start != i){
 		 std::string attribute;
@@ -74,12 +73,12 @@ static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string
 		 auto attr_start = j;
 		 for(;j < i && buffer[j]!=':';++j);
 		 attribute = buffer.substr(attr_start,j-attr_start);
-		 ++j;
+         ++j; //INVARIANT: buffer[j] == ':' || j == i
 		 for(;j < i && buffer[j]==' ' ;++j);
 		 auto cont_start = j;
-		 auto cont_end = i - 1;
+         auto cont_end = i - 1;
 		 for(;buffer[cont_end] == ' ';--cont_end);
-		 content = buffer.substr(cont_start, cont_end - cont_start + 1);
+         if ( cont_start <= cont_end) content = buffer.substr(cont_start, cont_end - cont_start + 1);
          header.push_back(std::make_pair(attribute,content));
 		}
 		line_start = i + 2;++i;
@@ -87,7 +86,6 @@ static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string
   }
   return std::make_tuple(true,first_line,header);
  }
-
  return std::make_tuple(false,std::string{},header_t{});
 }
 
@@ -217,6 +215,7 @@ void Virtual_can_interface::handler(int sck){
         if (!sim_host_name.first) return;
         auto sim_port = get_virtual_can_attribute_content("port",attrs);
         if (!sim_port.first) return;
+
         bool listed = false;
         for (auto & e:known_simcores_.entries){
             if(e.host_name == sim_host_name.second && e.port == sim_port.second){

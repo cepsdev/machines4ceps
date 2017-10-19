@@ -9,6 +9,7 @@ a_signal = -100;
 constraints{
  a_signal <= 100;
 };
+
 constraints{
  a_signal >= -100;
 };

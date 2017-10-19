@@ -4,7 +4,7 @@ sm{
  S;
  states{Initial;};
  on_enter{
-  start_periodic_timer(1.0*s,TimeUp);
+  start_periodic_timer(0.1*s,TimeUp);
  };
  Actions{
   print_a_signal{

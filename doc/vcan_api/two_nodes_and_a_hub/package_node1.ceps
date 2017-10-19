@@ -1,0 +1,5 @@
+package {
+ name { "Node 1"; };
+ uri { "node_1";};
+ directory_master{ host_name{"localhost";};port{"1064";}; };
+};
