@@ -20,6 +20,8 @@ struct directory_of_known_simcores{
      std::string port;
      std::string name;
      std::string short_name;
+     std::string ws_api_port;
+     std::string role;
  };
  std::vector<simcore_info> entries;
 };
@@ -31,11 +33,13 @@ class Virtual_can_interface{
     std::string port_;
     std::thread* dispatcher_thread_ = nullptr;
     std::mutex handler_threads_status_mutex_;
+    std::mutex known_simcores_mutex_;
     using thread_status_type = std::tuple<std::thread*,bool,int>;
     std::vector< thread_status_type > handler_threads_status_;
     ceps::ast::Nodeset hub_directory_;
     directory_of_known_simcores known_simcores_;
     bool reset_directory_of_known_simcores_ = true;
+    void sync_known_simcores_with_static_hublist();
     
 public:
     Virtual_can_interface(State_machine_simulation_core* smc,std::string port = "8183"):smc_{smc},port_{port}{}
@@ -46,6 +50,7 @@ public:
     }
     bool& reset_directory_of_known_simcores() { return reset_directory_of_known_simcores_; }
     std::string& port() {return port_;}
+    directory_of_known_simcores fetch_known_simcores_thread_safe();
 };
 
 #endif

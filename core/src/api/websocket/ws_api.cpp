@@ -625,6 +625,12 @@ void Websocket_interface::handler(int sck){
     }
    }}};
 
+ std::string host_name;
+ {
+  char buffer[1025] = {0};
+  if (0 == gethostname(buffer,1024)) host_name = buffer;
+ }
+
  for(;;){
    auto frm = read_websocket_frame(sck);
    if (!frm.first) break;
@@ -673,6 +679,49 @@ void Websocket_interface::handler(int sck){
           if (!already_watched) watched_signals->push_back(it);
          }
          reply = "{\"ok\": true, \"num_of_signals_watched\" : "+std::to_string(watched_signals->size())+ "}";
+     } else if (cmd[0] == "GLOBAL_SYSSTATES") {
+         std::stringstream ss;
+         ss << "{\"ok\":true, \"global_states\" : [";
+         std::lock_guard<std::recursive_mutex>g(smc_->states_mutex());
+         auto const & states = smc_->get_global_states();
+         std::vector< std::pair<std::string,ceps::ast::Nodebase_ptr> > v;
+         for(auto const & vv : states) v.push_back(vv);
+         for(std::size_t i = 0; i != v.size(); ++i){
+             ss << "{ \"name\": ";
+             auto p = v[i];
+             ss << "\"" << p.first << "\",";
+             ss << "\"type\":\"";
+             if (p.second == nullptr) { ss << "(null)";}
+             else if (p.second->kind() == ceps::ast::Ast_node_kind::int_literal) {ss << "int";}
+             else if (p.second->kind() == ceps::ast::Ast_node_kind::float_literal) {ss << "float";}
+             else if (p.second->kind() == ceps::ast::Ast_node_kind::string_literal) {ss << "string";}
+             else {ss << "object";}
+             ss << "\"}";
+             if (i + 1 != states.size()) ss << ",";
+         }
+         ss << "]}";
+         reply = ss.str();
+     } else if (cmd[0] == "KNOWN_SIMCORES" && args.size() == 0){
+         reply = "{\"ok\":true, \"simcores\" : [";
+         if (nullptr != smc_->vcan_api()){
+             auto known_sim_cores = smc_->vcan_api()->fetch_known_simcores_thread_safe();
+             for(std::size_t i = 0; i != known_sim_cores.entries.size(); ++i){
+                 auto const & e = known_sim_cores.entries[i];
+                 if (e.role == "this_core") continue;
+                 reply+="{";
+                  if (e.host_name.length()) { reply+="\"host_name\":"; reply+= "\"" + e.host_name + "\",";}
+                  else {reply+="\"host_name\":"; reply+= "\"" + host_name + "\",";}
+
+                  reply+="\"name\":"; reply+= "\"" + e.name + "\",";
+                  reply+="\"short_name\":"; reply+= "\"" + e.short_name + "\",";
+                  reply+="\"vcan_api_port\":"; reply+= "\"" + e.port + "\",";
+                  reply+="\"ws_api_port\":"; reply+= "\"" + e.ws_api_port + "\",";
+                  reply+="\"role\":"; reply+= "\"" + e.role + "\"";
+                 reply+="}";
+                 if (i + 1 != known_sim_cores.entries.size()) reply += ",";
+             }
+         }
+         reply += "]}";
      } else if (cmd[0] == "GET_UPDATE" && args.size() == 0){
          reply = "{\"ok\":true, \"signals\" : [";
          std::lock_guard<std::mutex> g2(*watched_signals_m);

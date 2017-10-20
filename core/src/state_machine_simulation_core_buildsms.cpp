@@ -1641,7 +1641,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
     }
 
     if(result_cmd_line.vcan_api_on || ns["package"]["vcan_api_port"].as_str().length()){
-        auto simcore_directory  = ns["package"]["hub_directory"];
+        auto simcore_directory  = ns["package"][ceps::ast::all{"hub_directory"}];
         auto vcan_api_port = ns["package"]["vcan_api_port"].as_str();
         if (vcan_api_port.length())
             vcan_api() = new Virtual_can_interface(this,vcan_api_port);
@@ -1656,10 +1656,14 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
             else info.name = ns["package"]["name"].as_str();
             if (ns["package"]["uri"].as_str().length() == 0) info.short_name = info.name;
             else info.short_name = ns["package"]["uri"].as_str();
+            if (nullptr != ws_api())
+                info.ws_api_port = ws_api()->port();
+            info.role = "this_core";
             vcan_api()->known_simcores().entries.push_back(info);
             vcan_api()->reset_directory_of_known_simcores() = false;
+        } else {
+            vcan_api()->hub_directory() = simcore_directory;
         }
-        else vcan_api()->hub_directory() = simcore_directory;
         vcan_api()->start();
         running_as_node() = true;
         auto vcan_api_directory = ns["package"]["directory_master"];
@@ -1681,6 +1685,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
             p.push_back(std::make_pair("short_name",reg_short_name));
             p.push_back(std::make_pair("host_name",reg_host_name));
             p.push_back(std::make_pair("port",reg_port));
+            if (nullptr != ws_api())
+              p.push_back(std::make_pair("ws_api_port",ws_api()->port()));
             auto r = send_cmd(sock,"register_sim_core",p);
             if (!std::get<0>(r)) this->fatal_(-1,"Failed to register to directory master.");
         }

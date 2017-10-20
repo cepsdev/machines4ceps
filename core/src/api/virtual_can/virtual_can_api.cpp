@@ -103,6 +103,32 @@ ceps::ast::Nodeset& Virtual_can_interface::hub_directory(){
     return this->hub_directory_;
 }
 
+directory_of_known_simcores Virtual_can_interface::fetch_known_simcores_thread_safe(){
+ std::lock_guard<std::mutex> lg(known_simcores_mutex_);
+ sync_known_simcores_with_static_hublist();
+ return known_simcores_;
+}
+
+void Virtual_can_interface::sync_known_simcores_with_static_hublist(){
+    if (reset_directory_of_known_simcores_){
+        for (auto simcore_ : hub_directory()[ceps::ast::all{"simcore"}]){
+            auto simcore = simcore_["simcore"];
+            auto name = simcore["name"].as_str();
+            auto short_name = simcore["short"].as_str();
+            auto host_name = simcore["host_name"].as_str();
+            auto port = simcore["port"].as_str();
+            directory_of_known_simcores::simcore_info info;
+            info.host_name = host_name;
+            info.name = name;
+            info.short_name = short_name;
+            info.port = port;
+            known_simcores_.entries.push_back(info);
+        }
+        reset_directory_of_known_simcores_ = false;
+    }
+}
+
+
 void Virtual_can_interface::handler(int sck){
 
  bool close_sck = true;
@@ -179,22 +205,8 @@ void Virtual_can_interface::handler(int sck){
             sck);
     } else if (cmd == "get_known_sim_cores") {
         response << "HTTP/1.1 100\r\n"<< "known_sim_cores:";
-        if (reset_directory_of_known_simcores_){
-            for (auto simcore_ : hub_directory()[ceps::ast::all{"simcore"}]){
-                auto simcore = simcore_["simcore"];
-                auto name = simcore["name"].as_str();
-                auto short_name = simcore["short"].as_str();
-                auto host_name = simcore["host_name"].as_str();
-                auto port = simcore["port"].as_str();
-                directory_of_known_simcores::simcore_info info;
-                info.host_name = host_name;
-                info.name = name;
-                info.short_name = short_name;
-                info.port = port;
-                known_simcores_.entries.push_back(info);
-            }
-            reset_directory_of_known_simcores_ = false;
-        }
+        std::lock_guard<std::mutex> lg(known_simcores_mutex_);
+        sync_known_simcores_with_static_hublist();
         for (auto simcore : known_simcores_.entries){
             response << "$";
             response << simcore.name << "\t";
@@ -215,6 +227,7 @@ void Virtual_can_interface::handler(int sck){
         if (!sim_host_name.first) return;
         auto sim_port = get_virtual_can_attribute_content("port",attrs);
         if (!sim_port.first) return;
+        auto ws_api_port = get_virtual_can_attribute_content("ws_api_port",attrs);
 
         bool listed = false;
         for (auto & e:known_simcores_.entries){
@@ -231,6 +244,7 @@ void Virtual_can_interface::handler(int sck){
             info.name = sim_name.second;
             info.short_name = sim_short_name.second;
             info.port = sim_port.second;
+            if(ws_api_port.first)info.ws_api_port = ws_api_port.second;
             known_simcores_.entries.push_back(info);
         }
         response << "HTTP/1.1 100\r\n\r\n";
