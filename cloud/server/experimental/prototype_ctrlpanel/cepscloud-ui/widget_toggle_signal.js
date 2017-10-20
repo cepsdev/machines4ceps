@@ -145,14 +145,15 @@ function setup_toggle_widget(widget_id, signal, watch) {
                 }
                 let vv = map_sig_target_value_to_range(signal, gran);
                 $(s).slider("value", vv);
-                let r = check_constraints(signal, v);
+                check_validity(v);
+                /*let r = check_constraints(signal, v);
                 if (!r[0]) {
                     $("#" + widget_id + "_input_group").addClass("has-error");
                     $("#" + widget_id + "_text_ctrl").popover({ placement: 'auto right' });
                     $("#" + widget_id + "_text_ctrl").attr("title", "");
                     $("#" + widget_id + "_text_ctrl").attr("data-content", r[1]);
                     $("#" + widget_id + "_text_ctrl").popover('show');
-                } else $("#" + widget_id + "_text_ctrl").popover('destroy');
+                } else $("#" + widget_id + "_text_ctrl").popover('destroy');*/
             }
         });
     }

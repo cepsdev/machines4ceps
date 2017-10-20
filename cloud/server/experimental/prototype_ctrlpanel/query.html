@@ -62,34 +62,43 @@
     <div class="row">
         <div class="col-xs-6 col-sm-2"></div>
         <div class="col-xs-6 col-sm-8">
-            <h2><span id="page_title">Control Panel</span></h2>
+            <h2><span id="page_title">Query</span></h2>
         </div>
         <div class="col-xs-6 col-sm-2"></div>
     </div>
+
+
+    <div class="row">
+        <div class="col-xs-6 col-sm-2">
+
+        </div>
+        <div class="col-xs-6 col-sm-8">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>
+                <!--input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder=""-->
+                <input id = "query" type="text" class="form-control" name="user" value="" placeholder="Type cepS Query here">
+            </div>
+          </div>
+        <div class="col-xs-6 col-sm-2">
+            <div class="input-group">
+                <button id="query_send" type="button" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+        </div>
+
+
     <div class="row">
         <div class="col-xs-6 col-sm-2">
             
         </div>
         <div class="col-xs-6 col-sm-8">
-                <div class="panel panel-default">
-                    <div class="panel-heading" style="background-color:white;">
-                        <div class="btn-toolbar" role="toolbar">
-                            <div class="btn-group btn-group-xs" role="group">
-                                <button id="ctrl_panel_editor_btn_add" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
-                                <!--button id="ctrl_panel_editor_btn_add_paragraph" type="button" class="btn btn-default btn-xs"><i class="fa fa-paragraph" aria-hidden="true"></i></button-->
-                            </div>
-                            <div class="btn-group btn-group-xs" role="group">
-                                <button id="ctrl_panel_editor_btn_save" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span></button>
-                                <button id="ctrl_panel_editor_btn_load" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></button>
-                            </div>
-                    </div>
-                    <div id="ctrl_panel_editor" class="panel-body" >
-
-                    </div>
-                </div>
+            <p></p><p></p>
+            <div class="panel panel-default">
+                <div class="panel-body" id="query_results"></div>     
             </div>
-            <div class="col-xs-6 col-sm-2"></div>
-        </div>
+         </div>
+         <div class="col-xs-6 col-sm-2"></div>
+     </div>
 
 
 
@@ -1089,7 +1098,39 @@
             do_login(url);
         }
 
+        function get_indent(n) {
+            let s = "";
+            for (let i = 0; i != n ; ++i) s += " ";
+            return s;
+        }
 
+        function cepsjson2txt_helper(e, indent) {
+            if (e.type != undefined) {
+                if (e.type == "struct") {
+                    let sc = "";
+                    for (let ee of e.content) {
+                        sc += cepsjson2txt_helper(ee, indent + 1) + "\n";
+                    }
+                    return get_indent(indent) + e.name + " {\n" + sc + get_indent(indent) + "};";
+                } else if (e.type == "symbol") {
+                    return get_indent(indent) + e.name;
+                } else if (e.type == "binop") {
+                    return get_indent(indent) + cepsjson2txt_helper(e.left, 0) + e.name + cepsjson2txt_helper(e.right, 0)  ;
+                }
+            }
+            if (typeof(e) ==  "string") return get_indent(indent) + e;
+            return e;
+        }
+
+        function cepsjson2txt(cj) {
+            console.log(cj);
+            let s = "";
+            let indent = 0;
+            for (let e of cj) {
+                s += cepsjson2txt_helper(e,indent);
+            }
+            return s;
+        }
         
         $(document).ready(() => {
             //$(document).click(() => { $(".baseWidget-selected").removeClass("baseWidget-selected"); });
@@ -1130,7 +1171,27 @@
             });
             $('#ctrl_panel_editor_btn_load').on('click', (ev) => {
                 $("#dlg_select_a_ctrlpanel").modal("show");
-            });      
+            });
+
+            $("#query_send").on("click", (ev) => {
+                let s = $("#query").val();
+                function h(ev) {
+                    simcore_ws.removeEventListener("message", h);
+                    let msg = JSON.parse(ev.data);
+                    if (msg.ok) {
+                        let s = cepsjson2txt(msg.sresult);
+                        $("#query_results").append(
+                        `<div class="alert alert-info fade in" role="alert">
+                         <pre>${s}</pre>
+                         </div>`
+                        );
+                    } else {
+
+                    }
+                }
+                simcore_ws.addEventListener("message", h);
+                simcore_ws.send("QUERY "+s);
+            });
 
             if (!connected)
                 setTimeout(() => {
