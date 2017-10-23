@@ -1,0 +1,45 @@
+Event can_frame_received;
+Systemstate first_byte;
+first_byte = 0;
+Systemstate first_uint8;
+first_uint8 = 0;
+
+event_signature{
+ can_frame_received;
+ port(id);
+ can_frame_id(0);
+ can_frame_payload(any);
+};
+
+
+sm{
+ S;
+ states{Initial;};
+ Actions{
+  print_a_signal{
+   print("\n\nprint_a_signal():\n");
+   print ("  A frame arrived at channel '",as_text(port),"' with the numeric id '",can_frame_id,"'\n");
+   print("  The raw payload is: ", can_frame_payload,"\n");
+   print("  a_signal = ",a_signal,"\n");
+  
+   breakup_byte_sequence(can_frame_payload,
+                         byte(first_byte)
+                         );
+   
+   print("  first_byte of the frame's payload is (bytes are signed chars like in C++) ",first_byte,"\n");
+   
+   breakup_byte_sequence(can_frame_payload,
+                         uint8(first_uint8)
+                         );
+   
+   print("  first_byte of the frame's payload is (now as uint8) ",first_uint8,"\n");
+  
+  };
+ };
+ t{Initial;Initial;can_frame_received;print_a_signal;};
+};
+
+
+Simulation{
+ Start{S;};
+};

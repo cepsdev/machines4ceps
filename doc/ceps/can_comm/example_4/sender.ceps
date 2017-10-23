@@ -1,0 +1,13 @@
+
+sender
+{
+  id { channel1_out; };
+  transport { 
+   canbus { 
+    bus_id { "vcan0"; };
+    can_id_mapping{
+     myframe; 0x601;
+    };
+   }; 
+  };
+};

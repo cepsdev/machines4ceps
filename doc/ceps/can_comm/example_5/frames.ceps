@@ -1,0 +1,11 @@
+frame{
+   id{myframe;};
+   data{
+     payload{
+      int8{
+       in{a_signal;};
+       out{a_signal;};
+      };     
+     };
+   };
+};

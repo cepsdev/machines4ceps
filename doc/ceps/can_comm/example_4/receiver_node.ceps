@@ -1,0 +1,17 @@
+Event can_frame_received;
+
+sm{
+ S;
+ states{Initial;};
+ Actions{
+  print_a_signal{
+   print("Frame arrived. a_signal = ",a_signal,"\n");
+  };
+ };
+ t{Initial;Initial;can_frame_received;print_a_signal;};
+};
+
+
+Simulation{
+ Start{S;};
+};

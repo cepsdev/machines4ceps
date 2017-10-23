@@ -1,0 +1,4 @@
+package {
+ name { "sim_node_1"; };
+ uri { "sim_node_1";};
+};
