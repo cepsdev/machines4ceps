@@ -466,6 +466,31 @@ class Execute_report : public sm4ceps_plugin_int::Executioncontext {
     }
 };
 
+class Exported_events_query : public sm4ceps_plugin_int::Executioncontext {
+    int sck;
+ public:
+    Exported_events_query() = default;
+    Exported_events_query(int s): sck{s}{}
+    void  run(State_machine_simulation_core* ctxt){
+      std::string r;
+      std::stringstream out;
+      auto n = ctxt->exported_events().size();
+      std::size_t i = 0;
+      for(auto const & e : ctxt->exported_events()){
+          out << "\"" << e << "\"";
+          if (i + 1 != ctxt->exported_events().size()) out << ",";
+          ++i;
+      }
+      r = "{ \"ok\": true,";
+      r += " \"number_exported_events\":"+std::to_string(ctxt->exported_events().size())+",";
+      r += " \"sresult\":["+out.str()+"]";
+      r += "}";
+
+      if(!send_ws_text_msg(sck,r)) closesocket(sck);
+    }
+};
+
+
 
 class Execute_push : public sm4ceps_plugin_int::Executioncontext {
     std::string query;
@@ -800,6 +825,12 @@ void Websocket_interface::handler(int sck){
 
          State_machine_simulation_core::event_t ev;
          auto exec = new Execute_query{query,sck};
+         ev.exec = exec;
+         smc_->enqueue_event(ev);
+         continue;
+      } else if (cmd[0] == "EXPORTED_EVENTS") {
+         State_machine_simulation_core::event_t ev;
+         auto exec = new Exported_events_query{sck};
          ev.exec = exec;
          smc_->enqueue_event(ev);
          continue;

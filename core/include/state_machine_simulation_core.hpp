@@ -249,6 +249,8 @@ private:
     std::vector< std::pair<std::string,std::string> > streaming_endpoints_registered_via_vcan_api_;
     mutable std::mutex vcan_wsapi_mutex_;
 public:
+    std::unordered_set<std::string>& exported_events() {return exported_events_;}
+
     Virtual_can_interface* &  vcan_api(){return vcan_api_;}
     std::mutex& vcan_wsapi_mutex() {return vcan_wsapi_mutex_;}
     std::vector< std::pair<std::string,std::string> >& streaming_endpoints_registered_via_vcan_api(){return streaming_endpoints_registered_via_vcan_api_;}
