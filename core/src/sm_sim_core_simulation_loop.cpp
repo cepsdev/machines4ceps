@@ -53,8 +53,12 @@ void executionloop_context_t::do_exit_impl(State_machine_simulation_core* smc,in
 		if (on_exit.size() > (size_t)sms && on_exit[sms]) {
 			smc->current_smp() = get_assoc_sm(sms);
 			on_exit[sms]();
-
-		}
+        } else {
+            smc->current_smp() = get_assoc_sm(sms);
+            auto it = smc->current_smp()->find_action("on_exit");
+            if (it && it->body_ != nullptr)
+             smc->execute_action_seq(smc->current_smp(),it->body());
+        }
 	}
 void executionloop_context_t::do_exit(State_machine_simulation_core* smc,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v){
 

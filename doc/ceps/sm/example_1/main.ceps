@@ -1,0 +1,22 @@
+sm{
+ A;
+ states{Initial;A;B;C;Final;};
+ on_enter{print("A entered.\n");};
+ on_exit{print("Leaving A.\n");};
+ t{Initial;A;};
+ t{A;B;};
+ t{B;C;};
+ t{C;Final;};
+};
+
+sm{
+ S;
+ import{A;};
+ states{Initial;B;};
+ transition{Initial;A;};
+ transition{A.Final;B;}; 
+};
+
+Simulation{
+ Start{S;};
+};
