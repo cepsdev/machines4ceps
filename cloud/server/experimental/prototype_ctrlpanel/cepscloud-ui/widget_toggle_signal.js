@@ -1,7 +1,4 @@
-function limit_to_n_characters(s, n) {
-    if (s.length < n) return s;
-    return s.substr(0, n)+"...";
-}
+
 
 
 function setup_toggle_widget(widget_id, signal, watch) {
@@ -62,7 +59,7 @@ function setup_toggle_widget(widget_id, signal, watch) {
             $("#" + widget_id + "_text_ctrl").attr("data-content", r[1]);
             if (!popover_active) {
                 $("#" + widget_id + "_input_group").addClass("has-error");
-                $("#" + widget_id + "_text_ctrl").popover({ placement: 'auto right' });
+                $("#" + widget_id + "_text_ctrl").popover({ placement: 'auto top' });
                 $("#" + widget_id + "_text_ctrl").attr("title", "");
                 $("#" + widget_id + "_text_ctrl").popover('show');
             }
@@ -179,4 +176,28 @@ function setup_toggle_widget(widget_id, signal, watch) {
         }
     });
 
+}
+
+function setup_trigger_event_widget(widget_id, info) {
+    let event_name = info.ev_name;
+    $(`#header_of_${widget_id}`).html(
+        event_name +
+        `<button type="button" class="btn btn-xs close" aria-label="Close" onclick="close_widget(event,'${widget_id}');" style="transform: translateY(-11px);">
+                    <span aria-hidden="true" class="small" >&times;</span>
+                </button>`
+    );
+    $(`#${widget_id}`).removeClass("trigger-event").removeClass("toggle-signal").addClass("toggle-signal");
+    $(`#${widget_id}`).removeClass("depend-on-event").removeClass("depend-on-signal-data").addClass("depend-on-event");
+    $(`#${widget_id}`).removeClass("baseWidget-not-initialized");
+    $(`#${widget_id}`).removeClass("waiting-for-data");
+
+    let widget_content = helper_make_trigger_event_widget_content(widget_id, info, limit_to_n_characters(event_name, 30));
+    //console.log(widget_content);
+
+    $(`#content_of_${widget_id}`).html(widget_content);
+
+    $(`#${widget_id}_trigger_ev_btn`).on("click", (ev) => {
+        let ws = get_simcore_ws_given_widget_id(widget_id);
+        ws.send(`EVENT ${event_name}`);
+    });   
 }
