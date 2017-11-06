@@ -1,4 +1,10 @@
 Event TimeUp;
+Event E;
+
+export{
+ TimeUp;E;
+};
+
 
 sm{
  S;
