@@ -17,7 +17,7 @@ const dns = require("dns");
 
 
 
-const host_name = "pc295"//os.hostname();
+const host_name = os.hostname();
 const ceps_executable = "./ceps";
 const ceps_default_args = ["--quiet"];
 const ceps_prelude = "../.ceps/prelude.ceps";
@@ -540,7 +540,8 @@ app.get("/", function(req, res) {
                          page_title:"Home",
                          sim_cores : sim_cores,
                          sim_core : undefined,
-                         command_ws_url:command_ws_url});
+                         command_ws_url:command_ws_url,
+                        hub_url : "ws://"+master_hub_host+":"+master_hub_port_wsapi });
 });
 
 app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next) {

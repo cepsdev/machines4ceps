@@ -1,5 +1,5 @@
         <!-- Navigation -->
-        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0;">
+<nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0;">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                     <span class="sr-only">Toggle navigation</span>
@@ -48,63 +48,5 @@
 
 <!-- Deleted Top Right Nav -->            
             <!-- /.navbar-top-links -->
-
-            <div class="navbar-default sidebar" role="navigation">
-                <div class="sidebar-nav navbar-collapse">
-                    <ul class="nav" id="side-menu">
-                        
-                        <li>
-                            <a href="/"><i class="fa fa-dashboard fa-fw"></i> Home</a>
-                        </li>
- <% if (sim_core != undefined) { %>                       
-                        <li>
-                            <a href="#"><i class="fa fa-info-circle"></i> Documentation<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                              <li><a href="doc_canlayer_all__<%= sim_core.index %>" ><i >&nbsp;</i>CAN Communication Layer</a><li>  
-                            </ul>
-                            <a href="#"><i class="fa fa-exchange"></i> Frames<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-<% sim_core.comm_layer.frames.forEach(function(frame) { %>
-                                <li>
-                                    <a href="frame.html" > <%= frame.name %><span class="fa arrow"></span></a>
-                                    <ul class="nav nav-third-level">
-                                        <% frame.signals.forEach(function(signal) { %>
-                                        <li>
-                                            <a href="signaldetails__<%= sim_core.index %>__<%= signal.index %>"><i class="fa fa-signal">&nbsp;</i><%= signal.name %></a>
-                                        </li>
-                                        <% });%>   
-                                    </ul>
-                                </li>
-<% });%>
-  
-
-                            </ul>
-                            <!-- /.nav-second-level -->
-                        </li>
-
-<% if(sim_core.src.views && sim_core.src.views.length) { %>
-                        <li>
-                            <a href="#"><i class="fa fa-tasks"></i> Control Panels<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-<% sim_core.src.views.forEach(function(panel) { %>
-                                <li>
-                                    <a href="<%= sim_core.uri %>/controlpanels/<%= panel %>"><%= panel %></a>
-                                </li>
-<% });%>
-                        </li>
-<% } %>
-
-                        
-
-
-                            </ul>
-                            <!-- /.nav-second-level -->
-                        </li>
-<% } %>                   
-                    </ul>
-                </div>
-                <!-- /.sidebar-collapse -->
-            </div>
-            <!-- /.navbar-static-side -->
-        </nav>
+</nav>
 
