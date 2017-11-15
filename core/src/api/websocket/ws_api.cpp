@@ -324,25 +324,27 @@ static std::string escape_json_string(std::string const & s){
     return ss.str();
 }
 
-static void ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
+static bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
     using namespace ceps::ast;
     if (n->kind() == Ast_node_kind::int_literal)
-        s << value(as_int_ref(n));
+     {s << value(as_int_ref(n));return true;}
     else if (n->kind() == Ast_node_kind::float_literal)
-        s << value(as_double_ref(n));
+     {s << value(as_double_ref(n));return true;}
     else if (n->kind() == Ast_node_kind::string_literal)
-        s << "\"" <<  escape_json_string(value(as_string_ref(n))) << "\"";
+     {s << "\"" <<  escape_json_string(value(as_string_ref(n))) << "\"";return true;}
     else if (n->kind() == Ast_node_kind::identifier)
-        s << "\"" <<  escape_json_string(name(as_id_ref(n))) << "\"";
+     {s << "\"" <<  escape_json_string(name(as_id_ref(n))) << "\"";return true;}
     else if (n->kind() == Ast_node_kind::structdef){
         auto & st = as_struct_ref(n);
         s << "{ \"type\":\"struct\", \"name\":" <<"\""<< name(st) << "\",\"content\":[";
         for(std::size_t i = 0; i != st.children().size();++i){
             auto nn = st.children()[i];
             if(!nn) continue;
-            ceps2json(s,nn);if (1+i != st.children().size()) s << ",";
+            if (!ceps2json(s,nn)) continue;
+            if (1+i != st.children().size()) s << ",";
         }
         s << "]}";
+        return true;
     } else if (n->kind() == Ast_node_kind::binary_operator){
         auto& bop = as_binop_ref(n);
         auto what_op = op(bop);
@@ -375,20 +377,25 @@ static void ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
         s << "\"left\":";ceps2json(s,bop.left());s << ",";
         s << "\"right\":";ceps2json(s,bop.right());
         s << "}";
+        return true;
     } else if (n->kind() == Ast_node_kind::scope){
         auto & scp = as_scope_ref(n);
         s << "{ \"type\":\"scope\", \"content\":[";
         for(std::size_t i = 0; i != scp.children().size();++i){
             auto nn = scp.children()[i];
             if(!nn) continue;
-            ceps2json(s,nn);if (1+i != scp.children().size()) s << ",";
+            if(!ceps2json(s,nn)) continue;
+            if (1+i != scp.children().size()) s << ",";
         }
         s << "]}";
+        return true;
     }
     else if (n->kind() == Ast_node_kind::symbol){
         auto & sy = as_symbol_ref(n);
         s << "{ \"type\":\"symbol\",\"kind\":" << "\""<< kind(sy) << "\", \"name\":" <<"\""<< name(sy) << "\"}";
+        return true;
     }
+    return false;
 }
 
 class Execute_query : public sm4ceps_plugin_int::Executioncontext {
