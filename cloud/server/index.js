@@ -752,6 +752,14 @@ ws_command.on("connection", function connection(ws){
               ws.send(JSON.stringify({ok:false,reason:"Error Code: '"+err.code+"'"}));return;  
             }
             ws.send(JSON.stringify({ok:true,uri:sc.uri+"/controlpanels/"+ctrl_panel_name}));
+        } else if (msg.cmd == "info"){
+            let r = { sim_cores:[]};
+            for (let s of sim_cores){
+                r.sim_cores.push({
+                    name : s.name
+                });
+            }
+            ws.send(JSON.stringify({ok:true,result: JSON.stringify(r) }));
         }
     });
 });

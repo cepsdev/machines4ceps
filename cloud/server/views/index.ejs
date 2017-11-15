@@ -19,40 +19,12 @@
         <div class="row">
             <div class="col-lg-1"></div>
             <div class="col-lg-10">
-                            <table width="100%" class="table table-striped table-bordered table-hover" id="available_simulations_table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th></th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% sim_cores.forEach( function(sim_core){ %>
-                                    <% if(sim_core.dont_launch) return; %>
-                                    <tr class="odd gradeX">
-                                        <td><a href=<%= sim_core.uri %> > <%= sim_core.name %> </a></td>
-                                        <td>
-                                            <div class="btn-group">
-                                            <button type="button" class="btn btn-primary">Action</button>
-                                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <span class="caret"></span>
-                                                <span class="sr-only">Toggle Dropdown</span>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a href="#" onclick="do_action_add_behaviour('<%= sim_core.name %>','<%= sim_core.uri %>');" >Add Behaviour</a></li>
-                                                <li role="separator" class="divider"></li>
-                                                <li><a href="#">Remove</a></li>
-                                            </ul>
-                                            </div>
-                                        </td>
-                                        <td><%= sim_core.get_status()%></td>
-                                    </tr>
-                                    <% });  %>
-                                </tbody>
-                            </table>
-                        </div>
-            </div>
+             <table width="100%" class="table table-striped table-bordered table-hover" id="available_simulations_table">                                
+             </table>
+             <center><div class="loader"></div></center>
+             <hr/>
+            </div>            
+        </div>
             <!-- /.row -->
 
    
@@ -93,24 +65,116 @@
 <script src="/cepscloud-ui/persistence.js"></script>
 
 <script>
-  let sim_cores = [];
-  let hub_url = "<%= hub_url%>";
-  <% sim_cores.forEach( function(sc){ %>
-    let r = {
-        name : "<%= sc.name %>",
-        ws_url : "<%= sc.signal_url %>",
-        ws : undefined
-    };
-    sim_cores.push(r);
- <% }); %>
- console.log(sim_cores);
- console.log(hub_url);
+  let sim_cores = undefined;
+  let current_info = undefined;
+  let hub_url = undefined;
+  let update_available_simulations_table_time_elapsed_to_retry_connect = undefined;
+  let command_ws_url = "<%=command_ws_url%>";
+  let update_available_simulations_table_retry_timeout = undefined;
 </script>
 
 <script>
+    var available_simulations_table_data = undefined;
+    var available_simulations_table_columns = [
+            { title: "Name" },
+            { title: "Repository" },
+            { title: "Status" },
+            { title: "Action" }
+       ];
+    function stop_update_available_simulations_table_retry_timeout() {
+            if (update_available_simulations_table_retry_timeout == undefined) return;
+            window.clearTimeout(update_available_simulations_table_retry_timeout);
+            update_available_simulations_table_retry_timeout = undefined;
+    }
+    function sim_core_info_changed(a,b){
+        if (b == undefined) return true;
+
+        return true;
+    }
+
+    function update_available_simulations_table(){
+        function main(info){
+            
+         if (sim_core_info_changed(info.sim_cores,sim_cores)){ 
+            sim_cores = info.sim_cores; 
+            console.log("!!!",info,info.sim_cores); 
+            do_update_available_simulations_table(info.sim_cores,
+                                               available_simulations_table_data,
+                                               available_simulations_table_columns);
+         }
+        }
+
+        let command_ws = new WebSocket(command_ws_url);
+        command_ws.addEventListener("open", on_ws_initial_connect);
+        command_ws.addEventListener("close", on_ws_close);
+        command_ws.addEventListener("error", on_ws_error);
+        
+        function on_ws_initial_connect(){
+            command_ws.addEventListener("message", (msg_raw)=>{
+                console.log(msg_raw.data);
+                let msg = JSON.parse(msg_raw.data);
+                if (msg.ok){
+                    main(msg.result);
+                }
+            });
+            command_ws.send('{"cmd":"info"}');
+        }
+
+        function on_ws_close(){}
+        function on_ws_error(){
+            update_available_simulations_table_time_elapsed_to_retry_connect = 10;
+            let msgbox = $.notify({/* options*/message: `Failed to connect with cepSCloud <small>(url:${command_ws_url})</small>
+                <p></p>
+                <button type="button" 
+                        class="btn btn-primary btn-xs" 
+                        data-dismiss="alert" 
+                        onclick="stop_update_available_simulations_table_retry_timeout();update_available_simulations_table();">
+                        Try again in
+                        <span id="info_btn_log_again">${update_available_simulations_table_time_elapsed_to_retry_connect}</span> seconds</button>&nbsp;&nbsp;`
+            },
+                {/*settings*/ delay: 0, type: 'danger', showProgressbar: false,
+                    animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
+                }
+            );
+            function time_elapsed_to_retry_connect_fn(){
+                --update_available_simulations_table_time_elapsed_to_retry_connect;
+                if (update_available_simulations_table_time_elapsed_to_retry_connect <= 0) {
+                    if (msgbox != undefined) {
+                        msgbox.close();
+                        setTimeout(() => { update_available_simulations_table(); }, 100);
+                    }
+                } else {
+                    $("#info_btn_log_again").html(update_available_simulations_table_time_elapsed_to_retry_connect.toString());
+                    update_available_simulations_table_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
+                }
+            }
+            update_available_simulations_table_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
+        }
+
+        function do_update_available_simulations_table(dt_instance,cols){
+            let dt = [];
+            let ctr = 0;
+            for (let e of sim_cores) {
+                ++ctr;
+                dt.push([`<a href="#" id="sel_sim_${ctr}" >`+e.name+"</a>",
+                "--",
+                "--",
+                "--"]);
+            }
+            
+            if (dt_instance == undefined){
+                $('#available_simulations_table').DataTable({
+                select: {
+                    style: 'single'
+                },
+                data: dt,
+                columns: cols
+                });
+            }
+        }        
+    } 
     function main(){
-       
-        //console.log(sim_cores);
+        update_available_simulations_table();
     }
 </script>
 
