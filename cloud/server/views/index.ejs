@@ -75,6 +75,9 @@
   let update_available_simulations_table_time_elapsed_to_retry_connect = undefined;
   let command_ws_url = "<%=command_ws_url%>";
   let update_available_simulations_table_retry_timeout = undefined;
+  let loader_icon_timeout = undefined;
+  let cmd_ws = undefined;
+
 </script>
 
 <script>
@@ -90,6 +93,13 @@
             window.clearTimeout(update_available_simulations_table_retry_timeout);
             update_available_simulations_table_retry_timeout = undefined;
     }
+
+    function kill_loader_icon_timeout() {
+        if (loader_icon_timeout == undefined) return;
+        window.clearTimeout(loader_icon_timeout);
+        loader_icon_timeout = undefined;
+    }
+
     function sim_core_info_changed(a,b){
         if (b == undefined) return true;
         if (a.length != b.length) return true;
@@ -106,17 +116,51 @@
         return false;
     }
 
+    function setup_cmd_socket(ws_url){
+        if (cmd_ws != undefined) return;
+        cmd_ws = new WebSocket(ws_url);
+        cmd_ws.addEventListener("open", () => {
+
+        });
+        cmd_ws.addEventListener("close", () => {cmd_ws = undefined;});
+        cmd_ws.addEventListener("error", () => {cmd_ws = undefined;});
+    }
+
+    function kill_sim_core(idx){
+        if (cmd_ws == undefined) return;
+        let sc = sim_cores[idx];
+        sc.status = "terminating";        
+        cmd_ws.send(`{"cmd":"kill","name":"${sc.name}"}`);
+        $(`#stop_${idx}`).prop("disabled",true);
+    }
+
+    function delete_sim_core(idx){
+        if (cmd_ws == undefined) return;
+        let sc = sim_cores[idx];
+        cmd_ws.send(`{"cmd":"delete","name":"${sc.name}"}`);
+        $(`#delete_${idx}`).prop("disabled",true);
+    }
+
+    function start_sim_core(idx){
+        if (cmd_ws == undefined) return;
+        let sc = sim_cores[idx];
+        cmd_ws.send(`{"cmd":"launch","name":"${sc.name}"}`);
+        $(`#run_${idx}`).prop("disabled",true);
+    }
+
     function update_available_simulations_table(){
         
-        $("#available_simulations_table_loading_info").css("display","");
-        function main(info){            
+        loader_icon_timeout = setTimeout(() => {$("#available_simulations_table_loading_info").css("display","");}, 1000 );        
+        
+        function main(info){           
          if (sim_core_info_changed(info.sim_cores,sim_cores)){ 
             console.log("Simulation Cores Table Changed");
             sim_cores = info.sim_cores;
             do_update_available_simulations_table(available_simulations_table_columns);            
          }
-         setTimeout(() => {$("#available_simulations_table_loading_info").css("display","none");},800);
-         setTimeout(() => {update_available_simulations_table();},5000);
+         setTimeout(() => {$("#available_simulations_table_loading_info").css("display","none");},0);
+         setTimeout(() => {update_available_simulations_table();},1000);
+         kill_loader_icon_timeout();
         }
 
         let command_ws = new WebSocket(command_ws_url);
@@ -125,9 +169,11 @@
         command_ws.addEventListener("error", on_ws_error);        
         function on_ws_initial_connect(){
             command_ws.addEventListener("message", (msg_raw)=>{
+                command_ws.close();
                 console.log(msg_raw.data);
                 let msg = JSON.parse(msg_raw.data);
                 if (msg.ok){
+                    setup_cmd_socket(command_ws_url);
                     main(msg.result);
                 }
             });
@@ -169,15 +215,61 @@
             let dt = [];
             let ctr = 0;
             for (let e of sim_cores) {
-                
-                ++ctr;
-                let status_html = "";
+                let status_html = `<span class="label label-danger">Not Available</span>`;
+                let link_html = "";
+                let actions_html = "";
+                let id = ctr;
+
+                let run_btn = `<button 
+                                  id="run_${id}" 
+                                  type="button"
+                                  onclick="start_sim_core(${id});" 
+                                  class="btn btn-default btn-xs" ${ e.status == "terminated" ? "" : "disabled"}><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>`;
+
+                let stop_btn = `<button 
+                                  id="stop_${id}" 
+                                  type="button"
+                                  onclick="kill_sim_core(${id});" 
+                                  class="btn btn-default btn-xs"
+                                  ${ e.status != "running" ? "disabled" : ""}><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>`;
+                let remove_btn = `<button 
+                                  id="delete_${id}"
+                                  onclick="delete_sim_core(${id});" 
+                                  type="button" 
+                                  class="btn btn-default btn-xs"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>`;
+                let upload_btn = `<button 
+                                  id="run_${id}" 
+                                  type="button" 
+                                  class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span></button>`;
+
                 if (e.status == "down")
                  status_html = `<span class="label label-warning">Down</span>`;
-                dt.push([`<a href="#" id="sel_sim_${ctr}" >`+e.name+"</a>",
+                else if (e.status == "terminated")
+                 status_html = `<span class="label label-danger">Terminated</span>`;
+                else if (e.status == "launching")
+                 status_html = `<span class="label label-info">Launching</span>`;
+                else if (e.status == "running")
+                 status_html = `<span class="label label-success">Running</span>`;
+                else if (e.status == "create")
+                 status_html = `<span class="label label-info">Initializing</span>`;
+                else if (e.status == "git_init")
+                 status_html = `<span class="label label-info">Creating Repo</span>`;
+                else if (e.status == "terminating")
+                 status_html = `<span class="label label-warning">Shutting Down</span>`;
+
+                if (e.status == "running")
+                 link_html = `<a href="#" id="sel_sim_${ctr}">${e.name}</a>`;
+                else 
+                 link_html = `<span class="disabled" style="color:grey;">${e.name}</span>`;
+
+                 actions_html = `<div class="btn-group btn-group-xs" role="group">${run_btn}${stop_btn}${upload_btn}</div>
+                                 &nbsp;&nbsp;&nbsp;<div class="btn-group btn-group-xs" role="group">${remove_btn}</div>`;
+
+                dt.push([link_html,
                 "--",
                 `${status_html}`,
-                "--"]);
+                `${actions_html}`]);
+                ++ctr;
             }
             
             if (available_simulations_table_ctrl == undefined){

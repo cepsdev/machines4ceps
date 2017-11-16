@@ -10,6 +10,7 @@ const express = require("express");
 const http = require("http");
 const chalk = require('chalk');
 const dns = require("dns");
+const fs_mv = require("mv");
 
 
 
@@ -23,6 +24,8 @@ const ceps_default_args = ["--quiet"];
 const ceps_prelude = "../.ceps/prelude.ceps";
 const ceps_publisher = "../.ceps/publisher.ceps";
 const sim_nodes_root = "../sim_nodes";
+const sim_nodes_trash = "../trash";
+
 const dbc_importer = "import_dbc.ceps";
 const dbc_lexer = "dbc.ceps.lex";
 let publish_port_start = 10100;
@@ -170,7 +173,8 @@ function instantiate_sim_info(srcs,cores){
       src:src,
       process : undefined,
       process_launching : false,
-      status : "down"
+      status : "down",
+      exit_code : "unknown"
     });
     cores.push(core);
  });
@@ -299,6 +303,7 @@ function Simcore(){
  this.process_launching = false;
  this.dont_launch = false;
  this.status = "down";
+ this.exit_code = "unknown";
 }
 
 function Simcore(p){
@@ -315,6 +320,7 @@ function Simcore(p){
  this.process_launching = false;
  this.dont_launch = false;
  this.status = p.status;
+ this.exit_code = p.exit_code;
 }
 
 Simcore.prototype.get_status = function () { return this.status;}
@@ -354,21 +360,22 @@ function sim_core_init(sim_core){
 
  let frame_names_received = (msg) => {
      sim_core.ws.removeListener('message', frame_names_received);
-     sim_core.comm_layer.frames = JSON.parse(msg);
+     //sim_core.comm_layer.frames = JSON.parse(msg);
      sim_core.index = ++ sim_core_counter;
      console.log("Simulation Core '"+sim_core.name+"'@"+sim_core.uri+" online.");
-     let frame_counter = 0;
-     let sig_counter = 0;
+     sim_core.status = "running";
+     //let frame_counter = 0;
+     //let sig_counter = 0;
      sim_core.signals = [];
-     for(let frame of sim_core.comm_layer.frames){
+     /*for(let frame of sim_core.comm_layer.frames){
          frame.index = frame_counter++;
          for(let sig of frame.signals){
              sig.index = sig_counter++;
              sim_core.signals.push(sig.name);             
          }
          //console.log(frame);
-     }
-    console.log(sim_core.ws._socket.remoteAddress);
+     }*/
+    //console.log(sim_core.ws._socket.remoteAddress);
  };
  let sim_uri_received = (msg) => {
     sim_core.uri = msg;
@@ -416,8 +423,8 @@ function spawn_and_trace_ceps_process(info,call_sequence){
        console.log(chalk.redBright(`${data}`));
     });
     p.on('close', (code) => {
-        if (code!=0) console.log(chalk.red(`"${info}" exited with code ${code}`));
-        else console.log(chalk.yellow(`"${info}" exited with code ${code}`));
+        if (code!=0) console.log(chalk.red(`[sim core terminated][pid: ${p.pid}][exit code: ${code}] "${info}"`));
+        else console.log(chalk.yellow(`[sim core terminated][pid: ${p.pid}][exit code: ${code}] "${info}"`));
     });
     return p;
 }
@@ -431,16 +438,18 @@ function check_remote_sim_cores() {
      }
      if (core_info.process === undefined){
          core_info.comm_layer = { frames : [] };
-         core_info.process_launching = true;          
+         core_info.process_launching = true;
+         core_info.status = "launching";          
          if (core_info.ws) {core_info.ws.close();}
          core_info.ws = undefined;
          
          let call_sequence = make_call_sequence(core_info); 
          
-         console.log(chalk.bold(`${ceps_executable} `,call_sequence.join(" ")));
          let p = spawn(`${ceps_executable}`,call_sequence);
+         console.log(chalk.bold(`[spawned sim core][pid: ${p.pid}]${ceps_executable} `,call_sequence.join(" "),"\n"));
+         
          p.stdout.on('data', (data) => {
-            console.log(chalk.yellow(`${data}`));
+            console.log(chalk.yellow(`[pid: ${p.pid}] ${data}`));
          });
          p.stderr.on('data', (data) => {
             console.log(chalk.redBright(`${data}`));
@@ -449,7 +458,9 @@ function check_remote_sim_cores() {
             core_info.process = undefined;
             core_info.process_launching = false;
             core_info.dont_launch = true;
-            console.log(chalk.red(`Simulation Core "${core_info.src.name}" exited with code ${code}`));
+            core_info.status = "terminated";
+            core_info.exit_code = (code == null ? "unknown" : (code == undefined ? "unknown": code.toString() ) );
+            console.log(chalk.red(`[sim core terminated][pid: ${p.pid}][exit code: ${core_info.exit_code}] "${core_info.src.name}"`));
          });
         core_info.process = p;
         setTimeout(() => {core_info.process_launching=false;},3000);
@@ -503,21 +514,24 @@ function check_remote_sim_cores() {
             cs.push("--dump_stddoc_canlayer");
             cs.push("-o");
             cs.push(path.join(sim_nodes_root,core_info.src.path,"views","documentation","can_communication_layer","all.ejs"));           
-            console.log(chalk.bold(`${ceps_executable} `,cs.join(" ")));
-            spawn_and_trace_ceps_process("Process Building CAN Documentation ("+core_info.uri+")" ,cs);
+            
+            let proc = spawn_and_trace_ceps_process("Process Building CAN Documentation ("+core_info.uri+")" ,cs);
+            console.log(chalk.bold(`[spawned sim core][pid: ${proc.pid}]${ceps_executable} `,cs.join(" ")));
           } catch (err){
             console.log(chalk.yellow(`***Warning: Failed to create static can layer documentation. (Simulation ${core_info.uri})`));
-          }
-                  
+          }                  
          }
-         
-        
-
-     } else if (core_info.ws === undefined && !core_info.process_launching){
+     } else if (core_info.ws === undefined && !core_info.process_launching){         
          core_info.ws = new WebSocket(core_info.url);
-         core_info.ws.on("error", () => {core_info.ws=undefined;} );
+         core_info.ws.on("error", () => {
+             core_info.ws=undefined;
+             console.log("Simulation Core '"+core_info.name+"'@"+core_info.uri+" offline.");
+            } );
          core_info.ws.on("open", () => {sim_core_init(core_info);} );
-         core_info.ws.on("close", () => {core_info.ws=undefined;} );
+         core_info.ws.on("close", () => {
+             core_info.ws=undefined;
+             console.log("Simulation Core '"+core_info.name+"'@"+core_info.uri+" offline.");
+            } );
      }
     }
 }
@@ -625,6 +639,30 @@ app.get("/:sim/controlpanels/:panel", function(req, res, next) {
                                command_ws_url:command_ws_url});    
 });
 
+function move_sim_core_to_trash_by_name(n){
+    let i = 0;
+    let sc = undefined;
+    for (let i = 0; i!=sim_cores.length;++i){
+        if (n != sim_cores[i].name) continue;
+        sc = sim_cores[i];
+        sim_cores.splice(i,1);
+        break;
+    }
+    if (sc != undefined){
+        let from = path.join(sim_nodes_root,sc.src.path);
+        let to_ = path.join(sim_nodes_trash,sc.src.path);
+        let to = undefined;
+        ctr = 0;
+        for(;;++ctr){
+            if (ctr == 0)
+             if (!fs.existsSync(to_)){ to = to_;break;}
+             else continue;
+            to = to_ + ctr.toString();
+            if (!fs.existsSync(to)) break;            
+        }
+        if (to != undefined)fs_mv(from,to,{mkdirp:true},(err)=>{});
+    }
+}
 
 function add_modify_files_simulation(client_msg,ws){
     //ws.send(JSON.stringify({ok:true}));
@@ -764,6 +802,24 @@ ws_command.on("connection", function connection(ws){
                 });
             }
             ws.send(JSON.stringify({ok:true,result: r }));
+        } else if (msg.cmd == "kill"){
+            let sc = get_sim_core_by_name(msg.name);
+            if (sc == undefined) {ws.send(JSON.stringify({ok:true}));return;}
+            sc.process.kill();
+            sc.status = "terminating";
+            ws.send(JSON.stringify({ok:true}));        
+        } else if (msg.cmd == "launch"){
+            let sc = get_sim_core_by_name(msg.name);
+            if (sc == undefined) {ws.send(JSON.stringify({ok:true}));return;}
+            sc.dont_launch = false;
+            sc.status = "launching";
+            ws.send(JSON.stringify({ok:true}));        
+        } else if (msg.cmd == "delete"){
+            let sc = get_sim_core_by_name(msg.name);
+            if (sc == undefined) {ws.send(JSON.stringify({ok:true}));return;}
+            if (sc.process != undefined) sc.process.kill();
+            move_sim_core_to_trash_by_name(msg.name);
+            ws.send(JSON.stringify({ok:true}));        
         }
     });
 });
