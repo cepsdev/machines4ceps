@@ -1,0 +1,41 @@
+<div class="modal fade" tabindex="-1" role="dialog" id="dialog_create_simulation">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">Create Simulation</h4>
+        </div>
+        <div class="modal-body">
+          <div class="input-group">
+                   <span class="input-group-addon" id="basic-addon1">Simulation's name</span>
+                   <input id ="dialog_create_simulation_sim_name" type="text" class="form-control" placeholder="Type here" aria-describedby="basic-addon1">
+          </div> 
+          <p></p>
+          <div class="btn-group  btn-group-justified" data-toggle="buttons">
+            <label class="btn btn-default active">
+              <input type="radio" name="options" id="dialog_create_simulation_option_empty" autocomplete="off" checked> Empty Simulation
+            </label>
+            <label class="btn btn-default">
+              <input type="radio" name="options" id="dialog_create_simulation_option_hello_world" autocomplete="off"> "Hello, World!" Simulation
+            </label>            
+          </div>    
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="dialog_create_simulation_btn_ok" disabled >Ok</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+
+  <script>
+  
+  function open_dialog_create_simulation(){
+    $('#dialog_create_simulation').modal();
+  }
+
+  function close_dialog_create_simulation(){
+    $('#dialog_create_simulation').modal("hide");
+  }   
+  
+  </script>

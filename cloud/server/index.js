@@ -748,6 +748,71 @@ function create_fibex_based_simulation(client_msg,ws){
     });
 }
 
+function create_empty_simulation(client_msg,ws){
+    fs.readdir(sim_nodes_root,(err,files)=>{
+        if (err){
+            ws.send(JSON.stringify({ok:false}));
+            return;
+        }
+        
+        function find_match (s){
+            for(let i = 0; i != files.length;++i)
+             if(files[i]==s)return i;
+            return -1;
+        }
+        
+        let i=0;
+        let s = client_msg.name;
+
+        s = s.replace(/\s/g,"_").replace(/\//g,"").replace(/\./g,"").replace(/:/g,"");
+        let subd=s;
+        while(0 <= find_match(subd)){
+            ++i;
+            subd = s+"_"+i.toString();
+        }
+        
+        fs.mkdir(path.join(sim_nodes_root,subd),(err)=>{
+          if (err){
+              ws.send(JSON.stringify({ok:false}));
+              return;
+          }
+
+          let pkg_json_sent = false;
+          let driver_ceps_sent = false; 
+          
+          for(let i = 0; i!=client_msg.file_names.length;++i){
+              if(client_msg.file_names[i] === "package.json") pkg_json_sent = true;
+              if(client_msg.file_names[i] === "driver.ceps") driver_ceps_sent = true;
+              fs.writeFileSync(path.join(sim_nodes_root,subd,client_msg.file_names[i]),client_msg.data[i]);
+          }
+          
+          if (!pkg_json_sent){
+              let jsn = {name:client_msg.name,modules:[]};
+              for(let i = 0; i!=client_msg.file_names.length;++i){
+                  if (client_msg.file_names[i].match(/xml$/)) jsn.modules.push(client_msg.file_names[i]);
+              }
+              for(let i = 0; i!=client_msg.file_names.length;++i){
+                  if (!client_msg.file_names[i].match(/xml$|driver\.ceps/)) jsn.modules.push(client_msg.file_names[i]);
+              }
+              jsn.modules.push("driver.ceps");  
+              fs.writeFileSync(path.join(sim_nodes_root,subd,"package.json"),JSON.stringify(jsn));
+          }
+          
+          if(!driver_ceps_sent) fs.writeFileSync(path.join(sim_nodes_root,subd,"driver.ceps"),"Simulation{};");
+          
+          let sim_src = make_sim_src_info_given_sim_dir(sim_nodes_root,subd,(s)=>{return uniquify_name(sim_srcs,s);},(s)=>{return uniquify_uri(sim_srcs,s);});
+          if (sim_src == undefined)
+            ws.send(JSON.stringify({ok:false}));
+          else{
+            instantiate_sim_info([sim_src],sim_cores);
+            let sim_core = sim_cores[sim_cores.length-1];
+            ws.send(JSON.stringify({ok:true}));
+          }
+        });
+    });
+}
+
+
 const ws_command = new WebSocket.Server({port: command_port});
 ws_command.on("connection", function connection(ws){
     ws.on("message",function incoming(message){
@@ -820,6 +885,8 @@ ws_command.on("connection", function connection(ws){
             if (sc.process != undefined) sc.process.kill();
             move_sim_core_to_trash_by_name(msg.name);
             ws.send(JSON.stringify({ok:true}));        
+        } else if (msg.cmd == "create_simulation"){
+            create_empty_simulation(msg,ws);                    
         }
     });
 });

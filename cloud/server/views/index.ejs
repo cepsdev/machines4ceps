@@ -54,6 +54,7 @@
     <!-- /#wrapper -->
 </div>
 
+<% include create_simulation %>
 
 <script src="/jquery/js/jquery.min.js"></script>
 <script src="/bootstrap/js/bootstrap.min.js"></script>
@@ -77,6 +78,13 @@
   let update_available_simulations_table_retry_timeout = undefined;
   let loader_icon_timeout = undefined;
   let cmd_ws = undefined;
+
+  function get_sim_by_name(n){
+      for(let e of sim_cores){
+          if (e.name == n) return e;
+      }
+      return undefined;
+  }
 
 </script>
 
@@ -148,13 +156,18 @@
         $(`#run_${idx}`).prop("disabled",true);
     }
 
+    function create_sim(name,type){
+        if (cmd_ws == undefined) return;
+        cmd_ws.send(`{"cmd":"create_simulation","name":"${name}","type":"${type}","file_names":[] }`);        
+    }
+
     function update_available_simulations_table(){
         
         loader_icon_timeout = setTimeout(() => {$("#available_simulations_table_loading_info").css("display","");}, 1000 );        
         
         function main(info){           
          if (sim_core_info_changed(info.sim_cores,sim_cores)){ 
-            console.log("Simulation Cores Table Changed");
+            //console.log("Simulation Cores Table Changed");
             sim_cores = info.sim_cores;
             do_update_available_simulations_table(available_simulations_table_columns);            
          }
@@ -170,7 +183,7 @@
         function on_ws_initial_connect(){
             command_ws.addEventListener("message", (msg_raw)=>{
                 command_ws.close();
-                console.log(msg_raw.data);
+                //console.log(msg_raw.data);
                 let msg = JSON.parse(msg_raw.data);
                 if (msg.ok){
                     setup_cmd_socket(command_ws_url);
@@ -291,6 +304,19 @@
 <script>
    var do_action_add_behaviour; 
    $(document).ready(function() {
+     $("#action_create_simulation").click(open_dialog_create_simulation);
+     $("#dialog_create_simulation_btn_ok").click(()=>{
+        close_dialog_create_simulation();
+        let t = $("#dialog_create_simulation_sim_name").val();
+        let create_empty_sim = $("#dialog_create_simulation_option_empty").prop("checked");
+        let create_hello_world_sim = $("#dialog_create_simulation_option_hello_world").prop("checked");
+        create_sim(t,(create_empty_sim ? "empty":"hello_world"));
+     });
+     $("#dialog_create_simulation_sim_name").on("input",(e)=>{
+         let t = $("#dialog_create_simulation_sim_name").val();
+         if (t.length == 0 || get_sim_by_name(t) != undefined) $("#dialog_create_simulation_btn_ok").prop("disabled",true);
+         else $("#dialog_create_simulation_btn_ok").prop("disabled",false);          
+        });
      main();
     });
 </script>
