@@ -14,6 +14,11 @@
             <div class="col-lg-10">
                 <h1 class="page-header">Available Simulations</h1>
             </div>
+            <div class="col-lg-1" style="text-align:right;">
+             <span id="available_simulations_table_loading_info" >
+              <div class="loader"  style="margin:10px;float:right;"></div>
+             </span>
+            </div>
         </div>
 
         <div class="row">
@@ -21,7 +26,6 @@
             <div class="col-lg-10">
              <table width="100%" class="table table-striped table-bordered table-hover" id="available_simulations_table">                                
              </table>
-             <center><div class="loader"></div></center>
              <hr/>
             </div>            
         </div>
@@ -74,7 +78,7 @@
 </script>
 
 <script>
-    var available_simulations_table_data = undefined;
+    var available_simulations_table_ctrl= undefined;
     var available_simulations_table_columns = [
             { title: "Name" },
             { title: "Repository" },
@@ -88,27 +92,37 @@
     }
     function sim_core_info_changed(a,b){
         if (b == undefined) return true;
-
-        return true;
+        if (a.length != b.length) return true;
+        for(let e of a){
+            let found = false;
+            for(ee of b){
+                if (ee.name == e.name){
+                    if (ee.status != e.status) return true;
+                    found=true;break;
+                }
+            }
+            if (!found) return true;
+        }        
+        return false;
     }
 
     function update_available_simulations_table(){
-        function main(info){
-            
+        
+        $("#available_simulations_table_loading_info").css("display","");
+        function main(info){            
          if (sim_core_info_changed(info.sim_cores,sim_cores)){ 
-            sim_cores = info.sim_cores; 
-            console.log("!!!",info,info.sim_cores); 
-            do_update_available_simulations_table(info.sim_cores,
-                                               available_simulations_table_data,
-                                               available_simulations_table_columns);
+            console.log("Simulation Cores Table Changed");
+            sim_cores = info.sim_cores;
+            do_update_available_simulations_table(available_simulations_table_columns);            
          }
+         setTimeout(() => {$("#available_simulations_table_loading_info").css("display","none");},800);
+         setTimeout(() => {update_available_simulations_table();},5000);
         }
 
         let command_ws = new WebSocket(command_ws_url);
         command_ws.addEventListener("open", on_ws_initial_connect);
         command_ws.addEventListener("close", on_ws_close);
-        command_ws.addEventListener("error", on_ws_error);
-        
+        command_ws.addEventListener("error", on_ws_error);        
         function on_ws_initial_connect(){
             command_ws.addEventListener("message", (msg_raw)=>{
                 console.log(msg_raw.data);
@@ -151,26 +165,30 @@
             update_available_simulations_table_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
         }
 
-        function do_update_available_simulations_table(dt_instance,cols){
+        function do_update_available_simulations_table(cols){
             let dt = [];
             let ctr = 0;
             for (let e of sim_cores) {
+                
                 ++ctr;
+                let status_html = "";
+                if (e.status == "down")
+                 status_html = `<span class="label label-warning">Down</span>`;
                 dt.push([`<a href="#" id="sel_sim_${ctr}" >`+e.name+"</a>",
                 "--",
-                "--",
+                `${status_html}`,
                 "--"]);
             }
             
-            if (dt_instance == undefined){
-                $('#available_simulations_table').DataTable({
+            if (available_simulations_table_ctrl == undefined){
+                available_simulations_table_ctrl = $('#available_simulations_table').DataTable({
                 select: {
                     style: 'single'
                 },
                 data: dt,
                 columns: cols
                 });
-            }
+            } else available_simulations_table_ctrl.clear().rows.add(dt).draw()
         }        
     } 
     function main(){

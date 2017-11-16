@@ -169,7 +169,8 @@ function instantiate_sim_info(srcs,cores){
       index :  sim_core_counter++,
       src:src,
       process : undefined,
-      process_launching : false
+      process_launching : false,
+      status : "down"
     });
     cores.push(core);
  });
@@ -297,6 +298,7 @@ function Simcore(){
  this.process = undefined;
  this.process_launching = false;
  this.dont_launch = false;
+ this.status = "down";
 }
 
 function Simcore(p){
@@ -312,9 +314,10 @@ function Simcore(p){
  this.process = p.process;
  this.process_launching = false;
  this.dont_launch = false;
+ this.status = p.status;
 }
 
-Simcore.prototype.get_status = function () { return "N/A";}
+Simcore.prototype.get_status = function () { return this.status;}
 Simcore.prototype.get_description = function () { return "N/A";}
 Simcore.prototype.get_view_path = function (view_name){
  for(let i = 0; i != this.src.views.length;++i )
@@ -756,10 +759,11 @@ ws_command.on("connection", function connection(ws){
             let r = { sim_cores:[]};
             for (let s of sim_cores){
                 r.sim_cores.push({
-                    name : s.name
+                    name : s.name,
+                    status : s.status
                 });
             }
-            ws.send(JSON.stringify({ok:true,result: JSON.stringify(r) }));
+            ws.send(JSON.stringify({ok:true,result: r }));
         }
     });
 });
