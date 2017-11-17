@@ -1,39 +1,24 @@
 <% include header %>
 
- <!-- jQuery -->
-<script src="../vendor/jquery/jquery.min.js"></script>
-<!-- Bootstrap Core JavaScript -->
-<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
-
-<!-- Metis Menu Plugin JavaScript -->
-<script src="../vendor/metisMenu/metisMenu.min.js"></script>
-
-<!-- Metis Menu Plugin JavaScript -->
-<script src="../vendor/metisMenu/metisMenu.min.js"></script>
-
-<!-- Flot Charts JavaScript -->
-<script src="../vendor/flot/excanvas.min.js"></script>
-<script src="../vendor/flot/jquery.flot.js"></script>
-<script src="../vendor/flot/jquery.flot.pie.js"></script>
-<script src="../vendor/flot/jquery.flot.resize.js"></script>
-<script src="../vendor/flot/jquery.flot.time.js"></script>
-<script src="../vendor/flot-tooltip/jquery.flot.tooltip.min.js"></script>
 
 <body>
     <div id="wrapper">
         <% include navbar %>
         <div id="page-wrapper">
             <div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header"> <%= sim_name %> - <strong>CAN Communication Layer</strong></h1>
+                <div class="col-lg-1"></div>
+                <div class="col-lg-10">
+                    <h1 class="page-header"> <strong><%= sim_name %>'s </strong> Communication Layer</h1>
                 </div>
-                <!-- /.col-lg-12 -->
+                <div class="col-lg-1"></div>
             </div>            
             <!-- /.row -->
             <div class="row">
-                  <div class="col-lg-8">
+                  <div class="col-lg-1"></div>
+                  <div class="col-lg-10">
                         <%- include("../"+doc_canlayer_all) %>
-                  </div> 
+                  </div>
+                  <div class="col-lg-1"></div> 
             </div>            
             <!-- /.row -->
 

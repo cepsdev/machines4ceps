@@ -14,24 +14,26 @@
 
     <!-- Collect the nav links, forms, and other content for toggling -->
       <ul class="nav navbar-nav">
+          <li class="link">
+              <a href="/">
+                <span class="glyphicon glyphicon-home" style="font-size: 1.2em;" data-toggle="tooltip" data-placement="bottom" title="Home"></span>
+              </a>
+          </li>
+  
         <li class="dropdown">
           <a href="#" class="dropdown-toggle btn-lg" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">New <span class="caret"></span></a>
           <ul class="dropdown-menu">
             <% if (sim_core === undefined) { %> 
              <li><a href="#" id="action_create_simulation" >Create Simulation</a></li>
             <% } else { %>
-             <li><a href="#" id="action_add_ctrl_panel" onclick="show_ctrl_panel_create_dialog();" >Create Control Panel</a></li>
+             <!--li><a href="#" id="action_add_ctrl_panel" onclick="show_ctrl_panel_create_dialog();" >Create Control Panel</a></li-->
             <% } %>
           </ul>
         </li>
-        <li class="link">
-         <a href="#">
-           <% if (streaming_endpoint != undefined) { %>           
-               <span class="glyphicon glyphicon-transfer" style="color:green;font-size: 1.2em;" data-toggle="tooltip" data-placement="bottom" title="Streaming Enabled"></span>
-            <% } else { %>
-                <span class="glyphicon glyphicon-transfer" style="color:#EE1111;font-size: 1.2em;" data-toggle="tooltip" data-placement="bottom" title="Streaming Disabled. Install/Start the CAN Streamer Tool."></span>
-            <% } %>
-            </a>
+        <li class="link">            
+         <a href="/__config_vcan">                  
+               <span class="glyphicon glyphicon-transfer" style="color:green;font-size: 1.2em;" data-toggle="tooltip" data-placement="bottom" title="Configure Streaming"></span>
+         </a>
         </li>
       </ul>
 

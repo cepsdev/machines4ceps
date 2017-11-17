@@ -419,6 +419,8 @@ function make_call_sequence(core_info, options){
  if (options == undefined || options['start_ws_api'] == undefined || options['start_ws_api']) {
      call_sequence.push("--ws_api");     
      call_sequence.push(`${core_info.src.pkg_info.base_port+3}`);
+     call_sequence.push("--vcan_api");     
+     call_sequence.push(`${core_info.src.pkg_info.base_port+2}`);
  }
  call_sequence = call_sequence.concat(ceps_default_args);
  return call_sequence;
@@ -454,6 +456,9 @@ function check_remote_sim_cores() {
          core_info.ws = undefined;
          
          let call_sequence = make_call_sequence(core_info); 
+         call_sequence.push("--push_dir");
+         call_sequence.push(`${path.join(sim_nodes_root,core_info.src.path,"push")}`);
+         
          
          let p = spawn(`${ceps_executable}`,call_sequence);
          console.log(chalk.bold(`[spawned sim core][pid: ${p.pid}]${ceps_executable} `,call_sequence.join(" "),"\n"));
@@ -571,6 +576,19 @@ app.get("/", function(req, res) {
                         hub_url : "ws://"+master_hub_host+":"+master_hub_port_wsapi });
 });
 
+app.get("/__config_vcan", function(req, res) {
+    let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
+    
+    res.render("vcan",{ streaming_endpoint:se,
+         streaming_endpoint_host: se == undefined ? undefined : se.host,
+        streaming_endpoint_port: se == undefined ? undefined : se.port,
+                         page_title:"",
+                         sim_cores : sim_cores,
+                         sim_core : undefined,
+                         command_ws_url:command_ws_url,
+                         hub_url : "ws://"+host_name+":"+master_hub_port_wsapi });
+});
+
 app.get(/^\/(controlpanel__(\w*))|(\w*)$/, function(req, res,next) {
     let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
  if (req.params[2] != undefined) {
@@ -606,11 +624,12 @@ app.get(/^\/(controlpanel__(\w*))|(\w*)$/, function(req, res,next) {
  }
 });
 
-app.get(/^\/doc_canlayer_all__([0-9]+)$/, function(req, res,next) {
+app.get(/^\/doc_canlayer_all__(\w+)$/, function(req, res,next) {
+
     let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
-    let score_idx = req.params[0];
-    let score = undefined;
-    for(let s of sim_cores) if (s.index == score_idx){ score=s;break; }
+    let score_uri = req.params[0];
+    
+    let score = get_sim_core_by_uri(score_uri);
     if (score === undefined) {res.status=404;res.send("404");return;} 
     res.render("doc_canlayer_all",{streaming_endpoint:se,
         streaming_endpoint_host: se == undefined ? undefined : se.host,
@@ -945,6 +964,9 @@ package.json
 *.sh
 dot_props.ceps
 views/
+push/
+*.svg
+*.dot
 `);
           fs.writeFileSync(path.join(sim_nodes_root,subd,"init-git.sh"),`
 cd ${path.join(sim_nodes_root,subd)}

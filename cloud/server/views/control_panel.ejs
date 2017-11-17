@@ -1,31 +1,4 @@
-﻿<!DOCTYPE html>
-<html lang=en>
-<!-- 
-    
-    Cool effects
-
-    https://blog.trackduck.com/2015/06/10/15-impressive-pop-animation-effects-codepen/
-    
-    
-    -->
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="author" content="(c) ceps technologies, all rights reserved">
-    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
-    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">
-    <!-- link href="datatables/css/dataTables.material.min.css" rel="stylesheet" -->
-    <!-- link href="datatables/css/jquery.dataTables.min.css" rel="stylesheet" -->
-    <link href="datatables/css/dataTables.bootstrap.min.css" rel="stylesheet" >
-    <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
-    <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
-    <link href="animate/animate.css" rel="stylesheet">
-    <style>
-    </style>
-    <title>Prototype Control Panel</title>
-</head>
+﻿<% include header %>
 
 <script>
     var global_observer_handlers = [];
@@ -64,10 +37,12 @@
 
 <body>
 
+        <% include navbar %>
+
     <div class="row">
         <div class="col-xs-6 col-sm-2"></div>
         <div class="col-xs-6 col-sm-8">
-            <h2><span id="page_title">Control Panel</span></h2>
+            <h2><span id="page_title">Control Panels</span></h2>
         </div>
         <div class="col-xs-6 col-sm-2"></div>
     </div>
@@ -1203,7 +1178,12 @@
 
             if (!connected)
                 setTimeout(() => {
-                    $('#dlg_login').modal('show');
+                    let remote = "<%= cmd_ws %>";
+                    if (remote.length == 0)
+                     $('#dlg_login').modal('show');
+                     else {
+                         do_login(remote);
+                     }
                 }, 100);
         });
     </script>
