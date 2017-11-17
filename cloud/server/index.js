@@ -11,6 +11,7 @@ const http = require("http");
 const chalk = require('chalk');
 const dns = require("dns");
 const fs_mv = require("mv");
+const username = require("username");
 
 
 
@@ -19,6 +20,7 @@ const fs_mv = require("mv");
 
 
 const host_name = os.hostname();
+let user_name = "";
 const ceps_executable = "./ceps";
 const ceps_default_args = ["--quiet"];
 const ceps_prelude = "../.ceps/prelude.ceps";
@@ -160,6 +162,7 @@ function Sim_source(name,pkg_info) {
 
 function instantiate_sim_info(srcs,cores){
  srcs.forEach( (src) => {
+    
     let core = new Simcore(
      {
       url:"ws://"+host_name+":"+src.pkg_info.base_port.toString(),
@@ -174,8 +177,11 @@ function instantiate_sim_info(srcs,cores){
       process : undefined,
       process_launching : false,
       status : "down",
-      exit_code : "unknown"
+      exit_code : "unknown",
+      git_upstream_repo : src.path+".git",
+      git_ssh_clone_cmd :  `git clone ${user_name}@${host_name}:${path.join(process.cwd(),sim_nodes_root,src.path+".git")}`
     });
+    console.log(core);
     cores.push(core);
  });
 }
@@ -304,6 +310,8 @@ function Simcore(){
  this.dont_launch = false;
  this.status = "down";
  this.exit_code = "unknown";
+ this.git_upstream_repo = undefined;
+ this.git_ssh_clone_cmd = undefined;
 }
 
 function Simcore(p){
@@ -321,6 +329,8 @@ function Simcore(p){
  this.dont_launch = false;
  this.status = p.status;
  this.exit_code = p.exit_code;
+ this.git_upstream_repo = p.git_upstream_repo;
+ this.git_ssh_clone_cmd = p.git_ssh_clone_cmd 
 }
 
 Simcore.prototype.get_status = function () { return this.status;}
@@ -561,10 +571,10 @@ app.get("/", function(req, res) {
                         hub_url : "ws://"+master_hub_host+":"+master_hub_port_wsapi });
 });
 
-app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next) {
+app.get(/^\/(controlpanel__(\w*))|(\w*)$/, function(req, res,next) {
     let se = get_streaming_endpoint_by_ip(req.socket.remoteAddress);
- if (req.params[3] != undefined) {
-    let score = get_sim_core_by_uri(req.params[3]);
+ if (req.params[2] != undefined) {
+    let score = get_sim_core_by_uri(req.params[2]);
     if (score != undefined) {
          if (se != undefined) {
             /* console.log("!!!!!!!!");
@@ -585,25 +595,14 @@ app.get(/^\/(signaldetails__([0-9]+)__([0-9]+))|(\w*)$/, function(req, res,next)
     } else next();
                                 
  } else {
-   let score_idx = req.params[1];
-   let sig_idx = req.params[2];
-   let score = undefined;
-   for(let s of sim_cores) if (s.index == score_idx){ score=s;break; }
-   if (score === undefined) {res.status=404;res.send("404");return;} 
-   let signalname = score.signals[sig_idx];
-   if (signalname === undefined) {res.status=404;res.send("404");return;}
-   let sig = undefined;
-   for(let f of score.comm_layer.frames)
-    for (let s of f.signals) if (s.index == sig_idx){sig = s;break;}
-   if (sig === undefined) {res.status=404;res.send("404");return;}
-   
-   res.render("signal_details",{ streaming_endpoint:se,
-                                    streaming_endpoint_host: se == undefined ? undefined :se.host,
-                                    streaming_endpoint_port: se == undefined ? undefined : se.port,
-                                 page_title: score.name +"-"+ signalname,
-                                 sim_core : score,
-                                 signal:sig,
-                                 signal_ws:score.signal_url});   
+   let simcore_uri = req.params[1];
+   let score = get_sim_core_by_uri(simcore_uri);
+   res.render("control_panel",{streaming_endpoint:se,
+    streaming_endpoint_host: se == undefined ? undefined : se.host,
+    streaming_endpoint_port: se == undefined ? undefined : se.port,
+    sim_core : score,
+    cmd_ws   : score.signal_url.substr(5)
+  }); 
  }
 });
 
@@ -660,7 +659,10 @@ function move_sim_core_to_trash_by_name(n){
             to = to_ + ctr.toString();
             if (!fs.existsSync(to)) break;            
         }
-        if (to != undefined)fs_mv(from,to,{mkdirp:true},(err)=>{});
+        if (to != undefined){
+            fs_mv(from,to,{mkdirp:true},(err)=>{});
+            fs_mv(from+".git",to+".git",{mkdirp:true},(err)=>{});
+        }
     }
 }
 
@@ -748,7 +750,8 @@ function create_fibex_based_simulation(client_msg,ws){
     });
 }
 
-function create_empty_simulation(client_msg,ws){
+function create_empty_simulation(client_msg,ws,type){
+    console.log(type);
     fs.readdir(sim_nodes_root,(err,files)=>{
         if (err){
             ws.send(JSON.stringify({ok:false}));
@@ -779,10 +782,12 @@ function create_empty_simulation(client_msg,ws){
 
           let pkg_json_sent = false;
           let driver_ceps_sent = false; 
-          
+          let gitignore_sent = false;
+
           for(let i = 0; i!=client_msg.file_names.length;++i){
               if(client_msg.file_names[i] === "package.json") pkg_json_sent = true;
               if(client_msg.file_names[i] === "driver.ceps") driver_ceps_sent = true;
+              if(client_msg.file_names[i] === ".gitignore") gitignore_sent = true;
               fs.writeFileSync(path.join(sim_nodes_root,subd,client_msg.file_names[i]),client_msg.data[i]);
           }
           
@@ -794,12 +799,166 @@ function create_empty_simulation(client_msg,ws){
               for(let i = 0; i!=client_msg.file_names.length;++i){
                   if (!client_msg.file_names[i].match(/xml$|driver\.ceps/)) jsn.modules.push(client_msg.file_names[i]);
               }
-              jsn.modules.push("driver.ceps");  
+              jsn.modules.push("driver.ceps"); 
+              
+              if (type == "hello_world"){
+                let d = new Date(Date.now());
+                let fromatted = d.toLocaleString();
+                fs.writeFileSync(path.join(sim_nodes_root,subd,"observables.ceps"),
+`/*
+  observables.ceps 
+  Generated by cepSCloud@Node.js ${fromatted} 
+  */
+
+kind Event;
+kind Guard;
+kind Systemstate;
+  
+Systemstate a_signal;
+a_signal = 1;
+
+`);jsn.modules.push("observables.ceps");
+fs.writeFileSync(path.join(sim_nodes_root,subd,"constraints.ceps"),
+`/*
+  constraints.ceps 
+  Generated by cepSCloud@Node.js ${fromatted} 
+  */
+
+constraints{
+    a_signal <= 100;
+    a_signal >= -100;
+};
+`);jsn.modules.push("constraints.ceps");
+fs.writeFileSync(path.join(sim_nodes_root,subd,"encodings.ceps"),
+`/*
+  encodings.ceps 
+  Generated by cepSCloud@Node.js ${fromatted} 
+  */
+
+`);jsn.modules.push("encodings.ceps");
+fs.writeFileSync(path.join(sim_nodes_root,subd,"frames.ceps"),
+`/*
+  frames.ceps 
+  Generated by cepSCloud@Node.js ${fromatted} 
+  */
+frame{ id{myframe;};
+  data{
+    payload{
+      uint8{
+        in{a_signal;};
+        out{a_signal;};
+       };     
+      };
+   };
+ };
+`);jsn.modules.push("frames.ceps");
+
+fs.writeFileSync(path.join(sim_nodes_root,subd,"can_comm.ceps"),
+`/*
+  can_comm.ceps 
+  Generated by cepSCloud@Node.js ${fromatted} 
+  */
+sender
+{
+ id { channel1_out; };
+ transport { 
+  canbus { 
+   can_id_mapping{
+    myframe; 0x601;
+   };
+  }; 
+ };
+};
+
+receiver
+{
+ id { channel1_in; };
+ transport { 
+  canbus { 
+   can_id_mapping{
+    myframe; 0x601;
+   };
+  }; 
+ };
+};
+`);jsn.modules.push("can_comm.ceps");
+fs.writeFileSync(path.join(sim_nodes_root,subd,"inputspace_partitions.ceps"),
+`/*
+  inputspace_partitions.ceps 
+  Generated by cepSCloud@Node.js ${fromatted} 
+  */
+partition{
+  of{a_signal;};
+  {a_signal <= -10; very_low;};
+  {a_signal == 0; low; };
+  {a_signal == 1; normal; };
+  {a_signal == 2; high; };
+  {a_signal >= 10; very_high;};
+};
+`);jsn.modules.push("inputspace_partitions.ceps");
+fs.writeFileSync(path.join(sim_nodes_root,subd,"main.ceps"),
+`/*
+  main.ceps 
+  Generated by cepSCloud@Node.js ${fromatted} 
+  */
+Event TimeUp;
+Event E;
+  
+export{
+ TimeUp;
+ E;
+};  
+  
+sm{
+ S;
+ states{Initial;};
+ on_enter{
+  start_periodic_timer(1.0*s,TimeUp);
+ };
+ Actions{
+  increment_a_signal{
+   a_signal = a_signal + 1;
+  };
+  send_frame{
+   increment_a_signal();
+   send(myframe,channel1_out);
+  };
+ };
+ t{Initial;Initial;TimeUp;send_frame;};
+};  
+`);             jsn.modules.push("main.ceps");
+                driver_ceps_sent = true;
+                fs.writeFileSync(path.join(sim_nodes_root,subd,"driver.ceps"),"Simulation{Start{S;};};");
+
+              }
+
               fs.writeFileSync(path.join(sim_nodes_root,subd,"package.json"),JSON.stringify(jsn));
           }
           
           if(!driver_ceps_sent) fs.writeFileSync(path.join(sim_nodes_root,subd,"driver.ceps"),"Simulation{};");
-          
+
+          if (!gitignore_sent)  fs.writeFileSync(path.join(sim_nodes_root,subd,".gitignore"),` 
+basic_style.ceps
+make_report.ceps
+*.ejs
+package.json
+*.sh
+dot_props.ceps
+views/
+`);
+          fs.writeFileSync(path.join(sim_nodes_root,subd,"init-git.sh"),`
+cd ${path.join(sim_nodes_root,subd)}
+git init
+git add .
+git commit -m "Initial Commit"
+git clone --bare . ../${subd}.git
+git remote add origin ../${subd}.git
+git push --set-upstream origin master
+git config --global push.default matching
+`);
+          spawn("sh",[path.join(sim_nodes_root,subd,"init-git.sh")]);
+
+
           let sim_src = make_sim_src_info_given_sim_dir(sim_nodes_root,subd,(s)=>{return uniquify_name(sim_srcs,s);},(s)=>{return uniquify_uri(sim_srcs,s);});
           if (sim_src == undefined)
             ws.send(JSON.stringify({ok:false}));
@@ -861,9 +1020,13 @@ ws_command.on("connection", function connection(ws){
         } else if (msg.cmd == "info"){
             let r = { sim_cores:[]};
             for (let s of sim_cores){
+                //console.log(s);
                 r.sim_cores.push({
                     name : s.name,
-                    status : s.status
+                    uri: s.uri,
+                    git_ssh_clone_cmd: s.git_ssh_clone_cmd,
+                    status : s.status,
+                    cmd_ws : s.signal_url
                 });
             }
             ws.send(JSON.stringify({ok:true,result: r }));
@@ -886,7 +1049,23 @@ ws_command.on("connection", function connection(ws){
             move_sim_core_to_trash_by_name(msg.name);
             ws.send(JSON.stringify({ok:true}));        
         } else if (msg.cmd == "create_simulation"){
-            create_empty_simulation(msg,ws);                    
+            create_empty_simulation(msg,ws,msg.type);                    
+        } else if (msg.cmd == "sync_repo"){
+            let sc = get_sim_core_by_name(msg.name);
+            if (sc == undefined) {ws.send(JSON.stringify({ok:true}));return;}
+            if (sc.process != undefined) sc.process.kill();
+            fs.writeFileSync(path.join(sim_nodes_root,sc.src.path,"pull-git.sh"),`
+cd ${path.join(sim_nodes_root,sc.src.path)}
+git pull
+`);
+            let p = spawn("sh",[path.join(sim_nodes_root,sc.src.path,"pull-git.sh")]);
+            p.on('close', (code) => {
+                sc.dont_launch = false;
+                sc.status = "launching";
+            });
+
+            //move_sim_core_to_trash_by_name(msg.name);
+            ws.send(JSON.stringify({ok:true}));        
         }
     });
 });
@@ -905,11 +1084,13 @@ function check_for_views(){
    } );
 }
 
-
-sim_srcs = walk_dir_and_fetch_sim_src_infos("../sim_nodes");
-instantiate_sim_info(sim_srcs,sim_cores);
-check_for_views();
-check_remote_sim_cores();
-setInterval(check_remote_sim_cores,500);
-setInterval(check_for_views,2000);
-http.createServer(app).listen(3000);
+username().then((e) => {
+    user_name = e;
+    sim_srcs = walk_dir_and_fetch_sim_src_infos("../sim_nodes");
+    instantiate_sim_info(sim_srcs,sim_cores);
+    check_for_views();
+    check_remote_sim_cores();
+    setInterval(check_remote_sim_cores,500);
+    setInterval(check_for_views,2000);
+    http.createServer(app).listen(3000);
+});

@@ -4,67 +4,63 @@
     <div id="wrapper">
         <%- include('navbar'); %>
         <div id="page-wrapper">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header"><%= sim_core.name %>- <strong>Overview</strong></h1>
-                </div>
-            <!-- /.row -->
-        </div>
         <div class="row">
-                <div class="col-lg-12">
-                   <%- include("../"+sim_nodes_root+"/"+sim_core.src.path+"/" + 'overview') %>
+                <div class="col-lg-1"></div>
+                <div class="col-lg-10">
+                    <h1 class="page-header"><strong><%= sim_core.name %>'s</strong> Main Page</h1>
                 </div>
-            <!-- /.row -->
+                <div class="col-lg-1"></div>
+        </div>
+
+        <div class="row">
+                <div class="col-lg-1"></div>
+                <div class="col-lg-10">
+                    <hr/>
+                </div>
+                <div class="col-lg-1"></div>
+        </div>
+        
+        <div class="row">
+                <div class="col-lg-1"></div>
+                <div class="col-lg-10">
+                 <div class="panel panel-default">
+                        <div class="panel-heading"><h2>Behaviours</h2></div>
+                        <div class="panel-body"><%- include("../"+sim_nodes_root+"/"+sim_core.src.path+"/" + 'overview') %></div>                 
+                </div>
+                </div>
+                <div class="col-lg-1"></div>
         </div>
 
           <div class="row">
-                <div class="col-lg-12" id="tasks_list">
-                    <!--div class="alert alert-info alert-dismissable">
-                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-                    <strong>Streaming CAN messages from/to your computer requires the </strong>
-                      <button type="button" class="btn btn-default navbar-btn" onclick="$('#action_download_canmapper_dialog').modal();">
-                        <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>&nbsp;CAN Mapping Tool
-                      </button>
-                    .
-                    </div-->
+                <div class="col-lg-1"></div>
+                <div class="col-lg-10" id="tasks_list">
                 </div>
-            <!-- /.row -->
+                <div class="col-lg-1"></div>
         </div>
-
-
-
-
-        <!-- /#page-wrapper -->
-
     </div>
-    <!-- /#wrapper -->
 
-    <!-- jQuery -->
-    <script src="../vendor/jquery/jquery.min.js"></script>
+<script src="/jquery/js/jquery.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/jquery-ui/jquery-ui.min.js"></script>
+<script src="/datatables/js/jquery.dataTables.min.js"></script>
+<script src="/datatables-plugins/dataTables.bootstrap.min.js"></script>
+<script src="/datatables-responsive/dataTables.responsive.js"></script>
+<script src="/chartjs/Chart.js"></script>
+<script src="/bootstrap-notify/bootstrap-notify.js"></script>
+<script src="/cepscloud-ui/widget_properties_panel.js"></script>
+<script src="/cepscloud-ui/widget_toggle_signal.js"></script>
+<script src="/cepscloud-ui/widget_plot_signal.js"></script>
+<script src="/cepscloud-ui/persistence.js"></script>
 
-    <!-- Bootstrap Core JavaScript -->
-    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+<script>
+ function main(){
 
-    <!-- Metis Menu Plugin JavaScript -->
-    <script src="../vendor/metisMenu/metisMenu.min.js"></script>
-    <!-- Custom Theme JavaScript -->
-    <script src="../dist/js/sb-admin-2.js"></script>
+ }
+</script>
 
-    <script src="/vendor/jquery-ui/jquery-ui.js"></script>
-
-    <% include ctrl_panel_logic %>
 <script>
     $(document).ready(function(){
-        setup_ctrl_panel_logic();
-        let ws_se = undefined;
-        let ws_se_host = "<%= streaming_endpoint_host %>";
-        let ws_se_port = "<%= streaming_endpoint_port %>";
-        if (ws_se_host.length != 0){
-           ws_se = new WebSocket("ws://"+ws_se_host+":"+ws_se_port); 
-           ws_se.onopen = function(e){
-                console.log("Connected via websocket @"+ws_se_host+".");
-           };
-        }       
+        main();
     });
 </script>
 </body>

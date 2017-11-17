@@ -161,6 +161,12 @@
         cmd_ws.send(`{"cmd":"create_simulation","name":"${name}","type":"${type}","file_names":[] }`);        
     }
 
+    function sync_sim_core(idx){
+        if (cmd_ws == undefined) return;
+        let sc = sim_cores[idx];
+        cmd_ws.send(`{"cmd":"sync_repo","name":"${sc.name}"}`);
+    }
+
     function update_available_simulations_table(){
         
         loader_icon_timeout = setTimeout(() => {$("#available_simulations_table_loading_info").css("display","");}, 1000 );        
@@ -271,15 +277,25 @@
                  status_html = `<span class="label label-warning">Shutting Down</span>`;
 
                 if (e.status == "running")
-                 link_html = `<a href="#" id="sel_sim_${ctr}">${e.name}</a>`;
+                 link_html = `<a href="${e.uri}" id="sel_sim_${ctr}">${e.name}</a>`;
                 else 
                  link_html = `<span class="disabled" style="color:grey;">${e.name}</span>`;
 
                  actions_html = `<div class="btn-group btn-group-xs" role="group">${run_btn}${stop_btn}${upload_btn}</div>
                                  &nbsp;&nbsp;&nbsp;<div class="btn-group btn-group-xs" role="group">${remove_btn}</div>`;
+                let repolink_html=`
+                <div class="input-group">
+                   <span class="input-group-addon">Clone (ssh)</span>
+                   <input type="text" class="form-control" style="width:200px" value="${e.git_ssh_clone_cmd}" aria-describedby="basic-addon1">
+                   &nbsp;&nbsp;
+                   <button onclick="sync_sim_core(${ctr});"
+                    type="button" class="btn btn-primary">Sync</button>
+                </div> 
+                `;
+                                 
 
                 dt.push([link_html,
-                "--",
+                `${repolink_html}`,
                 `${status_html}`,
                 `${actions_html}`]);
                 ++ctr;
