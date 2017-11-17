@@ -1,0 +1,1 @@
+cangateway.exe -d tomas-cepsdev-win:8181 --run_as_server
