@@ -3,6 +3,15 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+std::ofstream* of = nullptr;
+
+void log(std::string m) {
+	if (!of) of = new std::ofstream{ "d:\\temp\\log.txt" };
+	*of << m << std::endl;
+}
+
+std::string initial_config;
+bool run_as_service = true;
 
 std::map<std::string, net::can::can_info::BAUD_RATE>str_br2id{
 	{ "1M",net::can::can_info::BAUD_1M},
@@ -38,11 +47,13 @@ std::map<std::string, net::can::can_info::BAUD_RATE>str_br2id{
 
 
 void fatal(std::string msg) {
+	log("[FATAL] " + msg);
 	std::cerr << "***Fatal Error: " << msg << std::endl;
 	exit(1);
 }
 
 void warn(std::string msg, bool terminate) {
+	log("[WARNING] " + msg);
 	std::cerr << "***Warning: " << msg << (terminate ? " Program exited.":"") << std::endl;
 	if(terminate)exit(0);
 }
@@ -72,6 +83,7 @@ template <typename T, typename E> void getprocaddr(HINSTANCE hdll, E e,const cha
 }
 
 static void init_pcan_dll() {
+	log("[init_pcan_dll()] Enter");
 	pcan_dll = LoadLibrary("PCANBasic");
 	if (pcan_dll == nullptr) warn("No PEAK driver found: LoadLibrary('PCANBAsic') failed.",false);
 	if (pcan_dll == nullptr) return;
@@ -88,13 +100,17 @@ static void init_pcan_dll() {
 	getprocaddr(pcan_dll, e, "CAN_FilterMessages", pcan_api::filtermessages);
 	getprocaddr(pcan_dll, e, "CAN_SetValue", pcan_api::setvalue);
 	getprocaddr(pcan_dll, e, "CAN_GetErrorText", pcan_api::geterrortext);
+	log("[init_pcan_dll()] Leave");
 }
 
 #ifdef KMW_MULTIBUS_API
 HINSTANCE kmw_multibus_dll = nullptr;
 static void init_kmw_multibus_dll() {
 	kmw_multibus_dll = LoadLibrary("Multibus");
-	if (kmw_multibus_dll == nullptr) warn("No KMW Multibus library found: LoadLibrary('Multibus') failed.",false);
+	if (kmw_multibus_dll == nullptr) {
+		auto err = GetLastError();
+		warn("No KMW Multibus library found: LoadLibrary('Multibus') failed. ("+std::to_string(err)+")", false);
+	}
 	if (kmw_multibus_dll == nullptr) return;
 	auto e = [](const char* sz) {fatal("Incompatible KMW Multibus library: GetProcAddress(\"" + std::string{ sz }+"\") failed."); };
 	getprocaddr(kmw_multibus_dll, e, "CanStart", kmw_api::canstart);
@@ -570,67 +586,84 @@ void downstream_ctrl(
 	auto info = net::can::get_local_endpoint_info(dm.first);
 	auto baudrate = info_br2pcan_br[info.br];
 	auto channel = net::can::get_local_endpoint_handle(dm.first);
-	try {
-		if (channel == -1) throw net::exceptions::err_can{ "Couldn't acquire channel handle for '" + dm.first + "'." };
-		auto rinit = pcan_api::initialize(channel, baudrate, 0, 0, 0);
-		if (rinit != PCAN_ERROR_OK && rinit != PCAN_ERROR_INITIALIZE) {
-			throw net::exceptions::err_can{ "Initialization failed, endpoint is '" + dm.first + "', errormessage: "+pcan_errcode2text[rinit]+"." };
-		}
-		remote_sck = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
-		if (remote_sck == -1) { THROW_ERR_INET }
-		{
-			std::stringstream cmd;
-			cmd << "HTTP/1.1 100\r\n";
-			cmd << "cmd: subscribe_out_channel\r\n";
-			cmd << "out_channel: " << dm.second << "\r\n\r\n";
+	bool init_pcan = true;
+	TPCANStatus rinit;
+	for (;;) {
+		try {
+			if (channel == -1) throw net::exceptions::err_can{ "Couldn't acquire channel handle for '" + dm.first + "'." };
+			if (init_pcan) {
+				init_pcan = false;
+				rinit = pcan_api::initialize(channel, baudrate, 0, 0, 0);
+				if (rinit != PCAN_ERROR_OK && rinit != PCAN_ERROR_INITIALIZE) {
+					throw net::exceptions::err_can{ "Initialization failed, endpoint is '" + dm.first + "', errormessage: " + pcan_errcode2text[rinit] + "." };
+				}
+			}
+			if(remote_sck==-1)remote_sck = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
+			if (remote_sck == -1) { THROW_ERR_INET }
+			{
+				std::stringstream cmd;
+				cmd << "HTTP/1.1 100\r\n";
+				cmd << "cmd: subscribe_out_channel\r\n";
+				cmd << "out_channel: " << dm.second << "\r\n\r\n";
 
-			auto r = send(remote_sck, cmd.str().c_str(), cmd.str().length(), 0);
-			STORE_SYS_ERR;
-			if (r != cmd.str().length()) {
-				THROW_ERR_INET;
+				auto r = send(remote_sck, cmd.str().c_str(), cmd.str().length(), 0);
+				STORE_SYS_ERR;
+				if (r != cmd.str().length()) {
+					THROW_ERR_INET;
+				}
+			}
+			for (;;) {
+				std::uint32_t l = 0;
+				auto r = recv(remote_sck, (char*)&l, sizeof(l), 0);
+				if (r != sizeof(l)) THROW_ERR_INET;
+				l = ntohl(l);
+				TPCANMsg can_message{ 0 };
+				char buffer[32];
+				r = recv(remote_sck, buffer, l, 0);
+				if (r != l) THROW_ERR_INET;
+				std::uint32_t can_id = *((::uint32_t*)buffer);
+				std::uint8_t len = *(((::uint8_t*)buffer) + 4);
+				can_message.MSGTYPE = PCAN_MESSAGE_STANDARD;
+				if (can_id & CAN_RTR_FLAG) { can_message.MSGTYPE |= PCAN_MESSAGE_RTR; can_id &= ~CAN_RTR_FLAG; }
+				can_message.ID = can_id;
+				can_message.LEN = len;
+
+				if (ext_can) can_message.MSGTYPE |= PCAN_MESSAGE_EXTENDED;
+				memcpy(can_message.DATA, buffer + 8, len);
+				if (cur_token != get_current_token()) break;
+				auto wr = pcan_api::write(channel, &can_message);
+				if (wr != PCAN_ERROR_OK) {
+					throw net::exceptions::err_can{ "Write failed, endpoint is '" + dm.first + "', errormessage: " + pcan_errcode2text[rinit] + "." };
+				}
 			}
 		}
-		for (;;) {
-			std::uint32_t l = 0;
-			auto r = recv(remote_sck, (char*) &l, sizeof(l), 0);
-			if (r != sizeof(l)) THROW_ERR_INET;
-			l = ntohl(l);
-			TPCANMsg can_message { 0 };
-			char buffer[32];
-			r = recv(remote_sck, buffer, l, 0);
-			if (r != l) THROW_ERR_INET;
-			std::uint32_t can_id = *((::uint32_t*)buffer);
-			std::uint8_t len = *( ((::uint8_t*)buffer)+4);
-			can_message.MSGTYPE = PCAN_MESSAGE_STANDARD;
-			if (can_id & CAN_RTR_FLAG) { can_message.MSGTYPE |= PCAN_MESSAGE_RTR; can_id &= ~CAN_RTR_FLAG; }
-			can_message.ID = can_id;
-			can_message.LEN = len;
-			
-			if (ext_can) can_message.MSGTYPE |= PCAN_MESSAGE_EXTENDED;
-			memcpy(can_message.DATA, buffer + 8, len);
-			if (cur_token != get_current_token()) break;
-			auto wr = pcan_api::write(channel, &can_message);
-			if (wr != PCAN_ERROR_OK) {
-				throw net::exceptions::err_can{ "Write failed, endpoint is '" + dm.first + "', errormessage: " + pcan_errcode2text[rinit] + "." };
-			}
+		catch (net::exceptions::err_inet const & e) {
+			warn(std::string{ "[" + dm.second + "->" + dm.first + "][NETWORK ERROR] " }+e.what(),false);
+			closesocket(remote_sck); remote_sck = -1;
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
-	}catch(net::exceptions::err_inet const & e) {
-		fatal(std::string{ "["+dm.second+"->"+dm.first+"][NETWORK ERROR] " }+e.what());
-	}
-	catch (ceps::cloud::exceptions::err_vcan_api const & e) {
-		fatal(std::string{ "[" + dm.second + "->" + dm.first + "][VCAN_API ERROR] " }+e.what());
-	}
-	catch (net::exceptions::err_can const & e) {
-		fatal(std::string{ "[" + dm.second + "->" + dm.first + "][CAN ERROR] " }+e.what());
+		catch (ceps::cloud::exceptions::err_vcan_api const & e) {
+			warn(std::string{ "[" + dm.second + "->" + dm.first + "][VCAN_API ERROR] " }+e.what(),false);
+			closesocket(remote_sck); remote_sck = -1;
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+		catch (net::exceptions::err_can const & e) {
+			init_pcan = true;
+			warn(std::string{ "[" + dm.second + "->" + dm.first + "][CAN ERROR] " }+e.what(),false);
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+		if (cur_token != get_current_token()) break;
 	}
 }
 #ifdef KMW_MULTIBUS_API
+
 void downstream_ctrl_multibus(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Downstream_Mapping dm) {
 	INIT_SYS_ERR_HANDLING;
-	auto cur_token = get_current_token();
+	log("[downstream_ctrl_multibus()] Enter");
 
+	auto cur_token = get_current_token();
 	constexpr auto CAN_RTR_FLAG = 0x40000000U;
 	constexpr auto CAN_EFF_FLAG = 0x80000000U;
 	auto ext_can = false;
@@ -642,94 +675,138 @@ void downstream_ctrl_multibus(
 	}
 	auto remote_sck = -1;
 	CLEANUP([&]() {
+		log("[downstream_ctrl_multibus()] Leave");
 		if (remote_sck != -1)closesocket(remote_sck);
 	});
 	auto info = net::can::get_local_endpoint_info(dm.first);
 	auto baudrate = info_br2pcan_br[info.br];
 	auto channel = net::can::get_local_endpoint_handle(dm.first);
 	
-	try {
-		if (channel == -1) throw net::exceptions::err_can{ "Couldn't acquire channel handle for '" + dm.first + "'." };
-		auto multibus_queue = kmw_api::canopen(channel);
+	unsigned char multibus_queue;
+	bool init_multibus_queue = true;
+	for (;;) {
+		try {
+			if (channel == -1) throw net::exceptions::err_can{ "Couldn't acquire channel handle for '" + dm.first + "'." };
+			if (init_multibus_queue) {
+				multibus_queue = kmw_api::canopen(channel);
+				log("[downstream_ctrl_multibus()] multibus_queue=" + std::to_string((int)multibus_queue));
+				init_multibus_queue = false;
+			}
 
-		remote_sck = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
-		if (remote_sck == -1) { THROW_ERR_INET }
-		{
-			std::stringstream cmd;
-			cmd << "HTTP/1.1 100\r\n";
-			cmd << "cmd: subscribe_out_channel\r\n";
-			cmd << "out_channel: " << dm.second << "\r\n\r\n";
+			if (remote_sck == -1) remote_sck = net::inet::establish_inet_stream_connect(sim_core.first, sim_core.second);
+			if (remote_sck == -1) { THROW_ERR_INET }
+			{
+				std::stringstream cmd;
+				cmd << "HTTP/1.1 100\r\n";
+				cmd << "cmd: subscribe_out_channel\r\n";
+				cmd << "out_channel: " << dm.second << "\r\n\r\n";
 
-			auto r = send(remote_sck, cmd.str().c_str(), cmd.str().length(), 0);
-			STORE_SYS_ERR;
-			if (r != cmd.str().length()) {
-				THROW_ERR_INET;
+				auto r = send(remote_sck, cmd.str().c_str(), cmd.str().length(), 0);
+				STORE_SYS_ERR;
+				if (r != cmd.str().length()) {
+					THROW_ERR_INET;
+				}
+			}
+			for (;;) {
+				std::uint32_t l = 0;
+				auto r = recv(remote_sck, (char*)&l, sizeof(l), 0);
+				if (r != sizeof(l)) THROW_ERR_INET;
+				l = ntohl(l);
+				if (l != sizeof(can_frame)) THROW_ERR_INET;
+
+				CanMessage can_message{ 0 };
+				can_frame frame = { 0 };
+				r = recv(remote_sck, (char*)&frame, l, 0);
+				if (r != l) THROW_ERR_INET;
+				if (ext_can) can_message.format = CanFormat::CanFormatExtended;
+				else can_message.format = CanFormat::CanFormatStandard;
+				if (ext_can) can_message.id = frame.can_id  & ~CAN_EFF_FLAG;
+				else can_message.id = frame.can_id;
+
+				can_message.length = frame.can_dlc;
+				memcpy(can_message.data, frame.data, frame.can_dlc);
+				if (cur_token != get_current_token()) break;
+				//log("[DEBUG] can_message.length=" + std::to_string((int)can_message.length));
+				//log("[DEBUG] can_message.id=" + std::to_string(can_message.id));
+
+				auto rw = kmw_api::canwrite(
+					multibus_queue,
+					&can_message);
 			}
 		}
-		for (;;) {
-			std::uint32_t l = 0;
-			
-			auto r = recv(remote_sck, (char*)&l, sizeof(l), 0);
-			if (r != sizeof(l)) THROW_ERR_INET;
-			l = ntohl(l);
-			if (l != sizeof(can_frame)) THROW_ERR_INET;
-
-			CanMessage can_message{ 0 };
-			can_frame frame = { 0 };
-			r = recv(remote_sck, (char*)&frame, l, 0);
-			if (r != l) THROW_ERR_INET;
-			if (ext_can) can_message.format = CanFormat::CanFormatExtended;
-			else can_message.format = CanFormat::CanFormatStandard;
-			if (ext_can) can_message.id = frame.can_id  & ~CAN_EFF_FLAG;
-			else can_message.id =  frame.can_id;
-	
-			can_message.length = frame.can_dlc;
-			memcpy(can_message.data, frame.data, frame.can_dlc);
-			if (cur_token != get_current_token()) break;
-			auto rw = kmw_api::canwrite(
-				multibus_queue,
-				&can_message);
+		catch (net::exceptions::err_inet const & e) {
+			closesocket(remote_sck); remote_sck = -1;
+			warn(std::string{ "[" + dm.second + "->" + dm.first + "][NETWORK ERROR] " }+e.what(), false);
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
-	}
-	catch (net::exceptions::err_inet const & e) {
-		fatal(std::string{ "[" + dm.second + "->" + dm.first + "][NETWORK ERROR] " }+e.what());
-	}
-	catch (ceps::cloud::exceptions::err_vcan_api const & e) {
-		fatal(std::string{ "[" + dm.second + "->" + dm.first + "][VCAN_API ERROR] " }+e.what());
-	}
-	catch (net::exceptions::err_can const & e) {
-		fatal(std::string{ "[" + dm.second + "->" + dm.first + "][CAN ERROR] " }+e.what());
-	}
+		catch (ceps::cloud::exceptions::err_vcan_api const & e) {
+			closesocket(remote_sck); remote_sck = -1;
+			warn(std::string{ "[" + dm.second + "->" + dm.first + "][VCAN_API ERROR] " }+e.what(), false);
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+		catch (net::exceptions::err_can const & e) {
+			init_multibus_queue = true;
+			warn(std::string{ "[" + dm.second + "->" + dm.first + "][CAN ERROR] " }+e.what(), false);
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+
+		if (cur_token != get_current_token()) break;
+	}//for(;;)
+	
 }
 #endif
 
+
+ceps::cloud::Simulation_Core directory_server;
+void WINAPI service_main(DWORD argc, LPTSTR []);
+
+
 int main(int argc, char* argv[])
 {
+	log("[START]");
+
 	auto display_name = [](std::pair<ceps::cloud::Simulation_Core, std::string> p) -> std::string {
 		return p.second + "@" + p.first.first + ":" + p.first.second;
 	};
 	bool wsa_startup_successful = false;
-	bool run_as_server = false;
+	bool run_as_server = true;
+	 
 	CLEANUP([&](){if (wsa_startup_successful) WSACleanup(); })
 
-#ifdef PCAN_API    
-	init_pcan_dll();
+#ifdef PCAN_API
+	init_pcan_dll();	
 #endif
 
 #ifdef KMW_MULTIBUS_API
 	kmw_queue2sock.resize(256);
 	kmw_remote_inf_is_canx.resize(256);
 	init_kmw_multibus_dll();
-	if (kmw_api::canstart) kmw_api::canstart();
+	log("[INIT KMW MULTIBUS]");
+	if (kmw_api::canstart) {
+		kmw_api::canstart();
+		log("[START KMW MULTIBUS]");
+	}
 #endif
 
 	auto v = ceps::cloud::check_available_ifs();
 	ceps::cloud::sys_info_available_ifs = ceps::misc::sort_and_remove_duplicates(v);
 
 	//handle information parameters which requires only local data
-	if (argc == 1) {
+	if (argc == 1 && !run_as_service) {
 		std::cout << usage << std::endl;
 		exit(1);
+	}
+
+	if (argc > 1) for (int i = 1; i != argc; ++i) {
+		std::string token = argv[i];
+		if (token == "--run_as_console_app") {
+			run_as_server = false; run_as_service = false;
+		}
+	}
+
+	if (argc > 1) for (int i = 1; i != argc; ++i) {
+		std::string token = argv[i];
+		if (token == "--run_as_server") run_as_server = true;
 	}
 
 	if (v.size() == 0) warn("No CAN Devices found.",false);
@@ -744,11 +821,11 @@ int main(int argc, char* argv[])
 			fatal("WSAStartup failed with error: " + std::to_string(err));
 	}
 
-	ceps::cloud::Simulation_Core directory_server;
-	for (int i = 1; i != argc; ++i) {
+	directory_server = ceps::cloud::cmdline_read_remote_host("tomas-cepsdev-win:8181");
+
+	if (argc > 1) for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
-		if (token == "--run_as_server") run_as_server = true;
-		else if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
+        if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
 			std::cout << "Available local communication endpoints:\n";
 			for (auto e : ceps::cloud::sys_info_available_ifs) std::cout << "\t" << e << "\n";
 		}
@@ -761,19 +838,6 @@ int main(int argc, char* argv[])
 		else if (token == "-directory" || token == "--directory" || token == "-d") {
 			directory_server = ceps::cloud::cmdline_read_remote_host(argv[++i]);
 			if (directory_server == ceps::cloud::Simulation_Core{}) fatal("[USER ERROR] Erroneous host name:'" + std::string{ argv[i] }+"'.");
-			try{
-				auto dir = ceps::cloud::fetch_directory_entries(directory_server);
-				for (auto e : dir.entries) {
-					ceps::cloud::sim_cores.insert(e.sim_core);
-					ceps::cloud::global_directory.push_back(e);
-				}
-			}
-			catch (net::exceptions::err_inet & e) {
-				throw net::exceptions::err_inet("(" + directory_server.first + ":" + directory_server.second + ") " + e.what());
-			}
-			catch (ceps::cloud::exceptions::err_vcan_api const & e) {
-				fatal(std::string{ "[VCAN_API ERROR] " }+e.what());
-			}
 		}
 		else if (token == "--print_known_streaming_endpoints") {
 			auto l = ceps::cloud::fetch_streaming_endpoints(directory_server);
@@ -788,9 +852,38 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	
+	if (directory_server != ceps::cloud::Simulation_Core{}) {
+		bool fetching_entries_successful = false;
+		log("[DEBUG][directory_server="+ directory_server.first+":"+ directory_server.second+"]");
+		for (; run_as_server && !fetching_entries_successful;) {
+			try {
+				auto dir = ceps::cloud::fetch_directory_entries(directory_server);
+				for (auto e : dir.entries) {
+					ceps::cloud::sim_cores.insert(e.sim_core);
+					ceps::cloud::global_directory.push_back(e);
+				}
+				fetching_entries_successful = true;
+				log("[DEBUG][fetch_directory_entries() successful]");
+			}
+			catch (net::exceptions::err_inet & e) {
+				log(std::string{ "[INET ERROR] " }+"(" + directory_server.first + ":" + directory_server.second + ") " + e.what());
+				if (!run_as_server)
+					fatal(std::string{ "[INET ERROR] " }+"(" + directory_server.first + ":" + directory_server.second + ") " + e.what());
+				else std::this_thread::sleep_for(std::chrono::seconds(1));
+			}
+			catch (ceps::cloud::exceptions::err_vcan_api const & e) {
+				log(std::string{ "[VCAN_API ERROR] " }+e.what());
+				if (!run_as_server)
+					fatal(std::string{ "[VCAN_API ERROR] " }+e.what());
+				else std::this_thread::sleep_for(std::chrono::seconds(1));
+			}
+		}
+	}
+	else {
+		log("[WARN] No directory server set.");
+	}
 
-	for (int i = 1; i != argc; ++i) {
+	if (argc > 1) for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
 		if (token == "--print_known_hosts") {
 			std::cout << "Known hosts:\n";
@@ -798,9 +891,13 @@ int main(int argc, char* argv[])
 				std::cout <<"\t" << s.first << ":" << s.second << " aka " << ceps::cloud::display_name_with_details(s) << std::endl;
 			}
 		}
+		else if (token == "--print_config_data") {
+			std::cout << "Configuration Data fetched from directoy service:\n";
+			std::cout << "\n" << initial_config << "\n\n";
+		}
 	}
 
-	
+	log("[DEBUG][prepare to fetch channel information]");
 	std::vector<std::pair<ceps::cloud::Simulation_Core, std::future<ceps::cloud::vcan_api::fetch_channels_return_t>>> handles;
 	for(auto s : ceps::cloud::sim_cores)
 		handles.push_back(std::make_pair(s,std::async(std::launch::async, ceps::cloud::vcan_api::fetch_channels, s)));
@@ -811,8 +908,9 @@ int main(int argc, char* argv[])
 			ceps::cloud::info_out_channels[handle.first] = remote_channels.first;
 			ceps::cloud::info_in_channels[handle.first] = remote_channels.second;
 		}
+		log("[DEBUG][done fetching channel information]");
 		//handle information parameters which requires remote data
-		for (int i = 2; i != argc; ++i) {
+		if (argc > 1) for (int i = 2; i != argc; ++i) {
 			std::string token = argv[i];
 			if (token == "--print_available_remote_endpoints" || token == "-a" || token == "-ar") {
 				if (ceps::cloud::sim_cores.size()) std::cout << "Available remote endpoints (name,direction,type):\n";
@@ -824,9 +922,13 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+
+		log("[DEBUG][before ceps::cloud::parse_cmdline_and_extract_mappings()]");
 		auto mappings = ceps::cloud::parse_cmdline_and_extract_mappings(argc,argv, ceps::cloud::info_out_channels, ceps::cloud::info_in_channels);
+		log("[DEBUG][after ceps::cloud::parse_cmdline_and_extract_mappings()]");
+
 		//handle information parameters which requires parsed mapping data
-		for (int i = 2; i != argc; ++i) {
+		if (argc > 1) for (int i = 2; i != argc; ++i) {
 			std::string token = argv[i];
 			if (token == "--print_mappings" || token == "-m" ) {
 				if (mappings.remote_to_local_mappings.size()) {
@@ -850,11 +952,21 @@ int main(int argc, char* argv[])
 		}
 		if (mappings.empty() && !run_as_server) warn(std::string{ "No mappings defined." },true);
 		//Ready to run
+		log("[DEBUG][READY TO START WS API]");
 		if (run_as_server) {
-			Websocket_interface ws_api{ directory_server.first,directory_server.second };
-			auto t = ws_api.start();
-			if (t != nullptr) t->join();
-			else return 1;
+			if (run_as_service) {
+				SERVICE_TABLE_ENTRY dispatch_table[] = {
+					{"Streaming Service Client by cepS Technologies (www.ceps.technology).",service_main},
+					{NULL,NULL}
+				};
+				StartServiceCtrlDispatcher(dispatch_table);
+			}
+			else {
+				Websocket_interface ws_api{ directory_server.first,directory_server.second };
+				auto t = ws_api.start();
+				if (t != nullptr) t->join();
+				else return 1;
+			}
 			return 0;
 		}
 
@@ -887,13 +999,87 @@ int main(int argc, char* argv[])
 	}
 	catch (net::exceptions::err_inet const & e) {
 		fatal(std::string{ "[NETWORK ERROR] " }+e.what());
+		log(std::string{ "[NETWORK ERROR] " }+e.what());
 	}
 	catch (ceps::cloud::exceptions::err_vcan_api const & e) {
 		fatal(std::string{ "[VCAN_API ERROR] " }+e.what());
+		log(std::string{ "[VCAN_API ERROR] " }+e.what());
 	}
 	catch (net::exceptions::err_can const & e) {
 		fatal(std::string{ "[CAN_API ERROR] " }+e.what());
+		log(std::string{ "[CAN_API ERROR] " }+e.what());
 	}
     return 0;
 }
 
+
+SERVICE_STATUS global_service_status;
+SERVICE_STATUS_HANDLE global_handle_service_set_status;
+auto global_service_update_time = 1000;
+
+void WINAPI server_ctrl_handler(DWORD dwControl);
+
+void update_status(int new_status, int check) {
+	log("[update_status()][new_status="+std::to_string(new_status)+"][check=" + std::to_string(check) + "]");
+	if (check < 0) ++global_service_status.dwCheckPoint;
+	else global_service_status.dwCheckPoint = check;
+	if (new_status >= 0) global_service_status.dwCurrentState = new_status;
+	if (!SetServiceStatus(global_handle_service_set_status, &global_service_status)) {
+		global_service_status.dwCurrentState = SERVICE_STOPPED;
+		global_service_status.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+		global_service_status.dwServiceSpecificExitCode = 2;
+		SetServiceStatus(global_handle_service_set_status, &global_service_status);
+	}
+}
+
+void WINAPI service_main(DWORD argc, LPTSTR argv[]) {
+	log("[service_main()]");
+	global_service_status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+	global_service_status.dwCurrentState = SERVICE_START_PENDING;
+	global_service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PAUSE_CONTINUE;
+	global_service_status.dwWin32ExitCode = NO_ERROR;
+	global_service_status.dwServiceSpecificExitCode = 0;
+	global_service_status.dwCheckPoint = 0;
+	global_service_status.dwWaitHint = 2 * global_service_update_time;
+	//"Streaming Service Client by cepS Technologies (www.ceps.technology)."
+	global_handle_service_set_status = RegisterServiceCtrlHandler("simple_service", server_ctrl_handler);
+	
+	if (global_handle_service_set_status == 0) {
+		log("[global_handle_service_set_status == 0]");
+		warn("RegisterServiceCtrlHandler() failed.",false);
+		global_service_status.dwCurrentState = SERVICE_STOPPED;
+		global_service_status.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+		global_service_status.dwServiceSpecificExitCode = 1;
+		update_status(SERVICE_STOPPED,-1);
+		return;
+	}
+	SetServiceStatus(global_handle_service_set_status,&global_service_status);
+	log("[STARTING WS_API]");
+	Websocket_interface ws_api{ directory_server.first,directory_server.second };
+	auto t = ws_api.start();
+	update_status(SERVICE_RUNNING, 0);
+	log("[START WS_API]");
+	if (t != nullptr) t->join();
+	
+	update_status(SERVICE_STOPPED, 0);
+}
+
+void WINAPI server_ctrl_handler(DWORD dwControl) {
+	log("[server_ctrl_handler()][dwControl="+std::to_string(dwControl)+"]");
+	switch (dwControl) {
+	case SERVICE_CONTROL_SHUTDOWN:
+	case SERVICE_CONTROL_STOP:
+		//update_status(SERVICE_STOP_PENDING, -1);
+		update_status(SERVICE_STOPPED, 0);
+		exit(0);
+		break;
+	case SERVICE_CONTROL_PAUSE:
+		break;
+	case SERVICE_CONTROL_CONTINUE:
+		break;
+	case SERVICE_CONTROL_INTERROGATE:
+		break;
+	default: break;
+	}
+	update_status(-1, -1);
+}

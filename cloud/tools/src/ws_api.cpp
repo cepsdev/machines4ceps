@@ -263,6 +263,123 @@ auto get_current_token() -> decltype(current_token) {
 	return current_token;
 }
 
+void Websocket_interface::handle_config_cmd(std::string const & s) {
+
+	increase_current_token();//mutes all running communication threads, which will terminate eventually 
+	current_configuration = s;
+	bool config_down_stream = false;
+	bool config_up_stream = false;
+	bool config_route = false;
+
+	std::lock_guard<std::mutex> g(glbl_mtx);
+	down_streams.clear();
+	up_streams.clear();
+	routes.clear();
+
+	std::stringstream in{ s };
+	std::string l;
+	in >> l; // read first line, i.e. cmd[0]
+	while (in) {
+
+		char buffer[2049] = { 0 };
+		in.getline(buffer, 2048);
+		l = buffer;
+		if (l == "CONFIG_DOWN_STREAM") { config_down_stream = true; config_up_stream = false; config_route = false; continue; }
+		else if (l == "CONFIG_UP_STREAM") { config_down_stream = false; config_up_stream = true; config_route = false; continue; }
+		else if (l == "CONFIG_ROUTE") { config_down_stream = false; config_up_stream = false; config_route = true; continue; }
+
+		if (l == "ENTRY") {
+			std::string sim_name;
+			std::string channel;
+			std::string local_channel;
+			std::string sim_name_from;
+			std::string channel_from;
+			std::string sim_name_to;
+			std::string channel_to;
+			ceps::cloud::Simulation_Core sim_core;
+			ceps::cloud::Simulation_Core sim_core_from;
+			ceps::cloud::Simulation_Core sim_core_to;
+
+
+			if (!config_route) {
+				in.getline(buffer, 2048); sim_name = buffer;
+				in.getline(buffer, 2048); channel = buffer;
+				in.getline(buffer, 2048); local_channel = buffer;
+				for (auto s : ceps::cloud::sim_cores) {
+					if (get_sim_name(s) == sim_name) {
+						sim_core = s;
+						break;
+					}
+				}
+			}
+			else {
+				in.getline(buffer, 2048); sim_name_from = buffer;
+				in.getline(buffer, 2048); channel_from = buffer;
+				in.getline(buffer, 2048); sim_name_to = buffer;
+				in.getline(buffer, 2048); channel_to = buffer;
+				for (auto s : ceps::cloud::sim_cores) {
+					if (get_sim_name(s) == sim_name_from) {
+						sim_core_from = s;
+						break;
+					}
+				}
+				for (auto s : ceps::cloud::sim_cores) {
+					if (get_sim_name(s) == sim_name_to) {
+						sim_core_to = s;
+						break;
+					}
+				}
+			}
+
+			if (config_down_stream) {
+				down_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
+#ifdef PCAN_API
+				if (pcan_api::is_pcan(local_channel))
+					downstream_threads.push_back(new std::thread{
+					downstream_ctrl,
+					sim_core,
+					ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
+				});
+#endif
+#ifdef KMW_MULTIBUS_API
+				if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
+					downstream_threads.push_back(new std::thread{
+					downstream_ctrl_multibus,
+					sim_core,
+					ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
+				});
+#endif					
+			}
+			if (config_up_stream) {
+				up_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
+#ifdef PCAN_API
+				if (pcan_api::is_pcan(local_channel))
+					upstream_threads.push_back(new std::thread{
+					upstream_ctrl_kmw,
+					sim_core,
+					ceps::cloud::Upstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
+				});
+#endif
+#ifdef KMW_MULTIBUS_API
+				if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
+					upstream_threads.push_back(new std::thread{
+					upstream_ctrl_kmw,
+					sim_core,
+					ceps::cloud::Upstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
+				});
+#endif					
+			}
+			if (config_route) {
+				auto rt = ceps::cloud::Route{ std::make_pair(sim_core_from,channel_from), std::make_pair(sim_core_to,channel_to) };
+				routes.push_back(rt);
+				route_threads.push_back(new std::thread{
+					r2r_ctrl,
+					rt
+				});
+			}
+		}
+	}
+}
 
 void Websocket_interface::handler(int sck) {
 	
@@ -365,120 +482,8 @@ void Websocket_interface::handler(int sck) {
 					reply = "{\"ok\":true, \"value\" : \"cepSCloud's Virtual CAN Gateway (C) Tomas Prerovsky <tomas.prerovsky@gmail.com>, ALL RIGHTS RESERVED.\"}";
 				}
 				else if (cmd[0] == "CONFIG_STREAMS") {
-					increase_current_token();//mutes all running communication threads, which will terminate eventually 
-					bool config_down_stream = false;
-					bool config_up_stream = false;
-					bool config_route = false;
-
-					std::lock_guard<std::mutex> g(glbl_mtx);
-					down_streams.clear();
-					up_streams.clear();
-					routes.clear();
-
-					std::stringstream in{ s };
-					std::string l;
-					in >> l; // read first line, i.e. cmd[0]
-					while (in) {
-						
-						char buffer[2049] = { 0 };
-						in.getline(buffer, 2048);
-						l = buffer;
-						if (l == "CONFIG_DOWN_STREAM") { config_down_stream = true; config_up_stream = false; config_route = false; continue; }
-						else if (l == "CONFIG_UP_STREAM") { config_down_stream = false; config_up_stream = true; config_route = false; continue; }
-						else if (l == "CONFIG_ROUTE") { config_down_stream = false; config_up_stream = false; config_route = true; continue; }
-
-						if (l == "ENTRY") {
-							std::string sim_name;
-							std::string channel;
-							std::string local_channel;
-							std::string sim_name_from;
-							std::string channel_from;
-							std::string sim_name_to;
-							std::string channel_to;
-							ceps::cloud::Simulation_Core sim_core;
-							ceps::cloud::Simulation_Core sim_core_from;
-							ceps::cloud::Simulation_Core sim_core_to;
-
-
-							if (!config_route) {
-								in.getline(buffer, 2048); sim_name = buffer;
-								in.getline(buffer, 2048); channel = buffer;
-								in.getline(buffer, 2048); local_channel = buffer;
-								for (auto s : ceps::cloud::sim_cores) {
-									if (get_sim_name(s) == sim_name) {
-										sim_core = s;
-										break;
-									}
-								}
-							} else {
-								in.getline(buffer, 2048); sim_name_from = buffer;
-								in.getline(buffer, 2048); channel_from = buffer;
-								in.getline(buffer, 2048); sim_name_to = buffer;
-								in.getline(buffer, 2048); channel_to = buffer;
-								for (auto s : ceps::cloud::sim_cores) {
-									if (get_sim_name(s) == sim_name_from) {
-										sim_core_from = s;
-										break;
-									}
-								}
-								for (auto s : ceps::cloud::sim_cores) {
-									if (get_sim_name(s) == sim_name_to) {
-										sim_core_to = s;
-										break;
-									}
-								}
-							}
-
-							if (config_down_stream) {
-								down_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
-#ifdef PCAN_API
-								if (pcan_api::is_pcan(local_channel))
-									downstream_threads.push_back(new std::thread{
-									 downstream_ctrl,
-									 sim_core,
-									 ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{channel}}
-								});
-#endif
-#ifdef KMW_MULTIBUS_API
-								if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
-									downstream_threads.push_back(new std::thread{
-									 downstream_ctrl_multibus,
-									 sim_core,
-									 ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel }}
-								});
-#endif					
-							}
-							if (config_up_stream) {
-								up_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
-#ifdef PCAN_API
-								if (pcan_api::is_pcan(local_channel))
-									upstream_threads.push_back(new std::thread{
-									upstream_ctrl_kmw,
-									sim_core,
-									ceps::cloud::Upstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
-								});
-#endif
-#ifdef KMW_MULTIBUS_API
-								if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
-									upstream_threads.push_back(new std::thread{
-									upstream_ctrl_kmw,
-									sim_core,
-									ceps::cloud::Upstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
-								});
-#endif					
-							}
-							if (config_route) {
-								auto rt = ceps::cloud::Route{ std::make_pair(sim_core_from,channel_from), std::make_pair(sim_core_to,channel_to) };
-								routes.push_back(rt);	
-								route_threads.push_back(new std::thread{
-									r2r_ctrl,
-									rt
-								});
-							}
-						}
-					}
+					handle_config_cmd(s);
 					reply = "{\"ok\":true}";
-
 				} else if (cmd[0] == "GET_CONFIGURATION") {
 					std::lock_guard<std::mutex> g(glbl_mtx);
 					std::stringstream sreply;
@@ -653,5 +658,6 @@ void Websocket_interface::dispatcher() {
 }
 
 std::thread* Websocket_interface::start() {
+	if (initial_config.length()) handle_config_cmd(initial_config);
 	return dispatcher_thread_ = new std::thread(&Websocket_interface::dispatcher, this);
 }

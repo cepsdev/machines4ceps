@@ -418,12 +418,26 @@ ceps::cloud::Sim_Directory ceps::cloud::fetch_directory_entries(ceps::cloud::Sim
 	if (cfd == -1) {
 		throw net::exceptions::err_inet{ "Establishing connect to '" + sim_core.first + ":" + sim_core.second + "' failed." };
 	}
-	auto rhr = ceps::cloud::vcan_api::send_cmd(cfd, "get_known_sim_cores");
+
+	std::string hostname;
+
+	{
+		char buffer[512] = { 0 };
+		if (gethostname(buffer, 512) != 0) throw net::exceptions::err_inet{ "WS_API getsockname failed." };
+		hostname = buffer;
+	}
+
+	auto rhr = ceps::cloud::vcan_api::send_cmd(cfd, "get_known_sim_cores\r\nid-token: "+hostname);
 	if (!std::get<0>(rhr)) return r;
 
 	using namespace std;
 
 	auto raw_data = ceps::cloud::get_virtual_can_attribute_content("known_sim_cores", std::get<2>(rhr));
+	auto config_data = ceps::cloud::get_virtual_can_attribute_content("config", std::get<2>(rhr));
+	if (config_data.first) {
+		initial_config = config_data.second;
+	}
+
 	for (std::size_t j = 0; raw_data.second.length() > j;) {
 		if (raw_data.second[j] != '$') { ++j; continue; }
 		j += 1;

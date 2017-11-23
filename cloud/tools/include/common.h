@@ -21,7 +21,7 @@
 #include <future>
 #include <chrono>
 #include<sstream>
-
+#include<fstream>
 
 
 #ifdef __gnu_linux__
@@ -106,6 +106,8 @@
 
  std::uint64_t increase_current_token();
  std::uint64_t get_current_token();
+
+ extern std::string initial_config;
  
  namespace ceps {
 	 namespace cloud {
