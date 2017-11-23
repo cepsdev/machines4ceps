@@ -33,3 +33,11 @@ build-*/
 *.pro.user.*
 *.pro.user
 tools/gui/icons
+cloud/server/gen_overview*.sh
+cloud/server/node_modules
+cloud/server/package-lock.json
+cloud/server/push
+cloud/trash
+cloud/sim_nodes
+nohup.out
+

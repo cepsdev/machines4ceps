@@ -75,7 +75,7 @@ function get_streaming_endpoint_by_ip(ipaddr){
 
 setInterval(()=>{
     if (master_hub_process != undefined) return;
-    let params = [ceps_prelude, master_hub, "--vcan_api", master_hub_port,"--ws_api", master_hub_port_wsapi, ceps_default_args ];
+    let params = [ceps_prelude, master_hub, "--vcan_api", master_hub_port,"--ws_api", master_hub_port_wsapi, "--push_dir", "push", ceps_default_args ];
     master_hub_process = spawn(`${ceps_executable}`,params);
     master_hub_process.stdout.on('data', (data) => {
        console.log(chalk.yellow(`${data}`));
@@ -413,27 +413,8 @@ function make_call_sequence(core_info, options){
  if (options == undefined || options['package_info'] == undefined || options['package_info'])
     call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,"package.ceps"));
 
- let dbc_ctr = 0;
- 
- core_info.src.pkg_info.modules.forEach( (f) => {
-    if (f.split(".").pop() == "dbc") ++dbc_ctr;
- });
-
- let dbc_number = dbc_ctr;
- dbc_ctr = 0;
- 
-
- core_info.src.pkg_info.modules.forEach( (f) => {
-     if (f.split(".").pop() == "dbc") ++dbc_ctr;
-     call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,`${f}`));
-     if (dbc_ctr == dbc_number){
-      dbc_ctr = 0; 
-      call_sequence.push(`${dbc_importer}`);
-    }
- });
- 
- 
- 
+ core_info.src.pkg_info.modules.forEach( (f) => {call_sequence.push(path.join(`${sim_nodes_root}`,`${core_info.src.path}`,`${f}`)); });
+ call_sequence.push(`${dbc_importer}`);
  if (options == undefined || options['start_publisher'] == undefined || options['start_publisher']) call_sequence.push(`${ceps_publisher}`);         
  if (options == undefined || options['start_ws_api'] == undefined || options['start_ws_api']) {
      call_sequence.push("--ws_api");     
@@ -979,6 +960,7 @@ sm{
 basic_style.ceps
 make_report.ceps
 *.ejs
+package.json
 *.sh
 dot_props.ceps
 views/
@@ -1100,15 +1082,6 @@ git pull
 `);
             let p = spawn("sh",[path.join(sim_nodes_root,sc.src.path,"pull-git.sh")]);
             p.on('close', (code) => {
-
-                let pkg_json_path = path.join(sim_nodes_root,sc.src.path,"package.json");
-                let content = fs.readFileSync(pkg_json_path, 'utf8');
-                if(content != undefined){
-                    let jsn = JSON.parse(content);
-                    sc.src.pkg_info.modules = jsn.modules;
-                }
-      
-
                 sc.dont_launch = false;
                 sc.status = "launching";
             });

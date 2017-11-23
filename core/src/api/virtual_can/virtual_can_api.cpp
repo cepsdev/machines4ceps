@@ -128,6 +128,80 @@ void Virtual_can_interface::sync_known_simcores_with_static_hublist(){
     }
 }
 
+class Execute_knownsimcores;
+static std::string make_vcan_config_str(ceps::ast::Nodeset ns, Execute_knownsimcores* p);
+
+class Execute_knownsimcores : public sm4ceps_plugin_int::Executioncontext {
+    int sck;
+    std::string id_token;
+    std::unique_ptr<std::stringstream> response;
+    Virtual_can_interface* vcan_int;
+    directory_of_known_simcores sim_cores;
+
+ public:
+    Execute_knownsimcores() = default;
+    Execute_knownsimcores(int s,std::string idt,std::unique_ptr<std::stringstream>&& ss,Virtual_can_interface* vi )
+        : sck{s},id_token{idt}, response{std::move(ss)}, vcan_int{vi} {}
+    void  run(State_machine_simulation_core* ctxt){
+
+      if(id_token.length()){
+          auto ns = ctxt->current_universe()[ceps::ast::all{"__vcan_config_streams"}];
+          //std::cout << id_token << std::endl;
+          //std::cout << ns << std::endl;
+          sim_cores = vcan_int->fetch_known_simcores_thread_safe();
+
+          for(auto it = ns.nodes().rbegin();it!=ns.nodes().rend();++it){
+              auto entry = ceps::ast::Nodeset(*it)["__vcan_config_streams"];
+              auto ep_ = entry["ep"];
+              auto ep = ep_.as_str();
+              if (ep != id_token) continue;
+              *response << "config: "<< make_vcan_config_str(entry,this) << "\r\n";
+              break;
+          }
+      }
+      *response <<"\r\n";
+      send(sck,response->str().c_str(),response->str().length(),0);
+    }
+
+    std::string get_full_sim_name(std::string n){
+        for(auto nn : sim_cores.entries){
+            if (n != nn.name) continue;
+            return n + "@" + nn.host_name + ":" + nn.port;
+        }
+        return n;
+    }
+};
+
+static std::string make_vcan_config_str(ceps::ast::Nodeset ns, Execute_knownsimcores* p){
+    std::stringstream ss;
+    auto downstreams = ns["downstreams"];
+    auto upstreams = ns["upstreams"];
+    auto routes = ns["routes"];
+
+    ss << "CONFIG_STREAMS\n";
+
+    if (downstreams.nodes().size()){
+        for (auto entry_:downstreams[ceps::ast::all{"entry"}]){
+            auto entry = entry_["entry"];
+            ss << "CONFIG_DOWN_STREAM\nENTRY\n";
+            ss << p->get_full_sim_name(entry["sim"].as_str()) << "\n";
+            ss << entry["channel"].as_str() << "\n";
+            ss << entry["local_channel"].as_str() << "\n";
+        }
+    }
+    if (upstreams.nodes().size()){
+        for (auto entry_:upstreams[ceps::ast::all{"entry"}]){
+            auto entry = entry_["entry"];
+            ss << "CONFIG_UP_STREAM\nENTRY\n";
+            ss << p->get_full_sim_name(entry["sim"].as_str()) << "\n";
+            ss << entry["channel"].as_str() << "\n";
+            ss << entry["local_channel"].as_str() << "\n";
+        }
+    }
+
+    return ss.str();
+}
+
 
 void Virtual_can_interface::handler(int sck){
 
@@ -204,20 +278,30 @@ void Virtual_can_interface::handler(int sck){
             dispatcher_ctxt->can_extended(),
             sck);
     } else if (cmd == "get_known_sim_cores") {
-        response << "HTTP/1.1 100\r\n"<< "known_sim_cores:";
+        std::string id_token;
+        auto id_token_ = get_virtual_can_attribute_content("id-token",attrs);
+        if (id_token_.first) id_token = id_token_.second;
         std::lock_guard<std::mutex> lg(known_simcores_mutex_);
         sync_known_simcores_with_static_hublist();
+        std::unique_ptr<std::stringstream> response{new std::stringstream{} };
+
+        *response << "HTTP/1.1 100\r\n"<< "known_sim_cores:";
         for (auto simcore : known_simcores_.entries){
-            response << "$";
-            response << simcore.name << "\t";
-            response << simcore.short_name << "\t";
-            if (simcore.host_name != hostname && simcore.host_name != "127.0.0.1") response << simcore.host_name;
-            response << ":";
-            response << simcore.port;
-            response << "$";
+            *response << "$";
+            *response << simcore.name << "\t";
+            *response << simcore.short_name << "\t";
+            if (simcore.host_name != hostname && simcore.host_name != "127.0.0.1") *response << simcore.host_name;
+            *response << ":";
+            *response << simcore.port;
+            *response << "$";
         }
-        response << "\r\n";
-        response <<"\r\n";
+        *response << "\r\n";
+
+        State_machine_simulation_core::event_t ev;
+        auto exec = new Execute_knownsimcores{sck,id_token,std::move(response),this};
+        ev.exec = exec;
+        smc_->enqueue_event(ev);
+        continue;
     } else if (cmd == "register_sim_core") {
         auto sim_name = get_virtual_can_attribute_content("name",attrs);
         if (!sim_name.first) return;
