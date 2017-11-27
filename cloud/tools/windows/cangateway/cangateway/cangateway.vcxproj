@@ -168,7 +168,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\can_gateway.cpp" />
-    <ClCompile Include="..\..\..\src\ws_api.cpp" />
+    <ClCompile Include="..\..\..\src\cepscloud_streaming_common.cpp" />
+    <ClCompile Include="..\..\..\src\cepscloud_streaming_endpoint_ws_api.cpp" />
+    <ClCompile Include="..\..\..\src\vcanstreams.cpp" />
+    <ClCompile Include="..\..\..\src\vcan_standard_ctrls.cpp" />
     <ClCompile Include="cangateway.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

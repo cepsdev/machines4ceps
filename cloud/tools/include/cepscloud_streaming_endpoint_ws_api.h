@@ -1,5 +1,7 @@
 #pragma once
 
+#include <thread>
+#include <mutex>
 #include <string> 
 #include <vector>
 #include <map>
@@ -20,7 +22,9 @@ class Websocket_interface {
 	std::vector< thread_status_type > handler_threads_status_;
 	void handle_config_cmd(std::string const &);
 public:
-	Websocket_interface(std::string directory_server_name, std::string directory_server_port, std::string port = {}) :directory_server_name_{ directory_server_name}, 
-		directory_server_port_{ directory_server_port },  port_ { port } {}
+        Websocket_interface(std::string directory_server_name, std::string directory_server_port, std::string port = {})
+            :   port_ { port },
+                directory_server_name_{ directory_server_name},
+                directory_server_port_{ directory_server_port } {}
 	std::thread* start();
 };

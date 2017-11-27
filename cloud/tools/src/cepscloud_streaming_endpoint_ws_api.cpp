@@ -9,16 +9,26 @@
 #include <tuple>
 
 
-#include "../../../../cryptopp/sha.h"
-#include "../../../../cryptopp/filters.h"
-#include "../../../../cryptopp/hex.h"
+#include "cryptopp/sha.h"
+#include "cryptopp/filters.h"
+#include "cryptopp/hex.h"
 
-#include "common.h"
-#include "ws_api.h"
+#include "cepscloud_streaming_common.h"
+#include "vcanstreams.h"
+#include "vcan_standard_ctrls.h"
+#include "cepscloud_streaming_endpoint_ws_api.h"
 
-#ifdef _WIN32
- using ssize_t = long long;
+std::string initial_config;
+
+#ifdef __MINGW32__
+#define InetNtopA inet_ntop
+
+extern "C" WINSOCK_API_LINKAGE LPCWSTR WSAAPI InetNtopW(INT Family, PVOID pAddr, LPWSTR pStringBuf, size_t StringBufSIze);
+extern "C" WINSOCK_API_LINKAGE LPCSTR WSAAPI InetNtopA(INT Family, PVOID pAddr, LPSTR pStringBuf, size_t StringBufSize);
+
 #endif
+
+
 
 #ifdef KMW_MULTIBUS_API
  extern HINSTANCE kmw_multibus_dll;
@@ -46,6 +56,9 @@ extern void upstream_ctrl_kmw(
 /*
 * http/websocket routines
 */
+
+void log(std::string);
+void warn(std::string msg, bool terminate);
 
 static std::pair<bool, std::string> get_http_attribute_content(std::string attr, std::vector<std::pair<std::string, std::string>> const & http_header) {
 	for (auto const & v : http_header) {
@@ -264,7 +277,7 @@ auto get_current_token() -> decltype(current_token) {
 }
 
 void Websocket_interface::handle_config_cmd(std::string const & s) {
-
+    ::log("Websocket_interface::handle_config_cmd()");
 	increase_current_token();//mutes all running communication threads, which will terminate eventually 
 	current_configuration = s;
 	bool config_down_stream = false;
@@ -333,25 +346,44 @@ void Websocket_interface::handle_config_cmd(std::string const & s) {
 
 			if (config_down_stream) {
 				down_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
-#ifdef PCAN_API
-				if (pcan_api::is_pcan(local_channel))
-					downstream_threads.push_back(new std::thread{
-					downstream_ctrl,
-					sim_core,
-					ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
-				});
-#endif
-#ifdef KMW_MULTIBUS_API
-				if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
-					downstream_threads.push_back(new std::thread{
-					downstream_ctrl_multibus,
-					sim_core,
-					ceps::cloud::Downstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
-				});
-#endif					
+				ceps::cloud::Downstream_Mapping dm{
+					ceps::cloud::Local_Interface{ local_channel },
+					ceps::cloud::Remote_Interface{ channel }
+				};
+			    auto dwn_ctrl = global_ctrlregistry.get_down_stream_ctrl(ceps::cloud::get_down_stream_type(sim_core, channel), local_channel);
+				if (dwn_ctrl != nullptr){
+					downstream_threads.push_back(
+						new std::thread{ dwn_ctrl,
+										 sim_core,
+										 dm });
+                } else warn("No downstreamctrl for "+ceps::cloud::get_down_stream_type(sim_core, channel) + "/" + local_channel,false);
+
 			}
 			if (config_up_stream) {
 				up_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
+
+				ceps::cloud::Upstream_Mapping um{
+					ceps::cloud::Local_Interface{ local_channel },
+					ceps::cloud::Remote_Interface{ channel }
+				};
+				auto up_ctrl = global_ctrlregistry.get_up_stream_ctrl(ceps::cloud::get_up_stream_type(sim_core, channel), local_channel);
+				if (up_ctrl != nullptr) {
+					upstream_threads.push_back(
+						new std::thread{ up_ctrl,
+						sim_core,
+						um });
+				}
+				else {
+					//std::cout << ceps::cloud::get_up_stream_type(sim_core, channel) << " " << local_channel << std::endl;
+				}
+
+				/*for (auto e : mappings.local_to_remote_mappings) {
+					auto up_ctrl = global_ctrlregistry.get_up_stream_ctrl(ceps::cloud::get_up_stream_type(e), e.first.first);
+					if (up_ctrl == nullptr) fatal(std::string{ "[INTERNAL ERROR] No upstreamcontrol registered for " }+e.first.first + "/" + ceps::cloud::get_up_stream_type(e));
+					upstream_threads.push_back(new std::thread{ up_ctrl,ceps::cloud::sim_core(e),ceps::cloud::up_stream(e) });
+				}*/
+
+#if 0
 #ifdef PCAN_API
 				if (pcan_api::is_pcan(local_channel))
 					upstream_threads.push_back(new std::thread{
@@ -367,7 +399,8 @@ void Websocket_interface::handle_config_cmd(std::string const & s) {
 					sim_core,
 					ceps::cloud::Upstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
 				});
-#endif					
+#endif
+#endif
 			}
 			if (config_route) {
 				auto rt = ceps::cloud::Route{ std::make_pair(sim_core_from,channel_from), std::make_pair(sim_core_to,channel_to) };
@@ -583,7 +616,7 @@ void Websocket_interface::handler(int sck) {
 
 void Websocket_interface::dispatcher() {
 	socklen_t addrlen = sizeof(struct sockaddr_storage);
-	struct sockaddr_storage claddr = { 0 };
+    struct sockaddr_storage claddr = { 0 };
 	int cfd = -1;
 	struct addrinfo hints = { 0 };
 	struct addrinfo* result, *rp;
@@ -612,6 +645,8 @@ void Websocket_interface::dispatcher() {
 	if (bind(lfd, (struct sockaddr*) &sa, sizeof(sa)) != 0) throw net::exceptions::err_inet{ "bind() failed" };
 	if (listen(lfd, 128) == -1) throw net::exceptions::err_inet{ "listen() failed" };
 
+    log(directory_server_name_);
+
 	int listening_port;
 	{
 		struct sockaddr_in sin;
@@ -621,14 +656,16 @@ void Websocket_interface::dispatcher() {
 		listening_port = ntohs(sin.sin_port);
 
 		char buffer[512] = { 0 };
-		inet_ntop(AF_INET, &sin.sin_addr, buffer, 512);
+        inet_ntop(AF_INET, &sin.sin_addr, buffer, 512);
 		//std::cout << buffer << std::endl;
 	}
 
 	{
 		INIT_SYS_ERR_HANDLING;
 		int cfd = -1;
-		CLEANUP([&]() {if (cfd != -1) closesocket(cfd); })
+        CLEANUP([&]() {if (cfd != -1) closesocket(cfd); });
+        log(directory_server_name_);
+
 
 		cfd = net::inet::establish_inet_stream_connect(directory_server_name_, directory_server_port_);
 		if (cfd == -1) {

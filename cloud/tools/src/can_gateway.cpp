@@ -1,4 +1,4 @@
-#include "common.h"
+#include "cepscloud_streaming_common.h"
 #include <sstream>
 using namespace ceps;
 using namespace ceps::cloud;
@@ -101,6 +101,13 @@ void net::can::set_local_endpoint_info(std::string endpoint, net::can::can_info 
 	throw net::exceptions::err_can("Unknown local endpoint '" + endpoint + "'");
 }
 
+std::pair<bool, ceps::cloud::Sim_Directory::entry> ceps::cloud::get_direntry(Simulation_Core s) {
+	for (auto e : ceps::cloud::global_directory) {
+		if (e.sim_core == s) return std::make_pair(true, e);
+	}
+	return std::make_pair(false, ceps::cloud::Sim_Directory::entry{});
+}
+
 std::string ceps::cloud::display_name(ceps::cloud::Simulation_Core s) {
 	auto const & d = get_direntry(s);
 	if (!d.first) return s.first + ":" + s.second;
@@ -189,7 +196,7 @@ std::vector<std::string> ceps::cloud::check_available_ifs(){
 		unsigned int v{};
 		auto rc = pcan_api::getvalue(channel.first, PCAN_CHANNEL_CONDITION, &v, sizeof(v));
 		if (rc != PCAN_ERROR_OK) continue;
-		if (v != PCAN_CHANNEL_AVAILABLE) continue;
+		if (!(v & PCAN_CHANNEL_AVAILABLE)) continue;
 		r.push_back(channel.second);
 	}
  #endif	
@@ -216,7 +223,7 @@ int net::inet::establish_inet_stream_connect(std::string remote, std::string por
 	hints.ai_socktype = SOCK_STREAM;
 	if ((syscall_result = getaddrinfo(remote.c_str(), port.c_str(), &hints, &result)) != 0) {
 		STORE_SYS_ERR
-			throw net::exceptions::err_getaddrinfo(std::string{ "("+remote+":"+port+") " }+gai_strerror(syscall_result));
+            throw net::exceptions::err_getaddrinfo(std::string{ "("+remote+":"+port+") " }+gai_strerrorA(syscall_result));
 	}
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
@@ -437,6 +444,8 @@ ceps::cloud::Sim_Directory ceps::cloud::fetch_directory_entries(ceps::cloud::Sim
 	if (config_data.first) {
 		initial_config = config_data.second;
 	}
+
+	
 
 	for (std::size_t j = 0; raw_data.second.length() > j;) {
 		if (raw_data.second[j] != '$') { ++j; continue; }

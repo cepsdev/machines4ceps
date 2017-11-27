@@ -46,7 +46,9 @@
  #define UNIX_API 
 #else
  #ifdef _WIN32
-  using ssize_t = long long;
+  #ifndef __MINGW32__
+   using ssize_t = long long;
+  #endif
   #define WIN_API
   #define PCAN_API
   #define KMW_MULTIBUS_API
@@ -60,7 +62,9 @@
   inline int close(int s) { return closesocket(s); }
   #undef min
   #undef max
- #pragma comment(lib, "Ws2_32.lib")
+ #ifndef __MINGW32__
+  #pragma comment(lib, "Ws2_32.lib")
+ #endif
  #include <intrin.h>
  static inline std::uint64_t be64toh(std::uint64_t i) { return _byteswap_uint64(i); }
  static inline std::uint64_t htobe64(std::uint64_t i) { return _byteswap_uint64(i); }
@@ -73,7 +77,7 @@
 #define INIT_SYS_ERR_HANDLING int syscall_result = 0;
 #define STORE_SYS_ERR syscall_result = WSAGetLastError();
 #define THROW_ERR_INET { char* buffer=nullptr;\
- auto r = FormatMessage( \
+ auto r = FormatMessageA( \
   FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, \
   NULL, \
   syscall_result, \
@@ -84,7 +88,7 @@
  throw net::exceptions::err_inet{r!=0?buffer:""}; \
  }
 #define THROW_ERR_INET_ARG(x) { char* buffer=nullptr;\
- auto r = FormatMessage( \
+ auto r = FormatMessageA( \
   FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, \
   NULL, \
   syscall_result, \
@@ -113,6 +117,7 @@
 	 namespace cloud {
 		 extern std::vector<std::string> sys_info_available_ifs;
 		 extern std::vector<std::string> check_available_ifs();
+		 using Streamtype = std::string;
 		 using Hostname = std::string;
 		 using Port = std::string;
 		 using Simulation_Core = std::pair<Hostname, Port>;
@@ -125,6 +130,10 @@
 		 
 		 using Downstream_Mapping_ex = std::pair<Downstream_Mapping, Simulation_Core>;
 		 using Upstream_Mapping_ex = std::pair<Upstream_Mapping, Simulation_Core>;
+		 std::string get_down_stream_type(Downstream_Mapping_ex);
+		 std::string get_up_stream_type(Upstream_Mapping_ex);
+		 std::string get_down_stream_type(Simulation_Core sim_core, std::string channel);
+		 std::string get_up_stream_type(Simulation_Core sim_core, std::string channel);
 
 		 class Route {
 		 public:
@@ -251,6 +260,29 @@
 		 int establish_inet_stream_connect(std::string remote, std::string port);
 	 }
 	 namespace can {
+#ifdef _MSC_VER
+		 __declspec(align(8)) struct can_frame {
+          std::uint32_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+          std::uint8_t    can_dlc; /* frame payload length in byte (0 .. CAN_MAX_DLEN) */
+          std::uint8_t    __pad;   /* padding */
+          std::uint8_t    __res0;  /* reserved / padding */
+          std::uint8_t    __res1;  /* reserved / padding */
+          std::uint8_t    data[8];
+       };
+
+#endif
+#ifdef __GNUG__
+       struct can_frame {
+          std::uint32_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+          std::uint8_t    can_dlc; /* frame payload length in byte (0 .. CAN_MAX_DLEN) */
+          std::uint8_t    __pad;   /* padding */
+          std::uint8_t    __res0;  /* reserved / padding */
+          std::uint8_t    __res1;  /* reserved / padding */
+          std::uint8_t    data[8];
+       } __attribute__((packed, aligned(1)));
+#endif
+
+
 		 struct can_info {
 			 enum BAUD_RATE {
 				 BAUD_1M, BAUD_800K, BAUD_500K, BAUD_250K, BAUD_125K,
