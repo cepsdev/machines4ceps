@@ -363,6 +363,7 @@ void Websocket_interface::handle_config_cmd(std::string const & s) {
 				};
 			    auto dwn_ctrl = global_ctrlregistry.get_down_stream_ctrl(ceps::cloud::get_down_stream_type(sim_core, channel), local_channel);
 				if (dwn_ctrl != nullptr){
+                    log(ceps::cloud::get_down_stream_type(sim_core, channel) + "/"+ local_channel);
 					downstream_threads.push_back(
 						new std::thread{ dwn_ctrl,
 										 sim_core,

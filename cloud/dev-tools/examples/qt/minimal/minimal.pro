@@ -38,7 +38,7 @@ FORMS += \
 ### START cepSCloud Streaming specifics
 # Following lines enable cepSCloud streaming.
 LIBS += -lws2_32
-DEFINES += SIMBOX_HOST=\\\"tomas-cepsdev-win\\\"
+DEFINES += SIMBOX_HOST=\\\"dev-ceps-1\\\"
 DEFINES += SIMBOX_HOST_PORT=\\\"8181\\\"
 QMAKE_CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic
 CEPSCLOUDTOOLS = ../../../../tools

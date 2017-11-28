@@ -295,7 +295,7 @@ void pcan_api::upstream_ctrl(
 void kmw_api::downstream_ctrl(
 	ceps::cloud::Simulation_Core sim_core,
 	ceps::cloud::Downstream_Mapping dm,
-	ceps::cloud::downstream_hook_t) {
+	ceps::cloud::downstream_hook_t hook) {
 	INIT_SYS_ERR_HANDLING;
 	log("[downstream_ctrl_multibus()] Enter");
 
@@ -353,7 +353,8 @@ void kmw_api::downstream_ctrl(
 				CanMessage can_message{ 0 };
 				net::can::can_frame frame = { 0 };
 				r = recv(remote_sck, (char*)&frame, l, 0);
-				if (r != l) THROW_ERR_INET;
+                if(hook) hook(frame);
+                if (r != l) THROW_ERR_INET;
 				if (ext_can) can_message.format = CanFormat::CanFormatExtended;
 				else can_message.format = CanFormat::CanFormatStandard;
 				if (ext_can) can_message.id = frame.can_id  & ~CAN_EFF_FLAG;
