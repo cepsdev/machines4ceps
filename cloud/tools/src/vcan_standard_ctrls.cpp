@@ -111,7 +111,8 @@ std::map<int, int>info_br2pcan_br{
 
 void pcan_api::downstream_ctrl(
 	ceps::cloud::Simulation_Core sim_core,
-	ceps::cloud::Downstream_Mapping dm) {
+	ceps::cloud::Downstream_Mapping dm,
+	ceps::cloud::downstream_hook_t hook) {
 	INIT_SYS_ERR_HANDLING;
     log("pcan_api::downstream_ctrl()");
 	auto cur_token = get_current_token();
@@ -165,6 +166,7 @@ void pcan_api::downstream_ctrl(
 				char buffer[32];
 				r = recv(remote_sck, buffer, l, 0);
 				if (r != l) THROW_ERR_INET;
+				if (hook) hook( *((net::can::can_frame*)buffer) );
 				std::uint32_t can_id = *((::uint32_t*)buffer);
 				std::uint8_t len = *(((::uint8_t*)buffer) + 4);
 				can_message.MSGTYPE = PCAN_MESSAGE_STANDARD;
@@ -292,7 +294,8 @@ void pcan_api::upstream_ctrl(
 
 void kmw_api::downstream_ctrl(
 	ceps::cloud::Simulation_Core sim_core,
-	ceps::cloud::Downstream_Mapping dm) {
+	ceps::cloud::Downstream_Mapping dm,
+	ceps::cloud::downstream_hook_t) {
 	INIT_SYS_ERR_HANDLING;
 	log("[downstream_ctrl_multibus()] Enter");
 

@@ -344,6 +344,17 @@ void Websocket_interface::handle_config_cmd(std::string const & s) {
 				}
 			}
 
+			if (!config_route && (sim_core == ceps::cloud::Simulation_Core{}) )
+			{
+				warn("Ignoring config cmd, unknown sim core.", false);
+				continue;
+			}
+			if (config_route && (sim_core_to == ceps::cloud::Simulation_Core{} || sim_core_to == ceps::cloud::Simulation_Core{}))
+			{
+				warn("Ignoring config cmd, unknown sim core.", false);
+				continue;
+			}
+
 			if (config_down_stream) {
 				down_streams.push_back(std::make_pair(sim_core, ceps::cloud::Stream_Mapping{ local_channel , channel }));
 				ceps::cloud::Downstream_Mapping dm{
@@ -355,8 +366,9 @@ void Websocket_interface::handle_config_cmd(std::string const & s) {
 					downstream_threads.push_back(
 						new std::thread{ dwn_ctrl,
 										 sim_core,
-										 dm });
-                } else warn("No downstreamctrl for "+ceps::cloud::get_down_stream_type(sim_core, channel) + "/" + local_channel,false);
+										 dm,
+						                 global_ctrlregistry.get_down_stream_hook(ceps::cloud::get_down_stream_type(sim_core, channel), local_channel)});
+                } else warn("No downstreamctrl found for "+ceps::cloud::get_down_stream_type(sim_core, channel) + "/" + local_channel,false);
 
 			}
 			if (config_up_stream) {
@@ -373,34 +385,7 @@ void Websocket_interface::handle_config_cmd(std::string const & s) {
 						sim_core,
 						um });
 				}
-				else {
-					//std::cout << ceps::cloud::get_up_stream_type(sim_core, channel) << " " << local_channel << std::endl;
-				}
-
-				/*for (auto e : mappings.local_to_remote_mappings) {
-					auto up_ctrl = global_ctrlregistry.get_up_stream_ctrl(ceps::cloud::get_up_stream_type(e), e.first.first);
-					if (up_ctrl == nullptr) fatal(std::string{ "[INTERNAL ERROR] No upstreamcontrol registered for " }+e.first.first + "/" + ceps::cloud::get_up_stream_type(e));
-					upstream_threads.push_back(new std::thread{ up_ctrl,ceps::cloud::sim_core(e),ceps::cloud::up_stream(e) });
-				}*/
-
-#if 0
-#ifdef PCAN_API
-				if (pcan_api::is_pcan(local_channel))
-					upstream_threads.push_back(new std::thread{
-					upstream_ctrl_kmw,
-					sim_core,
-					ceps::cloud::Upstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
-				});
-#endif
-#ifdef KMW_MULTIBUS_API
-				if (kmw_multibus_dll != nullptr && kmw_api::is_kmw(local_channel))
-					upstream_threads.push_back(new std::thread{
-					upstream_ctrl_kmw,
-					sim_core,
-					ceps::cloud::Upstream_Mapping{ ceps::cloud::Local_Interface{ local_channel },ceps::cloud::Remote_Interface{ channel } }
-				});
-#endif
-#endif
+				else warn("No upstreamctrl found for " + ceps::cloud::get_up_stream_type(sim_core, channel) + "/" + local_channel, false);
 			}
 			if (config_route) {
 				auto rt = ceps::cloud::Route{ std::make_pair(sim_core_from,channel_from), std::make_pair(sim_core_to,channel_to) };

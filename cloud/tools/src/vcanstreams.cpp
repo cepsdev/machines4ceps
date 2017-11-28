@@ -53,3 +53,21 @@ route_ctrl_t ceps::cloud::Ctrlregistry::get_route_ctrl(Streamtype t) {
 	return it->second;
 }
 
+
+void ceps::cloud::Ctrlregistry::reg_down_stream_hook(Streamtype t, Local_Interface i, downstream_hook_t f, bool overwrite_existing_entry) {
+	auto & cont = downstream_hooks;
+	if (overwrite_existing_entry) {
+		if (f == nullptr) cont.erase(make_pair(t, i)); else cont[make_pair(t, i)] = f;
+	}
+	else {
+		auto it = cont.find(make_pair(t, i));
+		if (it != cont.end()) return;
+		it->second = f;
+	}
+}
+
+downstream_hook_t ceps::cloud::Ctrlregistry::get_down_stream_hook(Streamtype t, Local_Interface i) {
+	auto it = downstream_hooks.find(make_pair(t, i));
+	if (it == downstream_hooks.end()) return nullptr;
+	return it->second;
+}

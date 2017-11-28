@@ -7,7 +7,8 @@
 namespace pcan_api {
 	void downstream_ctrl(
 		ceps::cloud::Simulation_Core sim_core,
-		ceps::cloud::Downstream_Mapping dm);
+		ceps::cloud::Downstream_Mapping dm,
+		ceps::cloud::downstream_hook_t);
 	void upstream_ctrl(
 		ceps::cloud::Simulation_Core sim_core,
 		ceps::cloud::Upstream_Mapping um);
@@ -18,7 +19,8 @@ namespace pcan_api {
 namespace kmw_api {
 	void downstream_ctrl(
 		ceps::cloud::Simulation_Core sim_core,
-		ceps::cloud::Downstream_Mapping dm);
+		ceps::cloud::Downstream_Mapping dm,
+		ceps::cloud::downstream_hook_t);
 	void upstream_ctrl(
 		ceps::cloud::Simulation_Core sim_core,
 		ceps::cloud::Upstream_Mapping um);

@@ -6,8 +6,9 @@
 #pragma comment(lib, "ws2_32.lib")
 
 std::ofstream* of = nullptr;
-bool run_as_service = false;
-
+static bool run_as_service = false;
+static bool run_as_server = false;
+extern ceps::cloud::Simulation_Core directory_server;
 
 void log(std::string m) {
 	//if (!of) of = new std::ofstream{ "d:\\temp\\log.txt" };
@@ -174,29 +175,10 @@ void r2r_ctrl(
 
 
 
-ceps::cloud::Simulation_Core directory_server;
+
 void WINAPI service_main(DWORD argc, LPTSTR []);
 
-
-
-
-int main(int argc, char* argv[])
-{
-	setup_shared_libs();
-
-	auto display_name = [](std::pair<ceps::cloud::Simulation_Core, std::string> p) -> std::string {
-		return p.second + "@" + p.first.first + ":" + p.first.second;
-	};
-	bool wsa_startup_successful = false;
-	bool run_as_server = true;
-	 
-	CLEANUP([&](){if (wsa_startup_successful) WSACleanup(); })
-
-	auto v = ceps::cloud::check_available_ifs();
-	ceps::cloud::sys_info_available_ifs = ceps::misc::sort_and_remove_duplicates(v);
-	setup_stream_ctrls(ceps::cloud::sys_info_available_ifs);
-
-	//handle information parameters which requires only local data
+void handle_basic_options(int argc, char* argv[]) {
 	if (argc == 1 && !run_as_service) {
 		std::cout << usage << std::endl;
 		exit(1);
@@ -213,22 +195,12 @@ int main(int argc, char* argv[])
 		std::string token = argv[i];
 		if (token == "--run_as_server") run_as_server = true;
 	}
+}
 
-	if (v.size() == 0) warn("No CAN Devices found.",false);
-
-	{
-		WORD wVersionRequested;
-		WSADATA wsaData;
-		int err;
-		wVersionRequested = MAKEWORD(2, 2);
-		err = WSAStartup(wVersionRequested, &wsaData);
-		if (err != 0)
-			fatal("WSAStartup failed with error: " + std::to_string(err));
-	}
-
+void handle_options_which_require_only_local_endpoints(int argc, char* argv[]) {
 	if (argc > 1) for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
-        if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
+		if (token == "--print_available_local_endpoints" || token == "-a" || token == "-al") {
 			std::cout << "Available local communication endpoints:\n";
 			for (auto e : ceps::cloud::sys_info_available_ifs) std::cout << "\t" << e << "\n";
 		}
@@ -254,30 +226,36 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
+}
 
-	if (directory_server != ceps::cloud::Simulation_Core{}) {
-		bool fetching_entries_successful = false;
-		for (; !fetching_entries_successful;) {
-			try {
-				auto dir = ceps::cloud::fetch_directory_entries(directory_server);
-				for (auto e : dir.entries) {
-					ceps::cloud::sim_cores.insert(e.sim_core);
-					ceps::cloud::global_directory.push_back(e);
-				}
-				fetching_entries_successful = true;
-			}
-			catch (net::exceptions::err_inet & e) {
-				if (!run_as_server)
-					fatal(std::string{ "[INET ERROR] " }+"(" + directory_server.first + ":" + directory_server.second + ") " + e.what());
-				else std::this_thread::sleep_for(std::chrono::seconds(1));
-			}
-			catch (ceps::cloud::exceptions::err_vcan_api const & e) {
-				if (!run_as_server)
-					fatal(std::string{ "[VCAN_API ERROR] " }+e.what());
-				else std::this_thread::sleep_for(std::chrono::seconds(1));
-			}
-		}
+int main(int argc, char* argv[])
+{
+	setup_shared_libs();
+
+	auto display_name = [](std::pair<ceps::cloud::Simulation_Core, std::string> p) -> std::string {
+		return p.second + "@" + p.first.first + ":" + p.first.second;
+	};
+
+	auto v = ceps::cloud::check_available_ifs();
+	ceps::cloud::sys_info_available_ifs = ceps::misc::sort_and_remove_duplicates(v);
+	setup_stream_ctrls(ceps::cloud::sys_info_available_ifs);
+	handle_basic_options( argc, argv);
+
+	{
+		WORD wVersionRequested;
+		WSADATA wsaData;
+		int err;
+		wVersionRequested = MAKEWORD(2, 2);
+		err = WSAStartup(wVersionRequested, &wsaData);
+		if (err != 0)
+			fatal("WSAStartup failed with error: " + std::to_string(err));
 	}
+	CLEANUP([&]() {WSACleanup(); });
+
+
+
+	handle_options_which_require_only_local_endpoints(argc, argv);
+	ceps::cloud::check_and_query_sim_cores(run_as_server);
 
 	if (argc > 1) for (int i = 1; i != argc; ++i) {
 		std::string token = argv[i];
@@ -293,19 +271,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	log("[DEBUG][prepare to fetch channel information]");
-	std::vector<std::pair<ceps::cloud::Simulation_Core, std::future<ceps::cloud::vcan_api::fetch_channels_return_t>>> handles;
-	for(auto s : ceps::cloud::sim_cores)
-		handles.push_back(std::make_pair(s,std::async(std::launch::async, ceps::cloud::vcan_api::fetch_channels, s)));
-
 	try {
-		for (auto & handle : handles) {
-			auto remote_channels = handle.second.get();
-			ceps::cloud::info_out_channels[handle.first] = remote_channels.first;
-			ceps::cloud::info_in_channels[handle.first] = remote_channels.second;
-		}
-		log("[DEBUG][done fetching channel information]");
-		//handle information parameters which requires remote data
 		if (argc > 1) for (int i = 2; i != argc; ++i) {
 			std::string token = argv[i];
 			if (token == "--print_available_remote_endpoints" || token == "-a" || token == "-ar") {
@@ -318,12 +284,8 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
-
-		log("[DEBUG][before ceps::cloud::parse_cmdline_and_extract_mappings()]");
 		auto mappings = ceps::cloud::parse_cmdline_and_extract_mappings(argc,argv, ceps::cloud::info_out_channels, ceps::cloud::info_in_channels);
-		log("[DEBUG][after ceps::cloud::parse_cmdline_and_extract_mappings()]");
 
-		//handle information parameters which requires parsed mapping data
 		if (argc > 1) for (int i = 2; i != argc; ++i) {
 			std::string token = argv[i];
 			if (token == "--print_mappings" || token == "-m" ) {
@@ -347,8 +309,7 @@ int main(int argc, char* argv[])
 			}
 		}
 		if (mappings.empty() && !run_as_server) warn(std::string{ "No mappings defined." },true);
-		//Ready to run
-		log("[DEBUG][READY TO START WS API]");
+
 		if (run_as_server) {
 			if (run_as_service) {
 				SERVICE_TABLE_ENTRY dispatch_table[] = {
@@ -372,7 +333,7 @@ int main(int argc, char* argv[])
 		for (auto e : mappings.remote_to_local_mappings) {
 			auto dwn_ctrl = global_ctrlregistry.get_down_stream_ctrl(ceps::cloud::get_down_stream_type(e), e.first.first);
 			if (dwn_ctrl == nullptr) fatal(std::string{ "[INTERNAL ERROR] No downstreamcontrol registered for " }+e.first.first+"/"+ceps::cloud::get_down_stream_type(e));
-			downstream_threads.push_back(new std::thread{ dwn_ctrl,ceps::cloud::sim_core(e),ceps::cloud::down_stream(e) });
+			downstream_threads.push_back(new std::thread{ dwn_ctrl,ceps::cloud::sim_core(e),ceps::cloud::down_stream(e),global_ctrlregistry.get_down_stream_hook(ceps::cloud::get_down_stream_type(e), e.first.first) });
 		}
 		
 		for (auto e : mappings.local_to_remote_mappings) {
@@ -389,15 +350,12 @@ int main(int argc, char* argv[])
 	}
 	catch (net::exceptions::err_inet const & e) {
 		fatal(std::string{ "[NETWORK ERROR] " }+e.what());
-		log(std::string{ "[NETWORK ERROR] " }+e.what());
 	}
 	catch (ceps::cloud::exceptions::err_vcan_api const & e) {
 		fatal(std::string{ "[VCAN_API ERROR] " }+e.what());
-		log(std::string{ "[VCAN_API ERROR] " }+e.what());
 	}
 	catch (net::exceptions::err_can const & e) {
 		fatal(std::string{ "[CAN_API ERROR] " }+e.what());
-		log(std::string{ "[CAN_API ERROR] " }+e.what());
 	}
     return 0;
 }

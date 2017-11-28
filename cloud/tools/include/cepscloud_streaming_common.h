@@ -216,7 +216,13 @@
 		 std::string display_name(Simulation_Core);
 		 std::string display_name_with_details(Simulation_Core);
 
-
+		 bool check_and_query_sim_cores(
+			 std::vector<ceps::cloud::Simulation_Core> cores,
+			 std::vector<ceps::cloud::Sim_Directory::entry>& new_directory,
+			 std::vector< std::pair < std::vector < std::pair < ceps::cloud::Remote_Interface, std::string >>, std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>>>>& channel_infos,
+			 bool wait_for_directory_hosts = false);
+		 
+		 void check_and_query_sim_cores(bool wait_for_directory_host = false);
 
 		 extern void ctrl_thread_fn(Simulation_Core sim_core,
 			 std::shared_ptr<ctrl_thread_info> ctrl);
@@ -232,6 +238,9 @@
 		 std::tuple<bool, std::string, std::vector<std::pair<std::string, std::string>>> read_virtual_can_msg(int sck, std::string& unconsumed_data);
 		 std::pair<bool, std::string> get_virtual_can_attribute_content(std::string attr, std::vector<std::pair<std::string, std::string>> const & http_header);
 		 Simulation_Core cmdline_read_remote_host(char const * arg);
+
+		 using channel_infos_t = std::vector< std::pair < std::vector < std::pair < ceps::cloud::Remote_Interface, std::string >>, std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>>>>;
+
 		 namespace exceptions{
 			 class err_vcan_api : public std::runtime_error {
 			 public:

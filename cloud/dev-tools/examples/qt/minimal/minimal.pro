@@ -28,7 +28,8 @@ SOURCES += \
         mainwindow.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    ../../../include/create_ceps_cloud_streaming_endpoint.h
 
 FORMS += \
         mainwindow.ui

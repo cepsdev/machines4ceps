@@ -1,9 +1,12 @@
 #include "cepscloud_streaming_common.h"
 #include <sstream>
+#include <thread>
+#include <chrono>
 using namespace ceps;
 using namespace ceps::cloud;
 using namespace ceps::misc;
 
+ceps::cloud::Simulation_Core directory_server;
 std::vector<std::string> ceps::cloud::sys_info_available_ifs;
 std::map<Simulation_Core,std::vector< Downstream_Mapping > > ceps::cloud::mappings_downstream;
 std::map<Simulation_Core,std::vector< Upstream_Mapping > > ceps::cloud::mappings_upstream;
@@ -442,7 +445,7 @@ ceps::cloud::Sim_Directory ceps::cloud::fetch_directory_entries(ceps::cloud::Sim
 	auto raw_data = ceps::cloud::get_virtual_can_attribute_content("known_sim_cores", std::get<2>(rhr));
 	auto config_data = ceps::cloud::get_virtual_can_attribute_content("config", std::get<2>(rhr));
 	if (config_data.first) {
-		initial_config = config_data.second;
+		if (config_data.second.length()) initial_config = config_data.second;
 	}
 
 	
@@ -511,6 +514,85 @@ ceps::cloud::streaming_endpoints_directory ceps::cloud::fetch_streaming_endpoint
 	}
 	return r;
 }
+
+bool ceps::cloud::check_and_query_sim_cores(
+	std::vector<ceps::cloud::Simulation_Core> cores,
+	std::vector<ceps::cloud::Sim_Directory::entry>& new_directory,
+	std::vector< std::pair < std::vector < std::pair < ceps::cloud::Remote_Interface, std::string >>, std::vector<std::pair<ceps::cloud::Remote_Interface, std::string>>>>& channel_infos,
+	bool wait_for_directory_hosts)
+{
+	if (!cores.size()) return false;
+	std::vector<ceps::cloud::Sim_Directory::entry> t;
+	std::set<ceps::cloud::Simulation_Core> already_visted;
+
+	for (auto const & core : cores) {
+		try {
+			auto dir = ceps::cloud::fetch_directory_entries(core);
+			for (auto d : dir.entries) {
+				if (already_visted.find(d.sim_core) != already_visted.end()) continue;
+				t.push_back(d);
+				already_visted.insert(d.sim_core);
+			}
+		}
+		catch (net::exceptions::err_inet const &) {
+            if(wait_for_directory_hosts)std::this_thread::sleep_for (std::chrono::seconds(1));
+		}
+		catch (ceps::cloud::exceptions::err_vcan_api const &) {
+
+		}
+	}
+
+	channel_infos.clear();
+	std::vector<bool> valid_entries; valid_entries.resize(t.size(), false);
+	std::vector<std::future<ceps::cloud::vcan_api::fetch_channels_return_t>> handles;
+	for (auto e : t)
+		handles.push_back(std::async(std::launch::async, ceps::cloud::vcan_api::fetch_channels, e.sim_core));
+	for (std::size_t i = 0; i != handles.size(); ++i) {
+		try {
+			auto h = handles[i].get();
+			valid_entries[i] = true;
+			channel_infos.push_back(h);
+		}
+		catch (net::exceptions::err_inet const &) {
+		}
+		catch (ceps::cloud::exceptions::err_vcan_api const &) {
+		}
+	}
+	new_directory.clear();
+	for (std::size_t i = 0; i != valid_entries.size(); ++i) {
+		if (!valid_entries[i]) continue;
+		new_directory.push_back(t[i]);
+	}
+	return new_directory.size();
+}
+
+void ceps::cloud::check_and_query_sim_cores(bool wait_for_directory_host) {
+
+	if (directory_server == ceps::cloud::Simulation_Core{}) return;
+	for (;;) {
+		ceps::cloud::channel_infos_t channel_infos;
+		bool any_channels = false;
+		if (!ceps::cloud::check_and_query_sim_cores(
+			{ directory_server },
+				ceps::cloud::global_directory,
+				channel_infos, wait_for_directory_host)) {
+				ceps::cloud::sim_cores.clear();
+			}
+		else {
+			for (std::size_t i = 0; i != channel_infos.size(); ++i) {
+					any_channels = true;
+					auto const & ch_info = channel_infos[i];
+					ceps::cloud::info_out_channels[ceps::cloud::global_directory[i].sim_core] = ch_info.first;
+					ceps::cloud::info_in_channels[ceps::cloud::global_directory[i].sim_core] = ch_info.second;
+					ceps::cloud::sim_cores.insert(ceps::cloud::global_directory[i].sim_core);
+			}
+		}
+		if (!wait_for_directory_host) break;
+        if (!any_channels) std::this_thread::sleep_for (std::chrono::seconds(1));
+		else break;
+	}
+}
+
 
 
 void gateway_fn(Simulation_Core sim_core,
