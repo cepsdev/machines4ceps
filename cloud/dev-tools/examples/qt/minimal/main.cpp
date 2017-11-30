@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include "../../dev-tools/include/create_ceps_cloud_streaming_endpoint.h"
+
 MainWindow* w;
 
 static void myhook(net::can::can_frame frame){
@@ -27,6 +28,10 @@ int main(int argc, char *argv[])
     w->show();
 
     global_ctrlregistry.reg_down_stream_hook("CAN","PCAN-USB-1",myhook);
+    global_ctrlregistry.reg_down_stream_hook("CANX","PCAN-USB-1",myhook);
+    global_ctrlregistry.reg_down_stream_hook("CAN","KMW_MULTIBUS_0",myhook);
+    global_ctrlregistry.reg_down_stream_hook("CANX","KMW_MULTIBUS_0",myhook);
+
     setup_and_run_cepscloud_streaming_endpoint(SIMBOX_HOST,SIMBOX_HOST_PORT,argc,argv);
 
     return a.exec();
