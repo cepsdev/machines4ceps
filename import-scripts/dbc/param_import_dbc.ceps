@@ -2,8 +2,6 @@
 
 //Create pool of messages
 
-"OUTPUT";
-
 if(!use_all_frames){ //Specified subset of availabe send messages
   static_for(spec_msg:root.used_frames.content()){
     static_for(e:root.dbc_msg){
@@ -53,21 +51,6 @@ else //All available messages.
   
 }
 
-"EXPECTED";
-xxxframe_group{
- can_node{channel1;};
- send_frames{
-   interval_group{
-     interval{500;};
-     frames{"myframe";};
-   };
-   interval_group{
-     interval{1000;};
-     frames{"yourframe";};
-   };
- };  
-};
-
 static_for(e:root.dbc_msg_pool){
   val h = text(e.sender.content());
   make_struct("__msgs_by_sender_"+h,text(e.id.content()));
@@ -101,8 +84,6 @@ static_for(e:root.dbc_msg_pool){
   make_struct("canid2id_"+text(e.canid.content()),text(e.id.content()));   
 }
 
-
-"IS";
 static_for(e: root.sender_list.content()){
  frame_group{
   can_node{e;};
@@ -120,17 +101,6 @@ static_for(e: root.sender_list.content()){
         };
       };
     }
-
-    /*interval_group{
-      interval{0.1;};
-      frames{
-        static_for(ee: root.select("__msgs_by_sender_"+text(e)).content()){
-          ee;
-        }
-      };
-    };*/
-
-
   };
  };
 }
