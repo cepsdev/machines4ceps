@@ -43,6 +43,6 @@ BO_ 603 yourframe2: 3 channel2
 
 VAL_ 601 a_signal 0 "a" 1 "b" 2 "c" ;
 
-BA_ "GenMsgCycleTime" BO_ 601 500;
-BA_ "GenMsgCycleTime" BO_ 602 500;
-BA_ "GenMsgCycleTime" BO_ 603 1000;
+BA_ "GenMsgCycleTime" BO_ 601 1000;
+BA_ "GenMsgCycleTime" BO_ 602 2000;
+BA_ "GenMsgCycleTime" BO_ 603 3000;

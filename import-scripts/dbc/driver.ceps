@@ -1,0 +1,23 @@
+
+
+sender
+{
+  id { channel1_out; };
+  transport { 
+   canbus { 
+    bus_id { "vcan0"; };    
+   }; 
+  };
+};
+
+sender
+{
+  id { channel2_out; };
+  transport { 
+   canbus { 
+    bus_id { "vcan0"; };    
+   }; 
+  };
+};
+
+Simulation{};

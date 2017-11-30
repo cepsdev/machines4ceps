@@ -144,33 +144,48 @@ static_for(e:root.frame_group){
      }
 }
 
+Systemstate init_timer_already_called;
+init_timer_already_called = 0;
+global_functions{
+ init_timer{
+   if(init_timer_already_called) return 0;
+   init_timer_already_called = 1;
+   static_for(e:root.cycles_list.content()){
+     start_periodic_timer( (hd(e) / 1000.0 ) *s, as_symbol("ev_"+text(hd(e))+"_ms_elapsed","Event") );
+   }
+ };
+};
+
 
 static_for(e:root.frame_group){
  sm{
    as_identifier("sender_"+text(e.can_node.content()));
+   cover{edges_upto_1;};
+   states{
+     Initial;     
+   };
+   on_enter{
+     init_timer();
+   };
+
    Actions{
-     static_for(ee:e.send_frames.interval_group){
-       
-       //make_struct("do_"+text(ee.interval.content() ),
-        val c = root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content().size();
-        if (c==1) make_struct("do_"+text(ee.interval.content() ), 
-         hd(root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content())
+     static_for(ee:e.send_frames.interval_group){       
+       make_struct("do_"+text(ee.interval.content() ), 
+         root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content()
         );
-        if (c>1) make_struct("do_"+text(ee.interval.content() ), 
-         hd(root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content()),
-         tail(root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content())
-        );
-           
-       //);
-       //root.select("do_"+text(ee.interval.content()+"_"+text(e.can_node.content())+"_" ).content());
      }
    };
+   static_for(ee:e.send_frames.interval_group){
+     t{Initial;
+       Initial;
+       as_symbol("ev_"+text(ee.interval.content())+"_ms_elapsed","Event");
+       as_identifier("do_"+text(ee.interval.content()));
+    };
+   }
  };
 }
 
 
-
-if(0){
 
 //Extract signals from msg pool
 static_for(e:root.dbc_msg_pool.sig){
@@ -197,9 +212,13 @@ static_for(e:root.dbc_msg_pool){
       static_for(sig : e.sig.sort("start")){
         val content = as_symbol(text(sig.name.content()),"Systemstate");
         val type = "uint"+text(sig.width.content());
-        make_struct(type,
+        in{make_struct(type,
          content            
-        );     
+        ); };
+        out{make_struct(type,
+         content            
+        ); };
+        
         if (!last){
            val first_free_bit_after = strip(sig.start.content()) + strip(sig.width.content());
            val next_occupied_bit = strip(next.start.content());
@@ -293,29 +312,6 @@ static_for(e:root.dbc_import_internal_sender_list3.content()){
     };
     };
  }
-}
-
-
-/*static_for(e:root.dbc_msg_pool){
-    if (text(e.sender.content()) != "Vector__XXX"){
-     static_for(ee: root.dbc_import_internal_sender_info){
-      
-      static_for(eee: ee.msgs.content().sort().unique()){
-         
-        if( text(eee) == text(e.canid.content()) ){
-            send_periodically2{as_identifier(text(ee.id.content())+"_out");e.id.content();0.25*s;text(ee.id.content())+"__"+text(e.id.content())+"_out";};            
-        }
-      }  
-     }
-     send_periodically{as_identifier(text(e.sender.content())+"_out");e.id.content();0.25*s;};
-    }
-}*/
-
-/*static_for(e:root.frame_tiggering_generated_by_fibex_import.entry){
-    send_periodically{e.sender_id.content();e.frame_id.content();0.25*s;};    
-
-}*/
-
 }
 
 
