@@ -1,0 +1,321 @@
+
+
+//Create pool of messages
+
+"OUTPUT";
+
+if(!use_all_frames){ //Specified subset of availabe send messages
+  static_for(spec_msg:root.used_frames.content()){
+    static_for(e:root.dbc_msg){
+    //TP removed .content()
+    /* X.content() returns the content of all nodes in the node set denoted ny X:
+       
+     Given: 
+       
+     A{1;};
+     A{2;};
+     A{3;};
+       
+     static_for(e:root.A.content()) {e}
+       
+     results in:
+       
+     1;2;3;
+       
+     static_for(e:root.A) {e}
+       
+     results in:
+       
+       
+     A{1;};
+     A{2;};
+     A{3;};
+    */
+      //TP print(e.id.content(), hd(spec_msg), "\n");
+      //TP print is not evaluated at compile time, and will be ignored in any later phase.
+      
+      if(text(hd(e.id.content())) == text(spec_msg)){ 
+        dbc_msg_pool{
+          e.content();
+        };
+      };
+    };
+  };
+
+}
+else //All available messages.
+{ 
+  static_for(e:root.dbc_msg){
+    dbc_msg_pool{
+      e.content();
+    };
+  };
+  
+}
+
+"EXPECTED";
+xxxframe_group{
+ can_node{channel1;};
+ send_frames{
+   interval_group{
+     interval{500;};
+     frames{"myframe";};
+   };
+   interval_group{
+     interval{1000;};
+     frames{"yourframe";};
+   };
+ };  
+};
+
+static_for(e:root.dbc_msg_pool){
+  val h = text(e.sender.content());
+  make_struct("__msgs_by_sender_"+h,text(e.id.content()));
+}
+
+sender_list_temp{
+  static_for(e:root.dbc_msg_pool){
+   val h = text(e.sender.content());
+   h;
+  }
+};
+sender_list{
+  root.sender_list_temp.content().sort().unique();     
+};
+
+cycles_temp{
+  static_for(e:root.dbc_cycle_def){
+    e.interval.content();
+  }
+};
+
+cycles_list{
+  root.cycles_temp.content().sort().unique();     
+};
+
+static_for(e:root.dbc_cycle_def){
+ make_struct("cycle_"+text(e.interval.content()),hd(e.canid.content()) );   
+}
+
+static_for(e:root.dbc_msg_pool){
+  make_struct("canid2id_"+text(e.canid.content()),text(e.id.content()));   
+}
+
+
+"IS";
+static_for(e: root.sender_list.content()){
+ frame_group{
+  can_node{e;};
+  send_frames{
+    static_for(ee:root.cycles_list.content()){
+      interval_group{
+        interval{ee;};
+        frames{
+          static_for(eee:root.select("cycle_"+text(ee)).content()){
+            val z = text(root.select("canid2id_"+text(eee)).content());
+            static_for(ee: root.select("__msgs_by_sender_"+text(e)).content()){
+             if(text(ee)==z) z;
+            }
+          }
+        };
+      };
+    }
+
+    /*interval_group{
+      interval{0.1;};
+      frames{
+        static_for(ee: root.select("__msgs_by_sender_"+text(e)).content()){
+          ee;
+        }
+      };
+    };*/
+
+
+  };
+ };
+}
+
+static_for(e:root.frame_group){
+     static_for(ee:e.send_frames.interval_group){
+       static_for(eee:ee.frames.content()){
+       make_struct("do_"+text(ee.interval.content())+"_"+text(e.can_node.content()),
+       send(as_identifier(eee),as_identifier( text(e.can_node.content()) +"_out") ) );
+       }
+     }
+}
+
+
+static_for(e:root.frame_group){
+ sm{
+   as_identifier("sender_"+text(e.can_node.content()));
+   Actions{
+     static_for(ee:e.send_frames.interval_group){
+       
+       //make_struct("do_"+text(ee.interval.content() ),
+        val c = root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content().size();
+        if (c==1) make_struct("do_"+text(ee.interval.content() ), 
+         hd(root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content())
+        );
+        if (c>1) make_struct("do_"+text(ee.interval.content() ), 
+         hd(root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content()),
+         tail(root.select("do_"+text(ee.interval.content())+"_"+text(e.can_node.content())).content())
+        );
+           
+       //);
+       //root.select("do_"+text(ee.interval.content()+"_"+text(e.can_node.content())+"_" ).content());
+     }
+   };
+ };
+}
+
+
+
+if(0){
+
+//Extract signals from msg pool
+static_for(e:root.dbc_msg_pool.sig){
+    as_symbol(text(e.name.content()),"Systemstate") = strip(e.min.content());
+    reg_as_symbol_with_global_scope(text(e.name.content()),"Systemstate");
+    constraints{
+      as_symbol(text(e.name.content()),"Systemstate") >= strip(e.min.content());
+      strip(e.max.content()) >= as_symbol(text(e.name.content()),"Systemstate");
+    };
+}
+
+//Build frames from msg pool
+static_for(e:root.dbc_msg_pool){
+    frame{
+     e.id;
+     comment{
+      root.select("dbc_signal_comment" + text(e.canid.content())).content();      
+     };
+     value_mappings{
+      root.select("dbc_value_description_mapping" + text(e.canid.content())).content();
+     };
+
+     data{
+      static_for(sig : e.sig.sort("start")){
+        val content = as_symbol(text(sig.name.content()),"Systemstate");
+        val type = "uint"+text(sig.width.content());
+        make_struct(type,
+         content            
+        );     
+        if (!last){
+           val first_free_bit_after = strip(sig.start.content()) + strip(sig.width.content());
+           val next_occupied_bit = strip(next.start.content());
+           val gap = next_occupied_bit - first_free_bit_after;
+           if (gap > 0){
+               make_struct("uint"+text(gap),0);               
+           }
+        }
+      }
+      
+     };
+    };
+}
+static_for(e:root.dbc_msg_pool){
+    static_for(h:root.select("dbc_value_description_mapping" + text(e.canid.content()))){
+        xpartition{
+            of{h.sig.name.content();};
+            static_for(entry:h.sig.entry){
+                {as_symbol(text(strip(h.sig.name.content())),"Systemstate") == strip(entry.index.content());as_identifier(strip(entry.value.content()));}
+            }
+        };
+    }
+}
+dbc_import_internal_sender_list1{
+  root.dbc_msg_pool.sender.content().sort().unique();     
+};
+
+dbc_import_internal_sender_list2{
+  root.dbc_import_internal_sender_list1.content();
+  root.dbc_sender_ofmsg.sender.content().sort().unique();  
+};
+
+dbc_import_internal_sender_list3{
+  root.dbc_import_internal_sender_list2.content().sort().unique();   
+};
+
+static_for(e:root.dbc_import_internal_sender_list3.content()){
+if (text(e) != "Vector__XXX"){
+ dbc_import_internal_sender_info{
+  id{as_identifier(text(e));};    
+  msgs{
+   static_for(f:root.dbc_msg_pool){
+     if (text(f.sender.content()) == text(e)){
+         f.canid.content();
+     }
+   }
+   static_for(ee:root.dbc_sender_ofmsg){
+    static_for(eee:ee.sender.content()){
+    if (text(eee) == text(e)){
+      ee.can_id.content();
+    }       
+    }
+   }
+ };
+ };
+}
+}
+
+
+dbc_import_internal_sender_list{
+  static_for(e:root.dbc_import_internal_sender_list1.content()){
+   if (text(e) != "Vector__XXX"){
+       e;
+   }    
+  }  
+};
+
+static_for(e:root.dbc_import_internal_sender_list3.content()){
+ if ( text(e) != "Vector__XXX") {
+    sender
+    {
+    id { as_identifier(text(e)+"_out"); };
+    transport {
+    canbus {
+        extended;
+        //bus_id { "vcan0"; };
+        can_id_mapping{
+         static_for(f:root.dbc_import_internal_sender_info){
+            if (text(f.id.content()) == text(e)){
+              static_for(g:f.msgs.content().sort().unique()){
+                 static_for(msg:root.dbc_msg_pool){                     
+                     if (text(msg.canid.content()) == text(g)){
+                        msg.id.content();g; 
+                    }
+                }
+              }
+            }
+         }        
+        };
+    };
+    };
+    };
+ }
+}
+
+
+/*static_for(e:root.dbc_msg_pool){
+    if (text(e.sender.content()) != "Vector__XXX"){
+     static_for(ee: root.dbc_import_internal_sender_info){
+      
+      static_for(eee: ee.msgs.content().sort().unique()){
+         
+        if( text(eee) == text(e.canid.content()) ){
+            send_periodically2{as_identifier(text(ee.id.content())+"_out");e.id.content();0.25*s;text(ee.id.content())+"__"+text(e.id.content())+"_out";};            
+        }
+      }  
+     }
+     send_periodically{as_identifier(text(e.sender.content())+"_out");e.id.content();0.25*s;};
+    }
+}*/
+
+/*static_for(e:root.frame_tiggering_generated_by_fibex_import.entry){
+    send_periodically{e.sender_id.content();e.frame_id.content();0.25*s;};    
+
+}*/
+
+}
+
+
