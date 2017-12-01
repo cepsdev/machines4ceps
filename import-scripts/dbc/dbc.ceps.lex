@@ -105,6 +105,7 @@ BEGIN{
  VAL_ CAT_DEF_ => .
  VAL_ any ident => endl dbc_value_description_mapping$1{ sig{name{$2;}; call read_value_description_mapping }; }; endl.
  BO_TX_BU_ any : => dbc_sender_ofmsg{can_id{ double_quote $1 double_quote ; }; sender{call read_sender_list}; }; .
+ BA_DEF_DEF "GenMsgCycleTime" integer ; => dbc_default_cycle{$2} .
  BA_ "GenMsgCycleTime" BO_ integer integer ; => dbc_cycle_def{canid{double_quote $3 double_quote ;};interval{$4;};}; .
  any => .
 }

@@ -84,6 +84,7 @@ static_for(e:root.dbc_msg_pool){
   make_struct("canid2id_"+text(e.canid.content()),text(e.id.content()));   
 }
 
+
 static_for(e: root.sender_list.content()){
  frame_group{
   can_node{e;};
@@ -132,7 +133,7 @@ static_for(e:root.frame_group){
    as_identifier("sender_"+text(e.can_node.content()));
    cover{edges_upto_1;};
    states{
-     Initial;     
+     Initial;Paused;
    };
    on_enter{
      init_timer();
@@ -152,6 +153,8 @@ static_for(e:root.frame_group){
        as_identifier("do_"+text(ee.interval.content()));
     };
    }
+   t{Initial;Paused;as_symbol("ev_"+ text(e.can_node.content()) + "_sender_pause","Event");};
+   t{Paused;Initial;as_symbol("ev_"+ text(e.can_node.content()) + "_sender_continue","Event");};
  };
 }
 
