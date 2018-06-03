@@ -67,7 +67,7 @@
     <div class="row">
         <div class="col-xs-6 col-sm-2"></div>
         <div class="col-xs-6 col-sm-8">
-            <h2><span id="page_title">Control Panel</span></h2>
+            <h2><span id="page_title">State Machines</span></h2>
         </div>
         <div class="col-xs-6 col-sm-2"></div>
     </div>
@@ -80,20 +80,15 @@
                     <div class="panel-heading" style="background-color:white;">
                         <div class="btn-toolbar" role="toolbar">
                             <div class="btn-group btn-group-xs" role="group">
-                                <button id="ctrl_panel_editor_btn_add" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                                <!--button id="ctrl_panel_editor_btn_add" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button-->
                                 <!--button id="ctrl_panel_editor_btn_add_paragraph" type="button" class="btn btn-default btn-xs"><i class="fa fa-paragraph" aria-hidden="true"></i></button-->
                             </div>
                             <div class="btn-group btn-group-xs" role="group">
-                                <button id="ctrl_panel_editor_btn_save" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span></button>
-                                <button id="ctrl_panel_editor_btn_load" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></button>
+                                <!--button id="ctrl_panel_editor_btn_save" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span></button>
+                                <button id="ctrl_panel_editor_btn_load" type="button" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></button-->
                             </div>
                     </div>
-                    <div id="ctrl_panel_editor" class="panel-body">
-                        <div id ="d3_example">
-                            <input id="someCheckBox" type="checkbox" />
-                            <div id="infovizDiv">
-                            </div>
-                        </div>
+                    <div id="toplevel_sms" class="panel-body">
                     </div>
                 </div>
             </div>
@@ -1046,6 +1041,14 @@
                         let v = {};
                         simplifyceps2json(v,e);
                         console.log(v);
+                        for(let i = 0; i != v.sm.length;++i){
+                            $.get(v.sm[i].svg_filename,{},function(res){
+                                //console.log("Fetch "+v.sm[i].svg_filename);
+                                //console.log(res);
+                                $('#toplevel_sms').append("<div>"+res+"</div>");
+                            },"text");
+                            
+                        }
                         break;
                     }
                 }
