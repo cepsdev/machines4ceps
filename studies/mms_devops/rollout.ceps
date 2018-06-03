@@ -1,0 +1,20 @@
+kind Event;
+
+Event ev_step1_done,
+      ev_step2_done,
+      ev_step3_done,
+      ev_step4_done,
+      ev_step5_done;
+
+sm{
+ rollout;
+ states{Initial;Step1;Step2;Step3;Step4;Step5;Final;};
+ t{Initial;Step1;};
+ t{Step1;Step2;ev_step1_done;};
+ t{Step2;Step3;ev_step2_done;};
+ t{Step3;Step4;ev_step3_done;};
+ t{Step4;Step5;ev_step4_done;};
+ t{Step5;Final;ev_step5_done;};
+};
+
+sm{blabla;states{Initial;};};

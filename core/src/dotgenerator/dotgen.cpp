@@ -380,14 +380,29 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
       }//edge_display_properties
 	}//for
 
-	if (!result_cmd_line.dot_gen_one_file_per_top_level_statemachine){
+    if (!result_cmd_line.dot_gen_one_file_per_top_level_statemachine){
 	 std::ofstream o{"out.dot"};
      write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
      do_generate_dot_code(State_machine::statemachines,nullptr,highlight_states,dotgen,o);
 	} else {
+        auto meta_info = new ceps::ast::Struct{"__dot_gen"};
+        current_universe().nodes().push_back(meta_info);
+
 		for(auto s : statemachines() ){
+
+         std::string base_file_name = replace_all(s.first,".","__");
+
+         auto info = new ceps::ast::Struct{"sm"};
+         auto info_name = new ceps::ast::Struct{"name"};
+         auto svg_filename = new ceps::ast::Struct{"svg_filename"};
+
+         info->children().push_back(info_name);info->children().push_back(svg_filename);
+         svg_filename->children().push_back(new  String{base_file_name+".svg"});
+         info_name->children().push_back(new  String{s.first});
+
+         meta_info->children().push_back(info);
 		 std::map<std::string,State_machine*> m = { {s.first, s.second} };
-		 std::ofstream o{ replace_all(s.first,".","__")+".dot"};
+         std::ofstream o{ base_file_name+".dot"};
 	     write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
 	     do_generate_dot_code(m,nullptr,highlight_states,dotgen,o,true);
 		}

@@ -6,6 +6,8 @@
 #include <time.h>
 #include "core/include/base_defs.hpp"
 
+extern std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
+
 bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
 							std::string & func_name,
 							std::vector<ceps::ast::Nodebase_ptr>& args);
@@ -925,7 +927,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				 }
 				exec_action_timer(args,func_name == "start_periodic_timer");
 			}
-			else if (func_name == "print")
+            else if (func_name == "print")
 			{
 
 				for(auto& n : args) {
@@ -940,7 +942,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
                      for(auto c: seq){
                     	 ss << (int)c << " ";
                      }
-					} else ss << to_string(this,n);
+                    } else ss << default_text_representation(n);
                 }//for
                 if(live_logger()){
                    this->live_logger_out()->log_console(ss.str());

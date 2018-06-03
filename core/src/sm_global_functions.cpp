@@ -71,7 +71,15 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 return (this->*it->second)(id,args,active_smp);
 	 }
 	}
-	if (id == "as_id"){
+    if( id == "__append" ){
+        auto container = args[0];
+        auto elem = args[1];
+        if (container->kind() == ceps::ast::Ast_node_kind::structdef){
+            ceps::ast::as_struct_ptr(container)->children().push_back(elem);
+        }
+        return args[0];
+    }
+    else if (id == "as_id"){
 	 if (args.size() != 1 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) fatal_(-1,"as_id: illformed argument(s).");
      return new ceps::ast::Identifier(ceps::ast::value(ceps::ast::as_string_ref(args[0])));
 	}else if (id == "as_text"){
@@ -505,14 +513,14 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		#endif
 	}else if (id == "print"){
 
-		for(auto& n : args)
+        /*for(auto& n : args)
 		{
 			if (n->kind() == ceps::ast::Ast_node_kind::int_literal ||
 			    n->kind() == ceps::ast::Ast_node_kind::float_literal ||
 			    n->kind() == ceps::ast::Ast_node_kind::string_literal
 			    )std::cout << to_string(this,n);
 
-		}
+        }*/
 
 	} else if (id == "size") {
 		if (args[0]->kind() == ceps::ast::Ast_node_kind::byte_array)
