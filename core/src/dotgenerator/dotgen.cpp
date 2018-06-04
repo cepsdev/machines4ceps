@@ -179,7 +179,7 @@ void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,st
 void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,State_machine*> const & sms,
                                                          std::set<State_machine*>* expand,
                                                          std::set<int>& highlighted_states,
-														 Dotgenerator dotgen,
+                                                         Dotgenerator& dotgen,
                                                          std::ostream& o, bool toplevel_transparent){
     //expand = nullptr;
     int cluster_counter = 0;
@@ -204,9 +204,12 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
             return false;
         }
         dotgen.n2dotname[name] = "cluster"+std::to_string(cluster_counter);
+        dotgen.n2idx[name]  = sm->idx_;
         dotgen.sm2dotname[sm] = "cluster"+std::to_string(cluster_counter++);
         for(auto const& s:sm->states()) if (!s->is_sm_){
+
             dotgen.n2dotname[name+"."+s->id()] = "node"+std::to_string(pure_state_counter++)+"_is_"+s->id();
+            dotgen.n2idx[name+"."+s->id()]  = s->idx_;
             if (s->id() == "Initial" || s->id() == "initial") dotgen.sm2initial[sm] = dotgen.n2dotname[name+"."+s->id()];
         }
         return true;
@@ -406,6 +409,17 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 	     write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
 	     do_generate_dot_code(m,nullptr,highlight_states,dotgen,o,true);
 		}
+
+        auto states_info = new ceps::ast::Struct{"states"};
+        meta_info->children().push_back(states_info);
+        for (auto e : dotgen.n2dotname){
+            auto state_info= new Struct{"state",
+                                        new Struct{"full_name",new String{e.first}},
+                                        new Struct{"svg_id",new String{e.second}},
+                                        new Struct{"idx",new Int{dotgen.n2idx[e.first],ceps::ast::all_zero_unit()}}
+                };
+            states_info->children().push_back(state_info);
+        }
 	}
 }
 

@@ -394,8 +394,17 @@ static bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
         auto & sy = as_symbol_ref(n);
         s << "{ \"type\":\"symbol\",\"kind\":" << "\""<< kind(sy) << "\", \"name\":" <<"\""<< name(sy) << "\"}";
         return true;
+    } else if (n->kind() == Ast_node_kind::func_call){
+        s << "{ \"type\":\"func-call\"}";
+        return true;
     }
     return false;
+}
+static void rtrim(std::string& s){
+    if (s.length() == 0) return;auto i = s.length()-1;
+    for (;i >= 0 && std::isspace(s[i]);--i);
+    if (i == 0) s = {};
+    else s.erase(i+1);
 }
 
 class Execute_query : public sm4ceps_plugin_int::Executioncontext {
@@ -407,34 +416,51 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
     void  run(State_machine_simulation_core* ctxt){
       std::string r;
 
-      std::stringstream s;
-      s << query;
       try {
-       Ceps_parser_driver driver{ctxt->ceps_env_current().get_global_symboltable(),s};
-       ceps::Cepsparser parser{driver};
-       if (parser.parse() != 0 || driver.errors_occured()){
-         r = "{ \"ok\": false, \"reason\": \"\" }";
-       } else {
-         std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
-         ceps::interpreter::evaluate_without_modifying_universe(ctxt->current_universe(),
-                                  driver.parsetree().get_root(),
-                                  ctxt->ceps_env_current().get_global_symboltable(),
-                                  ctxt->ceps_env_current().interpreter_env(),
-                                  &generated_nodes
-                                  );
-         std::stringstream out;
-         for(std::size_t i = 0; i != generated_nodes.size();++i){
-             auto e = generated_nodes[i];
-             if (e) ceps2json(out,e);
-             if (1 + i != generated_nodes.size()) out << ",";
-         }
-         r = "{ \"ok\": true,";
-         r += " \"number_toplevel_nodes\":"+std::to_string(generated_nodes.size())+",";
-         r += " \"sresult\":["+out.str()+"]";
-         r += "}";
-         //std::cout << out.str() << std::endl;
-         //for(auto e : generated_nodes) delete e;
-       }
+          rtrim(query);
+          if (query == "root.__proc.current_states"){
+               std::stringstream s;
+               auto const& v = ctxt->executionloop_context().current_states;
+               std::size_t c = 0;for(std::size_t i = 0; i != v.size(); ++i) if (v[i]) ++c;
+
+               for(std::size_t i = 0; i != v.size(); ++i){
+                 if (!v[i]) continue;
+                 s << i;--c;if(c!=0) s <<",";
+               }
+               //std::cerr << s.str() << std::endl;
+               r = "{ \"ok\": true,";
+               r += " \"number_toplevel_nodes\":1,";
+               r += " \"sresult\":["+s.str()+"]";
+               r += "}";
+           } else {
+               std::stringstream s;
+               s << query;
+               Ceps_parser_driver driver{ctxt->ceps_env_current().get_global_symboltable(),s};
+               ceps::Cepsparser parser{driver};
+               if (parser.parse() != 0 || driver.errors_occured()){
+                 r = "{ \"ok\": false, \"reason\": \"\" }";
+               } else {
+                 std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
+                 ceps::interpreter::evaluate_without_modifying_universe(ctxt->current_universe(),
+                                          driver.parsetree().get_root(),
+                                          ctxt->ceps_env_current().get_global_symboltable(),
+                                          ctxt->ceps_env_current().interpreter_env(),
+                                          &generated_nodes
+                                          );
+                 std::stringstream out;
+                 for(std::size_t i = 0; i != generated_nodes.size();++i){
+                     auto e = generated_nodes[i];
+                     if (e) ceps2json(out,e);
+                     if (1 + i != generated_nodes.size()) out << ",";
+                 }
+                 r = "{ \"ok\": true,";
+                 r += " \"number_toplevel_nodes\":"+std::to_string(generated_nodes.size())+",";
+                 r += " \"sresult\":["+out.str()+"]";
+                 r += "}";
+                 //std::cout << out.str() << std::endl;
+                 //for(auto e : generated_nodes) delete e;
+            }
+           }
       }
       catch (ceps::interpreter::semantic_exception & se)
       {
