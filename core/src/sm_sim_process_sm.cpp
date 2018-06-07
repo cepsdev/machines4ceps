@@ -594,13 +594,35 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 
 
 
+  std::map<std::string,std::vector<std::string>> categorization;
+
   for (auto state : states)
   {
+     if (state.nodes().size() == 1 &&
+         state.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef &&
+             ceps::ast::name(ceps::ast::as_struct_ref(state.nodes()[0])) == "categories"){
+         auto & cat_defs = ceps::ast::as_struct_ref(state.nodes()[0]);
+         for (auto e : cat_defs.children()){
+             if (e->kind() != ceps::ast::Ast_node_kind::symbol) continue;
+              categorization[ceps::ast::name(ceps::ast::as_symbol_ref(e))].push_back(ceps::ast::kind(ceps::ast::as_symbol_ref(e)));
+         }
+         continue;
+     }
 	 if (state.nodes().size() != 1 || state.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-		 fatal_(-1,"State machine '"+id+"': Definition of states: Illformed expression: expected an unbound identifier, got: "
-				 + ceps::ast::ast_node_kind_to_text[(int)state.nodes()[0]->kind()] );
+         continue;
+         //fatal_(-1,"State machine '"+id+"': Definition of states: Illformed expression: expected an unbound identifier, got: "
+        //		 + ceps::ast::ast_node_kind_to_text[(int)state.nodes()[0]->kind()] );
      current_statemachine->insert_state( State_machine::State( name(as_id_ref(state.nodes()[0])) ) );
   }
+  //for(auto e : categorization)
+  //    for (auto ee : e.second) std::cerr << e.first << " " << ee << std::endl;
+
+  for(auto s:current_statemachine->states()){
+      auto it = categorization.find(s->id());
+      if (it == categorization.end() ) continue;
+      s->categories() = it->second;
+  }
+
   process_statemachine_helper_handle_transitions(current_statemachine,current_statemachine->transitions(),id,sm_definition,anonymous_guard_ctr,is_abstract);
 
   if (join.size())

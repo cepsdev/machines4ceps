@@ -1,0 +1,9 @@
+Simulation{
+Start{
+ static_for(e:root.rollout){
+  static_for(market:e.markets.content()){
+   market.content();   
+  }
+ }
+};
+};

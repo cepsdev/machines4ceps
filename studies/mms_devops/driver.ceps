@@ -1,3 +1,37 @@
+Event ev_time_elapsed;
+Event ev_reset_scenario1;
+
+sm{scenario1;
+ states{Initial;s1;s2;s3;s4;s5;s6;};
+ on_enter{start_timer(10.0*s,ev_time_elapsed);};
+ Actions{
+  a{
+   ev_step1_done;start_timer(5.0*s,ev_time_elapsed);
+  };
+  b{
+   ev_step2_done;start_timer(5.0*s,ev_time_elapsed);
+  };
+  c{
+   ev_step3_done;start_timer(5.0*s,ev_time_elapsed);
+  };
+  d{
+   ev_step4_done;start_timer(5.0*s,ev_time_elapsed);
+  };
+  e{
+   ev_step5_done;start_timer(5.0*s,ev_time_elapsed);
+  };
+  f{start_timer(10.0*s,ev_time_elapsed);};
+  
+ };
+ t{Initial;s1;};
+ t{s1;s2;ev_time_elapsed;a;};
+ t{s2;s3;ev_time_elapsed;b;};
+ t{s3;s4;ev_time_elapsed;c;};
+ t{s4;s5;ev_time_elapsed;d;};
+ t{s5;s6;ev_time_elapsed;e;};
+ t{s6;Initial;ev_reset_scenario1;f;};
+};
+
 Simulation{
- Start{rollout;};
+ Start{rollout;scenario1;fail_ex;warn_ex;};
 };

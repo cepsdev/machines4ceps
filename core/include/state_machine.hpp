@@ -109,15 +109,17 @@ public:
   bool visited_flag = false;
 
   struct State{
-	std::string id_;
-	state_rep_t shadow = {};
+    std::string id_;
+    state_rep_t shadow = {};
     bool is_sm_ = false;
     State_machine* smp_ = nullptr;
     State_machine* parent_ = nullptr;
     std::vector<std::string> q_id_;
     bool unresolved_ = false;
-	int idx_= 0;
-	bool dont_cover_ = false;
+    int idx_= 0;
+    bool dont_cover_ = false;
+    std::vector<std::string> categories_;
+
 
 
 
@@ -162,6 +164,9 @@ public:
     {
       return id() > rhs.id();
     }
+
+    decltype(categories_) & categories() {return categories_;}
+    decltype(categories_)const & categories() const {return categories_;}
   };
 
   struct Transition{

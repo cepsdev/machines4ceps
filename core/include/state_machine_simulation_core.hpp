@@ -427,6 +427,7 @@ public:
 	type_definitions_t & type_definitions() {return type_definitions_;}
 	state_rep_t resolve_state_or_transition_given_a_qualified_id(ceps::ast::Nodebase_ptr p, State_machine* parent,int* transition_number = nullptr);
 	state_rep_t resolve_state_qualified_id(std::string compound_id, State_machine* parent);
+        State_machine::State* find_state(std::string compound_id, State_machine* parent = nullptr);
 
 
 	void process_statemachine_helper_handle_transitions(

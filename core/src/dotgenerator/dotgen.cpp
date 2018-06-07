@@ -417,7 +417,16 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
                                         new Struct{"full_name",new String{e.first}},
                                         new Struct{"svg_id",new String{e.second}},
                                         new Struct{"idx",new Int{dotgen.n2idx[e.first],ceps::ast::all_zero_unit()}}
-                };
+            };
+            auto state = find_state(e.first);
+            if (state && state->categories().size()){
+                auto ceps_cats = new Struct{"categories"};
+                for(auto e:state->categories()){
+                    auto ceps_cat = new Struct{"category",new String{e}};
+                    ceps_cats->children().push_back(ceps_cat);
+                }
+                state_info->children().push_back(ceps_cats);
+            }
             states_info->children().push_back(state_info);
         }
 	}

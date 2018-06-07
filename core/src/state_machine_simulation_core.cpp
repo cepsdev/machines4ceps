@@ -425,6 +425,35 @@ std::string State_machine_simulation_core::get_full_qualified_id(State_machine::
 	return get_fullqualified_id(sr);
 }
 
+
+State_machine::State* State_machine_simulation_core::find_state(std::string compound_id, State_machine* parent){
+    using namespace ceps::ast;
+    if (compound_id.length() == 0) return nullptr;
+    if (compound_id.find_first_of('.') == std::string::npos){
+     if(parent == nullptr) return nullptr;
+     else
+      for(auto p: parent->states()){
+           if (p->id() == compound_id) return p;
+      }
+    } else {
+     auto pos = compound_id.find_first_of('.');
+     auto base_id = compound_id.substr(0,pos);
+     auto rest = compound_id.substr(pos+1);
+     if (parent == nullptr){
+      auto it = State_machine::statemachines.find(base_id);
+      if (it == State_machine::statemachines.end()) return nullptr;
+      return find_state(rest, it->second);
+     }
+     for(auto const & c : parent->children())
+      if (c->id_ == base_id) return find_state(rest, c);
+     for(auto p: parent->states()){
+      if (!p->is_sm_) continue;
+      if (p->id_ == base_id) return find_state(rest, p->smp_);
+     }
+    }
+    return nullptr;
+}
+
 state_rep_t State_machine_simulation_core::resolve_state_qualified_id(std::string compound_id, State_machine* parent)
 {
  using namespace ceps::ast;
