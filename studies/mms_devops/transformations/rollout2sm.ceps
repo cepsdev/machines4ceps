@@ -2,18 +2,80 @@ kind Event;
 Event success;
 Event start_rollout;
 
+
 static_for(e:root.rollout){
  static_for(market:e.markets.content()){
   sm{
+   val market_name = text(market.content()); 
    market.content();
-   states{Initial;Final; e.steps.content();};
-   t{Initial; e.steps.content().first();start_rollout;};
-   val prev=e.steps.content().first();
-   static_for(step:tail(e.steps.content())){
-    t{prev;step;success;};
-    ignore_value{prev = step;};
+   states { Initial;
+            Final; 
+            e.steps.content();
+            static_for(step : e.steps.content()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};
+            categories{
+              static_for(step : e.steps.content()){as_symbol(text(step)+"_critical","WarnState");};
+              static_for(step : e.steps.content()){as_symbol(text(step)+"_error","FailState");};
+            };
+          };
+   
+   t {  
+      Initial; 
+      e.steps.content().first();
+      as_symbol("start_rollout_"+market_name,"Event");        
+     };
+
+   val prev = e.steps.content().first();
+
+   static_for( step:tail(e.steps.content()) ) {
+    t {
+      prev;
+      as_identifier(text(prev)+"_error");
+      as_symbol(market_name+text(prev)+"_failed","Event");
+    };
+    t {
+      prev;
+      as_identifier(text(prev)+"_critical");
+      as_symbol(market_name+text(prev)+"_critical","Event");
+    };
+    t {
+      as_identifier(text(prev)+"_critical");
+      as_identifier(text(prev)+"_error");
+      as_symbol(market_name+text(prev)+"_failed","Event");
+    };
+    t {
+      as_identifier(text(prev)+"_critical");
+      step;
+      as_symbol(market_name+text(prev)+"_finished","Event");
+    };
+
+    t { prev;
+        step;
+        as_symbol(market_name+text(prev)+"_finished","Event");
+    };
+    
+    ignore_value { prev = step; };
    };
-   t{prev;Final;success;};
+   t {
+      prev;
+      as_identifier(text(prev)+"_critical");
+      as_symbol(market_name+text(prev)+"_critical","Event");
+    };
+   t {
+      as_identifier(text(prev)+"_critical");
+      as_identifier(text(prev)+"_error");
+      as_symbol(market_name+text(prev)+"_failed","Event");
+    };
+   t {
+      prev;
+      as_identifier(text(prev)+"_error");
+      as_symbol(market_name+text(prev)+"_failed","Event");
+    };
+   t {
+      as_identifier(text(prev)+"_critical");
+      Final;
+      as_symbol(market_name+text(prev)+"_finished","Event");
+     };
+   t { prev;Final;as_symbol(market_name+text(prev)+"_finished","Event"); };
  };
  }
 }

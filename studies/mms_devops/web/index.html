@@ -1061,18 +1061,33 @@
 
 
         let states_info = {
+            /*
+            states : [{
+                       full_name:"fullqualified state id, e.g. a.b.c.d", 
+                       svg_id:"Technical Id of this state's svg representation",
+                       idx : "Numerical id"
+                      }
+                     ],
+            states_per_sm : {
+                sm1 : [1,2,3],
+                sm2 : [4,5,6]
+            }
+            */
             
         };
         let callback_proc_consumer = function () {};
         let svgs = [];
         let consumed_events = {};
         let layout_info = {
-            sm_widget_tile : {width:156, height:73,outter_width:160, outter_height:100}
+            sm_widget_tile : {width:156, height:73,outter_width:160, outter_height:100},
+            sm_minimized : {width:166, height:23,outter_width:120, outter_height:40}
         };
 
+        let components = {};
+
         function find_sm_node_id_by_idx(idx){
-            for(let i = 0; i!=states_info.states[0].state.length;++i){
-                let e = states_info.states[0].state[i];
+            for(let i = 0; i!=states_info.states.length;++i){
+                let e = states_info.states[i];
                 if (e.idx == idx) return e.svg_id;
             }
 
@@ -1139,7 +1154,16 @@
             console.log(p);
         }
 
-        function html_gen_sm_widget(title,content,as_tile) {
+        function change_lane_of_sm_view(sm_name,current_lane,new_lane){
+            states_info.lane[sm_name] = new_lane;
+            let e = $(`#sm_viz_${sm_name}`);
+            e.remove();
+            $(new_lane).append(e);
+        }  
+
+
+
+        function html_gen_sm_widget(title,content,as_tile,minimized) {
             if (as_tile){
                return `    
                <div class="panel panel-primary sm_viz ceps-ui-tile" id="sm_viz_${title}" 
@@ -1181,6 +1205,25 @@
                </div>`;
                         
             }
+            if (minimized){
+
+                content =`
+<table style="width:80%;">
+<tr><td style="vertical-align:top;" >ghghh</td><td>
+<div class="progress">
+  <div style="width:45%;" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" >
+    <span >45% Complete</span>
+  </div>
+</div></td></tr></table>
+                `;
+
+                return `    
+               <div>
+                    
+                            ${content}
+               </div>`;
+                
+            }
             return `    <div class="panel panel-primary sm_viz" id="sm_viz_${title}" >
                             <div class="panel-heading">${title}</div>
                             <div class="panel-body">${content}</div>
@@ -1195,20 +1238,85 @@
                 //console.log(node_id);
                 d3.select(`#${node_id}`).style("fill","green").style("stroke","green");
             }
-        }        
+        }
+
+        
+
+        function get_sm(idx){
+            if (states_info.states == undefined) return;
+            let sinfo = undefined;
+            for (let i = 0; i!=states_info.states.length;++i){
+                if (states_info.states[i].idx == idx) {sinfo = states_info.states[i];break;}
+            }
+            if (sinfo == undefined) {                
+                return undefined;
+            }
+            let full_name = sinfo.full_name;
+            if(sinfo.svg_id.startsWith("cluster")) return full_name;
+            return full_name.substring(0,full_name.lastIndexOf("."));
+        }
+
+        function get_sms_with_changes(old_states,new_states){
+            sms_changed = {};
+            //INVARIANT old_states,new_states are already sorted(in ascending order) integer arrays
+            if (old_states.length == 0 && new_states.length == 0) return; //nothing todo here
+            if (new_states.length == 0 || old_states.length == 0){
+                let v = new_states;
+                if (new_states.length == 0) v = old_states;
+                for(let i = 0; i != v.length; ++i){
+                    sms_changed[get_sm(v[i])] = 1;
+                }
+            }
+            //console.log(old_states);
+            let v1 = old_states;
+            let v2 = new_states;
+            let j = 0;let i = 0;
+            for(; i != v1.length && j != v2.length;++i){
+                if (v1[i] == v2[j]) ++j;
+                else if (v1[i] < v2[j]) sms_changed[get_sm(v1[i])] = 1;
+                else /*v1[i] > v2[j]*/ {++j;--i;}
+            }
+            if (i < v1.length) {
+                for(; i != v1.length;++i) sms_changed[get_sm(v1[i])] = 1;
+            }
+            v2 = old_states;
+            v1 = new_states;
+            j = 0;i = 0;
+            for(; i != v1.length && j != v2.length;++i){
+                if (v1[i] == v2[j]) ++j;
+                else if (v1[i] < v2[j]) sms_changed[get_sm(v1[i])] = 1;
+                else /*v1[i] > v2[j]*/ {++j;--i;}
+            }
+            if (i < v1.length) {
+                for(; i != v1.length;++i) sms_changed[get_sm(v1[i])] = 1;
+            }        
+            return sms_changed;
+        }
 
         function start_ceps_proc_consumer(ws){
             function h(ev){
                 let msg = JSON.parse(ev.data);
+                if (states_info.active_states != undefined) {
+
+                    let sms_changed = get_sms_with_changes(states_info.active_states,msg.sresult);
+
+                    for(let sm in sms_changed){
+                        let new_lane = get_sm_lane(sm,msg.sresult);
+                        
+                        if (new_lane != states_info.lane[sm])
+                         change_lane_of_sm_view(sm,states_info.lane[sm],new_lane);    
+                        states_info.lane[sm] = new_lane;                    
+                    }
+                   
+                }
                 states_info.active_states = msg.sresult;
-                //console.log(states_info.active_states);
                 callback_proc_consumer();                       
             }
             ws.addEventListener("message", h);
             setInterval(
                 function () {
                  ws.send("QUERY root.__proc.current_states");                       
-                }, 250);            
+                }, 200);            
         }
 
         function on_change_input_search_statemachines(){          
@@ -1218,8 +1326,8 @@
             for(let i = 0; i != s.length; ++i){
                 if (s[i].length == 0) continue;
                 search_empty = false;
-                for(let j = 0; j!=states_info.states[0].state.length;++j) {
-                    let e = states_info.states[0].state[j];
+                for(let j = 0; j!=states_info.states.length;++j) {
+                    let e = states_info.states[j];
                     if (e.full_name.indexOf(s[i]) == -1) continue;
                     let ss = e.full_name.split(".");
                     r[ss[0]] = 1;                    
@@ -1366,58 +1474,59 @@
             return states_info.states_per_sm[sm_name];
         }
 
-        function is_sm_active(sm_name){            
+        function is_sm_active(sm_name,active_states){            
             let v = get_all_states_of_sm(sm_name);
             
-            for(let i = 0; i != states_info.active_states.length; ++i ){
+            for(let i = 0; i != active_states.length; ++i ){
                 for(let j = 0; j != v.length; ++j){
-                    if (states_info.active_states[i] == v[j]) return true;
+                    if (active_states[i] == v[j]) return true;
                 }
             }
             return false;     
         }
 
-        function is_in_final_state(sm_name){
+        function is_in_final_state(sm_name,active_states){
             get_all_states_of_sm(sm_name);
             let v = states_info.toplevel_final_states_per_sm[sm_name];
-            for(let i = 0; i != states_info.active_states.length; ++i ){
+            //if (sm_name == "trigger_m001"){ console.log("is_in_final_state: ",v,states_info.active_states);}
+            for(let i = 0; i != active_states.length; ++i ){
                 for(let j = 0; j != v.length; ++j){
-                    if (states_info.active_states[i] == v[j]) return true;
+                    if (active_states[i] == v[j]) {return true;}
                 }
             }
             return false;
         }
 
-        function is_in_fail_state(sm_name){
+        function is_in_fail_state(sm_name,active_states){
             get_all_states_of_sm(sm_name);
             let v = states_info.fail_states_per_sm[sm_name];
-            for(let i = 0; i != states_info.active_states.length; ++i ){
+            for(let i = 0; i != active_states.length; ++i ){
                 for(let j = 0; j != v.length; ++j){
-                    if (states_info.active_states[i] == v[j]) return true;
+                    if (active_states[i] == v[j]) return true;
                 }
             }
             return false;
         }
 
-        function is_in_warn_state(sm_name){
+        function is_in_warn_state(sm_name,active_states){
             get_all_states_of_sm(sm_name);
             let v = states_info.warn_states_per_sm[sm_name];
-            for(let i = 0; i != states_info.active_states.length; ++i ){
+            for(let i = 0; i != active_states.length; ++i ){
                 for(let j = 0; j != v.length; ++j){
-                    if (states_info.active_states[i] == v[j]) return true;
+                    if (active_states[i] == v[j]) return true;
                 }
             }
             return false;
         }
 
-        function is_sm_in_initial_only(sm_name){
+        function is_sm_in_initial_only(sm_name,active_states){
             let all_states = get_all_states_of_sm(sm_name);
             let v = states_info.initial_states_per_sm[sm_name];
             //console.log(all_states);console.log(v);
             
-            for(let i = 0; i != states_info.active_states.length; ++i ){
+            for(let i = 0; i != active_states.length; ++i ){
                 for(let j = 0; j != all_states.length; ++j){
-                    if (states_info.active_states[i] != all_states[j]) continue;
+                    if (active_states[i] != all_states[j]) continue;
                     let b = false;
                     for(let k = 0; k!=v.length;++k ){
                         if (v[k] == all_states[j]) {b = true;break;}
@@ -1433,14 +1542,78 @@
             return true;
         }
 
-        function get_sm_lane(sm_name){
-            if (!is_sm_active(sm_name)) return $('#toplevel_sms_inactive');
-            if (is_sm_in_initial_only(sm_name)) return $('#toplevel_sms_inactive');
-            if (is_in_fail_state(sm_name)) return $("#toplevel_sms_in_error_state");
-            if (is_in_warn_state(sm_name)) return $("#toplevel_sms_in_warn_state");
-            if (is_in_final_state(sm_name)) return $("#toplevel_sms_in_final_state");
-            return $('#toplevel_sms');
+        function get_sm_lane(sm_name,active_states){
+            if (!is_sm_active(sm_name,active_states)) return '#toplevel_sms_inactive';
+            if (is_sm_in_initial_only(sm_name,active_states)) return '#toplevel_sms_inactive';
+            if (is_in_fail_state(sm_name,active_states)) return "#toplevel_sms_in_error_state";
+            if (is_in_warn_state(sm_name,active_states)) return "#toplevel_sms_in_warn_state";
+            if (is_in_final_state(sm_name,active_states)) return "#toplevel_sms_in_final_state";
+            return '#toplevel_sms';
         }
+
+        function setup_tile(tile_scale,sm_name,svg_orig_width,svg_orig_height){                               
+
+            d3_util_scale(d3.select(`#sm_viz_${sm_name}`).select("svg").select("g"),tile_scale,tile_scale);
+
+            $(`#sm_viz_container_parent_div_${sm_name}`).mouseenter(
+                                    function(ev){
+                                        if (!$(`#sm_viz_${sm_name}`).hasClass("ceps-ui-tile")) return;
+                                        if (tile_scale < 1.0) {
+                                            new_tile_scale = tile_scale * 5.0;
+                                            if (new_tile_scale > 1.0) new_tile_scale = 1.0;
+                                            d3_util_scale(d3.select(`#sm_viz_${sm_name}`).select("svg").select("g"),new_tile_scale,new_tile_scale);
+                                        }                                        
+                                    }
+            );
+
+            $(`#sm_viz_container_parent_div_${sm_name}`).mouseleave(
+                function(ev){
+                    if (!$(`#sm_viz_${sm_name}`).hasClass("ceps-ui-tile")) return;
+                    let sm_viz_container = $(`#sm_viz_container_${sm_name}`);
+                    d3_util_scale(d3.select(`#sm_viz_${sm_name}`).select("svg").select("g"),tile_scale,tile_scale);
+                    sm_viz_container.css("top",0);
+                    sm_viz_container.css("left",0);
+                }
+            );                                
+                                
+            $(`#sm_viz_container_parent_div_${sm_name}`).mousemove(
+                function(ev){
+                    if (!$(`#sm_viz_${sm_name}`).hasClass("ceps-ui-tile")) return;
+                    let sm_viz_container = $(`#sm_viz_container_${sm_name}`);
+                    let w_pic = svg_orig_width * new_tile_scale;
+                    let h_pic = svg_orig_height * new_tile_scale;
+
+                    let w_parent = $(`#sm_viz_container_parent_div_${sm_name}`).width();
+                    let h_parent = $(`#sm_viz_container_parent_div_${sm_name}`).height();
+
+                    let m_pos_y = ev.pageY - $(`#sm_viz_container_parent_div_${sm_name}`).offset().top;
+                    let m_pos_x = ev.pageX - $(`#sm_viz_container_parent_div_${sm_name}`).offset().left;
+
+                    if (m_pos_y + 4 > h_parent) m_pos_y = h_parent;
+                    if (m_pos_x + 4 > w_parent) m_pos_x = w_parent;
+                                        
+                    if (m_pos_y > h_parent) m_pos_y = h_parent;
+                    if (m_pos_x > w_parent) m_pos_x = w_parent;
+                                      
+                    let sy = m_pos_y / h_parent; if (sy > 1.0) sy = 1.0;
+                    let sx = m_pos_x / w_parent; if (sx > 1.0) sx = 1.0;
+                                        
+                    let pos_in_pic_y = sy * h_pic ;// * h_pic;
+                    let pos_in_pic_x = sx * w_pic;
+                                        
+                    let dy = -(pos_in_pic_y - m_pos_y);
+                    if (dy + h_pic < h_parent) dy = h_parent - h_pic;
+                    if (dy >= 0) dy = 0;
+                    sm_viz_container.css("top",  dy);
+                                        
+                    let dx = -(pos_in_pic_x - m_pos_x);
+                    if (dx + w_pic < w_parent) dx = w_parent - w_pic;
+                    if (dx >= 0) dx = 0;
+                    sm_viz_container.css("left",  dx);                                  
+                    }
+                );
+        }
+
 
         function fetch_sm_svgs_from_simcore(ws) {
             function h(ev) {
@@ -1468,12 +1641,18 @@
                         console.log(v);
                         let svgs_to_load = v.sm.length;
                         states_info.states = v.states[0].state;
+                        console.log("states_info.states",states_info.states);
                         for(let i = 0; i != v.sm.length;++i){
                             $.get(v.sm[i].svg_filename,{},function(res){
 
-                                get_sm_lane(v.sm[i].name).append(html_gen_sm_widget(v.sm[i].name,res,true));
+                                let lane = undefined;
 
-                                let svg_orig_height = parseFloat(d3.select(`#sm_viz_${v.sm[i].name}`).select("svg").style("height"));
+                                $(lane = get_sm_lane(v.sm[i].name,states_info.active_states)).append(html_gen_sm_widget(v.sm[i].name,/*res*/"",false,true));
+
+                                if (states_info.lane == undefined) states_info.lane={};
+                                states_info.lane[v.sm[i].name] = lane;
+
+                                /*let svg_orig_height = parseFloat(d3.select(`#sm_viz_${v.sm[i].name}`).select("svg").style("height"));
                                 let svg_orig_width = parseFloat(d3.select(`#sm_viz_${v.sm[i].name}`).select("svg").style("width"));
 
                                 let svg_scale_y = layout_info.sm_widget_tile.height / svg_orig_height;
@@ -1484,86 +1663,12 @@
                                 if (svg_scale_x >= 1.0) {svg_scale_x = 1.0;svg_scale_y = 1.0;}
                                 if (svg_scale_y >= 1.0) {svg_scale_x = 1.0;svg_scale_y = 1.0;}
                                 let tile_scale = svg_scale_x; if (tile_scale < 0.1)tile_scale = 0.1;
-                                let new_tile_scale = tile_scale;
+                                let new_tile_scale = tile_scale;*/
 
-                                d3_util_scale(d3.select(`#sm_viz_${v.sm[i].name}`).select("svg").select("g"),tile_scale,tile_scale);
+                                components[v.sm[i].name] = {};
+                                components[v.sm[i].name].setup_tile = function(){setup_tile(tile_scale,v.sm[i].name,svg_orig_width,svg_orig_height);}
 
-                                $(`#sm_viz_container_parent_div_${v.sm[i].name}`).mouseenter(
-                                    function(ev){
-                                        if (!$(`#sm_viz_${v.sm[i].name}`).hasClass("ceps-ui-tile")) return;
-                                        if (tile_scale < 1.0) {
-                                            new_tile_scale = tile_scale * 5.0;
-                                            if (new_tile_scale > 1.0) new_tile_scale = 1.0;
-                                            d3_util_scale(d3.select(`#sm_viz_${v.sm[i].name}`).select("svg").select("g"),new_tile_scale,new_tile_scale);
-                                        }                                        
-                                    }
-                                );
-
-                                $(`#sm_viz_container_parent_div_${v.sm[i].name}`).mouseleave(
-                                    function(ev){
-                                        if (!$(`#sm_viz_${v.sm[i].name}`).hasClass("ceps-ui-tile")) return;
-                                        let sm_viz_container = $(`#sm_viz_container_${v.sm[i].name}`);
-                                        d3_util_scale(d3.select(`#sm_viz_${v.sm[i].name}`).select("svg").select("g"),tile_scale,tile_scale);
-                                        sm_viz_container.css("top",0);
-                                        sm_viz_container.css("left",0);
-                                    }
-                                );
-                                
-                                
-                                $(`#sm_viz_container_parent_div_${v.sm[i].name}`).mousemove(
-                                    function(ev){
-                                        if (!$(`#sm_viz_${v.sm[i].name}`).hasClass("ceps-ui-tile")) return;
-                                        let sm_viz_container = $(`#sm_viz_container_${v.sm[i].name}`);
-                                        let w_pic = svg_orig_width * new_tile_scale;
-                                        let h_pic = svg_orig_height * new_tile_scale;
-
-                                        let w_parent = $(`#sm_viz_container_parent_div_${v.sm[i].name}`).width();
-                                        let h_parent = $(`#sm_viz_container_parent_div_${v.sm[i].name}`).height();
-
-                                        //if (w_parent > sm_viz_container.width())w_parent = sm_viz_container.width();
-                                        
-                                        let m_pos_y = ev.pageY - $(`#sm_viz_container_parent_div_${v.sm[i].name}`).offset().top;
-                                        let m_pos_x = ev.pageX - $(`#sm_viz_container_parent_div_${v.sm[i].name}`).offset().left;
-
-                                        if (m_pos_y + 4 > h_parent) m_pos_y = h_parent;
-                                        if (m_pos_x + 4 > w_parent) m_pos_x = w_parent;
-                                        
-                                        if (m_pos_y > h_parent) m_pos_y = h_parent;
-                                        if (m_pos_x > w_parent) m_pos_x = w_parent;
-                                        
-                                        
-                                        //console.log($(`#sm_viz_container_${v.sm[i].name}`).width(), " ",$(`#sm_viz_container_${v.sm[i].name}`).height());
-                                        //console.log($(`#sm_viz_container_${v.sm[i].name}`).parent().width(), " ",
-                                        //            $(`#sm_viz_container_${v.sm[i].name}`).parent().height());
-                                        let sy = m_pos_y / h_parent; if (sy > 1.0) sy = 1.0;
-                                        let sx = m_pos_x / w_parent; if (sx > 1.0) sx = 1.0;
-                                        
-                                        let pos_in_pic_y = sy * h_pic ;// * h_pic;
-                                        let pos_in_pic_x = sx * w_pic;
-                                        //m_pos_y + h = pos_in_pic_y
-                                        //h = pos_in_pic_y - m_pos_y
-
-                                        let dy = -(pos_in_pic_y - m_pos_y);
-                                        if (dy + h_pic < h_parent) dy = h_parent - h_pic;
-                                        if (dy >= 0) dy = 0;
-                                        sm_viz_container.css("top",  dy);
-                                        
-                                        let dx = -(pos_in_pic_x - m_pos_x);
-                                        if (dx + w_pic < w_parent) dx = w_parent - w_pic;
-                                        if (dx >= 0) dx = 0;
-                                        sm_viz_container.css("left",  dx);
-
-                                        //console.log(`top:${-(pos_in_pic_y - m_pos_y)}`);
-
-                                        //console.log(m_pos_y);
-                                        //console.log(ev.pageY - sm_viz_container.parent().offset().top);
-                                        
-                                        //console.log("x="+pos_in_pic_x+" y="+pos_in_pic_y);
-                                        //d3_util_translate_rel(d3.select(`#sm_viz_${v.sm[i].name}`).select("svg").select("g"),-pos_in_pic_x,-pos_in_pic_y);                                   
-                                    }
-                                );
-
-                                svgs.push({name:v.sm[i].name, data:res, tile_scale:tile_scale,svg_orig_width:svg_orig_width,svg_orig_height:svg_orig_height});
+                                svgs.push({name:v.sm[i].name, data:res/*, tile_scale:tile_scale,svg_orig_width:svg_orig_width,svg_orig_height:svg_orig_height*/});
                                 svgs_to_load--;
                                 if (svgs_to_load == 0){
                                     

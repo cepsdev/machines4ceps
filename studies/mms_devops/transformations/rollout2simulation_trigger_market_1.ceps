@@ -1,0 +1,65 @@
+Event start_rollout_m001;
+Event m001S1_critical,m001S2_critical,m001S3_critical,m001S4_critical;
+Event m001S1_finished,m001S2_finished,m001S3_finished,m001S4_finished;
+Event m001S5_failed;
+
+sm{
+ trigger_m001;
+ states{Initial;Final;A;B;C;D;E;F;G;H;I;J;};
+ Actions{
+     do_a{         
+         start_timer(5.0*s,start_rollout_m001);
+     };
+     do_b{         
+         start_timer(5.0*s,m001S1_critical);
+     };
+     do_c{         
+         start_timer(5.0*s,m001S1_finished);
+     };
+     do_d{         
+         start_timer(5.0*s,m001S2_critical);
+     };
+     do_e{         
+         start_timer(5.0*s,m001S2_finished);
+     };
+     do_f{         
+         start_timer(5.0*s,m001S3_critical);
+     };
+     do_g{         
+         start_timer(5.0*s,m001S3_finished);
+     };
+     do_h{         
+         start_timer(5.0*s,m001S4_critical);
+     };
+     do_i{         
+         start_timer(5.0*s,m001S4_finished);
+     };
+     do_j{         
+         start_timer(5.0*s,m001S5_failed);
+     };   
+    
+ };
+ t{Initial;A;do_a;};
+ t{A;B;start_rollout_m001;do_b;};
+ t{B;C;m001S1_critical;do_c;};
+ t{C;D;m001S1_finished;do_d;};
+ t{D;E;m001S2_critical;do_e;};
+ t{E;F;m001S2_finished;do_f;};
+ t{F;G;m001S3_critical;do_g;};
+ t{G;H;m001S3_finished;do_h;};
+ t{H;I;m001S4_critical;do_i;};
+ t{I;Final;m001S4_finished;do_j;}; 
+};
+
+
+
+Simulation{
+Start{
+ static_for(e:root.rollout){
+  static_for(market:e.markets.content()){
+   market.content();   
+  }
+ }
+ trigger_m001;
+};
+};
