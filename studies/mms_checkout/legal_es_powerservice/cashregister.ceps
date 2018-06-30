@@ -1,0 +1,30 @@
+Systemstate articles;
+Systemstate counter;
+
+articles = make_struct("articles");
+
+sm {
+ cashregister;
+ states{Initial;};
+
+ sm{
+  basket;
+  states{Initial;empty;contains_articles;submitted;};     
+ };
+
+ sm{
+  control;
+  states{Initial;ready;};
+  Actions{
+      do_add_article_to_current_basket{
+        articles = __append(articles,argv(1));
+      };
+   };
+   t{Initial;ready;};
+   t{ready;ready;ev_new_basket;};
+   t{ready;ready;ev_add_article_to_current_basket;do_add_article_to_current_basket;};     
+ };
+
+ t{Initial;basket;};
+ t{Initial;control;};
+};

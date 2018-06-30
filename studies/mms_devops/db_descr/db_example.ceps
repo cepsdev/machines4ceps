@@ -1,0 +1,53 @@
+Rollout_Typ_Step{
+ ID{10;};
+ Bezeichnung{"Rollout_Typ_Step S1";};
+ Job_Check{jenkins_job_check_1;};
+ Job_Run{jenkins_job_run_1;};
+};
+
+Rollout_Typ_Step{
+ ID{11;};
+ Bezeichnung{"Rollout_Typ_Step S2";};
+ Job_Check{jenkins_job_check_2;};
+ Job_Run{jenkins_job_run_2;};
+};
+
+Rollout_Store{
+    ID{30;};
+    SAP_Code{123;};
+    Day {"06-28-2018 00:00:00";};    
+};
+
+Rollout_Store_Step{
+    ID{21;};
+    ID_Step_Typ{11;};
+    ID_Rollout_Store{30;};
+    Sequence{1;};
+};
+
+Rollout_Store_Step{
+    ID{20;};
+    ID_Step_Typ{10;};
+    ID_Rollout_Store{30;};
+    Sequence{0;};
+};
+
+Rollout_Store_Step{
+    ID{22;};
+    ID_Step_Typ{10;};
+    ID_Rollout_Store{31;};
+    Sequence{0;};
+};
+
+Rollout_Store_Step{
+    ID{23;};
+    ID_Step_Typ{11;};
+    ID_Rollout_Store{31;};
+    Sequence{1;};
+};
+
+
+
+
+
+

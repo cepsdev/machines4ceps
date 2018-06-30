@@ -1,0 +1,16 @@
+kind Event;
+Event success;
+
+static_for(e:root.rollout){
+ sm{
+   e.name.content();
+   states{Initial;Final; e.steps.content();};
+   t{Initial; e.steps.content().first();};
+   val prev=e.steps.content().first();
+   static_for(step:tail(e.steps.content())){
+    t{prev;step;success;};
+    ignore_value{prev = step;};
+   };
+   t{prev;Final;success;};
+ };
+}

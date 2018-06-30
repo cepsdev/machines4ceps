@@ -1,0 +1,34 @@
+
+"---------------------------------";
+val rollout_id = 30;
+
+rollout_steps_unsorted{
+    static_for(e:root.Rollout_Store_Step){
+        if (strip(e.ID_Rollout_Store.content()) == rollout_id) {
+            val step_type_id = strip(e.ID_Step_Typ.content());
+            static_for(f:root.Rollout_Typ_Step){
+                if (step_type_id == strip(f.ID.content())){
+                step{
+                    f.Bezeichnung;
+                    f.Job_Check;
+                    f.Job_Run;
+                    e.Sequence;
+                };
+                }
+            }            
+        } 
+    }
+};
+
+rollout_steps_sorted{
+ root.rollout_steps_unsorted.content().sort("Sequence");
+};
+
+rollout{
+    test;
+    steps{
+        static_for(e:root.rollout_steps_sorted.content()){
+            as_identifier(text(e.content().Bezeichnung.content()));
+        }
+    };   
+};

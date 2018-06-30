@@ -101,8 +101,8 @@ public:
 	std::map<int,std::vector<std::string>> userdefined_edge_style_infos;
         std::map<std::string,int> n2idx;
 private:
-	std::string pure_state_base_style_ = "fontname=\"Arial\",color=\"darkgray\",fillcolor=\"silver\",shape=\"box\",style=\"rounded,filled\"";
-        std::string pure_state_base_highlighted_style_ = "fontname=\"Arial\",shape=\"box\",style=\"rounded,filled\",fillcolor=lightpink";
+        std::string pure_state_base_style_ = "fontname=\"Arial\",color=\"#000000\",fillcolor=\"#E0E0E0\",shape=\"box\",style=\"rounded,filled\"";
+        std::string pure_state_base_highlighted_style_ = "fontname=\"Arial\",shape=\"box\",style=\"rounded,filled\",fillcolor=\"#FF9999\"";
         bool global_prop_show_edges_ = true;
 
         void dump_sm(std::ostream& o,std::string name,State_machine* sm,std::set<State_machine*>* expand,std::set<int>& highlighted_states, bool toplevel_transparent=false);

@@ -1,0 +1,1940 @@
+Full qualified state id => Index :
+ There are states to be covered, start of covering state space = 222
+ "m001" => 222  compound_state don't cover loops
+ "m001.Final" => 224  final_state
+ "m001.Initial" => 223  initial_state
+ "m001.S1" => 225 
+ "m001.S1_critical" => 232  don't cover
+ "m001.S1_error" => 231  don't cover
+ "m001.S2" => 226 
+ "m001.S2_critical" => 234  don't cover
+ "m001.S2_error" => 233  don't cover
+ "m001.S3" => 227 
+ "m001.S3_critical" => 236  don't cover
+ "m001.S3_error" => 235  don't cover
+ "m001.S4" => 228 
+ "m001.S4_critical" => 238  don't cover
+ "m001.S4_error" => 237  don't cover
+ "m001.S5" => 229 
+ "m001.S5_critical" => 240  don't cover
+ "m001.S5_error" => 239  don't cover
+ "m001.S6" => 230 
+ "m001.S6_critical" => 242  don't cover
+ "m001.S6_error" => 241  don't cover
+ "m002" => 243  compound_state don't cover loops
+ "m002.Final" => 246  final_state
+ "m002.Initial" => 245  initial_state
+ "m002.S1" => 247 
+ "m002.S1_critical" => 253  don't cover
+ "m002.S1_error" => 252  don't cover
+ "m002.S2" => 244 
+ "m002.S2_critical" => 255  don't cover
+ "m002.S2_error" => 254  don't cover
+ "m002.S3" => 248 
+ "m002.S3_critical" => 257  don't cover
+ "m002.S3_error" => 256  don't cover
+ "m002.S4" => 249 
+ "m002.S4_critical" => 259  don't cover
+ "m002.S4_error" => 258  don't cover
+ "m002.S5" => 250 
+ "m002.S5_critical" => 261  don't cover
+ "m002.S5_error" => 260  don't cover
+ "m002.S6" => 251 
+ "m002.S6_critical" => 263  don't cover
+ "m002.S6_error" => 262  don't cover
+ "m003" => 264  compound_state don't cover loops
+ "m003.Final" => 266  final_state
+ "m003.Initial" => 265  initial_state
+ "m003.S1" => 267 
+ "m003.S1_critical" => 274  don't cover
+ "m003.S1_error" => 273  don't cover
+ "m003.S2" => 268 
+ "m003.S2_critical" => 276  don't cover
+ "m003.S2_error" => 275  don't cover
+ "m003.S3" => 269 
+ "m003.S3_critical" => 278  don't cover
+ "m003.S3_error" => 277  don't cover
+ "m003.S4" => 270 
+ "m003.S4_critical" => 280  don't cover
+ "m003.S4_error" => 279  don't cover
+ "m003.S5" => 271 
+ "m003.S5_critical" => 282  don't cover
+ "m003.S5_error" => 281  don't cover
+ "m003.S6" => 272 
+ "m003.S6_critical" => 284  don't cover
+ "m003.S6_error" => 283  don't cover
+ "m004" => 285  compound_state don't cover loops
+ "m004.Final" => 288  final_state
+ "m004.Initial" => 287  initial_state
+ "m004.S1" => 289 
+ "m004.S1_critical" => 296  don't cover
+ "m004.S1_error" => 295  don't cover
+ "m004.S2" => 290 
+ "m004.S2_critical" => 297  don't cover
+ "m004.S2_error" => 286  don't cover
+ "m004.S3" => 291 
+ "m004.S3_critical" => 299  don't cover
+ "m004.S3_error" => 298  don't cover
+ "m004.S4" => 292 
+ "m004.S4_critical" => 301  don't cover
+ "m004.S4_error" => 300  don't cover
+ "m004.S5" => 293 
+ "m004.S5_critical" => 303  don't cover
+ "m004.S5_error" => 302  don't cover
+ "m004.S6" => 294 
+ "m004.S6_critical" => 305  don't cover
+ "m004.S6_error" => 304  don't cover
+ "m005" => 306  compound_state don't cover loops
+ "m005.Final" => 311  final_state
+ "m005.Initial" => 326  initial_state
+ "m005.S1" => 312 
+ "m005.S1_critical" => 319  don't cover
+ "m005.S1_error" => 318  don't cover
+ "m005.S2" => 313 
+ "m005.S2_critical" => 321  don't cover
+ "m005.S2_error" => 320  don't cover
+ "m005.S3" => 314 
+ "m005.S3_critical" => 323  don't cover
+ "m005.S3_error" => 322  don't cover
+ "m005.S4" => 315 
+ "m005.S4_critical" => 325  don't cover
+ "m005.S4_error" => 324  don't cover
+ "m005.S5" => 316 
+ "m005.S5_critical" => 308  don't cover
+ "m005.S5_error" => 307  don't cover
+ "m005.S6" => 317 
+ "m005.S6_critical" => 310  don't cover
+ "m005.S6_error" => 309  don't cover
+ "m006" => 327  compound_state don't cover loops
+ "m006.Final" => 329  final_state
+ "m006.Initial" => 328  initial_state
+ "m006.S1" => 330 
+ "m006.S1_critical" => 337  don't cover
+ "m006.S1_error" => 336  don't cover
+ "m006.S2" => 331 
+ "m006.S2_critical" => 339  don't cover
+ "m006.S2_error" => 338  don't cover
+ "m006.S3" => 332 
+ "m006.S3_critical" => 341  don't cover
+ "m006.S3_error" => 340  don't cover
+ "m006.S4" => 333 
+ "m006.S4_critical" => 343  don't cover
+ "m006.S4_error" => 342  don't cover
+ "m006.S5" => 334 
+ "m006.S5_critical" => 345  don't cover
+ "m006.S5_error" => 344  don't cover
+ "m006.S6" => 335 
+ "m006.S6_critical" => 347  don't cover
+ "m006.S6_error" => 346  don't cover
+ "m007" => 348  compound_state don't cover loops
+ "m007.Final" => 350  final_state
+ "m007.Initial" => 349  initial_state
+ "m007.S1" => 351 
+ "m007.S1_critical" => 358  don't cover
+ "m007.S1_error" => 357  don't cover
+ "m007.S2" => 352 
+ "m007.S2_critical" => 360  don't cover
+ "m007.S2_error" => 359  don't cover
+ "m007.S3" => 353 
+ "m007.S3_critical" => 362  don't cover
+ "m007.S3_error" => 361  don't cover
+ "m007.S4" => 354 
+ "m007.S4_critical" => 364  don't cover
+ "m007.S4_error" => 363  don't cover
+ "m007.S5" => 355 
+ "m007.S5_critical" => 366  don't cover
+ "m007.S5_error" => 365  don't cover
+ "m007.S6" => 356 
+ "m007.S6_critical" => 368  don't cover
+ "m007.S6_error" => 367  don't cover
+ "m008" => 369  compound_state don't cover loops
+ "m008.Final" => 375  final_state
+ "m008.Initial" => 389  initial_state
+ "m008.S1" => 376 
+ "m008.S1_critical" => 383  don't cover
+ "m008.S1_error" => 382  don't cover
+ "m008.S2" => 377 
+ "m008.S2_critical" => 385  don't cover
+ "m008.S2_error" => 384  don't cover
+ "m008.S3" => 378 
+ "m008.S3_critical" => 387  don't cover
+ "m008.S3_error" => 386  don't cover
+ "m008.S4" => 379 
+ "m008.S4_critical" => 370  don't cover
+ "m008.S4_error" => 388  don't cover
+ "m008.S5" => 380 
+ "m008.S5_critical" => 372  don't cover
+ "m008.S5_error" => 371  don't cover
+ "m008.S6" => 381 
+ "m008.S6_critical" => 374  don't cover
+ "m008.S6_error" => 373  don't cover
+ "m009" => 390  compound_state don't cover loops
+ "m009.Final" => 392  final_state
+ "m009.Initial" => 391  initial_state
+ "m009.S1" => 393 
+ "m009.S1_critical" => 400  don't cover
+ "m009.S1_error" => 399  don't cover
+ "m009.S2" => 394 
+ "m009.S2_critical" => 402  don't cover
+ "m009.S2_error" => 401  don't cover
+ "m009.S3" => 395 
+ "m009.S3_critical" => 404  don't cover
+ "m009.S3_error" => 403  don't cover
+ "m009.S4" => 396 
+ "m009.S4_critical" => 406  don't cover
+ "m009.S4_error" => 405  don't cover
+ "m009.S5" => 397 
+ "m009.S5_critical" => 408  don't cover
+ "m009.S5_error" => 407  don't cover
+ "m009.S6" => 398 
+ "m009.S6_critical" => 410  don't cover
+ "m009.S6_error" => 409  don't cover
+ "m010" => 411  compound_state don't cover loops
+ "m010.Final" => 413  final_state
+ "m010.Initial" => 412  initial_state
+ "m010.S1" => 414 
+ "m010.S1_critical" => 421  don't cover
+ "m010.S1_error" => 420  don't cover
+ "m010.S2" => 415 
+ "m010.S2_critical" => 423  don't cover
+ "m010.S2_error" => 422  don't cover
+ "m010.S3" => 416 
+ "m010.S3_critical" => 425  don't cover
+ "m010.S3_error" => 424  don't cover
+ "m010.S4" => 417 
+ "m010.S4_critical" => 427  don't cover
+ "m010.S4_error" => 426  don't cover
+ "m010.S5" => 418 
+ "m010.S5_critical" => 429  don't cover
+ "m010.S5_error" => 428  don't cover
+ "m010.S6" => 419 
+ "m010.S6_critical" => 431  don't cover
+ "m010.S6_error" => 430  don't cover
+ "m011" => 432  compound_state don't cover loops
+ "m011.Final" => 435  final_state
+ "m011.Initial" => 434  initial_state
+ "m011.S1" => 436 
+ "m011.S1_critical" => 443  don't cover
+ "m011.S1_error" => 442  don't cover
+ "m011.S2" => 437 
+ "m011.S2_critical" => 445  don't cover
+ "m011.S2_error" => 444  don't cover
+ "m011.S3" => 438 
+ "m011.S3_critical" => 447  don't cover
+ "m011.S3_error" => 446  don't cover
+ "m011.S4" => 439 
+ "m011.S4_critical" => 448  don't cover
+ "m011.S4_error" => 433  don't cover
+ "m011.S5" => 440 
+ "m011.S5_critical" => 450  don't cover
+ "m011.S5_error" => 449  don't cover
+ "m011.S6" => 441 
+ "m011.S6_critical" => 452  don't cover
+ "m011.S6_error" => 451  don't cover
+ "m012" => 453  compound_state don't cover loops
+ "m012.Final" => 458  final_state
+ "m012.Initial" => 473  initial_state
+ "m012.S1" => 459 
+ "m012.S1_critical" => 466  don't cover
+ "m012.S1_error" => 465  don't cover
+ "m012.S2" => 460 
+ "m012.S2_critical" => 468  don't cover
+ "m012.S2_error" => 467  don't cover
+ "m012.S3" => 461 
+ "m012.S3_critical" => 470  don't cover
+ "m012.S3_error" => 469  don't cover
+ "m012.S4" => 462 
+ "m012.S4_critical" => 472  don't cover
+ "m012.S4_error" => 471  don't cover
+ "m012.S5" => 463 
+ "m012.S5_critical" => 455  don't cover
+ "m012.S5_error" => 454  don't cover
+ "m012.S6" => 464 
+ "m012.S6_critical" => 457  don't cover
+ "m012.S6_error" => 456  don't cover
+ "m013" => 474  compound_state don't cover loops
+ "m013.Final" => 476  final_state
+ "m013.Initial" => 475  initial_state
+ "m013.S1" => 477 
+ "m013.S1_critical" => 484  don't cover
+ "m013.S1_error" => 483  don't cover
+ "m013.S2" => 478 
+ "m013.S2_critical" => 486  don't cover
+ "m013.S2_error" => 485  don't cover
+ "m013.S3" => 479 
+ "m013.S3_critical" => 488  don't cover
+ "m013.S3_error" => 487  don't cover
+ "m013.S4" => 480 
+ "m013.S4_critical" => 490  don't cover
+ "m013.S4_error" => 489  don't cover
+ "m013.S5" => 481 
+ "m013.S5_critical" => 492  don't cover
+ "m013.S5_error" => 491  don't cover
+ "m013.S6" => 482 
+ "m013.S6_critical" => 494  don't cover
+ "m013.S6_error" => 493  don't cover
+ "m014" => 495  compound_state don't cover loops
+ "m014.Final" => 497  final_state
+ "m014.Initial" => 496  initial_state
+ "m014.S1" => 498 
+ "m014.S1_critical" => 505  don't cover
+ "m014.S1_error" => 504  don't cover
+ "m014.S2" => 499 
+ "m014.S2_critical" => 507  don't cover
+ "m014.S2_error" => 506  don't cover
+ "m014.S3" => 500 
+ "m014.S3_critical" => 509  don't cover
+ "m014.S3_error" => 508  don't cover
+ "m014.S4" => 501 
+ "m014.S4_critical" => 511  don't cover
+ "m014.S4_error" => 510  don't cover
+ "m014.S5" => 502 
+ "m014.S5_critical" => 513  don't cover
+ "m014.S5_error" => 512  don't cover
+ "m014.S6" => 503 
+ "m014.S6_critical" => 515  don't cover
+ "m014.S6_error" => 514  don't cover
+ "m015" => 516  compound_state don't cover loops
+ "m015.Final" => 524  final_state
+ "m015.Initial" => 518  initial_state
+ "m015.S1" => 525 
+ "m015.S1_critical" => 532  don't cover
+ "m015.S1_error" => 531  don't cover
+ "m015.S2" => 526 
+ "m015.S2_critical" => 534  don't cover
+ "m015.S2_error" => 533  don't cover
+ "m015.S3" => 527 
+ "m015.S3_critical" => 536  don't cover
+ "m015.S3_error" => 535  don't cover
+ "m015.S4" => 528 
+ "m015.S4_critical" => 519  don't cover
+ "m015.S4_error" => 517  don't cover
+ "m015.S5" => 529 
+ "m015.S5_critical" => 521  don't cover
+ "m015.S5_error" => 520  don't cover
+ "m015.S6" => 530 
+ "m015.S6_critical" => 523  don't cover
+ "m015.S6_error" => 522  don't cover
+ "m016" => 537  compound_state don't cover loops
+ "m016.Final" => 538  final_state
+ "m016.Initial" => 557  initial_state
+ "m016.S1" => 539 
+ "m016.S1_critical" => 546  don't cover
+ "m016.S1_error" => 545  don't cover
+ "m016.S2" => 540 
+ "m016.S2_critical" => 548  don't cover
+ "m016.S2_error" => 547  don't cover
+ "m016.S3" => 541 
+ "m016.S3_critical" => 550  don't cover
+ "m016.S3_error" => 549  don't cover
+ "m016.S4" => 542 
+ "m016.S4_critical" => 552  don't cover
+ "m016.S4_error" => 551  don't cover
+ "m016.S5" => 543 
+ "m016.S5_critical" => 554  don't cover
+ "m016.S5_error" => 553  don't cover
+ "m016.S6" => 544 
+ "m016.S6_critical" => 556  don't cover
+ "m016.S6_error" => 555  don't cover
+ "m017" => 558  compound_state don't cover loops
+ "m017.Final" => 560  final_state
+ "m017.Initial" => 559  initial_state
+ "m017.S1" => 561 
+ "m017.S1_critical" => 568  don't cover
+ "m017.S1_error" => 567  don't cover
+ "m017.S2" => 562 
+ "m017.S2_critical" => 570  don't cover
+ "m017.S2_error" => 569  don't cover
+ "m017.S3" => 563 
+ "m017.S3_critical" => 572  don't cover
+ "m017.S3_error" => 571  don't cover
+ "m017.S4" => 564 
+ "m017.S4_critical" => 574  don't cover
+ "m017.S4_error" => 573  don't cover
+ "m017.S5" => 565 
+ "m017.S5_critical" => 576  don't cover
+ "m017.S5_error" => 575  don't cover
+ "m017.S6" => 566 
+ "m017.S6_critical" => 578  don't cover
+ "m017.S6_error" => 577  don't cover
+ "m018" => 579  compound_state don't cover loops
+ "m018.Final" => 586  final_state
+ "m018.Initial" => 599  initial_state
+ "m018.S1" => 587 
+ "m018.S1_critical" => 594  don't cover
+ "m018.S1_error" => 593  don't cover
+ "m018.S2" => 588 
+ "m018.S2_critical" => 596  don't cover
+ "m018.S2_error" => 595  don't cover
+ "m018.S3" => 589 
+ "m018.S3_critical" => 598  don't cover
+ "m018.S3_error" => 597  don't cover
+ "m018.S4" => 590 
+ "m018.S4_critical" => 581  don't cover
+ "m018.S4_error" => 580  don't cover
+ "m018.S5" => 591 
+ "m018.S5_critical" => 583  don't cover
+ "m018.S5_error" => 582  don't cover
+ "m018.S6" => 592 
+ "m018.S6_critical" => 585  don't cover
+ "m018.S6_error" => 584  don't cover
+ "m019" => 600  compound_state don't cover loops
+ "m019.Final" => 602  final_state
+ "m019.Initial" => 601  initial_state
+ "m019.S1" => 603 
+ "m019.S1_critical" => 610  don't cover
+ "m019.S1_error" => 609  don't cover
+ "m019.S2" => 604 
+ "m019.S2_critical" => 612  don't cover
+ "m019.S2_error" => 611  don't cover
+ "m019.S3" => 605 
+ "m019.S3_critical" => 614  don't cover
+ "m019.S3_error" => 613  don't cover
+ "m019.S4" => 606 
+ "m019.S4_critical" => 616  don't cover
+ "m019.S4_error" => 615  don't cover
+ "m019.S5" => 607 
+ "m019.S5_critical" => 618  don't cover
+ "m019.S5_error" => 617  don't cover
+ "m019.S6" => 608 
+ "m019.S6_critical" => 620  don't cover
+ "m019.S6_error" => 619  don't cover
+ "m020" => 621  compound_state don't cover loops
+ "m020.Final" => 623  final_state
+ "m020.Initial" => 622  initial_state
+ "m020.S1" => 624 
+ "m020.S1_critical" => 631  don't cover
+ "m020.S1_error" => 630  don't cover
+ "m020.S2" => 625 
+ "m020.S2_critical" => 633  don't cover
+ "m020.S2_error" => 632  don't cover
+ "m020.S3" => 626 
+ "m020.S3_critical" => 635  don't cover
+ "m020.S3_error" => 634  don't cover
+ "m020.S4" => 627 
+ "m020.S4_critical" => 637  don't cover
+ "m020.S4_error" => 636  don't cover
+ "m020.S5" => 628 
+ "m020.S5_critical" => 639  don't cover
+ "m020.S5_error" => 638  don't cover
+ "m020.S6" => 629 
+ "m020.S6_critical" => 641  don't cover
+ "m020.S6_error" => 640  don't cover
+ "trigger_m001" => 1  compound_state hidden
+ "trigger_m001.A" => 4 
+ "trigger_m001.B" => 5 
+ "trigger_m001.C" => 6 
+ "trigger_m001.D" => 7 
+ "trigger_m001.E" => 8 
+ "trigger_m001.F" => 9 
+ "trigger_m001.Final" => 3  final_state
+ "trigger_m001.G" => 10 
+ "trigger_m001.H" => 11 
+ "trigger_m001.I" => 12 
+ "trigger_m001.Initial" => 2  initial_state
+ "trigger_m001.J" => 13 
+ "trigger_m002" => 14  compound_state hidden
+ "trigger_m002.A" => 26 
+ "trigger_m002.B" => 18 
+ "trigger_m002.C" => 19 
+ "trigger_m002.D" => 20 
+ "trigger_m002.E" => 21 
+ "trigger_m002.F" => 22 
+ "trigger_m002.Final" => 25  final_state
+ "trigger_m002.G" => 23 
+ "trigger_m002.H" => 24 
+ "trigger_m002.I" => 16 
+ "trigger_m002.Initial" => 15  initial_state
+ "trigger_m002.J" => 17 
+ "trigger_m003" => 27  compound_state hidden
+ "trigger_m003.A" => 32 
+ "trigger_m003.B" => 33 
+ "trigger_m003.C" => 34 
+ "trigger_m003.D" => 35 
+ "trigger_m003.E" => 36 
+ "trigger_m003.F" => 37 
+ "trigger_m003.Final" => 31  final_state
+ "trigger_m003.G" => 38 
+ "trigger_m003.H" => 28 
+ "trigger_m003.I" => 29 
+ "trigger_m003.Initial" => 39  initial_state
+ "trigger_m003.J" => 30 
+ "trigger_m004" => 40  compound_state hidden
+ "trigger_m004.A" => 48 
+ "trigger_m004.B" => 49 
+ "trigger_m004.C" => 50 
+ "trigger_m004.D" => 51 
+ "trigger_m004.E" => 52 
+ "trigger_m004.F" => 41 
+ "trigger_m004.Final" => 47  final_state
+ "trigger_m004.G" => 42 
+ "trigger_m004.H" => 43 
+ "trigger_m004.I" => 44 
+ "trigger_m004.Initial" => 46  initial_state
+ "trigger_m004.J" => 45 
+ "trigger_m005" => 53  compound_state hidden
+ "trigger_m005.A" => 56 
+ "trigger_m005.B" => 57 
+ "trigger_m005.C" => 58 
+ "trigger_m005.D" => 59 
+ "trigger_m005.E" => 60 
+ "trigger_m005.F" => 61 
+ "trigger_m005.Final" => 55  final_state
+ "trigger_m005.G" => 62 
+ "trigger_m005.H" => 63 
+ "trigger_m005.I" => 64 
+ "trigger_m005.Initial" => 54  initial_state
+ "trigger_m005.J" => 65 
+ "trigger_m006" => 66  compound_state hidden
+ "trigger_m006.A" => 69 
+ "trigger_m006.B" => 70 
+ "trigger_m006.C" => 71 
+ "trigger_m006.D" => 72 
+ "trigger_m006.E" => 73 
+ "trigger_m006.F" => 74 
+ "trigger_m006.Final" => 68  final_state
+ "trigger_m006.G" => 75 
+ "trigger_m006.H" => 76 
+ "trigger_m006.I" => 77 
+ "trigger_m006.Initial" => 67  initial_state
+ "trigger_m006.J" => 78 
+ "trigger_m007" => 79  compound_state hidden
+ "trigger_m007.A" => 82 
+ "trigger_m007.B" => 83 
+ "trigger_m007.C" => 84 
+ "trigger_m007.D" => 85 
+ "trigger_m007.E" => 86 
+ "trigger_m007.F" => 87 
+ "trigger_m007.Final" => 81  final_state
+ "trigger_m007.G" => 88 
+ "trigger_m007.H" => 89 
+ "trigger_m007.I" => 90 
+ "trigger_m007.Initial" => 80  initial_state
+ "trigger_m007.J" => 91 
+ "trigger_m008" => 92  compound_state hidden
+ "trigger_m008.A" => 95 
+ "trigger_m008.B" => 96 
+ "trigger_m008.C" => 97 
+ "trigger_m008.D" => 98 
+ "trigger_m008.E" => 99 
+ "trigger_m008.F" => 100 
+ "trigger_m008.Final" => 94  final_state
+ "trigger_m008.G" => 101 
+ "trigger_m008.H" => 102 
+ "trigger_m008.I" => 103 
+ "trigger_m008.Initial" => 93  initial_state
+ "trigger_m008.J" => 104 
+ "trigger_m009" => 105  compound_state hidden
+ "trigger_m009.A" => 108 
+ "trigger_m009.B" => 109 
+ "trigger_m009.C" => 110 
+ "trigger_m009.D" => 111 
+ "trigger_m009.E" => 112 
+ "trigger_m009.F" => 113 
+ "trigger_m009.Final" => 107  final_state
+ "trigger_m009.G" => 114 
+ "trigger_m009.H" => 115 
+ "trigger_m009.I" => 116 
+ "trigger_m009.Initial" => 106  initial_state
+ "trigger_m009.J" => 117 
+ "trigger_m010" => 118  compound_state hidden
+ "trigger_m010.A" => 121 
+ "trigger_m010.B" => 122 
+ "trigger_m010.C" => 123 
+ "trigger_m010.D" => 124 
+ "trigger_m010.E" => 125 
+ "trigger_m010.F" => 126 
+ "trigger_m010.Final" => 120  final_state
+ "trigger_m010.G" => 127 
+ "trigger_m010.H" => 128 
+ "trigger_m010.I" => 129 
+ "trigger_m010.Initial" => 119  initial_state
+ "trigger_m010.J" => 130 
+ "trigger_m011" => 131  compound_state hidden
+ "trigger_m011.A" => 134 
+ "trigger_m011.B" => 135 
+ "trigger_m011.C" => 136 
+ "trigger_m011.D" => 137 
+ "trigger_m011.E" => 138 
+ "trigger_m011.F" => 139 
+ "trigger_m011.Final" => 133  final_state
+ "trigger_m011.G" => 140 
+ "trigger_m011.H" => 141 
+ "trigger_m011.I" => 142 
+ "trigger_m011.Initial" => 132  initial_state
+ "trigger_m011.J" => 143 
+ "trigger_m012" => 144  compound_state hidden
+ "trigger_m012.A" => 147 
+ "trigger_m012.B" => 148 
+ "trigger_m012.C" => 149 
+ "trigger_m012.D" => 150 
+ "trigger_m012.E" => 151 
+ "trigger_m012.F" => 152 
+ "trigger_m012.Final" => 146  final_state
+ "trigger_m012.G" => 153 
+ "trigger_m012.H" => 154 
+ "trigger_m012.I" => 155 
+ "trigger_m012.Initial" => 145  initial_state
+ "trigger_m012.J" => 156 
+ "trigger_m013" => 157  compound_state hidden
+ "trigger_m013.A" => 160 
+ "trigger_m013.B" => 161 
+ "trigger_m013.C" => 162 
+ "trigger_m013.D" => 163 
+ "trigger_m013.E" => 164 
+ "trigger_m013.F" => 165 
+ "trigger_m013.Final" => 159  final_state
+ "trigger_m013.G" => 166 
+ "trigger_m013.H" => 167 
+ "trigger_m013.I" => 168 
+ "trigger_m013.Initial" => 158  initial_state
+ "trigger_m013.J" => 169 
+ "trigger_m014" => 170  compound_state hidden
+ "trigger_m014.A" => 171 
+ "trigger_m014.B" => 172 
+ "trigger_m014.C" => 173 
+ "trigger_m014.D" => 174 
+ "trigger_m014.E" => 175 
+ "trigger_m014.F" => 176 
+ "trigger_m014.Final" => 181  final_state
+ "trigger_m014.G" => 177 
+ "trigger_m014.H" => 178 
+ "trigger_m014.I" => 179 
+ "trigger_m014.Initial" => 180  initial_state
+ "trigger_m014.J" => 182 
+ "trigger_m015" => 183  compound_state hidden
+ "trigger_m015.A" => 186 
+ "trigger_m015.B" => 187 
+ "trigger_m015.C" => 188 
+ "trigger_m015.D" => 189 
+ "trigger_m015.E" => 190 
+ "trigger_m015.F" => 191 
+ "trigger_m015.Final" => 185  final_state
+ "trigger_m015.G" => 192 
+ "trigger_m015.H" => 193 
+ "trigger_m015.I" => 194 
+ "trigger_m015.Initial" => 184  initial_state
+ "trigger_m015.J" => 195 
+ "trigger_m016" => 196  compound_state hidden
+ "trigger_m016.A" => 199 
+ "trigger_m016.B" => 200 
+ "trigger_m016.C" => 201 
+ "trigger_m016.D" => 202 
+ "trigger_m016.E" => 203 
+ "trigger_m016.F" => 204 
+ "trigger_m016.Final" => 198  final_state
+ "trigger_m016.G" => 205 
+ "trigger_m016.H" => 206 
+ "trigger_m016.I" => 207 
+ "trigger_m016.Initial" => 197  initial_state
+ "trigger_m016.J" => 208 
+ "trigger_m017" => 209  compound_state hidden
+ "trigger_m017.A" => 212 
+ "trigger_m017.B" => 213 
+ "trigger_m017.C" => 214 
+ "trigger_m017.D" => 215 
+ "trigger_m017.E" => 216 
+ "trigger_m017.F" => 217 
+ "trigger_m017.Final" => 211  final_state
+ "trigger_m017.G" => 218 
+ "trigger_m017.H" => 219 
+ "trigger_m017.I" => 220 
+ "trigger_m017.Initial" => 210  initial_state
+ "trigger_m017.J" => 221 
+event id => event name :
+ 1;"m001S1_critical";
+ 13;"m001S1_failed";
+ 2;"m001S1_finished";
+ 3;"m001S2_critical";
+ 14;"m001S2_failed";
+ 4;"m001S2_finished";
+ 5;"m001S3_critical";
+ 15;"m001S3_failed";
+ 6;"m001S3_finished";
+ 7;"m001S4_critical";
+ 16;"m001S4_failed";
+ 8;"m001S4_finished";
+ 17;"m001S5_critical";
+ 9;"m001S5_failed";
+ 18;"m001S5_finished";
+ 19;"m001S6_critical";
+ 20;"m001S6_failed";
+ 21;"m001S6_finished";
+ 24;"m002S1_critical";
+ 23;"m002S1_failed";
+ 25;"m002S1_finished";
+ 27;"m002S2_critical";
+ 26;"m002S2_failed";
+ 28;"m002S2_finished";
+ 30;"m002S3_critical";
+ 29;"m002S3_failed";
+ 31;"m002S3_finished";
+ 33;"m002S4_critical";
+ 32;"m002S4_failed";
+ 34;"m002S4_finished";
+ 36;"m002S5_critical";
+ 35;"m002S5_failed";
+ 37;"m002S5_finished";
+ 38;"m002S6_critical";
+ 39;"m002S6_failed";
+ 40;"m002S6_finished";
+ 43;"m003S1_critical";
+ 42;"m003S1_failed";
+ 44;"m003S1_finished";
+ 46;"m003S2_critical";
+ 45;"m003S2_failed";
+ 47;"m003S2_finished";
+ 49;"m003S3_critical";
+ 48;"m003S3_failed";
+ 50;"m003S3_finished";
+ 52;"m003S4_critical";
+ 51;"m003S4_failed";
+ 53;"m003S4_finished";
+ 55;"m003S5_critical";
+ 54;"m003S5_failed";
+ 56;"m003S5_finished";
+ 57;"m003S6_critical";
+ 58;"m003S6_failed";
+ 59;"m003S6_finished";
+ 62;"m004S1_critical";
+ 61;"m004S1_failed";
+ 63;"m004S1_finished";
+ 65;"m004S2_critical";
+ 64;"m004S2_failed";
+ 66;"m004S2_finished";
+ 68;"m004S3_critical";
+ 67;"m004S3_failed";
+ 69;"m004S3_finished";
+ 71;"m004S4_critical";
+ 70;"m004S4_failed";
+ 72;"m004S4_finished";
+ 74;"m004S5_critical";
+ 73;"m004S5_failed";
+ 75;"m004S5_finished";
+ 76;"m004S6_critical";
+ 77;"m004S6_failed";
+ 78;"m004S6_finished";
+ 81;"m005S1_critical";
+ 80;"m005S1_failed";
+ 82;"m005S1_finished";
+ 84;"m005S2_critical";
+ 83;"m005S2_failed";
+ 85;"m005S2_finished";
+ 87;"m005S3_critical";
+ 86;"m005S3_failed";
+ 88;"m005S3_finished";
+ 90;"m005S4_critical";
+ 89;"m005S4_failed";
+ 91;"m005S4_finished";
+ 93;"m005S5_critical";
+ 92;"m005S5_failed";
+ 94;"m005S5_finished";
+ 95;"m005S6_critical";
+ 96;"m005S6_failed";
+ 97;"m005S6_finished";
+ 100;"m006S1_critical";
+ 99;"m006S1_failed";
+ 101;"m006S1_finished";
+ 103;"m006S2_critical";
+ 102;"m006S2_failed";
+ 104;"m006S2_finished";
+ 106;"m006S3_critical";
+ 105;"m006S3_failed";
+ 107;"m006S3_finished";
+ 109;"m006S4_critical";
+ 108;"m006S4_failed";
+ 110;"m006S4_finished";
+ 112;"m006S5_critical";
+ 111;"m006S5_failed";
+ 113;"m006S5_finished";
+ 114;"m006S6_critical";
+ 115;"m006S6_failed";
+ 116;"m006S6_finished";
+ 119;"m007S1_critical";
+ 118;"m007S1_failed";
+ 120;"m007S1_finished";
+ 122;"m007S2_critical";
+ 121;"m007S2_failed";
+ 123;"m007S2_finished";
+ 125;"m007S3_critical";
+ 124;"m007S3_failed";
+ 126;"m007S3_finished";
+ 128;"m007S4_critical";
+ 127;"m007S4_failed";
+ 129;"m007S4_finished";
+ 131;"m007S5_critical";
+ 130;"m007S5_failed";
+ 132;"m007S5_finished";
+ 133;"m007S6_critical";
+ 134;"m007S6_failed";
+ 135;"m007S6_finished";
+ 138;"m008S1_critical";
+ 137;"m008S1_failed";
+ 139;"m008S1_finished";
+ 141;"m008S2_critical";
+ 140;"m008S2_failed";
+ 142;"m008S2_finished";
+ 144;"m008S3_critical";
+ 143;"m008S3_failed";
+ 145;"m008S3_finished";
+ 147;"m008S4_critical";
+ 146;"m008S4_failed";
+ 148;"m008S4_finished";
+ 150;"m008S5_critical";
+ 149;"m008S5_failed";
+ 151;"m008S5_finished";
+ 152;"m008S6_critical";
+ 153;"m008S6_failed";
+ 154;"m008S6_finished";
+ 157;"m009S1_critical";
+ 156;"m009S1_failed";
+ 158;"m009S1_finished";
+ 160;"m009S2_critical";
+ 159;"m009S2_failed";
+ 161;"m009S2_finished";
+ 163;"m009S3_critical";
+ 162;"m009S3_failed";
+ 164;"m009S3_finished";
+ 166;"m009S4_critical";
+ 165;"m009S4_failed";
+ 167;"m009S4_finished";
+ 169;"m009S5_critical";
+ 168;"m009S5_failed";
+ 170;"m009S5_finished";
+ 171;"m009S6_critical";
+ 172;"m009S6_failed";
+ 173;"m009S6_finished";
+ 176;"m010S1_critical";
+ 175;"m010S1_failed";
+ 177;"m010S1_finished";
+ 179;"m010S2_critical";
+ 178;"m010S2_failed";
+ 180;"m010S2_finished";
+ 182;"m010S3_critical";
+ 181;"m010S3_failed";
+ 183;"m010S3_finished";
+ 185;"m010S4_critical";
+ 184;"m010S4_failed";
+ 186;"m010S4_finished";
+ 188;"m010S5_critical";
+ 187;"m010S5_failed";
+ 189;"m010S5_finished";
+ 190;"m010S6_critical";
+ 191;"m010S6_failed";
+ 192;"m010S6_finished";
+ 195;"m011S1_critical";
+ 194;"m011S1_failed";
+ 196;"m011S1_finished";
+ 198;"m011S2_critical";
+ 197;"m011S2_failed";
+ 199;"m011S2_finished";
+ 201;"m011S3_critical";
+ 200;"m011S3_failed";
+ 202;"m011S3_finished";
+ 204;"m011S4_critical";
+ 203;"m011S4_failed";
+ 205;"m011S4_finished";
+ 207;"m011S5_critical";
+ 206;"m011S5_failed";
+ 208;"m011S5_finished";
+ 209;"m011S6_critical";
+ 210;"m011S6_failed";
+ 211;"m011S6_finished";
+ 214;"m012S1_critical";
+ 213;"m012S1_failed";
+ 215;"m012S1_finished";
+ 217;"m012S2_critical";
+ 216;"m012S2_failed";
+ 218;"m012S2_finished";
+ 220;"m012S3_critical";
+ 219;"m012S3_failed";
+ 221;"m012S3_finished";
+ 223;"m012S4_critical";
+ 222;"m012S4_failed";
+ 224;"m012S4_finished";
+ 226;"m012S5_critical";
+ 225;"m012S5_failed";
+ 227;"m012S5_finished";
+ 228;"m012S6_critical";
+ 229;"m012S6_failed";
+ 230;"m012S6_finished";
+ 233;"m013S1_critical";
+ 232;"m013S1_failed";
+ 234;"m013S1_finished";
+ 236;"m013S2_critical";
+ 235;"m013S2_failed";
+ 237;"m013S2_finished";
+ 239;"m013S3_critical";
+ 238;"m013S3_failed";
+ 240;"m013S3_finished";
+ 242;"m013S4_critical";
+ 241;"m013S4_failed";
+ 243;"m013S4_finished";
+ 245;"m013S5_critical";
+ 244;"m013S5_failed";
+ 246;"m013S5_finished";
+ 247;"m013S6_critical";
+ 248;"m013S6_failed";
+ 249;"m013S6_finished";
+ 252;"m014S1_critical";
+ 251;"m014S1_failed";
+ 253;"m014S1_finished";
+ 255;"m014S2_critical";
+ 254;"m014S2_failed";
+ 256;"m014S2_finished";
+ 258;"m014S3_critical";
+ 257;"m014S3_failed";
+ 259;"m014S3_finished";
+ 261;"m014S4_critical";
+ 260;"m014S4_failed";
+ 262;"m014S4_finished";
+ 264;"m014S5_critical";
+ 263;"m014S5_failed";
+ 265;"m014S5_finished";
+ 266;"m014S6_critical";
+ 267;"m014S6_failed";
+ 268;"m014S6_finished";
+ 271;"m015S1_critical";
+ 270;"m015S1_failed";
+ 272;"m015S1_finished";
+ 274;"m015S2_critical";
+ 273;"m015S2_failed";
+ 275;"m015S2_finished";
+ 277;"m015S3_critical";
+ 276;"m015S3_failed";
+ 278;"m015S3_finished";
+ 280;"m015S4_critical";
+ 279;"m015S4_failed";
+ 281;"m015S4_finished";
+ 283;"m015S5_critical";
+ 282;"m015S5_failed";
+ 284;"m015S5_finished";
+ 285;"m015S6_critical";
+ 286;"m015S6_failed";
+ 287;"m015S6_finished";
+ 290;"m016S1_critical";
+ 289;"m016S1_failed";
+ 291;"m016S1_finished";
+ 293;"m016S2_critical";
+ 292;"m016S2_failed";
+ 294;"m016S2_finished";
+ 296;"m016S3_critical";
+ 295;"m016S3_failed";
+ 297;"m016S3_finished";
+ 299;"m016S4_critical";
+ 298;"m016S4_failed";
+ 300;"m016S4_finished";
+ 302;"m016S5_critical";
+ 301;"m016S5_failed";
+ 303;"m016S5_finished";
+ 304;"m016S6_critical";
+ 305;"m016S6_failed";
+ 306;"m016S6_finished";
+ 309;"m017S1_critical";
+ 308;"m017S1_failed";
+ 310;"m017S1_finished";
+ 312;"m017S2_critical";
+ 311;"m017S2_failed";
+ 313;"m017S2_finished";
+ 315;"m017S3_critical";
+ 314;"m017S3_failed";
+ 316;"m017S3_finished";
+ 318;"m017S4_critical";
+ 317;"m017S4_failed";
+ 319;"m017S4_finished";
+ 321;"m017S5_critical";
+ 320;"m017S5_failed";
+ 322;"m017S5_finished";
+ 323;"m017S6_critical";
+ 324;"m017S6_failed";
+ 325;"m017S6_finished";
+ 328;"m018S1_critical";
+ 327;"m018S1_failed";
+ 329;"m018S1_finished";
+ 331;"m018S2_critical";
+ 330;"m018S2_failed";
+ 332;"m018S2_finished";
+ 334;"m018S3_critical";
+ 333;"m018S3_failed";
+ 335;"m018S3_finished";
+ 337;"m018S4_critical";
+ 336;"m018S4_failed";
+ 338;"m018S4_finished";
+ 340;"m018S5_critical";
+ 339;"m018S5_failed";
+ 341;"m018S5_finished";
+ 342;"m018S6_critical";
+ 343;"m018S6_failed";
+ 344;"m018S6_finished";
+ 347;"m019S1_critical";
+ 346;"m019S1_failed";
+ 348;"m019S1_finished";
+ 350;"m019S2_critical";
+ 349;"m019S2_failed";
+ 351;"m019S2_finished";
+ 353;"m019S3_critical";
+ 352;"m019S3_failed";
+ 354;"m019S3_finished";
+ 356;"m019S4_critical";
+ 355;"m019S4_failed";
+ 357;"m019S4_finished";
+ 359;"m019S5_critical";
+ 358;"m019S5_failed";
+ 360;"m019S5_finished";
+ 361;"m019S6_critical";
+ 362;"m019S6_failed";
+ 363;"m019S6_finished";
+ 366;"m020S1_critical";
+ 365;"m020S1_failed";
+ 367;"m020S1_finished";
+ 369;"m020S2_critical";
+ 368;"m020S2_failed";
+ 370;"m020S2_finished";
+ 372;"m020S3_critical";
+ 371;"m020S3_failed";
+ 373;"m020S3_finished";
+ 375;"m020S4_critical";
+ 374;"m020S4_failed";
+ 376;"m020S4_finished";
+ 378;"m020S5_critical";
+ 377;"m020S5_failed";
+ 379;"m020S5_finished";
+ 380;"m020S6_critical";
+ 381;"m020S6_failed";
+ 382;"m020S6_finished";
+ 10;"start_rollout";
+ 11;"start_rollout_m001";
+ 22;"start_rollout_m002";
+ 41;"start_rollout_m003";
+ 60;"start_rollout_m004";
+ 79;"start_rollout_m005";
+ 98;"start_rollout_m006";
+ 117;"start_rollout_m007";
+ 136;"start_rollout_m008";
+ 155;"start_rollout_m009";
+ 174;"start_rollout_m010";
+ 193;"start_rollout_m011";
+ 212;"start_rollout_m012";
+ 231;"start_rollout_m013";
+ 250;"start_rollout_m014";
+ 269;"start_rollout_m015";
+ 288;"start_rollout_m016";
+ 307;"start_rollout_m017";
+ 326;"start_rollout_m018";
+ 345;"start_rollout_m019";
+ 364;"start_rollout_m020";
+ 12;"success";
+(Transition Id) Index of State Machine (parent sm) :
+ Index of Start State -> Index of Destination State/Event Index Info...
+ There are transitions to be covered, start of covering transition space = 172
+ (1) 1 (0) : 2->4 /0 g=0 a1= 0 a2= 0 (root=1) 
+ (2) 1 (0) : 4->5 /11 g=0 a1= 0 a2= 0 (root=1) 
+ (3) 1 (0) : 5->6 /1 g=0 a1= 0 a2= 0 (root=1) 
+ (4) 1 (0) : 6->7 /2 g=0 a1= 0 a2= 0 (root=1) 
+ (5) 1 (0) : 7->8 /3 g=0 a1= 0 a2= 0 (root=1) 
+ (6) 1 (0) : 8->9 /4 g=0 a1= 0 a2= 0 (root=1) 
+ (7) 1 (0) : 9->10 /5 g=0 a1= 0 a2= 0 (root=1) 
+ (8) 1 (0) : 10->11 /6 g=0 a1= 0 a2= 0 (root=1) 
+ (9) 1 (0) : 11->12 /7 g=0 a1= 0 a2= 0 (root=1) 
+ (10) 1 (0) : 12->3 /8 g=0 a1= 0 a2= 0 (root=1) 
+ (11) 14 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=14) 
+ (12) 14 (0) : 15->26 /0 g=0 a1= 0 a2= 0 (root=14) 
+ (13) 14 (0) : 26->18 /22 g=0 a1= 0 a2= 0 (root=14) 
+ (14) 14 (0) : 18->19 /24 g=0 a1= 0 a2= 0 (root=14) 
+ (15) 14 (0) : 19->20 /25 g=0 a1= 0 a2= 0 (root=14) 
+ (16) 14 (0) : 20->21 /27 g=0 a1= 0 a2= 0 (root=14) 
+ (17) 14 (0) : 21->22 /28 g=0 a1= 0 a2= 0 (root=14) 
+ (18) 14 (0) : 22->23 /30 g=0 a1= 0 a2= 0 (root=14) 
+ (19) 14 (0) : 23->24 /31 g=0 a1= 0 a2= 0 (root=14) 
+ (20) 14 (0) : 24->16 /33 g=0 a1= 0 a2= 0 (root=14) 
+ (21) 14 (0) : 16->25 /34 g=0 a1= 0 a2= 0 (root=14) 
+ (22) 27 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=27) 
+ (23) 27 (0) : 39->32 /0 g=0 a1= 0 a2= 0 (root=27) 
+ (24) 27 (0) : 32->33 /41 g=0 a1= 0 a2= 0 (root=27) 
+ (25) 27 (0) : 33->34 /43 g=0 a1= 0 a2= 0 (root=27) 
+ (26) 27 (0) : 34->35 /44 g=0 a1= 0 a2= 0 (root=27) 
+ (27) 27 (0) : 35->36 /46 g=0 a1= 0 a2= 0 (root=27) 
+ (28) 27 (0) : 36->37 /47 g=0 a1= 0 a2= 0 (root=27) 
+ (29) 27 (0) : 37->38 /49 g=0 a1= 0 a2= 0 (root=27) 
+ (30) 27 (0) : 38->28 /50 g=0 a1= 0 a2= 0 (root=27) 
+ (31) 27 (0) : 28->29 /52 g=0 a1= 0 a2= 0 (root=27) 
+ (32) 27 (0) : 29->31 /53 g=0 a1= 0 a2= 0 (root=27) 
+ (33) 40 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=40) 
+ (34) 40 (0) : 46->48 /0 g=0 a1= 0 a2= 0 (root=40) 
+ (35) 40 (0) : 48->49 /60 g=0 a1= 0 a2= 0 (root=40) 
+ (36) 40 (0) : 49->50 /62 g=0 a1= 0 a2= 0 (root=40) 
+ (37) 40 (0) : 50->51 /63 g=0 a1= 0 a2= 0 (root=40) 
+ (38) 40 (0) : 51->52 /65 g=0 a1= 0 a2= 0 (root=40) 
+ (39) 40 (0) : 52->41 /66 g=0 a1= 0 a2= 0 (root=40) 
+ (40) 40 (0) : 41->42 /68 g=0 a1= 0 a2= 0 (root=40) 
+ (41) 40 (0) : 42->43 /69 g=0 a1= 0 a2= 0 (root=40) 
+ (42) 40 (0) : 43->44 /71 g=0 a1= 0 a2= 0 (root=40) 
+ (43) 40 (0) : 44->47 /72 g=0 a1= 0 a2= 0 (root=40) 
+ (44) 53 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=53) 
+ (45) 53 (0) : 54->56 /0 g=0 a1= 0 a2= 0 (root=53) 
+ (46) 53 (0) : 56->57 /79 g=0 a1= 0 a2= 0 (root=53) 
+ (47) 53 (0) : 57->58 /81 g=0 a1= 0 a2= 0 (root=53) 
+ (48) 53 (0) : 58->59 /82 g=0 a1= 0 a2= 0 (root=53) 
+ (49) 53 (0) : 59->60 /84 g=0 a1= 0 a2= 0 (root=53) 
+ (50) 53 (0) : 60->61 /85 g=0 a1= 0 a2= 0 (root=53) 
+ (51) 53 (0) : 61->62 /87 g=0 a1= 0 a2= 0 (root=53) 
+ (52) 53 (0) : 62->63 /88 g=0 a1= 0 a2= 0 (root=53) 
+ (53) 53 (0) : 63->64 /90 g=0 a1= 0 a2= 0 (root=53) 
+ (54) 53 (0) : 64->55 /91 g=0 a1= 0 a2= 0 (root=53) 
+ (55) 66 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=66) 
+ (56) 66 (0) : 67->69 /0 g=0 a1= 0 a2= 0 (root=66) 
+ (57) 66 (0) : 69->70 /98 g=0 a1= 0 a2= 0 (root=66) 
+ (58) 66 (0) : 70->71 /100 g=0 a1= 0 a2= 0 (root=66) 
+ (59) 66 (0) : 71->72 /101 g=0 a1= 0 a2= 0 (root=66) 
+ (60) 66 (0) : 72->73 /103 g=0 a1= 0 a2= 0 (root=66) 
+ (61) 66 (0) : 73->74 /104 g=0 a1= 0 a2= 0 (root=66) 
+ (62) 66 (0) : 74->75 /106 g=0 a1= 0 a2= 0 (root=66) 
+ (63) 66 (0) : 75->76 /107 g=0 a1= 0 a2= 0 (root=66) 
+ (64) 66 (0) : 76->77 /109 g=0 a1= 0 a2= 0 (root=66) 
+ (65) 66 (0) : 77->68 /110 g=0 a1= 0 a2= 0 (root=66) 
+ (66) 79 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=79) 
+ (67) 79 (0) : 80->82 /0 g=0 a1= 0 a2= 0 (root=79) 
+ (68) 79 (0) : 82->83 /117 g=0 a1= 0 a2= 0 (root=79) 
+ (69) 79 (0) : 83->84 /119 g=0 a1= 0 a2= 0 (root=79) 
+ (70) 79 (0) : 84->85 /120 g=0 a1= 0 a2= 0 (root=79) 
+ (71) 79 (0) : 85->86 /122 g=0 a1= 0 a2= 0 (root=79) 
+ (72) 79 (0) : 86->87 /123 g=0 a1= 0 a2= 0 (root=79) 
+ (73) 79 (0) : 87->88 /125 g=0 a1= 0 a2= 0 (root=79) 
+ (74) 79 (0) : 88->89 /126 g=0 a1= 0 a2= 0 (root=79) 
+ (75) 79 (0) : 89->90 /128 g=0 a1= 0 a2= 0 (root=79) 
+ (76) 79 (0) : 90->81 /129 g=0 a1= 0 a2= 0 (root=79) 
+ (77) 92 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=92) 
+ (78) 92 (0) : 93->95 /0 g=0 a1= 0 a2= 0 (root=92) 
+ (79) 92 (0) : 95->96 /136 g=0 a1= 0 a2= 0 (root=92) 
+ (80) 92 (0) : 96->97 /138 g=0 a1= 0 a2= 0 (root=92) 
+ (81) 92 (0) : 97->98 /139 g=0 a1= 0 a2= 0 (root=92) 
+ (82) 92 (0) : 98->99 /141 g=0 a1= 0 a2= 0 (root=92) 
+ (83) 92 (0) : 99->100 /142 g=0 a1= 0 a2= 0 (root=92) 
+ (84) 92 (0) : 100->101 /144 g=0 a1= 0 a2= 0 (root=92) 
+ (85) 92 (0) : 101->102 /145 g=0 a1= 0 a2= 0 (root=92) 
+ (86) 92 (0) : 102->103 /147 g=0 a1= 0 a2= 0 (root=92) 
+ (87) 92 (0) : 103->94 /148 g=0 a1= 0 a2= 0 (root=92) 
+ (88) 105 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=105) 
+ (89) 105 (0) : 106->108 /0 g=0 a1= 0 a2= 0 (root=105) 
+ (90) 105 (0) : 108->109 /155 g=0 a1= 0 a2= 0 (root=105) 
+ (91) 105 (0) : 109->110 /157 g=0 a1= 0 a2= 0 (root=105) 
+ (92) 105 (0) : 110->111 /158 g=0 a1= 0 a2= 0 (root=105) 
+ (93) 105 (0) : 111->112 /160 g=0 a1= 0 a2= 0 (root=105) 
+ (94) 105 (0) : 112->113 /161 g=0 a1= 0 a2= 0 (root=105) 
+ (95) 105 (0) : 113->114 /163 g=0 a1= 0 a2= 0 (root=105) 
+ (96) 105 (0) : 114->115 /164 g=0 a1= 0 a2= 0 (root=105) 
+ (97) 105 (0) : 115->116 /166 g=0 a1= 0 a2= 0 (root=105) 
+ (98) 105 (0) : 116->107 /167 g=0 a1= 0 a2= 0 (root=105) 
+ (99) 118 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=118) 
+ (100) 118 (0) : 119->121 /0 g=0 a1= 0 a2= 0 (root=118) 
+ (101) 118 (0) : 121->122 /174 g=0 a1= 0 a2= 0 (root=118) 
+ (102) 118 (0) : 122->123 /176 g=0 a1= 0 a2= 0 (root=118) 
+ (103) 118 (0) : 123->124 /177 g=0 a1= 0 a2= 0 (root=118) 
+ (104) 118 (0) : 124->125 /179 g=0 a1= 0 a2= 0 (root=118) 
+ (105) 118 (0) : 125->126 /180 g=0 a1= 0 a2= 0 (root=118) 
+ (106) 118 (0) : 126->127 /182 g=0 a1= 0 a2= 0 (root=118) 
+ (107) 118 (0) : 127->128 /183 g=0 a1= 0 a2= 0 (root=118) 
+ (108) 118 (0) : 128->129 /185 g=0 a1= 0 a2= 0 (root=118) 
+ (109) 118 (0) : 129->120 /186 g=0 a1= 0 a2= 0 (root=118) 
+ (110) 131 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=131) 
+ (111) 131 (0) : 132->134 /0 g=0 a1= 0 a2= 0 (root=131) 
+ (112) 131 (0) : 134->135 /193 g=0 a1= 0 a2= 0 (root=131) 
+ (113) 131 (0) : 135->136 /195 g=0 a1= 0 a2= 0 (root=131) 
+ (114) 131 (0) : 136->137 /196 g=0 a1= 0 a2= 0 (root=131) 
+ (115) 131 (0) : 137->138 /198 g=0 a1= 0 a2= 0 (root=131) 
+ (116) 131 (0) : 138->139 /199 g=0 a1= 0 a2= 0 (root=131) 
+ (117) 131 (0) : 139->140 /201 g=0 a1= 0 a2= 0 (root=131) 
+ (118) 131 (0) : 140->141 /202 g=0 a1= 0 a2= 0 (root=131) 
+ (119) 131 (0) : 141->142 /204 g=0 a1= 0 a2= 0 (root=131) 
+ (120) 131 (0) : 142->133 /205 g=0 a1= 0 a2= 0 (root=131) 
+ (121) 144 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=144) 
+ (122) 144 (0) : 145->147 /0 g=0 a1= 0 a2= 0 (root=144) 
+ (123) 144 (0) : 147->148 /212 g=0 a1= 0 a2= 0 (root=144) 
+ (124) 144 (0) : 148->149 /214 g=0 a1= 0 a2= 0 (root=144) 
+ (125) 144 (0) : 149->150 /215 g=0 a1= 0 a2= 0 (root=144) 
+ (126) 144 (0) : 150->151 /217 g=0 a1= 0 a2= 0 (root=144) 
+ (127) 144 (0) : 151->152 /218 g=0 a1= 0 a2= 0 (root=144) 
+ (128) 144 (0) : 152->153 /220 g=0 a1= 0 a2= 0 (root=144) 
+ (129) 144 (0) : 153->154 /221 g=0 a1= 0 a2= 0 (root=144) 
+ (130) 144 (0) : 154->155 /223 g=0 a1= 0 a2= 0 (root=144) 
+ (131) 144 (0) : 155->146 /224 g=0 a1= 0 a2= 0 (root=144) 
+ (132) 157 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=157) 
+ (133) 157 (0) : 158->160 /0 g=0 a1= 0 a2= 0 (root=157) 
+ (134) 157 (0) : 160->161 /231 g=0 a1= 0 a2= 0 (root=157) 
+ (135) 157 (0) : 161->162 /234 g=0 a1= 0 a2= 0 (root=157) 
+ (136) 157 (0) : 162->163 /237 g=0 a1= 0 a2= 0 (root=157) 
+ (137) 157 (0) : 163->164 /240 g=0 a1= 0 a2= 0 (root=157) 
+ (138) 157 (0) : 164->165 /243 g=0 a1= 0 a2= 0 (root=157) 
+ (139) 157 (0) : 165->159 /246 g=0 a1= 0 a2= 0 (root=157) 
+ (140) 170 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=170) 
+ (141) 170 (0) : 180->171 /0 g=0 a1= 0 a2= 0 (root=170) 
+ (142) 170 (0) : 171->172 /250 g=0 a1= 0 a2= 0 (root=170) 
+ (143) 170 (0) : 172->173 /253 g=0 a1= 0 a2= 0 (root=170) 
+ (144) 170 (0) : 173->174 /256 g=0 a1= 0 a2= 0 (root=170) 
+ (145) 170 (0) : 174->175 /259 g=0 a1= 0 a2= 0 (root=170) 
+ (146) 170 (0) : 175->176 /262 g=0 a1= 0 a2= 0 (root=170) 
+ (147) 170 (0) : 176->181 /265 g=0 a1= 0 a2= 0 (root=170) 
+ (148) 183 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=183) 
+ (149) 183 (0) : 184->186 /0 g=0 a1= 0 a2= 0 (root=183) 
+ (150) 183 (0) : 186->187 /269 g=0 a1= 0 a2= 0 (root=183) 
+ (151) 183 (0) : 187->188 /272 g=0 a1= 0 a2= 0 (root=183) 
+ (152) 183 (0) : 188->189 /275 g=0 a1= 0 a2= 0 (root=183) 
+ (153) 183 (0) : 189->190 /278 g=0 a1= 0 a2= 0 (root=183) 
+ (154) 183 (0) : 190->191 /281 g=0 a1= 0 a2= 0 (root=183) 
+ (155) 183 (0) : 191->185 /284 g=0 a1= 0 a2= 0 (root=183) 
+ (156) 196 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=196) 
+ (157) 196 (0) : 197->199 /0 g=0 a1= 0 a2= 0 (root=196) 
+ (158) 196 (0) : 199->200 /288 g=0 a1= 0 a2= 0 (root=196) 
+ (159) 196 (0) : 200->201 /291 g=0 a1= 0 a2= 0 (root=196) 
+ (160) 196 (0) : 201->202 /294 g=0 a1= 0 a2= 0 (root=196) 
+ (161) 196 (0) : 202->203 /297 g=0 a1= 0 a2= 0 (root=196) 
+ (162) 196 (0) : 203->204 /300 g=0 a1= 0 a2= 0 (root=196) 
+ (163) 196 (0) : 204->198 /303 g=0 a1= 0 a2= 0 (root=196) 
+ (164) 209 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=209) 
+ (165) 209 (0) : 210->212 /0 g=0 a1= 0 a2= 0 (root=209) 
+ (166) 209 (0) : 212->213 /307 g=0 a1= 0 a2= 0 (root=209) 
+ (167) 209 (0) : 213->214 /310 g=0 a1= 0 a2= 0 (root=209) 
+ (168) 209 (0) : 214->215 /313 g=0 a1= 0 a2= 0 (root=209) 
+ (169) 209 (0) : 215->216 /316 g=0 a1= 0 a2= 0 (root=209) 
+ (170) 209 (0) : 216->217 /319 g=0 a1= 0 a2= 0 (root=209) 
+ (171) 209 (0) : 217->211 /322 g=0 a1= 0 a2= 0 (root=209) 
+ (172) 222 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=222) 
+ (173) 222 (0) : 223->225 /11 g=0 a1= 0 a2= 0 (root=222) 
+ (174) 222 (0) : 225->231 /13 g=0 a1= 0 a2= 0 (root=222) 
+ (175) 222 (0) : 225->232 /1 g=0 a1= 0 a2= 0 (root=222) 
+ (176) 222 (0) : 225->225 /1 g=0 a1= 0 a2= 0 (root=222) 
+ (177) 222 (0) : 232->231 /13 g=0 a1= 0 a2= 0 (root=222) 
+ (178) 222 (0) : 232->226 /2 g=0 a1= 0 a2= 0 (root=222) 
+ (179) 222 (0) : 225->226 /2 g=0 a1= 0 a2= 0 (root=222) 
+ (180) 222 (0) : 226->233 /14 g=0 a1= 0 a2= 0 (root=222) 
+ (181) 222 (0) : 226->234 /3 g=0 a1= 0 a2= 0 (root=222) 
+ (182) 222 (0) : 226->226 /3 g=0 a1= 0 a2= 0 (root=222) 
+ (183) 222 (0) : 234->233 /14 g=0 a1= 0 a2= 0 (root=222) 
+ (184) 222 (0) : 234->227 /4 g=0 a1= 0 a2= 0 (root=222) 
+ (185) 222 (0) : 226->227 /4 g=0 a1= 0 a2= 0 (root=222) 
+ (186) 222 (0) : 227->235 /15 g=0 a1= 0 a2= 0 (root=222) 
+ (187) 222 (0) : 227->236 /5 g=0 a1= 0 a2= 0 (root=222) 
+ (188) 222 (0) : 227->227 /5 g=0 a1= 0 a2= 0 (root=222) 
+ (189) 222 (0) : 236->235 /15 g=0 a1= 0 a2= 0 (root=222) 
+ (190) 222 (0) : 236->228 /6 g=0 a1= 0 a2= 0 (root=222) 
+ (191) 222 (0) : 227->228 /6 g=0 a1= 0 a2= 0 (root=222) 
+ (192) 222 (0) : 228->237 /16 g=0 a1= 0 a2= 0 (root=222) 
+ (193) 222 (0) : 228->238 /7 g=0 a1= 0 a2= 0 (root=222) 
+ (194) 222 (0) : 228->228 /7 g=0 a1= 0 a2= 0 (root=222) 
+ (195) 222 (0) : 238->237 /16 g=0 a1= 0 a2= 0 (root=222) 
+ (196) 222 (0) : 238->229 /8 g=0 a1= 0 a2= 0 (root=222) 
+ (197) 222 (0) : 228->229 /8 g=0 a1= 0 a2= 0 (root=222) 
+ (198) 222 (0) : 229->239 /9 g=0 a1= 0 a2= 0 (root=222) 
+ (199) 222 (0) : 229->240 /17 g=0 a1= 0 a2= 0 (root=222) 
+ (200) 222 (0) : 229->229 /17 g=0 a1= 0 a2= 0 (root=222) 
+ (201) 222 (0) : 240->239 /9 g=0 a1= 0 a2= 0 (root=222) 
+ (202) 222 (0) : 240->230 /18 g=0 a1= 0 a2= 0 (root=222) 
+ (203) 222 (0) : 229->230 /18 g=0 a1= 0 a2= 0 (root=222) 
+ (204) 222 (0) : 230->242 /19 g=0 a1= 0 a2= 0 (root=222) 
+ (205) 222 (0) : 242->241 /20 g=0 a1= 0 a2= 0 (root=222) 
+ (206) 222 (0) : 230->241 /20 g=0 a1= 0 a2= 0 (root=222) 
+ (207) 222 (0) : 242->224 /21 g=0 a1= 0 a2= 0 (root=222) 
+ (208) 222 (0) : 230->224 /21 g=0 a1= 0 a2= 0 (root=222) 
+ (209) 243 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=243) 
+ (210) 243 (0) : 245->247 /22 g=0 a1= 0 a2= 0 (root=243) 
+ (211) 243 (0) : 247->252 /23 g=0 a1= 0 a2= 0 (root=243) 
+ (212) 243 (0) : 247->253 /24 g=0 a1= 0 a2= 0 (root=243) 
+ (213) 243 (0) : 247->247 /24 g=0 a1= 0 a2= 0 (root=243) 
+ (214) 243 (0) : 253->252 /23 g=0 a1= 0 a2= 0 (root=243) 
+ (215) 243 (0) : 253->244 /25 g=0 a1= 0 a2= 0 (root=243) 
+ (216) 243 (0) : 247->244 /25 g=0 a1= 0 a2= 0 (root=243) 
+ (217) 243 (0) : 244->254 /26 g=0 a1= 0 a2= 0 (root=243) 
+ (218) 243 (0) : 244->255 /27 g=0 a1= 0 a2= 0 (root=243) 
+ (219) 243 (0) : 244->244 /27 g=0 a1= 0 a2= 0 (root=243) 
+ (220) 243 (0) : 255->254 /26 g=0 a1= 0 a2= 0 (root=243) 
+ (221) 243 (0) : 255->248 /28 g=0 a1= 0 a2= 0 (root=243) 
+ (222) 243 (0) : 244->248 /28 g=0 a1= 0 a2= 0 (root=243) 
+ (223) 243 (0) : 248->256 /29 g=0 a1= 0 a2= 0 (root=243) 
+ (224) 243 (0) : 248->257 /30 g=0 a1= 0 a2= 0 (root=243) 
+ (225) 243 (0) : 248->248 /30 g=0 a1= 0 a2= 0 (root=243) 
+ (226) 243 (0) : 257->256 /29 g=0 a1= 0 a2= 0 (root=243) 
+ (227) 243 (0) : 257->249 /31 g=0 a1= 0 a2= 0 (root=243) 
+ (228) 243 (0) : 248->249 /31 g=0 a1= 0 a2= 0 (root=243) 
+ (229) 243 (0) : 249->258 /32 g=0 a1= 0 a2= 0 (root=243) 
+ (230) 243 (0) : 249->259 /33 g=0 a1= 0 a2= 0 (root=243) 
+ (231) 243 (0) : 249->249 /33 g=0 a1= 0 a2= 0 (root=243) 
+ (232) 243 (0) : 259->258 /32 g=0 a1= 0 a2= 0 (root=243) 
+ (233) 243 (0) : 259->250 /34 g=0 a1= 0 a2= 0 (root=243) 
+ (234) 243 (0) : 249->250 /34 g=0 a1= 0 a2= 0 (root=243) 
+ (235) 243 (0) : 250->260 /35 g=0 a1= 0 a2= 0 (root=243) 
+ (236) 243 (0) : 250->261 /36 g=0 a1= 0 a2= 0 (root=243) 
+ (237) 243 (0) : 250->250 /36 g=0 a1= 0 a2= 0 (root=243) 
+ (238) 243 (0) : 261->260 /35 g=0 a1= 0 a2= 0 (root=243) 
+ (239) 243 (0) : 261->251 /37 g=0 a1= 0 a2= 0 (root=243) 
+ (240) 243 (0) : 250->251 /37 g=0 a1= 0 a2= 0 (root=243) 
+ (241) 243 (0) : 251->263 /38 g=0 a1= 0 a2= 0 (root=243) 
+ (242) 243 (0) : 263->262 /39 g=0 a1= 0 a2= 0 (root=243) 
+ (243) 243 (0) : 251->262 /39 g=0 a1= 0 a2= 0 (root=243) 
+ (244) 243 (0) : 263->246 /40 g=0 a1= 0 a2= 0 (root=243) 
+ (245) 243 (0) : 251->246 /40 g=0 a1= 0 a2= 0 (root=243) 
+ (246) 264 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=264) 
+ (247) 264 (0) : 265->267 /41 g=0 a1= 0 a2= 0 (root=264) 
+ (248) 264 (0) : 267->273 /42 g=0 a1= 0 a2= 0 (root=264) 
+ (249) 264 (0) : 267->274 /43 g=0 a1= 0 a2= 0 (root=264) 
+ (250) 264 (0) : 267->267 /43 g=0 a1= 0 a2= 0 (root=264) 
+ (251) 264 (0) : 274->273 /42 g=0 a1= 0 a2= 0 (root=264) 
+ (252) 264 (0) : 274->268 /44 g=0 a1= 0 a2= 0 (root=264) 
+ (253) 264 (0) : 267->268 /44 g=0 a1= 0 a2= 0 (root=264) 
+ (254) 264 (0) : 268->275 /45 g=0 a1= 0 a2= 0 (root=264) 
+ (255) 264 (0) : 268->276 /46 g=0 a1= 0 a2= 0 (root=264) 
+ (256) 264 (0) : 268->268 /46 g=0 a1= 0 a2= 0 (root=264) 
+ (257) 264 (0) : 276->275 /45 g=0 a1= 0 a2= 0 (root=264) 
+ (258) 264 (0) : 276->269 /47 g=0 a1= 0 a2= 0 (root=264) 
+ (259) 264 (0) : 268->269 /47 g=0 a1= 0 a2= 0 (root=264) 
+ (260) 264 (0) : 269->277 /48 g=0 a1= 0 a2= 0 (root=264) 
+ (261) 264 (0) : 269->278 /49 g=0 a1= 0 a2= 0 (root=264) 
+ (262) 264 (0) : 269->269 /49 g=0 a1= 0 a2= 0 (root=264) 
+ (263) 264 (0) : 278->277 /48 g=0 a1= 0 a2= 0 (root=264) 
+ (264) 264 (0) : 278->270 /50 g=0 a1= 0 a2= 0 (root=264) 
+ (265) 264 (0) : 269->270 /50 g=0 a1= 0 a2= 0 (root=264) 
+ (266) 264 (0) : 270->279 /51 g=0 a1= 0 a2= 0 (root=264) 
+ (267) 264 (0) : 270->280 /52 g=0 a1= 0 a2= 0 (root=264) 
+ (268) 264 (0) : 270->270 /52 g=0 a1= 0 a2= 0 (root=264) 
+ (269) 264 (0) : 280->279 /51 g=0 a1= 0 a2= 0 (root=264) 
+ (270) 264 (0) : 280->271 /53 g=0 a1= 0 a2= 0 (root=264) 
+ (271) 264 (0) : 270->271 /53 g=0 a1= 0 a2= 0 (root=264) 
+ (272) 264 (0) : 271->281 /54 g=0 a1= 0 a2= 0 (root=264) 
+ (273) 264 (0) : 271->282 /55 g=0 a1= 0 a2= 0 (root=264) 
+ (274) 264 (0) : 271->271 /55 g=0 a1= 0 a2= 0 (root=264) 
+ (275) 264 (0) : 282->281 /54 g=0 a1= 0 a2= 0 (root=264) 
+ (276) 264 (0) : 282->272 /56 g=0 a1= 0 a2= 0 (root=264) 
+ (277) 264 (0) : 271->272 /56 g=0 a1= 0 a2= 0 (root=264) 
+ (278) 264 (0) : 272->284 /57 g=0 a1= 0 a2= 0 (root=264) 
+ (279) 264 (0) : 284->283 /58 g=0 a1= 0 a2= 0 (root=264) 
+ (280) 264 (0) : 272->283 /58 g=0 a1= 0 a2= 0 (root=264) 
+ (281) 264 (0) : 284->266 /59 g=0 a1= 0 a2= 0 (root=264) 
+ (282) 264 (0) : 272->266 /59 g=0 a1= 0 a2= 0 (root=264) 
+ (283) 285 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=285) 
+ (284) 285 (0) : 287->289 /60 g=0 a1= 0 a2= 0 (root=285) 
+ (285) 285 (0) : 289->295 /61 g=0 a1= 0 a2= 0 (root=285) 
+ (286) 285 (0) : 289->296 /62 g=0 a1= 0 a2= 0 (root=285) 
+ (287) 285 (0) : 289->289 /62 g=0 a1= 0 a2= 0 (root=285) 
+ (288) 285 (0) : 296->295 /61 g=0 a1= 0 a2= 0 (root=285) 
+ (289) 285 (0) : 296->290 /63 g=0 a1= 0 a2= 0 (root=285) 
+ (290) 285 (0) : 289->290 /63 g=0 a1= 0 a2= 0 (root=285) 
+ (291) 285 (0) : 290->286 /64 g=0 a1= 0 a2= 0 (root=285) 
+ (292) 285 (0) : 290->297 /65 g=0 a1= 0 a2= 0 (root=285) 
+ (293) 285 (0) : 290->290 /65 g=0 a1= 0 a2= 0 (root=285) 
+ (294) 285 (0) : 297->286 /64 g=0 a1= 0 a2= 0 (root=285) 
+ (295) 285 (0) : 297->291 /66 g=0 a1= 0 a2= 0 (root=285) 
+ (296) 285 (0) : 290->291 /66 g=0 a1= 0 a2= 0 (root=285) 
+ (297) 285 (0) : 291->298 /67 g=0 a1= 0 a2= 0 (root=285) 
+ (298) 285 (0) : 291->299 /68 g=0 a1= 0 a2= 0 (root=285) 
+ (299) 285 (0) : 291->291 /68 g=0 a1= 0 a2= 0 (root=285) 
+ (300) 285 (0) : 299->298 /67 g=0 a1= 0 a2= 0 (root=285) 
+ (301) 285 (0) : 299->292 /69 g=0 a1= 0 a2= 0 (root=285) 
+ (302) 285 (0) : 291->292 /69 g=0 a1= 0 a2= 0 (root=285) 
+ (303) 285 (0) : 292->300 /70 g=0 a1= 0 a2= 0 (root=285) 
+ (304) 285 (0) : 292->301 /71 g=0 a1= 0 a2= 0 (root=285) 
+ (305) 285 (0) : 292->292 /71 g=0 a1= 0 a2= 0 (root=285) 
+ (306) 285 (0) : 301->300 /70 g=0 a1= 0 a2= 0 (root=285) 
+ (307) 285 (0) : 301->293 /72 g=0 a1= 0 a2= 0 (root=285) 
+ (308) 285 (0) : 292->293 /72 g=0 a1= 0 a2= 0 (root=285) 
+ (309) 285 (0) : 293->302 /73 g=0 a1= 0 a2= 0 (root=285) 
+ (310) 285 (0) : 293->303 /74 g=0 a1= 0 a2= 0 (root=285) 
+ (311) 285 (0) : 293->293 /74 g=0 a1= 0 a2= 0 (root=285) 
+ (312) 285 (0) : 303->302 /73 g=0 a1= 0 a2= 0 (root=285) 
+ (313) 285 (0) : 303->294 /75 g=0 a1= 0 a2= 0 (root=285) 
+ (314) 285 (0) : 293->294 /75 g=0 a1= 0 a2= 0 (root=285) 
+ (315) 285 (0) : 294->305 /76 g=0 a1= 0 a2= 0 (root=285) 
+ (316) 285 (0) : 305->304 /77 g=0 a1= 0 a2= 0 (root=285) 
+ (317) 285 (0) : 294->304 /77 g=0 a1= 0 a2= 0 (root=285) 
+ (318) 285 (0) : 305->288 /78 g=0 a1= 0 a2= 0 (root=285) 
+ (319) 285 (0) : 294->288 /78 g=0 a1= 0 a2= 0 (root=285) 
+ (320) 306 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=306) 
+ (321) 306 (0) : 326->312 /79 g=0 a1= 0 a2= 0 (root=306) 
+ (322) 306 (0) : 312->318 /80 g=0 a1= 0 a2= 0 (root=306) 
+ (323) 306 (0) : 312->319 /81 g=0 a1= 0 a2= 0 (root=306) 
+ (324) 306 (0) : 312->312 /81 g=0 a1= 0 a2= 0 (root=306) 
+ (325) 306 (0) : 319->318 /80 g=0 a1= 0 a2= 0 (root=306) 
+ (326) 306 (0) : 319->313 /82 g=0 a1= 0 a2= 0 (root=306) 
+ (327) 306 (0) : 312->313 /82 g=0 a1= 0 a2= 0 (root=306) 
+ (328) 306 (0) : 313->320 /83 g=0 a1= 0 a2= 0 (root=306) 
+ (329) 306 (0) : 313->321 /84 g=0 a1= 0 a2= 0 (root=306) 
+ (330) 306 (0) : 313->313 /84 g=0 a1= 0 a2= 0 (root=306) 
+ (331) 306 (0) : 321->320 /83 g=0 a1= 0 a2= 0 (root=306) 
+ (332) 306 (0) : 321->314 /85 g=0 a1= 0 a2= 0 (root=306) 
+ (333) 306 (0) : 313->314 /85 g=0 a1= 0 a2= 0 (root=306) 
+ (334) 306 (0) : 314->322 /86 g=0 a1= 0 a2= 0 (root=306) 
+ (335) 306 (0) : 314->323 /87 g=0 a1= 0 a2= 0 (root=306) 
+ (336) 306 (0) : 314->314 /87 g=0 a1= 0 a2= 0 (root=306) 
+ (337) 306 (0) : 323->322 /86 g=0 a1= 0 a2= 0 (root=306) 
+ (338) 306 (0) : 323->315 /88 g=0 a1= 0 a2= 0 (root=306) 
+ (339) 306 (0) : 314->315 /88 g=0 a1= 0 a2= 0 (root=306) 
+ (340) 306 (0) : 315->324 /89 g=0 a1= 0 a2= 0 (root=306) 
+ (341) 306 (0) : 315->325 /90 g=0 a1= 0 a2= 0 (root=306) 
+ (342) 306 (0) : 315->315 /90 g=0 a1= 0 a2= 0 (root=306) 
+ (343) 306 (0) : 325->324 /89 g=0 a1= 0 a2= 0 (root=306) 
+ (344) 306 (0) : 325->316 /91 g=0 a1= 0 a2= 0 (root=306) 
+ (345) 306 (0) : 315->316 /91 g=0 a1= 0 a2= 0 (root=306) 
+ (346) 306 (0) : 316->307 /92 g=0 a1= 0 a2= 0 (root=306) 
+ (347) 306 (0) : 316->308 /93 g=0 a1= 0 a2= 0 (root=306) 
+ (348) 306 (0) : 316->316 /93 g=0 a1= 0 a2= 0 (root=306) 
+ (349) 306 (0) : 308->307 /92 g=0 a1= 0 a2= 0 (root=306) 
+ (350) 306 (0) : 308->317 /94 g=0 a1= 0 a2= 0 (root=306) 
+ (351) 306 (0) : 316->317 /94 g=0 a1= 0 a2= 0 (root=306) 
+ (352) 306 (0) : 317->310 /95 g=0 a1= 0 a2= 0 (root=306) 
+ (353) 306 (0) : 310->309 /96 g=0 a1= 0 a2= 0 (root=306) 
+ (354) 306 (0) : 317->309 /96 g=0 a1= 0 a2= 0 (root=306) 
+ (355) 306 (0) : 310->311 /97 g=0 a1= 0 a2= 0 (root=306) 
+ (356) 306 (0) : 317->311 /97 g=0 a1= 0 a2= 0 (root=306) 
+ (357) 327 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=327) 
+ (358) 327 (0) : 328->330 /98 g=0 a1= 0 a2= 0 (root=327) 
+ (359) 327 (0) : 330->336 /99 g=0 a1= 0 a2= 0 (root=327) 
+ (360) 327 (0) : 330->337 /100 g=0 a1= 0 a2= 0 (root=327) 
+ (361) 327 (0) : 330->330 /100 g=0 a1= 0 a2= 0 (root=327) 
+ (362) 327 (0) : 337->336 /99 g=0 a1= 0 a2= 0 (root=327) 
+ (363) 327 (0) : 337->331 /101 g=0 a1= 0 a2= 0 (root=327) 
+ (364) 327 (0) : 330->331 /101 g=0 a1= 0 a2= 0 (root=327) 
+ (365) 327 (0) : 331->338 /102 g=0 a1= 0 a2= 0 (root=327) 
+ (366) 327 (0) : 331->339 /103 g=0 a1= 0 a2= 0 (root=327) 
+ (367) 327 (0) : 331->331 /103 g=0 a1= 0 a2= 0 (root=327) 
+ (368) 327 (0) : 339->338 /102 g=0 a1= 0 a2= 0 (root=327) 
+ (369) 327 (0) : 339->332 /104 g=0 a1= 0 a2= 0 (root=327) 
+ (370) 327 (0) : 331->332 /104 g=0 a1= 0 a2= 0 (root=327) 
+ (371) 327 (0) : 332->340 /105 g=0 a1= 0 a2= 0 (root=327) 
+ (372) 327 (0) : 332->341 /106 g=0 a1= 0 a2= 0 (root=327) 
+ (373) 327 (0) : 332->332 /106 g=0 a1= 0 a2= 0 (root=327) 
+ (374) 327 (0) : 341->340 /105 g=0 a1= 0 a2= 0 (root=327) 
+ (375) 327 (0) : 341->333 /107 g=0 a1= 0 a2= 0 (root=327) 
+ (376) 327 (0) : 332->333 /107 g=0 a1= 0 a2= 0 (root=327) 
+ (377) 327 (0) : 333->342 /108 g=0 a1= 0 a2= 0 (root=327) 
+ (378) 327 (0) : 333->343 /109 g=0 a1= 0 a2= 0 (root=327) 
+ (379) 327 (0) : 333->333 /109 g=0 a1= 0 a2= 0 (root=327) 
+ (380) 327 (0) : 343->342 /108 g=0 a1= 0 a2= 0 (root=327) 
+ (381) 327 (0) : 343->334 /110 g=0 a1= 0 a2= 0 (root=327) 
+ (382) 327 (0) : 333->334 /110 g=0 a1= 0 a2= 0 (root=327) 
+ (383) 327 (0) : 334->344 /111 g=0 a1= 0 a2= 0 (root=327) 
+ (384) 327 (0) : 334->345 /112 g=0 a1= 0 a2= 0 (root=327) 
+ (385) 327 (0) : 334->334 /112 g=0 a1= 0 a2= 0 (root=327) 
+ (386) 327 (0) : 345->344 /111 g=0 a1= 0 a2= 0 (root=327) 
+ (387) 327 (0) : 345->335 /113 g=0 a1= 0 a2= 0 (root=327) 
+ (388) 327 (0) : 334->335 /113 g=0 a1= 0 a2= 0 (root=327) 
+ (389) 327 (0) : 335->347 /114 g=0 a1= 0 a2= 0 (root=327) 
+ (390) 327 (0) : 347->346 /115 g=0 a1= 0 a2= 0 (root=327) 
+ (391) 327 (0) : 335->346 /115 g=0 a1= 0 a2= 0 (root=327) 
+ (392) 327 (0) : 347->329 /116 g=0 a1= 0 a2= 0 (root=327) 
+ (393) 327 (0) : 335->329 /116 g=0 a1= 0 a2= 0 (root=327) 
+ (394) 348 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=348) 
+ (395) 348 (0) : 349->351 /117 g=0 a1= 0 a2= 0 (root=348) 
+ (396) 348 (0) : 351->357 /118 g=0 a1= 0 a2= 0 (root=348) 
+ (397) 348 (0) : 351->358 /119 g=0 a1= 0 a2= 0 (root=348) 
+ (398) 348 (0) : 351->351 /119 g=0 a1= 0 a2= 0 (root=348) 
+ (399) 348 (0) : 358->357 /118 g=0 a1= 0 a2= 0 (root=348) 
+ (400) 348 (0) : 358->352 /120 g=0 a1= 0 a2= 0 (root=348) 
+ (401) 348 (0) : 351->352 /120 g=0 a1= 0 a2= 0 (root=348) 
+ (402) 348 (0) : 352->359 /121 g=0 a1= 0 a2= 0 (root=348) 
+ (403) 348 (0) : 352->360 /122 g=0 a1= 0 a2= 0 (root=348) 
+ (404) 348 (0) : 352->352 /122 g=0 a1= 0 a2= 0 (root=348) 
+ (405) 348 (0) : 360->359 /121 g=0 a1= 0 a2= 0 (root=348) 
+ (406) 348 (0) : 360->353 /123 g=0 a1= 0 a2= 0 (root=348) 
+ (407) 348 (0) : 352->353 /123 g=0 a1= 0 a2= 0 (root=348) 
+ (408) 348 (0) : 353->361 /124 g=0 a1= 0 a2= 0 (root=348) 
+ (409) 348 (0) : 353->362 /125 g=0 a1= 0 a2= 0 (root=348) 
+ (410) 348 (0) : 353->353 /125 g=0 a1= 0 a2= 0 (root=348) 
+ (411) 348 (0) : 362->361 /124 g=0 a1= 0 a2= 0 (root=348) 
+ (412) 348 (0) : 362->354 /126 g=0 a1= 0 a2= 0 (root=348) 
+ (413) 348 (0) : 353->354 /126 g=0 a1= 0 a2= 0 (root=348) 
+ (414) 348 (0) : 354->363 /127 g=0 a1= 0 a2= 0 (root=348) 
+ (415) 348 (0) : 354->364 /128 g=0 a1= 0 a2= 0 (root=348) 
+ (416) 348 (0) : 354->354 /128 g=0 a1= 0 a2= 0 (root=348) 
+ (417) 348 (0) : 364->363 /127 g=0 a1= 0 a2= 0 (root=348) 
+ (418) 348 (0) : 364->355 /129 g=0 a1= 0 a2= 0 (root=348) 
+ (419) 348 (0) : 354->355 /129 g=0 a1= 0 a2= 0 (root=348) 
+ (420) 348 (0) : 355->365 /130 g=0 a1= 0 a2= 0 (root=348) 
+ (421) 348 (0) : 355->366 /131 g=0 a1= 0 a2= 0 (root=348) 
+ (422) 348 (0) : 355->355 /131 g=0 a1= 0 a2= 0 (root=348) 
+ (423) 348 (0) : 366->365 /130 g=0 a1= 0 a2= 0 (root=348) 
+ (424) 348 (0) : 366->356 /132 g=0 a1= 0 a2= 0 (root=348) 
+ (425) 348 (0) : 355->356 /132 g=0 a1= 0 a2= 0 (root=348) 
+ (426) 348 (0) : 356->368 /133 g=0 a1= 0 a2= 0 (root=348) 
+ (427) 348 (0) : 368->367 /134 g=0 a1= 0 a2= 0 (root=348) 
+ (428) 348 (0) : 356->367 /134 g=0 a1= 0 a2= 0 (root=348) 
+ (429) 348 (0) : 368->350 /135 g=0 a1= 0 a2= 0 (root=348) 
+ (430) 348 (0) : 356->350 /135 g=0 a1= 0 a2= 0 (root=348) 
+ (431) 369 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=369) 
+ (432) 369 (0) : 389->376 /136 g=0 a1= 0 a2= 0 (root=369) 
+ (433) 369 (0) : 376->382 /137 g=0 a1= 0 a2= 0 (root=369) 
+ (434) 369 (0) : 376->383 /138 g=0 a1= 0 a2= 0 (root=369) 
+ (435) 369 (0) : 376->376 /138 g=0 a1= 0 a2= 0 (root=369) 
+ (436) 369 (0) : 383->382 /137 g=0 a1= 0 a2= 0 (root=369) 
+ (437) 369 (0) : 383->377 /139 g=0 a1= 0 a2= 0 (root=369) 
+ (438) 369 (0) : 376->377 /139 g=0 a1= 0 a2= 0 (root=369) 
+ (439) 369 (0) : 377->384 /140 g=0 a1= 0 a2= 0 (root=369) 
+ (440) 369 (0) : 377->385 /141 g=0 a1= 0 a2= 0 (root=369) 
+ (441) 369 (0) : 377->377 /141 g=0 a1= 0 a2= 0 (root=369) 
+ (442) 369 (0) : 385->384 /140 g=0 a1= 0 a2= 0 (root=369) 
+ (443) 369 (0) : 385->378 /142 g=0 a1= 0 a2= 0 (root=369) 
+ (444) 369 (0) : 377->378 /142 g=0 a1= 0 a2= 0 (root=369) 
+ (445) 369 (0) : 378->386 /143 g=0 a1= 0 a2= 0 (root=369) 
+ (446) 369 (0) : 378->387 /144 g=0 a1= 0 a2= 0 (root=369) 
+ (447) 369 (0) : 378->378 /144 g=0 a1= 0 a2= 0 (root=369) 
+ (448) 369 (0) : 387->386 /143 g=0 a1= 0 a2= 0 (root=369) 
+ (449) 369 (0) : 387->379 /145 g=0 a1= 0 a2= 0 (root=369) 
+ (450) 369 (0) : 378->379 /145 g=0 a1= 0 a2= 0 (root=369) 
+ (451) 369 (0) : 379->388 /146 g=0 a1= 0 a2= 0 (root=369) 
+ (452) 369 (0) : 379->370 /147 g=0 a1= 0 a2= 0 (root=369) 
+ (453) 369 (0) : 379->379 /147 g=0 a1= 0 a2= 0 (root=369) 
+ (454) 369 (0) : 370->388 /146 g=0 a1= 0 a2= 0 (root=369) 
+ (455) 369 (0) : 370->380 /148 g=0 a1= 0 a2= 0 (root=369) 
+ (456) 369 (0) : 379->380 /148 g=0 a1= 0 a2= 0 (root=369) 
+ (457) 369 (0) : 380->371 /149 g=0 a1= 0 a2= 0 (root=369) 
+ (458) 369 (0) : 380->372 /150 g=0 a1= 0 a2= 0 (root=369) 
+ (459) 369 (0) : 380->380 /150 g=0 a1= 0 a2= 0 (root=369) 
+ (460) 369 (0) : 372->371 /149 g=0 a1= 0 a2= 0 (root=369) 
+ (461) 369 (0) : 372->381 /151 g=0 a1= 0 a2= 0 (root=369) 
+ (462) 369 (0) : 380->381 /151 g=0 a1= 0 a2= 0 (root=369) 
+ (463) 369 (0) : 381->374 /152 g=0 a1= 0 a2= 0 (root=369) 
+ (464) 369 (0) : 374->373 /153 g=0 a1= 0 a2= 0 (root=369) 
+ (465) 369 (0) : 381->373 /153 g=0 a1= 0 a2= 0 (root=369) 
+ (466) 369 (0) : 374->375 /154 g=0 a1= 0 a2= 0 (root=369) 
+ (467) 369 (0) : 381->375 /154 g=0 a1= 0 a2= 0 (root=369) 
+ (468) 390 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=390) 
+ (469) 390 (0) : 391->393 /155 g=0 a1= 0 a2= 0 (root=390) 
+ (470) 390 (0) : 393->399 /156 g=0 a1= 0 a2= 0 (root=390) 
+ (471) 390 (0) : 393->400 /157 g=0 a1= 0 a2= 0 (root=390) 
+ (472) 390 (0) : 393->393 /157 g=0 a1= 0 a2= 0 (root=390) 
+ (473) 390 (0) : 400->399 /156 g=0 a1= 0 a2= 0 (root=390) 
+ (474) 390 (0) : 400->394 /158 g=0 a1= 0 a2= 0 (root=390) 
+ (475) 390 (0) : 393->394 /158 g=0 a1= 0 a2= 0 (root=390) 
+ (476) 390 (0) : 394->401 /159 g=0 a1= 0 a2= 0 (root=390) 
+ (477) 390 (0) : 394->402 /160 g=0 a1= 0 a2= 0 (root=390) 
+ (478) 390 (0) : 394->394 /160 g=0 a1= 0 a2= 0 (root=390) 
+ (479) 390 (0) : 402->401 /159 g=0 a1= 0 a2= 0 (root=390) 
+ (480) 390 (0) : 402->395 /161 g=0 a1= 0 a2= 0 (root=390) 
+ (481) 390 (0) : 394->395 /161 g=0 a1= 0 a2= 0 (root=390) 
+ (482) 390 (0) : 395->403 /162 g=0 a1= 0 a2= 0 (root=390) 
+ (483) 390 (0) : 395->404 /163 g=0 a1= 0 a2= 0 (root=390) 
+ (484) 390 (0) : 395->395 /163 g=0 a1= 0 a2= 0 (root=390) 
+ (485) 390 (0) : 404->403 /162 g=0 a1= 0 a2= 0 (root=390) 
+ (486) 390 (0) : 404->396 /164 g=0 a1= 0 a2= 0 (root=390) 
+ (487) 390 (0) : 395->396 /164 g=0 a1= 0 a2= 0 (root=390) 
+ (488) 390 (0) : 396->405 /165 g=0 a1= 0 a2= 0 (root=390) 
+ (489) 390 (0) : 396->406 /166 g=0 a1= 0 a2= 0 (root=390) 
+ (490) 390 (0) : 396->396 /166 g=0 a1= 0 a2= 0 (root=390) 
+ (491) 390 (0) : 406->405 /165 g=0 a1= 0 a2= 0 (root=390) 
+ (492) 390 (0) : 406->397 /167 g=0 a1= 0 a2= 0 (root=390) 
+ (493) 390 (0) : 396->397 /167 g=0 a1= 0 a2= 0 (root=390) 
+ (494) 390 (0) : 397->407 /168 g=0 a1= 0 a2= 0 (root=390) 
+ (495) 390 (0) : 397->408 /169 g=0 a1= 0 a2= 0 (root=390) 
+ (496) 390 (0) : 397->397 /169 g=0 a1= 0 a2= 0 (root=390) 
+ (497) 390 (0) : 408->407 /168 g=0 a1= 0 a2= 0 (root=390) 
+ (498) 390 (0) : 408->398 /170 g=0 a1= 0 a2= 0 (root=390) 
+ (499) 390 (0) : 397->398 /170 g=0 a1= 0 a2= 0 (root=390) 
+ (500) 390 (0) : 398->410 /171 g=0 a1= 0 a2= 0 (root=390) 
+ (501) 390 (0) : 410->409 /172 g=0 a1= 0 a2= 0 (root=390) 
+ (502) 390 (0) : 398->409 /172 g=0 a1= 0 a2= 0 (root=390) 
+ (503) 390 (0) : 410->392 /173 g=0 a1= 0 a2= 0 (root=390) 
+ (504) 390 (0) : 398->392 /173 g=0 a1= 0 a2= 0 (root=390) 
+ (505) 411 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=411) 
+ (506) 411 (0) : 412->414 /174 g=0 a1= 0 a2= 0 (root=411) 
+ (507) 411 (0) : 414->420 /175 g=0 a1= 0 a2= 0 (root=411) 
+ (508) 411 (0) : 414->421 /176 g=0 a1= 0 a2= 0 (root=411) 
+ (509) 411 (0) : 414->414 /176 g=0 a1= 0 a2= 0 (root=411) 
+ (510) 411 (0) : 421->420 /175 g=0 a1= 0 a2= 0 (root=411) 
+ (511) 411 (0) : 421->415 /177 g=0 a1= 0 a2= 0 (root=411) 
+ (512) 411 (0) : 414->415 /177 g=0 a1= 0 a2= 0 (root=411) 
+ (513) 411 (0) : 415->422 /178 g=0 a1= 0 a2= 0 (root=411) 
+ (514) 411 (0) : 415->423 /179 g=0 a1= 0 a2= 0 (root=411) 
+ (515) 411 (0) : 415->415 /179 g=0 a1= 0 a2= 0 (root=411) 
+ (516) 411 (0) : 423->422 /178 g=0 a1= 0 a2= 0 (root=411) 
+ (517) 411 (0) : 423->416 /180 g=0 a1= 0 a2= 0 (root=411) 
+ (518) 411 (0) : 415->416 /180 g=0 a1= 0 a2= 0 (root=411) 
+ (519) 411 (0) : 416->424 /181 g=0 a1= 0 a2= 0 (root=411) 
+ (520) 411 (0) : 416->425 /182 g=0 a1= 0 a2= 0 (root=411) 
+ (521) 411 (0) : 416->416 /182 g=0 a1= 0 a2= 0 (root=411) 
+ (522) 411 (0) : 425->424 /181 g=0 a1= 0 a2= 0 (root=411) 
+ (523) 411 (0) : 425->417 /183 g=0 a1= 0 a2= 0 (root=411) 
+ (524) 411 (0) : 416->417 /183 g=0 a1= 0 a2= 0 (root=411) 
+ (525) 411 (0) : 417->426 /184 g=0 a1= 0 a2= 0 (root=411) 
+ (526) 411 (0) : 417->427 /185 g=0 a1= 0 a2= 0 (root=411) 
+ (527) 411 (0) : 417->417 /185 g=0 a1= 0 a2= 0 (root=411) 
+ (528) 411 (0) : 427->426 /184 g=0 a1= 0 a2= 0 (root=411) 
+ (529) 411 (0) : 427->418 /186 g=0 a1= 0 a2= 0 (root=411) 
+ (530) 411 (0) : 417->418 /186 g=0 a1= 0 a2= 0 (root=411) 
+ (531) 411 (0) : 418->428 /187 g=0 a1= 0 a2= 0 (root=411) 
+ (532) 411 (0) : 418->429 /188 g=0 a1= 0 a2= 0 (root=411) 
+ (533) 411 (0) : 418->418 /188 g=0 a1= 0 a2= 0 (root=411) 
+ (534) 411 (0) : 429->428 /187 g=0 a1= 0 a2= 0 (root=411) 
+ (535) 411 (0) : 429->419 /189 g=0 a1= 0 a2= 0 (root=411) 
+ (536) 411 (0) : 418->419 /189 g=0 a1= 0 a2= 0 (root=411) 
+ (537) 411 (0) : 419->431 /190 g=0 a1= 0 a2= 0 (root=411) 
+ (538) 411 (0) : 431->430 /191 g=0 a1= 0 a2= 0 (root=411) 
+ (539) 411 (0) : 419->430 /191 g=0 a1= 0 a2= 0 (root=411) 
+ (540) 411 (0) : 431->413 /192 g=0 a1= 0 a2= 0 (root=411) 
+ (541) 411 (0) : 419->413 /192 g=0 a1= 0 a2= 0 (root=411) 
+ (542) 432 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=432) 
+ (543) 432 (0) : 434->436 /193 g=0 a1= 0 a2= 0 (root=432) 
+ (544) 432 (0) : 436->442 /194 g=0 a1= 0 a2= 0 (root=432) 
+ (545) 432 (0) : 436->443 /195 g=0 a1= 0 a2= 0 (root=432) 
+ (546) 432 (0) : 436->436 /195 g=0 a1= 0 a2= 0 (root=432) 
+ (547) 432 (0) : 443->442 /194 g=0 a1= 0 a2= 0 (root=432) 
+ (548) 432 (0) : 443->437 /196 g=0 a1= 0 a2= 0 (root=432) 
+ (549) 432 (0) : 436->437 /196 g=0 a1= 0 a2= 0 (root=432) 
+ (550) 432 (0) : 437->444 /197 g=0 a1= 0 a2= 0 (root=432) 
+ (551) 432 (0) : 437->445 /198 g=0 a1= 0 a2= 0 (root=432) 
+ (552) 432 (0) : 437->437 /198 g=0 a1= 0 a2= 0 (root=432) 
+ (553) 432 (0) : 445->444 /197 g=0 a1= 0 a2= 0 (root=432) 
+ (554) 432 (0) : 445->438 /199 g=0 a1= 0 a2= 0 (root=432) 
+ (555) 432 (0) : 437->438 /199 g=0 a1= 0 a2= 0 (root=432) 
+ (556) 432 (0) : 438->446 /200 g=0 a1= 0 a2= 0 (root=432) 
+ (557) 432 (0) : 438->447 /201 g=0 a1= 0 a2= 0 (root=432) 
+ (558) 432 (0) : 438->438 /201 g=0 a1= 0 a2= 0 (root=432) 
+ (559) 432 (0) : 447->446 /200 g=0 a1= 0 a2= 0 (root=432) 
+ (560) 432 (0) : 447->439 /202 g=0 a1= 0 a2= 0 (root=432) 
+ (561) 432 (0) : 438->439 /202 g=0 a1= 0 a2= 0 (root=432) 
+ (562) 432 (0) : 439->433 /203 g=0 a1= 0 a2= 0 (root=432) 
+ (563) 432 (0) : 439->448 /204 g=0 a1= 0 a2= 0 (root=432) 
+ (564) 432 (0) : 439->439 /204 g=0 a1= 0 a2= 0 (root=432) 
+ (565) 432 (0) : 448->433 /203 g=0 a1= 0 a2= 0 (root=432) 
+ (566) 432 (0) : 448->440 /205 g=0 a1= 0 a2= 0 (root=432) 
+ (567) 432 (0) : 439->440 /205 g=0 a1= 0 a2= 0 (root=432) 
+ (568) 432 (0) : 440->449 /206 g=0 a1= 0 a2= 0 (root=432) 
+ (569) 432 (0) : 440->450 /207 g=0 a1= 0 a2= 0 (root=432) 
+ (570) 432 (0) : 440->440 /207 g=0 a1= 0 a2= 0 (root=432) 
+ (571) 432 (0) : 450->449 /206 g=0 a1= 0 a2= 0 (root=432) 
+ (572) 432 (0) : 450->441 /208 g=0 a1= 0 a2= 0 (root=432) 
+ (573) 432 (0) : 440->441 /208 g=0 a1= 0 a2= 0 (root=432) 
+ (574) 432 (0) : 441->452 /209 g=0 a1= 0 a2= 0 (root=432) 
+ (575) 432 (0) : 452->451 /210 g=0 a1= 0 a2= 0 (root=432) 
+ (576) 432 (0) : 441->451 /210 g=0 a1= 0 a2= 0 (root=432) 
+ (577) 432 (0) : 452->435 /211 g=0 a1= 0 a2= 0 (root=432) 
+ (578) 432 (0) : 441->435 /211 g=0 a1= 0 a2= 0 (root=432) 
+ (579) 453 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=453) 
+ (580) 453 (0) : 473->459 /212 g=0 a1= 0 a2= 0 (root=453) 
+ (581) 453 (0) : 459->465 /213 g=0 a1= 0 a2= 0 (root=453) 
+ (582) 453 (0) : 459->466 /214 g=0 a1= 0 a2= 0 (root=453) 
+ (583) 453 (0) : 459->459 /214 g=0 a1= 0 a2= 0 (root=453) 
+ (584) 453 (0) : 466->465 /213 g=0 a1= 0 a2= 0 (root=453) 
+ (585) 453 (0) : 466->460 /215 g=0 a1= 0 a2= 0 (root=453) 
+ (586) 453 (0) : 459->460 /215 g=0 a1= 0 a2= 0 (root=453) 
+ (587) 453 (0) : 460->467 /216 g=0 a1= 0 a2= 0 (root=453) 
+ (588) 453 (0) : 460->468 /217 g=0 a1= 0 a2= 0 (root=453) 
+ (589) 453 (0) : 460->460 /217 g=0 a1= 0 a2= 0 (root=453) 
+ (590) 453 (0) : 468->467 /216 g=0 a1= 0 a2= 0 (root=453) 
+ (591) 453 (0) : 468->461 /218 g=0 a1= 0 a2= 0 (root=453) 
+ (592) 453 (0) : 460->461 /218 g=0 a1= 0 a2= 0 (root=453) 
+ (593) 453 (0) : 461->469 /219 g=0 a1= 0 a2= 0 (root=453) 
+ (594) 453 (0) : 461->470 /220 g=0 a1= 0 a2= 0 (root=453) 
+ (595) 453 (0) : 461->461 /220 g=0 a1= 0 a2= 0 (root=453) 
+ (596) 453 (0) : 470->469 /219 g=0 a1= 0 a2= 0 (root=453) 
+ (597) 453 (0) : 470->462 /221 g=0 a1= 0 a2= 0 (root=453) 
+ (598) 453 (0) : 461->462 /221 g=0 a1= 0 a2= 0 (root=453) 
+ (599) 453 (0) : 462->471 /222 g=0 a1= 0 a2= 0 (root=453) 
+ (600) 453 (0) : 462->472 /223 g=0 a1= 0 a2= 0 (root=453) 
+ (601) 453 (0) : 462->462 /223 g=0 a1= 0 a2= 0 (root=453) 
+ (602) 453 (0) : 472->471 /222 g=0 a1= 0 a2= 0 (root=453) 
+ (603) 453 (0) : 472->463 /224 g=0 a1= 0 a2= 0 (root=453) 
+ (604) 453 (0) : 462->463 /224 g=0 a1= 0 a2= 0 (root=453) 
+ (605) 453 (0) : 463->454 /225 g=0 a1= 0 a2= 0 (root=453) 
+ (606) 453 (0) : 463->455 /226 g=0 a1= 0 a2= 0 (root=453) 
+ (607) 453 (0) : 463->463 /226 g=0 a1= 0 a2= 0 (root=453) 
+ (608) 453 (0) : 455->454 /225 g=0 a1= 0 a2= 0 (root=453) 
+ (609) 453 (0) : 455->464 /227 g=0 a1= 0 a2= 0 (root=453) 
+ (610) 453 (0) : 463->464 /227 g=0 a1= 0 a2= 0 (root=453) 
+ (611) 453 (0) : 464->457 /228 g=0 a1= 0 a2= 0 (root=453) 
+ (612) 453 (0) : 457->456 /229 g=0 a1= 0 a2= 0 (root=453) 
+ (613) 453 (0) : 464->456 /229 g=0 a1= 0 a2= 0 (root=453) 
+ (614) 453 (0) : 457->458 /230 g=0 a1= 0 a2= 0 (root=453) 
+ (615) 453 (0) : 464->458 /230 g=0 a1= 0 a2= 0 (root=453) 
+ (616) 474 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=474) 
+ (617) 474 (0) : 475->477 /231 g=0 a1= 0 a2= 0 (root=474) 
+ (618) 474 (0) : 477->483 /232 g=0 a1= 0 a2= 0 (root=474) 
+ (619) 474 (0) : 477->484 /233 g=0 a1= 0 a2= 0 (root=474) 
+ (620) 474 (0) : 477->477 /233 g=0 a1= 0 a2= 0 (root=474) 
+ (621) 474 (0) : 484->483 /232 g=0 a1= 0 a2= 0 (root=474) 
+ (622) 474 (0) : 484->478 /234 g=0 a1= 0 a2= 0 (root=474) 
+ (623) 474 (0) : 477->478 /234 g=0 a1= 0 a2= 0 (root=474) 
+ (624) 474 (0) : 478->485 /235 g=0 a1= 0 a2= 0 (root=474) 
+ (625) 474 (0) : 478->486 /236 g=0 a1= 0 a2= 0 (root=474) 
+ (626) 474 (0) : 478->478 /236 g=0 a1= 0 a2= 0 (root=474) 
+ (627) 474 (0) : 486->485 /235 g=0 a1= 0 a2= 0 (root=474) 
+ (628) 474 (0) : 486->479 /237 g=0 a1= 0 a2= 0 (root=474) 
+ (629) 474 (0) : 478->479 /237 g=0 a1= 0 a2= 0 (root=474) 
+ (630) 474 (0) : 479->487 /238 g=0 a1= 0 a2= 0 (root=474) 
+ (631) 474 (0) : 479->488 /239 g=0 a1= 0 a2= 0 (root=474) 
+ (632) 474 (0) : 479->479 /239 g=0 a1= 0 a2= 0 (root=474) 
+ (633) 474 (0) : 488->487 /238 g=0 a1= 0 a2= 0 (root=474) 
+ (634) 474 (0) : 488->480 /240 g=0 a1= 0 a2= 0 (root=474) 
+ (635) 474 (0) : 479->480 /240 g=0 a1= 0 a2= 0 (root=474) 
+ (636) 474 (0) : 480->489 /241 g=0 a1= 0 a2= 0 (root=474) 
+ (637) 474 (0) : 480->490 /242 g=0 a1= 0 a2= 0 (root=474) 
+ (638) 474 (0) : 480->480 /242 g=0 a1= 0 a2= 0 (root=474) 
+ (639) 474 (0) : 490->489 /241 g=0 a1= 0 a2= 0 (root=474) 
+ (640) 474 (0) : 490->481 /243 g=0 a1= 0 a2= 0 (root=474) 
+ (641) 474 (0) : 480->481 /243 g=0 a1= 0 a2= 0 (root=474) 
+ (642) 474 (0) : 481->491 /244 g=0 a1= 0 a2= 0 (root=474) 
+ (643) 474 (0) : 481->492 /245 g=0 a1= 0 a2= 0 (root=474) 
+ (644) 474 (0) : 481->481 /245 g=0 a1= 0 a2= 0 (root=474) 
+ (645) 474 (0) : 492->491 /244 g=0 a1= 0 a2= 0 (root=474) 
+ (646) 474 (0) : 492->482 /246 g=0 a1= 0 a2= 0 (root=474) 
+ (647) 474 (0) : 481->482 /246 g=0 a1= 0 a2= 0 (root=474) 
+ (648) 474 (0) : 482->494 /247 g=0 a1= 0 a2= 0 (root=474) 
+ (649) 474 (0) : 494->493 /248 g=0 a1= 0 a2= 0 (root=474) 
+ (650) 474 (0) : 482->493 /248 g=0 a1= 0 a2= 0 (root=474) 
+ (651) 474 (0) : 494->476 /249 g=0 a1= 0 a2= 0 (root=474) 
+ (652) 474 (0) : 482->476 /249 g=0 a1= 0 a2= 0 (root=474) 
+ (653) 495 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=495) 
+ (654) 495 (0) : 496->498 /250 g=0 a1= 0 a2= 0 (root=495) 
+ (655) 495 (0) : 498->504 /251 g=0 a1= 0 a2= 0 (root=495) 
+ (656) 495 (0) : 498->505 /252 g=0 a1= 0 a2= 0 (root=495) 
+ (657) 495 (0) : 498->498 /252 g=0 a1= 0 a2= 0 (root=495) 
+ (658) 495 (0) : 505->504 /251 g=0 a1= 0 a2= 0 (root=495) 
+ (659) 495 (0) : 505->499 /253 g=0 a1= 0 a2= 0 (root=495) 
+ (660) 495 (0) : 498->499 /253 g=0 a1= 0 a2= 0 (root=495) 
+ (661) 495 (0) : 499->506 /254 g=0 a1= 0 a2= 0 (root=495) 
+ (662) 495 (0) : 499->507 /255 g=0 a1= 0 a2= 0 (root=495) 
+ (663) 495 (0) : 499->499 /255 g=0 a1= 0 a2= 0 (root=495) 
+ (664) 495 (0) : 507->506 /254 g=0 a1= 0 a2= 0 (root=495) 
+ (665) 495 (0) : 507->500 /256 g=0 a1= 0 a2= 0 (root=495) 
+ (666) 495 (0) : 499->500 /256 g=0 a1= 0 a2= 0 (root=495) 
+ (667) 495 (0) : 500->508 /257 g=0 a1= 0 a2= 0 (root=495) 
+ (668) 495 (0) : 500->509 /258 g=0 a1= 0 a2= 0 (root=495) 
+ (669) 495 (0) : 500->500 /258 g=0 a1= 0 a2= 0 (root=495) 
+ (670) 495 (0) : 509->508 /257 g=0 a1= 0 a2= 0 (root=495) 
+ (671) 495 (0) : 509->501 /259 g=0 a1= 0 a2= 0 (root=495) 
+ (672) 495 (0) : 500->501 /259 g=0 a1= 0 a2= 0 (root=495) 
+ (673) 495 (0) : 501->510 /260 g=0 a1= 0 a2= 0 (root=495) 
+ (674) 495 (0) : 501->511 /261 g=0 a1= 0 a2= 0 (root=495) 
+ (675) 495 (0) : 501->501 /261 g=0 a1= 0 a2= 0 (root=495) 
+ (676) 495 (0) : 511->510 /260 g=0 a1= 0 a2= 0 (root=495) 
+ (677) 495 (0) : 511->502 /262 g=0 a1= 0 a2= 0 (root=495) 
+ (678) 495 (0) : 501->502 /262 g=0 a1= 0 a2= 0 (root=495) 
+ (679) 495 (0) : 502->512 /263 g=0 a1= 0 a2= 0 (root=495) 
+ (680) 495 (0) : 502->513 /264 g=0 a1= 0 a2= 0 (root=495) 
+ (681) 495 (0) : 502->502 /264 g=0 a1= 0 a2= 0 (root=495) 
+ (682) 495 (0) : 513->512 /263 g=0 a1= 0 a2= 0 (root=495) 
+ (683) 495 (0) : 513->503 /265 g=0 a1= 0 a2= 0 (root=495) 
+ (684) 495 (0) : 502->503 /265 g=0 a1= 0 a2= 0 (root=495) 
+ (685) 495 (0) : 503->515 /266 g=0 a1= 0 a2= 0 (root=495) 
+ (686) 495 (0) : 515->514 /267 g=0 a1= 0 a2= 0 (root=495) 
+ (687) 495 (0) : 503->514 /267 g=0 a1= 0 a2= 0 (root=495) 
+ (688) 495 (0) : 515->497 /268 g=0 a1= 0 a2= 0 (root=495) 
+ (689) 495 (0) : 503->497 /268 g=0 a1= 0 a2= 0 (root=495) 
+ (690) 516 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=516) 
+ (691) 516 (0) : 518->525 /269 g=0 a1= 0 a2= 0 (root=516) 
+ (692) 516 (0) : 525->531 /270 g=0 a1= 0 a2= 0 (root=516) 
+ (693) 516 (0) : 525->532 /271 g=0 a1= 0 a2= 0 (root=516) 
+ (694) 516 (0) : 525->525 /271 g=0 a1= 0 a2= 0 (root=516) 
+ (695) 516 (0) : 532->531 /270 g=0 a1= 0 a2= 0 (root=516) 
+ (696) 516 (0) : 532->526 /272 g=0 a1= 0 a2= 0 (root=516) 
+ (697) 516 (0) : 525->526 /272 g=0 a1= 0 a2= 0 (root=516) 
+ (698) 516 (0) : 526->533 /273 g=0 a1= 0 a2= 0 (root=516) 
+ (699) 516 (0) : 526->534 /274 g=0 a1= 0 a2= 0 (root=516) 
+ (700) 516 (0) : 526->526 /274 g=0 a1= 0 a2= 0 (root=516) 
+ (701) 516 (0) : 534->533 /273 g=0 a1= 0 a2= 0 (root=516) 
+ (702) 516 (0) : 534->527 /275 g=0 a1= 0 a2= 0 (root=516) 
+ (703) 516 (0) : 526->527 /275 g=0 a1= 0 a2= 0 (root=516) 
+ (704) 516 (0) : 527->535 /276 g=0 a1= 0 a2= 0 (root=516) 
+ (705) 516 (0) : 527->536 /277 g=0 a1= 0 a2= 0 (root=516) 
+ (706) 516 (0) : 527->527 /277 g=0 a1= 0 a2= 0 (root=516) 
+ (707) 516 (0) : 536->535 /276 g=0 a1= 0 a2= 0 (root=516) 
+ (708) 516 (0) : 536->528 /278 g=0 a1= 0 a2= 0 (root=516) 
+ (709) 516 (0) : 527->528 /278 g=0 a1= 0 a2= 0 (root=516) 
+ (710) 516 (0) : 528->517 /279 g=0 a1= 0 a2= 0 (root=516) 
+ (711) 516 (0) : 528->519 /280 g=0 a1= 0 a2= 0 (root=516) 
+ (712) 516 (0) : 528->528 /280 g=0 a1= 0 a2= 0 (root=516) 
+ (713) 516 (0) : 519->517 /279 g=0 a1= 0 a2= 0 (root=516) 
+ (714) 516 (0) : 519->529 /281 g=0 a1= 0 a2= 0 (root=516) 
+ (715) 516 (0) : 528->529 /281 g=0 a1= 0 a2= 0 (root=516) 
+ (716) 516 (0) : 529->520 /282 g=0 a1= 0 a2= 0 (root=516) 
+ (717) 516 (0) : 529->521 /283 g=0 a1= 0 a2= 0 (root=516) 
+ (718) 516 (0) : 529->529 /283 g=0 a1= 0 a2= 0 (root=516) 
+ (719) 516 (0) : 521->520 /282 g=0 a1= 0 a2= 0 (root=516) 
+ (720) 516 (0) : 521->530 /284 g=0 a1= 0 a2= 0 (root=516) 
+ (721) 516 (0) : 529->530 /284 g=0 a1= 0 a2= 0 (root=516) 
+ (722) 516 (0) : 530->523 /285 g=0 a1= 0 a2= 0 (root=516) 
+ (723) 516 (0) : 523->522 /286 g=0 a1= 0 a2= 0 (root=516) 
+ (724) 516 (0) : 530->522 /286 g=0 a1= 0 a2= 0 (root=516) 
+ (725) 516 (0) : 523->524 /287 g=0 a1= 0 a2= 0 (root=516) 
+ (726) 516 (0) : 530->524 /287 g=0 a1= 0 a2= 0 (root=516) 
+ (727) 537 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=537) 
+ (728) 537 (0) : 557->539 /288 g=0 a1= 0 a2= 0 (root=537) 
+ (729) 537 (0) : 539->545 /289 g=0 a1= 0 a2= 0 (root=537) 
+ (730) 537 (0) : 539->546 /290 g=0 a1= 0 a2= 0 (root=537) 
+ (731) 537 (0) : 539->539 /290 g=0 a1= 0 a2= 0 (root=537) 
+ (732) 537 (0) : 546->545 /289 g=0 a1= 0 a2= 0 (root=537) 
+ (733) 537 (0) : 546->540 /291 g=0 a1= 0 a2= 0 (root=537) 
+ (734) 537 (0) : 539->540 /291 g=0 a1= 0 a2= 0 (root=537) 
+ (735) 537 (0) : 540->547 /292 g=0 a1= 0 a2= 0 (root=537) 
+ (736) 537 (0) : 540->548 /293 g=0 a1= 0 a2= 0 (root=537) 
+ (737) 537 (0) : 540->540 /293 g=0 a1= 0 a2= 0 (root=537) 
+ (738) 537 (0) : 548->547 /292 g=0 a1= 0 a2= 0 (root=537) 
+ (739) 537 (0) : 548->541 /294 g=0 a1= 0 a2= 0 (root=537) 
+ (740) 537 (0) : 540->541 /294 g=0 a1= 0 a2= 0 (root=537) 
+ (741) 537 (0) : 541->549 /295 g=0 a1= 0 a2= 0 (root=537) 
+ (742) 537 (0) : 541->550 /296 g=0 a1= 0 a2= 0 (root=537) 
+ (743) 537 (0) : 541->541 /296 g=0 a1= 0 a2= 0 (root=537) 
+ (744) 537 (0) : 550->549 /295 g=0 a1= 0 a2= 0 (root=537) 
+ (745) 537 (0) : 550->542 /297 g=0 a1= 0 a2= 0 (root=537) 
+ (746) 537 (0) : 541->542 /297 g=0 a1= 0 a2= 0 (root=537) 
+ (747) 537 (0) : 542->551 /298 g=0 a1= 0 a2= 0 (root=537) 
+ (748) 537 (0) : 542->552 /299 g=0 a1= 0 a2= 0 (root=537) 
+ (749) 537 (0) : 542->542 /299 g=0 a1= 0 a2= 0 (root=537) 
+ (750) 537 (0) : 552->551 /298 g=0 a1= 0 a2= 0 (root=537) 
+ (751) 537 (0) : 552->543 /300 g=0 a1= 0 a2= 0 (root=537) 
+ (752) 537 (0) : 542->543 /300 g=0 a1= 0 a2= 0 (root=537) 
+ (753) 537 (0) : 543->553 /301 g=0 a1= 0 a2= 0 (root=537) 
+ (754) 537 (0) : 543->554 /302 g=0 a1= 0 a2= 0 (root=537) 
+ (755) 537 (0) : 543->543 /302 g=0 a1= 0 a2= 0 (root=537) 
+ (756) 537 (0) : 554->553 /301 g=0 a1= 0 a2= 0 (root=537) 
+ (757) 537 (0) : 554->544 /303 g=0 a1= 0 a2= 0 (root=537) 
+ (758) 537 (0) : 543->544 /303 g=0 a1= 0 a2= 0 (root=537) 
+ (759) 537 (0) : 544->556 /304 g=0 a1= 0 a2= 0 (root=537) 
+ (760) 537 (0) : 556->555 /305 g=0 a1= 0 a2= 0 (root=537) 
+ (761) 537 (0) : 544->555 /305 g=0 a1= 0 a2= 0 (root=537) 
+ (762) 537 (0) : 556->538 /306 g=0 a1= 0 a2= 0 (root=537) 
+ (763) 537 (0) : 544->538 /306 g=0 a1= 0 a2= 0 (root=537) 
+ (764) 558 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=558) 
+ (765) 558 (0) : 559->561 /307 g=0 a1= 0 a2= 0 (root=558) 
+ (766) 558 (0) : 561->567 /308 g=0 a1= 0 a2= 0 (root=558) 
+ (767) 558 (0) : 561->568 /309 g=0 a1= 0 a2= 0 (root=558) 
+ (768) 558 (0) : 561->561 /309 g=0 a1= 0 a2= 0 (root=558) 
+ (769) 558 (0) : 568->567 /308 g=0 a1= 0 a2= 0 (root=558) 
+ (770) 558 (0) : 568->562 /310 g=0 a1= 0 a2= 0 (root=558) 
+ (771) 558 (0) : 561->562 /310 g=0 a1= 0 a2= 0 (root=558) 
+ (772) 558 (0) : 562->569 /311 g=0 a1= 0 a2= 0 (root=558) 
+ (773) 558 (0) : 562->570 /312 g=0 a1= 0 a2= 0 (root=558) 
+ (774) 558 (0) : 562->562 /312 g=0 a1= 0 a2= 0 (root=558) 
+ (775) 558 (0) : 570->569 /311 g=0 a1= 0 a2= 0 (root=558) 
+ (776) 558 (0) : 570->563 /313 g=0 a1= 0 a2= 0 (root=558) 
+ (777) 558 (0) : 562->563 /313 g=0 a1= 0 a2= 0 (root=558) 
+ (778) 558 (0) : 563->571 /314 g=0 a1= 0 a2= 0 (root=558) 
+ (779) 558 (0) : 563->572 /315 g=0 a1= 0 a2= 0 (root=558) 
+ (780) 558 (0) : 563->563 /315 g=0 a1= 0 a2= 0 (root=558) 
+ (781) 558 (0) : 572->571 /314 g=0 a1= 0 a2= 0 (root=558) 
+ (782) 558 (0) : 572->564 /316 g=0 a1= 0 a2= 0 (root=558) 
+ (783) 558 (0) : 563->564 /316 g=0 a1= 0 a2= 0 (root=558) 
+ (784) 558 (0) : 564->573 /317 g=0 a1= 0 a2= 0 (root=558) 
+ (785) 558 (0) : 564->574 /318 g=0 a1= 0 a2= 0 (root=558) 
+ (786) 558 (0) : 564->564 /318 g=0 a1= 0 a2= 0 (root=558) 
+ (787) 558 (0) : 574->573 /317 g=0 a1= 0 a2= 0 (root=558) 
+ (788) 558 (0) : 574->565 /319 g=0 a1= 0 a2= 0 (root=558) 
+ (789) 558 (0) : 564->565 /319 g=0 a1= 0 a2= 0 (root=558) 
+ (790) 558 (0) : 565->575 /320 g=0 a1= 0 a2= 0 (root=558) 
+ (791) 558 (0) : 565->576 /321 g=0 a1= 0 a2= 0 (root=558) 
+ (792) 558 (0) : 565->565 /321 g=0 a1= 0 a2= 0 (root=558) 
+ (793) 558 (0) : 576->575 /320 g=0 a1= 0 a2= 0 (root=558) 
+ (794) 558 (0) : 576->566 /322 g=0 a1= 0 a2= 0 (root=558) 
+ (795) 558 (0) : 565->566 /322 g=0 a1= 0 a2= 0 (root=558) 
+ (796) 558 (0) : 566->578 /323 g=0 a1= 0 a2= 0 (root=558) 
+ (797) 558 (0) : 578->577 /324 g=0 a1= 0 a2= 0 (root=558) 
+ (798) 558 (0) : 566->577 /324 g=0 a1= 0 a2= 0 (root=558) 
+ (799) 558 (0) : 578->560 /325 g=0 a1= 0 a2= 0 (root=558) 
+ (800) 558 (0) : 566->560 /325 g=0 a1= 0 a2= 0 (root=558) 
+ (801) 579 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=579) 
+ (802) 579 (0) : 599->587 /326 g=0 a1= 0 a2= 0 (root=579) 
+ (803) 579 (0) : 587->593 /327 g=0 a1= 0 a2= 0 (root=579) 
+ (804) 579 (0) : 587->594 /328 g=0 a1= 0 a2= 0 (root=579) 
+ (805) 579 (0) : 587->587 /328 g=0 a1= 0 a2= 0 (root=579) 
+ (806) 579 (0) : 594->593 /327 g=0 a1= 0 a2= 0 (root=579) 
+ (807) 579 (0) : 594->588 /329 g=0 a1= 0 a2= 0 (root=579) 
+ (808) 579 (0) : 587->588 /329 g=0 a1= 0 a2= 0 (root=579) 
+ (809) 579 (0) : 588->595 /330 g=0 a1= 0 a2= 0 (root=579) 
+ (810) 579 (0) : 588->596 /331 g=0 a1= 0 a2= 0 (root=579) 
+ (811) 579 (0) : 588->588 /331 g=0 a1= 0 a2= 0 (root=579) 
+ (812) 579 (0) : 596->595 /330 g=0 a1= 0 a2= 0 (root=579) 
+ (813) 579 (0) : 596->589 /332 g=0 a1= 0 a2= 0 (root=579) 
+ (814) 579 (0) : 588->589 /332 g=0 a1= 0 a2= 0 (root=579) 
+ (815) 579 (0) : 589->597 /333 g=0 a1= 0 a2= 0 (root=579) 
+ (816) 579 (0) : 589->598 /334 g=0 a1= 0 a2= 0 (root=579) 
+ (817) 579 (0) : 589->589 /334 g=0 a1= 0 a2= 0 (root=579) 
+ (818) 579 (0) : 598->597 /333 g=0 a1= 0 a2= 0 (root=579) 
+ (819) 579 (0) : 598->590 /335 g=0 a1= 0 a2= 0 (root=579) 
+ (820) 579 (0) : 589->590 /335 g=0 a1= 0 a2= 0 (root=579) 
+ (821) 579 (0) : 590->580 /336 g=0 a1= 0 a2= 0 (root=579) 
+ (822) 579 (0) : 590->581 /337 g=0 a1= 0 a2= 0 (root=579) 
+ (823) 579 (0) : 590->590 /337 g=0 a1= 0 a2= 0 (root=579) 
+ (824) 579 (0) : 581->580 /336 g=0 a1= 0 a2= 0 (root=579) 
+ (825) 579 (0) : 581->591 /338 g=0 a1= 0 a2= 0 (root=579) 
+ (826) 579 (0) : 590->591 /338 g=0 a1= 0 a2= 0 (root=579) 
+ (827) 579 (0) : 591->582 /339 g=0 a1= 0 a2= 0 (root=579) 
+ (828) 579 (0) : 591->583 /340 g=0 a1= 0 a2= 0 (root=579) 
+ (829) 579 (0) : 591->591 /340 g=0 a1= 0 a2= 0 (root=579) 
+ (830) 579 (0) : 583->582 /339 g=0 a1= 0 a2= 0 (root=579) 
+ (831) 579 (0) : 583->592 /341 g=0 a1= 0 a2= 0 (root=579) 
+ (832) 579 (0) : 591->592 /341 g=0 a1= 0 a2= 0 (root=579) 
+ (833) 579 (0) : 592->585 /342 g=0 a1= 0 a2= 0 (root=579) 
+ (834) 579 (0) : 585->584 /343 g=0 a1= 0 a2= 0 (root=579) 
+ (835) 579 (0) : 592->584 /343 g=0 a1= 0 a2= 0 (root=579) 
+ (836) 579 (0) : 585->586 /344 g=0 a1= 0 a2= 0 (root=579) 
+ (837) 579 (0) : 592->586 /344 g=0 a1= 0 a2= 0 (root=579) 
+ (838) 600 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=600) 
+ (839) 600 (0) : 601->603 /345 g=0 a1= 0 a2= 0 (root=600) 
+ (840) 600 (0) : 603->609 /346 g=0 a1= 0 a2= 0 (root=600) 
+ (841) 600 (0) : 603->610 /347 g=0 a1= 0 a2= 0 (root=600) 
+ (842) 600 (0) : 603->603 /347 g=0 a1= 0 a2= 0 (root=600) 
+ (843) 600 (0) : 610->609 /346 g=0 a1= 0 a2= 0 (root=600) 
+ (844) 600 (0) : 610->604 /348 g=0 a1= 0 a2= 0 (root=600) 
+ (845) 600 (0) : 603->604 /348 g=0 a1= 0 a2= 0 (root=600) 
+ (846) 600 (0) : 604->611 /349 g=0 a1= 0 a2= 0 (root=600) 
+ (847) 600 (0) : 604->612 /350 g=0 a1= 0 a2= 0 (root=600) 
+ (848) 600 (0) : 604->604 /350 g=0 a1= 0 a2= 0 (root=600) 
+ (849) 600 (0) : 612->611 /349 g=0 a1= 0 a2= 0 (root=600) 
+ (850) 600 (0) : 612->605 /351 g=0 a1= 0 a2= 0 (root=600) 
+ (851) 600 (0) : 604->605 /351 g=0 a1= 0 a2= 0 (root=600) 
+ (852) 600 (0) : 605->613 /352 g=0 a1= 0 a2= 0 (root=600) 
+ (853) 600 (0) : 605->614 /353 g=0 a1= 0 a2= 0 (root=600) 
+ (854) 600 (0) : 605->605 /353 g=0 a1= 0 a2= 0 (root=600) 
+ (855) 600 (0) : 614->613 /352 g=0 a1= 0 a2= 0 (root=600) 
+ (856) 600 (0) : 614->606 /354 g=0 a1= 0 a2= 0 (root=600) 
+ (857) 600 (0) : 605->606 /354 g=0 a1= 0 a2= 0 (root=600) 
+ (858) 600 (0) : 606->615 /355 g=0 a1= 0 a2= 0 (root=600) 
+ (859) 600 (0) : 606->616 /356 g=0 a1= 0 a2= 0 (root=600) 
+ (860) 600 (0) : 606->606 /356 g=0 a1= 0 a2= 0 (root=600) 
+ (861) 600 (0) : 616->615 /355 g=0 a1= 0 a2= 0 (root=600) 
+ (862) 600 (0) : 616->607 /357 g=0 a1= 0 a2= 0 (root=600) 
+ (863) 600 (0) : 606->607 /357 g=0 a1= 0 a2= 0 (root=600) 
+ (864) 600 (0) : 607->617 /358 g=0 a1= 0 a2= 0 (root=600) 
+ (865) 600 (0) : 607->618 /359 g=0 a1= 0 a2= 0 (root=600) 
+ (866) 600 (0) : 607->607 /359 g=0 a1= 0 a2= 0 (root=600) 
+ (867) 600 (0) : 618->617 /358 g=0 a1= 0 a2= 0 (root=600) 
+ (868) 600 (0) : 618->608 /360 g=0 a1= 0 a2= 0 (root=600) 
+ (869) 600 (0) : 607->608 /360 g=0 a1= 0 a2= 0 (root=600) 
+ (870) 600 (0) : 608->620 /361 g=0 a1= 0 a2= 0 (root=600) 
+ (871) 600 (0) : 620->619 /362 g=0 a1= 0 a2= 0 (root=600) 
+ (872) 600 (0) : 608->619 /362 g=0 a1= 0 a2= 0 (root=600) 
+ (873) 600 (0) : 620->602 /363 g=0 a1= 0 a2= 0 (root=600) 
+ (874) 600 (0) : 608->602 /363 g=0 a1= 0 a2= 0 (root=600) 
+ (875) 621 (0) : 0->0 /0 g=0 a1= 0 a2= 0 (root=621) 
+ (876) 621 (0) : 622->624 /364 g=0 a1= 0 a2= 0 (root=621) 
+ (877) 621 (0) : 624->630 /365 g=0 a1= 0 a2= 0 (root=621) 
+ (878) 621 (0) : 624->631 /366 g=0 a1= 0 a2= 0 (root=621) 
+ (879) 621 (0) : 624->624 /366 g=0 a1= 0 a2= 0 (root=621) 
+ (880) 621 (0) : 631->630 /365 g=0 a1= 0 a2= 0 (root=621) 
+ (881) 621 (0) : 631->625 /367 g=0 a1= 0 a2= 0 (root=621) 
+ (882) 621 (0) : 624->625 /367 g=0 a1= 0 a2= 0 (root=621) 
+ (883) 621 (0) : 625->632 /368 g=0 a1= 0 a2= 0 (root=621) 
+ (884) 621 (0) : 625->633 /369 g=0 a1= 0 a2= 0 (root=621) 
+ (885) 621 (0) : 625->625 /369 g=0 a1= 0 a2= 0 (root=621) 
+ (886) 621 (0) : 633->632 /368 g=0 a1= 0 a2= 0 (root=621) 
+ (887) 621 (0) : 633->626 /370 g=0 a1= 0 a2= 0 (root=621) 
+ (888) 621 (0) : 625->626 /370 g=0 a1= 0 a2= 0 (root=621) 
+ (889) 621 (0) : 626->634 /371 g=0 a1= 0 a2= 0 (root=621) 
+ (890) 621 (0) : 626->635 /372 g=0 a1= 0 a2= 0 (root=621) 
+ (891) 621 (0) : 626->626 /372 g=0 a1= 0 a2= 0 (root=621) 
+ (892) 621 (0) : 635->634 /371 g=0 a1= 0 a2= 0 (root=621) 
+ (893) 621 (0) : 635->627 /373 g=0 a1= 0 a2= 0 (root=621) 
+ (894) 621 (0) : 626->627 /373 g=0 a1= 0 a2= 0 (root=621) 
+ (895) 621 (0) : 627->636 /374 g=0 a1= 0 a2= 0 (root=621) 
+ (896) 621 (0) : 627->637 /375 g=0 a1= 0 a2= 0 (root=621) 
+ (897) 621 (0) : 627->627 /375 g=0 a1= 0 a2= 0 (root=621) 
+ (898) 621 (0) : 637->636 /374 g=0 a1= 0 a2= 0 (root=621) 
+ (899) 621 (0) : 637->628 /376 g=0 a1= 0 a2= 0 (root=621) 
+ (900) 621 (0) : 627->628 /376 g=0 a1= 0 a2= 0 (root=621) 
+ (901) 621 (0) : 628->638 /377 g=0 a1= 0 a2= 0 (root=621) 
+ (902) 621 (0) : 628->639 /378 g=0 a1= 0 a2= 0 (root=621) 
+ (903) 621 (0) : 628->628 /378 g=0 a1= 0 a2= 0 (root=621) 
+ (904) 621 (0) : 639->638 /377 g=0 a1= 0 a2= 0 (root=621) 
+ (905) 621 (0) : 639->629 /379 g=0 a1= 0 a2= 0 (root=621) 
+ (906) 621 (0) : 628->629 /379 g=0 a1= 0 a2= 0 (root=621) 
+ (907) 621 (0) : 629->641 /380 g=0 a1= 0 a2= 0 (root=621) 
+ (908) 621 (0) : 641->640 /381 g=0 a1= 0 a2= 0 (root=621) 
+ (909) 621 (0) : 629->640 /381 g=0 a1= 0 a2= 0 (root=621) 
+ (910) 621 (0) : 641->623 /382 g=0 a1= 0 a2= 0 (root=621) 
+ (911) 621 (0) : 629->623 /382 g=0 a1= 0 a2= 0 (root=621) 

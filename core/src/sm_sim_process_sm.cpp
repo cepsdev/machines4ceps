@@ -145,12 +145,13 @@ static void extract_sm_sections(ceps::ast::Nodeset& sm_definition,ceps::ast::Nod
  extends = sm_definition["extends"];
 }
 
-static void extract_sm_modifiers(ceps::ast::Nodeset& sm_definition,bool& is_abstract, bool& is_concept){
+static void extract_sm_modifiers(ceps::ast::Nodeset& sm_definition,bool& is_abstract, bool& is_concept, bool& is_hidden){
  std::string n; std::string k;
  for(auto p:sm_definition.nodes()){
   if (!is_id_or_symbol(p,n,k)) continue;
   if (n == "abstract") is_abstract = true;
   if (n == "concept") {is_concept=is_abstract = true;}
+  if (n == "hidden") {is_hidden=true;}
  }
 }
 
@@ -417,7 +418,8 @@ State_machine* State_machine_simulation_core::merge_state_machines(std::vector<S
  return main_sm;
 }
 
-void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm_definition,
+void State_machine_simulation_core::process_statemachine(
+                            ceps::ast::Nodeset& sm_definition,
 							std::string prefix,
 							State_machine* parent,
 							int depth,
@@ -428,10 +430,13 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   using namespace std;
   using namespace ceps::ast;
   bool is_concept = false;
+  bool is_hidden = false;
 
   ceps::ast::Nodeset states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends;
   extract_sm_sections(sm_definition,states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends);
-  extract_sm_modifiers(sm_definition,is_abstract,is_concept);
+  extract_sm_modifiers(sm_definition,is_abstract,is_concept,is_hidden);
+
+
   int anonymous_guard_ctr = 1;
   std::string id;std::string sm_name;
   extract_sm_name_and_id(sm_definition,id,sm_name,is_thread,prefix,thread_ctr,this);
@@ -481,6 +486,13 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   }
 
   current_statemachine->cover() = !cover_method.empty() || is_concept;
+  current_statemachine->hidden() = is_hidden;
+  if (!cover_method.empty()){
+      for (auto p : cover_method.nodes()){
+          if (p->kind() == ceps::ast::Ast_node_kind::identifier && "dont_cover_loops" == ceps::ast::name(ceps::ast::as_id_ref(p)))
+              current_statemachine->dont_cover_loops() = true;
+      }
+  }
   current_statemachine->is_concept() = is_concept;
   current_statemachine->is_thread() = is_thread;
   if (is_thread && parent) parent->contains_threads() = true;
@@ -595,6 +607,7 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
 
 
   std::map<std::string,std::vector<std::string>> categorization;
+  std::vector<std::string> dont_cover_states;
 
   for (auto state : states)
   {
@@ -607,7 +620,16 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
               categorization[ceps::ast::name(ceps::ast::as_symbol_ref(e))].push_back(ceps::ast::kind(ceps::ast::as_symbol_ref(e)));
          }
          continue;
-     }
+     } else if (state.nodes().size() == 1 &&
+           state.nodes()[0]->kind() == ceps::ast::Ast_node_kind::structdef &&(
+               ceps::ast::name(ceps::ast::as_struct_ref(state.nodes()[0])) == "dont_cover" || ceps::ast::name(ceps::ast::as_struct_ref(state.nodes()[0])) == "dontcover") ){
+           auto & dont_cover = ceps::ast::as_struct_ref(state.nodes()[0]);
+           for (auto e : dont_cover.children()){
+               if (e->kind() != ceps::ast::Ast_node_kind::identifier) continue;
+                dont_cover_states.push_back(ceps::ast::name(ceps::ast::as_id_ref(e)));
+           }
+           continue;
+      }
 	 if (state.nodes().size() != 1 || state.nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
          continue;
          //fatal_(-1,"State machine '"+id+"': Definition of states: Illformed expression: expected an unbound identifier, got: "
@@ -618,6 +640,11 @@ void State_machine_simulation_core::process_statemachine(	ceps::ast::Nodeset& sm
   //    for (auto ee : e.second) std::cerr << e.first << " " << ee << std::endl;
 
   for(auto s:current_statemachine->states()){
+      for(auto e:dont_cover_states){
+          if (e == s->id()){
+              s->dont_cover() = true;break;
+          }
+      }
       auto it = categorization.find(s->id());
       if (it == categorization.end() ) continue;
       s->categories() = it->second;

@@ -53,11 +53,17 @@ struct state_rep_t {
 class State_machine
 {
   bool cover_ = false;
+  bool dont_cover_loops_ = false;
+  bool hidden_ = false;
   bool is_concept_ = false;
   std::unordered_set<State_machine*> shadowing_me_;
 
 public:
   state_rep_t shadow = {};
+  bool& dont_cover_loops() {return dont_cover_loops_;}
+  bool dont_cover_loops() const {return dont_cover_loops_;}
+  bool& hidden() {return hidden_;}
+  bool hidden() const {return hidden_;}
   bool& cover(){return cover_;}
   bool cover() const {return cover_;}
   bool& is_concept(){return is_concept_;}

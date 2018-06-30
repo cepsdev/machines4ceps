@@ -1705,7 +1705,8 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 		//number_of_states_to_cover = ctx.coverage_state_table.size();
 		for(std::size_t i = 0;i != ctx.coverage_state_table.size();++i){
 		 if (ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::INIT) ||
-			 ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::FINAL)
+             ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::FINAL) ||
+             ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::DONT_COVER)
 			 /*|| ctx.get_inf(i+ctx.start_of_covering_states,executionloop_context_t::SM)*/ ) continue;
 		 number_of_states_covered += ctx.coverage_state_table[i] != 0;
 		 ++number_of_states_to_cover;
@@ -1740,12 +1741,21 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 		   if (ctx.transitions[ctx.start_of_covering_transitions + i].start()) continue;
 		   auto from_state = ctx.transitions[ctx.start_of_covering_transitions + i].from;
 		   auto to_state = ctx.transitions[ctx.start_of_covering_transitions + i].to;
-		   if (ctx.get_inf(from_state,executionloop_context_t::INIT) ||
+
+           if (
+               ctx.get_inf(from_state,executionloop_context_t::DONT_COVER) ||
+               ctx.get_inf(from_state,executionloop_context_t::INIT) ||
 		   	   ctx.get_inf(from_state,executionloop_context_t::FINAL) ||
 		   	   ctx.get_inf(from_state,executionloop_context_t::SM) ) continue;
-		   if (ctx.get_inf(to_state,executionloop_context_t::INIT) ||
+
+           if (
+               ctx.get_inf(to_state,executionloop_context_t::DONT_COVER) ||
+               ctx.get_inf(to_state,executionloop_context_t::INIT) ||
 		   	   ctx.get_inf(to_state,executionloop_context_t::FINAL) ||
 		   	   ctx.get_inf(to_state,executionloop_context_t::SM) ) continue;
+           if (to_state == from_state && ctx.get_inf(ctx.get_parent(from_state),executionloop_context_t::DONT_COVER_LOOPS))
+               continue;
+           //std::cerr << from_state << "=>" << to_state << std::endl;
 		   auto sms = ctx.get_assoc_sm(ctx.transitions[ctx.start_of_covering_transitions + i].root_sms);
 		   assert(sms != nullptr);
 		   number_of_transitions_covered += ctx.coverage_transitions_table[i] != 0;

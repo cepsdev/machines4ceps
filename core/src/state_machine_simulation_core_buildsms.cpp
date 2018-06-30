@@ -304,6 +304,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::SM,true);
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::THREAD,inside_thread = cur_sm->is_thread_);
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::JOIN,cur_sm->join_);
+        if (cur_sm->dont_cover_loops()) ctx.set_inf(cur_sm->idx_,executionloop_context_t::DONT_COVER_LOOPS,true);
+        if (cur_sm->hidden()) ctx.set_inf(cur_sm->idx_,executionloop_context_t::HIDDEN,true);
+
 		if (cur_sm->join_) {
 			for(auto s : cur_sm->states()){
 				if(s->id_ !=cur_sm->join_state_.id_) continue;
@@ -315,6 +318,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		for(auto s : cur_sm->states()){
 			ctx.set_parent(s->idx_,cur_sm->idx_);
 			ctx.set_inf(s->idx_,executionloop_context_t::INIT,s->is_initial());
+            ctx.set_inf(s->idx_,executionloop_context_t::DONT_COVER,s->dont_cover());
 			ctx.set_inf(s->idx_,executionloop_context_t::FINAL,s->is_final());
 			ctx.set_inf(s->idx_,executionloop_context_t::IN_THREAD,inside_thread);
 			if (s->is_initial()) ctx.set_initial_state(cur_sm->idx_,s->idx_);
@@ -1444,6 +1448,9 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
        std::cout <<" \"" << e.first <<"\" => " << "" << e.second << " ";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial_state";
+       if (executionloop_context().get_inf(e.second,executionloop_context_t::DONT_COVER))std::cout <<" don't cover";
+       if (executionloop_context().get_inf(e.second,executionloop_context_t::DONT_COVER_LOOPS))std::cout <<" don't cover loops";
+       if (executionloop_context().get_inf(e.second,executionloop_context_t::HIDDEN))std::cout <<" hidden";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final_state";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::THREAD))std::cout <<" thread";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::IN_THREAD))std::cout <<" in_thread";

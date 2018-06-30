@@ -1,0 +1,1 @@
+check_job_for_termination_result_is_yes.sh

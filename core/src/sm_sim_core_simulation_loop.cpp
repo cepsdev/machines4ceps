@@ -445,7 +445,7 @@ static void log_state_changes(State_machine_simulation_core* smc,executionloop_c
   }
   if (!changes) return;
   std::stringstream ss;
-  ss << "Set of states changed: ";
+  //ss << "Set of states changed: ";
   for(size_t z = 0; z != execution_ctxt.current_states.size(); ++z){
    if (execution_ctxt.current_states[z] == temp[z]) continue;
    ss << execution_ctxt.idx_to_state_id[z];
@@ -647,7 +647,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  request_start_for_all_dispatchers();
 
 
- info("Simulation started.");
+ //info("Simulation started.");
  if (user_supplied_global_init() != nullptr){
       map_ceps_payload_to_native_=true;
       delete_ceps_payload_=true;
@@ -830,7 +830,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
 		global_ev_cllbck();
  }
- info("Simulation finished.");
+ //info("Simulation finished.");
 }
 
 

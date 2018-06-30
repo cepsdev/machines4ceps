@@ -397,9 +397,16 @@ static bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
     } else if (n->kind() == Ast_node_kind::func_call){
         s << "{ \"type\":\"func-call\"}";
         return true;
-    }
-    return false;
+    } else s << "0";
+    return true;
 }
+
+static bool ceps2json(std::stringstream& s,ceps::ast::Nodeset & n){
+    for(auto p : n.nodes())
+        if(!ceps2json(s,p))return false;
+    return true;
+}
+
 static void rtrim(std::string& s){
     if (s.length() == 0) return;auto i = s.length()-1;
     for (;i >= 0 && std::isspace(s[i]);--i);
@@ -432,7 +439,24 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
                r += " \"number_toplevel_nodes\":1,";
                r += " \"sresult\":["+s.str()+"]";
                r += "}";
-           } else {
+           } else if (query == "root.__proc.current_states_with_coverage"){
+              std::stringstream s;
+              auto const& v = ctxt->executionloop_context().current_states;
+              std::size_t c = 0;for(std::size_t i = 0; i != v.size(); ++i) if (v[i]) ++c;
+
+              for(std::size_t i = 0; i != v.size(); ++i){
+                if (!v[i]) continue;
+                s << i;--c;if(c!=0) s <<",";
+              }
+              std::stringstream s_cov_report;
+              auto report = ctxt->make_report();
+              ceps2json(s_cov_report,report);
+              //std::cerr << s.str() << std::endl;
+              r = "{ \"ok\": true,";
+              r += " \"number_toplevel_nodes\":2,";
+              r += " \"sresult\":{\"current_states\": ["+s.str()+"], \"coverage\": "+s_cov_report.str()+" }";
+              r += "}";
+          } else {
                std::stringstream s;
                s << query;
                Ceps_parser_driver driver{ctxt->ceps_env_current().get_global_symboltable(),s};

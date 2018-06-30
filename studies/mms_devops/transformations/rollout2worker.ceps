@@ -1,0 +1,58 @@
+kind Event;
+Event success;
+Event start_rollout;
+
+
+static_for(e:root.rollout){
+ static_for(market:e.markets.content()){
+  sm{
+   val market_name = text(market.content()); 
+   as_identifier(market_name+"_worker");
+   hidden;
+   states { Initial;
+            Final;          
+          };
+   static_for(step: e.steps.content().is_id() ) {
+    sm{
+        step;
+        states{Initial;Final;};
+        sub_step{Check;"";"_"+market_name;"check_ro_tmdbatch_elements";market_name;};
+        sub_step{Run;"";"_"+market_name;"run_ro_tmdbatch_elements";market_name;};
+        Actions{
+            do_big_step{
+                as_symbol("big_step_"+market_name,"Event");
+            };
+        };
+
+        t{Initial;Check;};
+        t{Check;Run;as_symbol("small_step_"+market_name,"Event");};
+        t{Run;Final;as_symbol("small_step_"+market_name,"Event");do_big_step;};
+        
+    };
+   }
+
+   Actions{
+       static_for( step:e.steps.content().is_id() ) {
+           make_struct("propagate_"+text(step)+"_done",
+            as_symbol(market_name+text(step)+"_finished","Event")
+           );
+       }
+   };
+
+   val prev = e.steps.content().is_id().first();
+
+   t{Initial;prev;as_symbol("start_rollout_"+market_name,"Event");};
+   
+   static_for( step:tail(e.steps.content().is_id()) ) {
+    t {
+      prev;
+      step;
+      as_symbol("big_step_"+market_name,"Event");
+      as_identifier("propagate_"+text(prev)+"_done");
+    };
+    ignore_value { prev = step; };
+   }
+   t { prev;Final;as_symbol("big_step_"+market_name,"Event");as_identifier("propagate_"+text(prev)+"_done"); };  
+ };
+ }
+}

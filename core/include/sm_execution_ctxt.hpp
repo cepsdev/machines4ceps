@@ -46,7 +46,11 @@ public:
 		return true;
 	}
 
-	int get_parent(int state){
+        int& get_parent(int state){
+                return parent_vec[state];
+        }
+
+        int get_parent(int state) const{
 		return parent_vec[state];
 	}
 
@@ -212,6 +216,9 @@ public:
 	static constexpr unsigned int JOIN = 8;
 	static constexpr unsigned int IN_THREAD = 9;
 	static constexpr unsigned int REGION = 10;
+        static constexpr unsigned int DONT_COVER = 11;
+        static constexpr unsigned int DONT_COVER_LOOPS = 12;
+        static constexpr unsigned int HIDDEN = 13;
 
 	static constexpr unsigned int TRANS_PROP_ABSTRACT = 1;
 

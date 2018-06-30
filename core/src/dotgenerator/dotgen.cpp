@@ -392,6 +392,7 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
         current_universe().nodes().push_back(meta_info);
 
 		for(auto s : statemachines() ){
+            if(s.second->hidden()) continue;
 
          std::string base_file_name = replace_all(s.first,".","__");
 

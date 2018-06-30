@@ -1,0 +1,116 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Event big_step,small_step,step_failure,trigger_status_check,job_not_done_yet,job_finished,result_ok,result_nok;
+
+
+val SCRIPT_TO_CHECK_JOB_FOR_TERMINATION = "./check_job_for_termination.sh";
+val SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT = "./fetch_job_computation_result.sh";
+
+
+global_functions{ 
+ check_interval{
+     params{job;};
+     if (job == "check_ro_tmdbatch_elements" )
+         return 1.0*s;
+     return 10.0*s;
+ };
+
+ check_script_for_job_termination{
+     params{job;parameters;};
+     val t =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION + " " + job + " "+ parameters;
+     return t;
+ };
+
+ script_for_job_result{
+     params{job;parameters;};
+     val t =  SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT + " " + job + " "+ parameters;
+     return t;
+ };
+};
+
+macro sub_step{    
+       sm{
+            hd(arglist);
+            val prefix = hd(tail(arglist));
+            val postfix = hd(tail(tail(arglist)));
+            val job_name = hd(tail(tail(tail(arglist))));
+            val job_parameter = hd(tail(tail(tail(tail(arglist)))));
+            
+            states{ Initial;
+                    Final;
+                    JobTriggered;
+                    WaitForStatus;
+                    JobStillRunning;
+                    FetchResult;
+                    WaitALittle;};
+            Actions{
+                start_job{
+                    start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                };
+                start_timer_for_job_check{
+                    start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                };
+                run_check_script{
+                   os_system(check_script_for_job_termination(job_name,job_parameter),
+                             as_symbol(prefix+"job_finished"+postfix,"Event"),
+                             as_symbol(prefix+"job_not_done_yet"+postfix,"Event"));
+                };
+                run_get_result_script{
+                   os_system(script_for_job_result(job_name,job_parameter),
+                             as_symbol(prefix+"result_ok"+postfix,"Event"),
+                             as_symbol(prefix+"result_nok"+postfix,"Event"));
+                };
+                skip_run_step{
+                    big_step;
+                };
+                run_step{
+                    small_step;                    
+                };
+            };
+
+            t{Initial;JobTriggered;start_job;};
+
+            t{JobTriggered;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+            t{WaitForStatus;JobStillRunning;as_symbol(prefix+"job_not_done_yet"+postfix,"Event");};
+            t{WaitForStatus;FetchResult;as_symbol(prefix+"job_finished"+postfix,"Event");run_get_result_script;};
+            
+            t{JobStillRunning;WaitALittle;start_timer_for_job_check;};
+            t{WaitALittle;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+
+            t{FetchResult;Final;as_symbol(prefix+"result_ok"+postfix,"Event");skip_run_step;};
+            t{FetchResult;Final;as_symbol(prefix+"result_nok"+postfix,"Event");run_step;};
+
+        };
+    
+};
+
+
+sm{
+    one_step_rollout_market_X;
+    states{Initial;Final;Error;};
+    sm{
+        Step;
+        states{Initial;Final;};
+        sub_step{Check;"";"X";"check_ro_tmdbatch_elements";"X";};
+        sub_step{Run;"";"X";"run_ro_tmdbatch_elements";"X";};
+        Actions{
+            do_big_step{
+                big_step;
+            };
+        };
+        
+        t{Initial;Check;};
+        t{Check;Run;small_step;};
+        t{Run;Final;small_step;do_big_step;};
+    };
+    
+    t{Initial;Step;};
+    t{Step;Final;big_step;};
+    t{Step;Error;step_failure;};
+};
+
+Simulation{
+    Start{one_step_rollout_market_X;};
+};

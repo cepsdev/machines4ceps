@@ -1,0 +1,977 @@
+﻿<!DOCTYPE html>
+<html lang=en>
+<!-- 
+    
+    Cool effects
+
+    https://blog.trackduck.com/2015/06/10/15-impressive-pop-animation-effects-codepen/
+    
+    
+    -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="(c) ceps technologies, all rights reserved">
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="datatables/css/dataTables.bootstrap.min.css" rel="stylesheet" >
+    <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
+    <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
+    <link href="animate/animate.css" rel="stylesheet">
+    <style>
+    </style>
+    <title>Virtual CAN</title>
+</head>
+
+<script>
+    var global_observer_handlers = [];
+
+    function register_observer(name, fn) {
+        for (let e of global_observer_handlers)
+            if (e.name == name) { e.handler = fn; return; }
+        if (fn == undefined) return;
+        for (let e of global_observer_handlers)
+            if (e.handler == undefined) { e.name = name; e.handler = fn; return; }
+
+        global_observer_handlers.push({name:name, handler:fn});
+    }
+
+    function unregister_observer(name) { register_observer(name, undefined); }
+
+    function set_page_title(s) {
+        $("#page_title").html(s);
+    }
+
+    function warn(s) {
+        $.notify({/* options*/message: s
+        },
+            {/*settings*/ delay: 10000, type: 'warning', showProgressbar: false,
+                animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
+            }
+        );        
+    }
+</script>
+
+
+<body>
+
+    <div class="row">
+        <div class="col-xs-6 col-sm-2"></div>
+        <div class="col-xs-6 col-sm-8">
+            <h2><span id="page_title">Virtual CAN</span></h2>
+        </div>
+        <div class="col-xs-6 col-sm-2"></div>
+    </div>
+    <div class="row">
+        <div class="col-xs-6 col-sm-2">
+            
+        </div>
+        <div class="col-xs-6 col-sm-8" id="main_area">
+        </div>
+        <div class="col-xs-6 col-sm-2"></div>
+    </div>
+
+    <!---------------------------- COMPONENT: Login ---------------------------->
+    <div class="modal fade" id="dlg_login" tabindex="-1" role="dialog" aria-labelledby="dlg_login" style="z-index: 10000;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_select_a_signal_label">Connect</h4>
+                </div>
+                <div id="dlg_select_a_signal_body" class="modal-body">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-log-in"></i></span>
+                        <!-- input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder="" -->
+                        <input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:1063" placeholder="">
+                        <!-- input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:1065" placeholder="" -->
+                    </div>                      
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary" onclick="login($('#sim_url').val());">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!---------------------------- COMPONENT: Login ---------------------------->
+
+
+
+
+
+ 
+
+    <!---------------------------- COMPONENT: Choose Remote Endpoint Out---------------------------->
+    <div class="modal fade" id="dlg_select_remote_endpoint_out" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_signal_label" style="z-index: 10000;">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_select_remote_endpoint_out_label">Remote Communication Endpoints (Outgoing)</h4>
+                </div>
+                <div id="dlg_select_remote_endpoint_out_body" class="modal-body">
+                    <table id="dlg_select_remote_endpoint_out_table" class="table table-striped table-bordered" width="100%"></table>
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_select_remote_endpoint_out_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!---------------------------- COMPONENT: Choose Remote Endpoint Out---------------------------->
+
+
+    <!---------------------------- COMPONENT: Choose Local Endpoint ---------------------------->
+    <div class="modal fade" id="dlg_select_local_endpoint" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_signal_label" style="z-index: 10000;">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_select_local_endpoint">Local Communication Endpoints</h4>
+                </div>
+                <div id="dlg_select_local_endpoint_body" class="modal-body">
+                    <table id="dlg_select_local_endpoint_table" class="table table-striped table-bordered" width="100%"></table>
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_select_local_endpoint_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!---------------------------- COMPONENT: Choose Local Endpoint ---------------------------->
+
+    <!---------------------------- COMPONENT: Choose Control Panel ---------------------------->
+    <div class="modal fade" id="dlg_select_a_ctrlpanel" tabindex="-1" role="dialog" aria-labelledby="dlg_select_a_ctrlpanel_label" style="z-index: 10000;">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="dlg_select_a_ctrlpanel_label">Choose a Control Panel</h4>
+                </div>
+                <div id="dlg_select_a_ctrlpanel_body" class="modal-body">
+                    <table id="dlg_select_a_ctrlpanel_table" class="table table-striped table-bordered" width="100%"></table>
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_select_a_ctrlpanel_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+    <!---------------------------- COMPONENT: Choose Control Panel ---------------------------->
+       
+    <!---------------------------- COMPONENT: Save Control Panel ---------------------------->
+        <div class="modal fade" id="dlg_save_control_panel" tabindex="-1" role="dialog" aria-labelledby="dlg_save_control_panel" style="z-index: 10000;">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="dlg_save_control_panel_label">Save Control Panel</h4>
+                    </div>
+                    <div id="dlg_save_control_panel_body" class="modal-body">
+                        <div class="form-group">
+                            <label for="save_control_panel_name">Name</label>
+                            <!--input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder=""-->
+                            <input id="save_control_panel_name" type="text" class="form-control" name="save_control_panel_name" value="" placeholder="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary" onclick="$('#dlg_save_control_panel').modal('hide');save_active_control_panel($('#save_control_panel_name').val());">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+     <!---------------------------- COMPONENT: Save Control Panel ---------------------------->
+
+
+
+
+    <script src="jquery/js/jquery.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="jquery-ui/jquery-ui.min.js"></script>
+    <script src="datatables/js/jquery.dataTables.min.js"></script>
+    <script src="datatables-plugins/dataTables.bootstrap.min.js"></script>
+    <script src="datatables-responsive/dataTables.responsive.js"></script>
+    <script src="chartjs/Chart.js"></script>
+    <script src="bootstrap-notify/bootstrap-notify.js"></script>
+    <script src="cepscloud-ui/widget_properties_panel.js"></script>
+    <script src="cepscloud-ui/widget_toggle_signal.js"></script>
+    <script src="cepscloud-ui/widget_plot_signal.js"></script>
+    <script src="cepscloud-ui/persistence.js"></script>
+
+    <script>
+        let ctrlPanelEditor = undefined;
+        let partitions = [];
+        let constraints = [];
+    </script>
+
+    <!---------------------- Persistence ----------------------->
+
+    
+
+
+
+    <script>
+        function traverse_ceps_as_json(doc, f) {
+            if (doc === undefined) return true;
+            if (Object.prototype.toString.call(doc) == "[object Array]") {
+                for (let e of doc) {
+                    if (!f(e)) return false;
+                    if(!traverse_ceps_as_json(e, f)) return false;
+                }
+                return true;
+            } else if (doc.content) {
+                return(traverse_ceps_as_json(doc.content, f));
+            }
+            return f(doc);
+        }
+
+    </script>
+
+    <script>
+        var connected = false;
+        var new_remote_site  = false;
+        var remote_url = undefined;
+        var simcore_ws = undefined;
+        var coverage_report = undefined;
+        var endpoint_info = [];
+        var ctr = 0;
+        var glob_endpoints = undefined;
+        
+
+        function get_endpoint_info(id) {
+            for (let e of endpoint_info) {
+                if (e.id == id) return e;
+            }
+            return undefined;
+        }
+
+        function first_n_chars(s, n) {
+            if (s.length <= n) return (s);
+            return s.substr(0, n) + "...";
+        }
+
+        function endpoint_config_reset_to_remote_settings(id) {
+            let ep = get_endpoint_info(id);
+        }
+
+        function endpoint_config_do_upload(id) {
+            let ep = get_endpoint_info(id);
+            let cmd = "CONFIG_STREAMS\n";
+            for (let e of $(`.down-streams-${id}`)) {
+                let sim_name = undefined;
+                let channel = undefined;
+                let local_channel = undefined;
+                for (let a of $(e).find(`.dwnstrm_src`)) {
+                    sim_name = $(a).attr("sim_name");
+                    channel = $(a).attr("channel");                    
+                }
+                for (let a of $(e).find(`.dwnstrm_trgt`)) {
+                    local_channel = $(a).attr("local_channel");           
+                }
+
+                if (sim_name && channel && local_channel) {
+                    cmd += "CONFIG_DOWN_STREAM\nENTRY\n";
+                    cmd += sim_name + "\n";
+                    cmd += channel + "\n";
+                    cmd += local_channel + "\n";
+                }
+            }
+            for (let e of $(`.up-streams-${id}`)) {
+                let sim_name = undefined;
+                let channel = undefined;
+                let local_channel = undefined;
+                for (let a of $(e).find(`.upstrm_trgt`)) {
+                    sim_name = $(a).attr("sim_name");
+                    channel = $(a).attr("channel");
+                }
+                for (let a of $(e).find(`.upstrm_src`)) {
+                    local_channel = $(a).attr("local_channel");
+                }
+
+                if (sim_name && channel && local_channel) {
+                    cmd += "CONFIG_UP_STREAM\nENTRY\n";
+                    cmd += sim_name + "\n";
+                    cmd += channel + "\n";
+                    cmd += local_channel + "\n";
+                }
+            }
+            for (let e of $(`.route-streams-${id}`)) {
+                let sim_name_from = undefined;
+                let channel_from = undefined;
+                let sim_name_to = undefined;
+                let channel_to = undefined;
+
+                for (let a of $(e).find(`.rtstrm_trgt`)) {
+                    sim_name_to = $(a).attr("sim_name");
+                    channel_to = $(a).attr("channel");
+                }
+                for (let a of $(e).find(`.rtstrm_src`)) {
+                    sim_name_from = $(a).attr("sim_name");
+                    channel_from = $(a).attr("channel");
+                }
+
+                if (sim_name_from && channel_from && sim_name_to && channel_to) {
+                    cmd += "CONFIG_ROUTE\nENTRY\n";
+                    cmd += sim_name_from + "\n";
+                    cmd += channel_from + "\n";
+                    cmd += sim_name_to + "\n";
+                    cmd += channel_to + "\n";
+                }
+            }
+            
+
+            function h(m) {
+                ep.ws.removeEventListener("message", h);
+                let msg = JSON.parse(m.data);
+                
+                if (!msg.ok) { console.log(msg); return; }
+                $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
+                $.notify({/* options*/message: 'Changes successfully applied  to \'' + glob_endpoints[id].host + ":"+glob_endpoints[id].port + `'` },
+                    {/*settings*/ type: 'success', showProgressbar: false, delay: 2000,
+                        animate: { enter: 'animated bounceIn', exit: 'animated bounceOut' }
+                    }
+                );
+            }
+            ep.ws.addEventListener("message", h);
+            console.log(cmd);
+            ep.ws.send(cmd);
+        }
+
+        function check_streaming_endpoint_complete(id) {
+            let ready_for_upload = true;
+            parents = [];            
+            for (let e of $(".strm_endpoint_cfg_btn")) {                
+                let entry_incomplete = false;
+                if ($(e).hasClass("dwnstrm_trgt") || $(e).hasClass("upstrm_src")) {
+                    if ($(e).attr("local_channel") == undefined) {
+                        ready_for_upload = false; entry_incomplete = true;
+                    }
+                }
+
+                if ($(e).hasClass("dwnstrm_src") || $(e).hasClass("upstrm_trgt") || $(e).hasClass("rtstrm_src") || $(e).hasClass("rtstrm_trgt") ) {
+                    if ($(e).attr("channel") == undefined || $(e).attr("sim_name") == undefined) {
+                        ready_for_upload = false; entry_incomplete = true;
+                    }
+                }
+                let parent = $(e).parent();
+                for (; parent && !parent.hasClass("alert"); parent = $(parent).parent());
+                let parent_found_in_list = false;
+                for (let p of parents) {
+                    if ($(p.p).attr("id") == $(parent).attr("id")) {
+                        if (p.complete && entry_incomplete) p.complete = false;
+                        parent_found_in_list = true;
+                        break;
+                    }
+                }
+                if (!parent_found_in_list) {
+                    parents.push({p:parent,complete:!entry_incomplete});
+                }
+            }
+            for (let e of parents) {
+                if (e.complete) {
+                    $(e.p).removeClass("alert-warning").removeClass("alert-info").addClass("alert-info");
+                } else {
+                    $(e.p).removeClass("alert-warning").removeClass("alert-info").addClass("alert-warning");
+                }
+            }
+                        
+            if (ready_for_upload) $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", false);
+            else $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
+        }
+
+        function set_strm_src(id, conn_id, info , check_completeness, which) {
+            let short = which;
+            if (which == "down") short = "dwn";
+            else if (which == "route") short = "rt";
+
+            if (info.sim_name != undefined) {
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).attr("sim_name", info.sim_name);
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).attr("channel", info.channel);
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).text(first_n_chars(info.channel + "(" + info.sim_name + ")", 30));
+            }
+
+            if (info.local_channel != undefined) {
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).attr("local_channel", info.local_channel);
+                $(`#${short}_strm_src_btn_${id}_${conn_id}`).text(first_n_chars(info.local_channel, 20));
+            }
+            if (check_completeness == undefined || check_completeness) check_streaming_endpoint_complete(id);
+        }
+
+        function set_strm_trgt(id, conn_id, info , check_completeness, which) {
+            let short = which;
+            if (which == "down") short = "dwn";
+            else if (which == "route") short = "rt";
+
+            if (info.sim_name != undefined) {
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).attr("sim_name", info.sim_name);
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).attr("channel", info.channel);
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).text(first_n_chars(info.channel + "(" + info.sim_name + ")", 30));
+            }
+
+            if (info.local_channel != undefined) {
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).attr("local_channel", info.local_channel);
+                $(`#${short}_strm_trgt_btn_${id}_${conn_id}`).text(first_n_chars(info.local_channel, 20));
+            }
+            if (check_completeness == undefined || check_completeness) check_streaming_endpoint_complete(id);
+        }
+
+
+        function set_dwn_strm_src(id, conn_id, sim_name, channel, check_completeness) {
+            set_strm_src(id, conn_id, { sim_name: sim_name, channel: channel } , check_completeness, "down");
+        }
+
+        function set_dwn_strm_trgt(id, conn_id, channel, check_completeness) {
+            set_strm_trgt(id, conn_id, { local_channel:channel }, check_completeness, "down");
+        }
+
+        function set_up_strm_src(id, conn_id, local_channel, check_completeness) {
+            set_strm_src(id, conn_id, {local_channel:local_channel} , check_completeness, "up");
+        }
+
+        function set_up_strm_trgt(id, conn_id, sim_name, channel, check_completeness) {
+            set_strm_trgt(id, conn_id, { sim_name: sim_name, channel: channel } , check_completeness, "up");
+        }
+
+        function set_rt_strm_src(id, conn_id, sim_name, channel, check_completeness) {
+            set_strm_src(id, conn_id, { sim_name: sim_name, channel: channel }, check_completeness, "route");
+        }
+
+        function set_rt_strm_trgt(id, conn_id, sim_name, channel, check_completeness) {
+            set_strm_trgt(id, conn_id, { sim_name: sim_name, channel: channel }, check_completeness, "route");
+        }
+
+
+        function sl_dwn_strm_src(id,conn_id) {
+            let ep = get_endpoint_info(id);
+
+            let sim_name = $(`#dwn_strm_src_btn_${id}_${conn_id}`).attr("sim_name");
+            let channel = $(`#dwn_strm_src_btn_${id}_${conn_id}`).attr("channel");
+
+            let dt = [];
+            for (let s of ep.config.value.simcore_infos) {
+                for (let ch of s.out) {
+                    if (s.name == sim_name && channel == ch.name)
+                        dt.push([`<strong>` + s.name + `</strong>`, `<strong>` + ch.name + "</strong>", `<strong>` + ch.type + `<strong>`]);
+                    else dt.push([s.name, `<a href='#' onclick='$("#dlg_select_remote_endpoint_out").modal("hide");set_dwn_strm_src(${id},${conn_id},"${s.name}","${ch.name}");'>` + ch.name + "</a>", ch.type]);
+                }
+            }
+            $("#dlg_select_remote_endpoint_out").modal("show");
+            if (ep.tbl_dt == undefined)
+                ep.tbl_dt = $('#dlg_select_remote_endpoint_out_table').DataTable({
+                    select: {
+                        style: 'single'
+                    },
+                    data: dt,
+                    columns: [{ title: "Simulation" }, { title: "Communication Endpoint" }, { title: "Type" }]
+                });
+            else {
+                //console.log();
+                $('#dlg_select_remote_endpoint_out_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+        function sl_dwn_strm_trgt(id, conn_id) {
+            let ep = get_endpoint_info(id);
+            let local_channel = $(`#dwn_strm_trgt_btn_${id}_${conn_id}`).attr("local_channel");
+
+            let dt = [];
+            for (let s of ep.config.value.local_endpoints) {
+                    if (s == local_channel)
+                        dt.push([`<strong>` + s + `</strong>`]);
+                    else dt.push([`<a href='#' onclick='$("#dlg_select_local_endpoint").modal("hide");set_dwn_strm_trgt(${id},${conn_id},"${s}");'>` + s + "</a>"]);
+            }
+            $("#dlg_select_local_endpoint").modal("show");
+
+            if (ep.loc_channel_tbl_dt == undefined)
+              ep.loc_channel_tbl_dt = $('#dlg_select_local_endpoint_table').DataTable({
+                select: {
+                    style: 'single'
+                },
+                data: dt,
+                columns: [{ title: "Name" }]
+              });
+            else {
+             $('#dlg_select_local_endpoint_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+
+        function sl_up_strm_trgt(id, conn_id) {
+            let ep = get_endpoint_info(id);
+
+            let sim_name = $(`#up_strm_trgt_btn_${id}_${conn_id}`).attr("sim_name");
+            let channel = $(`#up_strm_trgt_btn_${id}_${conn_id}`).attr("channel");
+
+            let dt = [];
+            for (let s of ep.config.value.simcore_infos) {
+                for (let ch of s.in) {
+                    if (s.name == sim_name && channel == ch.name)
+                        dt.push([`<strong>` + s.name + `</strong>`, `<strong>` + ch.name + "</strong>", `<strong>` + ch.type + `<strong>`]);
+                    else dt.push([s.name, `<a href='#' onclick='$("#dlg_select_remote_endpoint_out").modal("hide");set_up_strm_trgt(${id},${conn_id},"${s.name}","${ch.name}");'>` + ch.name + "</a>", ch.type]);
+                }
+            }
+            $("#dlg_select_remote_endpoint_out").modal("show");
+            if (ep.tbl_dt == undefined)
+                ep.tbl_dt = $('#dlg_select_remote_endpoint_out_table').DataTable({
+                    select: {
+                        style: 'single'
+                    },
+                    data: dt,
+                    columns: [{ title: "Simulation" }, { title: "Communication Endpoint" }, { title: "Type" }]
+                });
+            else {
+                $('#dlg_select_remote_endpoint_out_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+
+        function sl_up_strm_src(id, conn_id) {
+            let ep = get_endpoint_info(id);
+            let local_channel = $(`#up_strm_trgt_btn_${id}_${conn_id}`).attr("local_channel");
+
+            let dt = [];
+            for (let s of ep.config.value.local_endpoints) {
+                if (s == local_channel)
+                    dt.push([`<strong>` + s + `</strong>`]);
+                else dt.push([`<a href='#' onclick='$("#dlg_select_local_endpoint").modal("hide");set_up_strm_src(${id},${conn_id},"${s}");'>` + s + "</a>"]);
+            }
+            $("#dlg_select_local_endpoint").modal("show");
+
+            if (ep.loc_channel_tbl_dt == undefined)
+                ep.loc_channel_tbl_dt = $('#dlg_select_local_endpoint_table').DataTable({
+                    select: {
+                        style: 'single'
+                    },
+                    data: dt,
+                    columns: [{ title: "Name" }]
+                });
+            else {
+                $('#dlg_select_local_endpoint_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+
+        function sl_rt_strm_src(id, conn_id) {
+            let ep = get_endpoint_info(id);
+
+            let sim_name = $(`#rt_strm_src_btn_${id}_${conn_id}`).attr("sim_name");
+            let channel = $(`#rt_strm_src_btn_${id}_${conn_id}`).attr("channel");
+
+            let dt = [];
+            for (let s of ep.config.value.simcore_infos) {
+                for (let ch of s.out) {
+                    if (s.name == sim_name && channel == ch.name)
+                        dt.push([`<strong>` + s.name + `</strong>`, `<strong>` + ch.name + "</strong>", `<strong>` + ch.type + `<strong>`]);
+                    else dt.push([s.name, `<a href='#' onclick='$("#dlg_select_remote_endpoint_out").modal("hide");set_rt_strm_src(${id},${conn_id},"${s.name}","${ch.name}");'>` + ch.name + "</a>", ch.type]);
+                }
+            }
+            $("#dlg_select_remote_endpoint_out").modal("show");
+            if (ep.tbl_dt == undefined)
+                ep.tbl_dt = $('#dlg_select_remote_endpoint_out_table').DataTable({
+                    select: {
+                        style: 'single'
+                    },
+                    data: dt,
+                    columns: [{ title: "Simulation" }, { title: "Communication Endpoint" }, { title: "Type" }]
+                });
+            else {
+                $('#dlg_select_remote_endpoint_out_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+        function sl_rt_strm_trgt(id, conn_id) {
+            let ep = get_endpoint_info(id);
+
+            let sim_name = $(`#rt_strm_trgt_btn_${id}_${conn_id}`).attr("sim_name");
+            let channel = $(`#rt_strm_trgt_btn_${id}_${conn_id}`).attr("channel");
+
+            let dt = [];
+            for (let s of ep.config.value.simcore_infos) {
+                for (let ch of s.in) {
+                    if (s.name == sim_name && channel == ch.name)
+                        dt.push([`<strong>` + s.name + `</strong>`, `<strong>` + ch.name + "</strong>", `<strong>` + ch.type + `<strong>`]);
+                    else dt.push([s.name, `<a href='#' onclick='$("#dlg_select_remote_endpoint_out").modal("hide");set_rt_strm_trgt(${id},${conn_id},"${s.name}","${ch.name}");'>` + ch.name + "</a>", ch.type]);
+                }
+            }
+            $("#dlg_select_remote_endpoint_out").modal("show");
+            if (ep.tbl_dt == undefined)
+                ep.tbl_dt = $('#dlg_select_remote_endpoint_out_table').DataTable({
+                    select: {
+                        style: 'single'
+                    },
+                    data: dt,
+                    columns: [{ title: "Simulation" }, { title: "Communication Endpoint" }, { title: "Type" }]
+                });
+            else {
+                $('#dlg_select_remote_endpoint_out_table').DataTable().clear().rows.add(dt).draw();
+            }
+        }
+
+        function handle_stream(id, which) {
+            $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
+            let ep = get_endpoint_info(id);
+            
+            ++ctr;
+            let short = which;
+            if (which == "down") short = "dwn";
+            else if (which == "route") short = "rt";
+
+            let src_txt = "Select Source (Remote) ...";
+            let target_txt = "Select Target (Local) ...";
+
+            if (which == "up") {
+                src_txt = "Select Source (Local) ...";
+                target_txt = "Select Target (Remote) ...";
+            } else if (which == "route") {
+                src_txt = "Select Source (Remote) ...";
+                target_txt = "Select Target (Remote) ...";
+            }
+
+            let container_selector=undefined;
+            if (which == "route") container_selector = `#routes_${id}`; else container_selector = `#${which}_streams_${id}`;
+            
+            $(container_selector).append(
+                `<div class="alert alert-warning alert-dismissible ${which}-streams-${id} fade in" role="alert" id="${short}_strm_entry_${id}_${ctr}">
+                  <table width="100%">
+                   <tr>
+                    <td width="33%">
+                     <div class="btn-group" role="group" aria-label="...">
+                     <button id="${short}_strm_src_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn ${short}strm_src btn-md" onclick="sl_${short}_strm_src(${id},${ctr});" >${src_txt}</button></div>
+                    </td>
+                    <td width="20%" align="center"><span class="glyphicon glyphicon-arrow-right btn-lg" aria-hidden="true"></span></td>
+                    <td width="33%">                    
+                     <div class="btn-group navbar-right" role="group" aria-label="...">
+                     <button id="${short}_strm_trgt_btn_${id}_${ctr}" type="button" class="btn btn-default strm_endpoint_cfg_btn ${short}strm_trgt btn-md" onclick="sl_${short}_strm_trgt(${id},${ctr});">${target_txt}</button></div>
+                    </td><td width="14%">
+                     <a href="#" data-toggle="tooltip" data-placement="top" title="Delete Entry" class="close" data-dismiss="alert" aria-label="Close"  onclick="$('#${short}_strm_entry_${id}_${ctr}').remove();check_streaming_endpoint_complete(${id});" >x</a>
+                    </td>
+                   </tr>
+                  </table>
+                 </div>`);
+            return ctr;
+        }
+
+        function handle_add_up_streams(id) {
+            return handle_stream(id, "up");
+        }
+
+        function handle_add_down_streams(id) {
+            return handle_stream(id, "down");
+        }
+                
+        function handle_add_route(id) {
+            return handle_stream(id, "route");
+        }
+
+        function get_all_out_channels(id) {
+            let ep = get_endpoint_info(id);
+            let r = [];
+            for (let e of ep.config.value.simcore_infos) {
+                for (let ee of e.out) {
+                    ee.sim_name = e.name;
+                    r.push(ee);
+                }
+            }
+            return r;
+        }
+
+        function get_all_in_channels(id) {
+            let ep = get_endpoint_info(id);
+            let r = [];
+            for (let e of ep.config.value.simcore_infos) {
+                for (let ee of e.in) {
+                    ee.sim_name = e.name;
+                    r.push(ee);
+                }
+            }
+            return r;
+        }
+
+        function build_endpoint_ctrl_from_data(id, data) {
+            $(`#down_streams_${id}`).html();
+            $(`#up_streams_${id}`).html();
+            $(`#routes_${id}`).html();
+
+            for (let e of data.downstreams) {
+                let conn_id = handle_add_down_streams(id);
+                set_dwn_strm_src(id, conn_id, e.sim_name, e.channel);
+                set_dwn_strm_trgt(id, conn_id, e.local_channel);
+            }
+
+            for (let e of data.upstreams) {
+                let conn_id = handle_add_up_streams(id);
+                set_up_strm_src(id, conn_id , e.local_channel);
+                set_up_strm_trgt(id, conn_id, conn_id, e.sim_name, e.channel );
+            }
+
+            for (let e of data.routes) {
+                let conn_id = handle_add_route(id);
+                set_rt_strm_src(id, conn_id, e.from.sim_name, e.from.channel);
+                set_rt_strm_trgt(id, conn_id, e.to.sim_name, e.to.channel);
+            }
+
+            let o_channels = get_all_out_channels(id);
+            let in_channels = get_all_in_channels(id);
+            $(`#add_down_streams_btn_${id}`).attr("disabled", 0 == o_channels);
+            $(`#add_up_streams_btn_${id}`).attr("disabled", 0 == in_channels);
+            $(`#add_routes_btn_${id}`).attr("disabled", 0 == in_channels || 0 == o_channels);
+            $(`#endpoint_config_panel_${id}_btn_upload`).attr("disabled", true);
+        }
+
+        function helper_endpoint_ctrl_main_html(id) {
+            return `<div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="btn-toolbar btn-sm" role="toolbar">
+                        <h4 class="navbar-text navbar-right">Downstreams&nbsp;&nbsp;</h4>
+                        <button  data-toggle="tooltip" data-placement="top" title="Add Downstream" type="button" class="btn btn-default btn-sm" id="add_down_streams_btn_${id}" onclick="handle_add_down_streams(${id})" disabled><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                    </div>
+                </div>
+                <div class="panel-body" id="down_streams_${id}">
+                </div>
+            </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <div class="btn-toolbar btn-sm" role="toolbar">
+                            <h4 class="navbar-text navbar-right">Upstreams&nbsp;&nbsp;</h4>
+                            <button data-toggle="tooltip" data-placement="top" title="Add Upstream" type="button" class="btn btn-default btn-sm" id="add_up_streams_btn_${id}" onclick="handle_add_up_streams(${id})" disabled><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
+                    <div class="panel-body" id="up_streams_${id}">
+                    </div>
+                </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <div class="btn-toolbar btn-sm" role="toolbar">
+                            <h4 class="navbar-text navbar-right">Routes&nbsp;&nbsp;</h4>
+                            <button data-toggle="tooltip" data-placement="top" title="Add Route" type="button" class="btn btn-default btn-sm" id="add_routes_btn_${id}" onclick="handle_add_route(${id})" disabled><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
+                    <div class="panel-body" id="routes_${id}">
+                    </div>
+                </div>`;
+
+        }
+
+        function helper_endpoint_ctrl_main_html_with_loader() {
+
+            return `<table width="100%"><tr><td width="46%"></td><td width="20%"><div class="loader"></div></td><td width="40%"></td></tr></table>`;
+        }
+        function helper_endpoint_ctrl_main_html_with_reconnect_alert() {
+
+            return `<div class="alert alert-danger alert-dismissible" role="alert">
+                     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                     <strong>Error</strong> Failed to connect. Hit refresh button to retry.
+                   </div>`;
+        }
+
+        function helper_endpoint_ctrl_main_html_with_error_alert(err_txt) {
+
+            return `<div class="alert alert-danger alert-dismissible" role="alert">
+                     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                     <strong>Error</strong> ${err_txt}.
+                   </div>`;
+        }
+
+        function init_streaming_endpoint_panels(ws, endpoints) {
+            glob_endpoints = endpoints;
+            if (endpoints.length == 0) {
+                $("#main_area").html(`
+                <div class="panel panel-default">
+                 <div class="panel-body">
+                    <h2>No Virtual CAN Streaming Endpoints found.</h2>
+                    <p><a class="btn btn-primary btn" href="#" role="button">Download cepSCloud's VCAN Gateway</a>
+                    <a class="btn btn-primary btn" href="#" role="button" onclick="$('#main_area').html('');enter_credentials();">Reenter URL</a>
+                    <a class="btn btn-primary btn" href="#" role="button" onclick="$('#main_area').html('');do_login('${remote_url}');">Retry</a></p>
+                 </div>
+                </div>`);
+            } else {
+                for (let i = 0; i != endpoints.length; ++i) {
+                    let e = endpoints[i];
+                    let socket = new WebSocket(`ws://${e.host + ':' + e.port}`);
+
+                    function on_error() {
+                        $(`#endpoint_config_panel_${i}_btn_refresh`).prop("disabled", false);
+                        $(`#endpoint_config_panel_${i}_btn_refresh`).on("click", () => {
+                            socket = new WebSocket(`ws://${e.host + ':' + e.port}`);
+                            socket.addEventListener("error", on_ws_failed);
+                            socket.addEventListener("open", on_ws_succeed);
+                            $(`#endpoint_config_panel_${i}_main`).html(helper_endpoint_ctrl_main_html_with_loader());
+                        });
+                    }
+
+                    function on_ws_succeed(ev) {
+                        socket.removeEventListener("open", on_ws_succeed);
+                        function h(m) {
+                            socket.removeEventListener("message", h);
+                            console.log(m.data);
+                            let msg = JSON.parse(m.data);
+                            if (!msg.ok) {
+                                $(`#endpoint_config_panel_${i}_main`).html(helper_endpoint_ctrl_main_html_with_error_alert("Remote site reported a failure. Hit refresh button to retry."));
+                                socket.close(); socket = undefined;
+                                on_error(); return;
+                            }
+                            //console.log(msg);
+                            endpoint_info.push({id:i,ws:socket,config:msg});
+                            $(`#endpoint_config_panel_${i}_main`).html(helper_endpoint_ctrl_main_html(i));
+                            $(`#endpoint_config_panel_${i}_btn_refresh`).attr("disabled", false);
+                            build_endpoint_ctrl_from_data(i,msg.value);
+                        }
+       
+                        socket.send("GET_CONFIGURATION");
+                        socket.addEventListener("message", h);
+                    }
+
+                    function on_ws_failed(ev) {
+                        $(`#endpoint_config_panel_${i}_main`).html(helper_endpoint_ctrl_main_html_with_reconnect_alert());
+                        socket.removeEventListener("open", on_ws_succeed);
+                        socket.removeEventListener("open", on_ws_failed);
+                        on_error();
+                    };
+
+                    socket.addEventListener("error", on_ws_failed);
+                    socket.addEventListener("open", on_ws_succeed);
+                    
+                    $("#main_area").append(`
+                     <div class="panel panel-primary panel-default endpoint_config endpoint_loading" endpoint="${e.host+':'+e.port}" id="endpoint_config_panel_${i}">
+                      <div id="endpoint_config_panel_${i}_header" class="panel-heading">
+                       <div class="btn-toolbar" role="toolbar">
+                         <h3 class="navbar-text navbar-right">${e.host + ':' + e.port}&nbsp;&nbsp;</h3>
+                         <div class="btn-group btn-lg" role="group">
+                           <button data-toggle="tooltip" data-placement="top" title="Save Settings (Upload to cepSCloud's VCAN Gateway)" id="endpoint_config_panel_${i}_btn_upload" type="button" class="btn btn-default btn-lg" onclick="endpoint_config_do_upload(${i});"  disabled><span class="glyphicon glyphicon-upload" aria-hidden="true"></span></button>
+                         </div>
+                       </div>
+                      </div>
+                      <div id="endpoint_config_panel_${i}_main" class="panel-body">
+                        ${helper_endpoint_ctrl_main_html_with_loader()}
+                      </div>
+                     </div>`);
+                }
+            }
+        }
+
+
+
+        function simcore_ws_process_messages(ev) {
+            //let msg = JSON.parse(ev.data);
+            //if (!msg.ok) return;
+        }
+
+        function finish_prologue(ws,endpoints) {
+            simcore_ws = ws;
+            connected = true;
+            init_streaming_endpoint_panels(ws, endpoints);
+        }
+
+
+        function fetch_data_from_remote(ws) {
+            ws.send("GET_KNOWN_STREAMING_ENDPOINTS");
+            function process_streamingendpoints_resultset(ev) {
+                console.log(ev.data);
+                ws.removeEventListener("message", process_streamingendpoints_resultset);
+                let msg = JSON.parse(ev.data);
+                if (msg.ok) {
+                    finish_prologue(ws,msg.endpoints);
+                } else {
+                    ws.close();
+                }
+            }            
+            ws.addEventListener("message", process_streamingendpoints_resultset);
+        }
+
+        var login_retry_timeout = undefined;
+        function stop_login_retry_timeout() {
+            if (login_retry_timeout == undefined) return;
+            window.clearTimeout(login_retry_timeout);
+            login_retry_timeout = undefined;
+        }
+
+        function enter_credentials() {
+           $('#dlg_login').modal('show');
+        }
+
+        var failed_connect_notification_container = undefined;
+        function show_failed_connect_notification(url) {
+            if (failed_connect_notification_container != undefined) {
+                failed_connect_notification_container.close();
+            }
+            var time_elapsed_to_retry_connect = 10;
+            function time_elapsed_to_retry_connect_fn(){
+                --time_elapsed_to_retry_connect;
+                if (time_elapsed_to_retry_connect <= 0) {
+                    if (failed_connect_notification_container != undefined) {
+                        failed_connect_notification_container.close();
+                        setTimeout(() => { do_login(remote_url); }, 1500);
+                    }
+                } else {
+                    $("#info_btn_log_again").html(time_elapsed_to_retry_connect.toString());
+                    login_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
+                }
+            }
+            login_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
+            failed_connect_notification_container=
+            $.notify({/* options*/message: 'Failed to connect with \'' + url +
+                `' <p></p><button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick="stop_login_retry_timeout();do_login('${remote_url}');">Try again in <span id="info_btn_log_again">${time_elapsed_to_retry_connect}</span> seconds</button>&nbsp;&nbsp;` +
+                `<button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick=" stop_login_retry_timeout();enter_credentials();">Reenter Credentials</button>`
+            },
+                {/*settings*/ delay: 0, type: 'danger', showProgressbar: false,
+                    animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
+                }
+            );                    
+        }
+
+
+        function do_login(url) {
+            new_remote_site = remote_url != url;
+            remote_url = url;          
+            connected = false;
+            (() =>
+            {
+                let socket = new WebSocket("ws://"+url);
+                socket.addEventListener("open", (ev) => {
+                    $.notify({/* options*/message: 'Connected with \'' + url +  `'`},
+                        {/*settings*/ type: 'success', showProgressbar: false,delay : 2000,
+                            animate: { enter: 'animated rollIn', exit: 'animated rollOut' }
+                        }
+                    );
+                    fetch_data_from_remote(socket);
+                });
+                
+                socket.addEventListener("close", (ev) => {
+                    connected = false;
+                    simcore_ws = undefined;
+                    
+                    show_failed_connect_notification(url);
+                });
+                socket.addEventListener("error", (ev) => { connected = false; simcore_ws = undefined; });                
+            })();
+        }
+
+        function login(url) {
+            $('#dlg_login').modal('hide');
+            do_login(url);
+        }
+
+
+        
+        $(document).ready(() => {
+            //$(document).click(() => { $(".baseWidget-selected").removeClass("baseWidget-selected"); });
+            $('[data-toggle="tooltip"]').tooltip(); 
+            setInterval(() => {
+                for (let e of global_observer_handlers) if (e.handler != undefined) e.handler();
+             } , 10);
+
+            if (!connected)
+                setTimeout(() => {
+                    $('#dlg_login').modal('show');
+                }, 100);
+        });
+    </script>
+</body>
+
+</html>

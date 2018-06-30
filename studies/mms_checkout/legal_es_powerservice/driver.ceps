@@ -1,0 +1,3 @@
+Simulation{
+ static_for(uc : root.use_case) {Start{uc.content().first();};}
+};

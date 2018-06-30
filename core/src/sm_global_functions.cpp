@@ -17,6 +17,8 @@ extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodeb
 
 static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
 static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
+static ceps::ast::Nodebase_ptr handle_http_request_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
+static ceps::ast::Nodebase_ptr handle_os_system_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
 static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
 		State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp, ceps::parser_env::Symboltable & sym_table);
 
@@ -299,7 +301,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		return handle_breakup_byte_sequence(this,args,active_smp,sym_table);
 	} else if (id == "send")
 		return handle_send_cmd(this,args,active_smp);
-	else if (id == "write_read_frm"){
+    else if (id == "http_request")
+        return handle_http_request_cmd(this,args,active_smp);
+    else if (id == "os_system")
+        return handle_os_system_cmd(this,args,active_smp);
+    else if (id == "write_read_frm"){
 		if (args.size() == 2
 				&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
 				&& args[1]->kind() == ceps::ast::Ast_node_kind::identifier){
@@ -1224,6 +1230,232 @@ static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
  		true);
  return new ceps::ast::Int(bits_read,ceps::ast::all_zero_unit());
 }
+
+
+
+
+/////////////////////////////////////// http_request
+///
+///
+///
+///
+///
+///
+///
+///
+
+
+
+
+static bool read_http_reply(int sck,std::stringstream& data){
+
+ constexpr auto buf_size = 4096;
+ char buf[buf_size];
+ auto& buffer = data;
+ std::string eom = "\r\n\r\n";
+ std::size_t eom_pos = 0;
+
+ bool req_complete = false;
+ ssize_t readbytes = 0;
+ ssize_t buf_pos = 0;
+
+ for(; (readbytes=recv(sck,buf,buf_size-1,0)) > 0;){
+  buf[readbytes] = 0;
+  for(buf_pos = 0; buf_pos < readbytes; ++buf_pos){
+   if (buf[buf_pos] == eom[eom_pos])++eom_pos;else eom_pos = 0;
+   if (eom_pos == eom.length()){
+    req_complete = true;
+    if (buf_pos+1 < readbytes) buffer << buf+buf_pos+1;
+    break;
+   }
+  }
+  buffer << buf;
+  if(req_complete) break;
+ }
+
+ return true;
+}
+
+
+static void handle_http_thread_fn(State_machine_simulation_core *sm,std::string host,std::string port,std::string msg,std::string ev_id,std::string err_ev_id){
+
+    auto fire_err_ev = [&](std::string msg){
+        State_machine_simulation_core::event_t ev;
+        ev.id_ = err_ev_id;
+        ev.payload_.push_back(new ceps::ast::String(msg));
+        sm->enqueue_event(ev);
+        sm->dec_timed_events();
+    };
+
+    addrinfo hints;
+    addrinfo *result, *rp;
+
+    memset(&hints,0,sizeof(addrinfo));
+    hints.ai_canonname =nullptr;
+    hints.ai_addr = nullptr;
+    hints.ai_next = nullptr;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_NUMERICSERV;
+
+    if (ev_id.length() == 0) ev_id = "__http_reply_success";
+    if (err_ev_id.length() == 0) err_ev_id = "__http_reply_failure";
+
+    if (getaddrinfo(host.c_str(),
+                    port.c_str(),
+                    &hints,
+                    &result) != 0)
+    {
+        fire_err_ev("getaddrinfo() failed"); return;
+    }
+
+    int cfd = -1;
+    for(rp = result; rp != nullptr; rp = rp->ai_next){
+        cfd = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
+        if(cfd==-1)
+            continue;
+        if(connect(cfd,rp->ai_addr,rp->ai_addrlen) != -1)
+            break;
+        close(cfd);
+    }
+
+    if(rp == nullptr)
+    {
+        freeaddrinfo(result);
+        fire_err_ev("connect() failed"); return;
+        return;
+    }
+    freeaddrinfo(result);
+
+    if(write(cfd,msg.c_str(),msg.length()) != msg.length()){
+        fire_err_ev("write() failed (msg)"); return;
+    }
+
+    if(write(cfd,"\r\n\r\n",4) != 4){
+        fire_err_ev("write() failed (trailing seq)"); return;
+    }
+    std::stringstream reply;
+    read_http_reply(cfd,reply);
+
+    State_machine_simulation_core::event_t ev;
+    ev.id_ = ev_id;
+    ev.payload_.push_back(new ceps::ast::String(reply.str()));
+    sm->dec_timed_events();
+    sm->enqueue_event(ev);
+}
+
+
+
+static ceps::ast::Nodebase_ptr handle_http_request_cmd(State_machine_simulation_core *sm,
+                                                       std::vector<ceps::ast::Nodebase_ptr> args,
+                                                       State_machine* active_smp){
+
+    std::string host;
+    std::string port;
+    std::string msg;
+    std::string ev_id;
+    std::string err_ev_id;
+
+    host = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
+    port = ceps::ast::value(ceps::ast::as_string_ref(args[1]));
+    msg  = ceps::ast::value(ceps::ast::as_string_ref(args[2]));
+
+    if (args.size() > 3 &&
+        args[3]->kind() == ceps::ast::Ast_node_kind::symbol &&
+        ceps::ast::kind(ceps::ast::as_symbol_ref(args[3]))=="Event" ) ev_id = ceps::ast::name(ceps::ast::as_symbol_ref(args[3]));
+    if (args.size() > 4 &&
+        args[4]->kind() == ceps::ast::Ast_node_kind::symbol &&
+        ceps::ast::kind(ceps::ast::as_symbol_ref(args[4]))=="Event" ) err_ev_id = ceps::ast::name(ceps::ast::as_symbol_ref(args[4]));
+
+    sm->inc_timed_events();
+    std::thread t{handle_http_thread_fn,sm,host,port,msg,ev_id,err_ev_id};
+    t.detach();
+
+    return new ceps::ast::Int{1,ceps::ast::all_zero_unit()};
+}
+
+
+
+
+/////////////////////////////////////// os_system
+///
+///
+///
+///
+///
+///
+///
+///
+
+
+static void handle_os_system_thread_fn(State_machine_simulation_core *sm,std::string cmd,std::string ev_id,std::string err_ev_id){
+
+
+
+    auto fire_err_ev = [&](int r){
+        if(err_ev_id.length()==0) return;
+        State_machine_simulation_core::event_t ev;
+        ev.id_ = err_ev_id;
+        ev.payload_.push_back(new ceps::ast::Int(r,ceps::ast::all_zero_unit()));
+        sm->enqueue_event(ev);
+        sm->dec_timed_events();
+    };
+
+    auto r = system(cmd.c_str());
+    if (r != 0){
+        fire_err_ev(r); return;
+    }
+    if(ev_id.length() == 0) return;
+    State_machine_simulation_core::event_t ev;
+    ev.id_ = ev_id;
+    ev.payload_.push_back(new ceps::ast::Int(r,ceps::ast::all_zero_unit()));
+    sm->dec_timed_events();
+    sm->enqueue_event(ev);
+}
+
+static ceps::ast::Nodebase_ptr handle_os_system_cmd(State_machine_simulation_core *sm,
+                                                       std::vector<ceps::ast::Nodebase_ptr> args,
+                                                       State_machine* active_smp){
+    std::string cmd,ev_id,err_ev_id;
+    cmd = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
+    if (args.size() > 1 &&
+        args[1]->kind() == ceps::ast::Ast_node_kind::symbol &&
+        ceps::ast::kind(ceps::ast::as_symbol_ref(args[1]))=="Event" ) ev_id = ceps::ast::name(ceps::ast::as_symbol_ref(args[1]));
+    if (args.size() > 2 &&
+        args[2]->kind() == ceps::ast::Ast_node_kind::symbol &&
+        ceps::ast::kind(ceps::ast::as_symbol_ref(args[2]))=="Event" ) err_ev_id = ceps::ast::name(ceps::ast::as_symbol_ref(args[2]));
+    sm->inc_timed_events();
+    std::thread t{handle_os_system_thread_fn,sm,cmd,ev_id,err_ev_id};
+    t.detach();
+    return new ceps::ast::Int{1,ceps::ast::all_zero_unit()};
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

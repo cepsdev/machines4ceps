@@ -1,0 +1,22 @@
+kind Event; 
+Event ev_jenkins_job_start_backup;
+Event ev_jenkins_job_start_droptables;
+Event ev_jenkins_job_start_backup_done;
+Event ev_jenkins_job_start_droptables_done;
+Event success;
+
+
+sm{
+ jenkins_mock;
+ states{Initial;JobBackupProgress;JobDropTablesProgress;};
+ Actions{
+  do_backup{start_timer(2.0*s,ev_jenkins_job_start_backup_done);};
+  do_droptables{start_timer(2.0*s,ev_jenkins_droptables_done);};
+  done_backup{success;};
+  done_droptables{success;};
+ };
+ t{Initial;JobBackupProgress;ev_jenkins_job_start_backup;do_backup;};
+ t{Initial;JobDropTablesProgress;ev_jenkins_job_start_droptables;do_droptables;};
+ t{JobBackupProgress;Initial;ev_jenkins_job_start_backup_done;done_backup;};
+ t{JobDropTablesProgress;Initial;ev_jenkins_job_start_droptables_done;done_droptables;};
+};

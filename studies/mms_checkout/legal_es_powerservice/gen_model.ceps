@@ -1,0 +1,33 @@
+
+static_for(uc : root.use_case){
+ sm{
+   uc.content().first();
+   states{
+    Initial;Final;Failed;
+    static_for(e : uc.steps.content()){
+     as_identifier(name(e));
+    };
+   };
+   val prev = as_identifier(name(uc.steps.content().first()));
+   t{Initial;prev;};
+   static_for(e: tail(uc.steps.content())){
+     val t = prev;
+     t{
+        prev;
+        as_identifier(name(e));
+        as_symbol(text(t)+"_success","Event");
+      };
+      t{
+        prev;
+        Failed;
+        as_symbol(text(t)+"_failure","Event");
+      };
+      ignore_value{prev=as_identifier(name(e));};
+
+     if(last) {
+       t{prev;Final;as_symbol(text(prev)+"_success","Event");};
+       t{prev;Failed;as_symbol(text(prev)+"_failure","Event");};
+     }
+   }
+ };
+}

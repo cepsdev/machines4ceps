@@ -1,0 +1,149 @@
+Event start_rollout_m001;
+Event m001S1_critical,m001S2_critical,m001S3_critical,m001S4_critical;
+Event m001S1_finished,m001S2_finished,m001S3_finished,m001S4_finished;
+Event m001S5_failed;
+
+macro rollout_cycles_fails_ultimately{
+sm{
+ val market = text(hd(arglist));
+ val delay = hd(tail(arglist));
+ as_identifier("trigger_"+market);
+ hidden;
+ states{Initial;Final;A;B;C;D;E;F;G;H;I;J;};
+ Actions{
+     do_a{         
+         start_timer(delay,as_symbol("start_rollout_"+market,"Event"));
+     };
+     do_b{         
+         start_timer(delay,as_symbol(market+"S1_critical","Event") );
+     };
+     do_c{         
+         start_timer(delay,as_symbol(market+"S1_finished","Event") );
+     };
+     do_d{         
+         start_timer(delay,as_symbol(market+"S2_critical","Event") );
+     };
+     do_e{         
+         start_timer(delay,as_symbol(market+"S2_finished","Event") );
+     };
+     do_f{         
+         start_timer(delay,as_symbol(market+"S3_critical","Event") );
+     };
+     do_g{         
+         start_timer(delay,as_symbol(market+"S3_finished","Event") );
+     };
+     do_h{         
+         start_timer(delay,as_symbol(market+"S4_critical","Event") );
+     };
+     do_i{         
+         start_timer(delay,as_symbol(market+"S4_finished","Event") );
+     };
+     do_j{         
+         start_timer(delay,as_symbol(market+"S5_failed","Event") );
+     };    
+ };
+ t{Initial;A;do_a;};
+ t{A;B;as_symbol("start_rollout_"+market,"Event");do_b;};
+ t{B;C;as_symbol(market+"S1_critical","Event");do_c;};
+ t{C;D;as_symbol(market+"S1_finished","Event");do_d;};
+ t{D;E;as_symbol(market+"S2_critical","Event");do_e;};
+ t{E;F;as_symbol(market+"S2_finished","Event");do_f;};
+ t{F;G;as_symbol(market+"S3_critical","Event");do_g;};
+ t{G;H;as_symbol(market+"S3_finished","Event");do_h;};
+ t{H;I;as_symbol(market+"S4_critical","Event");do_i;};
+ t{I;Final;as_symbol(market+"S4_finished","Event");do_j;}; 
+}; };
+
+
+macro perfect_rollout{
+sm{
+ val market = text(hd(arglist));
+ val delay = hd(tail(arglist));
+ as_identifier("trigger_"+market);
+ hidden;
+
+ states{Initial;Final;A;B;C;D;E;F;G;H;I;J;};
+ Actions{
+     do_a{         
+         start_timer(delay,as_symbol("start_rollout_"+market,"Event"));
+     };
+     do_c{         
+         start_timer(delay,as_symbol(market+"S1_finished","Event") );
+     };
+     do_e{         
+         start_timer(delay,as_symbol(market+"S2_finished","Event") );
+     };
+     do_g{         
+         start_timer(delay,as_symbol(market+"S3_finished","Event") );
+     };
+     do_i{         
+         start_timer(delay,as_symbol(market+"S4_finished","Event") );
+     };
+     do_j{         
+         start_timer(delay,as_symbol(market+"S5_finished","Event") );
+     };
+     do_l{         
+         start_timer(delay,as_symbol(market+"S6_finished","Event") );
+     };
+     
+ };
+ t{Initial;A;do_a;};
+ t{A;B;as_symbol("start_rollout_"+market,"Event");do_c;};
+ t{B;C;as_symbol(market+"S1_finished","Event");do_e;};
+ t{C;D;as_symbol(market+"S2_finished","Event");do_g;};
+ t{D;E;as_symbol(market+"S3_finished","Event");do_i;};
+ t{E;F;as_symbol(market+"S4_finished","Event");do_j;};
+ t{F;Final;as_symbol(market+"S5_finished","Event");do_l;}; 
+}; };
+
+val counter = 0;
+
+hh{
+    root.markets;
+};
+static_for(e:root.rollout){
+ static_for(market:e.markets.content()){
+     if( mod(counter, 2) == 0)
+      perfect_rollout{market.content().first();__uniform_dist(1,10)*s;};
+     else
+      rollout_cycles_fails_ultimately{market.content().first();__uniform_dist(1,10)*s;};
+     counter = counter + 1;
+ }
+}
+
+
+/*rollout_cycles_fails_ultimately{m001;2.0*s;};
+rollout_cycles_fails_ultimately{m002;1.0*s;};
+rollout_cycles_fails_ultimately{m003;0.5*s;};
+rollout_cycles_fails_ultimately{m004;2.0*s;};
+rollout_cycles_fails_ultimately{m005;1.0*s;};
+rollout_cycles_fails_ultimately{m006;0.5*s;};
+
+rollout_cycles_fails_ultimately{m007;3.0*s;};
+rollout_cycles_fails_ultimately{m008;4.0*s;};
+rollout_cycles_fails_ultimately{m009;1.5*s;};
+rollout_cycles_fails_ultimately{m010;3.0*s;};
+rollout_cycles_fails_ultimately{m011;2.0*s;};
+rollout_cycles_fails_ultimately{m012;1.5*s;};
+
+perfect_rollout{m013;2.0*s;};
+perfect_rollout{m014;2.0*s;};
+perfect_rollout{m015;2.0*s;};
+perfect_rollout{m016;2.0*s;};
+perfect_rollout{m017;2.0*s;};*/
+
+Simulation{
+Start{
+ static_for(e:root.rollout){
+  static_for(market:e.markets.content()){
+   market.content();   
+  }
+ }
+ static_for(e:root.rollout){
+ static_for(market:e.markets.content()){
+     as_identifier("trigger_"+text(market.content().first()));
+ }
+}
+
+};
+};

@@ -1,0 +1,9 @@
+name my_rollout
+
+This Rollout shows the very fundamental building blocks of a market rollout
+
+step Make a Backup
+step import Data
+step Fetch Artifacts
+step Deploy Software
+

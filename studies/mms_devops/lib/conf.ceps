@@ -1,0 +1,2 @@
+val SCRIPT_TO_CHECK_JOB_FOR_TERMINATION = "./check_job_for_termination.sh";
+val SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT = "./fetch_job_computation_result.sh";

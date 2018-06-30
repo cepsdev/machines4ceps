@@ -28,8 +28,8 @@ $(TARGET)/$(SM4CEPSLIB): $(objfiles)
 	rm -f $(TARGET)/$(SM4CEPSLIB);\
 	$(AR) rcs $(TARGET)/$(SM4CEPSLIB) $(objfiles)
 
-$(TARGET)/ceps: $(objfiles)
-	$(CXX)   $(cflags) $(includes) \
+$(TARGET)/ceps: $(objfiles) $(cepslibs)/ceps_interpreter.o
+	$(CXX)   $(cflags) $(includes) -L"../cryptopp" \
 	$(cepslibs)/ceps_ast.o \
 	$(cepslibs)/ceps.tab.o \
 	$(cepslibs)/ceps_interpreter.o \

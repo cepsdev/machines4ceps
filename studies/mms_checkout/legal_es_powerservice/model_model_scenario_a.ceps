@@ -1,0 +1,6 @@
+Simulation{
+ Start{es_powerservice_400;cashregister;};
+ ev_add_article_to_current_basket(make_struct("article",make_struct("prod_number",1)));
+ ev_add_article_to_current_basket(make_struct("article",make_struct("prod_number",2)));
+ ev_add_article_to_current_basket(make_struct("article",make_struct("prod_number",3)));
+};
