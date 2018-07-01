@@ -1,0 +1,201 @@
+#widget_properties_panel {
+    position: absolute;
+    left: 30px;
+    top: 190px;
+    width: 280px;
+    resize: both;
+    overflow: auto;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+    z-index: 1000;
+}
+
+#widget_properties_panel .panel-heading {
+    cursor: pointer;
+}
+
+.baseWidget {
+    border: 1px solid;
+    height: 60px;
+    width: 160px;
+    resize: both;
+    
+    float: left;
+    margin: 4px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+    cursor: pointer;
+    transition: opacity 0.3s, transform 0.3s;
+    overflow: hidden;
+}
+
+.baseWidget-remove {
+    transition-timing-function: ease;
+    opacity: 0.0;
+    transform: scale(0.05,0.05);
+}
+
+.baseWidget .header {
+    background-color: gray;
+    color: white;
+    padding: 8px;
+    border-top: 4px;
+    height: 18px;
+    border-color: inherit;
+    cursor: pointer;
+    font-size: 10.75px;
+    line-height: 1px;
+}
+
+.baseWidget-footer {
+   
+    bottom:0;
+}
+
+.baseWidget:hover {
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 20, 0.2), 0 3px 10px 0 rgba(0, 0, 20, 0.19);
+    border-color: lightslategrey;
+}
+
+.baseWidget:hover .header {
+    background-color: gray;
+}
+
+.ceps-ui-minimized:hover{
+    border-color: ltslategrey;
+
+}
+
+.baseWidget-selected {
+    font-weight: bold;
+}
+
+.baseWidget-selected .header {
+    background-color: lightsteelblue;
+}
+
+.baseWidget-selected:hover .header {
+    background-color: lightsteelblue;
+}
+
+.baseWidget-content {
+    margin: 2px;
+    padding: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.baseWidget-edit {
+    margin: 2px;
+    padding: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.toggle-signal {
+    width: 200px;
+    height: 80px;
+}
+
+.widget-plot-overview-container {
+    height: 60px;
+    width: auto;
+    position:relative;
+}
+
+.widget-plot-overview-container:hover{
+    
+}
+
+.plot-canvas-overview-slider {
+    opacity: 0.7;
+    position: absolute;
+    background-color: gray;
+    border: 2px;
+    border-style: inset;
+    border-radius: 0.5em;
+    color: #ffffff;
+    padding: 10px 20px;
+    ---background: -moz-linear-gradient( top, #ffcb69 0%, #f0a733 50%, #f2a324 92%, #ffb730);
+    ---background: -webkit-gradient( linear, left top, left bottom, from(#ffcb69), color-stop(0.50, #f0a733), color-stop(0.92, #f2a324), to(#ffb730));
+    ^--background: linear-gradient(to top left, #006699 12%, #33ccff 94%);
+    ---background: linear-gradient(to top left, #ff9933 12%, #800000 94%);
+    background: linear-gradient(to top left, #003366 24%, #006699 75%);
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    border: 1px solid #006699;
+    -moz-box-shadow: 0px 1px 1px rgba(000,000,000,0.5), inset 1px 2px 0px rgba(255,255,255,0.4);
+    -webkit-box-shadow: 0px 1px 1px rgba(000,000,000,0.5), inset 1px 2px 0px rgba(255,255,255,0.4);
+    box-shadow: 0px 1px 1px rgba(000,000,000,0.5), inset 1px 2px 0px rgba(255,255,255,0.4);
+    text-shadow: 1px 1px 2px rgba(000,000,000,0.7), 0px 1px 0px rgba(255,255,255,0.4);
+}
+
+.plot-canvas-overview-slider:hover {
+    opacity: 0.3;
+    position: absolute;
+    cursor: all-scroll;
+}
+
+.widget-plot-overview-canvas {
+    padding: 0px;
+    margin : 0px;
+}
+
+.cepscloud-ui-menu-btn{
+    opacity:0.4;
+}
+
+.cepscloud-ui-menu-btn:hover{
+    opacity:1.0;
+}
+
+.prop-panel {
+    ---transition: opacity 0.4s, transform 0.5s;
+    ---opacity: 1.0;
+}
+
+.prop-panel:hover {
+}
+
+.prop-panel-transition-1 {
+    ---transition-timing-function: ease;
+    ---opacity: 0.0;
+    ----transform: rotate3d(1, 2, -1, 1180deg);
+    ----transform: scale(4,4);
+    
+}
+
+.prop-panel-transition-2 {
+    --- transition-timing-function: ease;
+    ---- opacity: 1.0;
+    ---- transform: unset;
+}
+
+.calColor2 {
+    border: 2px solid #0064CD;
+    background-color: #4da3ff;
+}
+
+.ggbaseWidget {
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+}
+
+.loader {
+    border: 12px solid #f3f3f3; /* Light grey */
+    border-top: 12px solid rgb(43, 38, 38); 
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
