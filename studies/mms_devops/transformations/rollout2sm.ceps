@@ -4,10 +4,11 @@ Event start_rollout;
 
 
 static_for(e:root.rollout){
- static_for(market:e.markets.content()){
+ static_for(market:e.markets.market){
   sm{
-   val market_name = text(market.content()); 
-   market.content();
+   val market_name = text(market.content().id.content()); 
+   as_identifier(market_name);
+
    states { Initial;
             Done;
             Final;

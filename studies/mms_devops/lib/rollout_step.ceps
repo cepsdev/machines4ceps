@@ -4,26 +4,35 @@ kind Systemstate;
 
 Event big_step,small_step,step_failure,trigger_status_check,job_not_done_yet,job_finished,result_ok,result_nok;
 
+val param_name = "sapcode";  
 
 global_functions{ 
  check_interval{
      params{job;};
-     if (job == "check_ro_tmdbatch_elements" )
-         return 1.0*s;
+     /*if (job == "check_ro_tmdbatch_elements" )
+         return 1.0*s;*/
      return 10.0*s;
  };
 
  check_script_for_job_termination{
      params{job;parameters;};
-     val t =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION + " " + job + " "+ parameters;
+     val t =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION +" -t \"" + START_TIMESTAMP + "\" -j " + job + " -s "+ parameters;
+     //print(t,"\n");
      return t;
  };
 
  script_for_job_result{
      params{job;parameters;};
-     val t =  SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT + " " + job + " "+ parameters;
+     val t =  SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT +" -c -t \"" + START_TIMESTAMP + "\" -j " + job + " -s "+ parameters;
+     //print(t,"\n");
      return t;
  };
+
+ script_for_job_execution{
+     params{job;parameters;};
+     val t =  SCRIPT_TO_START_A_JOB + " " + job + " "+ parameters;
+     return t;
+ }; 
 };
 
 macro sub_step{    
@@ -43,6 +52,7 @@ macro sub_step{
                     WaitALittle;};
             Actions{
                 start_job{
+                    os_system(script_for_job_execution(job_name,param_name+" "+job_parameter));
                     start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
                 };
                 start_timer_for_job_check{

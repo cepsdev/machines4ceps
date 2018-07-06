@@ -6,18 +6,24 @@ Event start_rollout;
 static_for(e:root.rollout){
  static_for(market:e.markets.content()){
   sm{
-   val market_name = text(market.content()); 
+
+   val market_name = text(strip(market.content().id.content()));
+   val market_code = text(strip(market.content().code.content())); 
    as_identifier(market_name+"_worker");
    hidden;
+   
+
+
    states { Initial;
             Final;          
           };
-   static_for(step: e.steps.content().is_id() ) {
+   static_for(step: e.steps.content().step_details) {
     sm{
-        step;
+        as_identifier(strip(step.content().id.content()));
+
         states{Initial;Final;};
-        sub_step{Check;"";"_"+market_name;"check_ro_tmdbatch_elements";market_name;};
-        sub_step{Run;"";"_"+market_name;"run_ro_tmdbatch_elements";market_name;};
+        sub_step{Check;"";"_"+market_name;text(strip(step.content().job_check.content()));market_code;};
+        sub_step{Run;"";"_"+market_name;text(strip(step.content().job_run.content()));market_code;};
         Actions{
             do_big_step{
                 as_symbol("big_step_"+market_name,"Event");

@@ -176,6 +176,10 @@ void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,st
 	 o << " }\n";
 }
 
+static std::string dot_escape(std::string str){
+    return replace_all(replace_all(str," ","____"),":","___");
+}
+
 void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,State_machine*> const & sms,
                                                          std::set<State_machine*>* expand,
                                                          std::set<int>& highlighted_states,
@@ -208,7 +212,7 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
         dotgen.sm2dotname[sm] = "cluster"+std::to_string(cluster_counter++);
         for(auto const& s:sm->states()) if (!s->is_sm_){
 
-            dotgen.n2dotname[name+"."+s->id()] = "node"+std::to_string(pure_state_counter++)+"_is_"+s->id();
+            dotgen.n2dotname[name+"."+s->id()] = "node"+std::to_string(pure_state_counter++)+"_is_"+dot_escape(s->id());
             dotgen.n2idx[name+"."+s->id()]  = s->idx_;
             if (s->id() == "Initial" || s->id() == "initial") dotgen.sm2initial[sm] = dotgen.n2dotname[name+"."+s->id()];
         }
@@ -384,7 +388,7 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 	}//for
 
     if (!result_cmd_line.dot_gen_one_file_per_top_level_statemachine){
-	 std::ofstream o{"out.dot"};
+     std::ofstream o{result_cmd_line.no_file_output?"/dev/null" :"out.dot"};
      write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
      do_generate_dot_code(State_machine::statemachines,nullptr,highlight_states,dotgen,o);
 	} else {
@@ -394,7 +398,7 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 		for(auto s : statemachines() ){
             if(s.second->hidden()) continue;
 
-         std::string base_file_name = replace_all(s.first,".","__");
+         std::string base_file_name = replace_all(replace_all(s.first,".","__")," ","____");
 
          auto info = new ceps::ast::Struct{"sm"};
          auto info_name = new ceps::ast::Struct{"name"};
@@ -406,7 +410,7 @@ void State_machine_simulation_core::do_generate_dot_code(ceps::Ceps_Environment&
 
          meta_info->children().push_back(info);
 		 std::map<std::string,State_machine*> m = { {s.first, s.second} };
-         std::ofstream o{ base_file_name+".dot"};
+         std::ofstream o{result_cmd_line.no_file_output?"/dev/null" : (base_file_name+".dot")};
 	     write_copyright_and_timestamp(o, "out.dot",true,result_cmd_line);
 	     do_generate_dot_code(m,nullptr,highlight_states,dotgen,o,true);
 		}

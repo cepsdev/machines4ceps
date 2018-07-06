@@ -1,1 +1,0 @@
-../scribbles/fetch_job_computation_result.sh

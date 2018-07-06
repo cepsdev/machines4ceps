@@ -1,0 +1,506 @@
+rollout_step_type_db{
+ id{0;};
+ description{"step 0";};
+ job_check{"job_check_0";};
+ job_run{"job_run_0";};
+};
+rollout_step_type_db{
+ id{1;};
+ description{"step 1";};
+ job_check{"job_check_1";};
+ job_run{"job_run_1";};
+};
+rollout_step_type_db{
+ id{2;};
+ description{"step 2";};
+ job_check{"job_check_2";};
+ job_run{"job_run_2";};
+};
+rollout_step_type_db{
+ id{3;};
+ description{"step 3";};
+ job_check{"job_check_3";};
+ job_run{"job_run_3";};
+};
+rollout_step_type_db{
+ id{4;};
+ description{"step 4";};
+ job_check{"job_check_4";};
+ job_run{"job_run_4";};
+};
+rollout_step_type_db{
+ id{5;};
+ description{"step 5";};
+ job_check{"job_check_5";};
+ job_run{"job_run_5";};
+};
+rollout_step_type_db{
+ id{6;};
+ description{"step 6";};
+ job_check{"job_check_6";};
+ job_run{"job_run_6";};
+};
+rollout_step_type_db{
+ id{7;};
+ description{"step 7";};
+ job_check{"job_check_7";};
+ job_run{"job_run_7";};
+};
+rollout_step_type_db{
+ id{8;};
+ description{"step 8";};
+ job_check{"job_check_8";};
+ job_run{"job_run_8";};
+};
+rollout_step_type_db{
+ id{9;};
+ description{"step 9";};
+ job_check{"job_check_9";};
+ job_run{"job_run_9";};
+};
+rollout_step_type_db{
+ id{10;};
+ description{"step 10";};
+ job_check{"job_check_10";};
+ job_run{"job_run_10";};
+};
+rollout_db{
+ id{101;};
+ name{"rollout-1";};
+ when{"2018-07-06 19:50:12";};
+};
+rollout_db{
+ id{102;};
+ name{"rollout-2";};
+ when{"2018-07-06 20:50:12";};
+};
+rollout_db{
+ id{104;};
+ name{"rollout-4";};
+ when{"2018-07-06 22:50:12";};
+};
+rollout_db{
+ id{105;};
+ name{"rollout-5";};
+ when{"2018-07-06 23:50:12";};
+};
+rollout_store_db{
+ id{10;};
+ rollout{101;};
+ name{"market A";};
+ sap_code{"000";};
+};
+rollout_store_db{
+ id{11;};
+ rollout{101;};
+ name{"market B";};
+ sap_code{"001";};
+};
+rollout_store_db{
+ id{12;};
+ rollout{101;};
+ name{"market C";};
+ sap_code{"002";};
+};
+rollout_store_db{
+ id{13;};
+ rollout{101;};
+ name{"market D";};
+ sap_code{"003";};
+};
+rollout_store_db{
+ id{14;};
+ rollout{101;};
+ name{"market E";};
+ sap_code{"004";};
+};
+rollout_store_db{
+ id{15;};
+ rollout{101;};
+ name{"market F";};
+ sap_code{"005";};
+};
+rollout_store_db{
+ id{16;};
+ rollout{101;};
+ name{"market G";};
+ sap_code{"006";};
+};
+rollout_store_db{
+ id{17;};
+ rollout{101;};
+ name{"market H";};
+ sap_code{"007";};
+};
+rollout_store_db{
+ id{18;};
+ rollout{101;};
+ name{"market I";};
+ sap_code{"008";};
+};
+rollout_store_db{
+ id{19;};
+ rollout{101;};
+ name{"market J";};
+ sap_code{"009";};
+};
+rollout_store_db{
+ id{20;};
+ rollout{101;};
+ name{"market K";};
+ sap_code{"010";};
+};
+rollout_store_db{
+ id{21;};
+ rollout{101;};
+ name{"market L";};
+ sap_code{"011";};
+};
+rollout_store_db{
+ id{22;};
+ rollout{101;};
+ name{"market M";};
+ sap_code{"012";};
+};
+rollout_store_db{
+ id{23;};
+ rollout{101;};
+ name{"market N";};
+ sap_code{"013";};
+};
+rollout_store_db{
+ id{24;};
+ rollout{101;};
+ name{"market O";};
+ sap_code{"014";};
+};
+rollout_store_db{
+ id{25;};
+ rollout{101;};
+ name{"market P";};
+ sap_code{"015";};
+};
+rollout_store_db{
+ id{26;};
+ rollout{101;};
+ name{"market Q";};
+ sap_code{"016";};
+};
+rollout_store_db{
+ id{27;};
+ rollout{101;};
+ name{"market R";};
+ sap_code{"017";};
+};
+rollout_store_db{
+ id{28;};
+ rollout{101;};
+ name{"market S";};
+ sap_code{"018";};
+};
+rollout_store_db{
+ id{29;};
+ rollout{101;};
+ name{"market T";};
+ sap_code{"019";};
+};
+rollout_store_db{
+ id{30;};
+ rollout{101;};
+ name{"market U";};
+ sap_code{"020";};
+};
+rollout_store_db{
+ id{31;};
+ rollout{101;};
+ name{"market V";};
+ sap_code{"021";};
+};
+rollout_store_db{
+ id{32;};
+ rollout{101;};
+ name{"market W";};
+ sap_code{"022";};
+};
+rollout_store_db{
+ id{33;};
+ rollout{101;};
+ name{"market X";};
+ sap_code{"023";};
+};
+rollout_store_db{
+ id{22;};
+ rollout{102;};
+ name{"market M";};
+ sap_code{"012";};
+};
+rollout_store_db{
+ id{24;};
+ rollout{102;};
+ name{"market O";};
+ sap_code{"014";};
+};
+rollout_store_db{
+ id{25;};
+ rollout{102;};
+ name{"market P";};
+ sap_code{"015";};
+};
+rollout_store_db{
+ id{26;};
+ rollout{102;};
+ name{"market Q";};
+ sap_code{"016";};
+};
+rollout_store_db{
+ id{27;};
+ rollout{102;};
+ name{"market R";};
+ sap_code{"017";};
+};
+rollout_store_db{
+ id{28;};
+ rollout{102;};
+ name{"market S";};
+ sap_code{"018";};
+};
+rollout_store_db{
+ id{29;};
+ rollout{102;};
+ name{"market T";};
+ sap_code{"019";};
+};
+rollout_store_db{
+ id{30;};
+ rollout{102;};
+ name{"market U";};
+ sap_code{"020";};
+};
+rollout_store_db{
+ id{31;};
+ rollout{102;};
+ name{"market V";};
+ sap_code{"021";};
+};
+rollout_store_db{
+ id{32;};
+ rollout{102;};
+ name{"market W";};
+ sap_code{"022";};
+};
+rollout_store_db{
+ id{33;};
+ rollout{102;};
+ name{"market X";};
+ sap_code{"023";};
+};
+rollout_store_db{
+ id{12;};
+ rollout{104;};
+ name{"market C";};
+ sap_code{"002";};
+};
+rollout_store_db{
+ id{13;};
+ rollout{104;};
+ name{"market D";};
+ sap_code{"003";};
+};
+rollout_store_db{
+ id{14;};
+ rollout{104;};
+ name{"market E";};
+ sap_code{"004";};
+};
+rollout_store_db{
+ id{15;};
+ rollout{104;};
+ name{"market F";};
+ sap_code{"005";};
+};
+rollout_store_db{
+ id{16;};
+ rollout{104;};
+ name{"market G";};
+ sap_code{"006";};
+};
+rollout_store_db{
+ id{17;};
+ rollout{104;};
+ name{"market H";};
+ sap_code{"007";};
+};
+rollout_store_db{
+ id{18;};
+ rollout{104;};
+ name{"market I";};
+ sap_code{"008";};
+};
+rollout_store_db{
+ id{26;};
+ rollout{105;};
+ name{"market Q";};
+ sap_code{"016";};
+};
+rollout_store_db{
+ id{27;};
+ rollout{105;};
+ name{"market R";};
+ sap_code{"017";};
+};
+rollout_store_db{
+ id{28;};
+ rollout{105;};
+ name{"market S";};
+ sap_code{"018";};
+};
+rollout_store_db{
+ id{29;};
+ rollout{105;};
+ name{"market T";};
+ sap_code{"019";};
+};
+rollout_store_db{
+ id{30;};
+ rollout{105;};
+ name{"market U";};
+ sap_code{"020";};
+};
+rollout_step_db{
+ id{1101;};
+ step_type{0;};
+ rollout{101;};
+ sequence{10;};
+};
+rollout_step_db{
+ id{2101;};
+ step_type{1;};
+ rollout{101;};
+ sequence{9;};
+};
+rollout_step_db{
+ id{3101;};
+ step_type{2;};
+ rollout{101;};
+ sequence{8;};
+};
+rollout_step_db{
+ id{4101;};
+ step_type{3;};
+ rollout{101;};
+ sequence{7;};
+};
+rollout_step_db{
+ id{5101;};
+ step_type{4;};
+ rollout{101;};
+ sequence{6;};
+};
+rollout_step_db{
+ id{6101;};
+ step_type{5;};
+ rollout{101;};
+ sequence{5;};
+};
+rollout_step_db{
+ id{7101;};
+ step_type{6;};
+ rollout{101;};
+ sequence{4;};
+};
+rollout_step_db{
+ id{8101;};
+ step_type{7;};
+ rollout{101;};
+ sequence{3;};
+};
+rollout_step_db{
+ id{9101;};
+ step_type{8;};
+ rollout{101;};
+ sequence{2;};
+};
+rollout_step_db{
+ id{10101;};
+ step_type{9;};
+ rollout{101;};
+ sequence{1;};
+};
+rollout_step_db{
+ id{11101;};
+ step_type{10;};
+ rollout{101;};
+ sequence{0;};
+};
+rollout_step_db{
+ id{1104;};
+ step_type{0;};
+ rollout{104;};
+ sequence{0;};
+};
+rollout_step_db{
+ id{2104;};
+ step_type{10;};
+ rollout{104;};
+ sequence{1;};
+};
+rollout_step_db{
+ id{3104;};
+ step_type{1;};
+ rollout{104;};
+ sequence{2;};
+};
+rollout_step_db{
+ id{4104;};
+ step_type{9;};
+ rollout{104;};
+ sequence{3;};
+};
+rollout_step_db{
+ id{5104;};
+ step_type{2;};
+ rollout{104;};
+ sequence{4;};
+};
+rollout_step_db{
+ id{6104;};
+ step_type{8;};
+ rollout{104;};
+ sequence{5;};
+};
+rollout_step_db{
+ id{7104;};
+ step_type{3;};
+ rollout{104;};
+ sequence{6;};
+};
+rollout_step_db{
+ id{8104;};
+ step_type{7;};
+ rollout{104;};
+ sequence{7;};
+};
+rollout_step_db{
+ id{9104;};
+ step_type{4;};
+ rollout{104;};
+ sequence{8;};
+};
+rollout_step_db{
+ id{10104;};
+ step_type{5;};
+ rollout{104;};
+ sequence{9;};
+};
+rollout_step_db{
+ id{11104;};
+ step_type{6;};
+ rollout{104;};
+ sequence{10;};
+};
+rollout_step_db{
+ id{1105;};
+ step_type{6;};
+ rollout{105;};
+ sequence{0;};
+};

@@ -456,6 +456,15 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
               r += " \"number_toplevel_nodes\":2,";
               r += " \"sresult\":{\"current_states\": ["+s.str()+"], \"coverage\": "+s_cov_report.str()+" }";
               r += "}";
+          } else if (query == "root.__proc.coverage"){
+              std::stringstream s;
+              std::stringstream s_cov_report;
+              auto report = ctxt->make_report();
+              ceps2json(s_cov_report,report);
+              r = "{ \"ok\": true,";
+              r += " \"number_toplevel_nodes\":1,";
+              r += " \"sresult\":{\"coverage\": "+s_cov_report.str()+" }";
+              r += "}";
           } else {
                std::stringstream s;
                s << query;

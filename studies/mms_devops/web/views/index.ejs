@@ -160,6 +160,8 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Rollouts</sup></a>
+        <h3 style="color:white;vertical-align:center;text-align:center;"><%=rollout.name%></h3>
+
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                 <!---li class="nav-item"><button id="btn_start" class="btn btn-outline-success">Start</button></li>
@@ -398,6 +400,10 @@
             }
             return f(doc);
         }
+        
+        function normalize_id(s){
+            return s.replace(" ","__").replace(":","___");
+        }
 
     </script>
 
@@ -512,16 +518,16 @@
             btn.addClass("cepscloud-ui-btn-expand");
             let sm = get_svg_infos(sm_name);
 
-            $(`#sm_viz_${sm_name}`).css("height",`${layout_info.sm_widget_tile.outter_height}px`);
-            $(`#sm_viz_${sm_name}`).css("width",`${layout_info.sm_widget_tile.outter_width}px`);
-            $(`#sm_viz_container_${sm_name}`).css("height",`${layout_info.sm_widget_tile.height}px`);
-            $(`#sm_viz_container_${sm_name}`).css("width",`${layout_info.sm_widget_tile.width}px`);
-            $(`#sm_viz_container_parent_div_${sm_name}`).css("height",`${layout_info.sm_widget_tile.height}px`);
-            $(`#sm_viz_container_parent_div_${sm_name}`).css("width",`${layout_info.sm_widget_tile.width}px`);
-            d3_util_scale(d3.select(`#sm_viz_${sm_name}`).select("svg").select("g"),sm.tile_scale,sm.tile_scale);
-            $(`#sm_viz_${sm_name}`).addClass("ceps-ui-tile");
-            $(`#btn_glyph_${sm_name}_view_size`).removeClass("glyphicon-minus");
-            $(`#btn_glyph_${sm_name}_view_size`).addClass("glyphicon-fullscreen");
+            $(`#sm_viz_${normalize_id(sm_name)}`).css("height",`${layout_info.sm_widget_tile.outter_height}px`);
+            $(`#sm_viz_${normalize_id(sm_name)}`).css("width",`${layout_info.sm_widget_tile.outter_width}px`);
+            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("height",`${layout_info.sm_widget_tile.height}px`);
+            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("width",`${layout_info.sm_widget_tile.width}px`);
+            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("height",`${layout_info.sm_widget_tile.height}px`);
+            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("width",`${layout_info.sm_widget_tile.width}px`);
+            d3_util_scale(d3.select(`#sm_viz_${normalize_id(sm_name)}`).select("svg").select("g"),sm.tile_scale,sm.tile_scale);
+            $(`#sm_viz_${normalize_id(sm_name)}`).addClass("ceps-ui-tile");
+            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).removeClass("glyphicon-minus");
+            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).addClass("glyphicon-fullscreen");
         }
 
         function gui_action_expand_sm_view(sm_name,btn){
@@ -529,21 +535,21 @@
             btn.removeClass("cepscloud-ui-btn-expand");
             btn.addClass("cepscloud-ui-btn-tile");
             let sm = get_svg_infos(sm_name);
-            $(`#sm_viz_${sm_name}`).css("height",`${sm.svg_orig_height+40}px`);
-            $(`#sm_viz_${sm_name}`).css("width",`${sm.svg_orig_width+10}px`);
-            $(`#sm_viz_container_${sm_name}`).css("height",`${sm.svg_orig_height}px`);
-            $(`#sm_viz_container_${sm_name}`).css("width",`${sm.svg_orig_width}px`);
-            $(`#sm_viz_container_parent_div_${sm_name}`).css("height",`${sm.svg_orig_height}px`);
-            $(`#sm_viz_container_parent_div_${sm_name}`).css("width",`${sm.svg_orig_width}px`);
-            d3_util_scale(d3.select(`#sm_viz_${sm_name}`).select("svg").select("g"),1,1);
-            $(`#sm_viz_${sm_name}`).removeClass("ceps-ui-tile");
-            $(`#btn_glyph_${sm_name}_view_size`).removeClass("glyphicon-fullscreen");
-            $(`#btn_glyph_${sm_name}_view_size`).addClass("glyphicon-minus");
+            $(`#sm_viz_${normalize_id(sm_name)}`).css("height",`${sm.svg_orig_height+40}px`);
+            $(`#sm_viz_${normalize_id(sm_name)}`).css("width",`${sm.svg_orig_width+10}px`);
+            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("height",`${sm.svg_orig_height}px`);
+            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("width",`${sm.svg_orig_width}px`);
+            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("height",`${sm.svg_orig_height}px`);
+            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("width",`${sm.svg_orig_width}px`);
+            d3_util_scale(d3.select(`#sm_viz_${normalize_id(sm_name)}`).select("svg").select("g"),1,1);
+            $(`#sm_viz_${normalize_id(sm_name)}`).removeClass("ceps-ui-tile");
+            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).removeClass("glyphicon-fullscreen");
+            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).addClass("glyphicon-minus");
         }
 
         function gui_action_toggle_sm_view(sm_name){
             if (DEBUG_GUI_EVENTS) console.log("function gui_action_toggle_sm_view(sm_name)");
-            let btn = $(`#btn_${sm_name}_view_size`);
+            let btn = $(`#btn_${normalize_id(sm_name)}_view_size`);
             if (btn.hasClass("cepscloud-ui-btn-expand"))
              gui_action_expand_sm_view(sm_name,btn);
             else
@@ -551,7 +557,7 @@
         }
 
         function gui_action_move_one_down_sm_view(sm_name){
-            let e = $(`#sm_viz_${sm_name}`);
+            let e = $(`#sm_viz_${normalize_id(sm_name)}`);
             let p = e.parent();//.css("background-color","red");
             let n = e.next();
             //if(n.empty()) return;
@@ -562,7 +568,7 @@
 
         function change_lane_of_sm_view(sm_name,current_lane,new_lane){
             states_info.lane[sm_name] = new_lane;
-            let e = $(`#sm_viz_${sm_name}`);
+            let e = $(`#sm_viz_${normalize_id(sm_name)}`);
             e.remove();
             $(new_lane).append(e);
         }
@@ -573,14 +579,14 @@
             $(".ceps-ui-tile").each( function(idx){
                 mark_active_nodes(states_info.active_states);
                 let sm_name = $(this).attr("sm-name");
-                let sm_viz = $(`#sm_viz_${sm_name}`);                
+                let sm_viz = $(`#sm_viz_${normalize_id(sm_name)}`);                
                 let coverage = states_info.coverage[sm_name];
                 if (coverage == undefined){
 
                 } else {
                     let percentage = Math.round(100.0 * coverage);
-                    $(`#sm_viz_progress_${sm_name}`).css("width",`${percentage}%`);
-                    $(`#sm_viz_progress_${sm_name}_info_text`).html(`${percentage}%`);
+                    $(`#sm_viz_progress_${normalize_id(sm_name)}`).css("width",`${percentage}%`);
+                    $(`#sm_viz_progress_${normalize_id(sm_name)}_info_text`).html(`${percentage}%`);
                 }
 
                 if ($(sm_viz).hasClass("details-active")){
@@ -596,8 +602,8 @@
                           }
                     }
                     
-                    if (!$(`#info_${sm_name}`).hasClass("sm-details-info")) $(`#info_${sm_name}`).addClass("sm-details-info");
-                    $(`#info_${sm_name}`).html(s);
+                    if (!$(`#info_${normalize_id(sm_name)}`).hasClass("sm-details-info")) $(`#info_${normalize_id(sm_name)}`).addClass("sm-details-info");
+                    $(`#info_${normalize_id(sm_name)}`).html(s);
                 }
              }
             );
@@ -610,7 +616,7 @@
         function html_gen_sm_widget(title,content,as_tile,minimized) {
             if (as_tile){
                return `    
-               <div class="panel panel-primary sm_viz ceps-ui-tile" id="sm_viz_${title}" 
+               <div class="panel panel-primary sm_viz ceps-ui-tile" id="sm_viz_${normalize_id(title)}" 
                     style="margin:2px;width:${layout_info.sm_widget_tile.outter_width}px;height:${layout_info.sm_widget_tile.outter_height}px;float:left;">
                     
                     <div class="panel-heading" style="height:24px;padding:0px;padding-left:5px;" >
@@ -619,33 +625,33 @@
                             class="btn btn-default btn-xs pull-right cepscloud-ui-menu-btn cepscloud-ui-btn-expand" 
                             style= "padding-top:2px;border-width:0px;outline:none;background-color:transparent;"
                             onclick="gui_action_toggle_sm_view('${title}');"
-                            id="btn_${title}_view_size"
+                            id="btn_${normalize_id(title)}_view_size"
                             >
-                        <span id="btn_glyph_${title}_view_size" class="glyphicon glyphicon-fullscreen"></span>
+                        <span id="btn_glyph_${normalize_id(title)}_view_size" class="glyphicon glyphicon-fullscreen"></span>
                     </button>
                     <button type="button" 
                             class="btn btn-default btn-xs pull-right cepscloud-ui-menu-btn" 
                             style= "padding-top:2px;border-width:0px;outline:none;background-color:transparent;"
                             onclick="gui_action_move_one_down_sm_view('${title}');"
-                            id="btn_${title}_view_move_one_down"
+                            id="btn_${normalize_id(title)}_view_move_one_down"
                             >
-                        <span id="btn_glyph_${title}_view_move_one_down" class="glyphicon glyphicon-chevron-right"></span>
+                        <span id="btn_glyph_${normalize_id(title)}_view_move_one_down" class="glyphicon glyphicon-chevron-right"></span>
                     </button>
                     <button type="button" 
                             class="btn btn-default btn-xs pull-right cepscloud-ui-menu-btn" 
                             style= "padding-top:2px;border-width:0px;outline:none;background-color:transparent;"
                             onclick="gui_action_move_one_up_sm_view('${title}');"
-                            id="btn_${title}_view_move_one_up"
+                            id="btn_${normalize_id(title)}_view_move_one_up"
                             >
-                        <span id="btn_glyph_${title}_view_move_one_down" class="glyphicon glyphicon-chevron-left"></span>
+                        <span id="btn_glyph_${normalize_id(title)}_view_move_one_down" class="glyphicon glyphicon-chevron-left"></span>
                     </button>
 
                     </div>
                     <div class="panel-body" 
-                                 id="sm_viz_container_parent_div_${title}"
+                                 id="sm_viz_container_parent_div_${normalize_id(title)}"
                                  style="padding-left:2px;overflow:hidden;width:${layout_info.sm_widget_tile.width}px;height:${layout_info.sm_widget_tile.height}px;"
                                  >
-                            <div id="sm_viz_container_${title}" style="position:relative;">${content}</div>
+                            <div id="sm_viz_container_${normalize_id(title)}" style="position:relative;">${content}</div>
                      </div>
                </div>`;
                         
@@ -657,41 +663,41 @@
 <tr><td style="vertical-align:top;width:100px;" >${title}</td><td style="vertical-align:center;height:16px;">
 <div class="progress">
   <div style="width:0%;" 
-       id="sm_viz_progress_${title}" 
+       id="sm_viz_progress_${normalize_id(title)}" 
        class="progress-bar progress-bar-striped active" 
        role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" >
-       <span id="sm_viz_progress_${title}_info_text"></span>
+       <span id="sm_viz_progress_${normalize_id(title)}_info_text"></span>
   </div>
 </div></td>
 <td style="width:20px;vertical-align:top;">
     <i 
-       id = "show_details_btn_${title}"
+       id = "show_details_btn_${normalize_id(title)}"
        class="material-icons md-24 md-dark details-show-btn" 
        onclick="handle_tile_click('${title}')"
        style = "cursor:pointer;">details</i>
 </td>
 </tr>
-<tr><td colspan="3" style="text-align:center;"><div id="info_${title}" class=""></div></td></tr>
+<tr><td colspan="3" style="text-align:center;"><div id="info_${normalize_id(title)}" class=""></div></td></tr>
 </table>
                 `;
 
             return `    
-<div id="sm_viz_${title}" 
+<div id="sm_viz_${normalize_id(title)}" 
      style="padding:2px;overflow:hidden;" 
      class="ceps-ui-minimized ceps-ui-tile" 
      sm-name="${title}" 
      >     
  ${content}
-  <div id="sm_viz_details_${title}" style="width:100%; style=""
+  <div id="sm_viz_details_${normalize_id(title)}" style="width:100%; style=""
        onclick="sm_viz_details_click_handler('${title}')"
    >
-   <div id="sm_viz_details_svg_div_${title}"></div>
+   <div id="sm_viz_details_svg_div_${normalize_id(title)}"></div>
   </div>
  </div>
                `;
                 
             }
-            return `    <div class="panel panel-primary sm_viz" id="sm_viz_${title}" >
+            return `    <div class="panel panel-primary sm_viz" id="sm_viz_${normalize_id(title)}" >
                             <div class="panel-heading">${title}</div>
                             <div class="panel-body">${content}</div>
                         </div>`;
@@ -789,7 +795,8 @@
 
         function start_ceps_proc_consumer(ws){
             function h(ev){
-                
+                //console.log(ev.data);
+                //console.log("'"+ev.data.charCodeAt(891)+"'");
                 let msg = JSON.parse(ev.data);
                 let to = {};
                 simplifyceps2json(to,msg.sresult.coverage);
@@ -822,7 +829,7 @@
                      clearInterval(f);return;
                  }
                  ws.send("QUERY root.__proc.current_states_with_coverage");                       
-                }, 200);            
+                }, 5000);            
         }
 
         function on_change_input_search_statemachines(){          
@@ -1045,10 +1052,11 @@
                         states_info.states = v.states[0].state;
                         states_info.ids_of_marked_nodes = {};
                         //console.log("states_info.states",states_info.states);
+                        
                         for(let i = 0; i != v.sm.length;++i){
                             if (v.sm[i].name.indexOf(".") >= 0) continue;
                             states_info.ids_of_marked_nodes[v.sm[i].name]=[];
-                            $.get(v.sm[i].svg_filename,{},function(res){
+                            $.get("<%=rollout.svgs%>"+"/"+v.sm[i].svg_filename,{},function(res){
 
                                 let sm_status = get_sm_status(v.sm[i].name,states_info.active_states)
                                 let lane = get_sm_lane_given_status(sm_status);

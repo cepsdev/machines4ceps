@@ -12,10 +12,15 @@ Rollout_Typ_Step{
  Job_Run{jenkins_job_run_2;};
 };
 
+
+Rollout{
+    ID{0;};
+    Name{"Rollout_0";};
+};
+
 Rollout_Store{
     ID{30;};
     SAP_Code{123;};
-    Day {"06-28-2018 00:00:00";};    
 };
 
 Rollout_Store_Step{
@@ -45,6 +50,8 @@ Rollout_Store_Step{
     ID_Rollout_Store{31;};
     Sequence{1;};
 };
+
+
 
 
 

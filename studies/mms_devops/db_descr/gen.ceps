@@ -1,34 +1,74 @@
 
 "---------------------------------";
-val rollout_id = 30;
 
-rollout_steps_unsorted{
-    static_for(e:root.Rollout_Store_Step){
-        if (strip(e.ID_Rollout_Store.content()) == rollout_id) {
-            val step_type_id = strip(e.ID_Step_Typ.content());
-            static_for(f:root.Rollout_Typ_Step){
-                if (step_type_id == strip(f.ID.content())){
-                step{
-                    f.Bezeichnung;
-                    f.Job_Check;
-                    f.Job_Run;
-                    e.Sequence;
-                };
-                }
-            }            
-        } 
-    }
-};
 
-rollout_steps_sorted{
- root.rollout_steps_unsorted.content().sort("Sequence");
-};
-
-rollout{
-    test;
-    steps{
-        static_for(e:root.rollout_steps_sorted.content()){
-            as_identifier(text(e.content().Bezeichnung.content()));
+static_for(r:root.rollout_db){
+    val rollout_id = strip(r.id.content());
+    rollout_steps_unsorted{
+        static_for(e:root.rollout_step_db){
+            if (strip(e.rollout.content()) == rollout_id) {
+            val step_type_id = strip(e.step_type.content());
+            static_for(f:root.rollout_step_type_db){
+                    if (step_type_id == strip(f.id.content())){
+                    step{
+                        f.description;
+                        f.job_check;
+                        f.job_run;
+                        e.sequence;
+                    };
+                    }
+                }            
+            }
         }
-    };   
-};
+    };
+}
+
+val ctr = 0;
+static_for(e: root.rollout_steps_unsorted){
+    rollout_steps_sorted{
+        root.rollout_steps_unsorted.at(ctr).content().sort("sequence");
+    };
+    ignore_value{ctr = ctr + 1;};
+}
+
+ignore_value{ctr = 0;};
+static_for(rss: root.rollout_steps_sorted){
+    val rollout_id = strip(root.rollout_db.at(ctr).content().id.content()); 
+    rollout_{
+        static_for(e:root.rollout_db){
+            if (strip(e.id.content()) == rollout_id) {
+                as_identifier(strip(e.name.content()));
+                name{as_identifier(strip(e.name.content()));};
+            }
+        }
+        static_for(e:root.rollout_db){
+            if (strip(e.id.content()) == rollout_id) {
+                e.when;
+            }
+        }
+        steps{
+            val s_ctr = 1;
+            static_for(e:rss.content()){
+                as_identifier("step "+text(s_ctr)+": "+text(e.content().description.content()));
+                step_details{
+                    id{text("step "+text(s_ctr)+": "+text(e.content().description.content()));};
+                    e.content().job_check;
+                    e.content().job_run;
+                };
+                ignore_value{s_ctr = s_ctr + 1;};
+            }            
+        };
+        markets{
+        static_for(e:root.rollout_store_db){
+            if (strip(e.rollout.content()) == rollout_id) {
+                as_identifier(strip(e.name.content()));
+                market_details{
+                    id{e.name.content();};
+                    code{e.sap_code.content();};
+                };
+            }
+        }        
+        };
+    };
+   ignore_value{ctr = ctr + 1;};
+}

@@ -1,0 +1,15 @@
+val rollout_id = "rollout-5";
+
+static_for(e:root.rollout_){
+        if (text(strip(e.name.content())) == rollout_id ){
+            rollout{
+                e.name;
+                e.steps;
+                markets{
+                    static_for(f:e.markets.market_details){
+                        market{f.content();};                        
+                    }
+                };
+            };
+        }
+    }
