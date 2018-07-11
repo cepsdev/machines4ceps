@@ -1635,7 +1635,7 @@ static std::vector<ceps::ast::Nodebase_ptr>  mk_sm_state_transition_exprs(State_
 	return r;
 }
 
-static void print_report_coverage(std::ostream& os, ceps::ast::Nodeset coverage, std::string indent){
+static void print_report_coverage(std::ostream& os, ceps::ast::Nodeset coverage, std::string indent,Result_process_cmd_line const& result_cmd_line){
     if (coverage["state_coverage"].empty()) return;
 
     double v1 = coverage["state_coverage"]["ratio"].as_double();
@@ -1650,6 +1650,18 @@ static void print_report_coverage(std::ostream& os, ceps::ast::Nodeset coverage,
 	os << v2 << " ( "<< coverage["transition_coverage"]["percentage"].as_double() << "% )"<< "\n";
 }
 
+static void print_report_categories(std::ostream& os, ceps::ast::Nodeset categories, std::string indent,Result_process_cmd_line const& result_cmd_line){
+    if (categories.empty()) return;
+    os << indent << "Categories in total:\n";
+    for(auto p : categories.nodes())
+        os << indent << " "<< ceps::ast::name(ceps::ast::as_struct_ref(p)) << "\n";
+    os << indent << "Categories active:\n";
+    for(auto p : categories.nodes())
+        os << indent << " "<< ceps::ast::name(ceps::ast::as_struct_ref(p))<<": "
+           << ceps::ast::value(ceps::ast::as_int_ref(ceps::ast::as_struct_ref(p).children()[0])) << "\n";
+
+}
+
 static void print_report(std::ostream& os, ceps::ast::Nodeset report,Result_process_cmd_line const& result_cmd_line ){
 	if (result_cmd_line.report_format_sexpression) {
 		os << ceps::ast::Nodebase::pretty_print << report;
@@ -1657,16 +1669,70 @@ static void print_report(std::ostream& os, ceps::ast::Nodeset report,Result_proc
 	}
 	auto summary = report["summary"];
 	if (result_cmd_line.debug_mode)os << "States count: " << report["summary"]["general"]["states_total"].as_int() << "\n";
-	print_report_coverage(os, summary["coverage"], "");
-
+    print_report_coverage(os, summary["coverage"], "",result_cmd_line);
+    if (result_cmd_line.report_includes_cat) print_report_categories(os, summary["categories"], "",result_cmd_line);
 }
 
 static inline State_machine* get_toplevel(State_machine* sm){
  for(;sm->parent();sm = sm->parent());return sm;
 }
 
+
+#include <unordered_set>
+template<typename F, typename T> void traverse_sm(std::unordered_set<State_machine*>& m,State_machine* sm, T const & sms, F f){
+    f(sm);
+
+    for(auto state: sm->states()){
+        if (!state->is_sm() || state->smp() == nullptr) continue;
+        if (m.find(state->smp()) != m.end()) continue;
+        m.insert(state->smp());
+        traverse_sm(m,state->smp(),sms,f);
+    }
+
+    for(auto subsm: sm->children()){
+        //assert(m.find(subsm) != m.end());
+        if (m.find(subsm) != m.end()) continue;
+
+        m.insert(subsm);
+        traverse_sm(m,subsm,sms,f);
+    }
+}
+
+template<typename F, typename T> void traverse_sms(T const & sms, F f){
+    std::unordered_set<State_machine*> m;
+    for(auto sm: sms){
+     if (m.find(sm.second) != m.end()) continue;
+     traverse_sm(m,sm.second,sms,f);
+
+     m.insert(sm.second);
+    }
+}
+
 ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	using namespace ceps::ast;
+
+    if (!stateindex2categories_valid){
+        //Compute categorizations
+        auto f = [this](State_machine* cur_sm){
+
+            //cur_sm->idx_ = ctr++;
+            for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
+             auto state = *it;
+             std::vector<std::string> v;
+             for(auto e: state->categories()) {v.push_back(e);statistics_category[e]=0;}
+             stateindex2categories[state->idx_] = v;
+
+             //state->idx_ = ctr++;
+             //if (!state->is_sm_) continue;
+             //state->smp_->idx_ = state->idx_;
+            }
+         };
+        traverse_sms(State_machine::statemachines,f);
+        stateindex2categories_valid = true;
+    } else if (statistics_category.size()){
+        for(auto & e:statistics_category) e.second = 0;
+    }
+    bool do_cat = statistics_category.size();
 	ceps::ast::Nodeset result;
 
 	double state_coverage = 0.0;
@@ -1699,6 +1765,15 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
     bool state_coverage_defined = false;
     bool transition_coverage_defined = false;
     number_of_states_to_cover = 0;
+
+    if (do_cat){
+        auto const& v = executionloop_context().current_states;
+        for(std::size_t i = 0; i != v.size(); ++i) {
+            if (!v[i]) continue;
+            auto const& vv = stateindex2categories[i];
+            for(auto const & s : vv)  ++statistics_category[s];
+        }
+    }
 
 	//Distill information relating to state coverage
 	if ( (state_coverage_defined = ctx.start_of_covering_states_valid()) ){
@@ -1816,6 +1891,15 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	    }
 	};
 	result.nodes().push_back(summary->get_root());
+    if (do_cat){
+        auto cat_stat = new ceps::ast::Struct{"categories"};
+        for(auto e : statistics_category){
+            auto elem = new ceps::ast::Struct{e.first, new ceps::ast::Int{e.second,ceps::ast::all_zero_unit()}};
+            cat_stat->children().push_back(elem);
+        }
+        //std::cout << *cat_stat << std::endl;
+        summary->get_root()->children().push_back(cat_stat);
+    }
 	return result;
 }
 

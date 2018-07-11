@@ -573,6 +573,11 @@ public:
 	lookup_tables_t lookup_tables_;
 	lookup_tables_t& lookup_tables() {return lookup_tables_;}
 	ceps::ast::Nodebase_ptr lookup(lookup_table_t&,ceps::ast::Nodebase_ptr);
+
+        //make_report
+        bool stateindex2categories_valid = false;
+        std::map<int,std::vector<std::string>> stateindex2categories;
+        std::map<std::string,int> statistics_category;
 public:
 	std::vector<event_triggered_sender_t>& event_triggered_sender(){return event_triggered_sender_;};
 	bool running_as_node() const {return running_as_node_;}

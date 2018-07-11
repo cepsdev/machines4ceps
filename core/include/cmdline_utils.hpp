@@ -76,6 +76,7 @@ struct Result_process_cmd_line
    bool report_format_xml = false;
    bool report_format_json = false;
    bool report_format_ceps = false;
+   bool report_includes_cat = false;
    bool dump_asciidoc_can_layer = false;
    bool no_warn = false;
    bool print_event_signatures = false;
