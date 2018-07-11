@@ -1,0 +1,5 @@
+{
+ "skip_db_fetch" : true,
+ "skip_worker_sm_creation" : true,
+ "rollouts" : "tests/estimated_time_computation/a.ceps"
+}

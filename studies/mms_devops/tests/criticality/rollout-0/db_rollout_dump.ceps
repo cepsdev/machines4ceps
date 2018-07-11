@@ -1,0 +1,143 @@
+rollout_step_type_db{
+ id{0;};
+ description{"step 0";};
+ job_check{"job_check_0";};
+ job_run{"job_run_0";};
+};
+rollout_step_type_db{
+ id{1;};
+ description{"step 1";};
+ job_check{"job_check_1";};
+ job_run{"job_run_1";};
+};
+rollout_step_type_db{
+ id{2;};
+ description{"step 2";};
+ job_check{"job_check_2";};
+ job_run{"job_run_2";};
+};
+rollout_step_type_db{
+ id{3;};
+ description{"step 3";};
+ job_check{"job_check_3";};
+ job_run{"job_run_3";};
+};
+rollout_step_type_db{
+ id{4;};
+ description{"step 4";};
+ job_check{"job_check_4";};
+ job_run{"job_run_4";};
+};
+rollout_step_type_db{
+ id{5;};
+ description{"step 5";};
+ job_check{"job_check_5";};
+ job_run{"job_run_5";};
+};
+rollout_step_type_db{
+ id{6;};
+ description{"step 6";};
+ job_check{"job_check_6";};
+ job_run{"job_run_6";};
+};
+rollout_step_type_db{
+ id{7;};
+ description{"step 7";};
+ job_check{"job_check_7";};
+ job_run{"job_run_7";};
+};
+rollout_step_type_db{
+ id{8;};
+ description{"step 8";};
+ job_check{"job_check_8";};
+ job_run{"job_run_8";};
+};
+rollout_step_type_db{
+ id{9;};
+ description{"step 9";};
+ job_check{"job_check_9";};
+ job_run{"job_run_9";};
+};
+rollout_step_type_db{
+ id{10;};
+ description{"step 10";};
+ job_check{"job_check_10";};
+ job_run{"job_run_10";};
+};
+rollout_db{
+ id{100;};
+ name{"rollout-0";};
+ when{"2018-07-10 13:30:37";};
+};
+rollout_db{
+ id{101;};
+ name{"rollout-1";};
+ when{"2018-07-10 15:29:37";};
+};
+rollout_db{
+ id{102;};
+ name{"rollout-2";};
+ when{"2018-07-10 16:29:37";};
+};
+rollout_db{
+ id{103;};
+ name{"rollout-3";};
+ when{"2018-07-10 14:29:37";};
+};
+rollout_db{
+ id{104;};
+ name{"rollout-4";};
+ when{"2018-07-10 18:29:37";};
+};
+rollout_db{
+ id{105;};
+ name{"rollout-5";};
+ when{"2018-07-10 19:29:38";};
+};
+rollout_store_db{
+ id{10;};
+ rollout{100;};
+ name{"market A";};
+ sap_code{"000";};
+};
+rollout_store_db{
+ id{11;};
+ rollout{100;};
+ name{"market B";};
+ sap_code{"001";};
+};
+rollout_store_db{
+ id{12;};
+ rollout{100;};
+ name{"market C";};
+ sap_code{"002";};
+};
+rollout_step_db{
+ id{1100;};
+ step_type{0;};
+ rollout{100;};
+ sequence{0;};
+ criticality_def{
+  warn{
+   tries{2;};
+   timeout{20;};
+   due_time{"2018-7-10 16:00:00";};
+   job_check_returns{value{3;};value{5;};};
+   job_run_returns{value{3;};value{5;};};
+  };
+  error{
+   tries{4;};
+   timeout{20;};
+   due_time{"2018-7-10 17:00:00";};
+   job_check_returns{value{4;};value{6;};
+   job_run_returns{value{4;};value{6;};};
+  };  
+ };
+ };
+};
+rollout_step_db{
+ id{2100;};
+ step_type{1;};
+ rollout{100;};
+ sequence{1;};
+};
