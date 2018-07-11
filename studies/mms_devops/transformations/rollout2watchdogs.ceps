@@ -1,0 +1,79 @@
+kind Event;
+Event success;
+Event start_rollout;
+
+
+static_for(e:root.rollout){
+ static_for(market:e.markets.market){
+ 
+  sm{
+   val market_name = text(market.content().id.content()); 
+   as_identifier("watch_dog_"+market_name);
+   hidden;
+
+   states { Initial;
+            Done;
+            Final;
+            //e.steps.content().is_id();
+          };
+
+   static_for( step:e.steps.step_details ) {
+     sm{
+         val step_id = text(strip(step.id.content()));
+         as_identifier(step_id);
+         states{Initial;};
+         if (step.criticality_def.content().size() > 0){
+            on_enter{
+                if (step.criticality_def.warn.timeout.size()>0){
+                    val timeout = strip(step.criticality_def.warn.timeout.content());
+                    start_timer(timeout*s,
+                                as_symbol(market_name+text(strip(step.id.content()))+"_critical","Event"),
+                                as_identifier(market_name+text(strip(step.id.content()))+"_critical_timer")
+                                );
+                }
+                if (step.criticality_def.error.timeout.size()>0){
+                    val timeout = strip(step.criticality_def.error.timeout.content());
+                    start_timer(timeout*s,
+                                as_symbol(market_name+text(strip(step.id.content()))+"_failed","Event"),
+                                as_identifier(market_name+text(strip(step.id.content()))+"_failure_timer")
+                                );
+                }
+
+            };
+            on_exit{
+                if (step.criticality_def.warn.timeout.size()>0){
+                    kill_timer(
+                        as_identifier(market_name+text(strip(step.id.content()))+"_critical_timer")
+                    );
+                }
+                if (step.criticality_def.error.timeout.size()>0){                    
+                    kill_timer(
+                        as_identifier(market_name+text(strip(step.id.content()))+"_failure_timer")
+                    );
+                }
+            };
+         }
+     };
+   }
+
+   t {  
+      Initial; 
+      e.steps.content().is_id().first();
+      as_symbol("start_rollout_"+market_name,"Event");        
+     };
+
+   val prev = e.steps.content().is_id().first();
+
+   static_for( step:tail(e.steps.content().is_id()) ) {
+   
+    t { prev;
+        step;
+        as_symbol(market_name+text(prev)+"_finished","Event");
+    };
+    
+    ignore_value { prev = step; };
+   };
+   t{Done;Final;};
+ };
+ }
+}

@@ -14,6 +14,7 @@ static_for(r:root.rollout_db){
                         f.description;
                         f.job_check;
                         f.job_run;
+                        e.criticality_def;
                         e.sequence;
                     };
                     }
@@ -39,6 +40,8 @@ static_for(rss: root.rollout_steps_sorted){
             if (strip(e.id.content()) == rollout_id) {
                 as_identifier(strip(e.name.content()));
                 name{as_identifier(strip(e.name.content()));};
+                id{text(rollout_id);};
+    
             }
         }
         static_for(e:root.rollout_db){
@@ -54,6 +57,7 @@ static_for(rss: root.rollout_steps_sorted){
                     id{text("step "+text(s_ctr)+": "+text(e.content().description.content()));};
                     e.content().job_check;
                     e.content().job_run;
+                    e.content().criticality_def;
                 };
                 ignore_value{s_ctr = s_ctr + 1;};
             }            

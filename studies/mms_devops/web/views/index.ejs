@@ -49,6 +49,61 @@
 .material-icons.md-light { color: rgba(255, 255, 255, 1); }
 .material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
 .material-icons.orange600 { color: #FB8C00; }
+
+
+.spinner {
+  margin: 100px auto;
+  width: 50px;
+  height: 40px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.spinner > div {
+  background-color: #333;
+  height: 100%;
+  width: 6px;
+  display: inline-block;
+  
+  -webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
+  animation: sk-stretchdelay 1.2s infinite ease-in-out;
+}
+
+.spinner .rect2 {
+  -webkit-animation-delay: -1.1s;
+  animation-delay: -1.1s;
+}
+
+.spinner .rect3 {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s;
+}
+
+.spinner .rect4 {
+  -webkit-animation-delay: -0.9s;
+  animation-delay: -0.9s;
+}
+
+.spinner .rect5 {
+  -webkit-animation-delay: -0.8s;
+  animation-delay: -0.8s;
+}
+
+@-webkit-keyframes sk-stretchdelay {
+  0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
+  20% { -webkit-transform: scaleY(1.0) }
+}
+
+@keyframes sk-stretchdelay {
+  0%, 40%, 100% { 
+    transform: scaleY(0.4);
+    -webkit-transform: scaleY(0.4);
+  }  20% { 
+    transform: scaleY(1.0);
+    -webkit-transform: scaleY(1.0);
+  }
+}
+
     </style>
     <title>MediaMarktSaturn - Rollouts</title>
 </head>
@@ -159,8 +214,8 @@
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Rollouts</sup></a>
-        <h3 style="color:white;vertical-align:center;text-align:center;"><%=rollout.name%></h3>
+            <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:14px;">A</span></sub>ut</sup></a>
+            <h3 style="color:white;vertical-align:center;text-align:center;"><%=rollout.name%></h3>
 
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
@@ -198,21 +253,51 @@
                         <tr><td></td><td style="text-align:center;">Inactive/Ready</td></tr>
                         <tr><td style="width:4px;"></td><td style="border-top: 8px; border-top-color: grey;border-top-style: solid;"></td></tr>
                     </table>
-                        <div id="toplevel_sms_inactive" ></div>
+                        <div id="toplevel_sms_inactive" >
+
+                                <div class="spinner">
+                                        <div class="rect1"></div>
+                                        <div class="rect2"></div>
+                                        <div class="rect3"></div>
+                                        <div class="rect4"></div>
+                                        <div class="rect5"></div>
+                                </div>
+
+                        </div>
                 </div>
                 <div class="col-xs-2 col-sm-2">
                         <table width="100%">
                                 <tr><td style="text-align:center;">Active</td></tr>
                                 <tr><td style="border-top: 8px; border-top-color:darkslateblue;border-top-style: solid;"></td></tr>
                         </table>                            
-                        <div id="toplevel_sms" ></div>
+                        <div id="toplevel_sms" >
+
+                                <div class="spinner">
+                                        <div class="rect1"></div>
+                                        <div class="rect2"></div>
+                                        <div class="rect3"></div>
+                                        <div class="rect4"></div>
+                                        <div class="rect5"></div>
+                                </div>
+                            
+                        </div>
                 </div>
                 <div class="col-xs-2 col-sm-2">
                     <table width="100%">
                             <tr><td style="text-align:center;">Warning</td><td></td></tr>
                             <tr><td style="border-top: 8px; border-top-color:yellow;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
                             </table>
-                    <div id="toplevel_sms_in_warn_state"></div>
+                    <div id="toplevel_sms_in_warn_state">
+
+                            <div class="spinner">
+                                    <div class="rect1"></div>
+                                    <div class="rect2"></div>
+                                    <div class="rect3"></div>
+                                    <div class="rect4"></div>
+                                    <div class="rect5"></div>
+                            </div>
+
+                    </div>
                 </div>
             
                 <div class="col-xs-2 col-sm-2">
@@ -220,14 +305,36 @@
                                 <tr><td style="text-align:center;">Failure</td><td></td></tr>
                                 <tr><td style="border-top: 8px; border-top-color:red;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
                                 </table>
-                        <div id="toplevel_sms_in_error_state"></div>
+                        <div id="toplevel_sms_in_error_state">
+
+                                <div class="spinner">
+                                        <div class="rect1"></div>
+                                        <div class="rect2"></div>
+                                        <div class="rect3"></div>
+                                        <div class="rect4"></div>
+                                        <div class="rect5"></div>
+                                </div>
+
+
+                        </div>
                 </div>
                 <div class="col-xs-2 col-sm-2">
                     <table width="100%">
                             <tr><td style="text-align:center;">Done</td><td style="width:4px;"></td></tr>
                             <tr><td style="border-top: 8px; border-top-color:green;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
                     </table>                            
-                    <div id="toplevel_sms_in_final_state" ></div>
+                    <div id="toplevel_sms_in_final_state" >
+
+                            <div class="spinner">
+                                    <div class="rect1"></div>
+                                    <div class="rect2"></div>
+                                    <div class="rect3"></div>
+                                    <div class="rect4"></div>
+                                    <div class="rect5"></div>
+                            </div>
+
+
+                    </div>
                 </div>
                 <div class="col-xs-2 col-sm-2">
                 </div>
@@ -415,6 +522,8 @@
         var simcore_ws = undefined;
         var global_sysstates = [];
         var command_socket = undefined;
+
+        let lane_spinners_active = true;
 
 //  +#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!
 //Here comes the new stuff
@@ -1022,10 +1131,11 @@
         }
 
         function fetch_sm_svgs_from_simcore(ws) {
+            
             function h(ev) {
                 ws.removeEventListener("message", h);
 
-                //console.log(ev.data);
+                console.log(ev.data);
 
 
                 let msg = JSON.parse(ev.data);
@@ -1057,6 +1167,11 @@
                             if (v.sm[i].name.indexOf(".") >= 0) continue;
                             states_info.ids_of_marked_nodes[v.sm[i].name]=[];
                             $.get("<%=rollout.svgs%>"+"/"+v.sm[i].svg_filename,{},function(res){
+
+                                if (lane_spinners_active){
+                                    lane_spinners_active = false;
+                                    $(".spinner").remove();
+                                }
 
                                 let sm_status = get_sm_status(v.sm[i].name,states_info.active_states)
                                 let lane = get_sm_lane_given_status(sm_status);
@@ -1253,13 +1368,14 @@
             remote_url = url;          
             connected = false;
             main_socket = new WebSocket("ws://"+url);
+            console.log("Connecting to "+"ws://"+url);
             main_socket.addEventListener("open", on_ws_initial_connect);
             main_socket.addEventListener("close", on_ws_close);
             main_socket.addEventListener("error", on_ws_error);                
         }
 
         function login(url) {
-            $('#dlg_login').modal('hide');
+            
             do_login(url);
         }
 

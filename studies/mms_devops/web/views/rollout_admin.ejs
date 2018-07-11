@@ -159,7 +159,7 @@
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Rollouts</sup></a>
+        <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:14px;">A</span></sub>ut</sup></a>
         <h3 style="color:white;vertical-align:center;">Rollout Overview</h3>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
@@ -203,18 +203,18 @@
                         <h5 class="card-title mb-2 text-muted">Active Rollouts</h5>
                         <ul class="list-group">
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                  Cras justo odio
+                                  <!--Cras justo odio
                                   <span class="badge badge-danger badge-pill">14</span>
                                   <span class="badge badge-primary badge-pill">14</span>
-                                  <span class="badge badge-primary badge-pill">14</span>
+                                  <span class="badge badge-primary badge-pill">14</span> -->
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                  Dapibus ac facilisis in hjgg dhdj JGJ
-                                  <span class="badge badge-primary badge-pill">2</span>
+                                 <!--  Dapibus ac facilisis in hjgg dhdj JGJ
+                                  <span class="badge badge-primary badge-pill">2</span> -->
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                  Morbi leo risus
-                                  <span class="badge badge-primary badge-pill">1</span>
+                                  <!--Morbi leo risus
+                                  <span class="badge badge-primary badge-pill">1</span>-->
                                 </li>
                               </ul> 
                 </div></div></div>
@@ -407,6 +407,7 @@
         const ROLLOUT_STARTED_PENDING = 1;
         const ROLLOUT_STARTED = 2;
         const ROLLOUT_STOP_PENDING = 3;
+        const ROLLOUT_FAILED = 4;
         let gen_html_for_rollout_id_counter = 0;
 
         function gen_html_time_section(rollout){
@@ -417,6 +418,31 @@
             let time_left_hours = Math.floor((time_left_milli_secs-time_left_days*(3600 * 24 * 1000)) / (3600*1000) );
             let time_left_minutes = Math.floor( (time_left_milli_secs - time_left_hours*(3600 *1000)  - time_left_days*(3600 * 24 * 1000)) / (1000*60) );
             let time_left_seconds = Math.floor( (time_left_milli_secs % (1000*60)) / 1000 );
+
+            let content = `
+                ${ (time_left_days>0?"<emph>"+ time_left_days+"</emph> <b>day"+(time_left_days>1?"s":"")+"</b>":"")}
+                ${ ( (time_left_days!=0 || time_left_hours != 0) ?"<emph>"+ time_left_hours+"</emph> <b>hour"+(time_left_hours>1?"s":"")+"</b>":"")}
+                ${ "<emph>"+ time_left_minutes+"</emph> <b>minute"+(time_left_minutes>1?"s":"")+"</b>"}
+                ${ "<emph>"+ time_left_seconds+"</emph> <b>second"+(time_left_seconds>1?"s":"")+"</b>"}
+            `;
+            return content;
+        }
+
+        function gen_html_remaining_time_section(rollout){
+            if (rollout.coverage <= 0.0001) return "&#x221e;"; 
+            let remaining = 0;
+            let d = new Date(rollout.up_since);
+            let t = 0;
+            let time_left_milli_secs = Date.now()-d;
+            let ms_per_work = 0;
+            if (rollout.coverage < 1.0)  {
+              ms_per_work = time_left_milli_secs / rollout.coverage;
+              remaining = (1.0 - rollout.coverage) * ms_per_work;
+            } else remaining = 0;
+            let time_left_days = Math.floor(remaining / (3600 * 24 * 1000));
+            let time_left_hours = Math.floor((remaining-time_left_days*(3600 * 24 * 1000)) / (3600*1000) );
+            let time_left_minutes = Math.floor( (remaining - time_left_hours*(3600 *1000)  - time_left_days*(3600 * 24 * 1000)) / (1000*60) );
+            let time_left_seconds = Math.floor( (remaining % (1000*60)) / 1000 );
 
             let content = `
                 ${ (time_left_days>0?"<emph>"+ time_left_days+"</emph> <b>day"+(time_left_days>1?"s":"")+"</b>":"")}
@@ -451,8 +477,15 @@
             return undefiend;
         }
 
-        function action_launch_rollout(rollout_name){
-            let rollout = find_rollout_by_name(rollout_name);
+        function find_rollout_by_id(s){
+            for(let i = 0; i != rollouts_global.length; ++i)
+             if (rollouts_global[i].id == s) return rollouts_global[i];
+            return undefiend;
+        }
+
+
+        function action_launch_rollout(rollout_id){
+            let rollout = find_rollout_by_id(rollout_id);
             if (rollout == undefined) return;
             rollout.state = ROLLOUT_STARTED_PENDING;
             $(`#${rollout.internal_id}_btn_launch`).addClass("disabled");
@@ -461,7 +494,7 @@
         }
 
         function action_kill_rollout(rollout_name){
-            let rollout = find_rollout_by_name(rollout_name);
+            let rollout = find_rollout_by_id(rollout_id);
             if (rollout == undefined) return;
             rollout.state = ROLLOUT_STOP_PENDING;
             update_view(rollout);
@@ -474,6 +507,7 @@
                     case ROLLOUT_STARTED_PENDING: return `<span class="badge badge-info pull-right" id="nav_info_connection">Starting...</span>`;
                     case ROLLOUT_STARTED: return `<span class="badge badge-success pull-right" id="nav_info_connection">Started.</span>`;
                     case ROLLOUT_STOP_PENDING: break;
+                    case ROLLOUT_FAILED: return `<span class="badge badge-danger" id="nav_info_connection">Fatal Error</span>`;
                     default: return `<span class="badge badge-danger" id="nav_info_connection">Status not available</span>`;
                 }
             }
@@ -495,17 +529,50 @@
                 let time_sec = gen_html_time_section(rollout);
                 let actions = "";
                 if (rollout.state == ROLLOUT_READY){
-                    actions = `<a href="#" class="btn btn-primary" onclick="action_launch_rollout('${rollout.name}');" id="${rollout.internal_id}_btn_launch" >
+                    actions = `<a href="#" class="btn btn-primary" onclick="action_launch_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_launch" >
                                 Launch
                                </a>
-                               <a href="#" class="btn btn-primary disabled" onclick="action_kill_rollout('${rollout.name}');" id="${rollout.internal_id}_btn_kill">
+                               <a href="#" class="btn btn-primary disabled" onclick="action_kill_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_kill">
                                 Kill
                                </a>                               
                                `;
                 }
 
                 let table_body = "";
-                if (rollout.state == ROLLOUT_READY) table_body = `
+                if (rollout.state == ROLLOUT_FAILED){
+                    let health = "";
+                    let d = new Date(rollout.up_since);
+                    let time_sec = gen_html_uptime_section(rollout);
+                    if (rollout.coverage == undefined) rollout.coverage = 0;
+                    if (rollout.health == undefined) health = `<span class="badge badge-info">Computing...</span>`;                 
+                    table_body = `
+                    <thead><tr><th>Error Details</th><th>Overall Status</th><th>Health</th><th>Expected Time remaining</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="">
+                             <code>   ${rollout.error_details} </code>
+                            </td>
+                            
+                            <td style="alignment-vertical:center;">
+                              <span class="label">  <div class="progress">
+                                    <div style="width:${rollout.coverage*100.0}%;" 
+                                        class="progress-bar progress-bar-striped danger" 
+                                        role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" >
+                                        
+                                    </div>
+                                </div>
+                                ${Math.round(rollout.coverage*100.0)} %</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-danger">Technical Failure</span>
+                            </td>
+                            <td>&#x221e;</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                    `;
+                }
+                else if (rollout.state == ROLLOUT_READY) table_body = `
                     <thead><tr><th>Scheduled</th><th>Starts Automatically in</th></tr></thead>
                     <tbody>
                         <tr>
@@ -519,12 +586,20 @@
                     </tbody>
                     `;
                 else if (rollout.state == ROLLOUT_STARTED || ROLLOUT_STOP_PENDING){
+                    let health = "";
                     let d = new Date(rollout.up_since);
                     let time_sec = gen_html_uptime_section(rollout);
+                    let time_remain = gen_html_remaining_time_section(rollout);
                     if (rollout.coverage == undefined) rollout.coverage = 0;
-                    if (rollout.health == undefined) health = `<span class="badge badge-info">Computing...</span>`;                 
+                    if (rollout.health == undefined) health = `<span class="badge badge-info">Computing...</span>`;
+                    else {
+                        if (rollout.health.FailState>0) health = `<span class="badge badge-danger">There are failures</span>`;
+                        else if (rollout.health.WarnState>0) health = `<span class="badge badge-warning">Critical</span>`;
+                        else health = `<span class="badge badge-success">Ok</span>`;
+                    }
+
                     table_body = `
-                    <thead><tr><th>Started</th><th>Uptime</th><th>Overall Status</th><th>Health</th></tr></thead>
+                    <thead><tr><th>Started</th><th>Uptime</th><th>Overall Status</th><th>Health</th><th>Expected Time remaining</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr>
                             <td style="width:15%;">${d.getMonth()+1}/${d.getDay()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
@@ -543,9 +618,11 @@
                                 </div>
                                 ${Math.round(rollout.coverage*100.0)} %</span>
                             </td>
-                            <td>
+                            <td style="width:15%;">
                                 ${health}
                             </td>
+                            <td id="${rollout.internal_id}_estimated_remaining_time_section" style="width:20%;" >${time_remain}</td>
+                            <td></td>
                         </tr>
                     </tbody>
                     `;
@@ -566,7 +643,7 @@
             }
 
             return ` 
-            <div class="card" style="margin:4px;">
+            <div class="card" style="margin:4px;" id = "${rollout.internal_id}">
                 <div class="card-header" id = "${rollout.internal_id}_card_header">
                     ${gen_header(rollout)}
                 </div>
@@ -578,6 +655,7 @@
         }
 
         function create_rollout_view(rollouts){
+            console.log(`create_rollout_view()`);
             let content = "";
             for(let i = 0; i != rollouts.length;++i){
                 let h = gen_html_for_rollout(rollouts[i]);
@@ -606,12 +684,23 @@
             let v = rollouts_global;
             let inserted = false;
             for(let i = 0; i != v.length;++i){
-                if (r.name != v[i].name) continue;
+                if (r.id != v[i].id) continue;
+                let internal_id = v[i].internal_id;
                 v[i] = r;
+                v[i].internal_id = internal_id;
                 inserted = true;
-                break;
+                return v[i];
             }
             if (!inserted) v.push(r);
+            return r;
+        }
+
+        function remove_rollout(r_id){
+            let  t = [];
+            for(let i = 0; i != rollouts_global.length;++i){
+                if (rollouts_global[i].id != r_id) t.push(rollouts_global[i]);
+            }
+            return t;
         }
 
 
@@ -622,12 +711,23 @@
                 let ws = command_socket;
                 function handle_server_status_messages(m){
                     let msg = JSON.parse(m.data);
-                    console.log(m.data);
                     if (msg.reply != undefined && msg.reply == "ok"){
                         if (msg.rollout != undefined){
-                            save_rollout(msg.rollout);
-                            console.log(msg.rollout);
-                            update_view(msg.rollout);
+                            let rollout = save_rollout(msg.rollout);
+                            if (rollout.name == undefined){
+                                //Deletion
+                                console.log("DELETION !!");
+                                console.log(rollout.name);
+                                $(`#${rollout.internal_id}`).remove();
+                                remove_rollout(rollout.id);
+                                return;
+                            }
+                            console.log(`internal_id: ${rollout.internal_id}`);
+                            if (rollout.internal_id == undefined){
+                                let h = gen_html_for_rollout(rollout);
+                                $(rollouts_view).append(h);
+                            }
+                            else update_view(rollout);
                         }
                     }            
                 }
@@ -679,7 +779,12 @@
                  for(let i = 0; i != v.length;++i){
                      let rollout = v[i];
                      if (rollout.state == ROLLOUT_READY) $(`#${rollout.internal_id}_time_left_section`).html(gen_html_time_section(rollout));
-                     else $(`#${rollout.internal_id}_uptime_section`).html(gen_html_uptime_section(rollout));
+                     else if (rollout.state == ROLLOUT_STARTED){
+                        $(`#${rollout.internal_id}_uptime_section`).html(gen_html_uptime_section(rollout));
+                        if (rollout.coverage != 0){
+                            $(`#${rollout.internal_id}_estimated_remaining_time_section`).html(gen_html_remaining_time_section(rollout));                            
+                        }
+                     }
                  }
              });
 
