@@ -88,54 +88,34 @@ sm{
 
     Actions{
         do_s1{
-             //20 secs: All Active,10%
-             as_symbol("m1step_1_finished","Event");
-             as_symbol("m2step_1_finished","Event");
-             //as_symbol("m3step_1_finished","Event");
-             //as_symbol("m4step_1_finished","Event");
-             start_timer(20*s,scenario1_next_step);
+             as_symbol("m1step_1_finished","Event");start_timer(45*s,scenario1_next_step);
         };
         do_s2{
-            //20 secs: All Active,m1/m2 : 20%
-             as_symbol("m1step_2_finished","Event");
-             as_symbol("m2step_2_finished","Event");
-             //start_timer(20*s,scenario1_next_step);
+             as_symbol("m1step_2_finished","Event");start_timer(5*s,scenario1_next_step);
         };
         do_s3{
-            as_symbol("m2step_3_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+             as_symbol("m1step_3_finished","Event");start_timer(5*s,scenario1_next_step);
         };
         do_s4{
-            as_symbol("m3step_2_finished","Event");
-            as_symbol("m4step_2_finished","Event");
-
-            as_symbol("m1step_3_finished","Event");
-            as_symbol("m2step_4_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+            as_symbol("m1step_4_finished","Event");start_timer(5*s,scenario1_next_step);
         };
         do_s5{
-            as_symbol("m2step_5_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+            as_symbol("m1step_5_finished","Event");start_timer(5*s,scenario1_next_step);
         };
         do_s6{
-            as_symbol("m2step_6_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+            as_symbol("m1step_6_finished","Event");start_timer(5*s,scenario1_next_step);        
         };
         do_s7{
-            as_symbol("m2step_7_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+            as_symbol("m1step_7_finished","Event");start_timer(5*s,scenario1_next_step);        
         };
         do_s8{
-            as_symbol("m2step_8_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+            as_symbol("m1step_8_finished","Event");start_timer(5*s,scenario1_next_step);        
         };
         do_s9{
-            as_symbol("m2step_9_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+            as_symbol("m1step_9_finished","Event");start_timer(5*s,scenario1_next_step);        
         };
         do_s10{
-            as_symbol("m2step_10_finished","Event");
-            start_timer(20*s,scenario1_next_step);
+            as_symbol("m1step_10_finished","Event");start_timer(5*s,scenario1_next_step);       
         };
     };
     t{Initial;s1;scenario1_next_step;do_s1;};

@@ -58,13 +58,21 @@ static bool is_id(ceps::ast::Nodebase_ptr p, std::string & result, std::string& 
 }
 
 
+static ceps::ast::Nodebase_ptr clone(ceps::ast::Nodebase_ptr p){
+    if (p->kind() == ceps::ast::Ast_node_kind::int_literal)
+        return new ceps::ast::Int{ ceps::ast::value(ceps::ast::as_int_ref(p)), ceps::ast::unit(ceps::ast::as_int_ref(p))};
+    if (p->kind() == ceps::ast::Ast_node_kind::float_literal)
+        return new ceps::ast::Double{ ceps::ast::value(ceps::ast::as_double_ref(p)), ceps::ast::unit(ceps::ast::as_double_ref(p))};
+    if (p->kind() == ceps::ast::Ast_node_kind::string_literal)
+        return new ceps::ast::String{ ceps::ast::value(ceps::ast::as_string_ref(p))};
+    return nullptr;
+}
 
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,
 																				ceps::ast::Call_parameters* params,
 																				ceps::parser_env::Symboltable & sym_table)
 {
-
     std::vector<ceps::ast::Nodebase_ptr> args;
 	if (params != nullptr && params->children().size()) flatten_args(this,params->children()[0], args, ',');
 	{
@@ -73,7 +81,14 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 return (this->*it->second)(id,args,active_smp);
 	 }
 	}
-    if( id == "__append" ){
+    if (id == "write_system_state"){
+        std::lock_guard<std::recursive_mutex>g(states_mutex());
+        get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))] = clone(args[1]);
+        return args[1];
+    } else if (id == "read_system_state"){
+        std::lock_guard<std::recursive_mutex>g(states_mutex());
+        return clone(get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))]);
+    } else if( id == "__append" ){
         auto container = args[0];
         auto elem = args[1];
         if (container->kind() == ceps::ast::Ast_node_kind::structdef){
@@ -400,7 +415,42 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
        }
 	 }
 	 return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-	} else if (id == "c_lib_localtime_year"){
+    } else if (id == "env") {
+        if (args.size() == 0){
+            auto p = new ceps::ast::Struct{"env"};
+            for(auto e = environ;*e;++e){
+                //std::cout << *e  << "\n";
+                p->children().push_back(new ceps::ast::String{*e});
+            }
+            return p;
+        } else {
+            if (args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) return new ceps::ast::String{""};
+            auto s = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
+            auto p = getenv(s.c_str());
+            if (p) return new ceps::ast::String{p};
+            return new ceps::ast::String{""};
+        }
+    } else if (id == "timestamp"){
+        auto two_digits =  [](int i,std::ostream& os){
+           if (i < 10) os << "0";
+           os << i;
+        };
+
+        time_t rawtime;
+        struct tm* timeinfo;
+        time(&rawtime);
+        timeinfo = localtime(&rawtime);
+        std::stringstream timestamp;
+        timestamp << timeinfo->tm_year+1900 << "-";
+        two_digits(timeinfo->tm_mon+1,timestamp);
+        timestamp << "-" << timeinfo->tm_mday << " ";
+        two_digits(timeinfo->tm_hour,timestamp);
+        timestamp << ":";
+        two_digits(timeinfo->tm_min,timestamp);
+        timestamp << ":";
+        two_digits(timeinfo->tm_sec,timestamp);
+        return new ceps::ast::String{timestamp.str()};
+    } else if (id == "c_lib_localtime_year"){
 		 time_t rawtime;
 		 struct tm* timeinfo;
 		 time(&rawtime);
@@ -1402,6 +1452,18 @@ static void handle_os_system_thread_fn(State_machine_simulation_core *sm,std::st
     };
 
     auto r = system(cmd.c_str());
+
+    if (r == -1){
+        fire_err_ev(r);return;
+    } else if (r != 0) {
+        if (WIFEXITED(r) && WEXITSTATUS(r) == 127)
+        {
+            fire_err_ev(-1);return;
+        }
+        if (WIFEXITED(r)) r =  WEXITSTATUS(r);
+        else {fire_err_ev(-1);return;}
+    }
+
     if (r != 0){
         fire_err_ev(r); return;
     }

@@ -159,7 +159,7 @@
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:14px;">A</span></sub>ut</sup></a>
+        <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
         <h3 style="color:white;vertical-align:center;">Rollout Overview</h3>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
@@ -716,13 +716,10 @@
                             let rollout = save_rollout(msg.rollout);
                             if (rollout.name == undefined){
                                 //Deletion
-                                console.log("DELETION !!");
-                                console.log(rollout.name);
                                 $(`#${rollout.internal_id}`).remove();
                                 remove_rollout(rollout.id);
                                 return;
                             }
-                            console.log(`internal_id: ${rollout.internal_id}`);
                             if (rollout.internal_id == undefined){
                                 let h = gen_html_for_rollout(rollout);
                                 $(rollouts_view).append(h);
@@ -772,10 +769,22 @@
 
              let last_cmd_channel_established = cmd_channel_established;
              let last_connected = connected;
+            
 
              register_observer("Update Timerinfo", function(){
                  let v = rollouts_global;
-                 if (v == undefined) return;
+                 if (v == undefined || v.length == 0){
+                     //Case no rollouts available
+                     if(!$(`#info_no_rollouts_card`).empty()) return;
+                     $(`#rollouts_view`).html(`
+                     <div class="card" style="margin:4px;" id = "info_no_rollouts_card">
+                        <div class="card-body" id = "info_no_rollouts_card_body">
+                            <p class="card-text">No Rollouts scheduled or running.</p>
+                        </div>
+                    </div>
+                     `);
+                    return;
+                 } 
                  for(let i = 0; i != v.length;++i){
                      let rollout = v[i];
                      if (rollout.state == ROLLOUT_READY) $(`#${rollout.internal_id}_time_left_section`).html(gen_html_time_section(rollout));

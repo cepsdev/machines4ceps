@@ -12,7 +12,10 @@ const username = require("username");
 const host_name = os.hostname();
 
 const ceps_cmd_ = "./ceps";
-const fetch_rollouts_ceps_api_port = 10000;
+let fetch_rollouts_ceps_api_port_base = 10100;
+let fetch_rollouts_ceps_api_port = fetch_rollouts_ceps_api_port_base;
+let fetch_rollouts_ceps_api_port_window = 899;
+
 const ws_api_base = 11001;
 const command_port = ws_api_base - 1;
 let ws_api_next = 0;
@@ -203,6 +206,7 @@ function merge_rollouts(new_rollouts,removed_rollouts){
     let changed = false;
     let t = [];
 
+    for(let i = 0; i!=rollouts.length;++i) rollouts[i].changed = false;
     for(let i = 0; i!=new_rollouts.length;++i){
         let r = get_rollout_by_id(new_rollouts[i].id);
         if (r == undefined){
@@ -230,7 +234,7 @@ function merge_rollouts(new_rollouts,removed_rollouts){
         {
             if (rollouts[i].id == new_rollouts[j].id) {found = true;break;}
         }
-        if (found) t.push(rollouts[i]);
+        if (found) {if (!rollouts[i].changed) t.push(rollouts[i]);}
         else if (removed_rollouts != undefined) removed_rollouts.push(rollouts[i]);
         if (!found) changed = true;
     }
@@ -243,11 +247,17 @@ function merge_rollouts(new_rollouts,removed_rollouts){
     }
 
     rollouts = t;
+    console.log(`CHANGED = ${changed}`);
 
     return changed;
 }
 
+let rollout_fetch_action_active = false;
+
 let fetch_planned_rollouts = function (back_channel,callback){
+
+    //if (rollout_fetch_action_active) return;
+    //rollout_fetch_action_active = true;
 
     if (rollouts != undefined && rollouts.length>0 && back_channel != undefined){
         if (back_channel != undefined) back_channel.send(JSON.stringify(rollouts));
@@ -263,6 +273,12 @@ let fetch_planned_rollouts = function (back_channel,callback){
         [global_conf.rollouts,`drivers/empty_simulation.ceps`],
         `${fetch_rollouts_ceps_api_port}`);
 
+    let current_ws_api_port = fetch_rollouts_ceps_api_port;
+    fetch_rollouts_ceps_api_port = fetch_rollouts_ceps_api_port + 1;
+    if (fetch_rollouts_ceps_api_port > fetch_rollouts_ceps_api_port_base + fetch_rollouts_ceps_api_port_window)
+    fetch_rollouts_ceps_api_port = fetch_rollouts_ceps_api_port_base;
+
+
     ceps_process = spawn(ceps_cmd(),params);                        
     log_debug(`fetch_planned_rollouts()`,`Spawned Child Process pid=${ceps_process.pid}\nCommand: ${ceps_cmd()} ${params.join(" ")}`);
     let proc_down = false;
@@ -274,22 +290,22 @@ let fetch_planned_rollouts = function (back_channel,callback){
     });
     ceps_process.on('close', (code) => {
         proc_down = true;
+        try{process.kill(ceps_process.pid);}catch(err){}
         log_debug(`fetch_planned_rollouts()/cepS core pid=${ceps_process.pid}`,`exited with code ${code}`);
     });
 
-    let fetch_proc = setInterval(()=>{
-        let ws_ceps_api = new WebSocket(`ws://localhost:${fetch_rollouts_ceps_api_port}`);
+    let fetch_proc = function () {
+        //let current_ws_api_port = fetch_rollouts_ceps_api_port;
+        log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Trying to establish a websocket connect to localhost:${current_ws_api_port} pid=${ceps_process.pid}`);
+        let ws_ceps_api = new WebSocket(`ws://localhost:${current_ws_api_port}`);
         ws_ceps_api.on("error", (err) => {
-            callback(err);
-            console.log(chalk.red(`***Error: Connect to ws://localhost:${fetch_rollouts_ceps_api_port} failed`));
-            if (proc_down){
-
-            }
+            console.log(chalk.red(`***Error: Connect to ws://localhost:${current_ws_api_port} failed pid=${ceps_process.pid}`));
+            if (!proc_down) setTimeout(fetch_proc,1000);
+            else callback(err);
         });
         ws_ceps_api.on("open", () => {
             ws_ceps_api.on("message", function (msg){
-               // console.log(msg);
-
+                log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Received a reply from localhost:${current_ws_api_port} pid=${ceps_process.pid}`);
                 let m = JSON.parse(msg).sresult;
                 let removed_rollouts = [];
                 new_rollouts = extract_rollout_data_from_webservice_result(m);
@@ -299,7 +315,7 @@ let fetch_planned_rollouts = function (back_channel,callback){
                     for(let i = 0; i != rollouts.length;++i){
                     let rollout = rollouts[i];
                      if (rollout.changed != undefined && rollout.changed){
-                        log_debug(`fetch_planned_rollouts()/db update`,`Rollout id=${rollout.id} changed, trigger broadcast.`);
+                        log_debug(`fetch_planned_rollouts()/db update`,`Rollout id=${rollout.id} changed, trigger broadcast. pid=${ceps_process.pid}`);
                       broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
                      }
                  }
@@ -310,17 +326,22 @@ let fetch_planned_rollouts = function (back_channel,callback){
                     broadcast(JSON.stringify({reply:"ok",rollout:r}));
                  }
                 } else console.log("merge_rollouts: no changes detected");
-
-                //console.log(chalk.yellow(`fetch_planned_rollouts(): ${rollouts}`));
                 try{if (back_channel != undefined) back_channel.send(JSON.stringify(rollouts));}catch(err){}
-                clearInterval(fetch_proc);
-                process.kill(ceps_process.pid);
+                log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Shutting down of process with pid=${ceps_process.pid}`);
+                let kill_proc = ()=> {
+                    try{process.kill(ceps_process.pid);}catch(err){
+                        log_err("fetch_planned_rollouts()/fetch_proc():kill_proc",`Failed to kill process with pid=${ceps_process.pid}. Retry in 1 second.`);
+                        setTimeout(kill_proc,2000);
+                    }
+                };
+                kill_proc();
                 if (callback != undefined) callback(undefined);
             });
             ws_ceps_api.send("QUERY root.rollout_;");         
         } );
         ws_ceps_api.on("close", () => {} );
-       },1000);  
+       };
+       setTimeout(fetch_proc,1000);
 }
 
 function make_timestamp(){
@@ -330,7 +351,7 @@ function make_timestamp(){
     }
 
     let t = new Date(Date.now());
-    let timestamp = `${t.getFullYear()}-${two_digits(t.getMonth()+1)}-${two_digits(t.getDay()+1)} ${two_digits(t.getHours())}:${two_digits(t.getMinutes())}:${two_digits(t.getSeconds())}`;
+    let timestamp = `${t.getFullYear()}-${two_digits(t.getMonth()+1)}-${two_digits(t.getDate())} ${two_digits(t.getHours())}:${two_digits(t.getMinutes())}:${two_digits(t.getSeconds())}`;
     return timestamp;
 }
 
@@ -351,8 +372,8 @@ function launch_rollout(back_channel,rollout){
     }
     rollout.up_since = Date.now();
     let t = new Date(rollout.up_since);
-    let timestamp = `${t.getFullYear()}-${two_digits(t.getMonth()+1)}-${two_digits(t.getDay()+1)} ${two_digits(t.getHours())}:${two_digits(t.getMinutes())}:${two_digits(t.getSeconds())}`;
-
+    let timestamp = `${t.getFullYear()}-${two_digits(t.getMonth()+1)}-${two_digits(t.getDate())} ${two_digits(t.getHours())}:${two_digits(t.getMinutes())}:${two_digits(t.getSeconds())}`;
+    //console.log(`TIMESTAMP: ${timestamp}`);
     log_info("launch_rollout()",`Trigger ${rollout.name}`);
 
     let ws_api_port = get_next_ws_api_port();
@@ -603,7 +624,6 @@ written by Tomas Prerovsky <tomas.prerovsky@gmail.com>
 
 
 function main(){
-
 
     setInterval(() => {
         log_debug(`main()`,`Check for DB changes`);

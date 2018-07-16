@@ -69,6 +69,13 @@ static_for(e:root.rollout){
     
     ignore_value { prev = step; };
    };
+
+   t {
+      prev;
+      prev;
+      as_symbol(market_name+text(prev)+"_critical","Event");
+   };
+
    t {
       prev;
       as_identifier(text(prev)+"_critical");

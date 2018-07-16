@@ -11,8 +11,6 @@ static_for(e:root.rollout){
    val market_code = text(strip(market.content().code.content())); 
    as_identifier(market_name+"_worker");
    hidden;
-   
-
 
    states { Initial;
             Final;          
@@ -22,8 +20,8 @@ static_for(e:root.rollout){
         as_identifier(strip(step.content().id.content()));
 
         states{Initial;Final;};
-        sub_step{Check;"";"_"+market_name;text(strip(step.content().job_check.content()));market_code;};
-        sub_step{Run;"";"_"+market_name;text(strip(step.content().job_run.content()));market_code;};
+        sub_step_check{Check;"";"_"+market_name;text(strip(step.content().job_check.content()));market_code;};
+        sub_step_run{Run;"";"_"+market_name;text(strip(step.content().job_run.content()));market_code;};
         Actions{
             do_big_step{
                 as_symbol("big_step_"+market_name,"Event");
@@ -32,7 +30,9 @@ static_for(e:root.rollout){
 
         t{Initial;Check;};
         t{Check;Run;as_symbol("small_step_"+market_name,"Event");};
-        t{Run;Final;as_symbol("small_step_"+market_name,"Event");do_big_step;};
+        t{Run;Check;as_symbol("small_step_"+market_name,"Event");};
+        
+        //t{Run;Final;as_symbol("small_step_"+market_name,"Event");do_big_step;};
         
     };
    }

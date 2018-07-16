@@ -2,6 +2,8 @@ kind Event;
 Event success;
 Event start_rollout;
 
+Systemstate WATCHDOG_TEMP;
+WATCHDOG_TEMP = 0;
 
 static_for(e:root.rollout){
  static_for(market:e.markets.market){
@@ -24,6 +26,7 @@ static_for(e:root.rollout){
          states{Initial;};
          if (step.criticality_def.content().size() > 0){
             on_enter{
+                print("WATCH_DOG ENTER","\n");
                 if (step.criticality_def.warn.timeout.size()>0){
                     val timeout = strip(step.criticality_def.warn.timeout.content());
                     start_timer(timeout*s,
@@ -38,9 +41,11 @@ static_for(e:root.rollout){
                                 as_identifier(market_name+text(strip(step.id.content()))+"_failure_timer")
                                 );
                 }
-
+                write_system_state(step_id+market_name+"_tries",0);
             };
             on_exit{
+                print("WATCH_DOG EXIT","\n");
+
                 if (step.criticality_def.warn.timeout.size()>0){
                     kill_timer(
                         as_identifier(market_name+text(strip(step.id.content()))+"_critical_timer")
@@ -52,6 +57,52 @@ static_for(e:root.rollout){
                     );
                 }
             };
+
+            //as_symbol(prefix+"small_step"+postfix,"Event");
+            Actions{
+                handle_result{
+                    print ("WATCH_DOG handle_result\n");
+                    write_system_state(step_id+market_name+"_tries",read_system_state(step_id+market_name+"_tries")+1);
+                    print("WATCH_DOG TRIES", read_system_state(step_id+market_name+"_tries"));
+
+                    static_for(e:step.criticality_def.warn.result){
+                        val code = as_int(strip(e.content()));
+                        if (code == read_system_state("small_step_"+market_name+"_rcode")){
+                            as_symbol(market_name+text(strip(step.id.content()))+"_critical","Event");
+                        }           
+                    }
+                    static_for(e:step.criticality_def.error.result){
+                        val code = as_int(strip(e.content()));
+                        if (code == read_system_state("small_step_"+market_name+"_rcode")){
+                            as_symbol(market_name+text(strip(step.id.content()))+"_failed","Event");
+                        }           
+                    }
+                    static_for(e:step.criticality_def.warn.tries){
+                        val tries = as_int(strip(e.content()))+1;
+                        if (tries == read_system_state(step_id+market_name+"_tries")){
+                            as_symbol(market_name+text(strip(step.id.content()))+"_critical","Event");
+                        }           
+                    }
+                    static_for(e:step.criticality_def.error.tries){
+                        val tries = as_int(strip(e.content()))+1;
+                        if (tries == read_system_state(step_id+market_name+"_tries")){
+                            as_symbol(market_name+text(strip(step.id.content()))+"_failed","Event");
+                        }           
+                    }
+
+                };
+            };
+
+            //as_symbol(prefix+"small_step_check_result"+postfix,"Event");
+
+            if (
+                //step.criticality_def.warn.result.content().size() > 0 || 
+                //step.criticality_def.error.result.content().size() >0
+                step.criticality_def.warn.content().size() > 0 || step.criticality_def.error.content().size() > 0
+                
+                ){
+                t{Initial;Initial;as_symbol("small_step_check_result_"+market_name,"Event");handle_result;};
+            }
          }
      };
    }

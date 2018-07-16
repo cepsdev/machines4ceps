@@ -1,7 +1,8 @@
-val db_host = "localhost";
-val db_user = "root";
-val db_passwd = "";
-val db_db = "rollout";
+val db_host = env("ROLLAUT_DB_HOST");
+val db_user = env("ROLLAUT_DB_USER");
+val db_passwd = env("ROLLAUT_DB_PASSWD");
+val db_db = env("ROLLAUT_DB_DB");
+val param_name = env("ROLLAUT_JENKINS_SAPCODE_PARAM");
 
 
 val SCRIPT_TO_CHECK_JOB_FOR_TERMINATION = "./check_job_for_termination -h "+db_host+" -u "+db_user+" -p \""+db_passwd+"\" ";

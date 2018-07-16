@@ -1,0 +1,23 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+Event next_step;
+
+sm{
+ sm_timestamp;
+ on_enter{
+  start_periodic_timer(1.0*s,next_step);
+ };
+ states{Initial;a;};
+ Actions{
+  print_timestamp{
+   print(timestamp(),"\n");
+  };
+ };
+ t{Initial;a;};
+ t{a;a;next_step;print_timestamp;};
+};
+
+Simulation{
+ Start{sm_timestamp;};
+};

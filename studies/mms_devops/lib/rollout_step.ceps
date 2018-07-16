@@ -4,7 +4,7 @@ kind Systemstate;
 
 Event big_step,small_step,step_failure,trigger_status_check,job_not_done_yet,job_finished,result_ok,result_nok;
 
-val param_name = "sapcode";  
+//val param_name = "sapcode";  
 
 global_functions{ 
  check_interval{
@@ -15,16 +15,16 @@ global_functions{
  };
 
  check_script_for_job_termination{
-     params{job;parameters;};
-     val t =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION +" -t \"" + START_TIMESTAMP + "\" -j " + job + " -s "+ parameters;
-     //print(t,"\n");
+     params{t;job;parameters;};
+     val t =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION +" -t \"" + t + "\" -j " + job + " -s "+ parameters;
+     print(t,"\n");
      return t;
  };
 
  script_for_job_result{
-     params{job;parameters;};
-     val t =  SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT +" -c -t \"" + START_TIMESTAMP + "\" -j " + job + " -s "+ parameters;
-     //print(t,"\n");
+     params{t;job;parameters;};
+     val t =  SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT +" -c -t \"" + t + "\" -j " + job + " -s "+ parameters;
+     print(t,"\n");
      return t;
  };
 
@@ -35,7 +35,7 @@ global_functions{
  }; 
 };
 
-macro sub_step{    
+macro sub_step_check{    
        sm{
             hd(arglist);
             val prefix = hd(tail(arglist));
@@ -52,19 +52,21 @@ macro sub_step{
                     WaitALittle;};
             Actions{
                 start_job{
+                    //print("START ",script_for_job_execution(job_name,param_name+" "+job_parameter),"\n");
                     os_system(script_for_job_execution(job_name,param_name+" "+job_parameter));
                     start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                    as_symbol("sub_step_check"+prefix+job_name+job_parameter+postfix,"Systemstate") = timestamp();
                 };
                 start_timer_for_job_check{
                     start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
                 };
                 run_check_script{
-                   os_system(check_script_for_job_termination(job_name,job_parameter),
+                   os_system(check_script_for_job_termination(as_symbol("sub_step_check"+prefix+job_name+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
                              as_symbol(prefix+"job_finished"+postfix,"Event"),
                              as_symbol(prefix+"job_not_done_yet"+postfix,"Event"));
                 };
                 run_get_result_script{
-                   os_system(script_for_job_result(job_name,job_parameter),
+                   os_system(script_for_job_result(as_symbol("sub_step_check"+prefix+job_name+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
                              as_symbol(prefix+"result_ok"+postfix,"Event"),
                              as_symbol(prefix+"result_nok"+postfix,"Event"));
                 };
@@ -72,7 +74,12 @@ macro sub_step{
                     as_symbol(prefix+"big_step"+postfix,"Event");
                 };
                 run_step{
-                    as_symbol(prefix+"small_step"+postfix,"Event");                    
+                    print("["+prefix+"small_step_check_result"+postfix+"] RCODE IS ",argv(1),"\n");
+
+                    write_system_state(prefix+"small_step"+postfix+"_rcode",argv(1));
+                    //as_symbol(prefix+"small_step"+postfix+"_rcode","Systemstate") = argv(1);
+                    as_symbol(prefix+"small_step"+postfix,"Event");   
+                    as_symbol(prefix+"small_step_check_result"+postfix,"Event");                 
                 };
             };
 
@@ -87,6 +94,57 @@ macro sub_step{
 
             t{FetchResult;Final;as_symbol(prefix+"result_ok"+postfix,"Event");skip_run_step;};
             t{FetchResult;Final;as_symbol(prefix+"result_nok"+postfix,"Event");run_step;};
+
+        };
+    
+};
+
+
+macro sub_step_run{    
+       sm{
+            hd(arglist);
+            val prefix = hd(tail(arglist));
+            val postfix = hd(tail(tail(arglist)));
+            val job_name = hd(tail(tail(tail(arglist))));
+            val job_parameter = hd(tail(tail(tail(tail(arglist)))));
+            
+            states{ Initial;
+                    Final;
+                    JobTriggered;
+                    WaitForStatus;
+                    JobStillRunning;
+                    FetchResult;
+                    WaitALittle;};
+            Actions{
+                start_job{
+                    print("START ",script_for_job_execution(job_name,param_name+" "+job_parameter),"\n");
+                    os_system(script_for_job_execution(job_name,param_name+" "+job_parameter));
+                    start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                    as_symbol("sub_step_run"+prefix+job_name+job_parameter+postfix,"Systemstate") = timestamp();
+                };
+                start_timer_for_job_check{
+                    start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                };
+                run_check_script{
+                   os_system(check_script_for_job_termination(as_symbol("sub_step_run"+prefix+job_name+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
+                             as_symbol(prefix+"job_finished"+postfix,"Event"),
+                             as_symbol(prefix+"job_not_done_yet"+postfix,"Event"));
+                };
+               
+                done{
+                    as_symbol(prefix+"small_step"+postfix,"Event");                    
+                };
+            };
+
+            t{Initial;JobTriggered;start_job;};
+
+            t{JobTriggered;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+            t{WaitForStatus;JobStillRunning;as_symbol(prefix+"job_not_done_yet"+postfix,"Event");};
+            
+            t{JobStillRunning;WaitALittle;start_timer_for_job_check;};
+            t{WaitALittle;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+
+            t{WaitForStatus;Final;as_symbol(prefix+"job_finished"+postfix,"Event");done;};
 
         };
     
