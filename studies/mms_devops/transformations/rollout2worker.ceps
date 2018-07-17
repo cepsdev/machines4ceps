@@ -16,12 +16,21 @@ static_for(e:root.rollout){
             Final;          
           };
    static_for(step: e.steps.content().step_details) {
+       val job_check_warn_name = text(strip(step.job_check_warn.content()));
+       val job_run_warn_name = text(strip(step.job_run_warn.content()));
     sm{
         as_identifier(strip(step.content().id.content()));
+        on_enter{
+            write_system_state(market_name+"_job_check",text(strip(step.content().job_check.content())));
+            write_system_state(market_name+"_job_run",text(strip(step.content().job_run.content())));
+        };
 
         states{Initial;Final;};
-        sub_step_check{Check;"";"_"+market_name;text(strip(step.content().job_check.content()));market_code;};
-        sub_step_run{Run;"";"_"+market_name;text(strip(step.content().job_run.content()));market_code;};
+        sub_step_check{Check;"";"_"+market_name; as_symbol(market_name+"_job_check","Systemstate") ;market_code;
+                       as_symbol(market_name+"_job_check","Systemstate");
+                       job_check_warn;
+                       job_run_warn;};
+        sub_step_run{Run;"";"_"+market_name; as_symbol(market_name+"_job_run","Systemstate") ;market_code;};
         Actions{
             do_big_step{
                 as_symbol("big_step_"+market_name,"Event");

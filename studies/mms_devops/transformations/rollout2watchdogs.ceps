@@ -26,7 +26,11 @@ static_for(e:root.rollout){
          states{Initial;};
          if (step.criticality_def.content().size() > 0){
             on_enter{
-                print("WATCH_DOG ENTER","\n");
+                //print("WATCH_DOG ENTER","\n");
+                write_system_state(market_name+"_warn_state",0);
+                write_system_state(market_name+"_error_state",0);
+
+
                 if (step.criticality_def.warn.timeout.size()>0){
                     val timeout = strip(step.criticality_def.warn.timeout.content());
                     start_timer(timeout*s,
@@ -44,7 +48,7 @@ static_for(e:root.rollout){
                 write_system_state(step_id+market_name+"_tries",0);
             };
             on_exit{
-                print("WATCH_DOG EXIT","\n");
+                //print("WATCH_DOG EXIT","\n");
 
                 if (step.criticality_def.warn.timeout.size()>0){
                     kill_timer(
@@ -60,35 +64,52 @@ static_for(e:root.rollout){
 
             //as_symbol(prefix+"small_step"+postfix,"Event");
             Actions{
+                val job_check_warn = text(strip(step.content().job_check_warn.content()));
+                val job_run_warn = text(strip(step.content().job_run_warn.content()));
+
+                enter_warn_state{
+                    write_system_state(market_name+"_warn_state",1);
+      
+                };
+
+                enter_error_state{
+                    write_system_state(market_name+"_error_state",1);
+                };
+
                 handle_result{
-                    print ("WATCH_DOG handle_result\n");
+                    //print ("WATCH_DOG handle_result\n");
                     write_system_state(step_id+market_name+"_tries",read_system_state(step_id+market_name+"_tries")+1);
-                    print("WATCH_DOG TRIES", read_system_state(step_id+market_name+"_tries"));
+                    //print("WATCH_DOG TRIES", read_system_state(step_id+market_name+"_tries"));
 
                     static_for(e:step.criticality_def.warn.result){
                         val code = as_int(strip(e.content()));
                         if (code == read_system_state("small_step_"+market_name+"_rcode")){
+                            write_system_state(market_name+"_warn_state",1);
                             as_symbol(market_name+text(strip(step.id.content()))+"_critical","Event");
                         }           
                     }
                     static_for(e:step.criticality_def.error.result){
                         val code = as_int(strip(e.content()));
                         if (code == read_system_state("small_step_"+market_name+"_rcode")){
+                            write_system_state(market_name+"_error_state",1);
                             as_symbol(market_name+text(strip(step.id.content()))+"_failed","Event");
                         }           
                     }
                     static_for(e:step.criticality_def.warn.tries){
                         val tries = as_int(strip(e.content()))+1;
                         if (tries == read_system_state(step_id+market_name+"_tries")){
+                            write_system_state(market_name+"_warn_state",1);
                             as_symbol(market_name+text(strip(step.id.content()))+"_critical","Event");
                         }           
                     }
                     static_for(e:step.criticality_def.error.tries){
                         val tries = as_int(strip(e.content()))+1;
                         if (tries == read_system_state(step_id+market_name+"_tries")){
+                            write_system_state(market_name+"_error_state",1);
                             as_symbol(market_name+text(strip(step.id.content()))+"_failed","Event");
                         }           
                     }
+                    
 
                 };
             };
@@ -103,6 +124,8 @@ static_for(e:root.rollout){
                 ){
                 t{Initial;Initial;as_symbol("small_step_check_result_"+market_name,"Event");handle_result;};
             }
+            t{Initial;Initial;as_symbol(market_name+text(strip(step.id.content()))+"_critical","Event");enter_warn_state;};
+            t{Initial;Initial;as_symbol(market_name+text(strip(step.id.content()))+"_failed","Event");enter_error_state;};
          }
      };
    }
