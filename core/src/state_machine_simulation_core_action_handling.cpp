@@ -935,6 +935,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				}
                 std::stringstream ss;
 
+                bool do_flush = false;
+
 				for(auto& n : args)
 				{
                     if (n->kind() == ceps::ast::Ast_node_kind::byte_array){
@@ -942,11 +944,14 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
                      for(auto c: seq){
                     	 ss << (int)c << " ";
                      }
-                    } else ss << default_text_representation(n);
+                    } else if (n->kind() == ceps::ast::Ast_node_kind::symbol &&
+                               ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "IOManip" &&
+                               ceps::ast::name(ceps::ast::as_symbol_ref(n)) == "endl" ) do_flush = true;
+                    else ss << default_text_representation(n);
                 }//for
                 if(live_logger()){
                    this->live_logger_out()->log_console(ss.str());
-                } else std::cout << ss.str();
+                } else {std::cout << ss.str(); if (do_flush) std::cout << std::endl; }
 
 			}
 			else if (func_name == "kill_timer" || func_name == "stop_timer")

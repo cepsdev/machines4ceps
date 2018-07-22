@@ -59,6 +59,7 @@ static bool is_id(ceps::ast::Nodebase_ptr p, std::string & result, std::string& 
 
 
 static ceps::ast::Nodebase_ptr clone(ceps::ast::Nodebase_ptr p){
+    if (p==nullptr) return p;
     if (p->kind() == ceps::ast::Ast_node_kind::int_literal)
         return new ceps::ast::Int{ ceps::ast::value(ceps::ast::as_int_ref(p)), ceps::ast::unit(ceps::ast::as_int_ref(p))};
     if (p->kind() == ceps::ast::Ast_node_kind::float_literal)
@@ -83,11 +84,15 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	}
     if (id == "write_system_state"){
         std::lock_guard<std::recursive_mutex>g(states_mutex());
+        if (args[1] == nullptr) fatal_(-1,"write_system_state: second argument is null.");
         get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))] = clone(args[1]);
         return args[1];
     } else if (id == "read_system_state"){
         std::lock_guard<std::recursive_mutex>g(states_mutex());
-        return clone(get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))]);
+        auto t = get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))];
+        if (t == nullptr){ t = new ceps::ast::Int{0,ceps::ast::all_zero_unit()}; get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))] = t;}
+        else t = clone(t);
+        return t;
     } else if( id == "__append" ){
         auto container = args[0];
         auto elem = args[1];
