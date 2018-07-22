@@ -18,6 +18,7 @@ static_for(e:root.rollout){
    static_for(step: e.steps.content().step_details) {
        val job_check_warn_name = text(strip(step.job_check_warn.content()));
        val job_run_warn_name = text(strip(step.job_run_warn.content()));
+       val job_run_error_name = text(strip(step.job_run_error.content()));
     sm{
         as_identifier(strip(step.content().id.content()));
         on_enter{
@@ -26,10 +27,16 @@ static_for(e:root.rollout){
         };
 
         states{Initial;Final;};
-        sub_step_check{Check;"";"_"+market_name; as_symbol(market_name+"_job_check","Systemstate") ;market_code;
+        sub_step_check{Check;
+                       "";
+                       "_"+market_name;
                        as_symbol(market_name+"_job_check","Systemstate");
-                       job_check_warn;
-                       job_run_warn;};
+                       market_code;
+                       as_symbol(market_name+"_job_run","Systemstate");
+                       job_check_warn_name;
+                       job_run_warn_name;
+                       market_name;
+                       job_run_error_name;};
         sub_step_run{Run;"";"_"+market_name; as_symbol(market_name+"_job_run","Systemstate") ;market_code;};
         Actions{
             do_big_step{

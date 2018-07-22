@@ -232,7 +232,7 @@
             <h2><span id="page_title"></span></h2>
         </div>
     </div>
-    <div class="row">
+    <div class="row"  id="searchfield_row">
         <div class="col-xs-2 col-sm-2"></div>
         <div class="col-xs-6 col-sm-8" >
                         <div class="form-group" style="padding-left: 4px;padding-right: 4px;">
@@ -247,7 +247,7 @@
         <div class="col-xs-2 col-sm-2"></div>        
     </div>
 
-        <div class="row">
+        <div class="row" id="first_row">
                 <div class="col-xs-2 col-sm-2">
                     <table width="100%" >
                         <tr><td></td><td style="text-align:center;">Inactive/Ready</td></tr>
@@ -515,6 +515,7 @@
     </script>
 
     <script>
+        let rollout_market = "<%=rollout_market %>";
         var connected = false;
         var cmd_channel_established = false;
         var new_remote_site  = false;
@@ -672,7 +673,7 @@
             //if(n.empty()) return;
             e.remove();
             e.insertAfter(n);
-            console.log(p);
+            if (DEBUG_GUI_EVENTS) console.log(p);
         }
 
         function change_lane_of_sm_view(sm_name,current_lane,new_lane){
@@ -767,6 +768,15 @@
             }
             if (minimized){
 
+                let ctrls = "";
+                if (rollout_market == undefined) ctrls = `
+<i 
+       id = "show_details_btn_${normalize_id(title)}"
+       class="material-icons md-24 md-dark details-show-btn" 
+       onclick="handle_tile_click('${title}')"
+       style = "cursor:pointer;">details</i>
+`;
+
                 content =`
 <table style="width:100%;">
 <tr><td style="vertical-align:top;width:100px;" >${title}</td><td style="vertical-align:center;height:16px;">
@@ -779,11 +789,7 @@
   </div>
 </div></td>
 <td style="width:20px;vertical-align:top;">
-    <i 
-       id = "show_details_btn_${normalize_id(title)}"
-       class="material-icons md-24 md-dark details-show-btn" 
-       onclick="handle_tile_click('${title}')"
-       style = "cursor:pointer;">details</i>
+${ctrls}
 </td>
 </tr>
 <tr><td colspan="3" style="text-align:center;"><div id="info_${normalize_id(title)}" class=""></div></td></tr>
@@ -814,7 +820,6 @@
 
 
         function sm_viz_details_click_handler(sm_name){
-            //console.log(`sm_viz_details_click_handler(${sm_name})`);
             let svg_info = get_svg_infos(sm_name);            
             $(`#dlg_state_machine_details_svg`).html(svg_info.data);
             $("#dlg_state_machine_details").modal("show");
@@ -823,11 +828,6 @@
 
 
         function mark_active_nodes(v){
-            //d3.selectAll(["#node1_is_Step1","#node1_is_Step2"]).style("fill","green").style("stroke","green");
-            //console.log(v);
-            
-            //let sm_name = get_sm_of_node_given_by_idx(v[i]);
-            //let t = find_sm_node_marked_nodes_info_by_name(sm_name);
 
             for(let k in states_info.ids_of_marked_nodes)
             {
@@ -840,19 +840,21 @@
             for(let i = 0; i != v.length;++i){
                 let sm_name = get_sm_of_node_given_by_idx(v[i]);
                 if (sm_name == undefined) continue;
-                //console.log(`sm_name: ${sm_name}, v[i]: ${v[i]}`,sm_name);
                 let node_id = find_sm_node_id_by_idx(v[i]);
                 if (node_id == undefined) continue;
-                if(undefined == states_info.ids_of_marked_nodes[sm_name]) states_info.ids_of_marked_nodes[sm_name] = [];
+                states_info.ids_of_marked_nodes[sm_name] = [];
                 states_info.ids_of_marked_nodes[sm_name].push(node_id);
                 d3.selectAll(`#${node_id}`).style("stroke","red");
             }
         }
 
         
-
+        let get_sm_cache = {};
         function get_sm(idx){
-            if (states_info.states == undefined) return;
+            let t = undefined;
+            if ( (t = get_sm_cache[idx]) != undefined) return t;
+
+            if (states_info.states == undefined) return undefined;
             let sinfo = undefined;
             for (let i = 0; i!=states_info.states.length;++i){
                 if (states_info.states[i].idx == idx) {sinfo = states_info.states[i];break;}
@@ -861,12 +863,15 @@
                 return undefined;
             }
             let full_name = sinfo.full_name;
-            if(sinfo.svg_id.startsWith("cluster")) return full_name;
-            return full_name.substring(0,full_name.lastIndexOf("."));
+            
+            if(sinfo.svg_id.startsWith("cluster")) return get_sm_cache[idx] = full_name;
+
+            return get_sm_cache[idx] = full_name.substring(0,full_name.lastIndexOf("."));
         }
 
         function get_sms_with_changes(old_states,new_states){
-            sms_changed = {};
+            if (DEBUG_GUI_EVENTS) console.log(`get_sms_with_changes: ${old_states.length} ${new_states.length}`);
+            let sms_changed = {};
             //INVARIANT old_states,new_states are already sorted(in ascending order) integer arrays
             if (old_states.length == 0 && new_states.length == 0) return; //nothing todo here
             if (new_states.length == 0 || old_states.length == 0){
@@ -876,7 +881,6 @@
                     sms_changed[get_sm(v[i])] = 1;
                 }
             }
-            //console.log(old_states);
             let v1 = old_states;
             let v2 = new_states;
             let j = 0;let i = 0;
@@ -899,22 +903,20 @@
             if (i < v1.length) {
                 for(; i != v1.length;++i) sms_changed[get_sm(v1[i])] = 1;
             }        
+            console.log("sms_changed:",sms_changed)
             return sms_changed;
         }
 
         function start_ceps_proc_consumer(ws){
+            let no_lanes = rollout_market != undefined;
             function h(ev){
-                //console.log(ev.data);
-                //console.log("'"+ev.data.charCodeAt(891)+"'");
                 let msg = JSON.parse(ev.data);
                 let to = {};
                 simplifyceps2json(to,msg.sresult.coverage);
                 msg.sresult.coverage = to.coverage[0];
-                //console.log(msg.sresult.coverage    );
                 states_info["coverage"] = msg.sresult.coverage.transition_coverage[0].toplevel_state_machines[0];
-                //console.log(states_info.coverage);
 
-                if (states_info.active_states != undefined) {
+               if (!no_lanes)  if (states_info.active_states != undefined) {
 
                     let sms_changed = get_sms_with_changes(states_info.active_states,msg.sresult.current_states);
 
@@ -1166,14 +1168,21 @@
                         for(let i = 0; i != v.sm.length;++i){
                             if (v.sm[i].name.indexOf(".") >= 0) continue;
                             states_info.ids_of_marked_nodes[v.sm[i].name]=[];
-                            $.get("<%=rollout.svgs%>"+"/"+v.sm[i].svg_filename,{},function(res){
+                            if (rollout_market != undefined){
+                                if (rollout_market != v.sm[i].name) continue;
+                                let sm_status = get_sm_status(v.sm[i].name,states_info.active_states);
+                                $("#single_market_view").append(html_gen_sm_widget(v.sm[i].name,/*res*/"",false,true));
+                                set_css_class_for_sm_viz($(`#sm_viz_${v.sm[i].name}`),sm_status,true);
+                                components[v.sm[i].name] = {};
+                            }
+                            else $.get("<%=rollout.svgs%>"+"/"+v.sm[i].svg_filename,{},function(res){
 
                                 if (lane_spinners_active){
                                     lane_spinners_active = false;
                                     $(".spinner").remove();
                                 }
 
-                                let sm_status = get_sm_status(v.sm[i].name,states_info.active_states)
+                                let sm_status = get_sm_status(v.sm[i].name,states_info.active_states);
                                 let lane = get_sm_lane_given_status(sm_status);
 
                                 $(lane)
@@ -1421,6 +1430,16 @@
         }
         
         $(document).ready(() => {
+
+            if (rollout_market == "") rollout_market = undefined;
+            if (rollout_market != undefined){
+                $("#searchfield_row").remove();
+                $("#first_row").html(`
+                <div class="col-xs-2 col-sm-2"></div>
+                <div class="col-xs-8 col-sm-8" id="single_market_view"></div>
+                `);
+            }
+            console.log(rollout_market);
 
             $("#btn_start").attr("disabled","disabled");
             $("#btn_stop").attr("disabled","disabled");

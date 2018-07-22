@@ -173,22 +173,57 @@ app.set("views", path.resolve(__dirname, "web/views"));
 app.set("view engine", "ejs");
 app.use(express.static(publicPath));
 
+app.get("/tables", function(req, res){
+    res.render("tableview",{ 
+        server_name : host_name,
+        command_port : command_port  }
+    );
+});
+
 app.get("/rollout_status", function(req, res) {
     let rollout_name = req.query.rollout;
+    let rollout_market = req.query.market;
+    let plain_market_url_list = req.query.plain_text_list_of_markets;
+
     let rollout = get_rollout_by_name(rollout_name);
     if (rollout == undefined) {
         rollout={name:rollout_name};
         res.render("404",{ 
             command_port : command_port,rollout:rollout  }
         );
-    } else res.render("index",{ 
-        hostname_ceps_service: host_name, 
-        ceps_api_port : rollout.ws_api,
-        server_name : host_name,
-        command_port : command_port,
-        rollout      : rollout    
-     }
-    );
+    } else {
+        if (plain_market_url_list != undefined){
+            res.type("text/plain");
+
+            let r = "";
+
+            for(let i = 0; i != rollout.markets.length;++i){
+                let e = rollout.markets[i];
+                let name = "";
+                if (e.name == undefined || e.name.type != undefined) continue;
+                r += `http://${req.headers.host}/rollout_status?rollout=${encodeURI(rollout_name)}&market=${encodeURI(e.name)}
+`;
+            }
+            res.send(r);
+        }
+        else if (rollout_market == undefined) res.render("index",{ 
+                hostname_ceps_service: host_name, 
+                ceps_api_port : rollout.ws_api,
+                server_name : host_name,
+                command_port : command_port,
+                rollout      : rollout,
+                rollout_market : ""
+            }
+        ); else res.render("index",{ 
+                hostname_ceps_service: host_name, 
+                ceps_api_port : rollout.ws_api,
+                server_name : host_name,
+                command_port : command_port,
+                rollout      : rollout,
+                rollout_market : rollout_market
+            }
+        );
+    }
 });
 
 app.get("/", function(req, res) {
@@ -341,7 +376,7 @@ let fetch_planned_rollouts = function (back_channel,callback){
         } );
         ws_ceps_api.on("close", () => {} );
        };
-       setTimeout(fetch_proc,1000);
+       setTimeout(fetch_proc,2000);
 }
 
 function make_timestamp(){
@@ -636,7 +671,7 @@ function main(){
               }
           );
     },
-    10000);
+    15000);
 
     http_port = 3000;
     console.log(chalk.yellow(`HTTP Server Ready,listening at ${host_name}:${http_port}`));
@@ -652,7 +687,7 @@ function main(){
                 let msg = JSON.parse(message);
                 console.log(msg);
                 if (msg.cmd == "get_planned_rollouts"){
-                    fetch_planned_rollouts(ws);
+                    fetch_planned_rollouts(ws,(err)=>{});
                 } else if (msg.cmd == "launch_rollout"){
                     launch_rollout(ws,msg.rollout);
                 } else if (msg.cmd == "kill_rollout"){
@@ -662,7 +697,7 @@ function main(){
         });
     };
 
-    setTimeout(start_reading_cmds,5000);
+    setTimeout(start_reading_cmds,10000);
 
     let check_rollouts = setInterval(
         ()=>{

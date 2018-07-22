@@ -50,6 +50,10 @@ static_for(e:root.rollout){
             on_exit{
                 //print("WATCH_DOG EXIT","\n");
 
+                write_system_state(market_name+"_warn_state",0);
+                write_system_state(market_name+"_error_state",0);
+
+
                 if (step.criticality_def.warn.timeout.size()>0){
                     kill_timer(
                         as_identifier(market_name+text(strip(step.id.content()))+"_critical_timer")

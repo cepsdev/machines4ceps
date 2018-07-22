@@ -24,6 +24,8 @@
     <link href="animate/animate.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" 
+      integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
     <style>
         /* Rules for sizing the icon. */
 .material-icons.md-18 { font-size: 18px; }
@@ -160,7 +162,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
-        <h3 style="color:white;vertical-align:center;">Rollout Overview</h3>
+        <h3 style="color:white;vertical-align:center;">Tables!</h3>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                 <!---li class="nav-item"><button id="btn_start" class="btn btn-outline-success">Start</button></li>
@@ -218,10 +220,8 @@
                                 </li>
                               </ul> 
                 </div></div></div>
-                <div class="col-xs-2 col-sm-8">                 
-                       
-                        <div id="rollouts_view" ></div>
-               
+                <div class="col-xs-2 col-sm-8">
+                        <div id="rollouts_view" style="height:500px;" ></div>
                 </div>
             
                
@@ -366,14 +366,7 @@
         </div>
      <!---------------------------- COMPONENT: Save Control Panel ---------------------------->
 
-    
-    
-    
-    
-    
-    
-     
-    <!-- -------------------------- COMPONENT: market urls -------------------------- -->
+      <!---------------------------- COMPONENT: market urls ---------------------------->
     <div class="modal fade" 
     id="dlg_market_urls" 
     tabindex="-1" 
@@ -394,55 +387,9 @@
            <div class="modal-footer">
                <!--button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button-->
            </div>
-        </div>
-        </div>
-    </div>
-
-   <!-- -------------------------- COMPONENT: edit rollouts -------------------------- -->
-   <div class="modal fade" 
-   id="dlg_edit_rollout" 
-   tabindex="-1" 
-   role="dialog" 
-   aria-labelledby="dlg_edit_rollout_label" 
-   style="z-index: 10000;">
-
-  <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-          <div class="modal-header">
-              <h4 class="modal-title" id="dlg_edit_rollouts_label"><span id="dlg_edit_rollouts_label_value"></span></h4>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          </div>
-          <div id="dlg_edit_rollouts_body" class="modal-body" 
-               style="max-height:700px;overflow:auto;">
-              <div class="card" id="dlg_edit_rollouts_details">
-
-                <ul class="nav nav-tabs">
-                    <li class="nav-item">
-                      <a class="nav-link active" data-toggle="tab" href="#dlg_edit_rollouts_tab_oveview">Overview</a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link" data-toggle="tab" href="#dlg_edit_rollouts_tab_steps">Steps</a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link" data-toggle="tab" href="#dlg_edit_rollouts_tab_markets">Markets</a>
-                    </li>
-                  </ul>
-                  
-                  <!-- Tab panes -->
-                  <div class="tab-content">
-                    <div class="tab-pane container active" id="dlg_edit_rollouts_tab_oveview">A</div>
-                    <div class="tab-pane container fade" id="dlg_edit_rollouts_tab_steps">B</div>
-                    <div class="tab-pane container fade" id="dlg_edit_rollouts_tab_markets">C</div>
-                  </div>
-
-              </div> 
-          </div>
-          <div class="modal-footer">
-              <!--button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button-->
-          </div>
-       </div>
        </div>
    </div>
+</div>
 
     <script src="jquery/js/jquery.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
@@ -453,6 +400,9 @@
     <script src="chartjs/Chart.js"></script>
     <script src="bootstrap-notify/bootstrap-notify.js"></script>
     <script src="d3/d3.js"></script>
+    <script src="/lw-tables/multi-select.js"></script>
+    <script src="/lw-tables/lw-tables.js"></script>
+    <script src="/lw-tables/tabs.js"></script>
 
     <script>
         function traverse_ceps_as_json(doc, f) {
@@ -472,6 +422,7 @@
     </script>
 
     <script>
+        let language_context = {current:"en"};
         var connected = false;
         var cmd_channel_established = false;
         var new_remote_site  = false;
@@ -488,200 +439,6 @@
         const ROLLOUT_FAILED = 4;
         let gen_html_for_rollout_id_counter = 0;
 
-
-        function normalize_rollout(rollout_raw){
-            let r = {};
-            r.steps = [];
-            r.markets = [];
-            for (let i = 0; i < rollout_raw.steps.length;i+=2){
-                r.steps.push(normalize_step(rollout_raw.steps[i],rollout_raw.steps[i+1]));
-            }
-            for (let i = 0; i < rollout_raw.markets.length;i+=2){
-                r.markets.push(normalize_market(rollout_raw.markets[i],rollout_raw.markets[i+1]));
-            }
-            return r;
-
-            function normalize_market(name,details){
-                let r = {name:name.name, details : {}};
-                details = details.name.content;
-                for(let i = 0; i != details.length;++i)
-                 if (details[i].name == "code"){
-                  r.details.code = details[i].content[0];
-                 }
-                return r;
-            }
-
-            function normalize_step(name,details){
-                let r = {name:name.name, details : {}, criticality_conditions:{warn:"",error:""}};
-                details = details.name.content;
-                for(let i = 0;i != details.length;++i){
-                    let e = details[i];
-                    if (e.name == "job_check")
-                     r.details.job_check = e.content[0];
-                    else if (e.name == "job_run")
-                     r.details.job_run = e.content[0];
-                    else if (e.name == "job_check_warn")
-                     r.details.job_check_warn = e.content[0];
-                    else if (e.name == "job_run_warn")
-                     r.details.job_run_warn = e.content[0];
-                    else if (e.name == "job_run_error")
-                     r.details.job_run_error = e.content[0];
-                }
-                return r;
-            }
-        }
-
-        let current_edit_rollout = undefined;
-        let current_step_edit_box = undefined;
-
-        function edit_steps_done(pos,field){
-            let v = $(`#current_step_edit_box`).val();
-            console.log(v,pos,field);
-            if (field != "crit_def_warn" && field != "crit_def_error" && field != "name")
-             current_edit_rollout.steps[pos].details[field] = v;
-            else if (field == "name") current_edit_rollout.steps[pos].name = v;
-            current_step_edit_box.html(v);
-            current_step_edit_box = undefined;
-        }
-
-        function start_edit(ev,tab_id,row,col){
-            //console.log($(ev.target).html(),pos,field);
-            let data = edit_context[tab_id].data;
-            edit_context[tab_id].row = row;
-            edit_context[tab_id].col = col;
-            edit_context[tab_id].edit_box = $(ev.target);
-            let v = data.elem(row,col).value;
-            let content = `
-            <div class="input-group">
-                <input id="current_edit_box_${tab_id}_${row}_${col}" type="text" class="form-control" 
-                       value="${v}"
-                       onfocusout="stop_edit('${tab_id}')"
-                       >
-            </div>
-            `;
-            edit_context[tab_id].edit_box.html(content);
-            setTimeout(() => {$(`#current_edit_box_${tab_id}_${row}_${col}`).focus();},100);
-        }
-
-        function edit_steps_remove_step(pos){
-            current_edit_rollout.steps.splice(pos,1);
-            build_tab(  current_edit_rollout,
-                        `#dlg_edit_rollouts_tab_steps`,
-                        data_from_rollout_steps(current_edit_rollout)
-            );
-        }
-
-        let edit_context = {
-
-        };
-        
-        function build_tab(rollout,tab_id,data){
-            let tbl_body = "";
-            let tab = $(tab_id);
-            edit_context[tab_id] = {data:data};
-
-            if (data.size() /*rollout.steps.length*/ == 0){
-                tbl_body += 
-                `
-                     <tr>
-                     <td>
-                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="edit_steps_add_step(${0})" id="" >
-                          <i class="fa fa-plus"></i>
-                        </a>
-                      </td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr> `;                    
-            }
-            for(let i = 0 ; i != /*rollout.steps.length*/data.size();++i){
-                //let step = rollout.steps[i];
-                let inner = ""
-                for(let j = 0; j != data.cols();++j){
-                    inner += `
-                    <td onclick="start_edit(event,'${tab_id}',${i},${j})" >${data.elem(i,j).value}</td> 
-                    `;
-                }
-
-                tbl_body += 
-                `
-                     <tr>
-                     <td>
-                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="edit_steps_add_step(${i})" id="" >
-                          <i class="fa fa-plus"></i>
-                        </a>
-                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="edit_steps_remove_step(${i})" id="" >
-                          <i class="fa fa-minus"></i>
-                        </a>
-                      </td>
-                      ${inner}
-                    </tr> `;                    
-                }
-                inner = "";
-                for(let j = 0; j != data.cols();++j){
-                    inner += `
-                    <th>${data.elem(-1,j).title}</td> 
-                    `;
-                }
-
-                let content = 
-                `
-                <p></p>
-                <div style="width: 750px;height:500px; overflow-y: scroll;overflow-x: scroll;">
-                <table style="table-layout:fixed;overflow:hidden; width:1200px;padding:4px;">
-                <thead>
-                 <tr>
-                  <th><emph>Action</emph></th>
-                  ${inner}
-                 </tr>
-                </thead>
-                <tbody>${tbl_body}</tbody>
-                </table>
-                </div>
-                `;
-            $(tab).html(content);
-        }
-
-        function data_from_rollout_steps(rollout)
-        {
-            return {
-                size : function(){
-                    return rollout.steps.length;
-                },
-                cols : function (){return 8;},
-                elem : function(i,j){
-                    if (j == 0) return {title:"Name",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].name : undefined};
-                    else if (j == 1) return {title:"Check",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].details.job_check : undefined};
-                    else if (j == 2) return {title:"Run",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].details.job_run : undefined};
-                    else if (j == 3) return {title:"Check (Warn)",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].details.job_check_warn : undefined};
-                    else if (j == 4) return {title:"Run (Warn)",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].details.job_run_warn : undefined};
-                    else if (j == 5) return {title:"Run (Error)",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].details.job_run_error : undefined};
-                    else if (j == 6) return {title:"Crit. Cond. Warn",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].criticality_conditions.warn : undefined};
-                    else if (j == 7) return {title:"Crit. Cond. Error",value: i < rollout.steps.length && i >= 0 ? rollout.steps[i].criticality_conditions.error : undefined};
-                    return undefined;
-                }
-            }
-        }
-
-        function action_edit_rollout(rollout_id){
-            let rollout = find_rollout_by_id(rollout_id);
-            if (rollout == undefined) return;
-            $('#dlg_edit_rollout').modal('show');
-            $('#dlg_edit_rollouts_label_value').html(`<small>${rollout.name}</small>`);
-            //console.log(rollout);
-            current_edit_rollout = rollout = normalize_rollout(rollout);
-            console.log(rollout);
-            build_tab(  rollout,
-                        `#dlg_edit_rollouts_tab_steps`,
-                        data_from_rollout_steps(rollout)
-            );
-            //build_markets_tab(rollout);
-        }
 
         function dlg_open_market_urls(rollout_id){
             let rollout = find_rollout_by_id(rollout_id);
@@ -849,9 +606,9 @@
                     actions = `<a href="#" class="btn btn-primary" onclick="action_launch_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_launch" >
                                 Launch
                                </a>
-                               <href="#" class="btn btn-primary" onclick="action_edit_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_edit">
-                                Edit
-                               </a>                               
+                               <!--a href="#" class="btn btn-primary disabled" onclick="action_kill_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_kill">
+                                Kill
+                               </a-->                               
                                `;
                 }
 
@@ -894,12 +651,12 @@
                     <tbody>
                         <tr>
                             <td style="width:15%;">${d.getMonth()+1}/${d.getDay()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
-                            <td style="width:25%;">
+                            <td>
                                 <div class="rollout-time-left" id="${rollout.internal_id}_time_left_section">
                                     ${time_sec} 
                                 </div>
                             </td>
-                            <td style="text-align:right;" >${actions}</td>
+                            <td>${actions}</td>
                         </tr>
                     </tbody>
                     `;
@@ -977,13 +734,32 @@
         }
 
         function create_rollout_view(rollouts){
+            //TABLES
             console.log(`create_rollout_view()`);
-            let content = "";
-            for(let i = 0; i != rollouts.length;++i){
-                let h = gen_html_for_rollout(rollouts[i]);
-                content += h;                
-            }
-            $(rollouts_view).html(content);
+            let data_ctrl = build_table(lw_tables,"rollouts_view",
+            [
+                {
+                    name    : "A",
+                    title   : {en:"A",de:"A"},
+                    type    : "text-search",
+                    idx     : 1
+                },
+                {
+                    name    : "B",
+                    title   : {en:"B",de:"B"},
+                    type    : "text-search",
+                    idx     : 2 
+                },
+                {
+                    name    : "C",
+                    title   : {en:"C",de:"C"},
+                    type    : "text-search",
+                    idx     : 3
+                }
+            ]
+            ,[["a1,1","a1,2","a1,3"],["a2,1","a2,2","a2,3"]]);
+            
+            //$(rollouts_view).html("gaga");
         }
 
         function update_view(rollout){
@@ -1099,14 +875,14 @@
                  let v = rollouts_global;
                  if (v == undefined || v.length == 0){
                      //Case no rollouts available
-                     if(!$(`#info_no_rollouts_card`).empty()) return;
+                     /*if(!$(`#info_no_rollouts_card`).empty()) return;
                      $(`#rollouts_view`).html(`
                      <div class="card" style="margin:4px;" id = "info_no_rollouts_card">
                         <div class="card-body" id = "info_no_rollouts_card_body">
                             <p class="card-text">No Rollouts scheduled or running.</p>
                         </div>
                     </div>
-                     `);
+                     `);*/
                     return;
                  } 
                  for(let i = 0; i != v.length;++i){
