@@ -26,6 +26,7 @@ static_for(e:root.rollout){
             write_system_state(market_name+"_job_run",text(strip(step.content().job_run.content())));
         };
 
+     
         states{Initial;Final;};
         sub_step_check{Check;
                        "";
@@ -36,8 +37,18 @@ static_for(e:root.rollout){
                        job_check_warn_name;
                        job_run_warn_name;
                        market_name;
-                       job_run_error_name;};
-        sub_step_run{Run;"";"_"+market_name; as_symbol(market_name+"_job_run","Systemstate") ;market_code;};
+                       job_run_error_name;
+                       step.params_ext;
+                       step.settings;
+                       };
+                       
+        sub_step_run{Run;
+                     "";
+                     "_"+market_name; 
+                     as_symbol(market_name+"_job_run","Systemstate") ;
+                     market_code;
+                     step.settings;
+                     };
         Actions{
             do_big_step{
                 as_symbol("big_step_"+market_name,"Event");

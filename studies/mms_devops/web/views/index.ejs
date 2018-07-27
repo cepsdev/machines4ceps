@@ -22,8 +22,47 @@
     <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
     <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
     <link href="animate/animate.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet">
+    <!--link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"-->
+<style>
+    @font-face {
+   font-family: 'Material Icons';
+   font-style: normal;
+   font-weight: 400;
+   src: url(iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
+   src: local('Material Icons'),
+        local('MaterialIcons-Regular'),
+        url(iconfont/MaterialIcons-Regular.woff2) format('woff2'),
+        url(iconfont/MaterialIcons-Regular.woff) format('woff'),
+        url(iconfont/MaterialIcons-Regular.ttf) format('truetype');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+
+</style>
     <style>
         /* Rules for sizing the icon. */
 .material-icons.md-18 { font-size: 18px; }
@@ -248,7 +287,7 @@
     </div>
 
         <div class="row" id="first_row">
-                <div class="col-xs-2 col-sm-2">
+                <!--div class="col-xs-2 col-sm-2">
                     <table width="100%" >
                         <tr><td></td><td style="text-align:center;">Inactive/Ready</td></tr>
                         <tr><td style="width:4px;"></td><td style="border-top: 8px; border-top-color: grey;border-top-style: solid;"></td></tr>
@@ -264,8 +303,8 @@
                                 </div>
 
                         </div>
-                </div>
-                <div class="col-xs-2 col-sm-2">
+                </div-->
+                <div class="col-xs-2 col-sm-3">
                         <table width="100%">
                                 <tr><td style="text-align:center;">Active</td></tr>
                                 <tr><td style="border-top: 8px; border-top-color:darkslateblue;border-top-style: solid;"></td></tr>
@@ -282,7 +321,7 @@
                             
                         </div>
                 </div>
-                <div class="col-xs-2 col-sm-2">
+                <div class="col-xs-2 col-sm-3">
                     <table width="100%">
                             <tr><td style="text-align:center;">Warning</td><td></td></tr>
                             <tr><td style="border-top: 8px; border-top-color:yellow;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
@@ -300,7 +339,7 @@
                     </div>
                 </div>
             
-                <div class="col-xs-2 col-sm-2">
+                <div class="col-xs-2 col-sm-3">
                         <table width="100%">
                                 <tr><td style="text-align:center;">Failure</td><td></td></tr>
                                 <tr><td style="border-top: 8px; border-top-color:red;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
@@ -318,7 +357,7 @@
 
                         </div>
                 </div>
-                <div class="col-xs-2 col-sm-2">
+                <div class="col-xs-2 col-sm-3">
                     <table width="100%">
                             <tr><td style="text-align:center;">Done</td><td style="width:4px;"></td></tr>
                             <tr><td style="border-top: 8px; border-top-color:green;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
@@ -779,7 +818,7 @@
 
                 content =`
 <table style="width:100%;">
-<tr><td style="vertical-align:top;width:100px;" >${title}</td><td style="vertical-align:center;height:16px;">
+<tr><td style="vertical-align:top;" >${title}</td></tr><tr><td style="vertical-align:center;height:16px;">
 <div class="progress">
   <div style="width:0%;" 
        id="sm_viz_progress_${normalize_id(title)}" 
@@ -798,7 +837,7 @@ ${ctrls}
 
             return `    
 <div id="sm_viz_${normalize_id(title)}" 
-     style="padding:2px;overflow:hidden;" 
+     style="padding:2px;" 
      class="ceps-ui-minimized ceps-ui-tile" 
      sm-name="${title}" 
      >     

@@ -398,6 +398,9 @@ function log_err(who,msg){
 }
 function log_debug(who,msg){
     if (global_conf.log_debug != undefined && global_conf.log_debug) console.log(chalk.yellow(`${make_timestamp()} ${who} ${msg}`));
+    fs.appendFileSync("log.txt",`${make_timestamp()} ${who} ${msg}
+`);
+
 }
 
 function launch_rollout(back_channel,rollout){
@@ -412,7 +415,13 @@ function launch_rollout(back_channel,rollout){
     log_info("launch_rollout()",`Trigger ${rollout.name}`);
 
     let ws_api_port = get_next_ws_api_port();
-    let rollout_path_suffix = encodeURIComponent(rollout.name).replace("%","_");
+    let rollout_path_suffix = encodeURIComponent(rollout.name)  .replace(/%/g,"_")
+                                                                .replace(/\(/g,"LL")
+                                                                .replace(/\)/g,"RR")
+                                                                .replace(/\$/g,"_S_")
+                                                                .replace(/{/g,"LLL")
+                                                                .replace(/}/g,"RRR")
+                                                                .replace(/\./g,"_DOT_");
     let rollout_path_base = rollout_path_suffix;
     let rollout_run_path = "runs/"+rollout_path_suffix;
     let rollout_db_full = "db_rollout_dump.ceps";
@@ -574,6 +583,7 @@ function launch_rollout(back_channel,rollout){
         ws_ceps_api.on("open", () => {
             let f = undefined;
             ws_ceps_api.on("message", f = function (msg){
+                
                 let m = JSON.parse(msg).sresult;
                 clearInterval(fetch_proc);
                 rollout.state = ROLLOUT_STARTED;
@@ -581,7 +591,7 @@ function launch_rollout(back_channel,rollout){
                 rollout.ws_api = ws_api_port;
                 rollout.hostname = host_name;
                 rollout.url = "/rollout_status?rollout="+encodeURIComponent(rollout.name);
-                rollout.svgs = encodeURIComponent(rollout.name).replace("%","_")+"__svgs";
+                rollout.svgs = rollout_path_suffix+"__svgs";//encodeURIComponent(rollout.name).replace("%","_")+"__svgs";
                 save_rollout(rollout);
                 //back_channel.send(JSON.stringify({reply:"ok",rollout:rollout}));
                 broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
@@ -597,6 +607,8 @@ function launch_rollout(back_channel,rollout){
                     },10000
                 );
                 ws_ceps_api.on("message", function(msg){
+                    //console.log(msg);
+                    //console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     let reply_ = JSON.parse(msg);
                     if (!reply_.ok) return;
                     let reply = {};
@@ -615,7 +627,7 @@ function launch_rollout(back_channel,rollout){
             ws_ceps_api.send("QUERY root.rollout;");         
         } );
         ws_ceps_api.on("close", () => {} );
-       },250);
+       },10000);
 }
 
 function kill_rollout(back_channel,rollout){
@@ -656,6 +668,14 @@ function fetch_rollout_plan(callback){
 console.log(chalk.bold.green(`Media Markt Saturn Rollout & Automation Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").
 written by Tomas Prerovsky <tomas.prerovsky@gmail.com>
 `));
+
+
+
+
+
+
+
+
 
 
 function main(){

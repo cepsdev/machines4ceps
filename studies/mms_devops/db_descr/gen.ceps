@@ -17,6 +17,8 @@ static_for(r:root.rollout_db){
                         f.job_check_warn;
                         f.job_run_warn;
                         f.job_run_error;
+                        f.params_ext;
+                        f.settings;
                         e.criticality_def;
                         e.sequence;
                     };
@@ -55,15 +57,17 @@ static_for(rss: root.rollout_steps_sorted){
         steps{
             val s_ctr = 1;
             static_for(e:rss.content()){
-                as_identifier("step "+text(s_ctr)+": "+text(e.content().description.content()));
+                as_identifier("step_"+text(s_ctr));
                 step_details{
-                    id{text("step "+text(s_ctr)+": "+text(e.content().description.content()));};
+                    id{text("step_"+text(s_ctr));};
                     e.content().job_check;
                     e.content().job_run;
                     e.content().job_check_warn;
                     e.content().job_run_warn;
                     e.content().job_run_error;
                     e.content().criticality_def;
+                    e.content().params_ext;
+                    e.content().settings;
                 };
                 ignore_value{s_ctr = s_ctr + 1;};
             }            

@@ -1,6 +1,7 @@
 kind Event;
 kind Guard;
 kind Systemstate;
+kind IOManip;IOManip endl;
 
 Event big_step,small_step,step_failure,trigger_status_check,job_not_done_yet,job_finished,result_ok,result_nok;
 
@@ -16,25 +17,35 @@ global_functions{
 
  check_script_for_job_termination{
      params{t;job;parameters;};
-     val t =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION +" -t \"" + t + "\" -j " + job + " -s "+ parameters;
-     print(t,"\n");
-     return t;
+     val script_call =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION +" -t \"" + t + "\" -j " + job + " -s "+ parameters;
+     print("check_script_for_job_termination:",script_call,endl);
+     return script_call;
  };
 
  script_for_job_result{
      params{t;job;parameters;};
      val t =  SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT +" -c -t \"" + t + "\" -j " + job + " -s "+ parameters;
-     print(t,"\n");
+     //print(t,"\n");
      return t;
  };
 
  script_for_job_execution{
      params{job;parameters;};
      val t =  SCRIPT_TO_START_A_JOB + " " + job + " "+ parameters;
-     print(t,"\n");
+     //print("script_for_job_execution:",t,endl);
      return t;
  }; 
 };
+
+
+macro get_params{
+    val r = "";    
+    static_for(e:as_nodeset(hd(arglist)).content()){        
+        ignore_value{r = r +" "+ text(e.content().name.content()) +" \""+text(e.content().value.content())+"\"";};
+    }
+    r;
+};
+
 
 macro sub_step_check{    
        sm{
@@ -43,6 +54,35 @@ macro sub_step_check{
             val postfix = hd(tail(tail(arglist)));
             val job_name = hd(tail(tail(tail(arglist))));
             val job_parameter = hd(tail(tail(tail(tail(arglist)))));
+            val job_run_name = hd(tail(tail(tail(tail(tail(arglist))))));
+            val job_check_warn = hd(tail(tail(tail(tail(tail(tail(arglist)))))));
+            val job_run_warn = hd(tail(tail(tail(tail(tail(tail(tail(arglist))))))));
+            val market_name = hd(tail(tail(tail(tail(tail(tail(tail(tail(arglist)))))))));
+            val job_run_error = hd(tail(tail(tail(tail(tail(tail(tail(tail(tail(arglist))))))))));
+            val params_ext = hd(tail(tail(tail(tail(tail(tail(tail(tail(tail(tail(arglist)))))))))));
+            val settings = hd(tail(tail(tail(tail(tail(tail(tail(tail(tail(tail(tail(arglist))))))))))));
+
+
+            val params_ext_check = text(make_struct("get_params",as_nodeset(params_ext).content().check));
+            val params_ext_check_warn = text(make_struct("get_params",as_nodeset(params_ext).content().check_warn));
+            val params_ext_run = text(make_struct("get_params",as_nodeset(params_ext).content().run));
+            val params_ext_run_warn = text(make_struct("get_params",as_nodeset(params_ext).content().run_warn));
+
+            val params_ext_run_error = text(make_struct("get_params",as_nodeset(params_ext).content().run_error));
+
+            /*val params_ext_check = "";
+            val params_ext_check_warn = "";
+            val params_ext_run = "";
+            val params_ext_run_warn = "";
+            val params_ext_run_error = "";*/
+
+
+
+        /*get_params{step.params_ext.run.param;};
+        get_params{step.params_ext.check_warn.param;};
+        get_params{step.params_ext.run_warn.param;};
+        get_params{step.params_ext.run_error.param;};*/
+
             
             states{ Initial;
                     Final;
@@ -50,20 +90,61 @@ macro sub_step_check{
                     WaitForStatus;
                     JobStillRunning;
                     FetchResult;
-                    WaitALittle;};
+                    WaitALittle;
+                    WaitForSoftTimeout;
+                    WaitForSoftTimeoutDone;};
             Actions{
                 start_job{
-                    //print("START ",script_for_job_execution(job_name,param_name+" "+job_parameter),"\n");
-                    os_system(script_for_job_execution(job_name,param_name+" "+job_parameter));
-                    start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
-                    as_symbol("sub_step_check"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate") = timestamp();
+
+                    //print ("start_job(): ",market_name+"_warn_state=",read_system_state(market_name+"_warn_state"),endl);
+                    //print ("start_job(): ",market_name+"_error_state=",read_system_state(market_name+"_error_state"),endl);
+                    
+                    if (!read_system_state(market_name+"_error_state")) {
+                        if (read_system_state(market_name+"_warn_state")){
+                            write_system_state(text(job_name),job_check_warn);
+                            write_system_state(text(job_run_name),job_run_warn);
+                            write_system_state("ext_params_check_"+postfix,params_ext_check_warn);
+                            write_system_state("ext_params_run_"+postfix,params_ext_run_warn);
+                        } else {
+                            write_system_state("ext_params_check_"+postfix,params_ext_check);
+                            write_system_state("ext_params_run_"+postfix,params_ext_run);
+                            static_for(e:as_nodeset(settings).content().check.content()){
+                                if("soft_timeout" == text(e.param.content().name.content())){
+                                    val t = as_int(e.param.content().value.content());
+                                    write_system_state(prefix+"check_job_name_soft_timeout"+postfix,t);
+                                    start_timer(t*s,as_symbol(prefix+"_check_restart_job_"+postfix,"Event"));                                    
+                                }
+                            }                             
+                        }
+
+                        //print("START ",script_for_job_execution(job_name,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate") ),"\n");
+                        
+                        write_system_state(prefix+"check_job_name_"+postfix,job_name);
+                        write_system_state(prefix+"check_job_parameters_"+postfix,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"));
+
+                        os_system(
+                            script_for_job_execution(job_name,
+                                                     param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate")
+                                                     ));
+                        
+                        //print ("start_job():",script_for_job_execution(job_name,param_name+" "+job_parameter),endl);
+                        start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                        as_symbol("sub_step_check"+prefix+job_parameter+postfix,"Systemstate") = timestamp();
+                        print("sub_step_check"+prefix+job_parameter+postfix,endl);
+                    } else {
+                        //print ("start_job(): ",market_name+" giving up",endl);
+                        if (job_run_error != "") {
+                            print ("start_job(): ",market_name+" start error job ",job_run_error ,endl);
+                            os_system(script_for_job_execution(job_run_error,param_name+" "+job_parameter+params_ext_run_error));
+                        }
+                    }
                 };
                 start_timer_for_job_check{
                     start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
                 };
                 run_check_script{
                    os_system(check_script_for_job_termination(
-                             as_symbol("sub_step_check"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
+                             as_symbol("sub_step_check"+prefix+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
                              as_symbol(prefix+"job_finished"+postfix,"Event"),
                              as_symbol(prefix+"job_not_done_yet"+postfix,"Event"));
                 };
@@ -77,21 +158,37 @@ macro sub_step_check{
                     as_symbol(prefix+"big_step"+postfix,"Event");
                 };
                 run_step{
-                    print("["+prefix+"small_step_check_result"+postfix+"] RCODE IS ",argv(1),"\n");
+                    print("["+prefix+"small_step_check_result"+postfix+"] RESULT CODE IS ",argv(1),"\n");
 
                     write_system_state(prefix+"small_step"+postfix+"_rcode",argv(1));
                     //as_symbol(prefix+"small_step"+postfix+"_rcode","Systemstate") = argv(1);
                     as_symbol(prefix+"small_step"+postfix,"Event");   
                     as_symbol(prefix+"small_step_check_result"+postfix,"Event");                 
                 };
+
+                soft_timeout_expired{
+                    print("soft_timeout_expired!",endl);                                    
+                    start_timer(read_system_state(prefix+"check_job_name_soft_timeout"+postfix)*s,as_symbol(prefix+"_check_restart_job_"+postfix,"Event"));
+                    //as_symbol("sub_step_check"+prefix+job_parameter+postfix,"Systemstate") = timestamp();
+                    os_system(
+                            script_for_job_execution(
+                                read_system_state(prefix+"check_job_name_"+postfix),
+                                read_system_state(prefix+"check_job_parameters_"+postfix,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"))
+                            )
+                    );        
+                };
             };
 
             t{Initial;JobTriggered;start_job;};
+            t{Initial;WaitForSoftTimeout;};
+            t{WaitForSoftTimeout;WaitForSoftTimeout;as_symbol(prefix+"_check_restart_job_"+postfix,"Event");soft_timeout_expired;};
 
             t{JobTriggered;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
             t{WaitForStatus;JobStillRunning;as_symbol(prefix+"job_not_done_yet"+postfix,"Event");};
-            t{WaitForStatus;FetchResult;as_symbol(prefix+"job_finished"+postfix,"Event");run_get_result_script;};
             
+            t{WaitForStatus;FetchResult;as_symbol(prefix+"job_finished"+postfix,"Event");run_get_result_script;};
+            t{WaitForSoftTimeout;WaitForSoftTimeoutDone;as_symbol(prefix+"job_finished"+postfix,"Event");};
+
             t{JobStillRunning;WaitALittle;start_timer_for_job_check;};
             t{WaitALittle;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
 
@@ -120,8 +217,12 @@ macro sub_step_run{
                     WaitALittle;};
             Actions{
                 start_job{
-                    print("START ",script_for_job_execution(job_name,param_name+" "+job_parameter),"\n");
-                    os_system(script_for_job_execution(job_name,param_name+" "+job_parameter));
+                    print("START ",script_for_job_execution(job_name,param_name+" "+job_parameter+as_symbol("ext_params_run_"+postfix,"Systemstate")),"\n");
+                    os_system(
+                        script_for_job_execution(job_name,
+                                                 param_name+" "+job_parameter+as_symbol("ext_params_run_"+postfix,"Systemstate")
+                                                 ));
+                    //print ("start_job():",script_for_job_execution(job_name,param_name+" "+job_parameter),endl);
                     start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
                     as_symbol("sub_step_run"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate") = timestamp();
                 };

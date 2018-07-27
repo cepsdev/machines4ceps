@@ -177,8 +177,40 @@ void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,st
 }
 
 static std::string dot_escape(std::string str){
-    return replace_all(replace_all(str," ","____"),":","___");
+    return "blabla";
+    return replace_all(replace_all(replace_all(replace_all(replace_all(replace_all(replace_all(str," ","____"),":","___"),"\"","\\\""),"\n"," "),"-",""),"!",""),".","");
 }
+
+static std::string dot_label_escape(std::string str){
+    return replace_all(replace_all(str,"\"",""),"\n"," ");
+}
+
+
+std::string Dotgenerator::label(State_machine::State* s){
+    if (s->id() == "Initial" || s->id() == "initial" || s->id() == "Final" || s->id() == "final" ) return "xlabel=<<i><FONT POINT-SIZE=\"8\">"+ dot_label_escape(s->id())+ "</FONT></i>>";
+    return "label=\""+dot_label_escape(s->id())+"\"";
+}
+
+std::string Dotgenerator::edge_label(State_machine::Transition const & t,State_machine* ){
+  std::string label_content;
+
+  for (auto ev : t.events())
+  {
+      label_content+="<B>"+dot_escape(ev.id())+"</B>";
+  }
+  if (t.guard().length()){
+      label_content+="["+t.guard()+"]";
+  }
+
+  for (auto a : t.actions()){
+      label_content+="<i>/"+a.id()+"();</i> ";
+  }
+
+  if (label_content.length() == 0 || !global_prop_show_edges()) return "";
+  if (t.from_.is_sm_ && t.to_.is_sm_) return ",fontname=\"Courier\",xlabel=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
+  return ",fontname=\"Courier\",label=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
+}
+
 
 void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,State_machine*> const & sms,
                                                          std::set<State_machine*>* expand,
@@ -212,7 +244,7 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
         dotgen.sm2dotname[sm] = "cluster"+std::to_string(cluster_counter++);
         for(auto const& s:sm->states()) if (!s->is_sm_){
 
-            dotgen.n2dotname[name+"."+s->id()] = "node"+std::to_string(pure_state_counter++)+"_is_"+dot_escape(s->id());
+            dotgen.n2dotname[name+"."+s->id()] = "node"+std::to_string(pure_state_counter++);//+"_is_"+dot_escape(s->id());
             dotgen.n2idx[name+"."+s->id()]  = s->idx_;
             if (s->id() == "Initial" || s->id() == "initial") dotgen.sm2initial[sm] = dotgen.n2dotname[name+"."+s->id()];
         }

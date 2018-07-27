@@ -120,30 +120,9 @@ private:
         return pure_state_base_style(highlight);
 	}
 
-	std::string label(State_machine::State* s){
-		if (s->id() == "Initial" || s->id() == "initial" || s->id() == "Final" || s->id() == "final" ) return "xlabel=<<i><FONT POINT-SIZE=\"8\">" +s->id()+ "</FONT></i>>";
-		return "label=\""+s->id()+"\"";
-	}
+        std::string label(State_machine::State* s);
+        std::string edge_label(State_machine::Transition const & t,State_machine* );
 
-        std::string edge_label(State_machine::Transition const & t,State_machine* ){
-	  std::string label_content;
-
-	  for (auto ev : t.events())
-	  {
-		  label_content+="<B>"+ev.id()+"</B>";
-	  }
-	  if (t.guard().length()){
-		  label_content+="["+t.guard()+"]";
-	  }
-
-	  for (auto a : t.actions()){
-		  label_content+="<i>/"+a.id()+"();</i> ";
-	  }
-
-	  if (label_content.length() == 0 || !global_prop_show_edges()) return "";
-	  if (t.from_.is_sm_ && t.to_.is_sm_) return ",fontname=\"Courier\",xlabel=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
-	  return ",fontname=\"Courier\",label=< <FONT POINT-SIZE=\"10\">"+label_content+"</FONT> >";
-	}
 public:
     std::string pure_state_base_style(bool highlight){if (!highlight)return pure_state_base_style_;return pure_state_base_highlighted_style_;}
     decltype(global_prop_show_edges_) & global_prop_show_edges() {return global_prop_show_edges_;}

@@ -16,7 +16,6 @@ static_for(e:root.rollout){
    states { Initial;
             Done;
             Final;
-            //e.steps.content().is_id();
           };
 
    static_for( step:e.steps.step_details ) {

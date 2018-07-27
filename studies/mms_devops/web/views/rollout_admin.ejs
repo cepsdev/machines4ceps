@@ -22,8 +22,50 @@
     <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
     <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
     <link href="animate/animate.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet">
+    <!--link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"-->
+<style>
+    @font-face {
+   font-family: 'Material Icons';
+   font-style: normal;
+   font-weight: 400;
+   src: url(iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
+   src: local('Material Icons'),
+        local('MaterialIcons-Regular'),
+        url(iconfont/MaterialIcons-Regular.woff2) format('woff2'),
+        url(iconfont/MaterialIcons-Regular.woff) format('woff'),
+        url(iconfont/MaterialIcons-Regular.ttf) format('truetype');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+
+</style>
+
+
+
     <style>
         /* Rules for sizing the icon. */
 .material-icons.md-18 { font-size: 18px; }
@@ -159,7 +201,7 @@
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
+        <a class="navbar-brand" href="#" >MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
         <h3 style="color:white;vertical-align:center;">Rollout Overview</h3>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
@@ -560,7 +602,7 @@
             </div>
             `;
             edit_context[tab_id].edit_box.html(content);
-            setTimeout(() => {$(`#current_edit_box_${tab_id}_${row}_${col}`).focus();},100);
+            setTimeout(() => {$(`#current_edit_box_${tab_id}_${row}_${col}`).focus();},0);
         }
 
         function edit_steps_remove_step(pos){
@@ -577,7 +619,7 @@
         
         function build_tab(rollout,tab_id,data){
             let tbl_body = "";
-            let tab = $(tab_id);
+            let tab = $("#"+tab_id);
             edit_context[tab_id] = {data:data};
 
             if (data.size() /*rollout.steps.length*/ == 0){
@@ -585,7 +627,7 @@
                 `
                      <tr>
                      <td>
-                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="edit_steps_add_step(${0})" id="" >
+                        <a  class="btn btn-outline-primary btn-sm" onclick="edit_steps_add_step(${0})" id="" >
                           <i class="fa fa-plus"></i>
                         </a>
                       </td>
@@ -612,10 +654,10 @@
                 `
                      <tr>
                      <td>
-                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="edit_steps_add_step(${i})" id="" >
+                        <a  class="btn btn-outline-primary btn-sm" onclick="edit_steps_add_step(${i})" id="" >
                           <i class="fa fa-plus"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="edit_steps_remove_step(${i})" id="" >
+                        <a  class="btn btn-outline-primary btn-sm" onclick="edit_steps_remove_step(${i})" id="" >
                           <i class="fa fa-minus"></i>
                         </a>
                       </td>
@@ -677,7 +719,7 @@
             current_edit_rollout = rollout = normalize_rollout(rollout);
             console.log(rollout);
             build_tab(  rollout,
-                        `#dlg_edit_rollouts_tab_steps`,
+                        `dlg_edit_rollouts_tab_steps`,
                         data_from_rollout_steps(rollout)
             );
             //build_markets_tab(rollout);
@@ -846,12 +888,12 @@
                 let time_sec = gen_html_time_section(rollout);
                 let actions = "";
                 if (rollout.state == ROLLOUT_READY){
-                    actions = `<a href="#" class="btn btn-primary" onclick="action_launch_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_launch" >
+                    actions = `<a  class="btn btn-primary" onclick="action_launch_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_launch" >
                                 Launch
                                </a>
-                               <href="#" class="btn btn-primary" onclick="action_edit_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_edit">
+                               <!--class="btn btn-primary" onclick="action_edit_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_edit">
                                 Edit
-                               </a>                               
+                               </a-->                               
                                `;
                 }
 
@@ -941,7 +983,7 @@
                             </td>
                             <td id="${rollout.internal_id}_estimated_remaining_time_section" style="width:20%;" >${time_remain}</td>
                             <td>
-                              <a href="#" class="btn btn-primary" onclick="dlg_open_market_urls('${rollout.id}');" id="btn_dlg_open_market_urls">
+                              <a  class="btn btn-primary" onclick="dlg_open_market_urls('${rollout.id}');" id="btn_dlg_open_market_urls">
                                 Markets
                               </a>                                      
                             </td>

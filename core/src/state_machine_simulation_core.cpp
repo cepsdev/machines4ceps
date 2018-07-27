@@ -1873,20 +1873,20 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 		   strct{"state_coverage",
 		    strct{"valid",state_coverage_defined},
 		    strct{"ratio",state_coverage},
-		    strct{"percentage",state_coverage*100.0},
+            strct{"percentage",state_coverage*100.0},
 		    strct{"covered_states",state_coverage_states_list_ceps_expr},
 		    strct{"not_covered_states",state_coverage_missing_states_list_ceps_expr},
-			strct{"toplevel_state_machines",toplevel_state_machines_state_coverage_stats}
+            strct{"toplevel_state_machines",toplevel_state_machines_state_coverage_stats}
 		   },
 		   strct{"transition_coverage",
 		    strct{"valid",transition_coverage_defined},
 		    strct{"ratio",transition_coverage},
-		    strct{"percentage",transition_coverage*100.0},
+            strct{"percentage",transition_coverage*100.0},
 		    strct{"covered_transitions",transition_coverage_list_ceps_expr},
-		    strct{"not_covered_transitions",transition_coverage_missing_list_ceps_expr},
+            strct{"not_covered_transitions",transition_coverage_missing_list_ceps_expr},
 			strct{"covered_transitions_by_id",transition_coverage_list},
-			strct{"not_covered_transitions_by_id",transition_coverage_missing_list},
-			strct{"toplevel_state_machines",toplevel_state_machines_transition_coverage_stats}
+            strct{"not_covered_transitions_by_id",transition_coverage_missing_list},
+            strct{"toplevel_state_machines",toplevel_state_machines_transition_coverage_stats}
 		 }
 	    }
 	};
