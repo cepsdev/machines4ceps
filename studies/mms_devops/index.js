@@ -627,7 +627,7 @@ function launch_rollout(back_channel,rollout){
             ws_ceps_api.send("QUERY root.rollout;");         
         } );
         ws_ceps_api.on("close", () => {} );
-       },10000);
+       },15000);
 }
 
 function kill_rollout(back_channel,rollout){
