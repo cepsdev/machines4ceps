@@ -487,8 +487,6 @@ static void run_simulations(State_machine_simulation_core* smc,
  auto simulations = universe[all{"Simulation"}];
  if (!simulations.size()) return;
 
-
-
  for (auto simulation_ : simulations){
 	auto simulation = simulation_["Simulation"];
 	smc->process_simulation(simulation,ceps_env,universe);
@@ -1641,12 +1639,6 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         }
     }
 
-    if(result_cmd_line.ws_api_on){
-        ws_api() = new Websocket_interface(this,result_cmd_line.ws_api_port);
-        ws_api()->start();
-        running_as_node() = true;
-    }
-
     if(result_cmd_line.vcan_api_on || ns["package"]["vcan_api_port"].as_str().length()){
         auto simcore_directory  = ns["package"][ceps::ast::all{"hub_directory"}];
         auto vcan_api_port = ns["package"]["vcan_api_port"].as_str();
@@ -1704,7 +1696,35 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         do_generate_dot_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
     }
 
-	run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
+    if(result_cmd_line.ws_api_on){
+        ws_api() = new Websocket_interface(this,result_cmd_line.ws_api_port);
+        ws_api()->start();
+        running_as_node() = true;
+    }
+
+    if(result_cmd_line.start_paused){
+        bool start_event_triggered = false;
+        for(;!start_event_triggered;){
+            main_event_queue().wait_for_data();
+            std::unique_lock<std::mutex> lk(main_event_queue().data_mutex());
+            std::queue<event_t> q;
+            while (!main_event_queue().data().empty()) {
+                q.push(main_event_queue().data().front());
+                main_event_queue().data().pop();
+            }
+            lk.unlock();
+            while(!q.empty()){
+                auto eev = q.front();
+                q.pop();
+                if (eev.exec){
+                    eev.exec->run(this);
+                    eev.exec = nullptr;
+                    delete eev.exec;
+                } else if (eev.id_ == "@@start") start_event_triggered = true;
+            }
+        }
+        run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
+    } else run_simulations(this,result_cmd_line,ceps_env_current(),current_universe());
 
     if(result_cmd_line.post_processing_rel_paths.size() ){
     	std::string last_file_processed;

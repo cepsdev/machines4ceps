@@ -29,7 +29,7 @@ const ROLLOUT_FAILED = 4;
 
 const global_conf = require('./rollaut.json');
 
-console.log(global_conf);
+
 let connections = [
 
 ];
@@ -80,12 +80,14 @@ let rollouts = [
 ];
 
 function save_rollout(rollout){
-    if (rollouts.length == 0)
+    if (rollouts.length == 0){
      rollouts.push(rollout);
-    else {
+     return rollouts[rollouts.length-1];
+    } else {
      for(let i = 0; i != rollouts.length;++i){
         if (rollout.id != rollouts[i].id) continue;
         rollouts[i] = rollout;
+        return rollouts[i];
      }
     }
 }
@@ -282,7 +284,7 @@ function merge_rollouts(new_rollouts,removed_rollouts){
     }
 
     rollouts = t;
-    console.log(`CHANGED = ${changed}`);
+    //console.log(`CHANGED = ${changed}`);
 
     return changed;
 }
@@ -334,7 +336,7 @@ let fetch_planned_rollouts = function (back_channel,callback){
         log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Trying to establish a websocket connect to localhost:${current_ws_api_port} pid=${ceps_process.pid}`);
         let ws_ceps_api = new WebSocket(`ws://localhost:${current_ws_api_port}`);
         ws_ceps_api.on("error", (err) => {
-            console.log(chalk.red(`***Error: Connect to ws://localhost:${current_ws_api_port} failed pid=${ceps_process.pid}`));
+            log_err("fetch_proc()",`Connect to ws://localhost:${current_ws_api_port} failed pid=${ceps_process.pid}`);
             if (!proc_down) setTimeout(fetch_proc,1000);
             else callback(err);
         });
@@ -357,10 +359,10 @@ let fetch_planned_rollouts = function (back_channel,callback){
                  for(let i = 0; i != removed_rollouts.length;++i){
                     let rollout = removed_rollouts[i];
                     let r = {id:rollout.id};
-                    console.log("Removing Rollout with id = "+r.id);
+                    log_debug("","Removing Rollout with id = "+r.id);
                     broadcast(JSON.stringify({reply:"ok",rollout:r}));
                  }
-                } else console.log("merge_rollouts: no changes detected");
+                } else log_debug("merge_rollouts: no changes detected");
                 try{if (back_channel != undefined) back_channel.send(JSON.stringify(rollouts));}catch(err){}
                 log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Shutting down of process with pid=${ceps_process.pid}`);
                 let kill_proc = ()=> {
@@ -391,24 +393,290 @@ function make_timestamp(){
 }
 
 function log_info(who,msg){
-    console.log(`${make_timestamp()} ${who} ${msg}`);
+    console.log(`${make_timestamp()} [${who}] ${msg}`);
 }
 function log_err(who,msg){
-    console.log(chalk.red(`${make_timestamp()} ${who} ${msg}`));
+    console.log(chalk.red(`${make_timestamp()} [${who}] ${msg}`));
 }
 function log_debug(who,msg){
-    if (global_conf.log_debug != undefined && global_conf.log_debug) console.log(chalk.yellow(`${make_timestamp()} ${who} ${msg}`));
-    fs.appendFileSync("log.txt",`${make_timestamp()} ${who} ${msg}
-`);
+    if (global_conf.log_debug != undefined && global_conf.log_debug) console.log(chalk.yellow(`${make_timestamp()} [${who}] ${msg}`));
+//   fs.appendFileSync("log.txt",`${make_timestamp()} ${who} ${msg}
+//`);
 
 }
+
+const CEPS_INSTANCE_SPAWNING = 1;
+const CEPS_INSTANCE_EXITED   = 2;
+const CEPS_INSTANCE_WSAPI_CONNECTED = 4;
+const CEPS_INSTANCE_WSAPI_CONNECTING = 8;
+const CEPS_INSTANCE_COMPLETE = 16;
+const CEPS_INSTANCE_RUNNING_ROLLOUT = 32;
+
+let ceps_instances = [
+
+];
+
+function watch_ceps_instance(info){
+    if (ceps_instances.length == 0) {ceps_instances.push(info);return ceps_instances.length - 1;}
+    for(let i = 0; i != ceps_instances.length; ++i)
+    {
+        if (ceps_instances[i].status == CEPS_INSTANCE_COMPLETE)
+         ceps_instances[i] = info;
+        return i;
+    }
+    ceps_instances.push(info);
+    return ceps_instances.length - 1;
+}
+
+setInterval( () => {
+    for(let i = 0; i != ceps_instances.length; ++i)
+    {
+        let info = ceps_instances[i];
+        let proc_idx = i;
+        let rollout = info.rollout;
+        //console.log(rollout);
+        log_debug("cepS Core Watch",
+        `'${rollout.name}': spawn=${(info.status & CEPS_INSTANCE_SPAWNING) != 0},terminated:${ (info.status & CEPS_INSTANCE_EXITED) != 0},`+
+        `connecting:${ (info.status & CEPS_INSTANCE_WSAPI_CONNECTING) != 0},connected:${ (info.status & CEPS_INSTANCE_WSAPI_CONNECTED) != 0} `);
+
+        if (info.status & CEPS_INSTANCE_COMPLETE) continue;
+        if (info.status & CEPS_INSTANCE_RUNNING_ROLLOUT){
+            if (info.status & CEPS_INSTANCE_EXITED){
+                connections_with_ceps_cores[rollout.pid.toString] = undefined;
+                clearInterval(info.periodic_status);
+                info.periodic_status=undefined;
+                rollout.pid = info.proc_info.pid = undefined;
+                rollout.ws_api = info.ws_api_port = get_next_ws_api_port();
+                info.ws_ceps_api = undefined;
+                info.status = CEPS_INSTANCE_SPAWNING | CEPS_INSTANCE_EXITED;
+            }
+        } else if (info.status & CEPS_INSTANCE_SPAWNING){
+            log_debug("cepS Core Watch",`Spawning ${rollout.name}`);
+            if (info.status & CEPS_INSTANCE_EXITED){
+                info.status = CEPS_INSTANCE_SPAWNING;
+                let cmd_args2 = info.cmd_args.concat(["--ws_api",`${info.ws_api_port}`]);
+                let ceps_process = spawn(info.cmd,cmd_args2,info.options);
+                info.proc_info = ceps_process;
+                log_info("watch cepS Core",`Restarting ${info.cmd} ${cmd_args2.join(" ")}`);    
+                log_info("watch cepS Core",`Spawned Child Process pid=${ceps_process.pid}`);
+    
+                ceps_process.stdout.on('data', (data) => {
+                    log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`);
+                });
+                ceps_process.stderr.on('data', (data) => {
+                    log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`); 
+                });
+                ceps_process.on('close', (code) => {
+                    try{process.kill(ceps_process.pid);}catch(err){}
+                    ceps_instances[proc_idx].status = CEPS_INSTANCE_EXITED | CEPS_INSTANCE_SPAWNING;
+                    connections_with_ceps_cores[ceps_process.pid] = undefined;
+                    log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} '${rollout.name}'`,`exited with code ${code}`);    
+                });
+
+            } else if (  !(info.status & CEPS_INSTANCE_WSAPI_CONNECTED) && !(info.status & CEPS_INSTANCE_WSAPI_CONNECTING)){
+                log_debug("cepS Core Watch",`Connecting '${rollout.name}'@ws://localhost:${info.ws_api_port}`);
+                let ws_ceps_api = new WebSocket(`ws://localhost:${info.ws_api_port}`);
+                info.status |= CEPS_INSTANCE_WSAPI_CONNECTING;
+
+                ws_ceps_api.on("error", () => {
+                    log_debug("cepS Core Watch",`Failed to connect to '${rollout.name}'@ws://localhost:${info.ws_api_port}`);
+                    //info.status &= ~(CEPS_INSTANCE_WSAPI_CONNECTING || CEPS_INSTANCE_WSAPI_CONNECTED);
+                } );
+                ws_ceps_api.on("open", () => {
+                    log_debug("cepS Core Watch",`Connection to '${rollout.name}'@ws://localhost:${info.ws_api_port} established. Sending PING`);
+                    let f = undefined;
+                    ws_ceps_api.on("message", f = function (msg){
+                        let m = JSON.parse(msg);
+                        if (m.ok && m.reply == "PONG"){
+                            log_debug("cepS Core Watch",`Successfuly connected to '${rollout.name}'@ws://localhost:${info.ws_api_port}`);
+                            info.status = CEPS_INSTANCE_WSAPI_CONNECTED;
+                            ws_ceps_api.removeEventListener("message",f);
+                            ws_ceps_api.on("message", f = function (msg){
+                                ws_ceps_api.removeEventListener("message",f);
+                                let m = JSON.parse(msg);
+                                if (m.ok){
+                                    info.status |= CEPS_INSTANCE_RUNNING_ROLLOUT;
+                                    ws_ceps_api.on("message", f = function (msg){
+                                        rollout.state = ROLLOUT_STARTED;
+                                        rollout.pid = info.proc_info.pid;
+                                        rollout.ws_api = info.ws_api_port;
+                                        rollout.hostname = host_name;
+                                        rollout.url = "/rollout_status?rollout="+encodeURIComponent(rollout.name);
+                                        rollout.svgs = info.rollout_path_suffix+"__svgs";//encodeURIComponent(rollout.name).replace("%","_")+"__svgs";
+                                        //save_rollout(rollout);
+                                        broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
+                                        connections_with_ceps_cores[rollout.pid.toString] = ws_ceps_api;
+                                        info.ws_ceps_api = ws_ceps_api;
+                                        ws_ceps_api.removeEventListener("message",f);
+
+                                        info.periodic_status = setInterval(
+                                            function(){
+                                                try{ws_ceps_api.send("QUERY root.__proc.coverage");}catch(err){
+                                                    //log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${err}`); 
+                                                }
+                                            },5000
+                                        );
+                                        ws_ceps_api.on("message", function(msg){
+                                            let reply_ = JSON.parse(msg);
+                                            if (!reply_.ok) return;
+                                            let reply = {};
+                                            simplifyceps2json(reply,reply_.sresult.coverage);
+                                            rollout.coverage = reply.coverage[0].transition_coverage[0].ratio;
+                                            rollout.health = reply.categories[0];
+                                            try{broadcast(JSON.stringify({reply:"ok",rollout:rollout}));}catch(err){}
+                                        });
+                                        ws_ceps_api.send("QUERY root.__proc.coverage");
+                                    });
+                                    ws_ceps_api.send("QUERY root.rollout;");
+                                }
+                                else try{process.kill(info.proc_info.pid);}catch(err){}
+                            });
+                            ws_ceps_api.send("EVENT @@start");              
+                        } else {
+                            try{process.kill(info.proc_info.pid);}catch(err){}                            
+                        }
+                    });
+                    ws_ceps_api.send("PING");         
+                } );
+                ws_ceps_api.on("close", () => {
+                    log_debug("cepS Core Watch",`Close Connection to '${rollout.name}'@ws://localhost:${info.ws_api_port}`);
+                    //info.status &= ~(CEPS_INSTANCE_WSAPI_CONNECTING || CEPS_INSTANCE_WSAPI_CONNECTED);
+                } );
+        
+            }
+        }
+    }
+    /*function kick_off_rollout(){
+        ws_ceps_api.on("open", () => {
+            let f = undefined;
+            ws_ceps_api.on("message", f = function (msg){
+                
+                let m = JSON.parse(msg).sresult;
+                clearInterval(fetch_proc);
+                rollout.state = ROLLOUT_STARTED;
+                rollout.pid = ceps_process.pid;
+                rollout.ws_api = ws_api_port;
+                rollout.hostname = host_name;
+                rollout.url = "/rollout_status?rollout="+encodeURIComponent(rollout.name);
+                rollout.svgs = rollout_path_suffix+"__svgs";//encodeURIComponent(rollout.name).replace("%","_")+"__svgs";
+                save_rollout(rollout);
+                broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
+
+                connections_with_ceps_cores[rollout.pid.toString] = ws_ceps_api; 
+                ws_ceps_api.removeEventListener("message",f);
+                let periodic_status = setInterval(
+                    function(){
+                        if (proc_down) clearInterval(periodic_status);
+                        try{ws_ceps_api.send("QUERY root.__proc.coverage");}catch(err){
+                            log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${err}`); 
+                        }
+                    },10000
+                );
+                ws_ceps_api.on("message", function(msg){
+                    let reply_ = JSON.parse(msg);
+                    if (!reply_.ok) return;
+                    let reply = {};
+                    simplifyceps2json(reply,reply_.sresult.coverage);
+                    rollout.coverage = reply.coverage[0].transition_coverage[0].ratio;
+                    rollout.health = reply.categories[0];
+                    try{broadcast(JSON.stringify({reply:"ok",rollout:rollout}));}catch(err){}
+                });
+                ws_ceps_api.send("QUERY root.__proc.coverage");
+            });
+            ws_ceps_api.send("QUERY root.rollout;");         
+        } );
+
+    }*/
+},1000);
+
+
+ function start_ceps_instance (rollout,
+                               rollout_path_base,
+                               rollout_db_full,
+                               ws_api_port,
+                               rollout_path_suffix){
+    
+    let cmd_args = [];
+
+    if (global_conf.skip_worker_sm_creation){
+        log_debug(`launch_rollout()`,`Worker State Machines will not be created. global_conf.skip_worker_sm_creation == true`);
+        cmd_args = [
+            `${rollout_path_base}/globals.ceps`,
+            `../${rollout_db_full}`,
+            "../db_descr/gen.ceps",
+            `${rollout_path_base}/extract_rollout.ceps`,
+            "../lib/conf.ceps",
+            "../lib/rollout_step.ceps",
+            "../transformations/rollout2sm.ceps",
+            "../transformations/rollout2watchdogs.ceps",
+            "../transformations/driver4rollout_start_immediately_no_worker.ceps",
+            "--dot_gen_one_file_per_top_level_statemachine",
+            "--dot_gen",
+            "--no_file_output",
+            "--start_paused"
+        ];
+    } else cmd_args = [
+        `${rollout_path_base}/globals.ceps`,
+        `../${rollout_db_full}`,
+        "../db_descr/gen.ceps",
+        `${rollout_path_base}/extract_rollout.ceps`,
+        "../lib/conf.ceps",
+        "../lib/rollout_step.ceps",
+        "../transformations/rollout2worker.ceps",
+        "../transformations/rollout2sm.ceps",
+        "../transformations/rollout2watchdogs.ceps",
+        "../transformations/driver4rollout_start_immediately.ceps",
+        "--dot_gen_one_file_per_top_level_statemachine",
+        "--dot_gen",
+        "--no_file_output",
+        "--start_paused"
+    ];
+
+    let cmd_args2 = cmd_args.concat(["--ws_api",`${ws_api_port}`]);
+
+    ceps_process = spawn("../ceps",cmd_args2,{cwd:"runs"});
+
+    let proc_idx = watch_ceps_instance(
+        {
+            status : CEPS_INSTANCE_SPAWNING,
+            proc_info : ceps_process,
+            cmd : "../ceps",
+            cmd_args : cmd_args,
+            options : {cwd:"runs"},
+            rollout:rollout,
+            ws_api_port : ws_api_port,
+            rollout_path_base : rollout_path_base,
+            rollout_db_full : rollout_db_full,
+            rollout_path_suffix:rollout_path_suffix
+        }
+    );
+
+    log_info("launch_rollout()",`Executing ../ceps ${cmd_args2.join(" ")}`);    
+    log_info("launch_rollout()",`Spawned Child Process pid=${ceps_process.pid}`);
+    
+    ceps_process.stdout.on('data', (data) => {
+        log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`);
+    });
+    ceps_process.stderr.on('data', (data) => {
+        log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`); 
+    });
+    ceps_process.on('close', (code) => {
+        try{process.kill(ceps_process.pid);}catch(err){}
+        ceps_instances[proc_idx].status |= CEPS_INSTANCE_EXITED;
+        connections_with_ceps_cores[ceps_process.pid] = undefined;
+        log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} '${rollout.name}'`,`exited with code ${code}`);    
+    });
+};
+
 
 function launch_rollout(back_channel,rollout){
     function two_digits(n){
         if (n < 10) return "0"+n.toString();
         else return n.toString();
     }
+    
     rollout.up_since = Date.now();
+    rollout.state = ROLLOUT_STARTED_PENDING;
     let t = new Date(rollout.up_since);
     let timestamp = `${t.getFullYear()}-${two_digits(t.getMonth()+1)}-${two_digits(t.getDate())} ${two_digits(t.getHours())}:${two_digits(t.getMinutes())}:${two_digits(t.getSeconds())}`;
     //console.log(`TIMESTAMP: ${timestamp}`);
@@ -437,7 +705,7 @@ function launch_rollout(back_channel,rollout){
     try{fs.writeFileSync(rollout_run_path+"/globals.ceps",
     `
     // ${t.toUTCString()}
-    // Generated by mms_rollout_automation@cepS
+    // Generated by rollAut
     // DO NOT CHANGE
     val START_TIMESTAMP  = "${timestamp}";
     `);}catch(err){}
@@ -505,69 +773,11 @@ function launch_rollout(back_channel,rollout){
     });
     svg_generating_proc.on('close', (code) => {
         log_debug(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,`Child Process pid=${ceps_process.pid} exited with code ${code}`);
+        start_ceps_instance(rollout,rollout_path_base,rollout_db_full,ws_api_port,rollout_path_suffix);
     });
 
 
-    process.chdir(`runs`);
-
-    let cmd_args = [];
-
-    if (global_conf.skip_worker_sm_creation){
-        log_debug(`launch_rollout()`,`Worker State Machines will not be created. global_conf.skip_worker_sm_creation == true`);
-        cmd_args = [
-            `${rollout_path_base}/globals.ceps`,
-            `../${rollout_db_full}`,
-            "../db_descr/gen.ceps",
-            `${rollout_path_base}/extract_rollout.ceps`,
-            "../lib/conf.ceps",
-            "../lib/rollout_step.ceps",
-            "../transformations/rollout2sm.ceps",
-            "../transformations/rollout2watchdogs.ceps",
-            "../transformations/driver4rollout_start_immediately_no_worker.ceps",
-            "--dot_gen_one_file_per_top_level_statemachine",
-            "--dot_gen",
-            "--no_file_output",
-            "--ws_api",`${ws_api_port}`
-        ];
-    } else cmd_args = [
-        `${rollout_path_base}/globals.ceps`,
-        `../${rollout_db_full}`,
-        "../db_descr/gen.ceps",
-        `${rollout_path_base}/extract_rollout.ceps`,
-        "../lib/conf.ceps",
-        "../lib/rollout_step.ceps",
-        "../transformations/rollout2worker.ceps",
-        "../transformations/rollout2sm.ceps",
-        "../transformations/rollout2watchdogs.ceps",
-        "../transformations/driver4rollout_start_immediately.ceps",
-        "--dot_gen_one_file_per_top_level_statemachine",
-        "--dot_gen",
-        "--no_file_output",
-        "--ws_api",`${ws_api_port}`
-    ];
-
-    ceps_process = spawn("../ceps",cmd_args);
-    log_debug("launch_rollout()",`Executing ../ceps ${cmd_args.join(" ")}`);
-    process.chdir(`..`);
-    log_info("launch_rollout()",`Spawned Child Process pid=${ceps_process.pid}`);
-
-    let proc_down = false;
-    let ceps_core_err = "";
-    ceps_process.stdout.on('data', (data) => {
-        log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`);
-        ceps_core_err = ceps_core_err+`${data}`;
-    });
-    ceps_process.stderr.on('data', (data) => {
-        log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`); 
-        ceps_core_err = ceps_core_err+`${data}`;
-    });
-    ceps_process.on('close', (code) => {
-        proc_down = true;
-        connections_with_ceps_cores[ceps_process.pid] = undefined;
-        log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`exited with code ${code}`);    
-    });
-
-    let fetch_proc = setInterval(()=>{
+    /*let fetch_proc = setInterval(()=>{
         if (proc_down){
             rollout.state = ROLLOUT_FAILED;
             rollout.error_details = ceps_core_err;
@@ -578,7 +788,7 @@ function launch_rollout(back_channel,rollout){
         }
         let ws_ceps_api = new WebSocket(`ws://localhost:${ws_api_port}`);
         ws_ceps_api.on("error", () => {
-            log_info(`launch_rollout()/Establishing connection to cepS core running ${rollout.name}`,`ws://localhost:${ws_api_port} not ready yet`);
+            //log_info(`launch_rollout()/Establishing connection to cepS core running ${rollout.name}`,`ws://localhost:${ws_api_port} not ready yet`);
         } );
         ws_ceps_api.on("open", () => {
             let f = undefined;
@@ -593,7 +803,6 @@ function launch_rollout(back_channel,rollout){
                 rollout.url = "/rollout_status?rollout="+encodeURIComponent(rollout.name);
                 rollout.svgs = rollout_path_suffix+"__svgs";//encodeURIComponent(rollout.name).replace("%","_")+"__svgs";
                 save_rollout(rollout);
-                //back_channel.send(JSON.stringify({reply:"ok",rollout:rollout}));
                 broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
 
                 connections_with_ceps_cores[rollout.pid.toString] = ws_ceps_api; 
@@ -607,19 +816,12 @@ function launch_rollout(back_channel,rollout){
                     },10000
                 );
                 ws_ceps_api.on("message", function(msg){
-                    //console.log(msg);
-                    //console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     let reply_ = JSON.parse(msg);
                     if (!reply_.ok) return;
                     let reply = {};
                     simplifyceps2json(reply,reply_.sresult.coverage);
-                    //console.log(reply);
-
-                    //reply = reply.coverage[0];
-                    //console.log(reply);
                     rollout.coverage = reply.coverage[0].transition_coverage[0].ratio;
                     rollout.health = reply.categories[0];
-                    //console.log(rollout.health);
                     try{broadcast(JSON.stringify({reply:"ok",rollout:rollout}));}catch(err){}
                 });
                 ws_ceps_api.send("QUERY root.__proc.coverage");
@@ -627,7 +829,7 @@ function launch_rollout(back_channel,rollout){
             ws_ceps_api.send("QUERY root.rollout;");         
         } );
         ws_ceps_api.on("close", () => {} );
-       },15000);
+       },0);*/
 }
 
 function kill_rollout(back_channel,rollout){
@@ -640,9 +842,9 @@ function kill_rollout(back_channel,rollout){
 
 
 function fetch_rollout_plan(callback){
-    console.log(chalk.yellow(`fetch_rollout_plan()`));
+    log_debug(`fetch_rollout_plan()`,"");
     if (global_conf.skip_db_fetch){
-        console.log(chalk.yellow(`fetch_rollout_plan():skipped (configuration option skip_db_fetch==true)`));
+        log_debug(`fetch_rollout_plan()`,`skipped (configuration option skip_db_fetch==true)`);
         callback();
         return;
     }
@@ -651,21 +853,21 @@ function fetch_rollout_plan(callback){
     } catch (e){
      return;   
     }
-    console.log(chalk.yellow(`fetch_rollout_plan(): Spawned Child Process pid=${p.pid}`));
+    log_debug(`fetch_rollout_plan()`,`Spawned Child Process pid=${p.pid}`);
 
     p.stdout.on('data', (data) => {
-        console.log(chalk.yellow(`${data}`));
+        log_debug(`fetch_rollout_plan()`,`${data}`);
     });
     p.stderr.on('data', (data) => {
-        console.log(chalk.yellow(`${data}`));
+        log_debug(`fetch_rollout_plan()`,`${data}`);
     });
     p.on('close', (code) => {
-        console.log(chalk.yellow(`fetch_rollout_plan(): Child Process pid=${p.pid} exited.`));
+        log_debug(`fetch_rollout_plan()`,`Child Process pid=${p.pid} exited`);
         callback();
     });    
 }
 
-console.log(chalk.bold.green(`Media Markt Saturn Rollout & Automation Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").
+console.log(chalk.bold.green(`Media Markt Saturn Rollout Automation (RollAut) Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").
 written by Tomas Prerovsky <tomas.prerovsky@gmail.com>
 `));
 
@@ -694,22 +896,22 @@ function main(){
     15000);
 
     http_port = 3000;
-    console.log(chalk.yellow(`HTTP Server Ready,listening at ${host_name}:${http_port}`));
+    log_debug(`HTTP Server`,`listening at ${host_name}:${http_port}`);
     http.createServer(app).listen(http_port);
 
     var start_reading_cmds = function() {
-        console.log(chalk.yellow(`Ready to receive commands via ws://${host_name}:${command_port}`));
+        log_debug(`HTTP Server`,`Ready to receive commands via ws://${host_name}:${command_port}`);
+    
         const ws_command = new WebSocket.Server({port: command_port});
 
         ws_command.on("connection", function connection(ws){
             connections.push(ws);
             ws.on("message",function incoming(message){
                 let msg = JSON.parse(message);
-                console.log(msg);
                 if (msg.cmd == "get_planned_rollouts"){
                     fetch_planned_rollouts(ws,(err)=>{});
-                } else if (msg.cmd == "launch_rollout"){
-                    launch_rollout(ws,msg.rollout);
+                } else if (msg.cmd == "launch_rollout"){                    
+                    launch_rollout(ws,save_rollout(msg.rollout));
                 } else if (msg.cmd == "kill_rollout"){
                     kill_rollout(ws,lookup_rollout(msg.rollout));
                 }
@@ -724,6 +926,7 @@ function main(){
             
             for(let i = 0; i != rollouts.length;++i){
                 let rollout = rollouts[i];
+                //console.log(rollout);
                 if (rollout.state != ROLLOUT_READY) continue;
                 let t = new Date(rollout.when)-Date.now();
                 if (t < 1000){

@@ -865,6 +865,8 @@ void Websocket_interface::handler(int sck){
              }
          }
          if (cmd[0] == "SET_VALUE_NO_REPLY") continue;
+      } else if (cmd[0] == "PING") {
+         reply = "{\"ok\": true , \"reply\":\"PONG\" }";
       } else if (cmd[0] == "EVENT" && args.size()) {
         auto const & name = args[0];
         if (args.size() == 1){

@@ -262,6 +262,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
             else if (arg == "--push_dir") {++i;if (i >= argc)break;r.push_dir = argv[i] ; continue;}
             else if (arg == "--no_file_output") {r.no_file_output=true; continue;}
             else if (arg == "--report_includes_cat") {r.report_includes_cat=true; continue;}
+            else if (arg == "--start_paused") {r.start_paused=true; continue;}
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {
 					r.server_port = r.port = arg.substr(6);

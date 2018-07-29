@@ -725,7 +725,9 @@
 
 
         function update_info_cards(){
+            
             $(".ceps-ui-tile").each( function(idx){
+                console.log("!!!");
                 mark_active_nodes(states_info.active_states);
                 let sm_name = $(this).attr("sm-name");
                 let sm_viz = $(`#sm_viz_${normalize_id(sm_name)}`);                
@@ -949,6 +951,7 @@ ${ctrls}
         function start_ceps_proc_consumer(ws){
             let no_lanes = rollout_market != undefined;
             function h(ev){
+                //console.log("REPLY!",ev.data);
                 let msg = JSON.parse(ev.data);
                 let to = {};
                 simplifyceps2json(to,msg.sresult.coverage);
@@ -1155,7 +1158,7 @@ ${ctrls}
         }
 
         function get_sm_lane_given_status(sm_status){
-            if (sm_status == SM_STATUS_INACTIVE) return '#toplevel_sms_inactive';
+            //if (sm_status == SM_STATUS_INACTIVE) return '#toplevel_sms_inactive';
             if (sm_status == SM_STATUS_FAILURE) return "#toplevel_sms_in_error_state";
             if (sm_status == SM_STATUS_WARNING) return "#toplevel_sms_in_warn_state";
             if (sm_status == SM_STATUS_DONE) return "#toplevel_sms_in_final_state";
@@ -1215,6 +1218,8 @@ ${ctrls}
                                 components[v.sm[i].name] = {};
                             }
                             else $.get("<%=rollout.svgs%>"+"/"+v.sm[i].svg_filename,{},function(res){
+
+                                
 
                                 if (lane_spinners_active){
                                     lane_spinners_active = false;
@@ -1279,69 +1284,6 @@ ${ctrls}
             ws.send("QUERY root;");*/
         }
 
-
-        function fetch_exported_events_from_simcore(ws) {
-            function h(ev) {
-                ws.removeEventListener("message", h);
-                let msg = JSON.parse(ev.data);
-                if (msg.ok && msg.number_exported_events > 0) {
-                    msg.sresult.forEach((e) => { simcore_events.push(new Eventinfo(e)); });                                        
-                }
-                fetch_sm_svgs_from_simcore(ws);
-            }
-            ws.addEventListener("message", h);
-            ws.send("EXPORTED_EVENTS");
-        }
-
-        function fetch_data_from_simcore(ws) {
-            function h(ev) {
-                ws.removeEventListener("message", h);
-                let msg = JSON.parse(ev.data);
-                if (msg.ok) {
-                    global_sysstates = msg.global_states;
-                }
-                fetch_exported_events_from_simcore(ws);
-            }
-            ws.addEventListener("message", h);
-            ws.send("GLOBAL_SYSSTATES");
-        }
-
-        function fetch_data_from_remote(ws) {
-            ws.send("KNOWN_SIMCORES");
-            function h(ev) {
-                ws.removeEventListener("message", h);                
-                let msg = JSON.parse(ev.data);                
-                if (msg.ok) {
-                    let dt = [];
-                    for (let e of msg.simcores) {
-                        let hn = (e.host_name.length == 0 ? "localhost" : e.host_name);
-                        let url = hn + ":" + e.ws_api_port;
-                        dt.push([`<a href="#" onclick="$('#dlg_select_a_simulation').modal('hide');connect_to_simcore('${url}')" >`+e.name+"</a>",
-                            e.short_name, url]);
-                    }
-                    if (dt.length == 0) {
-                        fetch_data_from_simcore(ws);
-                        return;
-                    }
-                    $("#dlg_select_a_simulation").modal("show");
-                    if (dlg_select_a_simulation_table_data == undefined)
-                        dlg_select_a_simulation_table_data = $('#dlg_select_a_simulation_table').DataTable({
-                            select: {
-                                style: 'single'
-                            },
-                            data: dt,
-                            columns: [{ title: "Name" }, { title: "Short Name" }, {title:"Host"}]
-                        });
-                    else {
-                        $('#dlg_select_a_simulation_table').DataTable().clear().rows.add(dt).draw();
-                    }
-                    return;
-                }
-                fetch_data_from_simcore(ws);
-            }
-            ws.addEventListener("message", h);
-        }
-
         var login_retry_timeout = undefined;
         function stop_login_retry_timeout() {
             if (login_retry_timeout == undefined) return;
@@ -1394,7 +1336,7 @@ ${ctrls}
             connected = true;
             states_info = {};
             $(".sm_viz").each(function(a,b){$(this).remove();});
-            fetch_data_from_remote(main_socket);
+            fetch_sm_svgs_from_simcore(main_socket);
         }
 
         function on_ws_close(ev) {
@@ -1434,13 +1376,7 @@ ${ctrls}
                 console.log("on_command_channel_connect");
                 let ws = command_socket;
                 function msg_arrived(msg){
-                    console.log(msg.data);
-                    let ev = JSON.parse(msg.data).event;
-                    console.log(ev);
-                    if (ev == "ceps service started"){
-                        $("#btn_start").attr("disabled","disabled");
-                        $("#btn_stop").attr("disabled",false);
-                    }
+                    //console.log(msg.data);
                 }              
 
                 cmd_channel_established = true;
