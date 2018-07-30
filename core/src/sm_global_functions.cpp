@@ -82,29 +82,58 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		 return (this->*it->second)(id,args,active_smp);
 	 }
 	}
-    if (id == "write_system_state"){
+    if (id == "restart"){
+        State_machine_simulation_core::event_t ev;
+        ev.id_ = "@@restart_state_machine";
+        for(auto arg:args){
+            int t;
+            state_rep_t state;
+            if (arg->kind() != ceps::ast::Ast_node_kind::string_literal) state = resolve_state_or_transition_given_a_qualified_id(arg,nullptr,&t);
+            else{
+                //assume arg is the name of a state machine
+                auto it = statemachines().find(ceps::ast::value(ceps::ast::as_string_ref(arg)));
+                if (it == statemachines().end()) continue;
+                state.id_ = it->second->idx_;
+                state.is_sm_ = true;
+                state.smp_ = it->second;
+                state.valid_ = true;
+                state.sid_ = it->second->id();
+            }
+
+            if(!state.valid()) {
+             std::stringstream ss; ss << *args[0];
+             fatal_(-1,"Function '"+id+"': illformed argument, unknown state: "+ss.str());
+            }
+            if(!state.is_sm_) {
+                std::stringstream ss; ss << *args[0];
+                fatal_(-1,"Function '"+id+"': illformed argument, '"+ss.str()+"' does not denote a state machine.");
+            }
+            ev.payload_native_.push_back(state.id());
+        }
+        enqueue_event(ev);
+        return new ceps::ast::Int( 1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
+    } else if (id == "write_system_state") {
         std::lock_guard<std::recursive_mutex>g(states_mutex());
         if (args[1] == nullptr) fatal_(-1,"write_system_state: second argument is null.");
         get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))] = clone(args[1]);
         return args[1];
-    } else if (id == "read_system_state"){
+    } else if (id == "read_system_state") {
         std::lock_guard<std::recursive_mutex>g(states_mutex());
         auto t = get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))];
         if (t == nullptr){ t = new ceps::ast::Int{0,ceps::ast::all_zero_unit()}; get_global_states()[ceps::ast::value(ceps::ast::as_string_ref(args[0]))] = t;}
         else t = clone(t);
         return t;
-    } else if( id == "__append" ){
+    } else if( id == "__append" ) {
         auto container = args[0];
         auto elem = args[1];
         if (container->kind() == ceps::ast::Ast_node_kind::structdef){
             ceps::ast::as_struct_ptr(container)->children().push_back(elem);
         }
         return args[0];
-    }
-    else if (id == "as_id"){
+    } else if (id == "as_id") {
 	 if (args.size() != 1 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) fatal_(-1,"as_id: illformed argument(s).");
      return new ceps::ast::Identifier(ceps::ast::value(ceps::ast::as_string_ref(args[0])));
-	}else if (id == "as_text"){
+    } else if (id == "as_text") {
 	 if (args.size() != 1 ) fatal_(-1,"as_text: illformed argument(s).");
 	 if (args[0]->kind () == ceps::ast::Ast_node_kind::identifier)
 		 return new ceps::ast::String(ceps::ast::name(ceps::ast::as_id_ref(args[0])));

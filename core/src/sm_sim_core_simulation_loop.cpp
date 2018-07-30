@@ -434,8 +434,6 @@ static void run_triggered_actions(State_machine_simulation_core* smc,
  }
 }
 
-
-
 static void log_state_changes(State_machine_simulation_core* smc,executionloop_context_t & execution_ctxt, executionloop_context_t::states_t & temp){
  if (!smc->quiet_mode() || smc->live_logger()){
   auto changes = false;
@@ -753,6 +751,10 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 	}
   }
 
+
+  auto restart_event = ev_read && current_event().id_=="@@restart_state_machine";
+  //auto sm_to_be_restarted = restart_event ? current_event().payload_native_[0].iv_ : 0;
+
   log_current_states(this);
   handle_event_triggered_senders(this,execution_ctxt,ev_read);
 
@@ -764,7 +766,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 								max_number_of_active_transitions,triggered_transitions,
 								triggered_transitions_end,cur_states_size,ev_id);
   bool no_transitions_triggered = triggered_transitions_end == 0;
-  if (no_transitions_triggered){
+  if (no_transitions_triggered && !restart_event){
 	if (this->current_event().error_ != nullptr){
 		info("Unhandled error:"+current_event().error_->what_ + "["+std::to_string(current_event().error_->errno_)+"]");
 		break;
@@ -776,7 +778,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 			global_ev_cllbck();
 	continue;
   }
-  invariant("at least one transition was triggered");
+  invariant("at least one transition or the restart of a sm was triggered");
   taking_epsilon_transitions = true;
 
   std::sort(triggered_transitions.begin(),triggered_transitions.begin()+triggered_transitions_end);
@@ -805,7 +807,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   }
 
   log_triggered_transitions(this,execution_ctxt,triggered_transitions,end_of_trans_it);
-  bool possible_exit_or_enter_occured = compute_transition_kernel(triggered_transitions,
+  bool possible_exit_or_enter_occured = restart_event || compute_transition_kernel(triggered_transitions,
           end_of_trans_it,
 		  execution_ctxt,
 		  temp,
@@ -818,11 +820,27 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   run_triggered_actions(this,triggered_transitions,end_of_trans_it,execution_ctxt);
  } else {
   int entering_sms_next = 0; int exiting_sms_next = 0;
-  compute_entered_states(this,execution_ctxt,temp,entering_sms,entering_sms_next);
-  compute_exit_states(this,execution_ctxt,temp,exiting_sms,exiting_sms_next);
-  execution_ctxt.do_exit(this,exiting_sms.data(),exiting_sms_next,temp);
-  run_triggered_actions(this,triggered_transitions,end_of_trans_it,execution_ctxt);
-  execution_ctxt.do_enter(this,entering_sms.data(),entering_sms_next,temp);
+  auto compute_enter_and_exit_states = [&](){
+      compute_entered_states(this,execution_ctxt,temp,entering_sms,entering_sms_next);
+      compute_exit_states(this,execution_ctxt,temp,exiting_sms,exiting_sms_next);
+      execution_ctxt.do_exit(this,exiting_sms.data(),exiting_sms_next,temp);
+      run_triggered_actions(this,triggered_transitions,end_of_trans_it,execution_ctxt);
+      execution_ctxt.do_enter(this,entering_sms.data(),entering_sms_next,temp);
+  };
+  if(restart_event) {
+      for(auto sm_to_be_restarted_ : current_event().payload_native_){
+          auto sm_to_be_restarted = sm_to_be_restarted_.iv_;
+          temp[sm_to_be_restarted] = 0;
+      }
+      compute_enter_and_exit_states();
+      memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
+      for(auto sm_to_be_restarted_ : current_event().payload_native_){
+          auto sm_to_be_restarted = sm_to_be_restarted_.iv_;
+          temp[sm_to_be_restarted] = 1;
+      }
+      compute_enter_and_exit_states();
+      memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
+  } else compute_enter_and_exit_states();
  }
  log_state_changes(this,execution_ctxt, temp);
  memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));

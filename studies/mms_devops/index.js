@@ -316,33 +316,33 @@ let fetch_planned_rollouts = function (back_channel,callback){
     fetch_rollouts_ceps_api_port = fetch_rollouts_ceps_api_port_base;
 
 
-    ceps_process = spawn(ceps_cmd(),params);                        
-    log_debug(`fetch_planned_rollouts()`,`Spawned Child Process pid=${ceps_process.pid}\nCommand: ${ceps_cmd()} ${params.join(" ")}`);
+    let cproc = spawn(ceps_cmd(),params);                        
+    log_debug(`fetch_planned_rollouts()`,`Spawned Child Process pid=${cproc.pid}\nCommand: ${ceps_cmd()} ${params.join(" ")}`);
     let proc_down = false;
-    ceps_process.stdout.on('data', (data) => {
+    cproc.stdout.on('data', (data) => {
         //console.log(chalk.yellow(`${data}`));
     });
-    ceps_process.stderr.on('data', (data) => {
-        log_err(`fetch_planned_rollouts()/cepS core pid=${ceps_process.pid}`,`${data}`);
+    cproc.stderr.on('data', (data) => {
+        log_err(`fetch_planned_rollouts()/cepS core pid=${cproc.pid}`,`${data}`);
     });
-    ceps_process.on('close', (code) => {
+    cproc.on('close', (code) => {
         proc_down = true;
-        try{process.kill(ceps_process.pid);}catch(err){}
-        log_debug(`fetch_planned_rollouts()/cepS core pid=${ceps_process.pid}`,`exited with code ${code}`);
+        try{process.kill(cproc.pid);}catch(err){}
+        log_debug(`fetch_planned_rollouts()/cepS core pid=${cproc.pid}`,`exited with code ${code}`);
     });
 
     let fetch_proc = function () {
         //let current_ws_api_port = fetch_rollouts_ceps_api_port;
-        log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Trying to establish a websocket connect to localhost:${current_ws_api_port} pid=${ceps_process.pid}`);
+        log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Trying to establish a websocket connect to localhost:${current_ws_api_port} pid=${cproc.pid}`);
         let ws_ceps_api = new WebSocket(`ws://localhost:${current_ws_api_port}`);
         ws_ceps_api.on("error", (err) => {
-            log_err("fetch_proc()",`Connect to ws://localhost:${current_ws_api_port} failed pid=${ceps_process.pid}`);
+            log_err("fetch_proc()",`Connect to ws://localhost:${current_ws_api_port} failed pid=${cproc.pid}`);
             if (!proc_down) setTimeout(fetch_proc,1000);
             else callback(err);
         });
         ws_ceps_api.on("open", () => {
             ws_ceps_api.on("message", function (msg){
-                log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Received a reply from localhost:${current_ws_api_port} pid=${ceps_process.pid}`);
+                log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Received a reply from localhost:${current_ws_api_port} pid=${cproc.pid}`);
                 let m = JSON.parse(msg).sresult;
                 let removed_rollouts = [];
                 new_rollouts = extract_rollout_data_from_webservice_result(m);
@@ -352,7 +352,7 @@ let fetch_planned_rollouts = function (back_channel,callback){
                     for(let i = 0; i != rollouts.length;++i){
                     let rollout = rollouts[i];
                      if (rollout.changed != undefined && rollout.changed){
-                        log_debug(`fetch_planned_rollouts()/db update`,`Rollout id=${rollout.id} changed, trigger broadcast. pid=${ceps_process.pid}`);
+                        log_debug(`fetch_planned_rollouts()/db update`,`Rollout id=${rollout.id} changed, trigger broadcast. pid=${cproc.pid}`);
                       broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
                      }
                  }
@@ -364,10 +364,10 @@ let fetch_planned_rollouts = function (back_channel,callback){
                  }
                 } else log_debug("merge_rollouts: no changes detected");
                 try{if (back_channel != undefined) back_channel.send(JSON.stringify(rollouts));}catch(err){}
-                log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Shutting down of process with pid=${ceps_process.pid}`);
+                log_debug(`fetch_planned_rollouts()/fetch_proc()`,`Shutting down of process with pid=${cproc.pid}`);
                 let kill_proc = ()=> {
-                    try{process.kill(ceps_process.pid);}catch(err){
-                        log_err("fetch_planned_rollouts()/fetch_proc():kill_proc",`Failed to kill process with pid=${ceps_process.pid}. Retry in 1 second.`);
+                    try{process.kill(cproc.pid);}catch(err){
+                        log_err("fetch_planned_rollouts()/fetch_proc():kill_proc",`Failed to kill process with pid=${cproc.pid}. Retry in 1 second.`);
                         setTimeout(kill_proc,2000);
                     }
                 };
@@ -634,7 +634,7 @@ setInterval( () => {
 
     let cmd_args2 = cmd_args.concat(["--ws_api",`${ws_api_port}`]);
 
-    ceps_process = spawn("../ceps",cmd_args2,{cwd:"runs"});
+    let ceps_process = spawn("../ceps",cmd_args2,{cwd:"runs"});
 
     let proc_idx = watch_ceps_instance(
         {
@@ -642,7 +642,7 @@ setInterval( () => {
             proc_info : ceps_process,
             cmd : "../ceps",
             cmd_args : cmd_args,
-            options : {cwd:"runs"},
+            options : {cwd:"runs"}, 
             rollout:rollout,
             ws_api_port : ws_api_port,
             rollout_path_base : rollout_path_base,
@@ -772,64 +772,9 @@ function launch_rollout(back_channel,rollout){
         log_err(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,`${data}`);
     });
     svg_generating_proc.on('close', (code) => {
-        log_debug(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,`Child Process pid=${ceps_process.pid} exited with code ${code}`);
+        log_debug(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,`Child Process pid=${svg_generating_proc.pid} exited with code ${code}`);
         start_ceps_instance(rollout,rollout_path_base,rollout_db_full,ws_api_port,rollout_path_suffix);
     });
-
-
-    /*let fetch_proc = setInterval(()=>{
-        if (proc_down){
-            rollout.state = ROLLOUT_FAILED;
-            rollout.error_details = ceps_core_err;
-            broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
-            clearInterval(fetch_proc);
-            log_err(`launch_rollout()/cepS core running ${rollout.name}`,`failed, giving up`); 
-            return;
-        }
-        let ws_ceps_api = new WebSocket(`ws://localhost:${ws_api_port}`);
-        ws_ceps_api.on("error", () => {
-            //log_info(`launch_rollout()/Establishing connection to cepS core running ${rollout.name}`,`ws://localhost:${ws_api_port} not ready yet`);
-        } );
-        ws_ceps_api.on("open", () => {
-            let f = undefined;
-            ws_ceps_api.on("message", f = function (msg){
-                
-                let m = JSON.parse(msg).sresult;
-                clearInterval(fetch_proc);
-                rollout.state = ROLLOUT_STARTED;
-                rollout.pid = ceps_process.pid;
-                rollout.ws_api = ws_api_port;
-                rollout.hostname = host_name;
-                rollout.url = "/rollout_status?rollout="+encodeURIComponent(rollout.name);
-                rollout.svgs = rollout_path_suffix+"__svgs";//encodeURIComponent(rollout.name).replace("%","_")+"__svgs";
-                save_rollout(rollout);
-                broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
-
-                connections_with_ceps_cores[rollout.pid.toString] = ws_ceps_api; 
-                ws_ceps_api.removeEventListener("message",f);
-                let periodic_status = setInterval(
-                    function(){
-                        if (proc_down) clearInterval(periodic_status);
-                        try{ws_ceps_api.send("QUERY root.__proc.coverage");}catch(err){
-                            log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${err}`); 
-                        }
-                    },10000
-                );
-                ws_ceps_api.on("message", function(msg){
-                    let reply_ = JSON.parse(msg);
-                    if (!reply_.ok) return;
-                    let reply = {};
-                    simplifyceps2json(reply,reply_.sresult.coverage);
-                    rollout.coverage = reply.coverage[0].transition_coverage[0].ratio;
-                    rollout.health = reply.categories[0];
-                    try{broadcast(JSON.stringify({reply:"ok",rollout:rollout}));}catch(err){}
-                });
-                ws_ceps_api.send("QUERY root.__proc.coverage");
-            });
-            ws_ceps_api.send("QUERY root.rollout;");         
-        } );
-        ws_ceps_api.on("close", () => {} );
-       },0);*/
 }
 
 function kill_rollout(back_channel,rollout){
@@ -908,6 +853,7 @@ function main(){
             connections.push(ws);
             ws.on("message",function incoming(message){
                 let msg = JSON.parse(message);
+                console.log(msg);
                 if (msg.cmd == "get_planned_rollouts"){
                     fetch_planned_rollouts(ws,(err)=>{});
                 } else if (msg.cmd == "launch_rollout"){                    
