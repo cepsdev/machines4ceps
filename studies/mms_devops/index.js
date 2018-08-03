@@ -26,8 +26,11 @@ const ROLLOUT_STARTED_PENDING = 1;
 const ROLLOUT_STARTED = 2;
 const ROLLOUT_STOP_PENDING = 3;
 const ROLLOUT_FAILED = 4;
+const ROLLOUT_DONE = 5;
 
 const global_conf = require('./rollaut.json');
+const MAX_RECONNECTS_DURING_CEPS_SPAWN = 20;
+const DB_CHECK_INTERVAL_MS = 10000;
 
 
 let connections = [
@@ -66,11 +69,16 @@ function simplifyceps2json(o,m){
 
 function broadcast(msg){
  //let b = false;
- for(let i = 0; i != connections.length;++i){
-  if (connections[i].readyState != connections[i].OPEN) continue;
-  //if(!b){console.log(`broadcasting: ${msg}`);console.log();b=true;}
-  connections[i].send(msg);
+ try{
+    for(let i = 0; i != connections.length;++i){
+    if (connections[i].readyState != connections[i].OPEN) continue;
+    //if(!b){console.log(`broadcasting: ${msg}`);console.log();b=true;}
+    connections[i].send(msg);
+    }
+ } catch (err) {
+
  }
+
 }
 
 let rollouts = [
@@ -239,6 +247,7 @@ let get_planned_rollouts = undefined;
 
 
 function merge_rollouts(new_rollouts,removed_rollouts){
+    
     let v_new = [];
     let changed = false;
     let t = [];
@@ -327,7 +336,7 @@ let fetch_planned_rollouts = function (back_channel,callback){
     });
     cproc.on('close', (code) => {
         proc_down = true;
-        try{process.kill(cproc.pid);}catch(err){}
+        //try{process.kill(cproc.pid);}catch(err){}
         log_debug(`fetch_planned_rollouts()/cepS core pid=${cproc.pid}`,`exited with code ${code}`);
     });
 
@@ -451,9 +460,10 @@ setInterval( () => {
                 info.status = CEPS_INSTANCE_SPAWNING | CEPS_INSTANCE_EXITED;
             }
         } else if (info.status & CEPS_INSTANCE_SPAWNING){
-            log_debug("cepS Core Watch",`Spawning ${rollout.name}`);
+            //log_debug("cepS Core Watch",`Spawning ${rollout.name}`);
             if (info.status & CEPS_INSTANCE_EXITED){
                 info.status = CEPS_INSTANCE_SPAWNING;
+                info.ws_api_port = get_next_ws_api_port();
                 let cmd_args2 = info.cmd_args.concat(["--ws_api",`${info.ws_api_port}`]);
                 let ceps_process = spawn(info.cmd,cmd_args2,info.options);
                 info.proc_info = ceps_process;
@@ -467,7 +477,7 @@ setInterval( () => {
                     log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`); 
                 });
                 ceps_process.on('close', (code) => {
-                    try{process.kill(ceps_process.pid);}catch(err){}
+                    //try{process.kill(ceps_process.pid);}catch(err){}
                     ceps_instances[proc_idx].status = CEPS_INSTANCE_EXITED | CEPS_INSTANCE_SPAWNING;
                     connections_with_ceps_cores[ceps_process.pid] = undefined;
                     log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} '${rollout.name}'`,`exited with code ${code}`);    
@@ -477,6 +487,14 @@ setInterval( () => {
                 log_debug("cepS Core Watch",`Connecting '${rollout.name}'@ws://localhost:${info.ws_api_port}`);
                 let ws_ceps_api = new WebSocket(`ws://localhost:${info.ws_api_port}`);
                 info.status |= CEPS_INSTANCE_WSAPI_CONNECTING;
+                if (info.connect_counter == undefined)
+                 info.connect_counter = 1;
+                else ++info.connect_counter;
+                if (MAX_RECONNECTS_DURING_CEPS_SPAWN <= info.connect_counter){
+                    info.connect_counter = 0;
+                    try{process.kill(info.proc_info.pid);}catch(err){}
+                }
+                
 
                 ws_ceps_api.on("error", () => {
                     log_debug("cepS Core Watch",`Failed to connect to '${rollout.name}'@ws://localhost:${info.ws_api_port}`);
@@ -517,13 +535,19 @@ setInterval( () => {
                                             },5000
                                         );
                                         ws_ceps_api.on("message", function(msg){
-                                            let reply_ = JSON.parse(msg);
-                                            if (!reply_.ok) return;
-                                            let reply = {};
-                                            simplifyceps2json(reply,reply_.sresult.coverage);
-                                            rollout.coverage = reply.coverage[0].transition_coverage[0].ratio;
-                                            rollout.health = reply.categories[0];
-                                            try{broadcast(JSON.stringify({reply:"ok",rollout:rollout}));}catch(err){}
+                                            try{
+                                                let reply_ = JSON.parse(msg);
+                                                if (!reply_.ok) return;
+                                                let reply = {};
+                                                if (reply_.sresult == undefined) return;
+                                                if (reply_.sresult.coverage == undefined) return;                                                
+                                                simplifyceps2json(reply,reply_.sresult.coverage);
+                                                rollout.coverage = reply.coverage[0].transition_coverage[0].ratio;
+                                                rollout.health = reply.categories[0];                                            
+                                                try{broadcast(JSON.stringify({reply:"ok",rollout:rollout}));}catch(err){}
+                                            } catch(err) {
+
+                                            }
                                         });
                                         ws_ceps_api.send("QUERY root.__proc.coverage");
                                     });
@@ -540,7 +564,7 @@ setInterval( () => {
                 } );
                 ws_ceps_api.on("close", () => {
                     log_debug("cepS Core Watch",`Close Connection to '${rollout.name}'@ws://localhost:${info.ws_api_port}`);
-                    //info.status &= ~(CEPS_INSTANCE_WSAPI_CONNECTING || CEPS_INSTANCE_WSAPI_CONNECTED);
+                    info.status &= ~(CEPS_INSTANCE_WSAPI_CONNECTING || CEPS_INSTANCE_WSAPI_CONNECTED);
                 } );
         
             }
@@ -629,7 +653,9 @@ setInterval( () => {
         "--dot_gen_one_file_per_top_level_statemachine",
         "--dot_gen",
         "--no_file_output",
-        "--start_paused"
+        "--start_paused"/*,
+        "--sleep_before_ws_api",
+        "6000000"*/
     ];
 
     let cmd_args2 = cmd_args.concat(["--ws_api",`${ws_api_port}`]);
@@ -661,12 +687,81 @@ setInterval( () => {
         log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`); 
     });
     ceps_process.on('close', (code) => {
-        try{process.kill(ceps_process.pid);}catch(err){}
+        //try{process.kill(ceps_process.pid);}catch(err){}
         ceps_instances[proc_idx].status |= CEPS_INSTANCE_EXITED;
         connections_with_ceps_cores[ceps_process.pid] = undefined;
         log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} '${rollout.name}'`,`exited with code ${code}`);    
     });
 };
+
+function restart_sm(ws,sm,rollout_name){
+    let rollout = get_rollout_by_name(rollout_name);
+    let worker = sm+"_worker";
+    let watch_dog_sm = "watch_dog_"+sm;
+    let representational_sm = sm;
+
+    
+    for(let i = 0; i != ceps_instances.length; ++i)
+    {
+        let info = ceps_instances[i];
+        //console.log(info);
+        let rollout = info.rollout;
+        if (rollout.name != rollout_name) continue;
+        try{info.ws_ceps_api.send(
+`RESTART_STATEMACHINES
+
+${representational_sm}
+${worker}
+${watch_dog_sm}
+`                               );
+
+setTimeout(()=>{
+    try{info.ws_ceps_api.send(
+`EVENTL
+
+start_rollout_${sm}
+`);}catch(err){}       
+},2000);
+
+
+        }catch(err){}
+    }
+}
+
+function kill_sm(ws,sm,rollout_name){
+    let rollout = get_rollout_by_name(rollout_name);
+    let worker = sm+"_worker";
+    let watch_dog_sm = "watch_dog_"+sm;
+    let representational_sm = sm;
+
+    
+    for(let i = 0; i != ceps_instances.length; ++i)
+    {
+        let info = ceps_instances[i];
+        //console.log(info);
+        let rollout = info.rollout;
+        if (rollout.name != rollout_name) continue;
+        try{info.ws_ceps_api.send(
+`RESTART_STATEMACHINES
+
+${representational_sm}
+${worker}
+${watch_dog_sm}
+`                               );
+
+setTimeout(()=>{
+    try{info.ws_ceps_api.send(
+`EVENTL
+
+dump_rollout_${sm}
+`);}catch(err){}       
+},2000);
+
+
+        }catch(err){}
+    }
+}
+
 
 
 function launch_rollout(back_channel,rollout){
@@ -838,7 +933,7 @@ function main(){
               }
           );
     },
-    15000);
+    DB_CHECK_INTERVAL_MS);
 
     http_port = 3000;
     log_debug(`HTTP Server`,`listening at ${host_name}:${http_port}`);
@@ -860,6 +955,10 @@ function main(){
                     launch_rollout(ws,save_rollout(msg.rollout));
                 } else if (msg.cmd == "kill_rollout"){
                     kill_rollout(ws,lookup_rollout(msg.rollout));
+                } else if (msg.cmd == "restart"){
+                    restart_sm(ws,msg.what,lookup_rollout(msg.rollout_name));
+                } else if (msg.cmd == "kill"){
+                    kill_sm(ws,msg.what,lookup_rollout(msg.rollout_name));
                 }
             });
         });
@@ -875,7 +974,7 @@ function main(){
                 //console.log(rollout);
                 if (rollout.state != ROLLOUT_READY) continue;
                 let t = new Date(rollout.when)-Date.now();
-                if (t < 1000){
+                if (t < 1000 && t > -10000){
                     rollout.state = ROLLOUT_STARTED_PENDING;
                     setTimeout( 
                         () => {
@@ -884,6 +983,9 @@ function main(){
                         },
                         Math.min(1000,Math.abs(t))
                     );
+                } else if (t < -10000){
+                    //rollout.state = ROLLOUT_DONE;
+                    //broadcast(JSON.stringify({reply:"ok",rollout:rollout}));
                 }
             }        
         },

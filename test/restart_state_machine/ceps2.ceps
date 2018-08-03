@@ -1,0 +1,70 @@
+kind Event;kind Guard;kind Systemstate;
+Event E;
+
+
+
+sm{
+ Q;
+ states{Initial;A;B;C;};
+};
+
+sm{
+ as_identifier("This is S");
+ states{Initial;A;B;C;D;Final;};
+ sm{
+  Sub_S;
+  states{Initial;};
+  on_enter{print("S.Sub_S.on_enter()\n");};
+  on_exit{print("S.Sub_S.on_exit()\n");};
+ };
+ on_enter{
+  print("S.on_enter()\n");
+ };
+ on_exit{
+  print("S.on_exit()\n");
+ };
+ Actions{
+ };
+ t{Initial;A;};
+ t{Initial;Sub_S;};
+ t{A;B;E;};
+ t{B;C;E;};
+ t{C;D;E;};
+ t{D;A;E;};
+};
+
+sm{
+ as_identifier("This is P");
+ states{Initial;A;B;C;D;Final;};
+ sm{
+  Sub_P;
+  states{Initial;};
+  on_enter{print("P.Sub_P.on_enter()\n");};
+  on_exit{print("P.Sub_P.on_exit()\n");};
+ };
+ on_enter{
+  print("P.on_enter()\n");
+ };
+ on_exit{
+  print("P.on_exit()\n");
+ };
+ t{Initial;A;};
+ t{Initial;Sub_P;};
+ t{A;B;E;};
+ t{B;C;E;};
+ t{C;D;E;};
+ t{D;A;E;};
+};
+
+
+sm{Z;
+ states{Initial;};
+};
+
+Simulation{
+ Start{
+  as_identifier("This is P");
+  as_identifier("This is S");
+ };
+ start_periodic_timer(1.0*s,E);
+};

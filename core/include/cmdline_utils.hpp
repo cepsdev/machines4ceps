@@ -89,6 +89,8 @@ struct Result_process_cmd_line
    bool stddoc_canlayer_no_header_no_footer = true;
    bool no_file_output = false;
    bool start_paused = false;
+   bool sleep_before_ws_api_on = false;
+   std::string sleep_before_ws_delta_ms;
    std::string push_dir;
    Result_process_cmd_line() = default;
    Result_process_cmd_line(bool version_flag_set_,

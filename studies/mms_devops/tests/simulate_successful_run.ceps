@@ -1,0 +1,58 @@
+kind Event;
+Event success;
+Event start_rollout;
+
+test_scenarios{
+static_for(e:root.rollout){
+ static_for(market:e.markets.market){
+   val market_name = text(market.content().id.content()); 
+   as_identifier("simulate_"+market_name);
+ }
+}
+};
+
+
+static_for(e:root.rollout){
+ static_for(market:e.markets.market){
+  sm{
+   val market_name = text(market.content().id.content()); 
+   as_identifier("simulate_"+market_name);
+   hidden;
+
+   states { Initial;
+            Done;
+            Final;
+            Killed;
+            e.steps.content().is_id();
+            categories{
+              as_symbol("Killed","FailState");              
+            };
+          };
+
+    t {  
+      Initial; 
+      e.steps.content().is_id().first();
+      as_symbol("start_rollout_"+market_name,"Event");        
+    };
+
+    t{
+      Initial;
+      Killed;
+      as_symbol("dump_rollout_"+market_name,"Event");
+    };
+
+   val prev = e.steps.content().is_id().first();
+
+   static_for( step:tail(e.steps.content().is_id()) ) {
+    t { prev;
+        step;
+        as_symbol(market_name+text(prev)+"_finished","Event");
+    };
+    ignore_value { prev = step; };
+   };
+
+   t { prev;Done;as_symbol(market_name+text(prev)+"_finished","Event"); };
+   t{Done;Final;};
+ };
+ }
+}

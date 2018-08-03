@@ -162,6 +162,9 @@ private:
     std::vector<std::pair<std::string,sm4ceps::datasources::Signalgenerator>> sig_generators_;
     void build_signal_structures(Result_process_cmd_line const& result_cmd_line);
 public:
+    void restart_state_machines(std::vector<std::string>);
+    void restart_state_machines(std::vector<ceps::ast::Nodebase_ptr>);
+
     std::map<std::string,State_machine*> & statemachines() {return statemachines_;}
     using signal_generator_handle = int;
     signal_generator_handle add_sig_gen(std::string,sm4ceps::datasources::Signalgenerator const &);

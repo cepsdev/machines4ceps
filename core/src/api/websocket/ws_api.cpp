@@ -451,6 +451,7 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
               std::stringstream s_cov_report;
               auto report = ctxt->make_report();
               ceps2json(s_cov_report,report);
+              for(auto n:report.nodes()) if(n!=nullptr)delete n;
               //std::cerr << s.str() << std::endl;
               r = "{ \"ok\": true,";
               r += " \"number_toplevel_nodes\":2,";
@@ -461,6 +462,7 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
               std::stringstream s_cov_report;
               auto report = ctxt->make_report();
               ceps2json(s_cov_report,report);
+              for(auto n:report.nodes()) if(n!=nullptr)delete n;
               r = "{ \"ok\": true,";
               r += " \"number_toplevel_nodes\":1,";
               r += " \"sresult\":{\"coverage\": "+s_cov_report.str()+" }";
@@ -737,18 +739,20 @@ void Websocket_interface::handler(int sck){
     std::string s;
     s.resize(payload.size());
     for(size_t j = 0; j < payload.size();++j)s[j] = payload[j];
-    //handle command
-    //std::cout << s << std::endl;
 
     std::stringstream hs{s};
     std::vector<std::string> cmd;
+    bool line_wise = false;
     for(;hs;){
         std::string l;
-        hs >> l;
+        if(!line_wise) hs >> l; else std::getline(hs,l);
+        if (l.size() == 0 || l == "\n" || l == "\r\n" || l == "\n\r") continue;
         cmd.push_back(l);
         if (cmd.size() == 1 && cmd[0] == "PUSH"){
             cmd.push_back(s.substr(5));
             break;
+        } else if (cmd.size() == 1 && (cmd[0] == "RESTART_STATEMACHINES" || cmd[0] == "EVENTL") ){
+            line_wise = true;
         }
     }
     std::string reply = "{\"ok\": false}";
@@ -756,7 +760,6 @@ void Websocket_interface::handler(int sck){
     if (cmd.size() != 0){
      decltype(cmd) args;
      for (std::size_t i = 1; i != cmd.size(); ++i ) if (cmd[i].length()) {args.push_back(cmd[i]);}
-     //std::cout << args.size() << std::endl;
 
      if (cmd[0] == "WATCH"){
          std::lock_guard<std::recursive_mutex>g(smc_->states_mutex());
@@ -867,7 +870,15 @@ void Websocket_interface::handler(int sck){
          if (cmd[0] == "SET_VALUE_NO_REPLY") continue;
       } else if (cmd[0] == "PING") {
          reply = "{\"ok\": true , \"reply\":\"PONG\" }";
-      } else if (cmd[0] == "EVENT" && args.size()) {
+      } else if (cmd[0] == "EVENTL" && args.size()) {
+         auto const & name = args[0];
+         if (args.size() == 1){
+           State_machine_simulation_core::event_t ev;
+           ev.id_ = name;
+           smc_->enqueue_event(ev);
+           reply = "{\"ok\": true }";
+         }
+      }else if (cmd[0] == "EVENT" && args.size()) {
         auto const & name = args[0];
         if (args.size() == 1){
           State_machine_simulation_core::event_t ev;
@@ -896,6 +907,9 @@ void Websocket_interface::handler(int sck){
          ev.exec = exec;
          smc_->enqueue_event(ev);
          continue;
+      } else if (cmd[0] == "RESTART_STATEMACHINES") {
+         smc_->restart_state_machines(args);
+         reply = "{\"ok\": true }";
       } else if (cmd[0] == "EXPORTED_EVENTS") {
          State_machine_simulation_core::event_t ev;
          auto exec = new Exported_events_query{sck};

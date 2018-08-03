@@ -1,0 +1,10 @@
+{
+  "name": "ws_api_test_client",
+  "version": "0.0.01",
+  "description": "",
+  "dependencies": {
+    "chalk": "^2.0.1",
+    "express": "^4.15.3",
+    "ws": "^3.1.0"
+  }
+}

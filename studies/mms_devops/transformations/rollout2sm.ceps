@@ -2,7 +2,6 @@ kind Event;
 Event success;
 Event start_rollout;
 
-
 static_for(e:root.rollout){
  static_for(market:e.markets.market){
   sm{
@@ -12,24 +11,32 @@ static_for(e:root.rollout){
    states { Initial;
             Done;
             Final;
+            Killed;
             e.steps.content().is_id();
             static_for(step : e.steps.content().is_id()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};
             categories{
               static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_critical","WarnState");};
               static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_error","FailState");};
+              as_symbol("Killed","FailState");              
             };
             dont_cover{
-              static_for(step : e.steps.content().is_id()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};              
+              Killed;static_for(step : e.steps.content().is_id()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};              
             };
           };
 
    cover{edges_upto_1;dont_cover_loops;};
    
-   t {  
+    t {  
       Initial; 
       e.steps.content().is_id().first();
       as_symbol("start_rollout_"+market_name,"Event");        
-     };
+    };
+
+    t{
+      Initial;
+      Killed;
+      as_symbol("dump_rollout_"+market_name,"Event");
+    };
 
    val prev = e.steps.content().is_id().first();
 

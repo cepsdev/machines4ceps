@@ -418,12 +418,12 @@
             <div class="modal-content">
                 <div class="modal-header">
                         <h4 class="modal-title" id="dlg_state_machine_details_label"></h4>
-                                <ul class="nav nav-pills card-header-pills">
-                                    <li class="nav-item"><button id="btn_resstart_sm" class="btn btn-primary">Restart</button></li>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </ul>
+                        <button id="btn_restart_sm" class="btn btn-primary" style="margin-left:64px;" >Restart</button>
+                        <button id="btn_kill_sm" class="btn btn-primary" style="margin-left:8px;" >Kill</button>
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                 </div>
                 <div id="dlg_state_machine_details_body" class="modal-body" 
                      style="max-height:700px;overflow:auto;">
@@ -652,7 +652,7 @@
         function update_info_cards(){
             
             $(".ceps-ui-tile").each( function(idx){
-                console.log("!!!");
+                
                 mark_active_nodes(states_info.active_states);
                 let sm_name = $(this).attr("sm-name");
                 let sm_viz = $(`#sm_viz_${normalize_id(sm_name)}`);                
@@ -788,9 +788,17 @@ ${ctrls}
         function sm_viz_details_click_handler(sm_name){
             let svg_info = get_svg_infos(sm_name);            
             $(`#dlg_state_machine_details_svg`).html(svg_info.data);
-            $(`#btn_resstart_sm`).click(()=>{
-                command_socket.send(JSON.stringify({cmd:"restart",what:sm_name}));                
+            $(`#btn_restart_sm`).off("click");
+            $(`#btn_kill_sm`).off("click");
+            
+            $(`#btn_restart_sm`).click(()=>{
+                command_socket.send(JSON.stringify({cmd:"restart",what:sm_name,rollout_name:"<%=rollout.name%>"}));    
+                $("#dlg_state_machine_details").modal("hide");            
             });
+            $(`#btn_kill_sm`).click(()=>{
+                command_socket.send(JSON.stringify({cmd:"kill",what:sm_name,rollout_name:"<%=rollout.name%>"}));
+                $("#dlg_state_machine_details").modal("hide");        
+            });            
             $("#dlg_state_machine_details").modal("show");
             $("#dlg_state_machine_details_label").html(sm_name);
         }
@@ -872,14 +880,12 @@ ${ctrls}
             if (i < v1.length) {
                 for(; i != v1.length;++i) sms_changed[get_sm(v1[i])] = 1;
             }        
-            console.log("sms_changed:",sms_changed)
             return sms_changed;
         }
 
         function start_ceps_proc_consumer(ws){
             let no_lanes = rollout_market != undefined;
-            function h(ev){
-                //console.log("REPLY!",ev.data);
+            function h(ev){  
                 let msg = JSON.parse(ev.data);
                 let to = {};
                 simplifyceps2json(to,msg.sresult.coverage);
@@ -910,7 +916,7 @@ ${ctrls}
                      clearInterval(f);return;
                  }
                  ws.send("QUERY root.__proc.current_states_with_coverage");                       
-                }, 5000);            
+                }, 1000);            
         }
 
         function on_change_input_search_statemachines(){          
@@ -938,7 +944,6 @@ ${ctrls}
                 for(let i = 0; i != svgs.length;++i){ 
                  if (svgs[i].name == e){
                     svgs[i].matched = true;
-                    //console.log("makevisible:"+e);
                     $(`#sm_viz_${e}`).css("display","inline");
                  }
                 }
@@ -1022,7 +1027,6 @@ ${ctrls}
         function is_in_final_state(sm_name,active_states){
             get_all_states_of_sm(sm_name);
             let v = states_info.toplevel_final_states_per_sm[sm_name];
-            //if (sm_name == "trigger_m001"){ console.log("is_in_final_state: ",v,states_info.active_states);}
             for(let i = 0; i != active_states.length; ++i ){
                 for(let j = 0; j != v.length; ++j){
                     if (active_states[i] == v[j]) {return true;}
@@ -1056,7 +1060,6 @@ ${ctrls}
         function is_sm_in_initial_only(sm_name,active_states){
             let all_states = get_all_states_of_sm(sm_name);
             let v = states_info.initial_states_per_sm[sm_name];
-            //console.log(all_states);console.log(v);
             
             for(let i = 0; i != active_states.length; ++i ){
                 for(let j = 0; j != all_states.length; ++j){
@@ -1107,14 +1110,7 @@ ${ctrls}
             function h(ev) {
                 ws.removeEventListener("message", h);
 
-                console.log(ev.data);
-
-
                 let msg = JSON.parse(ev.data);
-                /*console.log("query root");
-                console.log(msg);
-                console.log("fetch_sm_svgs_from_simcore");*/
-                console.log(msg.sresult);
                 for(let k = 0; k != msg.sresult.length;++k) {
                     if (msg.sresult[k].name != "sm" || msg.sresult[k].type != "struct") continue;
                     consumed_events[id_of_sm(msg.sresult[k])] = compute_consumed_events(msg.sresult[k]);
@@ -1129,11 +1125,9 @@ ${ctrls}
                         let v = {};
                         simplifyceps2json(v,e);
                         
-                        //console.log(v);
                         let svgs_to_load = v.sm.length;
                         states_info.states = v.states[0].state;
                         states_info.ids_of_marked_nodes = {};
-                        //console.log("states_info.states",states_info.states);
                         
                         for(let i = 0; i != v.sm.length;++i){
                             if (v.sm[i].name.indexOf(".") >= 0) continue;
@@ -1286,7 +1280,6 @@ ${ctrls}
             remote_url = url;          
             connected = false;
             main_socket = new WebSocket("ws://"+url);
-            console.log("Connecting to "+"ws://"+url);
             main_socket.addEventListener("open", on_ws_initial_connect);
             main_socket.addEventListener("close", on_ws_close);
             main_socket.addEventListener("error", on_ws_error);                
@@ -1298,13 +1291,10 @@ ${ctrls}
         }
 
         function establish_command_channel(){
-            console.log("establish_command_channel(): ws://<%=server_name%>:<%=command_port%>");
             
             function on_command_channel_connect(){
-                console.log("on_command_channel_connect");
                 let ws = command_socket;
                 function msg_arrived(msg){
-                    //console.log(msg.data);
                 }              
 
                 cmd_channel_established = true;
@@ -1316,14 +1306,12 @@ ${ctrls}
                 ws.addEventListener("message", msg_arrived);
             }
             function on_command_channel_close(){
-                console.log("on_command_channel_close"); 
                 cmd_channel_established = false;
                 $("#btn_start").attr("disabled","disabled");
                 setTimeout(establish_command_channel,1000);                
             }
             function on_command_channel_error(){
                 cmd_channel_established = false;
-                console.log("on_command_channel_error");                
             }
 
             command_socket = new WebSocket("ws://"+window.location.hostname+":<%=command_port%>");
@@ -1342,7 +1330,6 @@ ${ctrls}
                 <div class="col-xs-8 col-sm-8" id="single_market_view"></div>
                 `);
             }
-            console.log(rollout_market);
 
             $("#btn_start").attr("disabled","disabled");
             $("#btn_stop").attr("disabled","disabled");
@@ -1355,7 +1342,6 @@ ${ctrls}
              let last_connected = connected;
 
              register_observer("Check Connections", function(){
-                 console.log("Check Connections",connected,cmd_channel_established);
 
                  if (last_cmd_channel_established != cmd_channel_established ){
                    

@@ -177,7 +177,7 @@ void Dotgenerator::dump_sm(std::ostream& o,std::string name,State_machine* sm,st
 }
 
 static std::string dot_escape(std::string str){
-    return "blabla";
+
     return replace_all(replace_all(replace_all(replace_all(replace_all(replace_all(replace_all(str," ","____"),":","___"),"\"","\\\""),"\n"," "),"-",""),"!",""),".","");
 }
 

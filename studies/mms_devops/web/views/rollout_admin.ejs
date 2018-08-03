@@ -210,6 +210,7 @@
                 
                 <li class="nav-item"><button id="btn_stop" class="btn btn-outline-success">Stop</button></li-->
             </ul>
+            <span class="badge badge-info xs">v201808012300</span>&nbsp;&nbsp;
             <span class="badge badge-danger" id="nav_info_connection">Not Connected</span>
         </div>
     </nav>
@@ -528,6 +529,7 @@
         const ROLLOUT_STARTED = 2;
         const ROLLOUT_STOP_PENDING = 3;
         const ROLLOUT_FAILED = 4;
+        const ROLLOUT_DONE = 5;
         let gen_html_for_rollout_id_counter = 0;
 
 
@@ -773,6 +775,7 @@
             let d = new Date(rollout.when);
             let t = 0;
             let time_left_milli_secs = d - Date.now();
+            if (time_left_milli_secs < 0) return "&#x221e;";
             let time_left_days = Math.floor(time_left_milli_secs / (3600 * 24 * 1000));
             let time_left_hours = Math.floor((time_left_milli_secs-time_left_days*(3600 * 24 * 1000)) / (3600*1000) );
             let time_left_minutes = Math.floor( (time_left_milli_secs - time_left_hours*(3600 *1000)  - time_left_days*(3600 * 24 * 1000)) / (1000*60) );
@@ -867,6 +870,7 @@
                     case ROLLOUT_STARTED: return `<span class="badge badge-success pull-right" id="nav_info_connection">Started.</span>`;
                     case ROLLOUT_STOP_PENDING: break;
                     case ROLLOUT_FAILED: return `<span class="badge badge-danger" id="nav_info_connection">Fatal Error</span>`;
+                    case ROLLOUT_DONE: return `<span class="badge badge-info" id="nav_info_connection">Done</span>`;
                     default: return `<span class="badge badge-danger" id="nav_info_connection">Status not available</span>`;
                 }
             }
@@ -887,7 +891,7 @@
 
                 let time_sec = gen_html_time_section(rollout);
                 let actions = "";
-                if (rollout.state == ROLLOUT_READY){
+                if (rollout.state == ROLLOUT_READY || rollout.state == ROLLOUT_DONE){
                     actions = `<a  class="btn btn-primary" onclick="action_launch_rollout('${rollout.id}');" id="${rollout.internal_id}_btn_launch" >
                                 Launch
                                </a>
@@ -931,11 +935,11 @@
                     </tbody>
                     `;
                 }
-                else if (rollout.state == ROLLOUT_READY) table_body = `
+                else if (rollout.state == ROLLOUT_READY || rollout.state == ROLLOUT_STARTED_PENDING) table_body = `
                     <thead><tr><th>Scheduled</th><th>Starts Automatically in</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr>
-                            <td style="width:15%;">${d.getMonth()+1}/${d.getDay()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
+                            <td style="width:15%;">${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
                             <td style="width:25%;">
                                 <div class="rollout-time-left" id="${rollout.internal_id}_time_left_section">
                                     ${time_sec} 
@@ -945,7 +949,7 @@
                         </tr>
                     </tbody>
                     `;
-                else if (rollout.state == ROLLOUT_STARTED || ROLLOUT_STOP_PENDING){
+                else if (rollout.state == ROLLOUT_STARTED /*|| ROLLOUT_STOP_PENDING*/){
                     let health = "";
                     let d = new Date(rollout.up_since);
                     let time_sec = gen_html_uptime_section(rollout);
@@ -1120,6 +1124,7 @@
             }
 
             command_socket = new WebSocket("ws://"+window.location.hostname+":<%=command_port%>");
+            console.log("Connecting to "+"ws://"+window.location.hostname+":<%=command_port%>");
             command_socket.addEventListener("open", on_command_channel_connect);
             command_socket.addEventListener("close", on_command_channel_close);
             command_socket.addEventListener("error", on_command_channel_error);        

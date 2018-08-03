@@ -1696,6 +1696,11 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         do_generate_dot_code(ceps_env_current(),current_universe(),global_guards,result_cmd_line);
     }
 
+    if (result_cmd_line.sleep_before_ws_api_on){
+            auto delta = std::stoi(result_cmd_line.sleep_before_ws_delta_ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds(delta));
+    }
+
     if(result_cmd_line.ws_api_on){
         ws_api() = new Websocket_interface(this,result_cmd_line.ws_api_port);
         ws_api()->start();

@@ -69,6 +69,52 @@ static ceps::ast::Nodebase_ptr clone(ceps::ast::Nodebase_ptr p){
     return nullptr;
 }
 
+
+void State_machine_simulation_core::restart_state_machines(std::vector<std::string> args){
+    State_machine_simulation_core::event_t ev;
+    ev.id_ = "@@restart_state_machine";
+    for(auto arg:args){
+        int t;
+        state_rep_t state;
+        auto it = statemachines().find(arg);
+        if (it == statemachines().end()) continue;
+        state.id_ = it->second->idx_;
+        state.is_sm_ = true;
+        state.smp_ = it->second;
+        state.valid_ = true;
+        state.sid_ = it->second->id();
+        if(!state.valid()) continue;
+        if(!state.is_sm_) continue;
+        ev.payload_native_.push_back(state.id());
+    }
+    enqueue_event(ev);
+}
+
+void State_machine_simulation_core::restart_state_machines(std::vector<ceps::ast::Nodebase_ptr> args){
+    State_machine_simulation_core::event_t ev;
+    ev.id_ = "@@restart_state_machine";
+    for(auto arg:args){
+        int t;
+        state_rep_t state;
+        if (arg->kind() != ceps::ast::Ast_node_kind::string_literal) state = resolve_state_or_transition_given_a_qualified_id(arg,nullptr,&t);
+        else{
+            //assume arg is the name of a state machine
+            auto it = statemachines().find(ceps::ast::value(ceps::ast::as_string_ref(arg)));
+            if (it == statemachines().end()) continue;
+            state.id_ = it->second->idx_;
+            state.is_sm_ = true;
+            state.smp_ = it->second;
+            state.valid_ = true;
+            state.sid_ = it->second->id();
+        }
+
+        if(!state.valid()) continue;
+        if(!state.is_sm_) continue;
+        ev.payload_native_.push_back(state.id());
+    }
+    enqueue_event(ev);
+}
+
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,
 																				ceps::ast::Call_parameters* params,
@@ -83,6 +129,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	 }
 	}
     if (id == "restart"){
+
         State_machine_simulation_core::event_t ev;
         ev.id_ = "@@restart_state_machine";
         for(auto arg:args){
@@ -110,6 +157,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
             }
             ev.payload_native_.push_back(state.id());
         }
+
+
         enqueue_event(ev);
         return new ceps::ast::Int( 1, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
     } else if (id == "write_system_state") {
