@@ -429,9 +429,10 @@ function watch_ceps_instance(info){
     if (ceps_instances.length == 0) {ceps_instances.push(info);return ceps_instances.length - 1;}
     for(let i = 0; i != ceps_instances.length; ++i)
     {
-        if (ceps_instances[i].status == CEPS_INSTANCE_COMPLETE)
-         ceps_instances[i] = info;
-        return i;
+        if (ceps_instances[i].status == CEPS_INSTANCE_COMPLETE){
+            ceps_instances[i] = info;
+            return i;
+        }
     }
     ceps_instances.push(info);
     return ceps_instances.length - 1;
@@ -677,20 +678,20 @@ setInterval( () => {
         }
     );
 
-    log_info("launch_rollout()",`Executing ../ceps ${cmd_args2.join(" ")}`);    
-    log_info("launch_rollout()",`Spawned Child Process pid=${ceps_process.pid}`);
+    log_info(`${rollout.name} - launch_rollout()`,`Executing ../ceps ${cmd_args2.join(" ")}`);    
+    log_info(`${rollout.name} - launch_rollout()`,`Spawned Child Process pid=${ceps_process.pid}`);
     
     ceps_process.stdout.on('data', (data) => {
-        log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`);
+        log_debug(`${rollout.name} - launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`);
     });
     ceps_process.stderr.on('data', (data) => {
-        log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`); 
+        log_err(`${rollout.name} - launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${data}`); 
     });
     ceps_process.on('close', (code) => {
         //try{process.kill(ceps_process.pid);}catch(err){}
         ceps_instances[proc_idx].status |= CEPS_INSTANCE_EXITED;
         connections_with_ceps_cores[ceps_process.pid] = undefined;
-        log_debug(`launch_rollout()/cepS core running,pid=${ceps_process.pid} '${rollout.name}'`,`exited with code ${code}`);    
+        log_debug(`${rollout.name} - launch_rollout()/cepS core running,pid=${ceps_process.pid} '${rollout.name}'`,`exited with code ${code}`);    
     });
 };
 
