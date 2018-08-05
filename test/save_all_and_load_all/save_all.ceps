@@ -1,0 +1,22 @@
+kind Event;
+
+Event E;
+
+sm{S;
+states{Initial;a;b;c;};
+Actions{
+ save_all{
+  print("Serializing environment...\n");
+  save_env();
+ };
+};
+t{Initial;a;};
+t{a;b;E;save_all;};
+t{b;c;E;};
+};
+
+Simulation{
+ Start{S;};
+ start_timer(1.0*s,E);
+ start_timer(3.0*s,E);
+};

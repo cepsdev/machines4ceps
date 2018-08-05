@@ -19,6 +19,8 @@ static ceps::ast::Nodebase_ptr handle_make_byte_sequence(State_machine_simulatio
 static ceps::ast::Nodebase_ptr handle_send_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
 static ceps::ast::Nodebase_ptr handle_http_request_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
 static ceps::ast::Nodebase_ptr handle_os_system_cmd(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
+static ceps::ast::Nodebase_ptr trigger_jenkins_build(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
+static ceps::ast::Nodebase_ptr save_env(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp);
 static ceps::ast::Nodebase_ptr handle_breakup_byte_sequence(
 		State_machine_simulation_core *smc, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp, ceps::parser_env::Symboltable & sym_table);
 
@@ -403,6 +405,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
         return handle_http_request_cmd(this,args,active_smp);
     else if (id == "os_system")
         return handle_os_system_cmd(this,args,active_smp);
+    else if (id == "trigger_jenkins_build")
+        return trigger_jenkins_build(this,args,active_smp);
+    else if (id == "save_env")
+        return save_env(this, args,active_smp);
     else if (id == "write_read_frm"){
 		if (args.size() == 2
 				&& args[0]->kind() == ceps::ast::Ast_node_kind::identifier
@@ -1522,9 +1528,6 @@ static ceps::ast::Nodebase_ptr handle_http_request_cmd(State_machine_simulation_
 
 
 static void handle_os_system_thread_fn(State_machine_simulation_core *sm,std::string cmd,std::string ev_id,std::string err_ev_id){
-
-
-
     auto fire_err_ev = [&](int r){
         if(err_ev_id.length()==0) return;
         State_machine_simulation_core::event_t ev;
@@ -1533,9 +1536,7 @@ static void handle_os_system_thread_fn(State_machine_simulation_core *sm,std::st
         sm->enqueue_event(ev);
         sm->dec_timed_events();
     };
-
     auto r = system(cmd.c_str());
-
     if (r == -1){
         fire_err_ev(r);return;
     } else if (r != 0) {
@@ -1546,7 +1547,6 @@ static void handle_os_system_thread_fn(State_machine_simulation_core *sm,std::st
         if (WIFEXITED(r)) r =  WEXITSTATUS(r);
         else {fire_err_ev(-1);return;}
     }
-
     if (r != 0){
         fire_err_ev(r); return;
     }
@@ -1578,6 +1578,146 @@ static ceps::ast::Nodebase_ptr handle_os_system_cmd(State_machine_simulation_cor
 
 
 
+
+/////////////////////////////////////// trigger_jenkins_build
+///
+///
+///
+///
+///
+///
+///
+///
+bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n);
+static ceps::ast::Nodebase_ptr trigger_jenkins_build(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
+    using namespace std;
+    using namespace ceps::ast;
+
+    string job_name;
+    std::map<std::string,std::string> jenkins_parameters;
+    for(auto p: args){
+        if (job_name.size() == 0 && p->kind() == Ast_node_kind::string_literal)
+            job_name = value(as_string_ref(p));
+        else if (p->kind() == Ast_node_kind::binary_operator && op(as_binop_ref(p)) == '='){
+            auto & root = as_binop_ref(p);
+            auto  l_ = root.left(); auto r_ = root.right();
+            if (l_->kind() == Ast_node_kind::symbol){
+                auto & l = as_symbol_ref(l_);
+                if (kind(l) != "Formal_parameter_name") continue;
+                if (r_->kind() == Ast_node_kind::symbol)
+                {
+
+                } else {
+                    stringstream ss;
+                    ceps2json(ss,r_);
+                    jenkins_parameters[name(l)] = ss.str();
+                }
+            }
+        }
+    }
+
+
+    return new ceps::ast::Int{1,ceps::ast::all_zero_unit()};
+}
+
+
+/////////////////////////////////////// save_env
+///
+///
+///
+///
+///
+///
+///
+///
+///
+void serialize_execution_context(State_machine_simulation_core *sm,std::ostream & os);
+static ceps::ast::Nodebase_ptr save_env(State_machine_simulation_core *sm, std::vector<ceps::ast::Nodebase_ptr> args,State_machine* active_smp){
+    using namespace std;
+    using namespace ceps::ast;
+
+    string file_name{"out.ceps"};
+    std::ofstream os{file_name};
+    serialize_execution_context(sm,os);
+
+    return new ceps::ast::Int{1,ceps::ast::all_zero_unit()};
+}
+
+void serialize_execution_context(State_machine_simulation_core *sm,std::ostream & os){
+     using namespace std;
+
+    os << "execution_context{";
+    constexpr auto max_per_line = 12;
+    auto printed = 0;
+    for(auto i = 0; i != sm->executionloop_context().current_states.size();++i){
+        auto const & e = sm->executionloop_context().current_states[i];
+        if (e){if(printed % max_per_line==0)os<<"\n ";os << i <<";";++printed;}
+    }
+    if(printed) os << "\n";
+
+    os << " timers{\n";
+    {
+        std::lock_guard<std::mutex> lk(timer_threads_m);
+        for(size_t i = 0; i < timer_threads.size(); ++i)
+            if (!get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i]) &&
+                !get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[i]) &&
+                nullptr != std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i]))
+        {
+                os << "  timer{";
+                os << "};\n";
+        }
+    }
+    os << " };\n";
+    os << "};\n";
+
+
+
+    /*std::cout << "Full qualified state id => Index :\n";
+    if (executionloop_context().start_of_covering_states_valid())
+        std::cout << " There are states to be covered, start of covering state space = " << executionloop_context().start_of_covering_states << "\n";
+    for(auto e : executionloop_context().state_id_to_idx){
+     std::cout <<" \"" << e.first <<"\" => " << "" << e.second << " ";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::SM))std::cout <<" compound_state";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::INIT))std::cout <<" initial_state";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::DONT_COVER))std::cout <<" don't cover";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::DONT_COVER_LOOPS))std::cout <<" don't cover loops";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::HIDDEN))std::cout <<" hidden";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::FINAL))std::cout <<" final_state";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::THREAD))std::cout <<" thread";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::IN_THREAD))std::cout <<" in_thread";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::REGION))std::cout <<" orthogonal_regions";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::JOIN)){
+         std::cout <<" join="<< executionloop_context().get_join_state(e.second);
+     }
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::EXIT))std::cout <<" on_exit";
+     if (executionloop_context().get_inf(e.second,executionloop_context_t::ENTER))std::cout <<" on_enter";
+
+     if (executionloop_context().shadow_state[e.second] >= 0) std::cout << " shadow_state = "<< executionloop_context().shadow_state[e.second];
+
+     std::cout << "\n";
+    }
+    std::cout << "event id => event name :\n";
+    for(auto e:executionloop_context().ev_to_id){
+     std::cout <<" " << e.second <<";" << "\"" << e.first;
+     std::cout << "\";\n";
+    }
+    int j = -1;
+    std::cout << "(Transition Id) Index of State Machine (parent sm) :\n Index of Start State -> Index of Destination State/Event Index Info...\n";
+    if (executionloop_context().start_of_covering_transitions_valid())
+        std::cout << " There are transitions to be covered, start of covering transition space = " << executionloop_context().start_of_covering_transitions << "\n";
+    for(auto const & t : executionloop_context().transitions){
+     ++j;if (j == 0) continue;
+     std::cout << " ("<< j << ") ";
+     std::cout << t.smp;
+     std::cout << " (" << executionloop_context().parent_vec[t.smp] << ") : ";
+     std::cout << t.from << "->"<<t.to<<" /"<<t.ev<<" g="<<t.guard << " a1= " << ((long long)t.a1) << " a2= "<< ((long long)t.a2);
+     std::cout << " (root=" <<t.root_sms<<") ";
+     if (t.props & executionloop_context_t::TRANS_PROP_ABSTRACT) std::cout << "(abstract)";
+     if (executionloop_context().shadow_transitions[j] > 0) std::cout << " (shadow transition is " << executionloop_context().shadow_transitions[j] <<")";
+     std::cout << std::endl;
+    }
+    std::cout << "Total number of states == " << executionloop_context().number_of_states <<" (option --print_transition_tables)\n\n";*/
+}
 
 
 

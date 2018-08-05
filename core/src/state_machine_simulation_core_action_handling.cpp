@@ -139,18 +139,15 @@ bool is_second(ceps::ast::Unit_rep unit)
 	return unit.ampere == 0 && unit.candela == 0 && unit.kelvin == 0 && unit.kg == 0 && unit.m == 0 && unit.mol == 0 && unit.s == 1;
 }
 
-
-#include<chrono>
 std::mutex timer_threads_m;
-std::vector< std::tuple<int,std::thread*,bool,bool,std::string >> timer_threads;
-constexpr int TIMER_THREAD_FN_CTRL_THREADOBJ = 1;
-constexpr int TIMER_THREAD_FN_CTRL_TERMINATED = 2;
-constexpr int TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED = 3;
-constexpr int TIMER_THREAD_FN_CTRL_ID = 4;
-
-
-
-
+std::vector< std::tuple<int,
+                        std::thread*,
+                        bool,
+                        bool,
+                        std::string,
+                        std::chrono::time_point<std::chrono::steady_clock>,
+                        double,
+                        bool >> timer_threads;
 
 void timer_thread_fn(State_machine_simulation_core* smc, int id, bool periodic, double delta,State_machine_simulation_core::event_t event){
 

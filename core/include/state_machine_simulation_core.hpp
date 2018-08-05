@@ -91,6 +91,25 @@ template <>
  };
 }
 
+extern std::mutex timer_threads_m;
+extern std::vector< std::tuple<int,
+                        std::thread*,
+                        bool,
+                        bool,
+                        std::string,
+                        std::chrono::time_point<std::chrono::steady_clock>,
+                        double,
+                        bool,
+                        std::string>> timer_threads;
+
+constexpr int TIMER_THREAD_FN_CTRL_THREADOBJ = 1;
+constexpr int TIMER_THREAD_FN_CTRL_TERMINATED = 2;
+constexpr int TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED = 3;
+constexpr int TIMER_THREAD_FN_CTRL_ID = 4;
+constexpr int TIMER_THREAD_FN_CTRL_LATEST_FIRE_TIMEPOINT = 5;
+constexpr int TIMER_THREAD_FN_CTRL_DELTA = 6;
+constexpr int TIMER_THREAD_FN_CTRL_PERIODIC = 7;
+constexpr int TIMER_THREAD_FN_CTRL_EVENT = 8;
 
 class Dotgenerator{
 public:

@@ -324,7 +324,7 @@ static std::string escape_json_string(std::string const & s){
     return ss.str();
 }
 
-static bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
+bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
     using namespace ceps::ast;
     if (n->kind() == Ast_node_kind::int_literal)
      {s << value(as_int_ref(n));return true;}
