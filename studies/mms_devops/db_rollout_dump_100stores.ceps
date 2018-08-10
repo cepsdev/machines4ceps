@@ -1,0 +1,735 @@
+rollout_step_type_db{
+ id{0;};
+ description{"legt eine leere Protokolldatei auf Jenkins an";};
+ job_check{"pos/rollout/automated/002_auto_prepare_and_start_rollout_protocol";};
+ job_run{"";};
+ job_check_warn{"pos/rollout/automated/002_auto_prepare_and_start_rollout_protocol";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ROLLOUTNAME";};value{"Massenrollout (DE XCH7 2 XCH10.2-HF)";};};  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{1;};
+ description{"prüft , ob eine Instanz in Jenkins zu dem Markt aufbaubar ist";};
+ job_check{"pos/rollout/automated/020_auto_check_store_connect";};
+ job_run{"";};
+ job_check_warn{"pos/rollout/automated/020_auto_check_store_connect";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{"soft_timeout";};value{"90";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{2;};
+ description{"prüft in der Tabelle MIG_DELTA auf einen Eintrag für die Zielversion.   Sucht dazu das jüngste (E:DeploymentPaketverzeichnis und darin die \"verpusher.log\". Sucht dann den Eintrag für die aktuelle Version (Parameter !) . Im Erfolgsfall ist der Indien-Rol";};
+ job_check{"pos/rollout/automated/100_auto_check_checkversion";};
+ job_run{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_check_warn{"pos/rollout/automated/100_auto_check_checkversion";};
+ job_run_warn{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"WWSVersion";};value{"2018.0.02.05.005";};};  };
+  run{
+   param{name{"WAIT";};value{"600";};};  };
+  check_warn{
+   param{name{"WWSVersion";};value{"2018.0.02.05.005";};};  };
+  run_warn{
+   param{name{"WAIT";};value{"600";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{3;};
+ description{"Abarbeitung des TMD-Batch ohne Eingriff; muß um 6:00 fertig sein";};
+ job_check{"pos/rollout/automated/200_auto_check_tmd_batch";};
+ job_run{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_check_warn{"pos/rollout/automated/200_auto_check_tmd_batch";};
+ job_run_warn{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"120";};};  };
+  check_warn{
+   param{name{"REPAIR";};value{"X_FALSE";};};  };
+  run_warn{
+   param{name{"WAIT";};value{"120";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{4;};
+ description{"JMX-RD + Prüfung (ersetzt 400+405)";};
+ job_check{"pos/rollout/automated/406_auto_run_check_rd";};
+ job_run{"";};
+ job_check_warn{"pos/rollout/automated/406_auto_run_check_rd";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{5;};
+ description{"Aufruf ISDL / 1. Versuch. einfach mal machen";};
+ job_check{"pos/rollout/automated/300_auto_run_isdl_jmx";};
+ job_run{"";};
+ job_check_warn{"pos/rollout/automated/300_auto_run_isdl_jmx";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{"soft_timeout";};value{"75";};};  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{6;};
+ description{"Abarbeitung des ISDL/check ohne Eingriff; 30/75 Minuten";};
+ job_check{"pos/rollout/automated/305_auto_check_isdl";};
+ job_run{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_check_warn{"pos/rollout/automated/305_auto_check_isdl";};
+ job_run_warn{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"90";};};  };
+  check_warn{
+  };
+  run_warn{
+   param{name{"WAIT";};value{"90";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{7;};
+ description{"Aufruf TD / 1. Versuch. einfach mal machen";};
+ job_check{"pos/rollout/automated/500_auto_run_td_jmx";};
+ job_run{"pos/rollout/automated/500_auto_run_td_jmx";};
+ job_check_warn{"pos/rollout/automated/500_auto_run_td_jmx";};
+ job_run_warn{"pos/rollout/automated/500_auto_run_td_jmx";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  check_warn{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{8;};
+ description{"Abarbeitung des TD/Check ohne Eingriff; 10/20 Minuten";};
+ job_check{"pos/rollout/automated/505_auto_check_td";};
+ job_run{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_check_warn{"pos/rollout/automated/505_auto_check_td";};
+ job_run_warn{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_run_error{"pos/rollout/automated/999_auto_send_protocol_file";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+  };
+  run_warn{
+   param{name{"WAIT";};value{"60";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{9;};
+ description{"start des Update für alle Kassen eines Marktes";};
+ job_check{"pos/rollout/automated/606_auto_update_all_cr";};
+ job_run{"";};
+ job_check_warn{"pos/rollout/automated/606_auto_update_all_cr";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{10;};
+ description{"wartet eine bestimmte Zeit; Einstellung über StepType";};
+ job_check{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_run{"";};
+ job_check_warn{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"WAIT";};value{"600";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"WAIT";};value{"600";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{11;};
+ description{"erstellt eine Übersicht über Sync-Point im Store";};
+ job_check{"pos/rollout/automated/601_auto_check_cr_syncpoints_and_correct";};
+ job_run{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_check_warn{"pos/rollout/automated/601_auto_check_cr_syncpoints_and_correct";};
+ job_run_warn{"pos/rollout/automated/010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_step_type_db{
+ id{12;};
+ description{"sendet das Ergebnis als Log-File an das Rollout-Team";};
+ job_check{"pos/rollout/automated/999_auto_send_protocol_file";};
+ job_run{"";};
+ job_check_warn{"pos/rollout/automated/999_auto_send_protocol_file";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+};
+rollout_db{
+ id{0;};
+ name{"whatever to XCH10.02HF5 dated  2018-08-05/ Batch: Batch5 / 23 Store(s)";};
+ when{"2018-08-05 02:30:00";};
+};
+rollout_store_db{
+ id{0;};
+ rollout{0;};
+ name{"m007";};
+ sap_code{"m007";};
+};
+rollout_store_db{
+ id{1;};
+ rollout{0;};
+ name{"m013";};
+ sap_code{"m013";};
+};
+rollout_store_db{
+ id{2;};
+ rollout{0;};
+ name{"m018";};
+ sap_code{"m018";};
+};
+rollout_store_db{
+ id{3;};
+ rollout{0;};
+ name{"m039";};
+ sap_code{"m039";};
+};
+rollout_store_db{
+ id{4;};
+ rollout{0;};
+ name{"m041";};
+ sap_code{"m041";};
+};
+rollout_store_db{
+ id{5;};
+ rollout{0;};
+ name{"m067";};
+ sap_code{"m067";};
+};
+rollout_store_db{
+ id{6;};
+ rollout{0;};
+ name{"m069";};
+ sap_code{"m069";};
+};
+rollout_store_db{
+ id{7;};
+ rollout{0;};
+ name{"m080";};
+ sap_code{"m080";};
+};
+rollout_store_db{
+ id{8;};
+ rollout{0;};
+ name{"m084";};
+ sap_code{"m084";};
+};
+rollout_store_db{
+ id{9;};
+ rollout{0;};
+ name{"m093";};
+ sap_code{"m093";};
+};
+rollout_store_db{
+ id{10;};
+ rollout{0;};
+ name{"m133";};
+ sap_code{"m133";};
+};
+rollout_store_db{
+ id{11;};
+ rollout{0;};
+ name{"m147";};
+ sap_code{"m147";};
+};
+rollout_store_db{
+ id{12;};
+ rollout{0;};
+ name{"m174";};
+ sap_code{"m174";};
+};
+rollout_store_db{
+ id{13;};
+ rollout{0;};
+ name{"m196";};
+ sap_code{"m196";};
+};
+rollout_store_db{
+ id{14;};
+ rollout{0;};
+ name{"m310";};
+ sap_code{"m310";};
+};
+rollout_store_db{
+ id{15;};
+ rollout{0;};
+ name{"m402";};
+ sap_code{"m402";};
+};
+rollout_store_db{
+ id{16;};
+ rollout{0;};
+ name{"s001";};
+ sap_code{"s001";};
+};
+rollout_store_db{
+ id{17;};
+ rollout{0;};
+ name{"s006";};
+ sap_code{"s006";};
+};
+rollout_store_db{
+ id{18;};
+ rollout{0;};
+ name{"s009";};
+ sap_code{"s009";};
+};
+rollout_store_db{
+ id{19;};
+ rollout{0;};
+ name{"s025";};
+ sap_code{"s025";};
+};
+rollout_store_db{
+ id{20;};
+ rollout{0;};
+ name{"s031";};
+ sap_code{"s031";};
+};
+rollout_store_db{
+ id{21;};
+ rollout{0;};
+ name{"s213";};
+ sap_code{"s213";};
+};
+
+static_for(v : 0 .. 77 ){
+
+rollout_store_db{
+ id{22+v;};
+ rollout{0;};
+ name{"s353_"+text(v);};
+ sap_code{"s353_"+text(v);};
+};
+}
+
+
+rollout_step_db{
+ id{0;};
+ step_type{0;};
+ rollout{0;};
+ sequence{1;};
+ criticality_def{
+ warn {  tries{1;};
+};
+ error {  tries{1;};
+};
+ };
+};
+rollout_step_db{
+ id{1;};
+ step_type{1;};
+ rollout{0;};
+ sequence{2;};
+ criticality_def{
+ warn {  tries{1;};
+ timeout{60;};
+};
+ error {  tries{2;};
+};
+ };
+};
+rollout_step_db{
+ id{2;};
+ step_type{2;};
+ rollout{0;};
+ sequence{3;};
+ criticality_def{
+ warn { timeout{-123145;};
+};
+ error { timeout{-115945;};
+};
+ };
+};
+rollout_step_db{
+ id{3;};
+ step_type{3;};
+ rollout{0;};
+ sequence{4;};
+ criticality_def{
+ warn {  tries{45;};
+};
+ };
+};
+rollout_step_db{
+ id{4;};
+ step_type{4;};
+ rollout{0;};
+ sequence{5;};
+ criticality_def{
+ warn {  tries{1;};
+};
+ error {  tries{1;};
+};
+ };
+};
+rollout_step_db{
+ id{5;};
+ step_type{5;};
+ rollout{0;};
+ sequence{6;};
+ criticality_def{
+ warn {  tries{1;};
+};
+ error {  tries{1;};
+};
+ };
+};
+rollout_step_db{
+ id{6;};
+ step_type{6;};
+ rollout{0;};
+ sequence{7;};
+ criticality_def{
+ warn {  tries{30;};
+};
+ error {  tries{75;};
+};
+ };
+};
+rollout_step_db{
+ id{7;};
+ step_type{7;};
+ rollout{0;};
+ sequence{8;};
+ criticality_def{
+ warn {  tries{1;};
+};
+ error {  tries{2;};
+};
+ };
+};
+rollout_step_db{
+ id{8;};
+ step_type{8;};
+ rollout{0;};
+ sequence{9;};
+ criticality_def{
+ warn {  tries{10;};
+  result{"3";};
+};
+ error {  tries{20;};
+  result{"3";};
+};
+ };
+};
+rollout_step_db{
+ id{9;};
+ step_type{9;};
+ rollout{0;};
+ sequence{10;};
+ criticality_def{
+ warn {  tries{1;};
+};
+ error {  tries{1;};
+};
+ };
+};
+rollout_step_db{
+ id{10;};
+ step_type{10;};
+ rollout{0;};
+ sequence{11;};
+ criticality_def{
+ warn {  tries{1;};
+};
+ error {  tries{1;};
+};
+ };
+};
+rollout_step_db{
+ id{11;};
+ step_type{11;};
+ rollout{0;};
+ sequence{12;};
+ criticality_def{
+ warn {  tries{60;};
+};
+ error {  tries{60;};
+};
+ };
+};
+rollout_step_db{
+ id{12;};
+ step_type{12;};
+ rollout{0;};
+ sequence{13;};
+ criticality_def{
+ warn {  tries{1;};
+};
+ error {  tries{1;};
+};
+ };
+};
