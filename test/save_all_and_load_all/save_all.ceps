@@ -3,7 +3,7 @@ kind Event;
 Event E;
 
 sm{S;
-states{Initial;a;b;c;};
+states{Initial;a;b;c;d;e;f;};
 Actions{
  save_all{
   print("Serializing environment...\n");
@@ -11,12 +11,18 @@ Actions{
  };
 };
 t{Initial;a;};
-t{a;b;E;save_all;};
+t{a;b;E;};
 t{b;c;E;};
+t{c;d;E;save_all;};
+t{d;e;E;};
+t{e;f;E;};
 };
 
 Simulation{
  Start{S;};
  start_timer(1.0*s,E);
+ start_timer(2.0*s,E);
  start_timer(3.0*s,E);
+ start_timer(4.0*s,E);
+ start_timer(5.0*s,E);
 };
