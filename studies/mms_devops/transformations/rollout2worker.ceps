@@ -48,6 +48,7 @@ static_for(e:root.rollout){
                      as_symbol(market_name+"_job_run","Systemstate") ;
                      market_code;
                      step.settings;
+                     market_name;
                      };
         Actions{
             do_big_step{

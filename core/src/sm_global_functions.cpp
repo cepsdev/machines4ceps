@@ -504,30 +504,29 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
        }
 	 }
 	 return new ceps::ast::Int(1,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-    } else if (id == "env") {
-        if (args.size() == 0){
-            auto p = new ceps::ast::Struct{"env"};
-            for(auto e = environ;*e;++e){
-                //std::cout << *e  << "\n";
-                p->children().push_back(new ceps::ast::String{*e});
-            }
-            return p;
-        } else {
-            if (args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) return new ceps::ast::String{""};
-            auto s = ceps::ast::value(ceps::ast::as_string_ref(args[0]));
-            auto p = getenv(s.c_str());
-            if (p) return new ceps::ast::String{p};
-            return new ceps::ast::String{""};
-        }
+    }  else if (id == "test_bit") {
+
+       if (args.size() != 2 || args[0]->kind() != ceps::ast::Ast_node_kind::int_literal || args[1]->kind() != ceps::ast::Ast_node_kind::int_literal)
+            return new ceps::ast::Int{ 0,ceps::ast::all_zero_unit()};
+        auto b = (value(as_int_ref(args[0])) & value(as_int_ref(args[1]))) == value(as_int_ref(args[1]));
+        return new ceps::ast::Int{
+            b ? 1 : 0,ceps::ast::all_zero_unit()};
     } else if (id == "timestamp"){
         auto two_digits =  [](int i,std::ostream& os){
            if (i < 10) os << "0";
            os << i;
         };
 
+        int delta = 0;
+
+        if (args.size() > 0 && args[0]->kind() == ceps::ast::Ast_node_kind::int_literal){
+            delta = ceps::ast::value(ceps::ast::as_int_ref(args[0]));
+        }
+
         time_t rawtime;
         struct tm* timeinfo;
         time(&rawtime);
+        rawtime += delta;
         timeinfo = localtime(&rawtime);
         std::stringstream timestamp;
         timestamp << timeinfo->tm_year+1900 << "-";

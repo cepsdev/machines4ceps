@@ -3,8 +3,10 @@ val db_user = env("ROLLAUT_DB_USER");
 val db_passwd = env("ROLLAUT_DB_PASSWD");
 val db_db = env("ROLLAUT_DB_DB");
 val param_name = env("ROLLAUT_JENKINS_SAPCODE_PARAM");
-
+val max_time_drift = -as_int("0"+env("ROLLAUT_MAX_DRIFT","180"));
 
 val SCRIPT_TO_CHECK_JOB_FOR_TERMINATION = "./check_job_for_termination -h "+db_host+" -u "+db_user+" -p \""+db_passwd+"\" ";
 val SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT = "./fetch_job_computation_result -h "+db_host+" -u "+db_user+" -p \""+db_passwd+"\" ";
 val SCRIPT_TO_START_A_JOB = "./start_job";
+val SCRIPT_TO_START_A_JOB_AND_FOLLOW = "./start_job_follow";
+
