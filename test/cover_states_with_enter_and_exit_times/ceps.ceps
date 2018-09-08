@@ -1,0 +1,21 @@
+kind Event;
+Event A,B,C,D;
+val timeout_delay = 0.5 *s;
+
+sm{
+ S1;
+ //cover{edges_upto_1;};
+ log{state_enter_timestamp;state_exit_timestamp;};
+ states{Initial;s_1;s_2;s_3;};
+ t{Initial;s_1;};
+ t{s_1;s_2;A;};
+ t{s_2;s_3;B;};
+ t{s_3;s_3;C;};
+};
+
+Simulation{
+ Start{S1;};
+ start_timer(timeout_delay,A);
+ start_timer(2.0*timeout_delay,B);
+ start_timer(3.0*timeout_delay,C);
+};

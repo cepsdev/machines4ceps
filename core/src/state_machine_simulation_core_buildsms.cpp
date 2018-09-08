@@ -300,6 +300,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 
 	//Set parent information
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+        ctx.set_inf(cur_sm->idx_,executionloop_context_t::LOG_ENTER_TIME,cur_sm->log_enter_state());
+        ctx.set_inf(cur_sm->idx_,executionloop_context_t::LOG_EXIT_TIME,cur_sm->log_exit_state());
+
 		bool inside_thread = false;
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::SM,true);
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::THREAD,inside_thread = cur_sm->is_thread_);
@@ -321,6 +324,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
             ctx.set_inf(s->idx_,executionloop_context_t::DONT_COVER,s->dont_cover());
 			ctx.set_inf(s->idx_,executionloop_context_t::FINAL,s->is_final());
 			ctx.set_inf(s->idx_,executionloop_context_t::IN_THREAD,inside_thread);
+            ctx.set_inf(s->idx_,executionloop_context_t::LOG_ENTER_TIME,cur_sm->log_enter_state());
+            ctx.set_inf(s->idx_,executionloop_context_t::LOG_EXIT_TIME,cur_sm->log_exit_state());
+
 			if (s->is_initial()) ctx.set_initial_state(cur_sm->idx_,s->idx_);
 			if (s->is_final()) ctx.set_final_state(cur_sm->idx_,s->idx_);
 		}
@@ -328,6 +334,8 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			ctx.set_parent(s->idx_,cur_sm->idx_);
 			if (s->is_thread_)
 				ctx.set_inf(cur_sm->idx_,executionloop_context_t::REGION,true);
+            ctx.set_inf(s->idx_,executionloop_context_t::LOG_ENTER_TIME,cur_sm->log_enter_state());
+            ctx.set_inf(s->idx_,executionloop_context_t::LOG_EXIT_TIME,cur_sm->log_exit_state());
 		}
 	});
 
@@ -1458,8 +1466,9 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	   }
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::EXIT))std::cout <<" on_exit";
 	   if (executionloop_context().get_inf(e.second,executionloop_context_t::ENTER))std::cout <<" on_enter";
-
 	   if (executionloop_context().shadow_state[e.second] >= 0) std::cout << " shadow_state = "<< executionloop_context().shadow_state[e.second];
+       if (executionloop_context().get_inf(e.second,executionloop_context_t::LOG_ENTER_TIME))std::cout <<" log_enter_time";
+       if (executionloop_context().get_inf(e.second,executionloop_context_t::LOG_EXIT_TIME))std::cout <<" log_exit_time";
 
 	   std::cout << "\n";
 	  }

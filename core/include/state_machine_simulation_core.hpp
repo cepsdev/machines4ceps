@@ -667,7 +667,7 @@ public:
 	ceps::ast::Nodebase_ptr execute_action_seq(State_machine* containing_smp,ceps::ast::Nodebase_ptr ac_seq);
 	bool fetch_event(event_rep_t& ev,ceps::ast::Nodeset& sim,std::size_t& pos,states_t& states,
 			bool& states_updated, std::vector<State_machine*>& on_enter_seq,bool ignore_handler = true, bool ignore_ev_queue =  false,bool exit_if_start_found = false);
-	void simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
+        //void simulate(ceps::ast::Nodeset sim,states_t& states_in,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
 	void run_simulation(ceps::ast::Nodeset sim,
 			                                     states_t& states_in,
 			                                     ceps::Ceps_Environment& ceps_env,

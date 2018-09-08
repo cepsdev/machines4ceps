@@ -118,9 +118,20 @@ void State_machine_simulation_core::process_statemachine_helper_handle_transitio
   }
 }
 
-static void extract_sm_sections(ceps::ast::Nodeset& sm_definition,ceps::ast::Nodeset& states, ceps::ast::Nodeset& events, ceps::ast::Nodeset& actions, ceps::ast::Nodeset& threads,
-		                        ceps::ast::Nodeset& imports, ceps::ast::Nodeset& join, ceps::ast::Nodeset& on_enter, ceps::ast::Nodeset& on_exit,
-								ceps::ast::Nodeset& cover_method, ceps::ast::Nodeset& implements, ceps::ast::Nodeset& where, ceps::ast::Nodeset& extends){
+static void extract_sm_sections(ceps::ast::Nodeset& sm_definition,
+                                ceps::ast::Nodeset& states,
+                                ceps::ast::Nodeset& events,
+                                ceps::ast::Nodeset& actions,
+                                ceps::ast::Nodeset& threads,
+                                ceps::ast::Nodeset& imports,
+                                ceps::ast::Nodeset& join,
+                                ceps::ast::Nodeset& on_enter,
+                                ceps::ast::Nodeset& on_exit,
+                                ceps::ast::Nodeset& cover_method,
+                                ceps::ast::Nodeset& implements,
+                                ceps::ast::Nodeset& where,
+                                ceps::ast::Nodeset& extends,
+                                ceps::ast::Nodeset& log){
  using namespace ceps::ast;
  states = sm_definition["States"];
  auto states2 = sm_definition["states"];
@@ -143,6 +154,7 @@ static void extract_sm_sections(ceps::ast::Nodeset& sm_definition,ceps::ast::Nod
  implements = sm_definition["implements"];
  where = sm_definition["where"];
  extends = sm_definition["extends"];
+ log = sm_definition["log"];
 }
 
 static void extract_sm_modifiers(ceps::ast::Nodeset& sm_definition,bool& is_abstract, bool& is_concept, bool& is_hidden){
@@ -432,8 +444,8 @@ void State_machine_simulation_core::process_statemachine(
   bool is_concept = false;
   bool is_hidden = false;
 
-  ceps::ast::Nodeset states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends;
-  extract_sm_sections(sm_definition,states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends);
+  ceps::ast::Nodeset states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends,log;
+  extract_sm_sections(sm_definition,states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends,log);
   extract_sm_modifiers(sm_definition,is_abstract,is_concept,is_hidden);
 
 
@@ -487,12 +499,18 @@ void State_machine_simulation_core::process_statemachine(
 
   current_statemachine->cover() = !cover_method.empty() || is_concept;
   current_statemachine->hidden() = is_hidden;
-  if (!cover_method.empty()){
-      for (auto p : cover_method.nodes()){
-          if (p->kind() == ceps::ast::Ast_node_kind::identifier && "dont_cover_loops" == ceps::ast::name(ceps::ast::as_id_ref(p)))
-              current_statemachine->dont_cover_loops() = true;
-      }
+  for (auto p : cover_method.nodes()){
+     if (p->kind() == ceps::ast::Ast_node_kind::identifier && "dont_cover_loops" == ceps::ast::name(ceps::ast::as_id_ref(p)))
+     current_statemachine->dont_cover_loops() = true;
   }
+
+  for(auto p : log.nodes()){
+      if (p->kind() == ceps::ast::Ast_node_kind::identifier && "state_enter_timestamp" == ceps::ast::name(ceps::ast::as_id_ref(p)))
+          current_statemachine->log_enter_state() = true;
+      if (p->kind() == ceps::ast::Ast_node_kind::identifier && "state_exit_timestamp" == ceps::ast::name(ceps::ast::as_id_ref(p)))
+          current_statemachine->log_exit_state() = true;
+  }
+
   current_statemachine->is_concept() = is_concept;
   current_statemachine->is_thread() = is_thread;
   if (is_thread && parent) parent->contains_threads() = true;

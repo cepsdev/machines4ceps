@@ -57,6 +57,9 @@ class State_machine
   bool hidden_ = false;
   bool is_concept_ = false;
   std::unordered_set<State_machine*> shadowing_me_;
+  bool log_enter_state_event = false;
+  bool log_exit_state_event = false;
+
 
 public:
   state_rep_t shadow = {};
@@ -70,6 +73,10 @@ public:
   bool is_concept() const {return is_concept_;}
   decltype(shadowing_me_)& shadowing_me(){return shadowing_me_;}
   decltype(shadowing_me_) shadowing_me() const {return shadowing_me_;}
+  decltype(log_enter_state_event)& log_enter_state(){return log_enter_state_event;}
+  decltype(log_enter_state_event) log_enter_state() const {return log_enter_state_event;}
+  decltype(log_exit_state_event)& log_exit_state(){return log_exit_state_event;}
+  decltype(log_exit_state_event) log_exit_state() const {return log_exit_state_event;}
 
   std::string const & id() const {return id_;}
   std::string & id() {return id_;}

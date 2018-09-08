@@ -6,21 +6,42 @@
 #include <map>
 #include <unordered_set>
 #include <limits>
+#include <chrono>
 
 class State_machine_simulation_core;
 
 class executionloop_context_t{
 public:
 
-    //using state_rep_t = std::uint16_t;
+    static constexpr unsigned int INIT = 0;
+    static constexpr unsigned int FINAL = 1;
+    static constexpr unsigned int SM = 2;
+    static constexpr unsigned int EXIT = 3;
+    static constexpr unsigned int ENTER = 4;
+    static constexpr unsigned int VISITED = 5;
+    static constexpr unsigned int VISITING = 6;
+    static constexpr unsigned int THREAD = 7;
+    static constexpr unsigned int JOIN = 8;
+    static constexpr unsigned int IN_THREAD = 9;
+    static constexpr unsigned int REGION = 10;
+    static constexpr unsigned int DONT_COVER = 11;
+    static constexpr unsigned int DONT_COVER_LOOPS = 12;
+    static constexpr unsigned int HIDDEN = 13;
+    static constexpr unsigned int LOG_ENTER_TIME = 14;
+    static constexpr unsigned int LOG_EXIT_TIME = 15;
+
+    static constexpr unsigned int TRANS_PROP_ABSTRACT = 1;
+
+
     using state_rep_t = int;
     using state_present_rep_t = std::uint8_t;
+    bool log_timing = false;
 
-	executionloop_context_t(){
-		ev_sync_queue.resize(1024);
-	}
+    executionloop_context_t(){
+      ev_sync_queue.resize(1024);
+    }
 
-	void push_ev_sync_queue(int ev_id){
+    void push_ev_sync_queue(int ev_id){
 		ev_sync_queue[ev_sync_queue_end] = ev_id;
 		++ev_sync_queue_end;
 		if (ev_sync_queue_end == ev_sync_queue.size()) ev_sync_queue_end = 0;
@@ -28,7 +49,7 @@ public:
 			++ev_sync_queue_start;
 			if (ev_sync_queue_start == ev_sync_queue.size()) ev_sync_queue_start = 0;
 		}
-	}
+    }
 
 	int front_ev_sync_queue(){
 		return ev_sync_queue[ev_sync_queue_start];
@@ -70,6 +91,7 @@ public:
 			inf_vec.resize(number_of_states+1,0);
 		if (value) inf_vec[state] |=  1 << what;
 		else inf_vec[state] &=  ~ (1 << what);
+                if (what == LOG_ENTER_TIME || what == LOG_EXIT_TIME ) log_timing = true;
 	}
 
 	bool get_inf(int state, unsigned int what) const{
@@ -186,8 +208,8 @@ public:
 
 	std::vector<transition_t> transitions;
 	std::vector<int> shadow_transitions;
-    std::vector<state_present_rep_t> current_states;
-    std::vector<int> shadow_state;
+        std::vector<state_present_rep_t> current_states;
+        std::vector<int> shadow_state;
 	std::unordered_map<int,int> state_to_first_transition;
 	std::vector<int> ev_sync_queue;
 	std::vector<int> parent_vec;
@@ -204,23 +226,12 @@ public:
 	std::unordered_set<int> exported_events;
 	mutable std::vector<State_machine*> assoc_sm;
 	std::vector<int> triggered_shadow_transitions;
+        using enter_times_t = std::unordered_map<int,std::chrono::time_point<std::chrono::high_resolution_clock>>;
+        enter_times_t enter_times;
+        using exit_times_t = enter_times_t;
+        exit_times_t exit_times;
+        std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;
 
-	static constexpr unsigned int INIT = 0;
-	static constexpr unsigned int FINAL = 1;
-	static constexpr unsigned int SM = 2;
-	static constexpr unsigned int EXIT = 3;
-	static constexpr unsigned int ENTER = 4;
-	static constexpr unsigned int VISITED = 5;
-	static constexpr unsigned int VISITING = 6;
-	static constexpr unsigned int THREAD = 7;
-	static constexpr unsigned int JOIN = 8;
-	static constexpr unsigned int IN_THREAD = 9;
-	static constexpr unsigned int REGION = 10;
-        static constexpr unsigned int DONT_COVER = 11;
-        static constexpr unsigned int DONT_COVER_LOOPS = 12;
-        static constexpr unsigned int HIDDEN = 13;
-
-	static constexpr unsigned int TRANS_PROP_ABSTRACT = 1;
 
 	size_t ev_sync_queue_start = 0;
 	size_t ev_sync_queue_end = 0;

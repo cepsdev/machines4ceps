@@ -1708,6 +1708,58 @@ template<typename F, typename T> void traverse_sms(T const & sms, F f){
     }
 }
 
+// "2018-07-07 00:00:00.000"
+template <typename T> static std::string gen_timestamp(std::chrono::time_point<T> tmp, bool with_msec = true){
+    using namespace std;
+    auto time_now = chrono::high_resolution_clock::to_time_t(tmp);
+    auto ms_mod = std::chrono::duration_cast<std::chrono::milliseconds>(tmp - std::chrono::time_point<T>{}).count() % 1000;
+    auto t = std::localtime(&time_now);
+    std::stringstream s;
+    s << t->tm_year + 1900;
+    s << "-"; if (t->tm_mon+1 < 10) s << "0";s << t->tm_mon+1;
+    s << "-"; if (t->tm_mday < 10) s << "0";s << t->tm_mday;
+    s << " ";
+    if (t->tm_hour < 10)s << "0"; s << t->tm_hour <<":";
+    if (t->tm_min < 10) s << "0"; s << t->tm_min <<":";
+    if (t->tm_sec < 10) s << "0"; s << t->tm_sec;
+    if(!with_msec) return s.str();
+    s << ".";
+    if (ms_mod < 100) s << "0";
+    if (ms_mod < 10) s << "0";
+    s << ms_mod;
+    return s.str();
+}
+
+template <typename T> static std::string gen_gmt_timestamp(std::chrono::time_point<T> tmp, bool with_msec = true){
+    using namespace std;
+    auto time_now = chrono::high_resolution_clock::to_time_t(tmp);
+    auto ms_mod = std::chrono::duration_cast<std::chrono::milliseconds>(tmp - std::chrono::time_point<T>{}).count() % 1000;
+    auto t = std::gmtime(&time_now);
+    std::stringstream s;
+    s << t->tm_year + 1900;
+    s << "-"; if (t->tm_mon+1 < 10) s << "0";s << t->tm_mon+1;
+    s << "-"; if (t->tm_mday < 10) s << "0";s << t->tm_mday;
+    s << " ";
+    if (t->tm_hour < 10)s << "0"; s << t->tm_hour <<":";
+    if (t->tm_min < 10) s << "0"; s << t->tm_min <<":";
+    if (t->tm_sec < 10) s << "0"; s << t->tm_sec;
+    if(!with_msec) return s.str();
+    s << ".";
+    if (ms_mod < 100) s << "0";
+    if (ms_mod < 10) s << "0";
+    s << ms_mod;
+    return s.str();
+}
+
+template <typename T> static int get_ms_mod_1000(std::chrono::time_point<T> tmp){
+    using namespace std;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(tmp - std::chrono::time_point<T>{}).count() % 1000;
+}
+template <typename T> static int get_secs(std::chrono::time_point<T> tmp){
+    using namespace std;
+    return chrono::high_resolution_clock::to_time_t(tmp);
+}
+
 ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	using namespace ceps::ast;
 
@@ -1753,6 +1805,8 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	std::vector<ceps::ast::Nodebase_ptr> transition_coverage_missing_list_ceps_expr;
 
 	std::vector<ceps::ast::Nodebase_ptr> toplevel_state_machines_state_coverage_stats;
+    std::vector<ceps::ast::Nodebase_ptr> enter_times;
+    std::vector<ceps::ast::Nodebase_ptr> exit_times;
 	std::map<State_machine*,int> sm_states_covered;
 	std::map<State_machine*,int> sm_states_not_covered;
 
@@ -1862,12 +1916,71 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	state_coverage = (double)number_of_states_covered / (double)number_of_states_to_cover;
     transition_coverage = (double) number_of_transitions_covered / (double) number_of_transitions_to_cover;
 
+    //enter- / exit- times
+
+    for(std::size_t i = 0;i != ctx.number_of_states+1;++i){
+        auto log_time = [&](executionloop_context_t::exit_times_t const & m,std::vector<ceps::ast::Nodebase_ptr> & d){
+            auto it = m.find(i);
+            if (it != m.end()){
+                ceps::ast::Struct* t = new ceps::ast::Struct{"timestamp_str"
+                };
+                t->children().push_back(
+                new ceps::ast::Struct{"localtime_with_ms_accuracy",
+                  new ceps::ast::String{gen_timestamp(it->second)}
+                });
+                t->children().push_back(
+
+                new ceps::ast::Struct{"gmtime_with_ms_accuracy",
+                  new ceps::ast::String{gen_gmt_timestamp(it->second)}
+                });
+                t->children().push_back(
+
+                new ceps::ast::Struct{"localtime",
+                  new ceps::ast::String{gen_timestamp(it->second,false)}
+                });
+
+                t->children().push_back(
+
+                new ceps::ast::Struct{"gmtime",
+                  new ceps::ast::String{gen_gmt_timestamp(it->second,false)}
+                });
+
+                d.push_back(
+                   new ceps::ast::Struct{"entry",
+                                         new ceps::ast::Struct{"id_int",
+                                           new ceps::ast::Int{(int)i,ceps::ast::all_zero_unit()}
+                                         },
+                                         t,
+                                         new ceps::ast::Struct{"timestamp",
+                                           new ceps::ast::Struct{"utc_secs_since_epoch",
+                                             new ceps::ast::Int{get_secs(it->second),ceps::ast::all_zero_unit()}
+                                           },
+                                           new ceps::ast::Struct{"ms_mod_1000",
+                                             new ceps::ast::Int{get_ms_mod_1000(it->second),ceps::ast::all_zero_unit()}
+                                           }
+                                         }
+                            }
+                );
+            }
+        };
+        if (ctx.get_inf(i,executionloop_context_t::LOG_ENTER_TIME)) {
+            log_time(ctx.enter_times,enter_times);
+        }
+        if (ctx.get_inf(i,executionloop_context_t::LOG_EXIT_TIME)) {
+            log_time(ctx.exit_times,exit_times);
+        }
+    }
+
     auto summary =
      new strct{ "summary",
     	  strct{"general",
     	   strct{"states_total",ctx.number_of_states},
 		   strct{"total_of_states_to_cover",number_of_states_to_cover},
 		   strct{"total_of_states_covered",number_of_states_covered}
+          },
+          strct{"log",
+             strct{"enter_times",enter_times},
+             strct{"exit_times",exit_times},
           },
 		  strct{"coverage",
 		   strct{"state_coverage",
