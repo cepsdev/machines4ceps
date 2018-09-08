@@ -6,6 +6,7 @@
 #include <time.h>
 #include <tuple>
 #include "core/include/base_defs.hpp"
+#include "core/include/api/websocket/ws_api.hpp"
 
 bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
 							std::string & func_name,
@@ -511,6 +512,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
         auto b = (value(as_int_ref(args[0])) & value(as_int_ref(args[1]))) == value(as_int_ref(args[1]));
         return new ceps::ast::Int{
             b ? 1 : 0,ceps::ast::all_zero_unit()};
+    } else if ("websocket_api_query" == id ){
+        if (args.size() == 0 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal)
+            return new ceps::ast::String("");
+        return new ceps::ast::String(Websocket_interface::query(this,ceps::ast::value(ceps::ast::as_string_ref(args[0]))));
     } else if (id == "timestamp"){
         auto two_digits =  [](int i,std::ostream& os){
            if (i < 10) os << "0";

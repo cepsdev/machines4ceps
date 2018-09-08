@@ -1,0 +1,16 @@
+kind Event;
+
+sm{
+ S1;
+ states{a;b;c;d;e;f;g;h;Initial;};
+ label{b;"That's b!";};
+ t{Initial;a;};
+ t{Initial;b;};
+ t{g;h;};
+};
+
+Simulation{
+ print("{\n");
+ print("\"sm_exec_ctxt_static\" :",websocket_api_query("root.__proc.sm_exec_ctxt_static"),"\n");
+ print("}");
+};

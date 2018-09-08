@@ -131,7 +131,8 @@ static void extract_sm_sections(ceps::ast::Nodeset& sm_definition,
                                 ceps::ast::Nodeset& implements,
                                 ceps::ast::Nodeset& where,
                                 ceps::ast::Nodeset& extends,
-                                ceps::ast::Nodeset& log){
+                                ceps::ast::Nodeset& log,
+                                ceps::ast::Nodeset& label_definitions){
  using namespace ceps::ast;
  states = sm_definition["States"];
  auto states2 = sm_definition["states"];
@@ -155,6 +156,7 @@ static void extract_sm_sections(ceps::ast::Nodeset& sm_definition,
  where = sm_definition["where"];
  extends = sm_definition["extends"];
  log = sm_definition["log"];
+ label_definitions = sm_definition[all{"label"}];
 }
 
 static void extract_sm_modifiers(ceps::ast::Nodeset& sm_definition,bool& is_abstract, bool& is_concept, bool& is_hidden){
@@ -444,8 +446,8 @@ void State_machine_simulation_core::process_statemachine(
   bool is_concept = false;
   bool is_hidden = false;
 
-  ceps::ast::Nodeset states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends,log;
-  extract_sm_sections(sm_definition,states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends,log);
+  ceps::ast::Nodeset states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends,log,labels;
+  extract_sm_sections(sm_definition,states,events,actions,threads,imports,join,on_enter,on_exit,cover_method,implements,where,extends,log,labels);
   extract_sm_modifiers(sm_definition,is_abstract,is_concept,is_hidden);
 
 
@@ -695,5 +697,27 @@ void State_machine_simulation_core::process_statemachine(
 	    current_statemachine->join_state() = State_machine::State(q_join_state_id);
 	  }
 
+  }
+
+  for(auto p : labels){
+      auto label = p["label"];
+      std::string label_text;
+      std::string state_id;
+      for(auto e : label.nodes()){
+          if(e->kind() == ceps::ast::Ast_node_kind::identifier) state_id = ceps::ast::name(ceps::ast::as_id_ref(e));
+          else if(e->kind() == ceps::ast::Ast_node_kind::string_literal) label_text = ceps::ast::value(ceps::ast::as_string_ref(e));
+      }
+      if (state_id.length() == 0 ) current_statemachine->label() = label_text;
+      else{
+          State_machine::State s{state_id};
+          for(auto e: current_statemachine->states()){
+              if (e->id() != state_id) continue;
+              e->label() = label_text;break;
+          }
+          for(auto e: current_statemachine->children()){
+              if (e->id() != state_id) continue;
+              e->label() = label_text;break;
+          }
+      }
   }
 }

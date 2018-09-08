@@ -24,6 +24,7 @@ public:
     Websocket_interface(State_machine_simulation_core* smc,std::string port = "8181"):smc_{smc},port_{port}{}
     void start();
     std::string& port() {return port_;}
+    static std::string query(State_machine_simulation_core* smc,std::string);
 };
 
 #endif

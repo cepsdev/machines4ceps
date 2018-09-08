@@ -1918,7 +1918,7 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 
     //enter- / exit- times
 
-    for(std::size_t i = 0;i != ctx.number_of_states+1;++i){
+    for(std::size_t i = 0;i != executionloop_context().inf_vec.size();++i){
         auto log_time = [&](executionloop_context_t::exit_times_t const & m,std::vector<ceps::ast::Nodebase_ptr> & d){
             auto it = m.find(i);
             if (it != m.end()){

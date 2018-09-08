@@ -59,6 +59,7 @@ class State_machine
   std::unordered_set<State_machine*> shadowing_me_;
   bool log_enter_state_event = false;
   bool log_exit_state_event = false;
+  std::string label_;
 
 
 public:
@@ -78,6 +79,8 @@ public:
   decltype(log_exit_state_event)& log_exit_state(){return log_exit_state_event;}
   decltype(log_exit_state_event) log_exit_state() const {return log_exit_state_event;}
 
+  std::string const & label() const {return label_;}
+  std::string & label() {return label_;}
   std::string const & id() const {return id_;}
   std::string & id() {return id_;}
   State_machine& operator = (State_machine const & rhs) = default;
@@ -132,9 +135,7 @@ public:
     int idx_= 0;
     bool dont_cover_ = false;
     std::vector<std::string> categories_;
-
-
-
+    std::string label_;
 
     State() = default;
     State(State const &) = default;
@@ -147,6 +148,9 @@ public:
     bool is_final() const {return id_ == "final" || id_ == "Final";}
     bool& dont_cover() {return dont_cover_;}
     bool dont_cover() const {return dont_cover_;}
+
+    std::string const & label() const {return label_;}
+    std::string & label() {return label_;}
 
     std::string const & id() const {if (!is_sm_ || smp_ == nullptr) return id_; return smp_->id();}
     std::string & id() {if (!is_sm_ || smp_ == nullptr) return id_; return smp_->id();}
@@ -265,9 +269,9 @@ public:
 
   bool lookup(State& s)
   {
-	for(auto st: states()){
-		if (st->id() == s.id()) {s = *st; return true;}
-	}
+    for(auto st: states()){
+        if (st->id() == s.id()) {s = *st; return true;}
+    }
     for(auto &t : children_)
      if (t->id() == s.id()) {s.smp() = t;s.is_sm_ = true;return true;}
     if (parent_!=nullptr)

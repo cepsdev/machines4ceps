@@ -29,6 +29,7 @@ public:
     static constexpr unsigned int HIDDEN = 13;
     static constexpr unsigned int LOG_ENTER_TIME = 14;
     static constexpr unsigned int LOG_EXIT_TIME = 15;
+    static constexpr unsigned int HAS_LABEL = 16;
 
     static constexpr unsigned int TRANS_PROP_ABSTRACT = 1;
 
@@ -213,7 +214,7 @@ public:
 	std::unordered_map<int,int> state_to_first_transition;
 	std::vector<int> ev_sync_queue;
 	std::vector<int> parent_vec;
-	std::vector<int> inf_vec;
+        std::vector<unsigned int> inf_vec;
 	std::vector<void(*)()> on_enter;
 	std::vector<void(*)()> on_exit;
 	std::vector<int> initial_state;
@@ -231,6 +232,8 @@ public:
         using exit_times_t = enter_times_t;
         exit_times_t exit_times;
         std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;
+        using state_labels_t = std::unordered_map<int,std::string>;
+        state_labels_t state_labels;
 
 
 	size_t ev_sync_queue_start = 0;

@@ -13,6 +13,151 @@
 /*
  * http/websocket routines
 */
+static std::string escape_json_string(std::string const & s){
+    bool transform_necessary = false;
+    for(std::size_t i = 0; i!=s.length();++i){
+        auto ch = s[i];
+        if (ch == '\n' || ch == '\t'|| ch == '\r' || ch == '"' || ch == '\\'){
+            transform_necessary = true; break;
+        }
+    }
+    if (!transform_necessary) return s;
+
+    std::stringstream ss;
+    for(std::size_t i = 0; i!=s.length();++i){
+        char buffer[2] = {0};
+        char ch = buffer[0] = s[i];
+        if (ch == '\n') ss << "\\n";
+        else if (ch == '\t') ss << "\\t";
+        else if (ch == '\r' ) ss << "\\r";
+        else if (ch == '"') ss << "\\\"";
+        else if (ch == '\\') ss << "\\\\";
+        else ss << buffer;
+    }
+    return ss.str();
+}
+
+
+bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
+    using namespace ceps::ast;
+    if (n->kind() == Ast_node_kind::int_literal)
+     {s << value(as_int_ref(n));return true;}
+    else if (n->kind() == Ast_node_kind::float_literal)
+     {s << value(as_double_ref(n));return true;}
+    else if (n->kind() == Ast_node_kind::string_literal)
+     {s << "\"" <<  escape_json_string(value(as_string_ref(n))) << "\"";return true;}
+    else if (n->kind() == Ast_node_kind::identifier)
+     {s << "\"" <<  escape_json_string(name(as_id_ref(n))) << "\"";return true;}
+    else if (n->kind() == Ast_node_kind::structdef){
+        auto & st = as_struct_ref(n);
+        s << "{ \"type\":\"struct\", \"name\":" <<"\""<< name(st) << "\",\"content\":[";
+        for(std::size_t i = 0; i != st.children().size();++i){
+            auto nn = st.children()[i];
+            if(!nn) continue;
+            if (!ceps2json(s,nn)) continue;
+            if (1+i != st.children().size()) s << ",";
+        }
+        s << "]}";
+        return true;
+    } else if (n->kind() == Ast_node_kind::binary_operator){
+        auto& bop = as_binop_ref(n);
+        auto what_op = op(bop);
+        s << "{\"type\":\"binop\",\"name\":";
+        if (ceps::Cepsparser::token::REL_OP_GT_EQ == what_op)
+            s << "\">=\",";
+        else if (ceps::Cepsparser::token::REL_OP_EQ == what_op)
+            s << "\"==\",";
+        else if (ceps::Cepsparser::token::REL_OP_GT == what_op)
+            s << "\">\",";
+        else if (ceps::Cepsparser::token::REL_OP_LT== what_op)
+            s << "\"<\",";
+        else if (ceps::Cepsparser::token::REL_OP_LT_EQ == what_op)
+            s << "\"<=\",";
+        else if (ceps::Cepsparser::token::REL_OP_NEQ == what_op)
+            s << "\"!=\",";
+        else if ('+' == what_op)
+            s << "\"+\",";
+        else if ('-' == what_op)
+            s << "\"-\",";
+        else if ('*' == what_op)
+            s << "\"*\",";
+        else if ('/' == what_op)
+            s << "\"/\",";
+        else if ('&' == what_op)
+            s << "\"&&\",";
+        else if ('|' == what_op)
+            s << "\"||\",";
+        else s << "\"?\",";
+        s << "\"left\":";ceps2json(s,bop.left());s << ",";
+        s << "\"right\":";ceps2json(s,bop.right());
+        s << "}";
+        return true;
+    } else if (n->kind() == Ast_node_kind::scope){
+        auto & scp = as_scope_ref(n);
+        s << "{ \"type\":\"scope\", \"content\":[";
+        for(std::size_t i = 0; i != scp.children().size();++i){
+            auto nn = scp.children()[i];
+            if(!nn) continue;
+            if(!ceps2json(s,nn)) continue;
+            if (1+i != scp.children().size()) s << ",";
+        }
+        s << "]}";
+        return true;
+    }
+    else if (n->kind() == Ast_node_kind::symbol){
+        auto & sy = as_symbol_ref(n);
+        s << "{ \"type\":\"symbol\",\"kind\":" << "\""<< kind(sy) << "\", \"name\":" <<"\""<< name(sy) << "\"}";
+        return true;
+    } else if (n->kind() == Ast_node_kind::func_call){
+        s << "{ \"type\":\"func-call\"}";
+        return true;
+    } else s << "0";
+    return true;
+}
+
+static bool ceps2json(std::stringstream& s,ceps::ast::Nodeset & n){
+    for(auto p : n.nodes())
+        if(!ceps2json(s,p))return false;
+    return true;
+}
+
+static void rtrim(std::string& s){
+    if (s.length() == 0) return;auto i = s.length()-1;
+    for (;i >= 0 && std::isspace(s[i]);--i);
+    if (i == 0) s = {};
+    else s.erase(i+1);
+}
+
+std::string Websocket_interface::query(State_machine_simulation_core* smc,std::string query){
+    std::string r;
+    rtrim(query);
+    if (query == "root.__proc.sm_exec_ctxt_static"){
+        std::stringstream s_info_vec;
+        {
+            auto const& v = smc->executionloop_context().inf_vec;
+            for(std::size_t i = 0; i + 1 < v.size();++i){
+                auto e = v[i];
+                s_info_vec << e << ",";
+            }
+            if(!v.empty())s_info_vec << v.back();
+        }
+        std::stringstream s_transitions_vec;
+        {
+            auto const& v = smc->executionloop_context().transitions;
+            for(std::size_t i = 1; i < v.size();++i){
+                auto e = v[i];
+                unsigned int props = 0;
+                s_transitions_vec << e.root_sms << "," << e.smp << "," << e.from << "," << e.to << "," << e.ev << "," << e.rel_idx;
+                if (v.size() > i+1) s_transitions_vec << ",";
+            }
+        }
+        r = "{ \"ok\": true,";
+        r += " \"number_toplevel_nodes\":1,";
+        r += " \"sresult\":{\"states\": ["+s_info_vec.str()+"],\"transitions\": ["+s_transitions_vec.str()+"]  }";
+        r += "}";
+    }
+    return r;
+}
 
 static std::pair<bool,std::string> get_http_attribute_content(std::string attr, std::vector<std::pair<std::string,std::string>> const & http_header){
  for(auto const & v : http_header){
@@ -300,119 +445,7 @@ bool send_ws_text_msg(int sck, std::string const & msg){
     return true;
 }
 
-static std::string escape_json_string(std::string const & s){
-    bool transform_necessary = false;
-    for(std::size_t i = 0; i!=s.length();++i){
-        auto ch = s[i];
-        if (ch == '\n' || ch == '\t'|| ch == '\r' || ch == '"' || ch == '\\'){
-            transform_necessary = true; break;
-        }
-    }
-    if (!transform_necessary) return s;
 
-    std::stringstream ss;
-    for(std::size_t i = 0; i!=s.length();++i){
-        char buffer[2] = {0};
-        char ch = buffer[0] = s[i];
-        if (ch == '\n') ss << "\\n";
-        else if (ch == '\t') ss << "\\t";
-        else if (ch == '\r' ) ss << "\\r";
-        else if (ch == '"') ss << "\\\"";
-        else if (ch == '\\') ss << "\\\\";
-        else ss << buffer;
-    }
-    return ss.str();
-}
-
-bool ceps2json(std::stringstream& s,ceps::ast::Nodebase_ptr n){
-    using namespace ceps::ast;
-    if (n->kind() == Ast_node_kind::int_literal)
-     {s << value(as_int_ref(n));return true;}
-    else if (n->kind() == Ast_node_kind::float_literal)
-     {s << value(as_double_ref(n));return true;}
-    else if (n->kind() == Ast_node_kind::string_literal)
-     {s << "\"" <<  escape_json_string(value(as_string_ref(n))) << "\"";return true;}
-    else if (n->kind() == Ast_node_kind::identifier)
-     {s << "\"" <<  escape_json_string(name(as_id_ref(n))) << "\"";return true;}
-    else if (n->kind() == Ast_node_kind::structdef){
-        auto & st = as_struct_ref(n);
-        s << "{ \"type\":\"struct\", \"name\":" <<"\""<< name(st) << "\",\"content\":[";
-        for(std::size_t i = 0; i != st.children().size();++i){
-            auto nn = st.children()[i];
-            if(!nn) continue;
-            if (!ceps2json(s,nn)) continue;
-            if (1+i != st.children().size()) s << ",";
-        }
-        s << "]}";
-        return true;
-    } else if (n->kind() == Ast_node_kind::binary_operator){
-        auto& bop = as_binop_ref(n);
-        auto what_op = op(bop);
-        s << "{\"type\":\"binop\",\"name\":";
-        if (ceps::Cepsparser::token::REL_OP_GT_EQ == what_op)
-            s << "\">=\",";
-        else if (ceps::Cepsparser::token::REL_OP_EQ == what_op)
-            s << "\"==\",";
-        else if (ceps::Cepsparser::token::REL_OP_GT == what_op)
-            s << "\">\",";
-        else if (ceps::Cepsparser::token::REL_OP_LT== what_op)
-            s << "\"<\",";
-        else if (ceps::Cepsparser::token::REL_OP_LT_EQ == what_op)
-            s << "\"<=\",";
-        else if (ceps::Cepsparser::token::REL_OP_NEQ == what_op)
-            s << "\"!=\",";
-        else if ('+' == what_op)
-            s << "\"+\",";
-        else if ('-' == what_op)
-            s << "\"-\",";
-        else if ('*' == what_op)
-            s << "\"*\",";
-        else if ('/' == what_op)
-            s << "\"/\",";
-        else if ('&' == what_op)
-            s << "\"&&\",";
-        else if ('|' == what_op)
-            s << "\"||\",";
-        else s << "\"?\",";
-        s << "\"left\":";ceps2json(s,bop.left());s << ",";
-        s << "\"right\":";ceps2json(s,bop.right());
-        s << "}";
-        return true;
-    } else if (n->kind() == Ast_node_kind::scope){
-        auto & scp = as_scope_ref(n);
-        s << "{ \"type\":\"scope\", \"content\":[";
-        for(std::size_t i = 0; i != scp.children().size();++i){
-            auto nn = scp.children()[i];
-            if(!nn) continue;
-            if(!ceps2json(s,nn)) continue;
-            if (1+i != scp.children().size()) s << ",";
-        }
-        s << "]}";
-        return true;
-    }
-    else if (n->kind() == Ast_node_kind::symbol){
-        auto & sy = as_symbol_ref(n);
-        s << "{ \"type\":\"symbol\",\"kind\":" << "\""<< kind(sy) << "\", \"name\":" <<"\""<< name(sy) << "\"}";
-        return true;
-    } else if (n->kind() == Ast_node_kind::func_call){
-        s << "{ \"type\":\"func-call\"}";
-        return true;
-    } else s << "0";
-    return true;
-}
-
-static bool ceps2json(std::stringstream& s,ceps::ast::Nodeset & n){
-    for(auto p : n.nodes())
-        if(!ceps2json(s,p))return false;
-    return true;
-}
-
-static void rtrim(std::string& s){
-    if (s.length() == 0) return;auto i = s.length()-1;
-    for (;i >= 0 && std::isspace(s[i]);--i);
-    if (i == 0) s = {};
-    else s.erase(i+1);
-}
 
 class Execute_query : public sm4ceps_plugin_int::Executioncontext {
     std::string query;

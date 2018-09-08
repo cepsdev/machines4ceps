@@ -29,6 +29,29 @@
 #include <unordered_set>
 #include <list>
 
+static std::string escape_string(std::string const & s){
+    bool transform_necessary = false;
+    for(std::size_t i = 0; i!=s.length();++i){
+        auto ch = s[i];
+        if (ch == '\n' || ch == '\t'|| ch == '\r' || ch == '"' || ch == '\\'){
+            transform_necessary = true; break;
+        }
+    }
+    if (!transform_necessary) return s;
+
+    std::stringstream ss;
+    for(std::size_t i = 0; i!=s.length();++i){
+        char buffer[2] = {0};
+        char ch = buffer[0] = s[i];
+        if (ch == '\n') ss << "\\n";
+        else if (ch == '\t') ss << "\\t";
+        else if (ch == '\r' ) ss << "\\r";
+        else if (ch == '"') ss << "\\\"";
+        else if (ch == '\\') ss << "\\\\";
+        else ss << buffer;
+    }
+    return ss.str();
+}
 
 typedef void (*init_plugin_t)(IUserdefined_function_registry*);
 
@@ -302,7 +325,10 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
         ctx.set_inf(cur_sm->idx_,executionloop_context_t::LOG_ENTER_TIME,cur_sm->log_enter_state());
         ctx.set_inf(cur_sm->idx_,executionloop_context_t::LOG_EXIT_TIME,cur_sm->log_exit_state());
-
+        if (cur_sm->label().length()){
+            ctx.set_inf(cur_sm->idx_,executionloop_context_t::HAS_LABEL,cur_sm->label().length());
+            ctx.state_labels[cur_sm->idx_] = cur_sm->label();
+        }
 		bool inside_thread = false;
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::SM,true);
 		ctx.set_inf(cur_sm->idx_,executionloop_context_t::THREAD,inside_thread = cur_sm->is_thread_);
@@ -326,6 +352,10 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			ctx.set_inf(s->idx_,executionloop_context_t::IN_THREAD,inside_thread);
             ctx.set_inf(s->idx_,executionloop_context_t::LOG_ENTER_TIME,cur_sm->log_enter_state());
             ctx.set_inf(s->idx_,executionloop_context_t::LOG_EXIT_TIME,cur_sm->log_exit_state());
+            if (s->label().length()){
+                ctx.set_inf(s->idx_,executionloop_context_t::HAS_LABEL,s->label().length());
+                ctx.state_labels[s->idx_] = s->label();
+            }
 
 			if (s->is_initial()) ctx.set_initial_state(cur_sm->idx_,s->idx_);
 			if (s->is_final()) ctx.set_final_state(cur_sm->idx_,s->idx_);
@@ -336,6 +366,10 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				ctx.set_inf(cur_sm->idx_,executionloop_context_t::REGION,true);
             ctx.set_inf(s->idx_,executionloop_context_t::LOG_ENTER_TIME,cur_sm->log_enter_state());
             ctx.set_inf(s->idx_,executionloop_context_t::LOG_EXIT_TIME,cur_sm->log_exit_state());
+            if (s->label().length()){
+                ctx.set_inf(s->idx_,executionloop_context_t::HAS_LABEL,s->label().length());
+                ctx.state_labels[s->idx_] = s->label();
+            }
 		}
 	});
 
@@ -1469,6 +1503,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	   if (executionloop_context().shadow_state[e.second] >= 0) std::cout << " shadow_state = "<< executionloop_context().shadow_state[e.second];
        if (executionloop_context().get_inf(e.second,executionloop_context_t::LOG_ENTER_TIME))std::cout <<" log_enter_time";
        if (executionloop_context().get_inf(e.second,executionloop_context_t::LOG_EXIT_TIME))std::cout <<" log_exit_time";
+       if (executionloop_context().get_inf(e.second,executionloop_context_t::HAS_LABEL))std::cout <<" label=\"" << escape_string(executionloop_context().state_labels[e.second])<<"\"";
 
 	   std::cout << "\n";
 	  }
