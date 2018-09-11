@@ -1,4 +1,0 @@
-step{
- step1;
- trigger{ http_request(JENKINS_HOST,JENKINS_PORT,JOBQUERY,EV_SUCCESS,EV_FAILURE); };
- check { 

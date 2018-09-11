@@ -201,7 +201,9 @@ macro sub_step_check{
                     } else {
                         if (job_run_error != "") {
                             print ("start_job(): ",market_name+" start error job ",job_run_error ,endl);
-                            os_system(script_for_job_execution(job_run_error,param_name+" "+job_parameter+params_ext_run_error));
+                            os_system(script_for_job_execution(job_run_error,
+                                                               param_name+" "+job_parameter+params_ext_run_error,
+                                                               read_system_state(check_job_ctrl_sysstate)));
                         }
                     }
                 };
@@ -239,7 +241,8 @@ macro sub_step_check{
                     os_system(
                             script_for_job_execution(
                                 read_system_state(prefix+"check_job_name_"+postfix),
-                                read_system_state(prefix+"check_job_parameters_"+postfix,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"))
+                                read_system_state(prefix+"check_job_parameters_"+postfix,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate")),
+                                read_system_state(check_job_ctrl_sysstate)
                             )
                     );        
                 };

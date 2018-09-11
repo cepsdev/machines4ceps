@@ -1,0 +1,8 @@
+
+Simulation{
+
+static_for(e:root.rollout_store_db){
+ print(text(e.sap_code.content()),"\n");
+}
+
+};

@@ -1,9 +1,0 @@
-
-rollout{
- name{some_name;};
- steps{
-  step1;
-  step2;
-  step3;
- };
-};
