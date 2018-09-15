@@ -210,22 +210,22 @@
                 
                 <li class="nav-item"><button id="btn_stop" class="btn btn-outline-success">Stop</button></li-->
             </ul>
-            <span class="badge badge-info xs">v201809110530</span>&nbsp;&nbsp;
+            <span class="badge badge-info xs">v201809130644</span>&nbsp;&nbsp;
             <span class="badge badge-danger" id="nav_info_connection">Not Connected</span>
         </div>
     </nav>
     <div class="row">
-        <div class="col-xs-6 col-sm-12">
+        <div class="col-sm-12">
             <h2><span id="page_title"></span></h2>
         </div>
     </div>
     <div class="row">
-        <div class="col-xs-2 col-sm-2">
+        <div class="col-sm-2">
 
 
             
         </div>
-        <div class="col-xs-6 col-sm-8" >
+        <div class="col-sm-8" >
                         <div class="form-group" style="padding-left: 4px;padding-right: 4px;">
                             <label for="search_statemachines"></label>
                             <input type="text" 
@@ -235,40 +235,21 @@
                             <small id="search_statemachinesHelp" class="form-text text-muted"></small>
                           </div>
         </div>
-        <div class="col-xs-2 col-sm-2"></div>        
+        <div class="col-sm-2"></div>        
     </div>
 
         <div class="row">
                 
-                <div class="col-xs-2 col-sm-2">
-                        <div class="card border-light mb-3" style="margin-left:10px;">
-                        <div class="card-body">
-                        <h5 class="card-title mb-2 text-muted">Active Rollouts</h5>
-                        <ul class="list-group">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                  <!--Cras justo odio
-                                  <span class="badge badge-danger badge-pill">14</span>
-                                  <span class="badge badge-primary badge-pill">14</span>
-                                  <span class="badge badge-primary badge-pill">14</span> -->
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                 <!--  Dapibus ac facilisis in hjgg dhdj JGJ
-                                  <span class="badge badge-primary badge-pill">2</span> -->
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                  <!--Morbi leo risus
-                                  <span class="badge badge-primary badge-pill">1</span>-->
-                                </li>
-                              </ul> 
-                </div></div></div>
-                <div class="col-xs-2 col-sm-8">                 
+                <div class="col-sm-2">
+                    </div>
+                <div class="col-sm-8">                 
                        
                         <div id="rollouts_view" ></div>
                
                 </div>
             
                
-                <div class="col-xs-2 col-sm-2">
+                <div class="col-sm-2">
                 </div>
 
             </div>
@@ -940,7 +921,7 @@
                     <tbody>
                         <tr>
                             <td style="width:15%;">${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
-                            <td style="width:25%;">
+                            <td style="width:15%;">
                                 <div class="rollout-time-left" id="${rollout.internal_id}_time_left_section">
                                     ${time_sec} 
                                 </div>
@@ -967,12 +948,12 @@
                     <tbody>
                         <tr>
                             <td style="width:15%;">${d.getMonth()+1}/${d.getDay()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
-                            <td>
+                            <td style="width:15%;">
                                 <div class="rollout-time-left" id="${rollout.internal_id}_uptime_section">
                                     ${time_sec}
                                 </div>
                             </td>
-                            <td style="alignment-vertical:center;">
+                            <td style="alignment-vertical:center;width:20%;">
                               <span class="label">  <div class="progress">
                                     <div style="width:${rollout.coverage*100.0}%;" 
                                         class="progress-bar progress-bar-striped active" 
