@@ -206,7 +206,7 @@ namespace sm4ceps{
 	template<typename T> bool is_unique_event(T const &) {return false;}
 	template<typename T> typename Eventqueue_traits<T>::id_t id(T const &) {return typename Eventqueue_traits<T>::id_t{};}
 
-	template<typename E,int defaultlength=4096,int defaultlength_evinfo=512> class Eventqueue{
+        template<typename E,int defaultlength=65536,int defaultlength_evinfo=4096> class Eventqueue{
 		struct ev_info{
 			typename Eventqueue_traits<E>::id_t id_;
 			std::size_t stored_at_;

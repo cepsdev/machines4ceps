@@ -387,7 +387,7 @@ let fetch_planned_rollouts = function (back_channel,callback){
         } );
         ws_ceps_api.on("close", () => {} );
        };
-       setTimeout(fetch_proc,2000);
+       setTimeout(fetch_proc,6000);
 }
 
 function make_timestamp(){
@@ -905,9 +905,7 @@ function fetch_rollout_plan(callback){
 }
 
 console.log(chalk.bold.green(
-`Media Markt Saturn Rollout Automation (RollAut) Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").
-written by Tomas Prerovsky <tomas.prerovsky@gmail.com>
-`));
+`Media Markt Saturn Rollout Automation (RollAut) Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").`));
 
 function main(){
 

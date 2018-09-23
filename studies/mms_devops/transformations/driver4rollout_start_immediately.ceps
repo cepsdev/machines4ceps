@@ -9,10 +9,16 @@ Simulation{
             }
         }
     };
+    val start_at = 0.0;
+    val j = 1;
+    val block_size = 3;
     static_for(e:root.rollout){
         static_for(market:e.markets.market){
             val market_name = text(market.content().id.content()); 
-            as_symbol("start_rollout_"+market_name,"Event");
+            //as_symbol("start_rollout_"+market_name,"Event");
+            start_timer(start_at*s,as_symbol("start_rollout_"+market_name,"Event"));
+            if(mod(j,block_size) == 0) { start_at = start_at + 3.0;}
+            j = j + 1;
         }
     }
     static_for(e:root.test_scenarios.content()){

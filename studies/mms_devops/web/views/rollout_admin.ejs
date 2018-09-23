@@ -210,7 +210,7 @@
                 
                 <li class="nav-item"><button id="btn_stop" class="btn btn-outline-success">Stop</button></li-->
             </ul>
-            <span class="badge badge-info xs">v201809130644</span>&nbsp;&nbsp;
+            <span class="badge badge-info xs">v201809181615</span>&nbsp;&nbsp;
             <span class="badge badge-danger" id="nav_info_connection">Not Connected</span>
         </div>
     </nav>
@@ -920,8 +920,8 @@
                     <thead><tr><th>Scheduled</th><th>Starts Automatically in</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr>
-                            <td style="width:15%;">${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
-                            <td style="width:15%;">
+                            <td style="width:15%;white-space: nowrap;">${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
+                            <td style="width:15%;white-space: nowrap;">
                                 <div class="rollout-time-left" id="${rollout.internal_id}_time_left_section">
                                     ${time_sec} 
                                 </div>
@@ -947,8 +947,8 @@
                     <thead><tr><th>Started</th><th>Uptime</th><th>Overall Status</th><th>Health</th><th>Expected Time remaining</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr>
-                            <td style="width:15%;">${d.getMonth()+1}/${d.getDay()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
-                            <td style="width:15%;">
+                            <td style="width:15%;white-space: nowrap;">${d.getMonth()+1}/${d.getDay()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</td>
+                            <td style="width:15%;white-space: nowrap;">
                                 <div class="rollout-time-left" id="${rollout.internal_id}_uptime_section">
                                     ${time_sec}
                                 </div>

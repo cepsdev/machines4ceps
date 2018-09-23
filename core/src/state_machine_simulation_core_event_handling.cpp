@@ -71,6 +71,7 @@ bool State_machine_simulation_core::is_global_event(std::string const & ev_name)
 void State_machine_simulation_core::enqueue_event(event_t ev, bool update_out_queues)
 {
 	ev.already_sent_to_out_queues_ = update_out_queues;
+    //std::cout << this->main_event_queue().data().count()<< "\n";
 	this->main_event_queue().push(ev);
 	if (!update_out_queues) return;
 	std::lock_guard<std::mutex> lk(out_event_queues_m_);

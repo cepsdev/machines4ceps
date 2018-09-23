@@ -1,0 +1,27 @@
+kind Systemstate;
+
+
+data{
+ d1;
+ d2;
+ d3;
+ d4;
+ d5;
+ d6;
+ d7;
+ d8;
+ d9;
+ d10;
+};
+
+
+
+Simulation{
+ val t = 0;
+ val j = 1;
+ static_for(e:root.data.content()){
+  if(mod(j,3) == 0){ t = t+ 3.0;}
+  print(text(e),":",t,"\n");
+  j = j + 1;
+ }
+};

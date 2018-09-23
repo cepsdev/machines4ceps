@@ -461,10 +461,13 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
           if (query == "root.__proc.current_states"){
                std::stringstream s;
                auto const& v = ctxt->executionloop_context().current_states;
-               std::size_t c = 0;for(std::size_t i = 0; i != v.size(); ++i) if (v[i]) ++c;
+               std::size_t c = 0;for(std::size_t i = 0; i != v.size(); ++i)
+                   if (v[i] &&
+                           !ctxt->executionloop_context().get_inf(i,executionloop_context_t::HIDDEN)) ++c;
 
                for(std::size_t i = 0; i != v.size(); ++i){
                  if (!v[i]) continue;
+                 if (ctxt->executionloop_context().get_inf(i,executionloop_context_t::HIDDEN)) continue;
                  s << i;--c;if(c!=0) s <<",";
                }
                //std::cerr << s.str() << std::endl;
@@ -475,10 +478,12 @@ class Execute_query : public sm4ceps_plugin_int::Executioncontext {
            } else if (query == "root.__proc.current_states_with_coverage"){
               std::stringstream s;
               auto const& v = ctxt->executionloop_context().current_states;
-              std::size_t c = 0;for(std::size_t i = 0; i != v.size(); ++i) if (v[i]) ++c;
+              std::size_t c = 0;for(std::size_t i = 0; i != v.size(); ++i)
+                  if (v[i] && !ctxt->executionloop_context().get_inf(i,executionloop_context_t::HIDDEN)) ++c;
 
               for(std::size_t i = 0; i != v.size(); ++i){
                 if (!v[i]) continue;
+                if (ctxt->executionloop_context().get_inf(i,executionloop_context_t::HIDDEN))continue;
                 s << i;--c;if(c!=0) s <<",";
               }
               std::stringstream s_cov_report;
