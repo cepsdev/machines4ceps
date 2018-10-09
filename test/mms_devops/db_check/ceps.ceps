@@ -1,0 +1,350 @@
+kind Event;
+kind Parameter;
+Event dummy;
+
+Parameter hostname;
+Parameter passwd;
+Parameter user;
+Parameter timestamp;
+Parameter database;
+Parameter job_name;
+Parameter sap_code;
+Parameter time_delta;
+Parameter check_for_empty_resultset_only;
+Parameter on_error;
+Parameter on_success;
+
+Event failed;
+Event ok;
+Event error;
+
+sm {
+ S;
+ states{Initial;A;B;C;};
+ on_enter{print("S started.\n");};
+ Actions{
+  enter_b{
+   // print("enter_b\n");
+  };
+ };
+ t{Initial;B;failed;};
+ t{Initial;C;error;enter_b;};
+ t{Initial;A;ok;};
+};
+
+Event log_error;
+
+sm{
+ Log;
+ states{Initial;};
+ on_enter{print("Log started.\n");};
+ Actions{
+  do_log_error{print("[",timestamp(),"]","[ERROR][",argv(1),"] ",argv(2),"\n");};
+ };
+ t{Initial;Initial;log_error;do_log_error;};
+};
+
+Simulation{
+ Start{S;Log;};
+ mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"), 
+                      user       = env("ROLLAUT_DB_USER"),
+                      passwd     = env("ROLLAUT_DB_PASSWD"),
+                      database   = env("ROLLAUT_DB_DB"),
+                      sap_code   = "1234",
+                      job_name   = "abc",
+                      timestamp  = timestamp(),
+                      on_error   = failed,
+                      on_success = ok           
+                     );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "12345",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "2345",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "3456",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "4567",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "5678",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "6789",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0001",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0002",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0003",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0004",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0005",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0006",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0007",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0008",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0009",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0010",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0011",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0012",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0013",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0014",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0015",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0016",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0017",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0018",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0019",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+mms_rollaut_db_check(hostname   = env("ROLLAUT_DB_HOST"),
+                     user       = env("ROLLAUT_DB_USER"),
+                     passwd     = env("ROLLAUT_DB_PASSWD"),
+                     database   = env("ROLLAUT_DB_DB"),
+                     sap_code   = "0020",
+                     job_name   = "abc",
+                     timestamp  = timestamp(),
+                     on_error   = failed,
+                     on_success = ok
+                    );
+
+
+};

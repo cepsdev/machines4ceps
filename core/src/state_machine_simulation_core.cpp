@@ -1560,6 +1560,7 @@ void State_machine_simulation_core::sm_set_join_state(void* sm_, std::string id,
     sm->join_state_.unresolved_ = unresolved;
     sm->join_state_.idx_ =idx;
 }
+
 void State_machine_simulation_core::sm_add_ref_to_sm_at_least_one_transition_was_moved_to(void* sm_, void* sm_to){
 	if (sm_ == nullptr) return;
 	auto sm = (State_machine*)sm_;
@@ -1567,14 +1568,13 @@ void State_machine_simulation_core::sm_add_ref_to_sm_at_least_one_transition_was
 	sm->smps_containing_moved_transitions_.push_back((State_machine*) sm_to);
 }
 
-
+void State_machine_simulation_core::reg_ceps_plugin(std::string name, smcore_plugin_fn_t fn){
+    register_plugin_fn(name,fn);
+}
 
 void* State_machine_simulation_core::get_sm(std::string name){
  return State_machine::statemachines[name];
 }
-
-
-
 
 // Reporting
 static ceps::ast::Binary_operator* mkop(std::string o,ceps::ast::Nodebase_ptr l, ceps::ast::Nodebase_ptr r){

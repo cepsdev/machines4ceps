@@ -19,9 +19,12 @@ void State_machine_simulation_core::queue_event(std::string ev_name,std::initial
 	event_t ev(ev_name);
 	ev.already_sent_to_out_queues_ = false;
 	ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
-	ev.payload_native_.insert(ev.payload_native_.cbegin(),vl.begin(),vl.end());
-
-
+    for(auto e : vl){
+        if (e.what_ == sm4ceps_plugin_int::Variant::String ) ev.payload_.push_back(new ceps::ast::String{e.sv_});
+        else if (e.what_ == sm4ceps_plugin_int::Variant::Int ) ev.payload_.push_back(new ceps::ast::Int{e.iv_,ceps::ast::all_zero_unit()});
+        else if (e.what_ == sm4ceps_plugin_int::Variant::Double ) ev.payload_.push_back(new ceps::ast::Double{e.dv_,ceps::ast::all_zero_unit()});
+    }
+    //ev.payload_native_.insert(ev.payload_native_.cbegin(),vl.begin(),vl.end());
 	enqueue_event(ev,true);
 }
 

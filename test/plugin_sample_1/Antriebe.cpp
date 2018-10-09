@@ -94,6 +94,27 @@ double Z_IstPosition_Berechnen(signed int Position){
   return AntriebZ.getIstMasthoehe();
 }
 
+static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
+{
+        if (r == nullptr) return;
+        if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
+        {
+                auto& t = as_binop_ref(r);
+                flatten_args(t.left(),v,op_val);
+                flatten_args(t.right(),v,op_val);
+                return;
+        }
+        v.push_back(r);
+}
+
+ceps::ast::Nodebase_ptr my_ceps_plugin(ceps::ast::Call_parameters* params){
+    std::cout << "my_ceps_plugin: ";
+    std::vector<ceps::ast::Nodebase_ptr> args;
+    if (params != nullptr && params->children().size()) flatten_args(params->children()[0], args, ',');
+    for(auto e: args) std::cout << *e << " ";
+    std::cout << std::endl;
+    return nullptr;
+}
 
 extern "C" void init_plugin(IUserdefined_function_registry* smc)
 {
@@ -105,8 +126,8 @@ extern "C" void init_plugin(IUserdefined_function_registry* smc)
   
   smc->regfn("Z_SollPosition_Berechnen",Z_SollPosition_Berechnen);
   smc->regfn("Z_IstPosition_Berechnen", Z_IstPosition_Berechnen);
+  smc->get_plugin_interface()->reg_ceps_plugin("my_plugin",my_ceps_plugin);
 }
-
 
 
 

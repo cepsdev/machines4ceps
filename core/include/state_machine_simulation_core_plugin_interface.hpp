@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include "ceps_all.hh"
 
 class State_machine_simulation_core;
 
@@ -109,6 +110,9 @@ namespace sm4ceps_plugin_int{
 
 
 }
+
+typedef ceps::ast::Nodebase_ptr (*smcore_plugin_fn_t)(ceps::ast::Call_parameters* params);
+
 class Ism4ceps_plugin_interface{
 public:
  virtual void queue_event(std::string ev_name,std::initializer_list<sm4ceps_plugin_int::Variant> vl = {}) = 0;
@@ -147,6 +151,7 @@ public:
  virtual void sm_transition_add_action(void* sm,std::string id, void* assoc_sm) = 0;
  virtual void sm_set_join_state(void* sm, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx ) = 0;
  virtual void sm_add_ref_to_sm_at_least_one_transition_was_moved_to(void* sm, void* sm_to) = 0;
+ virtual void reg_ceps_plugin(std::string name, smcore_plugin_fn_t)=0;
 };
 
 #endif

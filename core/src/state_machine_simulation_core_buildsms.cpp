@@ -74,7 +74,7 @@ int truncate(int i) { return i; }
 double mymin(double a, double b) { return std::min(a,b); }
 double mymin(double a, int b) { return std::min(a, (double)b); }
 double mymin(int a, double b) { return std::min((double)a, b); }
-int mymin(int a, int b) { return std::min(a, b); }
+int mymin(int a, int b) {  return std::min(a, b); }
 
 extern std::vector<std::thread*> comm_threads;
 
