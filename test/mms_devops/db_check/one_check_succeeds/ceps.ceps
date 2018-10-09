@@ -1,0 +1,90 @@
+kind Event;
+kind Parameter;
+kind Systemstate;
+Event dummy;
+
+Parameter hostname;
+Parameter passwd;
+Parameter user;
+Parameter time_stamp;
+Parameter database;
+Parameter job_name;
+Parameter sap_code;
+Parameter time_delta;
+Parameter check_for_empty_resultset_only;
+Parameter on_error;
+Parameter on_success;
+
+Event failed;
+Event ok;
+Event error;
+
+sm {
+ S;
+ states{Initial;A;B;C;};
+ on_enter{
+     watch_job();
+ };
+ Actions{
+  watch_job{
+    mms_rollaut_db_check(
+                      hostname   = env("ROLLAUT_DB_HOST"), 
+                      user       = env("ROLLAUT_DB_USER"),
+                      passwd     = env("ROLLAUT_DB_PASSWD"),
+                      database   = env("ROLLAUT_DB_DB"),
+                      sap_code   = "1234",
+                      job_name   = "abc",
+                      time_stamp  = timestamp(),
+                      on_error   = failed,
+                      on_success = ok           
+                     );     
+  };
+  enter_c{
+    print("Error Event Catched\n");
+  };
+  enter_b{
+    print("Failure Event Catched\n");
+  };
+  got_ok{
+    print("[",timestamp(),"] ","Job finished. Result == ",argv(1),"\n");
+    watch_job();
+  };
+
+ };
+ t{Initial;B;failed;enter_b;};
+ t{Initial;C;error;enter_c;};
+ t{Initial;Initial;ok;got_ok;};
+};
+
+Event write2db;
+Systemstate counter;
+counter = 0;
+
+sm {
+    T;
+    states{Initial;};
+    on_enter{start_periodic_timer(0.8*s,write2db);};
+    Actions{
+        do_write2db{
+            os_system("../../../../bin/set_job_result -h "+env("ROLLAUT_DB_HOST")+" -u "+env("ROLLAUT_DB_USER")+" -p "+env("ROLLAUT_DB_PASSWD")+" -j abc -s 1234 -r "+as_text(counter));
+            counter = counter + 1;
+        };
+    };
+    t{Initial;Initial;write2db;do_write2db;};
+};
+
+Event log_error;
+
+sm{
+ Log;
+ states{Initial;};
+ on_enter{print("Log started.\n");};
+ Actions{
+  do_log_error{print("[",timestamp(),"]","[ERROR][",argv(1),"] ",argv(2),"\n");};
+ };
+ t{Initial;Initial;log_error;do_log_error;};
+};
+
+Simulation{
+ Start{S;T;Log;};
+};
