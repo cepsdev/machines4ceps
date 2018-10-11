@@ -1,0 +1,101 @@
+kind Event;
+kind Parameter;
+kind Systemstate;
+Event dummy;
+
+
+Event failed;
+Event ok;
+Event error;
+Event EXIT;
+Event no_connect;
+Event market_timeout;
+Event kill_job;
+
+
+/*
+watch_job{
+    Parameter hostname;
+    Parameter passwd;
+    Parameter user;
+    Parameter time_stamp;
+    Parameter database;
+    Parameter job_name;
+    Parameter sap_code;
+    Parameter time_delta;
+    Parameter check_for_empty_resultset_only;
+    Parameter on_error;
+    Parameter on_success;
+    Parameter on_connect_error;
+    Parameter timeout_ms;
+    Parameter on_timeout;
+
+    mms_rollaut_db_check(
+                        hostname         = env("ROLLAUT_DB_HOST"),
+                        user             = env("ROLLAUT_DB_USER"),
+                        passwd           = env("ROLLAUT_DB_PASSWD"),
+                        database         = env("ROLLAUT_DB_DB"),
+                        sap_code         = "1234",
+                        job_name         = "abc",
+                        time_stamp       = timestamp(),
+                        on_error         = failed,
+                        on_connect_error = no_connect,
+                        on_success       = ok,
+                        on_timeout       = market_timeout,
+                        timeout_ms       = 5000
+                       );
+};
+
+*/
+
+markets{
+ //sap codes
+ static_for(e: 1 .. 63){
+  e;
+ }
+};
+Event start;
+
+static_for(market:root.markets.content()){
+    sm {
+     as_identifier("m_"+text(market));
+     cover{edges_up_to_1;};
+     states{Initial;StartJob;WaitForJob;DummyState;Error;Final;};
+     Actions{
+        do_start_job{
+         Event ignore;
+         print(text(market),"\n");
+         os_system(
+                   "java -jar jenkins-cli.jar -s \"$ROLLAUT_JENKINS_URL\" -http -auth \"$ROLLAUT_JENKINS_AUTH\""+
+                   "  -noKeyAuth build pos_rollout_automated_010_auto_x_wait_a_while -p sapcode="+text(market)+"",
+                   //"echo \""+text(market)+"!!\"",
+                   as_symbol("success_start_job_"+text(market),"Event"),
+                   as_symbol("failed_start_job_"+text(market),"Event"));
+         start_periodic_timer(0.5*s,as_symbol("ping_"+text(market),"Event"));
+        };
+        do_restart_job{
+            print("m_",text(market)," failed\n");
+            //start_timer(1.5 * s,as_symbol("restart_start_job_"+text(market),"Event"));
+        };
+        do_print_ping_msg{
+            //print("m_",text(market)," PING!\n");
+        };
+     };
+     t{Initial;DummyState;start;};
+     t{DummyState;DummyState;as_symbol("ping_"+text(market),"Event");do_print_ping_msg;};
+     t{Initial;StartJob;start;do_start_job;};
+     t{StartJob;StartJob;as_symbol("failed_start_job_"+text(market),"Event");do_restart_job;};
+     t{StartJob;Error;as_symbol("failed_start_job_"+text(market),"Event");};
+     t{StartJob;StartJob;as_symbol("restart_start_job_"+text(market),"Event");do_start_job;};
+     t{StartJob;Final;as_symbol("success_start_job_"+text(market),"Event");};
+    };
+}
+
+Simulation{
+ Start{
+    static_for(market:root.markets.content()){
+        as_identifier("m_"+text(market));
+    }
+ };
+ start;
+};

@@ -1,0 +1,20 @@
+kind Event;
+kind Systemstate;
+kind Parameter;
+
+Parameter parameters;
+Parameter hostname, port,job_name;
+
+params{
+ param{
+  name{"p1";};value{1;};
+ };
+ param{
+  name{"p2";};value{"123";};
+ };
+};
+
+Simulation{
+ print("jenkins4cepS: Hello, World!\n");
+ jenkins(hostname="localhost",port="8080",job_name="pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",parameters = root.params.content());
+};

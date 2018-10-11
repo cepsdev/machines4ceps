@@ -1,0 +1,123 @@
+kind Event;
+kind Parameter;
+kind Systemstate;
+Event dummy;
+
+
+Event failed;
+Event ok;
+Event error;
+Event EXIT;
+Event no_connect;
+Event market_timeout;
+
+sm {
+ S;
+ val sm_name = "S";
+ states{Initial;A;B;C;Connection_Failure;Timeout;};
+ on_enter{
+     watch_job();
+ };
+ Actions{
+  watch_job{
+      Parameter hostname;
+      Parameter passwd;
+      Parameter user;
+      Parameter time_stamp;
+      Parameter database;
+      Parameter job_name;
+      Parameter sap_code;
+      Parameter time_delta;
+      Parameter check_for_empty_resultset_only;
+      Parameter on_error;
+      Parameter on_success;
+      Parameter on_connect_error;
+      Parameter timeout_ms;
+      Parameter on_timeout;
+
+      mms_rollaut_db_check(
+                          hostname         = env("ROLLAUT_DB_HOST"),
+                          user             = env("ROLLAUT_DB_USER"),
+                          passwd           = env("ROLLAUT_DB_PASSWD"),
+                          database         = env("ROLLAUT_DB_DB"),
+                          sap_code         = "1234",
+                          job_name         = "abc",
+                          time_stamp       = timestamp(),
+                          on_error         = failed,
+                          on_connect_error = no_connect,
+                          on_success       = ok,
+                          on_timeout       = market_timeout,
+                          timeout_ms       = 5000
+                         );
+  };
+  do_report_error{
+    print("[",timestamp(),"]","[ERROR][",sm_name,"] ",argv(2),"\n");
+  };
+  do_report_failure{
+    print("[",timestamp(),"]","[FAILED][",sm_name,"] Event=",argv(0),". ",argv(1),"\n");
+  };
+  do_report_timeout{
+    print("[",timestamp(),"]","[TIMEOUT][",sm_name,"] Event:",argv(0),". What:",argv(1)," Job: '",argv(2),"' SAP: '",argv(3),"'\n");
+  };
+  got_ok{
+    print("[",timestamp(),"] ","[DONE][",sm_name,"] Job finished. Result == ",argv(1),"\n");
+    watch_job();
+  };
+
+ };
+ t{Initial;B;failed;do_report_failure;};
+ t{Initial;Initial;failed;};
+
+ t{Initial;Connection_Failure;no_connect;do_report_failure;};
+ t{Initial;Initial;no_connect;};
+
+ t{Initial;C;error;};
+ t{Initial;Initial;error;do_report_error;};
+
+ t{Initial;Timeout;market_timeout;do_report_timeout;};
+ t{Initial;Initial;market_timeout;};
+
+ t{Initial;Initial;ok;got_ok;};
+};
+
+Event write2db;
+Systemstate counter;
+counter = 0;
+
+sm {
+    T;
+    states{Initial;};
+    on_enter{start_periodic_timer(0.8*s,write2db);};
+    Actions{
+        do_write2db{
+            //os_system("../../../../bin/set_job_result -h "+env("ROLLAUT_DB_HOST")+" -u "+env("ROLLAUT_DB_USER")+" -p "+env("ROLLAUT_DB_PASSWD")+" -j abc -s 1234 -r "+as_text(counter));
+            //counter = counter + 1;
+        };
+    };
+    t{Initial;Initial;write2db;do_write2db;};
+};
+
+Event log_error,log_info;
+
+sm{
+ Log;
+ states{Initial;};
+ Actions{
+  do_log_error{print("[",timestamp(),"]","[ERROR][",argv(1),"] ",argv(2),"\n");};
+  do_log_info{print("[",timestamp(),"]","[INFO][",argv(1),"] ",argv(2),"\n");};
+ };
+ t{Initial;Initial;log_error;do_log_error;};
+ t{Initial;Initial;log_info;do_log_info;};
+};
+
+sm{
+ Watchdog;
+ cover{edge_up_to_1;};
+ states{Initial;Timout_Detected;};
+ t{Initial;Timout_Detected;market_timeout;};
+};
+
+Simulation{
+ Start{S;T;Log;Watchdog;};
+ start_timer(7.0*s,EXIT);
+};

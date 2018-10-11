@@ -14,45 +14,57 @@ Parameter time_delta;
 Parameter check_for_empty_resultset_only;
 Parameter on_error;
 Parameter on_success;
+Parameter on_connect_error;
 
 Event failed;
 Event ok;
 Event error;
+Event EXIT;
+Event no_connect;
 
 sm {
  S;
- states{Initial;A;B;C;};
+ val sm_name = "S";
+ states{Initial;A;B;C;Connection_Failure;};
  on_enter{
      watch_job();
  };
  Actions{
   watch_job{
     mms_rollaut_db_check(
-                      hostname   = env("ROLLAUT_DB_HOST"), 
-                      user       = env("ROLLAUT_DB_USER"),
-                      passwd     = env("ROLLAUT_DB_PASSWD"),
-                      database   = env("ROLLAUT_DB_DB"),
-                      sap_code   = "1234",
-                      job_name   = "abc",
-                      time_stamp  = timestamp(),
-                      on_error   = failed,
-                      on_success = ok           
+                      hostname         = env("ROLLAUT_DB_HOST"),
+                      user             = env("ROLLAUT_DB_USER"),
+                      passwd           = env("ROLLAUT_DB_PASSWD"),
+                      database         = env("ROLLAUT_DB_DB"),
+                      sap_code         = "1234",
+                      job_name         = "abc",
+                      time_stamp       = timestamp(),
+                      on_error         = failed,
+                      on_connect_error = no_connect,
+                      on_success       = ok
                      );     
   };
-  enter_c{
-    print("Error Event Catched\n");
+  do_report_error{
+    print("[",timestamp(),"]","[ERROR][",sm_name,"] ",argv(2),"\n");
   };
-  enter_b{
-    print("Failure Event Catched\n");
+  do_report_failure{
+    print("[",timestamp(),"]","[FAILED][",sm_name,"] Event=",argv(0),". ",argv(1),"\n");
   };
   got_ok{
-    print("[",timestamp(),"] ","Job finished. Result == ",argv(1),"\n");
+    print("[",timestamp(),"] ","[DONE][",sm_name,"] Job finished. Result == ",argv(1),"\n");
     watch_job();
   };
 
  };
- t{Initial;B;failed;enter_b;};
- t{Initial;C;error;enter_c;};
+ t{Initial;B;failed;do_report_failure;};
+ t{Initial;Initial;failed;};
+
+ t{Initial;Connection_Failure;no_connect;do_report_failure;};
+ t{Initial;Initial;no_connect;};
+
+ t{Initial;C;error;};
+ t{Initial;Initial;error;do_report_error;};
+
  t{Initial;Initial;ok;got_ok;};
 };
 
@@ -73,16 +85,17 @@ sm {
     t{Initial;Initial;write2db;do_write2db;};
 };
 
-Event log_error;
+Event log_error,log_info;
 
 sm{
  Log;
  states{Initial;};
- on_enter{print("Log started.\n");};
  Actions{
   do_log_error{print("[",timestamp(),"]","[ERROR][",argv(1),"] ",argv(2),"\n");};
+  do_log_info{print("[",timestamp(),"]","[INFO][",argv(1),"] ",argv(2),"\n");};
  };
  t{Initial;Initial;log_error;do_log_error;};
+ t{Initial;Initial;log_info;do_log_info;};
 };
 
 Simulation{

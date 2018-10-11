@@ -1,0 +1,1 @@
+../../../studies/mms_devops/set_env.sh
