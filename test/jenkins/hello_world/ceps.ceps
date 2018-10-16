@@ -1,11 +1,12 @@
 kind Event;
 kind Systemstate;
 kind Parameter;
-
-Parameter parameters;
-Parameter hostname, port,job_name,authorization;
+Event job_started_event;
 
 params{
+ comment{
+  "Jenkins Parameters";
+ };
  param{
   name{"sapcode";};value{1;};
  };
@@ -14,7 +15,41 @@ params{
  };
 };
 
+sm{
+ S;
+ comment{
+  "Statemachine controlling Jenkins job";
+ };
+
+ states{Initial;JobStarted;};
+
+ on_enter{
+  Parameter parameters,hostname, port,job_name,authorization,on_success;
+  jenkins(authorization          = env("ROLLAUT_JENKINS_AUTH"),
+          hostname               = "localhost",
+          port                   = "8080",
+          job_name               = "pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",
+          parameters             = root.params.content(),
+          on_success             = job_started_event);
+ };
+
+Actions{
+  do_print_success{
+   print("Job started successfully.\n");
+  };
+ };
+
+ t{Initial;JobStarted;job_started_event;do_print_success;};
+};
+
+
 Simulation{
- print("jenkins4cepS: Hello, World!\n");
- jenkins(authorization=env("ROLLAUT_JENKINS_AUTH"),hostname="localhost",port="8080",job_name="pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",parameters = root.params.content());
+ comment{
+  "Start Statemachine, wait a couple of seconds and exit.";
+ };
+
+ Event EXIT;
+ Start{S;};
+ start_timer(10.0 * s, EXIT);
+
 };
