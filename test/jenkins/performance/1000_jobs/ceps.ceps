@@ -1,0 +1,70 @@
+kind Event;
+kind Systemstate;
+kind Parameter;
+Event job_started_event,job_failed_event;
+
+static_for(i : 1 .. 1000){
+
+params{
+ comment{
+  "Jenkins Parameters";
+ };
+ param{
+  name{"sapcode";};value{i;};
+ };
+ param{
+  name{"ROLLOUTNAME";};value{"123";};
+ };
+};
+
+}
+
+static_for(i : 1 .. 1000){
+
+sm{
+ as_identifier("S"+text(i));
+ comment{
+  "Statemachine controlling Jenkins job";
+ };
+
+ states{Initial;JobStarted;JobFailed;};
+
+ on_enter{
+  Parameter url,parameters,hostname,port,job_name,authorization,on_success,on_error;
+  //print("S",i,":","on_enter\n");
+  jenkins(authorization          = env("ROLLAUT_JENKINS_AUTH"),
+          //hostname               = "localhost",
+          //port                   = "8080",
+          url                    = "http://localhost:8080",
+          job_name               = "pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",
+          parameters             = root.params.at(i-1).content(),
+          on_success             = as_symbol("job_started_event"+text(i),"Event"),
+          on_error               = as_symbol("job_failed_event"+text(i),"Event"));
+ };
+
+Actions{
+  do_print_success{
+   print("[",timestamp(),"] Job #",i," '",argv(1),"' started successfully.\n");
+  };
+  do_print_failure{
+   print("[",timestamp(),"] Job #",i," '",argv(1), "' failed: ",argv(2),"\n");
+  };
+ };
+
+ t{Initial;JobStarted;as_symbol("job_started_event"+text(i),"Event");do_print_success;};
+ t{Initial;JobFailed;as_symbol("job_failed_event"+text(i),"Event");do_print_failure;};
+};
+
+}
+
+
+Simulation{
+ comment{
+  "Start Statemachine, wait a couple of seconds and exit.";
+ };
+
+ Event EXIT;
+ Start{static_for(i : 1 .. 1000){as_identifier("S"+text(i));}};
+ start_timer(3600.0 * s, EXIT);
+
+};
