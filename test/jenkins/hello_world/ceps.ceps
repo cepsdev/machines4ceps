@@ -8,10 +8,10 @@ params{
   "Jenkins Parameters";
  };
  param{
-  name{"sapcode";};value{1;};
+  name{"sapcode";};value{3015;};
  };
  param{
-  name{"ROLLOUTNAME";};value{"123";};
+  name{"ROLLOUTNAME";};value{"GargamelKK";};
  };
 };
 
@@ -24,10 +24,11 @@ sm{
  states{Initial;JobStarted;JobFailed;};
 
  on_enter{
-  Parameter url,parameters,hostname,port,job_name,authorization,on_success,on_error;
-  jenkins(authorization          = env("ROLLAUT_JENKINS_AUTH"),
-          //hostname               = "localhost",
-          //port                   = "8080",
+  Parameter option,command,url,parameters,hostname,port,job_name,authorization,on_success,on_error;
+  jenkins(
+          command                = "build",
+          option                 = "follow",
+          authorization          = env("ROLLAUT_JENKINS_AUTH"),
           url                    = "http://localhost:8080",
           job_name               = "pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",
           parameters             = root.params.content(),
@@ -56,6 +57,6 @@ Simulation{
 
  Event EXIT;
  Start{S;};
- start_timer(10.0 * s, EXIT);
+ start_timer(3600.0 * s, EXIT);
 
 };
