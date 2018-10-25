@@ -2,8 +2,6 @@ kind Event;
 kind Systemstate;
 kind Parameter;
 Event job_finished_successfully_event,job_failed_event;
-Systemstate counter;
-counter = 100;
 
 static_for(i : 1 .. 100){
 
@@ -21,7 +19,7 @@ params{
 
 }
 
-static_for(i : 1 .. 10){
+static_for(i : 1 .. 2){
 
 sm{
  as_identifier("S"+text(i));
@@ -57,8 +55,7 @@ sm{
 
 Actions{
   do_print_success{
-   counter = counter - 1;
-   print("[",timestamp(),"] Job #",i," '",argv(1),"' finished successfully. (counter=",counter,")\n");
+   print("[",timestamp(),"] Job #",i," '",argv(1),"' finished successfully.\n");
   };
   do_print_failure{
    print("[",timestamp(),"] Job #",i," '",argv(1), "' failed: ",argv(2),"\n");
@@ -77,7 +74,7 @@ Simulation{
  };
 
  Event EXIT;
- Start{static_for(i : 1 .. 10){as_identifier("S"+text(i));}};
+ Start{static_for(i : 1 .. 2){as_identifier("S"+text(i));}};
  start_timer(3600.0 * s, EXIT);
 
 };

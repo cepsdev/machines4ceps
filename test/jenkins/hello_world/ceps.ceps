@@ -1,17 +1,17 @@
 kind Event;
 kind Systemstate;
 kind Parameter;
-Event job_started_event,job_failed_event;
+Event job_finished_successfully_event,job_failed_event,job_queued;
 
 params{
  comment{
   "Jenkins Parameters";
  };
  param{
-  name{"sapcode";};value{3015;};
+  name{"sapcode";};value{3333;};
  };
  param{
-  name{"ROLLOUTNAME";};value{"GargamelKK";};
+  name{"ROLLOUTNAME";};value{"Gargamel42";};
  };
 };
 
@@ -21,10 +21,21 @@ sm{
   "Statemachine controlling Jenkins job";
  };
 
- states{Initial;JobStarted;JobFailed;};
+ states{Initial;JobSuccessful;JobFailed;};
 
  on_enter{
-  Parameter option,command,url,parameters,hostname,port,job_name,authorization,on_success,on_error;
+  Parameter on_job_queued,
+            option,
+            command,
+            url,
+            parameters,
+            hostname,
+            port,
+            job_name,
+            authorization,
+            on_success,
+            on_error;
+
   jenkins(
           command                = "build",
           option                 = "follow",
@@ -32,21 +43,27 @@ sm{
           url                    = "http://localhost:8080",
           job_name               = "pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",
           parameters             = root.params.content(),
-          on_success             = job_started_event,
-          on_error               = job_failed_event);
+          on_success             = job_finished_successfully_event,
+          on_error               = job_failed_event,
+          on_job_queued          = job_queued
+  );
  };
 
 Actions{
   do_print_success{
-   print("[",timestamp(),"] Job '",argv(1),"' started successfully.\n");
+   print("[",timestamp(),"] Job '",argv(1),"' successfully finished.\n");
   };
   do_print_failure{
    print("[",timestamp(),"] Job '",argv(1), "' failed: ",argv(2),"\n");
   };
- };
+  do_print_job_queued{
+   print("[",timestamp(),"] Job '",argv(1), "' queued. Jenkins build number is ",argv(2),"\n");
+  };
+};
 
- t{Initial;JobStarted;job_started_event;do_print_success;};
+ t{Initial;JobSuccessful;job_finished_successfully_event;do_print_success;};
  t{Initial;JobFailed;job_failed_event;do_print_failure;};
+ t{Initial;Initial;job_queued;do_print_job_queued;};
 };
 
 

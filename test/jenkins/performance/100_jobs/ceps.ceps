@@ -1,7 +1,10 @@
 kind Event;
 kind Systemstate;
 kind Parameter;
-Event job_started_event,job_failed_event;
+Event job_finished_successfully_event,job_failed_event;
+Systemstate counter,counter2;
+counter = 100;
+counter2 = 100;
 
 static_for(i : 1 .. 100){
 
@@ -13,7 +16,7 @@ params{
   name{"sapcode";};value{i;};
  };
  param{
-  name{"ROLLOUTNAME";};value{"123";};
+  name{"ROLLOUTNAME";};value{"R"+text(i);};
  };
 };
 
@@ -27,36 +30,56 @@ sm{
   "Statemachine controlling Jenkins job";
  };
 
- states{Initial;JobStarted;JobFailed;};
+ states{Initial;JobFinishedSuccessfully;JobFailed;};
 
  on_enter{
-  Parameter url,parameters,hostname,port,job_name,authorization,on_success,on_error;
-  //print("S",i,":","on_enter\n");
-  jenkins(authorization          = env("ROLLAUT_JENKINS_AUTH"),
-          //hostname               = "localhost",
-          //port                   = "8080",
+ Parameter on_job_queued,
+           option,
+           command,
+           url,
+           parameters,
+           hostname,
+           port,
+           job_name,
+           authorization,
+           on_success,
+           on_error,
+           on_job_queued;
+
+  jenkins(
+          command                = "build",
+          option                 = "follow",
+          authorization          = env("ROLLAUT_JENKINS_AUTH"),
           url                    = "http://localhost:8080",
           job_name               = "pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",
           parameters             = root.params.at(i-1).content(),
-          on_success             = as_symbol("job_started_event"+text(i),"Event"),
-          on_error               = as_symbol("job_failed_event"+text(i),"Event"));
+          on_success             = as_symbol("job_finished_successfully_event"+text(i),"Event"),
+          on_error               = as_symbol("job_failed_event"+text(i),"Event"),
+          on_job_queued          = as_symbol("job_queued"+text(i),"Event")
+          );
  };
 
 Actions{
   do_print_success{
-   print("[",timestamp(),"] Job #",i," '",argv(1),"' started successfully.\n");
+   counter = counter - 1;
+   print("[",timestamp(),"] Job #",i," '",argv(1),"' finished successfully. (",counter," left)\n");
   };
   do_print_failure{
    print("[",timestamp(),"] Job #",i," '",argv(1), "' failed: ",argv(2),"\n");
   };
+  do_print_job_queued{
+   counter2 = counter2 - 1;
+   print("[",timestamp(),"] Job '",argv(1), "' queued. Jenkins build number is ",argv(2)," (",counter2," left)\n");
+  };
+
  };
 
- t{Initial;JobStarted;as_symbol("job_started_event"+text(i),"Event");do_print_success;};
+ t{Initial;JobFinishedSuccessfully;as_symbol("job_finished_successfully_event"+text(i),"Event");do_print_success;};
  t{Initial;JobFailed;as_symbol("job_failed_event"+text(i),"Event");do_print_failure;};
+ t{Initial;Initial;as_symbol("job_queued"+text(i),"Event");do_print_job_queued;};
 };
 
 }
-
 
 Simulation{
  comment{
