@@ -1,0 +1,390 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+kind IOManip;IOManip endl;
+
+Event big_step,small_step,step_failure,trigger_status_check,job_not_done_yet,job_finished,result_ok,result_nok;
+
+//val param_name = "sapcode";  
+
+global_functions{ 
+ check_interval{
+     params{job;};
+     /*if (job == "check_ro_tmdbatch_elements" )
+         return 1.0*s;*/
+     return 10.0*s;
+ };
+
+ check_script_for_job_termination{
+     params{t;job;parameters;};
+     val rest = " -t \"" + t + "\" -j " + job + " -s "+ parameters;
+     val script_call =  SCRIPT_TO_CHECK_JOB_FOR_TERMINATION +rest;
+     print("check_script_for_job_termination:",rest,endl);
+     return script_call;
+ };
+
+ script_for_job_result{
+     params{t;job;parameters;};
+     val t =  SCRIPT_TO_FETCH_JOB_COMPUTATION_RESULT +" -c -t \"" + t + "\" -j " + job + " -s "+ parameters;
+     //print(t,"\n");
+     return t;
+ };
+
+ script_for_job_execution{
+     params{job;parameters;job_ctrl;};
+     if (test_bit(job_ctrl,1)) {
+        val t = SCRIPT_TO_START_A_JOB_AND_FOLLOW + " " + job + " "+ parameters;
+        print("[script_for_job_execution] result=",t,endl);
+        return t;
+     } else {
+        val t =  SCRIPT_TO_START_A_JOB + " " + job + " "+ parameters;
+        print("[script_for_job_execution] result=",t,endl);
+        return t;
+     }
+ }; 
+};
+
+
+macro get_params{
+    val r = "";    
+    static_for(e:as_nodeset(hd(arglist)).content()){        
+        ignore_value{r = r +" "+ text(e.content().name.content()) +" \""+text(e.content().value.content())+"\"";};
+    }
+    r;
+};
+
+macro sub_step_check{    
+       sm{
+            hd(arglist);
+            val prefix = hd(tail(arglist));
+            val postfix = hd(tail(tail(arglist)));
+            val job_name = hd(tail(tail(tail(arglist))));
+            val job_parameter = hd(tail(tail(tail(tail(arglist)))));
+            val job_run_name = hd(tail(tail(tail(tail(tail(arglist))))));
+            val job_check_warn = hd(tail(tail(tail(tail(tail(tail(arglist)))))));
+            val job_run_warn = hd(tail(tail(tail(tail(tail(tail(tail(arglist))))))));
+            val market_name = hd(tail(tail(tail(tail(tail(tail(tail(tail(arglist)))))))));
+            val job_run_error = hd(tail(tail(tail(tail(tail(tail(tail(tail(tail(arglist))))))))));
+            val params_ext = hd(tail(tail(tail(tail(tail(tail(tail(tail(tail(tail(arglist)))))))))));
+            val settings = hd(tail(tail(tail(tail(tail(tail(tail(tail(tail(tail(tail(arglist))))))))))));
+
+
+            val params_ext_check = text(make_struct("get_params",as_nodeset(params_ext).content().check));
+            val params_ext_check_warn = text(make_struct("get_params",as_nodeset(params_ext).content().check_warn));
+            val params_ext_run = text(make_struct("get_params",as_nodeset(params_ext).content().run));
+            val params_ext_run_warn = text(make_struct("get_params",as_nodeset(params_ext).content().run_warn));
+
+            val params_ext_run_error = text(make_struct("get_params",as_nodeset(params_ext).content().run_error));
+
+            val check_job_ctrl_sysstate = "check_job_ctrl_for_"+postfix;
+            
+            
+            states{ Initial;
+                    Final;
+                    JobTriggered;
+                    WaitForStatus;
+                    JobStillRunning;
+                    FetchResult;
+                    WaitALittle;
+                    WaitForSoftTimeout;
+                    WaitForSoftTimeoutDone;};
+            Actions{
+                start_job{
+                    write_system_state(check_job_ctrl_sysstate,0);
+
+                    //print ("start_job(): ",market_name+"_warn_state=",read_system_state(market_name+"_warn_state"),endl);
+                    //print ("start_job(): ",market_name+"_error_state=",read_system_state(market_name+"_error_state"),endl);
+
+                    //Job Control
+
+                    if (read_system_state(market_name+"_error_state")) {
+
+                    } else if (read_system_state(market_name+"_warn_state")) {
+                        static_for(e:as_nodeset(settings).content().check_warn.content()){
+                            if ("JOB_CTRL" == text(e.param.content().name.content())){
+                                write_system_state(check_job_ctrl_sysstate,as_int(e.param.content().value.content()));
+                                print("["+market_name+".check.start_job()]"," JOB_CTRL=",read_system_state(check_job_ctrl_sysstate),
+                                " {", check_job_ctrl_sysstate ,"}","\n");
+                            }
+                        }
+                    } else {
+                        static_for(e:as_nodeset(settings).content().check.content()){
+                            if ("JOB_CTRL" == text(e.param.content().name.content())){
+                                write_system_state(check_job_ctrl_sysstate,as_int(e.param.content().value.content()));
+                                print("["+market_name+".check.start_job()]"," JOB_CTRL=",read_system_state(check_job_ctrl_sysstate),
+                                " {", check_job_ctrl_sysstate ,"}","\n");
+                            }
+                        }
+                    }
+                    
+                    if (!read_system_state(market_name+"_error_state")) {
+                        if (read_system_state(market_name+"_warn_state")){
+                            write_system_state(text(job_name),job_check_warn);
+                            write_system_state(text(job_run_name),job_run_warn);
+                            write_system_state("ext_params_check_"+postfix,params_ext_check_warn);
+                            write_system_state("ext_params_run_"+postfix,params_ext_run_warn);
+                        } else {
+                            write_system_state("ext_params_check_"+postfix,params_ext_check);
+                            write_system_state("ext_params_run_"+postfix,params_ext_run);
+                            static_for(e:as_nodeset(settings).content().check.content()){
+                                if("soft_timeout" == text(e.param.content().name.content())){
+                                    val t = as_int(e.param.content().value.content());
+                                    write_system_state(prefix+"check_job_name_soft_timeout"+postfix,t);
+                                    start_timer(t*s,as_symbol(prefix+"_check_restart_job_"+postfix,"Event"));                                    
+                                }
+                            }                             
+                        }
+
+                        //print("START ",script_for_job_execution(job_name,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate") ),"\n");
+                        
+                        write_system_state(prefix+"check_job_name_"+postfix,job_name);
+                        write_system_state(prefix+"check_job_parameters_"+postfix,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"));
+                        if ( !test_bit(read_system_state(check_job_ctrl_sysstate),1) && !test_bit(read_system_state(check_job_ctrl_sysstate),2) ){ 
+                            os_system(
+                                script_for_job_execution(job_name,
+                                                        param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"),
+                                                        read_system_state(check_job_ctrl_sysstate)
+                                                        )
+                            );                                                    
+                            start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                        } else {
+                            if ( test_bit(read_system_state(check_job_ctrl_sysstate),2) ) {
+                                // Fire and Forget
+                                os_system(
+                                    script_for_job_execution(job_name,
+                                        param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"),
+                                        read_system_state(check_job_ctrl_sysstate)
+                                    )                                
+                                );
+                                as_symbol(prefix+"big_step"+postfix,"Event");
+                                return 0;
+                            } else if ( test_bit(read_system_state(check_job_ctrl_sysstate),8) ){
+                                if ( test_bit(read_system_state(check_job_ctrl_sysstate),16) ){
+                                    os_system(
+                                        script_for_job_execution(job_name,
+                                                                param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"),
+                                                                read_system_state(check_job_ctrl_sysstate)
+                                        ),
+                                        as_symbol(prefix+"result_nok"+postfix,"Event"),
+                                        as_symbol(prefix+"result_ok"+postfix,"Event")
+                                    );
+                                } else {
+                                    os_system(
+                                        script_for_job_execution(job_name,
+                                                                param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"),
+                                                                read_system_state(check_job_ctrl_sysstate)
+                                        ),
+                                        as_symbol(prefix+"result_ok"+postfix,"Event"),
+                                        as_symbol(prefix+"result_nok"+postfix,"Event")
+                                    );
+                                }
+                                as_symbol(prefix+"skip_reading_from_db"+postfix,"Event");
+                            } else { 
+                                os_system(
+                                    script_for_job_execution(job_name,
+                                                            param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate"),
+                                                            read_system_state(check_job_ctrl_sysstate)
+                                    ),
+                                    as_symbol(prefix+"trigger_status_check"+postfix,"Event")
+                                );
+                            }                                              
+                        }
+                        if (test_bit(read_system_state(check_job_ctrl_sysstate),4)) { 
+                            val t = timestamp(max_time_drift);
+                            as_symbol("sub_step_check"+prefix+job_parameter+postfix,"Systemstate") = t;
+                            print("["+market_name+".check.start_job()]"," timestamp= ",t," DRIFT=",max_time_drift," seconds","\n");
+                        } else { 
+                            val t = timestamp();
+                            as_symbol("sub_step_check"+prefix+job_parameter+postfix,"Systemstate") = t;
+                            print("["+market_name+".check.start_job()]"," timestamp= ",t,"\n");
+                        }
+                    } else {
+                        if (job_run_error != "") {
+                            print ("start_job(): ",market_name+" start error job ",job_run_error ,endl);
+                            os_system(script_for_job_execution(job_run_error,
+                                                               param_name+" "+job_parameter+params_ext_run_error,
+                                                               read_system_state(check_job_ctrl_sysstate)));
+                        }
+                    }
+                };
+                start_timer_for_job_check{
+                    start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                };
+                run_check_script{
+                   os_system(check_script_for_job_termination(
+                             as_symbol("sub_step_check"+prefix+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
+                             as_symbol(prefix+"job_finished"+postfix,"Event"),
+                             as_symbol(prefix+"job_not_done_yet"+postfix,"Event"));
+                };
+                run_get_result_script{
+                   os_system(script_for_job_result(
+                             as_symbol("sub_step_check"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
+                             as_symbol(prefix+"result_ok"+postfix,"Event"),
+                             as_symbol(prefix+"result_nok"+postfix,"Event"));
+                };
+                skip_run_step{
+                    as_symbol(prefix+"big_step"+postfix,"Event");
+                };
+                run_step{
+                    print("["+prefix+"small_step_check_result"+postfix+"] RESULT CODE IS ",argv(1),"\n");
+
+                    write_system_state(prefix+"small_step"+postfix+"_rcode",argv(1));
+                    //as_symbol(prefix+"small_step"+postfix+"_rcode","Systemstate") = argv(1);
+                    as_symbol(prefix+"small_step"+postfix,"Event");   
+                    as_symbol(prefix+"small_step_check_result"+postfix,"Event");                 
+                };
+
+                soft_timeout_expired{
+                    print("soft_timeout_expired!",endl);                                    
+                    start_timer(read_system_state(prefix+"check_job_name_soft_timeout"+postfix)*s,as_symbol(prefix+"_check_restart_job_"+postfix,"Event"));
+                    //as_symbol("sub_step_check"+prefix+job_parameter+postfix,"Systemstate") = timestamp();
+                    os_system(
+                            script_for_job_execution(
+                                read_system_state(prefix+"check_job_name_"+postfix),
+                                read_system_state(prefix+"check_job_parameters_"+postfix,param_name+" "+job_parameter+as_symbol("ext_params_check_"+postfix,"Systemstate")),
+                                read_system_state(check_job_ctrl_sysstate)
+                            )
+                    );        
+                };
+            };
+
+            t{Initial;JobTriggered;start_job;};
+            t{Initial;WaitForSoftTimeout;};
+            t{WaitForSoftTimeout;WaitForSoftTimeout;as_symbol(prefix+"_check_restart_job_"+postfix,"Event");soft_timeout_expired;};
+
+            t{JobTriggered;FetchResult;as_symbol(prefix+"skip_reading_from_db"+postfix,"Event");};
+            
+            t{JobTriggered;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+            t{WaitForStatus;JobStillRunning;as_symbol(prefix+"job_not_done_yet"+postfix,"Event");};
+            
+            t{WaitForStatus;FetchResult;as_symbol(prefix+"job_finished"+postfix,"Event");run_get_result_script;};
+            
+            
+            
+            t{WaitForSoftTimeout;WaitForSoftTimeoutDone;as_symbol(prefix+"job_finished"+postfix,"Event");};
+
+            t{JobStillRunning;WaitALittle;start_timer_for_job_check;};
+            t{WaitALittle;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+
+            t{FetchResult;Final;as_symbol(prefix+"result_ok"+postfix,"Event");skip_run_step;};
+            t{FetchResult;Final;as_symbol(prefix+"result_nok"+postfix,"Event");run_step;};
+
+        };
+    
+};
+
+
+macro sub_step_run{    
+       sm{
+            hd(arglist);
+            val prefix = hd(tail(arglist));
+            val postfix = hd(tail(tail(arglist)));
+            val job_name = hd(tail(tail(tail(arglist))));
+            val job_parameter = hd(tail(tail(tail(tail(arglist)))));
+            
+            val market_name =   hd(tail(tail(tail(tail(tail(tail(arglist)))))));
+            val settings    =   hd(tail(tail(tail(tail(tail(arglist))))));
+            
+            val run_job_ctrl_sysstate = "run_job_ctrl_for_"+postfix;
+            
+            states{ Initial;
+                    Final;
+                    JobTriggered;
+                    WaitForStatus;
+                    JobStillRunning;
+                    FetchResult;
+                    WaitALittle;};
+            Actions{
+                start_job{
+                    write_system_state(run_job_ctrl_sysstate,0);
+                    
+                    if (read_system_state(market_name+"_error_state")) {
+                        static_for(e:as_nodeset(settings).content().run_error.content()){
+                            if ("JOB_CTRL" == text(e.param.content().name.content())){
+                                write_system_state(run_job_ctrl_sysstate,as_int(e.param.content().value.content()));
+                                print("["+market_name+".run.start_job()]"," JOB_CTRL=",read_system_state(run_job_ctrl_sysstate),
+                                " {", run_job_ctrl_sysstate ,"}","\n");
+                            }
+                        }
+                    } else if (read_system_state(market_name+"_warn_state")) {
+                        static_for(e:as_nodeset(settings).content().run_warn.content()){
+                            if ("JOB_CTRL" == text(e.param.content().name.content())){
+                                write_system_state(run_job_ctrl_sysstate,as_int(e.param.content().value.content()));
+                                print("["+market_name+".run.start_job()]"," JOB_CTRL=",read_system_state(run_job_ctrl_sysstate),
+                                " {", run_job_ctrl_sysstate ,"}","\n");
+                            }
+                        }
+                    } else {
+                        static_for(e:as_nodeset(settings).content().run.content()){
+                            if ("JOB_CTRL" == text(e.param.content().name.content())){
+                                write_system_state(run_job_ctrl_sysstate,as_int(e.param.content().value.content()));
+                                print("["+market_name+".run.start_job()]"," JOB_CTRL=",read_system_state(run_job_ctrl_sysstate),
+                                " {", run_job_ctrl_sysstate ,"}","\n");
+                            }
+                        }
+                    }
+
+                    val launch_script = script_for_job_execution(job_name,
+                                                   param_name+" "+job_parameter+as_symbol("ext_params_run_"+postfix,"Systemstate"),
+                                                   read_system_state(run_job_ctrl_sysstate)
+                            );
+
+                    print("["+market_name+".run.start_job()]",
+                            launch_script,
+                    "\n");
+
+                    if ( !test_bit(read_system_state(run_job_ctrl_sysstate),1) && !test_bit(read_system_state(run_job_ctrl_sysstate),2) ){
+                        os_system(launch_script);
+                        start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                    } else {
+                        if (test_bit(read_system_state(run_job_ctrl_sysstate),1)){
+                            os_system(launch_script,as_symbol(prefix+"small_step"+postfix,"Event"),as_symbol(prefix+"small_step"+postfix,"Event"));
+                        } else if (test_bit(read_system_state(run_job_ctrl_sysstate),2)){
+                            os_system(launch_script);
+                            as_symbol(prefix+"small_step"+postfix,"Event");
+                            return 0;
+                        }
+                    }
+
+                    //print ("start_job():",script_for_job_execution(job_name,param_name+" "+job_parameter),endl);
+                    
+
+                    if (test_bit(read_system_state(run_job_ctrl_sysstate),4)) { 
+                            val t = timestamp(max_time_drift);
+                            as_symbol("sub_step_run"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate") = t;
+                            print("["+market_name+".run.start_job()]"," timestamp= ",t," DRIFT=",max_time_drift," seconds","\n");
+                    } else { 
+                            val t = timestamp();
+                            as_symbol("sub_step_run"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate") = t;
+                            print("["+market_name+".run.start_job()]"," timestamp= ",t,"\n");
+                    }
+
+                    //as_symbol("sub_step_run"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate") = timestamp();
+                };
+                start_timer_for_job_check{
+                    start_timer(check_interval(job_name),as_symbol(prefix+"trigger_status_check"+postfix,"Event"));
+                };
+                run_check_script{
+                   os_system(check_script_for_job_termination(as_symbol("sub_step_run"+prefix/*+job_name*/+job_parameter+postfix,"Systemstate"),job_name,job_parameter),
+                             as_symbol(prefix+"job_finished"+postfix,"Event"),
+                             as_symbol(prefix+"job_not_done_yet"+postfix,"Event"));
+                };
+               
+                done{
+                    as_symbol(prefix+"small_step"+postfix,"Event");                    
+                };
+            };
+
+            t{Initial;JobTriggered;start_job;};
+
+            t{JobTriggered;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+            t{WaitForStatus;JobStillRunning;as_symbol(prefix+"job_not_done_yet"+postfix,"Event");};
+            
+            t{JobStillRunning;WaitALittle;start_timer_for_job_check;};
+            t{WaitALittle;WaitForStatus;as_symbol(prefix+"trigger_status_check"+postfix,"Event");run_check_script;};
+
+            t{WaitForStatus;Final;as_symbol(prefix+"job_finished"+postfix,"Event");done;};
+
+        };
+    
+};
