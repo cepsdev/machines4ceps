@@ -53,15 +53,6 @@ static std::string escape_string(std::string const & s){
     return ss.str();
 }
 
-typedef void (*init_plugin_t)(IUserdefined_function_registry*);
-
-
-
-void register_plugin(State_machine_simulation_core* smc,std::string const& id,ceps::ast::Nodebase_ptr (*fn) (ceps::ast::Call_parameters* ))
-{
-	smc->register_plugin_fn(id,fn);
-}
-
 const auto SM4CEPS_VER_MAJ = 0;
 const auto SM4CEPS_VER_MINOR = .600;
 
@@ -795,8 +786,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	regfn("min", static_cast<double(*)(double, int)> (mymin));
 	regfn("min", static_cast<int(*)(int, int)> (mymin));
 
-    ceps::ast::Nodeset ns            = current_universe();
-    //auto statemachines               = ns[all{"Statemachine"}];
+    ceps::ast::Nodeset& ns            = current_universe();
+
     auto globalfunctions             = ns["global_functions"];
     auto frames                      = ns[all{"raw_frame"}];
     auto xmlframes                   = ns[all{"xml_frame"}];
@@ -1424,34 +1415,6 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 			tbl.push_back(std::make_pair(lkt.nodes()[i],lkt.nodes()[i+1]));
 	}
 	build_signal_structures(result_cmd_line);
-
-#ifdef __gnu_linux__
-	for(auto const & plugin_lib : result_cmd_line.plugins){
-		void* handle = dlopen( plugin_lib.c_str(), RTLD_LAZY);
-		if (handle == nullptr)
-			fatal_(-1,dlerror());
-
-		dlerror();
-	    void* init_fn_ = dlsym(handle,"init_plugin");
-	    if (init_fn_ == nullptr)
-	    	fatal_(-1,dlerror());
-	    auto init_fn = (init_plugin_t)init_fn_;
-	    init_fn(this);
-	}
-#endif
-#ifdef _WIN32
-/*	for (auto const & plugin_lib : result_cmd_line.plugins) {
-		auto handle = dlopen(plugin_lib.c_str(), RTLD_NOW);
-		if (handle == nullptr)
-			smc->fatal_(-1, dlerror());
-
-		auto init_fn_ = dlsym(handle, "init_plugin");
-		if (init_fn_ == nullptr)
-			smc->fatal_(-1, dlerror());
-		auto init_fn = (init_plugin_t)init_fn_;
-		init_fn(smc, register_plugin);
-	}*/
-#endif
 
 	{
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;

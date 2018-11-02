@@ -37,6 +37,14 @@
 
 
 
+typedef void (*init_plugin_t)(IUserdefined_function_registry*);
+
+
+
+void register_plugin(State_machine_simulation_core* smc,std::string const& id,ceps::ast::Nodebase_ptr (*fn) (ceps::ast::Call_parameters* ))
+{
+    smc->register_plugin_fn(id,fn);
+}
 
 
 int State_machine_simulation_core::SM_COUNTER = 0;
@@ -1131,6 +1139,36 @@ void init_state_machine_simulation(	int argc,
 			 ss << "\n***Error: Couldn't open file '" << f << "' " << std::endl << std::endl;
 			 throw std::runtime_error(ss.str()) ;
 		 }
+
+
+#ifdef __gnu_linux__
+    for(auto const & plugin_lib : result_cmd_line.plugins){
+        void* handle = dlopen( plugin_lib.c_str(), RTLD_LAZY);
+        if (handle == nullptr)
+            smc->fatal_(-1,dlerror());
+
+        dlerror();
+        void* init_fn_ = dlsym(handle,"init_plugin");
+        if (init_fn_ == nullptr)
+            smc->fatal_(-1,dlerror());
+        auto init_fn = (init_plugin_t)init_fn_;
+        init_fn(smc);
+    }
+#endif
+#ifdef _WIN32
+/*	for (auto const & plugin_lib : result_cmd_line.plugins) {
+        auto handle = dlopen(plugin_lib.c_str(), RTLD_NOW);
+        if (handle == nullptr)
+            smc->fatal_(-1, dlerror());
+
+        auto init_fn_ = dlsym(handle, "init_plugin");
+        if (init_fn_ == nullptr)
+            smc->fatal_(-1, dlerror());
+        auto init_fn = (init_plugin_t)init_fn_;
+        init_fn(smc, register_plugin);
+    }*/
+#endif
+
 
     ceps::interpreter::register_struct_rewrite_rule(
             smc->ceps_env_current().get_global_symboltable(),"partition", sm4ceps::modelling::standard_value_partition_sm, smc);

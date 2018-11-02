@@ -1,0 +1,1102 @@
+rollout_step_type_db{
+ id{0;};
+ description{"legt eine leere Protokolldatei auf Jenkins an";};
+ job_check{"pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ROLLOUTNAME";};value{"Massenrollout (DE XCH7 2 XCH10.2-HF)";};};  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{1;};
+ description{"prüft , ob eine Instanz in Jenkins zu dem Markt aufbaubar ist";};
+ job_check{"pos_rollout_automated_020_auto_check_store_connect";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_020_auto_check_store_connect";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{2;};
+ description{"Trigger für TD an oder aus";};
+ job_check{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ONOFF";};value{"OFF";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"ONOFF";};value{"OFF";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{3;};
+ description{"prüft in der Tabelle MIG_DELTA auf einen Eintrag für die Zielversion.   Sucht dazu das jüngste (E:DeploymentPaketverzeichnis und darin die \"verpusher.log\". Sucht dann den Eintrag für die aktuelle Version (Parameter !) . Im Erfolgsfall ist der Indien-Rol";};
+ job_check{"pos_rollout_automated_100_auto_check_checkversion";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_100_auto_check_checkversion";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"WWSVersion";};value{"2018.0.02.07";};};  };
+  run{
+   param{name{"WAIT";};value{"600";};};  };
+  check_warn{
+   param{name{"WWSVersion";};value{"2018.0.02.07";};};  };
+  run_warn{
+   param{name{"WAIT";};value{"600";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{4;};
+ description{"Kurz-Aufruf TMD_Batch_Check / Lösche 103 / ggf restart";};
+ job_check{"pos_rollout_automated_201_auto_check_tmd_batch__ff";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_201_auto_check_tmd_batch__ff";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{5;};
+ description{"JMX-RD + Prüfung (ersetzt 400+405)";};
+ job_check{"pos_rollout_automated_406_auto_run_check_rd";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_406_auto_run_check_rd";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"50";};};  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{6;};
+ description{"Aufruf ISDL / 1. Versuch. einfach mal machen";};
+ job_check{"pos_rollout_automated_300_auto_run_isdl_jmx";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_300_auto_run_isdl_jmx";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{"soft_timeout";};value{"75";};};   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{7;};
+ description{"Abarbeitung des ISDL/check ohne Eingriff; 30/75 Minuten";};
+ job_check{"pos_rollout_automated_305_auto_check_isdl";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_305_auto_check_isdl";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"90";};};  };
+  check_warn{
+  };
+  run_warn{
+   param{name{"WAIT";};value{"90";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{8;};
+ description{"Aufruf TD / 1. Versuch. einfach mal machen";};
+ job_check{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_run{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_check_warn{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_run_warn{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  check_warn{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{9;};
+ description{"Abarbeitung des TD/Check ohne Eingriff; 10/20 Minuten";};
+ job_check{"pos_rollout_automated_505_auto_check_td";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_505_auto_check_td";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"pos_rollout_automated_999_auto_send_protocol_file";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+  };
+  run_warn{
+   param{name{"WAIT";};value{"60";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{10;};
+ description{"start des Update für alle Kassen eines Marktes";};
+ job_check{"pos_rollout_automated_606_auto_update_all_cr";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_606_auto_update_all_cr";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{11;};
+ description{"wartet eine bestimmte Zeit; Einstellung über StepType";};
+ job_check{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"WAIT";};value{"600";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"WAIT";};value{"600";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{12;};
+ description{"erstellt eine Übersicht über Sync-Point im Store";};
+ job_check{"pos_rollout_automated_601_auto_check_cr_syncpoints_and_correct";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_601_auto_check_cr_syncpoints_and_correct";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+  };
+  run_warn{
+   param{name{"WAIT";};value{"60";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{13;};
+ description{"Trigger für TD an oder aus";};
+ job_check{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{14;};
+ description{"esl-Trigger an oder aus";};
+ job_check{"pos_rollout_automated_510_toggle_esl_trigger";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_510_toggle_esl_trigger";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{15;};
+ description{"sendet das Ergebnis als Log-File an das Rollout-Team";};
+ job_check{"pos_rollout_automated_999_auto_send_protocol_file";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_999_auto_send_protocol_file";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{5;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{16;};
+ description{"legt eine leere Protokolldatei auf Jenkins an";};
+ job_check{"pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ROLLOUTNAME";};value{"HF-Update (XCH10.2-HF)";};};  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{17;};
+ description{"prüft , ob eine Instanz in Jenkins zu dem Markt aufbaubar ist";};
+ job_check{"pos_rollout_automated_020_auto_check_store_connect";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_020_auto_check_store_connect";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{18;};
+ description{"Trigger für TD an oder aus";};
+ job_check{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ONOFF";};value{"OFF";};};  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+   param{name{"ONOFF";};value{"OFF";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{19;};
+ description{"prüft in der Tabelle MIG_DELTA auf einen Eintrag für die Zielversion.   Sucht dazu das jüngste (E:DeploymentPaketverzeichnis und darin die \"verpusher.log\". Sucht dann den Eintrag für die aktuelle Version (Parameter !) . Im Erfolgsfall ist der Indien-Rol";};
+ job_check{"pos_rollout_automated_100_auto_check_checkversion";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_100_auto_check_checkversion";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"WWSVersion";};value{"2018.0.02.07";};};  };
+  run{
+   param{name{"WAIT";};value{"600";};};  };
+  check_warn{
+   param{name{"WWSVersion";};value{"2018.0.02.07";};};  };
+  run_warn{
+   param{name{"WAIT";};value{"600";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{20;};
+ description{"Kurz-Aufruf TMD_Batch_Check / Lösche 103 / ggf restart";};
+ job_check{"pos_rollout_automated_201_auto_check_tmd_batch__ff";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_201_auto_check_tmd_batch__ff";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{21;};
+ description{"Aufruf TD / 1. Versuch. einfach mal machen";};
+ job_check{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_run{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_check_warn{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_run_warn{"pos_rollout_automated_500_auto_run_td_jmx";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  check_warn{
+   param{name{"FIX0";};value{"X_TRUE";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{22;};
+ description{"Abarbeitung des TD/Check ohne Eingriff; 10/20 Minuten";};
+ job_check{"pos_rollout_automated_505_auto_check_td";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_505_auto_check_td";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"pos_rollout_automated_999_auto_send_protocol_file";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+  };
+  run_warn{
+   param{name{"WAIT";};value{"60";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{23;};
+ description{"start des Update für alle Kassen eines Marktes";};
+ job_check{"pos_rollout_automated_606_auto_update_all_cr";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_606_auto_update_all_cr";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{"soft_timeout";};value{"90";};};   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{24;};
+ description{"wartet eine bestimmte Zeit; Einstellung über StepType";};
+ job_check{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"WAIT";};value{"600";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"WAIT";};value{"600";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{25;};
+ description{"erstellt eine Übersicht über Sync-Point im Store";};
+ job_check{"pos_rollout_automated_601_auto_check_cr_syncpoints_and_correct";};
+ job_run{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_check_warn{"pos_rollout_automated_601_auto_check_cr_syncpoints_and_correct";};
+ job_run_warn{"pos_rollout_automated_010_auto_x_wait_a_while";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+   param{name{"WAIT";};value{"60";};};  };
+  check_warn{
+  };
+  run_warn{
+   param{name{"WAIT";};value{"60";};};  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{26;};
+ description{"Trigger für TD an oder aus";};
+ job_check{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_507_toggle_quartz_td";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{27;};
+ description{"esl-Trigger an oder aus";};
+ job_check{"pos_rollout_automated_510_toggle_esl_trigger";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_510_toggle_esl_trigger";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run{
+  };
+  check_warn{
+   param{name{"ONOFF";};value{"ON";};};  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
+rollout_step_type_db{
+ id{28;};
+ description{"sendet das Ergebnis als Log-File an das Rollout-Team";};
+ job_check{"pos_rollout_automated_999_auto_send_protocol_file";};
+ job_run{"";};
+ job_check_warn{"pos_rollout_automated_999_auto_send_protocol_file";};
+ job_run_warn{"";};
+ job_run_error{"";};
+ params_ext{
+  check{
+  };
+  run{
+  };
+  check_warn{
+  };
+  run_warn{
+  };
+  run_error{
+  };
+ };
+ settings{
+  check{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  check_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_warn{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+  run_error{
+   param{name{JOB_CTRL;};value{0;};};
+  };
+ };
+};
