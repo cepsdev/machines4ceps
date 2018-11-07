@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang=en>
+<!-- 
+    
+    Cool effects
+
+    https://blog.trackduck.com/2015/06/10/15-impressive-pop-animation-effects-codepen/
+    
+    
+    -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="(c) ceps technologies, all rights reserved">
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- link href="datatables/css/dataTables.material.min.css" rel="stylesheet" -->
+    <!-- link href="datatables/css/jquery.dataTables.min.css" rel="stylesheet" -->
+    <link href="datatables/css/dataTables.bootstrap.min.css" rel="stylesheet" >
+    <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
+    <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
+    <link href="animate/animate.css" rel="stylesheet">
+    <!--link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"-->
+<style>
+    @font-face {
+   font-family: 'Material Icons';
+   font-style: normal;
+   font-weight: 400;
+   src: url(iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
+   src: local('Material Icons'),
+        local('MaterialIcons-Regular'),
+        url(iconfont/MaterialIcons-Regular.woff2) format('woff2'),
+        url(iconfont/MaterialIcons-Regular.woff) format('woff'),
+        url(iconfont/MaterialIcons-Regular.ttf) format('truetype');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+
+</style>
+    <style>
+        /* Rules for sizing the icon. */
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+
+/* Rules for using icons as black on a light background. */
+.material-icons.md-dark { color: rgba(0, 0, 0, 0.54); }
+.material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }
+
+/* Rules for using icons as white on a dark background. */
+.material-icons.md-light { color: rgba(255, 255, 255, 1); }
+.material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
+
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+.material-icons.md-dark { color: rgba(0, 0, 0, 0.54); }
+.material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }
+
+.material-icons.md-light { color: rgba(255, 255, 255, 1); }
+.material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
+.material-icons.orange600 { color: #FB8C00; }
+
+
+.spinner {
+  margin: 100px auto;
+  width: 50px;
+  height: 40px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.spinner > div {
+  background-color: #333;
+  height: 100%;
+  width: 6px;
+  display: inline-block;
+  
+  -webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
+  animation: sk-stretchdelay 1.2s infinite ease-in-out;
+}
+
+.spinner .rect2 {
+  -webkit-animation-delay: -1.1s;
+  animation-delay: -1.1s;
+}
+
+.spinner .rect3 {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s;
+}
+
+.spinner .rect4 {
+  -webkit-animation-delay: -0.9s;
+  animation-delay: -0.9s;
+}
+
+.spinner .rect5 {
+  -webkit-animation-delay: -0.8s;
+  animation-delay: -0.8s;
+}
+
+@-webkit-keyframes sk-stretchdelay {
+  0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
+  20% { -webkit-transform: scaleY(1.0) }
+}
+
+@keyframes sk-stretchdelay {
+  0%, 40%, 100% { 
+    transform: scaleY(0.4);
+    -webkit-transform: scaleY(0.4);
+  }  20% { 
+    transform: scaleY(1.0);
+    -webkit-transform: scaleY(1.0);
+  }
+}
+
+    </style>
+    <title>MediaMarktSaturn - Rollouts</title>
+</head>
+
+
+<script>
+    
+</script>
+
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
+            <h3 style="color:white;vertical-align:center;text-align:center;"><%=rollout.name%></h3>
+
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                
+            </ul>
+            <span class="badge badge-danger" id="nav_info_connection">Not Connected</span>
+        </div>
+    </nav>
+    <div class="row">
+        <div class="col-xs-6 col-sm-12">
+            <h2><span id="page_title"></span></h2>
+        </div>
+    </div>
+    <div class="row"  id="searchfield_row">
+        <div class="col-xs-2 col-sm-2"></div>
+        <div class="col-xs-6 col-sm-8" >
+                        <div class="form-group" style="padding-left: 4px;padding-right: 4px;">
+                            <label for="search_statemachines"></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="input_search_statemachines" 
+                                   aria-describedby="search_statemachinesHelp" placeholder="Search">
+                            <small id="search_statemachinesHelp" class="form-text text-muted"></small>
+                          </div>
+        </div>
+        <div class="col-xs-2 col-sm-2"></div>        
+    </div>
+
+    <div class="row" id="first_row">
+      <div class="col-xs-2 col-sm-2"></div>
+      <div class="col-xs-6 col-sm-6">
+        <div id="info_tiles" >
+
+        </div>
+      </div>
+      <div class="col-xs-2 col-sm-2"></div>
+    </div>
+</body>
+<script>
+ const TILE_STATUS_OK    = 0;
+ const TILE_STATUS_DONE  = 1;
+ const TILE_STATUS_ERROR = 2;
+ const TILE_STATUS_WARN  = 3;
+ 
+ let ceps_tiles_component = function (parent, data) {
+  let THIS = {
+     tile_width               : 200,
+     tile_height_em           : 0.7,
+     progress_bar_height_em   : 0.5,
+     dom_cache                : [],
+     data                     : data,
+     tiles_dom_slots          : {
+      columns : [TILE_STATUS_OK,TILE_STATUS_WARN,TILE_STATUS_ERROR,TILE_STATUS_DONE],      
+      slots   : [new Array(data.size),new Array(data.size),new Array(data.size),new Array(data.size)]
+     },
+     get_progress_bar_height_css      : function(tile_idx) {
+      return THIS.progress_bar_height_em+"em";
+     },
+     get_tile_height_css      : function(tile_idx) {
+      return THIS.tile_height_em+"em";
+     },
+     get_progress_bar_bootstrap_class : function (status){
+      if (status == TILE_STATUS_OK) return "bg-primary";
+      if (status == TILE_STATUS_WARN) return "bg-warning";
+      if (status == TILE_STATUS_ERROR) return "bg-danger";
+      return "bg-success";      
+     },
+     build_progress_indicator : function(tile_idx){
+      let outer = document.createElement("div");
+      let inner = document.createElement("div");
+      THIS.dom_cache[tile_idx].progress_bar = inner;
+      inner.setAttribute("class",THIS.get_progress_bar_bootstrap_class(THIS.data.info.status[tile_idx]));
+      inner.setAttribute("style",
+       `width:${Math.floor(THIS.data.info.cov[tile_idx]*100)}%;`+
+       `border-radius:4px;`+
+       `height:${THIS.get_progress_bar_height_css(tile_idx)};`);
+      outer.setAttribute("style",`padding:3px;`);
+      outer.appendChild(inner);
+      return outer;      
+     },
+     build_header : function(tile_idx){
+      let outer = document.createElement("div");
+      let tbl = document.createElement("table");
+      tbl.setAttribute("style",`table-layout: fixed;width:${THIS.tile_width}px;`);
+      let tr = document.createElement("tr");
+      let td1 = document.createElement("td");
+      td1.setAttribute("style",`text-align: left;width:${Math.floor(THIS.tile_width*0.7)}px;overflow:hidden;`);
+      let td2 = document.createElement("td");
+      THIS.dom_cache[tile_idx].percentage_information = td2;
+      td2.setAttribute("style",`overflow:hidden;text-align: right;`);
+      td2.appendChild(document.createTextNode(`${Math.floor(THIS.data.info.cov[tile_idx]*10000)/100}%`));
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      tbl.appendChild(tr);
+      let inner = document.createElement("small");
+      inner.appendChild(document.createTextNode(THIS.data.info.title[tile_idx]));
+      td1.appendChild(inner);
+      outer.appendChild(tbl);
+      return outer;      
+     },
+     build_tile_content : function(tile_idx) {
+      let pi = THIS.build_progress_indicator(tile_idx);
+      let header = THIS.build_header(tile_idx);
+      let outer = document.createElement("div");
+      outer.appendChild(header);outer.appendChild(pi);
+      outer.setAttribute("style",`margin-right:4px;margin-bottom:4px;border-radius: 5px;box-shadow: 2px 2px 4px #aaaaaa;`);
+      return outer;
+     },
+     handler_mouse_move : function (ev){       
+       for(let row_number = 0; row_number != THIS.data.size;++row_number){
+        for(let k in THIS.tiles_dom_slots.columns){
+         let col = k;
+         k = THIS.tiles_dom_slots.columns[k];
+         let r = THIS.tiles_dom_slots.slots[k][row_number].getBoundingClientRect();
+         if (ev.clientX-r.left < 0) continue;
+         if (ev.clientY-r.top < 0) continue; 
+         if (ev.clientX-r.left > r.width) continue;
+         if (ev.clientY-r.top > r.height) continue;         
+         let tile_idx = THIS.data.get_tile_at_row(row_number,THIS.tiles_dom_slots.columns,k);
+         console.log(THIS.data.info.title[tile_idx]);         
+         break;
+        }
+       }
+     },
+     update : function(){
+      for(let row_number = 0; row_number != THIS.data.size;++row_number){
+        for(let k in THIS.tiles_dom_slots.columns){
+         let col = k;
+         k = THIS.tiles_dom_slots.columns[k];
+         let tile_idx = THIS.data.get_tile_at_row(row_number,THIS.tiles_dom_slots.columns,k);
+         if (tile_idx == undefined) continue;
+         let dom = THIS.tiles_dom_slots.slots[k][row_number];
+         dom.removeChild(dom.firstChild);
+         dom.appendChild(THIS.build_tile_content(tile_idx));
+        }
+      }
+     },
+     set_coverage(tile_idx,cov){
+      THIS.data.info.cov[tile_idx] = cov;
+      
+      if (THIS.dom_cache.length > tile_idx && THIS.dom_cache[tile_idx].percentage_information != undefined ){
+        THIS.dom_cache[tile_idx].percentage_information.removeChild(THIS.dom_cache[tile_idx].percentage_information.firstChild);
+        THIS.dom_cache[tile_idx].percentage_information.appendChild(document.createTextNode(`${Math.floor(THIS.data.info.cov[tile_idx]*10000)/100}%`));
+        THIS.dom_cache[tile_idx].progress_bar.style.width = `${Math.floor(THIS.data.info.cov[tile_idx]*100)}%`;
+      }       
+     },
+     build_dom : function() {
+      THIS.dom_cache = new Array(THIS.data.size);
+      for(let i = 0; i != THIS.dom_cache.length;++i) THIS.dom_cache[i] = {progress_bar: undefined, percentage_information: undefined};
+      let table = document.createElement("table");
+      table.addEventListener("mousemove",THIS.handler_mouse_move);
+      table.setAttribute("style","table-layout: fixed;");
+      
+      let tile_idx_previous = -1;
+      let tile_idx = -1;
+
+      for(let row_number = 0; row_number != THIS.data.size;++row_number){
+       let row = document.createElement("tr");
+       
+       for(let k in THIS.tiles_dom_slots.columns){
+        let col = k;
+        k = THIS.tiles_dom_slots.columns[k];
+        tile_idx = THIS.data.get_tile_at_row(row_number,THIS.tiles_dom_slots.columns,k);
+        let td = document.createElement("td");
+        td.setAttribute("style",`width: ${THIS.tile_width}px;height: ${THIS.get_tile_height_css(row_number,col)};overflow:hidden;`);
+        let content = document.createElement("div");
+        //content.setAttribute("style","padding:8px;");
+        
+        if (tile_idx != undefined){
+          if (THIS.data.info.status[tile_idx] == k)
+           content.appendChild(THIS.build_tile_content(tile_idx)/*document.createTextNode(THIS.data.tiles_title[row_number])*/);
+        }
+
+        td.appendChild(content);
+        THIS.tiles_dom_slots.slots[k][row_number] = td;
+        row.appendChild(td);
+       }
+       table.appendChild(row);
+      }
+      parent.appendChild(table);
+     }
+  };
+  THIS.build_dom();
+  return THIS; 
+ };
+ 
+ </script>
+ 
+ <script>
+ 
+ function test_data(data_size){
+   let THIS = {
+     filters           : [],
+     permutations      : [],
+     size              : data_size,
+     info              : {
+       status      : new Array(data_size),
+       cov         : new Array(data_size),
+       title       : new Array(data_size),
+     },
+     ordering    : new Array(data_size), // pos => tile index
+     visibility  : new Array(data_size),
+     compute_ordering  : function () {
+      for(let i = 0; i != THIS.ordering.length;++i)
+       THIS.ordering[i] = i;
+     },
+     compute_visibility  : function () {
+      for(let i = 0; i != THIS.visibility.length;++i)
+       THIS.visibility[i] = true;
+     },
+     get_tile_at_row : function(row,cols,col){
+       let r = -1;
+       for(let i = 0; i < THIS.ordering.length; ++i){
+         if (!THIS.visibility[THIS.ordering[i]]) continue;
+         if (THIS.info.status[[THIS.ordering[i]]] != col) continue;         
+         ++r;
+         if (r == row) return i;
+       }
+       return undefined;     
+     }
+  };
+  let data = THIS;
+  for(let i = 0; i != data_size; ++i){
+   data.info.status[i] = [TILE_STATUS_OK,TILE_STATUS_ERROR,TILE_STATUS_WARN][Math.floor(Math.random() * 3)];
+   data.info.title[i]  = `market ${i+1}`;
+   data.info.cov[i]    = Math.random();
+   if (data.info.cov[i] >= 0.75){
+    data.info.cov[i] = 1.0;
+    data.info.status[i] = TILE_STATUS_DONE;
+   }
+  }
+  THIS.compute_ordering();
+  THIS.compute_visibility();
+
+  return data;
+ }
+ 
+  </script>
+ <script>
+ 
+ let tiles;
+ 
+ window.onload = () => {
+  let data_size = 40;
+  let data = test_data(data_size);
+  tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
+  setInterval(()=>{
+    for(let i = 0; i != data.info.cov.length;++i ){
+      tiles.set_coverage(i, Math.random());
+    }    
+  }, 1000);
+
+ }; 
+
+</script>
+</html>
