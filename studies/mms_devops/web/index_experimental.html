@@ -188,7 +188,7 @@
     <div class="row" id="first_row">
       <div class="col-xs-2 col-sm-2"></div>
       <div class="col-xs-6 col-sm-6">
-        <div id="info_tiles" >
+        <div id="info_tiles" style="display:block;overflow:hidden;position:absolute;width:100%;">
 
         </div>
       </div>
@@ -204,9 +204,10 @@
  let ceps_tiles_component = function (parent, data) {
   let THIS = {
      tile_width               : 200,
-     tile_height_em           : 0.7,
+     tile_height_em           : 3.0,
      progress_bar_height_em   : 0.5,
      dom_cache                : [],
+     tileidx2dom_slot         : [],
      data                     : data,
      tiles_dom_slots          : {
       columns : [TILE_STATUS_OK,TILE_STATUS_WARN,TILE_STATUS_ERROR,TILE_STATUS_DONE],      
@@ -240,10 +241,10 @@
      build_header : function(tile_idx){
       let outer = document.createElement("div");
       let tbl = document.createElement("table");
-      tbl.setAttribute("style",`table-layout: fixed;width:${THIS.tile_width}px;`);
+      tbl.setAttribute("style",`table-layout: fixed;width:100%;`);
       let tr = document.createElement("tr");
       let td1 = document.createElement("td");
-      td1.setAttribute("style",`text-align: left;width:${Math.floor(THIS.tile_width*0.7)}px;overflow:hidden;`);
+      td1.setAttribute("style",`text-align: left;width:70%;overflow:hidden;`);
       let td2 = document.createElement("td");
       THIS.dom_cache[tile_idx].percentage_information = td2;
       td2.setAttribute("style",`overflow:hidden;text-align: right;`);
@@ -276,7 +277,8 @@
          if (ev.clientX-r.left > r.width) continue;
          if (ev.clientY-r.top > r.height) continue;         
          let tile_idx = THIS.data.get_tile_at_row(row_number,THIS.tiles_dom_slots.columns,k);
-         console.log(THIS.data.info.title[tile_idx]);         
+         console.log(THIS.data.info.title[tile_idx]);
+         
          break;
         }
        }
@@ -303,12 +305,101 @@
         THIS.dom_cache[tile_idx].progress_bar.style.width = `${Math.floor(THIS.data.info.cov[tile_idx]*100)}%`;
       }       
      },
+     compute_tiles_in_current_order_of_given_status : function (status,visible){
+      let v = [];
+      for(let i = 0; i != THIS.data.ordering.length;++i){
+        let ti = THIS.data.ordering[i];
+        if (THIS.data.visibility[ti]!=visible) continue;
+        if (THIS.data.info.status[ti] != status) continue;
+        v.push(ti);
+      }
+      return v;
+     },
+     compute_number_of_tiles_in_current_order_of_given_status : function (status,visible){
+      let r = 0;
+      for(let i = 0; i != THIS.data.ordering.length;++i){
+        let ti = THIS.data.ordering[i];
+        if (THIS.data.visibility[ti]!=visible) continue;
+        if (THIS.data.info.status[ti] != status) continue;
+        ++r;
+      }
+      return r;
+     },
+     set_status(tile_idx,new_status){
+      if (tile_idx >= THIS.data.info.status.length) return;
+      if (new_status < 0 || new_status > 3) return;
+      let current_status = THIS.data.info.status[tile_idx];
+      if (current_status == new_status) return;
+      if (!THIS.data.visibility[tile_idx]){
+        THIS.data.info.status[tile_idx] == new_status;return;
+      }
+      //Step 1: Remove from column
+      //Step 2: Move remaining tiles in column to fill hole
+      //Step 3: Make place in destination column
+      //Step 4: Insert in destination column
+      
+      let v = THIS.compute_tiles_in_current_order_of_given_status(current_status,true);
+      THIS.data.info.status[tile_idx] = new_status;
+      let first_after_removed_tile = 0;
+      for(;first_after_removed_tile<v.length;++first_after_removed_tile){
+        if (v[first_after_removed_tile] == tile_idx){
+          ++first_after_removed_tile;break;
+        }
+      }
+
+      for(let i = first_after_removed_tile; i < v.length;++i){
+        --THIS.tileidx2dom_slot[v[i]];
+      }
+
+      //Step 1
+      let r = THIS.tileidx2dom_slot[tile_idx];
+      let p = THIS.tiles_dom_slots.slots[current_status][r];
+      let tile_dom = p.firstChild;
+      p.removeChild(tile_dom);
+      
+      //Step 2
+      for(let i = r; i + 1 < THIS.tiles_dom_slots.slots[current_status].length; ++i){
+        if (THIS.tiles_dom_slots.slots[current_status][i+1].firstChild == undefined) break;
+        let t = THIS.tiles_dom_slots.slots[current_status][i+1].firstChild;
+        THIS.tiles_dom_slots.slots[current_status][i+1].removeChild(t);
+        THIS.tiles_dom_slots.slots[current_status][i].appendChild(t);
+      }
+      
+
+      //Step 3:
+      v = THIS.compute_tiles_in_current_order_of_given_status(new_status,true);
+      let first_after_inserted_tile = 0;
+      for(;first_after_inserted_tile<v.length;++first_after_inserted_tile){
+        if (v[first_after_inserted_tile] == tile_idx){
+          ++first_after_inserted_tile;
+          break;
+        }
+      }
+      let prev = THIS.tiles_dom_slots.slots[new_status][first_after_inserted_tile-1].firstChild;
+      THIS.tileidx2dom_slot[tile_idx] = first_after_inserted_tile-1;
+      if (prev != undefined) THIS.tiles_dom_slots.slots[new_status][first_after_inserted_tile-1].removeChild(prev);
+      for(let i = first_after_inserted_tile; i < v.length;++i){
+        let ti = v[i];
+        let t = THIS.tiles_dom_slots.slots[new_status][i].firstChild;
+        //if (first_after_inserted_tile + 1 == v.length) console.log("?",tile_idx,first_after_inserted_tile,v,"?");
+        if (t != undefined) THIS.tiles_dom_slots.slots[new_status][i].removeChild(t);
+        if (prev != undefined){
+          THIS.tiles_dom_slots.slots[new_status][i].appendChild(prev);
+        }
+        prev = t;
+        ++THIS.tileidx2dom_slot[ti];
+      }
+      //Step 4
+      THIS.tiles_dom_slots.slots[new_status][first_after_inserted_tile-1].appendChild(tile_dom);
+     },
      build_dom : function() {
       THIS.dom_cache = new Array(THIS.data.size);
+      THIS.tileidx2dom_slot = new Array(THIS.data.size);
+
       for(let i = 0; i != THIS.dom_cache.length;++i) THIS.dom_cache[i] = {progress_bar: undefined, percentage_information: undefined};
       let table = document.createElement("table");
       table.addEventListener("mousemove",THIS.handler_mouse_move);
-      table.setAttribute("style","table-layout: fixed;");
+      table.setAttribute("style","table-layout: fixed;display: inline-block;overflow: hidden;");
       
       let tile_idx_previous = -1;
       let tile_idx = -1;
@@ -321,13 +412,15 @@
         k = THIS.tiles_dom_slots.columns[k];
         tile_idx = THIS.data.get_tile_at_row(row_number,THIS.tiles_dom_slots.columns,k);
         let td = document.createElement("td");
-        td.setAttribute("style",`width: ${THIS.tile_width}px;height: ${THIS.get_tile_height_css(row_number,col)};overflow:hidden;`);
+        td.setAttribute("style",`table-layout: fixed;width: ${THIS.tile_width}px;height: ${THIS.get_tile_height_css(row_number,col)};overflow:hidden;`);
         let content = document.createElement("div");
         //content.setAttribute("style","padding:8px;");
         
         if (tile_idx != undefined){
-          if (THIS.data.info.status[tile_idx] == k)
+          if (THIS.data.info.status[tile_idx] == k){
            content.appendChild(THIS.build_tile_content(tile_idx)/*document.createTextNode(THIS.data.tiles_title[row_number])*/);
+           THIS.tileidx2dom_slot[tile_idx] = row_number; 
+          }
         }
 
         td.appendChild(content);
@@ -400,14 +493,51 @@
  let tiles;
  
  window.onload = () => {
-  let data_size = 40;
+  let data_size = 200;
   let data = test_data(data_size);
   tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
   setInterval(()=>{
     for(let i = 0; i != data.info.cov.length;++i ){
-      tiles.set_coverage(i, Math.random());
+      let t = data.info.cov[i];
+      if (t >= 1.0){
+        if (Math.floor(Math.random()*2) == 0){
+          tiles.set_coverage(i, 1.0 - 0.1*Math.random());
+        }
+      } else{
+        let dr = 1.0 - t;
+        let d = 0;
+        if (Math.floor(Math.random()*2) == 0)
+         d = dr*Math.random()*0.2;
+        else
+         d = -t*Math.random()*0.2;
+         tiles.set_coverage(i, t+d);
+      }      
     }    
   }, 1000);
+
+  setInterval(()=>{
+  
+    let b = 0;let v = [TILE_STATUS_OK,TILE_STATUS_WARN,TILE_STATUS_ERROR,TILE_STATUS_DONE];
+    let category_idx =  Math.floor(Math.random()*4);
+    let m = v.length;
+    for(;tiles.compute_number_of_tiles_in_current_order_of_given_status(v[category_idx],true) == 0; category_idx = (category_idx + 1) % v.length ){
+      --m;
+      if(m == 0) return;
+    }
+    let category = v[category_idx];
+    let category_to = v[Math.floor(Math.random()*4)];
+    if (category_to == category) category_to = (category_to + 1 ) % v.length;
+    let elem_idx = Math.floor((tiles.compute_number_of_tiles_in_current_order_of_given_status(category,true)+1)*Math.random());//tiles.compute_number_of_tiles_in_current_order_of_given_status(category,true)-1;//
+    let ii = 0;
+    for(let i = 0; i != data.info.status.length;++i ){
+      if (data.info.status[i]!=category) continue;
+      if (ii == elem_idx){
+        tiles.set_status(i, category_to);
+        break;
+      }
+      ++ii;
+    }
+  }, 10);
 
  }; 
 
