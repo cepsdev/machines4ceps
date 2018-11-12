@@ -12,7 +12,12 @@ let ceps_tiles_component = function (parent, data) {
     tileidx2dom_slot         : [],
     data                     : data,
     mm_handler               : undefined,
+    cov_changed              : undefined,
+    tile_status_changed      : undefined,
     register_move_over_tile_handler : function (f) {THIS.mm_handler = f;},
+    register_coverage_changed_handler : function (f) {THIS.cov_changed = f;},
+    register_status_changed_handler : function (f) {THIS.tile_status_changed = f;},
+
     tiles_dom_slots          : {
      columns : [TILE_STATUS_OK,TILE_STATUS_WARN,TILE_STATUS_ERROR,TILE_STATUS_DONE],      
      slots   : [new Array(data.size),new Array(data.size),new Array(data.size),new Array(data.size)]
@@ -114,6 +119,7 @@ let ceps_tiles_component = function (parent, data) {
 
     set_coverage(tile_idx,cov){
      THIS.data.info.cov[tile_idx] = cov;
+     if (THIS.cov_changed != undefined) THIS.cov_changed(tile_idx,cov);
      
      if (THIS.dom_cache.length > tile_idx && THIS.dom_cache[tile_idx].percentage_information != undefined ){
        THIS.dom_cache[tile_idx].percentage_information.removeChild(THIS.dom_cache[tile_idx].percentage_information.firstChild);
@@ -149,6 +155,7 @@ let ceps_tiles_component = function (parent, data) {
      if (new_status < 0 || new_status > 3) return;
      let current_status = THIS.data.info.status[tile_idx];
      if (current_status == new_status) return;
+     
      if (!THIS.data.visibility[tile_idx]){
        THIS.data.info.status[tile_idx] == new_status;return;
      }
@@ -159,6 +166,8 @@ let ceps_tiles_component = function (parent, data) {
      
      let v = THIS.compute_tiles_in_current_order_of_given_status(current_status,true);
      THIS.data.info.status[tile_idx] = new_status;
+     if(THIS.tile_status_changed) THIS.tile_status_changed(tile_idx,new_status,current_status);
+     
      let first_after_removed_tile = 0;
      for(;first_after_removed_tile<v.length;++first_after_removed_tile){
        if (v[first_after_removed_tile] == tile_idx){
