@@ -99,7 +99,9 @@
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                 
             </ul>
-            <span class="badge badge-danger" id="nav_info_connection">Not Connected</span>
+            <span class="badge badge-danger" id="nav_info_connection">
+             <div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>
+            </span>
         </div>
     </nav>
     <div class="row">
@@ -198,13 +200,112 @@
 </script>
 
 <script>
+  let cepS_API = function (url){
+    THIS = {
+      main_socket : undefined,
+      connected   : false,
+      on_connect_handler : [],
+      on_close_handler   : [],
+      unregister_handler   : function (what,f){
+        let v = undefined;
+        if ("open" == what) v = THIS.on_connect_handler;
+        else if ("close" == what) v = THIS.on_close_handler;
+        for(let i = 0; i != v.length;++i) if (v[i] == f) {v[i]=undefined;break;}
+      },
+      register_handler   : function (what,f){
+        let v = undefined;
+        if ("open" == what) v = THIS.on_connect_handler;
+        else if ("close" == what) v = THIS.on_close_handler;
+        let slot = -1;
+        if (v.length){
+          for(let i = 0; i != v.length;++i) if (v[i] == undefined) {slot=i;break;}
+        }
+        if (slot != -1) v[slot] = f;
+        else v.push(f);
+      },
+      subscribe   : function(topic) {
+        THIS.main_socket.send(`SUBSCRIBE ${topic}`);        
+      },
+      connect     : function(){
+            THIS.connected = false;
+            THIS.main_socket = new WebSocket("ws://"+url);
+            THIS.main_socket.addEventListener("open", THIS.on_ws_initial_connect);
+            THIS.main_socket.addEventListener("close", THIS.on_ws_close);
+            THIS.main_socket.addEventListener("error", THIS.on_ws_error);
+            THIS.main_socket.addEventListener("message",THIS.on_message);
+      },
+      on_ws_initial_connect: function (ev) {
+            THIS.connected = true;
+            for(let i = 0; i!=THIS.on_connect_handler.length;++i)
+             if (THIS.on_connect_handler[i]!=undefined) THIS.on_connect_handler[i](THIS,THIS.on_connect_handler[i]);
+      },
+      on_ws_close: function (ev) {
+            let connection_status = THIS.connected;
+            THIS.connected = false;
+            for(let i = 0; i!=THIS.on_close_handler.length;++i)
+             if (THIS.on_close_handler[i]!=undefined) THIS.on_close_handler[i](THIS,connection_status,THIS.on_connect_handler[i]);
+      },
+      on_ws_error: function (ev) {
+            
+      },
+      on_message: function (ev){
+        let msg = JSON.parse(ev.data);
+        console.log(msg);
+      }
+    };
+    return THIS;
+  }
 </script>
 
 <script>
  let tiles;
  let info_box;
+ let ceps_core_channel;
  
  window.onload = () => {
+  ceps_core_channel = cepS_API(window.location.hostname+":11001");
+  ceps_core_channel.register_handler("open",
+    (channel) =>{
+      let connection_info = document.getElementById("nav_info_connection");
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-success");
+      connection_info.innerHTML =
+        `<span>Connected</span>`
+      ;
+    }
+  );
+
+  ceps_core_channel.register_handler("open",
+    (channel,handler) =>{
+      let connection_info = document.getElementById("nav_info_connection");
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-info");
+      connection_info.innerHTML =
+        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Processing</span>`
+      ;          
+      channel.subscribe("COVERAGE", 
+       (msg)=>{
+         
+       } 
+      );       
+    }
+  );
+  
+  ceps_core_channel.register_handler("close",
+    (channel,connection_status) =>{
+      setTimeout(()=>{ceps_core_channel.connect();},1000);
+      if (!connection_status) return;
+      let connection_info = document.getElementById("nav_info_connection");
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-danger");
+      connection_info.innerHTML =
+        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>`
+      ;          
+    }
+  );
+
+  ceps_core_channel.connect();
+  return;
   let data_size = 1;
   let data = test_data(data_size);
   tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);

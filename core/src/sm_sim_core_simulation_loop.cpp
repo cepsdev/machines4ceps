@@ -880,3 +880,42 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  }
  //info("Simulation finished.");
 }
+
+
+
+//
+//
+//
+// Statemachine execution context loop handler
+
+void State_machine_simulation_core::register_execution_context_loop_handler_cover_state_changed(
+           int id,
+           bool (*handler)(void*,int&),
+           void* data){
+    if(handler == nullptr){
+        return;
+    }
+    int status = 1;
+    if(!handler(data,status)) return;
+}
+
+  /*
+   struct execution_context_loop_handler_cover_state_changed_handler_info_t{
+     bool active;
+     bool (*handler)(void*,int&);
+     void* data;
+   };
+   std::vector<execution_context_loop_handler_cover_state_changed_handler_info_t> execution_context_loop_handler_cover_state_changed_handler_infos;
+*/
+
+
+void State_machine_simulation_core::run_execution_context_loop_cover_state_changed_handlers(){
+
+}
+
+
+
+
+
+
+

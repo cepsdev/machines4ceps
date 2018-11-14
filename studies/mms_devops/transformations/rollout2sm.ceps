@@ -7,6 +7,7 @@ static_for(e:root.rollout){
   sm{
    val market_name = text(market.content().id.content()); 
    as_identifier(market_name);
+   //label{"This is \"" + market_name+"\"";};
 
    states { Initial;
             Done;

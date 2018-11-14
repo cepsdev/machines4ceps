@@ -20,6 +20,10 @@ class Websocket_interface{
     std::mutex handler_threads_status_mutex_;
     using thread_status_type = std::tuple<std::thread*,bool,int>;
     std::vector< thread_status_type > handler_threads_status_;
+    void handle_subscribe_coverage(int sck);
+    int next_subscribe_channel_id = 0;
+    void handle_subscribe_coverage_thread(int subscribe_channel_id,int sck);
+    std::map<int,std::thread*> subscribe_channels2thread;
 public:
     Websocket_interface(State_machine_simulation_core* smc,std::string port = "8181"):smc_{smc},port_{port}{}
     void start();

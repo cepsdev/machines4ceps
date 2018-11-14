@@ -170,6 +170,30 @@ public:
         }
         std::vector<std::string> push_modules;
         std::string push_dir;
+        //
+        //
+        //
+        // Statemachine execution context loop handler
+
+        void register_execution_context_loop_handler_cover_state_changed(
+                int id,
+                bool (*)(void*,int&),
+                void* data
+        );
+
+        struct execution_context_loop_handler_cover_state_changed_handler_info_t{
+          bool active;
+          bool (*handler)(void*,int&);
+          void* data;
+        };
+        std::vector<execution_context_loop_handler_cover_state_changed_handler_info_t> execution_context_loop_handler_cover_state_changed_handler_infos;
+        void run_execution_context_loop_cover_state_changed_handlers();
+
+        //
+        //
+        //
+        //
+
 private:
 	std::map<std::string,State_machine*> statemachines_;
 	ceps::ast::Nodeset*	current_universe_ = nullptr;
