@@ -1057,7 +1057,8 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
      std::stringstream ss;
      ss << "{";
         ss << "\"ok\":" << "true" << "," << "\n";
-        ss << "\"channel\":" << subscribe_channel_id  << "\n";
+        ss << "\"channel\":" << subscribe_channel_id  << ",\n";
+        ss << "\"topic\":\"COVERAGE\"\n";
      ss << "}";
      if(!send_reply(ss.str())) return;
     }

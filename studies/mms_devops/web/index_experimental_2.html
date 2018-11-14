@@ -223,8 +223,13 @@
         if (slot != -1) v[slot] = f;
         else v.push(f);
       },
-      subscribe   : function(topic) {
-        THIS.main_socket.send(`SUBSCRIBE ${topic}`);        
+      pending_subscribers : { }, //topic -> list of handlers
+      topic_subscribers   : { }, //channel -> list of handlers
+      subscribe   : function(topic,f) {
+        if (f == undefined) return;
+        if(THIS.pending_subscribers[topic] == undefined) THIS.pending_subscribers[topic] = [f];
+        else  THIS.pending_subscribers[topic].push(f);
+        THIS.main_socket.send(`SUBSCRIBE ${topic}`);      
       },
       connect     : function(){
             THIS.connected = false;
@@ -250,7 +255,18 @@
       },
       on_message: function (ev){
         let msg = JSON.parse(ev.data);
-        console.log(msg);
+        //console.log(msg);
+        if (msg.topic != undefined && msg.channel != undefined){
+          let v = THIS.pending_subscribers[msg.topic];
+          if (v == undefined || v.length == 0) return;
+          THIS.topic_subscribers[msg.channel] = v[0];
+          v[0](msg);v.shift();
+          return;
+        } else {
+          let f = THIS.topic_subscribers[msg.channel];
+          if (f == undefined) return;
+          f(msg);
+        }
       }
     };
     return THIS;
@@ -278,16 +294,22 @@
   ceps_core_channel.register_handler("open",
     (channel,handler) =>{
       let connection_info = document.getElementById("nav_info_connection");
+      channel.subscribe("COVERAGE", 
+       (msg)=>{
+         if (msg.what != undefined && msg.what == "init"){
+          setTimeout( () => {if (connection_info != undefined){
+            connection_info.setAttribute("class","badge badge-success");
+            connection_info.innerHTML =
+            `<span>Ok</span>`;
+          }},2000);
+         }        
+       }
+      );      
       if(connection_info == undefined) return;
       connection_info.setAttribute("class","badge badge-info");
       connection_info.innerHTML =
-        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Processing</span>`
+        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Fetching Data</span>`
       ;          
-      channel.subscribe("COVERAGE", 
-       (msg)=>{
-         
-       } 
-      );       
     }
   );
   
