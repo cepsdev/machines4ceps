@@ -207,6 +207,8 @@
  window.onload = () => {
   let data_size = 1;
   let data = test_data(data_size);
+  let old_component = document.getElementById("info_tiles").firstChild;
+  if(old_component) document.getElementById("info_tiles").removeChild(old_component);
   tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
     
   setInterval(()=>{

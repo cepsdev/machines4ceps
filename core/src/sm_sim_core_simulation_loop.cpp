@@ -873,6 +873,14 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
      }
  }
  log_state_changes(this,execution_ctxt, temp);
+ if (execution_ctxt.start_of_covering_states_valid()){
+     bool changes_exists = false;
+     for(std::size_t i = execution_ctxt.start_of_covering_states; i < execution_ctxt.current_states.size();++i){
+         if (temp[i] != execution_ctxt.current_states[i]){changes_exists=true;break;}
+     }
+     if (changes_exists)run_execution_context_loop_cover_state_changed_handlers();
+ }
+
  memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
  if(ev_read && post_proc_native) post_proc_native();
  if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
@@ -892,11 +900,17 @@ void State_machine_simulation_core::register_execution_context_loop_handler_cove
            int id,
            bool (*handler)(void*,int&),
            void* data){
-    if(handler == nullptr){
+    if(handler == nullptr) {
         return;
     }
     int status = 1;
     if(!handler(data,status)) return;
+    for(auto& e: execution_context_loop_handler_cover_state_changed_handler_infos){
+        if (e.active) continue;
+        e = {true,handler,data};
+        return;
+    }
+    execution_context_loop_handler_cover_state_changed_handler_infos.push_back({true,handler,data});
 }
 
   /*
@@ -909,8 +923,12 @@ void State_machine_simulation_core::register_execution_context_loop_handler_cove
 */
 
 
-void State_machine_simulation_core::run_execution_context_loop_cover_state_changed_handlers(){
-
+void State_machine_simulation_core::run_execution_context_loop_cover_state_changed_handlers() {
+    for(auto& e: execution_context_loop_handler_cover_state_changed_handler_infos){
+        if (!e.active) continue;
+        int status = 0;
+        e.active = e.handler(e.data,status);
+    }
 }
 
 

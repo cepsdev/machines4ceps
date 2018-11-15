@@ -981,7 +981,7 @@ void Websocket_interface::handler(int sck){
 }
 
 struct coverage_update_msg_t{
- enum what_t {INIT};
+ enum what_t {INIT,UPDATE};
  what_t what;
  std::vector<int> coverage_state_table;
  std::vector<int> coverage_transitions_table;
@@ -1002,6 +1002,10 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
         } else return false;
         return true;
     }
+    auto& exec = ctxt->smc->executionloop_context();
+    if (exec.start_of_covering_states_valid()){
+        ctxt->q->push(coverage_update_msg_t{coverage_update_msg_t::what_t::UPDATE,exec.coverage_state_table,exec.coverage_transitions_table});
+    } else return false;
     return true;
 }
 
@@ -1052,6 +1056,86 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
         using namespace std;
         if (sck != -1) close(sck);
     };
+    auto get_root_sm = [&](executionloop_context_t const & ctx, int state){
+        for(;ctx.get_parent(state) != 0;) state = ctx.get_parent(state);
+        return state;
+    };
+
+    auto compute_root_sms = [&](executionloop_context_t const & ctx){
+        std::vector<int> r;
+        for(std::size_t i = 0;i != ctx.coverage_state_table.size();++i){
+            auto state = i+ctx.start_of_covering_states;
+            if (ctx.get_inf(state,executionloop_context_t::SM) && ctx.get_parent(state) == 0 ){
+                r.push_back(state);
+            }
+        }
+        std::sort(r.begin(),r.end());
+        auto last = std::unique(r.begin(), r.end());
+        r.erase(last,r.end());
+        return r;
+    };
+
+    auto compute_total_of_transitions = [&]( executionloop_context_t const & ctx,
+                                             std::unordered_map<int,int> & sm2_total_transitions ){
+        //number_of_transitions_covered
+        //number_of_transitions_to_cover
+
+        if( ctx.start_of_covering_transitions_valid() ){
+           for(std::size_t i = 0;i != ctx.coverage_transitions_table.size();++i){
+               if (ctx.transitions[ctx.start_of_covering_transitions + i].start()) continue;
+               auto from_state = ctx.transitions[ctx.start_of_covering_transitions + i].from;
+               auto to_state = ctx.transitions[ctx.start_of_covering_transitions + i].to;
+
+               if (
+                   ctx.get_inf(from_state,executionloop_context_t::DONT_COVER) ||
+                   ctx.get_inf(from_state,executionloop_context_t::INIT) ||
+                   ctx.get_inf(from_state,executionloop_context_t::FINAL) ||
+                   ctx.get_inf(from_state,executionloop_context_t::SM) ) continue;
+
+               if (
+                   ctx.get_inf(to_state,executionloop_context_t::DONT_COVER) ||
+                   ctx.get_inf(to_state,executionloop_context_t::INIT) ||
+                   ctx.get_inf(to_state,executionloop_context_t::FINAL) ||
+                   ctx.get_inf(to_state,executionloop_context_t::SM) ) continue;
+               if (to_state == from_state && ctx.get_inf(ctx.get_parent(from_state),executionloop_context_t::DONT_COVER_LOOPS))
+                   continue;
+               ++sm2_total_transitions[get_root_sm(ctx,from_state)];
+           }
+        }
+    };
+
+    auto compute_transition_coverage = [&](executionloop_context_t const & ctx,
+                                           std::vector<int> const & coverage_transitions_table,
+                                           std::unordered_map<int,int>& sm2_covered_transitions){
+        //number_of_transitions_covered
+        //number_of_transitions_to_cover
+
+        if( ctx.start_of_covering_transitions_valid() ){
+           for(std::size_t i = 0;i != coverage_transitions_table.size();++i){
+               if (ctx.transitions[ctx.start_of_covering_transitions + i].start()) continue;
+               auto from_state = ctx.transitions[ctx.start_of_covering_transitions + i].from;
+               auto to_state = ctx.transitions[ctx.start_of_covering_transitions + i].to;
+
+               if (
+                   ctx.get_inf(from_state,executionloop_context_t::DONT_COVER) ||
+                   ctx.get_inf(from_state,executionloop_context_t::INIT) ||
+                   ctx.get_inf(from_state,executionloop_context_t::FINAL) ||
+                   ctx.get_inf(from_state,executionloop_context_t::SM) ) continue;
+
+               if (
+                   ctx.get_inf(to_state,executionloop_context_t::DONT_COVER) ||
+                   ctx.get_inf(to_state,executionloop_context_t::INIT) ||
+                   ctx.get_inf(to_state,executionloop_context_t::FINAL) ||
+                   ctx.get_inf(to_state,executionloop_context_t::SM) ) continue;
+               if (to_state == from_state && ctx.get_inf(ctx.get_parent(from_state),executionloop_context_t::DONT_COVER_LOOPS))
+                   continue;
+               //auto sms = ctx.get_assoc_sm(ctx.transitions[ctx.start_of_covering_transitions + i].root_sms);
+               //
+               if (coverage_transitions_table[i]) ++sm2_covered_transitions[get_root_sm(ctx,from_state)];
+           }
+        }
+    };
+
     cleanup<decltype(cleanup_f)> cl{cleanup_f};
     {
      std::stringstream ss;
@@ -1063,17 +1147,41 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
      if(!send_reply(ss.str())) return;
     }
 
+
+
     State_machine_simulation_core::event_t ev;
     auto q = new threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>;
     auto exec = new Subscribe_coverage{subscribe_channel_id,q};
     ev.exec = exec;
     smc_->enqueue_event(ev);
+    std::vector<int> top_level_sms;
+    std::unordered_map<int,double> sm2cov;
+    std::unordered_map<int,int> sm2_total_transitions;
+    std::unordered_map<int,int> sm2_covered_transitions;
+    std::vector<int> coverage_state_table_last;
+    std::vector<int> coverage_transitions_table_last;
 
     for(;;){
         coverage_update_msg_t msg;
         q->wait_and_pop(msg);
         auto& ctx = this->smc_->executionloop_context();
         if (msg.what == coverage_update_msg_t::what_t::INIT){
+            coverage_state_table_last = msg.coverage_state_table;
+            coverage_transitions_table_last = msg.coverage_transitions_table;
+
+            top_level_sms = compute_root_sms(ctx);
+            for(auto e : top_level_sms) {
+                sm2cov[e] = 0.0;sm2_total_transitions[e] = 0;sm2_covered_transitions[e] = 0;
+            }
+            compute_total_of_transitions(ctx,sm2_total_transitions);
+            compute_transition_coverage(ctx,msg.coverage_transitions_table,sm2_covered_transitions);
+            for(auto e : sm2_total_transitions){
+                if ( e.second ) {
+                    if (sm2_covered_transitions[e.first] == e.second) sm2cov[e.first] = 1.0;
+                    else  sm2cov[e.first] = (double)sm2_covered_transitions[e.first] / (double)e.second;
+                } else sm2cov[e.first] = 1.0;
+            }
+
             std::stringstream ss;
             ss << "{";
             ss << "\"ok\":" << "true" << "," << "\n";
@@ -1081,34 +1189,85 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
             ss << "\"what\":" << "\"" << "init" <<"\""<<  "," << "\n";
             ss << "\"toplevel_sms\":" << "[";
             bool first_in_list = true;
-            for(std::size_t i = 0;i != ctx.coverage_state_table.size();++i){
-                auto state = i+ctx.start_of_covering_states;
-                if (ctx.get_inf(state,executionloop_context_t::SM) && ctx.get_parent(state) == 0 ){
-                    if (!first_in_list)
-                        ss << ",";
-                    ss << i+ctx.start_of_covering_states;
-                    first_in_list = false;
-                }
+            for(std::size_t i = 0;i != top_level_sms.size();++i){
+                if (!first_in_list) ss << ",";
+                ss << top_level_sms[i];
+                first_in_list = false;
             }
             ss << "]," << "\n";
             ss << "\"toplevel_sms_labels\":" << "[";
             first_in_list = true;
-            for(std::size_t i = 0;i != ctx.coverage_state_table.size();++i){
-             auto state = i+ctx.start_of_covering_states;
-             if(ctx.get_inf(state,executionloop_context_t::SM) && ctx.get_parent(state) == 0 ){
+            for(std::size_t i = 0;i != top_level_sms.size();++i){
+                auto state = top_level_sms[i];
                 auto assoc_sm = ctx.get_assoc_sm(state);
                 if (!assoc_sm) continue;
-                if (!first_in_list)
-                 ss << ",";
+                if (!first_in_list) ss << ",";
                 auto label = assoc_sm->label();
                 if(label.length()==0) label = assoc_sm->id();
                 ss << "\""<<label<<"\"";
                 first_in_list = false;
-             }
+            }
+            ss << "]," << "\n";
+            ss << "\"toplevel_sms_transition_coverage\":" << "[";
+            first_in_list = true;
+            for(std::size_t i = 0;i != top_level_sms.size();++i){
+                if (!first_in_list) ss << ",";
+                ss << sm2cov[top_level_sms[i]];
+                first_in_list = false;
             }
             ss << "]" << "\n";
 
             ss << "}";
+            if(!send_reply(ss.str())) return;
+        } else if (msg.what == coverage_update_msg_t::what_t::UPDATE) {
+
+            std::vector<int> changed_sms;
+            for(std::size_t i = 0; i != ctx.coverage_state_table.size(); ++i){
+                auto state = i+ctx.start_of_covering_states;
+                if (msg.coverage_state_table[i] != coverage_state_table_last[i]  ){
+                    changed_sms.push_back(get_root_sm(ctx,state));
+                }
+            }
+            std::sort(changed_sms.begin(),changed_sms.end());
+            auto last = std::unique(changed_sms.begin(), changed_sms.end());
+            changed_sms.erase(last,changed_sms.end());
+
+            for(auto e : top_level_sms) {
+                sm2_covered_transitions[e] = 0;
+            }
+            compute_transition_coverage(ctx,msg.coverage_transitions_table,sm2_covered_transitions);
+            for(auto e : sm2_total_transitions){
+                if ( e.second ) {
+                    if (sm2_covered_transitions[e.first] == e.second) sm2cov[e.first] = 1.0;
+                    else  sm2cov[e.first] = (double)sm2_covered_transitions[e.first] / (double)e.second;
+                } else sm2cov[e.first] = 1.0;
+            }
+            std::stringstream ss;
+            ss << "{";
+            ss << "\"ok\":" << "true" << "," << "\n";
+            ss << "\"channel\":" << subscribe_channel_id << "," << "\n";
+            ss << "\"what\":" << "\"" << "update" <<"\""<<  "," << "\n";
+            ss << "\"toplevel_sms\":" << "[";
+            bool first_in_list = true;
+            for(std::size_t i = 0;i != changed_sms.size();++i){
+                if (!first_in_list) ss << ",";
+                ss << changed_sms[i];
+                first_in_list = false;
+            }
+            ss << "]," << "\n";
+
+            ss << "\"toplevel_sms_transition_coverage\":" << "[";
+            first_in_list = true;
+            for(std::size_t i = 0;i != changed_sms.size();++i){
+                if (!first_in_list) ss << ",";
+                ss << sm2cov[changed_sms[i]];
+                first_in_list = false;
+            }
+            ss << "]" << "\n";
+
+            ss << "}";
+            coverage_state_table_last = msg.coverage_state_table;
+            coverage_transitions_table_last = msg.coverage_transitions_table;
             if(!send_reply(ss.str())) return;
         }
     }
