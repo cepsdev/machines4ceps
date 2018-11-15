@@ -90,8 +90,8 @@
 </script>
 
 
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<body style="padding-top: 70px;">
+    <nav class="navbar navbar-expand-md  navbar-dark bg-dark fixed-top">
             <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
             <h3 style="color:white;vertical-align:center;text-align:center;"><%=rollout.name%></h3>
 
@@ -104,6 +104,7 @@
             </span>
         </div>
     </nav>
+    <main role="main" class="container">
     <div class="row">
         <div class="col-xs-6 col-sm-12">
             <h2><span id="page_title"></span></h2>
@@ -133,10 +134,11 @@
       </div>
       <div class="col-xs-2 col-sm-2"></div>
     </div>
+  </main>
 </body>
 
-
-
+<script src="jquery/js/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="rollaut/tiles.js"></script>
 
 
@@ -274,8 +276,65 @@
 </script>
 
 <script>
- let tiles;
- let info_box;
+ let tiles = undefined;
+
+ function create_tiles_deck(msg){
+  let data_size = msg.toplevel_sms.length;
+  let THIS = {
+     filters           : [],
+     permutations      : [],
+     size              : data_size,
+     info              : {
+       status      : new Array(data_size),
+       cov         : new Array(data_size),
+       title       : new Array(data_size),
+       state       : new Array(data_size), //a non negative integer
+       up_since    : undefined,
+       state_labels : function (tile_idx){
+         return ["State 1","State 2","State 3","State 4","State 5","State 6","State 7"];
+       },
+       state_reached_at : function (tile_idx){
+         return [undefined,undefined,undefined,undefined,undefined,undefined,undefined];
+       }       
+     },
+     ordering    : new Array(data_size), // pos => tile index
+     visibility  : new Array(data_size),
+     compute_ordering  : function () {
+      for(let i = 0; i != THIS.ordering.length;++i)
+       THIS.ordering[i] = i;
+     },
+     compute_visibility  : function () {
+      for(let i = 0; i != THIS.visibility.length;++i)
+       THIS.visibility[i] = true;
+     },
+     get_tile_at_row : function(row,cols,col){
+       let r = -1;
+       for(let i = 0; i < THIS.ordering.length; ++i){
+         if (!THIS.visibility[THIS.ordering[i]]) continue;
+         if (THIS.info.status[[THIS.ordering[i]]] != col) continue;         
+         ++r;
+         if (r == row) return i;
+       }
+       return undefined;     
+     }
+  };
+  let data = THIS;
+  for(let i = 0; i != data_size; ++i){
+   data.info.state[i] = 0;
+   data.info.status[i] = TILE_STATUS_OK;
+   data.info.title[i]  = msg.toplevel_sms_labels[i];
+   data.info.cov[i]    = msg.toplevel_sms_transition_coverage[i];
+  }
+  THIS.compute_ordering();
+  THIS.compute_visibility();
+  let old_component = document.getElementById("info_tiles").firstChild;
+  if (old_component) document.getElementById("info_tiles").removeChild(old_component);
+  tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
+}
+
+</script>
+
+<script>
  let ceps_core_channel;
  
  window.onload = () => {
@@ -292,16 +351,26 @@
   );
 
   ceps_core_channel.register_handler("open",
-    (channel,handler) =>{
+    (channel,handler) => {
+      let sm2idx = {};
       let connection_info = document.getElementById("nav_info_connection");
       channel.subscribe("COVERAGE", 
        (msg)=>{
+         console.log(msg);
          if (msg.what != undefined && msg.what == "init"){
-          setTimeout( () => {if (connection_info != undefined){
+          if (connection_info != undefined) setTimeout( () => {
             connection_info.setAttribute("class","badge badge-success");
             connection_info.innerHTML =
             `<span>Ok</span>`;
-          }},2000);
+          },2000);
+          for(let i = 0; i != msg.toplevel_sms.length;++i){
+            sm2idx[msg.toplevel_sms[i]] = i;
+          }
+          create_tiles_deck(msg);          
+         } else if (msg.what != undefined && msg.what == "update"){
+          for(let i = 0; i != msg.toplevel_sms.length;++i){
+            tiles.set_coverage(sm2idx[msg.toplevel_sms[i]],msg.toplevel_sms_transition_coverage[i]);
+          }
          }        
        }
       );      

@@ -174,7 +174,14 @@ public:
         //
         //
         // Statemachine execution context loop handler
-
+private:
+        long long min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms_ = 100;
+        bool dangling_cover_state_changed_handler_call_ = false;
+public:
+        long long& min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms() {return min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms_;}
+        long long min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms() const {return min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms_;}
+        bool& dangling_cover_state_changed_handler_call(){return dangling_cover_state_changed_handler_call_;}
+        bool dangling_cover_state_changed_handler_call() const {return dangling_cover_state_changed_handler_call_;}
         void register_execution_context_loop_handler_cover_state_changed(
                 int id,
                 bool (*)(void*,int&),

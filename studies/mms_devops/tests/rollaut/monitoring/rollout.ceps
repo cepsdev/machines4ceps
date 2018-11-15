@@ -1,0 +1,17 @@
+val number_of_markets = 10;
+val number_of_steps = 4;
+
+rollout{
+ markets{
+  static_for(mrkt: 1 .. number_of_markets){
+     market{
+      id{"market "+text(mrkt);};
+     };
+  }
+ };
+ steps{
+  static_for(stp: 1 .. number_of_steps){
+      as_identifier("step "+text(stp));
+  }
+ };
+};

@@ -991,6 +991,8 @@ struct subscribe_coverage_handler_ctxt_t{
     State_machine_simulation_core* smc;
     threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q;
     int subscribe_channel_id;
+    std::chrono::time_point<std::chrono::high_resolution_clock> last;
+    long long delta_ms;
 };
 
 static bool subscribe_coverage_handler(void* ctxt_,int& status){
@@ -1002,6 +1004,15 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
         } else return false;
         return true;
     }
+    auto t = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> d = t - ctxt->last;
+    auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
+    if (delta < ctxt->delta_ms) {
+        status = 4;
+        return true;
+    }
+    ctxt->last = t;
+
     auto& exec = ctxt->smc->executionloop_context();
     if (exec.start_of_covering_states_valid()){
         ctxt->q->push(coverage_update_msg_t{coverage_update_msg_t::what_t::UPDATE,exec.coverage_state_table,exec.coverage_transitions_table});
@@ -1019,7 +1030,11 @@ class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
         ctxt->register_execution_context_loop_handler_cover_state_changed(
                     subscribe_channel_id,
                     subscribe_coverage_handler,
-                    new subscribe_coverage_handler_ctxt_t{ctxt,q,subscribe_channel_id}
+                    new subscribe_coverage_handler_ctxt_t{ctxt,
+                                                          q,
+                                                          subscribe_channel_id,
+                                                          std::chrono::high_resolution_clock::now(),
+                                                          ctxt->min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms()}
             );
     }
 };

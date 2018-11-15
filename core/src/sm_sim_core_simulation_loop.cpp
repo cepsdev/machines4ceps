@@ -874,11 +874,14 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  }
  log_state_changes(this,execution_ctxt, temp);
  if (execution_ctxt.start_of_covering_states_valid()){
-     bool changes_exists = false;
-     for(std::size_t i = execution_ctxt.start_of_covering_states; i < execution_ctxt.current_states.size();++i){
+     if (dangling_cover_state_changed_handler_call()) run_execution_context_loop_cover_state_changed_handlers();
+     else {
+      bool changes_exists = false;
+      for(std::size_t i = execution_ctxt.start_of_covering_states; i < execution_ctxt.current_states.size();++i){
          if (temp[i] != execution_ctxt.current_states[i]){changes_exists=true;break;}
+      }
+      if (changes_exists)run_execution_context_loop_cover_state_changed_handlers();
      }
-     if (changes_exists)run_execution_context_loop_cover_state_changed_handlers();
  }
 
  memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
@@ -924,10 +927,12 @@ void State_machine_simulation_core::register_execution_context_loop_handler_cove
 
 
 void State_machine_simulation_core::run_execution_context_loop_cover_state_changed_handlers() {
+    dangling_cover_state_changed_handler_call() = false;
     for(auto& e: execution_context_loop_handler_cover_state_changed_handler_infos){
         if (!e.active) continue;
         int status = 0;
         e.active = e.handler(e.data,status);
+        if (status == 4) dangling_cover_state_changed_handler_call() = true;
     }
 }
 
