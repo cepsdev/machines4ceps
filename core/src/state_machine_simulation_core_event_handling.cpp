@@ -424,7 +424,16 @@ do{
 
 	//std::cout << timed_events_pending() << std::endl;
 	if (pos >= sim.nodes().size()){
-		if (running_as_node() || timed_events_pending()){
+        if (dangling_cover_state_changed_handler_call())
+        {
+            for(;;){
+             auto r = this->main_event_queue().wait_for_data_with_timeout(std::chrono::milliseconds(100));
+             run_execution_context_loop_cover_state_changed_handlers();
+             if(r) break;
+             if (!dangling_cover_state_changed_handler_call()) break;
+            }
+        }
+        else if (running_as_node() || timed_events_pending()){
 			//DEBUG << "[FETCH_EVENT_LOOP][WAIT_FOR_DATA]\n";
 			this->main_event_queue().wait_for_data();
 		}

@@ -247,6 +247,9 @@ public:
 	std::vector<int> coverage_state_table;
 	std::vector<int> coverage_transitions_table;
 
+        std::vector<int> states2transitions_slot_start;
+        std::vector<int> states2transitions_slots;
+
 	void init_coverage_structures(){
 		if (start_of_covering_states_valid()) coverage_state_table.resize((size_t)number_of_states - start_of_covering_states+1);
 		if (start_of_covering_transitions_valid()) coverage_transitions_table.resize(transitions.size()-start_of_covering_transitions);

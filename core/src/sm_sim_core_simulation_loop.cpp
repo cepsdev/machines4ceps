@@ -293,14 +293,47 @@ if ( (smc->live_logger() || !smc->quiet_mode()) && ev_read){
   }
 }
 
-static void compute_triggered_transitions(State_machine_simulation_core* smc,ceps::Ceps_Environment& ceps_env,
-		                                   executionloop_context_t & execution_ctxt,
-										   executionloop_context_t::states_t & temp,
-										   size_t max_number_of_active_transitions,
-										   std::vector<int> & triggered_transitions,
-										   int& triggered_transitions_end,
-										   int cur_states_size,
-										   int ev_id){
+static void compute_triggered_transitions(State_machine_simulation_core* smc,
+                                          ceps::Ceps_Environment& ceps_env,
+                                          executionloop_context_t & execution_ctxt,
+                                          executionloop_context_t::states_t & temp,
+                                          size_t max_number_of_active_transitions,
+                                          std::vector<int> & triggered_transitions,
+                                          int& triggered_transitions_end,
+                                          int cur_states_size,
+                                          int ev_id){
+
+
+  //execution_ctxt.states2transitions_slot_start
+
+
+ for (int s = 0; s != cur_states_size && max_number_of_active_transitions != (size_t)triggered_transitions_end;++s){
+  if (execution_ctxt.current_states[s] == 0) continue;
+  ssize_t i = execution_ctxt.states2transitions_slot_start[s];
+  if (execution_ctxt.states2transitions_slots[i] == -1) continue;
+  int smp = execution_ctxt.transitions[execution_ctxt.states2transitions_slots[i]].smp;
+  bool triggered = false;
+  for(; execution_ctxt.states2transitions_slots[i] != -1;++i){
+     auto const & t = execution_ctxt.transitions[execution_ctxt.states2transitions_slots[i]];
+     if (t.props & executionloop_context_t::TRANS_PROP_ABSTRACT) continue;
+     if (t.smp != smp) break;
+     if (temp[t.to] && ev_id == 0 && t.ev == 0 && t.from == t.to && t.guard == nullptr && t.script_guard.length() == 0) continue;
+     if (t.ev == ev_id && t.from == s){
+      if (!t.script_guard.empty()){
+         State_machine_simulation_core::states_t st;
+         bool r = smc->eval_guard(ceps_env,t.script_guard,st);
+         if (r){triggered_transitions[triggered_transitions_end++]=execution_ctxt.states2transitions_slots[i];triggered=true;}
+       } else if (t.guard == nullptr || (*t.guard)() )  {
+         triggered_transitions[triggered_transitions_end++]=execution_ctxt.states2transitions_slots[i];triggered=true;
+       }
+       if (triggered) execution_ctxt.visit_transition(execution_ctxt.states2transitions_slots[i]);
+     }
+  }
+  if (!triggered) {temp[s] = 1;}
+ }
+
+ return;
+
  for (int s = 0; s != cur_states_size && max_number_of_active_transitions != (size_t)triggered_transitions_end;++s){
    if (execution_ctxt.current_states[s] == 0) continue;
 		ssize_t i = execution_ctxt.state_to_first_transition[s];
@@ -586,6 +619,23 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   for(int i = 0; i != 16;++i)callback_ceps_double_vec.push_back(new ceps::ast::Double(0,ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr));
  std::vector<ceps::ast::String*> callback_ceps_str_vec;
   for(int i = 0; i != 16;++i)callback_ceps_str_vec.push_back(new ceps::ast::String("", nullptr, nullptr, nullptr));
+//Compute optimizations
+  //std::cerr << "S" << std::endl;
+  execution_ctxt.states2transitions_slot_start.clear();
+  execution_ctxt.states2transitions_slot_start.resize(execution_ctxt.number_of_states+1);
+  execution_ctxt.states2transitions_slots.clear();
+  //std::cerr << execution_ctxt.number_of_states << std::endl;
+  for(std::size_t i = 0; i < execution_ctxt.number_of_states+1;++i){
+      execution_ctxt.states2transitions_slot_start[i] = execution_ctxt.states2transitions_slots.size();
+      for(std::size_t j = 0; j!= execution_ctxt.transitions.size();++j){
+          if (execution_ctxt.transitions[j].from == i)
+             execution_ctxt.states2transitions_slots.push_back(j);
+      }
+      execution_ctxt.states2transitions_slots.push_back(-1);
+  }
+  //std::cerr << execution_ctxt.states2transitions_slots.size() << std::endl;
+  //std::cerr << execution_ctxt.states2transitions_slot_start.size() << std::endl;
+  //std::cerr << "E" << std::endl;
 
 
  auto global_ev_cllbck = [this,&ev_id,&dummy_ev,&dummy_ev2,&execution_ctxt,&callback_ceps_int_vec,&callback_ceps_double_vec,&callback_ceps_str_vec](){
@@ -872,16 +922,14 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
          }
      }
  }
+
  log_state_changes(this,execution_ctxt, temp);
  if (execution_ctxt.start_of_covering_states_valid()){
-     if (dangling_cover_state_changed_handler_call()) run_execution_context_loop_cover_state_changed_handlers();
-     else {
-      bool changes_exists = false;
-      for(std::size_t i = execution_ctxt.start_of_covering_states; i < execution_ctxt.current_states.size();++i){
+      bool changes_exists = false || dangling_cover_state_changed_handler_call();
+      if(!changes_exists)for(std::size_t i = execution_ctxt.start_of_covering_states; i < execution_ctxt.current_states.size();++i){
          if (temp[i] != execution_ctxt.current_states[i]){changes_exists=true;break;}
       }
       if (changes_exists)run_execution_context_loop_cover_state_changed_handlers();
-     }
  }
 
  memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
@@ -915,15 +963,6 @@ void State_machine_simulation_core::register_execution_context_loop_handler_cove
     }
     execution_context_loop_handler_cover_state_changed_handler_infos.push_back({true,handler,data});
 }
-
-  /*
-   struct execution_context_loop_handler_cover_state_changed_handler_info_t{
-     bool active;
-     bool (*handler)(void*,int&);
-     void* data;
-   };
-   std::vector<execution_context_loop_handler_cover_state_changed_handler_info_t> execution_context_loop_handler_cover_state_changed_handler_infos;
-*/
 
 
 void State_machine_simulation_core::run_execution_context_loop_cover_state_changed_handlers() {

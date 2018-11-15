@@ -73,6 +73,11 @@ public:
 		cv_.wait(lk, [this]{return !data_.empty(); });
 	}
 
+        template<typename Rep,typename Period> bool wait_for_data_with_timeout(const std::chrono::duration<Rep,Period>& rel_time){
+                std::unique_lock<std::mutex> lk(m_);
+                return cv_.wait_for(lk,rel_time,[this]{return !data_.empty(); });
+        }
+
 	Q& data() {return data_;}
 	std::mutex& data_mutex() const {return m_;}
 };

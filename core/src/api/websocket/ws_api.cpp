@@ -1004,6 +1004,7 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
         } else return false;
         return true;
     }
+
     auto t = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> d = t - ctxt->last;
     auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
@@ -1012,6 +1013,7 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
         return true;
     }
     ctxt->last = t;
+
 
     auto& exec = ctxt->smc->executionloop_context();
     if (exec.start_of_covering_states_valid()){
