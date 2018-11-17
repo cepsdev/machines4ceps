@@ -980,27 +980,17 @@ void Websocket_interface::handler(int sck){
   }//for
 }
 
-struct coverage_update_msg_t{
- enum what_t {INIT,UPDATE};
- what_t what;
- std::vector<int> coverage_state_table;
- std::vector<int> coverage_transitions_table;
-};
-
-struct subscribe_coverage_handler_ctxt_t{
-    State_machine_simulation_core* smc;
-    threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q;
-    int subscribe_channel_id;
-    std::chrono::time_point<std::chrono::high_resolution_clock> last;
-    long long delta_ms;
-};
 
 static bool subscribe_coverage_handler(void* ctxt_,int& status){
-    auto ctxt = static_cast<subscribe_coverage_handler_ctxt_t*>(ctxt_);
+    auto ctxt = static_cast<Websocket_interface::subscribe_coverage_handler_ctxt_t*>(ctxt_);
     if (status == 1){ // Very first call
         auto& exec = ctxt->smc->executionloop_context();
         if (exec.start_of_covering_states_valid()){
-            ctxt->q->push(coverage_update_msg_t{coverage_update_msg_t::what_t::INIT,exec.coverage_state_table,exec.coverage_transitions_table});
+            Websocket_interface::coverage_update_msg_t msg;
+            msg.what = Websocket_interface::coverage_update_msg_t::what_t::INIT;
+            msg.coverage_state_table = exec.coverage_state_table;
+            msg.coverage_transitions_table = exec.coverage_transitions_table;
+            ctxt->q->push(msg);
         } else return false;
         return true;
     }
@@ -1013,26 +1003,30 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
         return true;
     }
     ctxt->last = t;
-
-
     auto& exec = ctxt->smc->executionloop_context();
     if (exec.start_of_covering_states_valid()){
-        ctxt->q->push(coverage_update_msg_t{coverage_update_msg_t::what_t::UPDATE,exec.coverage_state_table,exec.coverage_transitions_table});
+        Websocket_interface::coverage_update_msg_t msg;
+        msg.what = Websocket_interface::coverage_update_msg_t::what_t::UPDATE;
+        msg.coverage_state_table = exec.coverage_state_table;
+        msg.coverage_transitions_table = exec.coverage_transitions_table;
+        ctxt->q->push(msg);
     } else return false;
     return true;
 }
 
 class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
-    threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q;
+    threadsafe_queue<Websocket_interface::coverage_update_msg_t,std::queue<Websocket_interface::coverage_update_msg_t>>* q;
     int subscribe_channel_id;
  public:
     Subscribe_coverage() = default;
-    Subscribe_coverage(int subscribe_channel_id_,threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>*q_):subscribe_channel_id{subscribe_channel_id_},q{q_}{}
-    void  run(State_machine_simulation_core* ctxt){
+    Subscribe_coverage(int subscribe_channel_id_,
+                       threadsafe_queue<Websocket_interface::coverage_update_msg_t,std::queue<Websocket_interface::coverage_update_msg_t>>*q_)
+                       :subscribe_channel_id{subscribe_channel_id_},q{q_}{}
+    void run(State_machine_simulation_core* ctxt){
         ctxt->register_execution_context_loop_handler_cover_state_changed(
                     subscribe_channel_id,
                     subscribe_coverage_handler,
-                    new subscribe_coverage_handler_ctxt_t{ctxt,
+                    new Websocket_interface::subscribe_coverage_handler_ctxt_t{ctxt,
                                                           q,
                                                           subscribe_channel_id,
                                                           std::chrono::high_resolution_clock::now(),
@@ -1041,8 +1035,14 @@ class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
     }
 };
 
-void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel_id,int sck){
-    auto send_reply = [&](std::string const & reply) -> bool   {
+void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q){
+    std::vector<int> sockets;
+    std::unordered_map<int,int> channel2socket;
+    std::unordered_map<int,int> channel2writer_thread;
+
+
+
+    auto send_reply = [&](int sck,std::string const & reply) -> bool   {
         auto len = reply.length();
         bool fin = true;
         bool ext1_len = len >= 126 && len <= 65535;
@@ -1069,9 +1069,13 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
         if ( (wr = write(sck, reply.c_str(),len )) != (int)len) return false;
         return true;
     };
-    auto cleanup_f = [this,&sck](){
+    auto cleanup_f = [this,&sockets](){
         using namespace std;
-        if (sck != -1) close(sck);
+        for(auto& s : sockets){
+            if (s == -1) continue;
+            close(s);
+            s = -1;
+        }
     };
     auto get_root_sm = [&](executionloop_context_t const & ctx, int state){
         for(;ctx.get_parent(state) != 0;) state = ctx.get_parent(state);
@@ -1154,23 +1158,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
     };
 
     cleanup<decltype(cleanup_f)> cl{cleanup_f};
-    {
-     std::stringstream ss;
-     ss << "{";
-        ss << "\"ok\":" << "true" << "," << "\n";
-        ss << "\"channel\":" << subscribe_channel_id  << ",\n";
-        ss << "\"topic\":\"COVERAGE\"\n";
-     ss << "}";
-     if(!send_reply(ss.str())) return;
-    }
 
-
-
-    State_machine_simulation_core::event_t ev;
-    auto q = new threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>;
-    auto exec = new Subscribe_coverage{subscribe_channel_id,q};
-    ev.exec = exec;
-    smc_->enqueue_event(ev);
     std::vector<int> top_level_sms;
     std::unordered_map<int,double> sm2cov;
     std::unordered_map<int,int> sm2_total_transitions;
@@ -1182,7 +1170,22 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
         coverage_update_msg_t msg;
         q->wait_and_pop(msg);
         auto& ctx = this->smc_->executionloop_context();
-        if (msg.what == coverage_update_msg_t::what_t::INIT){
+        if (msg.what == coverage_update_msg_t::what_t::NEW_CHANNEL){
+            if (msg.payload.channel.socket == -1) continue;
+            channel2socket[msg.payload.channel.id] = msg.payload.channel.socket;
+            {
+             std::stringstream ss;
+             ss << "{";
+                ss << "\"ok\":" << "true" << "," << "\n";
+                ss << "\"channel\":" << msg.payload.channel.id  << ",\n";
+                ss << "\"topic\":\"COVERAGE\"\n";
+             ss << "}";
+             new std::thread{[](){}};
+             if(!send_reply(msg.payload.channel.socket,ss.str())) return;
+            }
+        }
+#if 0
+          else if (msg.what == coverage_update_msg_t::what_t::INIT){
             coverage_state_table_last = msg.coverage_state_table;
             coverage_transitions_table_last = msg.coverage_transitions_table;
 
@@ -1287,12 +1290,28 @@ void Websocket_interface::handle_subscribe_coverage_thread(int subscribe_channel
             coverage_transitions_table_last = msg.coverage_transitions_table;
             if(!send_reply(ss.str())) return;
         }
+#endif
     }
 }
 
 void Websocket_interface::handle_subscribe_coverage(int sck){
     auto ch_id = this->next_subscribe_channel_id++;
-    subscribe_channels2thread[ch_id] = new std::thread{&Websocket_interface::handle_subscribe_coverage_thread,this,ch_id,sck};
+    if (subscribe_channels2thread.size() == 0){
+        State_machine_simulation_core::event_t ev;
+        coverage_channel_queue = new threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>;
+        auto exec = new Subscribe_coverage{ch_id,coverage_channel_queue};
+        ev.exec = exec;
+        smc_->enqueue_event(ev);
+        subscribe_channels2thread[ch_id] = new std::thread{&Websocket_interface::handle_subscribe_coverage_thread,
+                                                           this,
+                                                           coverage_channel_queue
+                                                          };
+    } else subscribe_channels2thread[ch_id] = subscribe_channels2thread[ch_id-1];
+    coverage_update_msg_t msg;
+    msg.what = coverage_update_msg_t::what_t::NEW_CHANNEL;
+    msg.payload.channel.id = ch_id;
+    msg.payload.channel.socket = sck;
+    coverage_channel_queue->push(msg);
 }
 
 

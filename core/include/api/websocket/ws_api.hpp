@@ -9,9 +9,36 @@
 #include "ceps_all.hh"
 #include "core/include/serialization.hpp"
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
+#include "core/include/threadsafequeue.hpp"
+
 class State_machine_simulation_core;
 
 class Websocket_interface{
+public:
+    struct coverage_update_msg_t{
+     enum what_t {INIT,UPDATE,NEW_CHANNEL};
+     what_t what;
+     union {
+         struct {
+             int id;
+             int socket;
+         } channel;
+     } payload;
+     std::vector<int> coverage_state_table;
+     std::vector<int> coverage_transitions_table;
+    };
+
+    struct subscribe_coverage_handler_ctxt_t{
+        State_machine_simulation_core* smc;
+        threadsafe_queue< coverage_update_msg_t,
+                          std::queue<coverage_update_msg_t> >* q;
+        int subscribe_channel_id;
+        std::chrono::time_point<std::chrono::high_resolution_clock> last;
+        long long delta_ms;
+    };
+
+private:
+    threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* coverage_channel_queue = nullptr;
     void dispatcher();
     void handler(int sck);
     State_machine_simulation_core* smc_ = nullptr;
@@ -22,7 +49,7 @@ class Websocket_interface{
     std::vector< thread_status_type > handler_threads_status_;
     void handle_subscribe_coverage(int sck);
     int next_subscribe_channel_id = 0;
-    void handle_subscribe_coverage_thread(int subscribe_channel_id,int sck);
+    void handle_subscribe_coverage_thread(threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q);
     std::map<int,std::thread*> subscribe_channels2thread;
 public:
     Websocket_interface(State_machine_simulation_core* smc,std::string port = "8181"):smc_{smc},port_{port}{}

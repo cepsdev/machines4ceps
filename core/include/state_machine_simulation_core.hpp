@@ -42,45 +42,12 @@
 #include "core/include/api/websocket/ws_api.hpp"
 #include "core/include/api/virtual_can/virtual_can_api.hpp"
 #include "core/include/transform/streamtransform.hpp"
+#include "core/include/threadsafequeue.hpp"
 
 namespace log4ceps = log4kmw;
 namespace log4cepsloggers = log4kmw_loggers;
 
 constexpr int SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH = 128;
-
-
-
-template<typename T, typename Q> class threadsafe_queue{
-	Q data_;
-	mutable std::mutex m_;
-	std::condition_variable cv_;
-public:
-	void push(T const & elem){
-		std::lock_guard<std::mutex> lk(m_);
-		data_.push(elem);
-		cv_.notify_one();
-	}
-
-	void wait_and_pop(T & elem){
-		std::unique_lock<std::mutex> lk(m_);
-		cv_.wait(lk, [this]{return !data_.empty(); });
-		elem = data_.front();
-		data_.pop();
-	}
-
-	void wait_for_data(){
-		std::unique_lock<std::mutex> lk(m_);
-		cv_.wait(lk, [this]{return !data_.empty(); });
-	}
-
-        template<typename Rep,typename Period> bool wait_for_data_with_timeout(const std::chrono::duration<Rep,Period>& rel_time){
-                std::unique_lock<std::mutex> lk(m_);
-                return cv_.wait_for(lk,rel_time,[this]{return !data_.empty(); });
-        }
-
-	Q& data() {return data_;}
-	std::mutex& data_mutex() const {return m_;}
-};
 
 namespace std{
 template <>
