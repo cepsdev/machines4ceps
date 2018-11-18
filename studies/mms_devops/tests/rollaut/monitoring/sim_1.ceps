@@ -13,7 +13,7 @@ static_for(e:root.rollout){
         };
 
         on_enter{
-            start_periodic_timer(5.0*s,as_symbol(market_name+"sim_next","Event"));
+            start_periodic_timer(1.0*s,as_symbol(market_name+"sim_next","Event"));
         };
 
         Actions{
