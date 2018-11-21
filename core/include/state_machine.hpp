@@ -60,6 +60,7 @@ class State_machine
   bool log_enter_state_event = false;
   bool log_exit_state_event = false;
   std::string label_;
+  int state_counter_ = 0;
 
 
 public:
@@ -125,6 +126,7 @@ public:
   bool visited_flag = false;
 
   struct State{
+    int order_ = 0;
     std::string id_;
     state_rep_t shadow = {};
     bool is_sm_ = false;
@@ -264,6 +266,7 @@ public:
   {
 	s.is_sm_ = false;
 	s.smp_ = this;
+        s.order_ = state_counter_++;
     states().insert(new State(s));
   }
 

@@ -26,13 +26,13 @@ let rollaut_infobox = function (parent,tile_idx, data) {
       }
     },
     layout      : {
-      get_width_css         : function() {return "400px;";},
+      get_width_css         : function() {return "700px;";},
       get_height_css        : function() {return "300px;";},
       get_header_height_css : function() {return "100px";},
       get_three_steps_view_height_css : function() {return "120px";},
       get_three_steps_step_height_css : function() {return "40px";},
       get_three_steps_step_height : function() {return 40;},
-      get_three_steps_view_width_css : function() {return "300px";}
+      get_three_steps_view_width_css : function() {return "600px";}
     },
     get_associated_tile_idx : function () {return THIS.tile_idx;},
     hide : function(){

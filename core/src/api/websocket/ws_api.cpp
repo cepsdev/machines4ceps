@@ -1036,9 +1036,6 @@ class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
 };
 
 void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q){
-
-
-
     auto send_reply = [&](int sck,std::string const & reply,std::string const & prefix="",std::string const & postfix="") -> bool   {
         auto len = prefix.length()+reply.length()+postfix.length();
         bool fin = true;
@@ -1093,9 +1090,6 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
 
     auto compute_total_of_transitions = [&]( executionloop_context_t const & ctx,
                                              std::unordered_map<int,int> & sm2_total_transitions ){
-        //number_of_transitions_covered
-        //number_of_transitions_to_cover
-
         if( ctx.start_of_covering_transitions_valid() ){
            for(std::size_t i = 0;i != ctx.coverage_transitions_table.size();++i){
                if (ctx.transitions[ctx.start_of_covering_transitions + i].start()) continue;
@@ -1123,9 +1117,6 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
     auto compute_transition_coverage = [&](executionloop_context_t const & ctx,
                                            std::vector<int> const & coverage_transitions_table,
                                            std::unordered_map<int,int>& sm2_covered_transitions){
-        //number_of_transitions_covered
-        //number_of_transitions_to_cover
-
         if( ctx.start_of_covering_transitions_valid() ){
            for(std::size_t i = 0;i != coverage_transitions_table.size();++i){
                if (ctx.transitions[ctx.start_of_covering_transitions + i].start()) continue;
@@ -1151,26 +1142,25 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
            }
         }
     };
-
     cleanup<decltype(cleanup_f)> cl{cleanup_f};
-
     std::unordered_map<int,int> channel2socket;
     std::unordered_map<int,std::thread*> channel2writer_thread;
+
     std::vector<int> top_level_sms;
     std::unordered_map<int,double> sm2cov;
     std::unordered_map<int,int> sm2_total_transitions;
     std::unordered_map<int,int> sm2_covered_transitions;
     std::vector<int> coverage_state_table_last;
     std::vector<int> coverage_transitions_table_last;
+    std::map<std::string,std::vector<int>> label2states;
+    std::map<int,std::vector<int>> root2states;
 
     long long next_msg_id = 0;
-
     struct channel_msg_t{
         long long id;
         bool init_msg = false;
         std::stringstream msg;
     };
-
     std::vector<channel_msg_t> channel_out;
     constexpr auto channel_size = 32;
     channel_out.resize(channel_size);
@@ -1179,11 +1169,10 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
     std::mutex channel_mutex;
     std::mutex writer_thread_map_mutex;
     std::condition_variable cv_channel;
-
     bool coverage_tables_are_current = false;
     auto& ctx = this->smc_->executionloop_context();
 
-    auto compute_init_msg_main_part = [&](std::vector<int>& coverage_transitions_table)->std::stringstream{
+    auto compute_init_msg_main_part = [&](std::vector<int>& coverage_transitions_table,std::vector<int>& coverage_table)->std::stringstream{
         top_level_sms = compute_root_sms(ctx);
         for(auto e : top_level_sms) {
             sm2cov[e] = 0.0;sm2_total_transitions[e] = 0;sm2_covered_transitions[e] = 0;
@@ -1196,6 +1185,32 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
                 else  sm2cov[e.first] = (double)sm2_covered_transitions[e.first] / (double)e.second;
             } else sm2cov[e.first] = 1.0;
         }
+        if (label2states.size() == 0){
+            for(std::size_t i = 0;i != ctx.coverage_state_table.size();++i){
+                auto state = i+ctx.start_of_covering_states;
+                if (!ctx.get_inf(state,executionloop_context_t::SM) &&
+                    !ctx.get_inf(state,executionloop_context_t::DONT_COVER) &&
+                    !ctx.get_inf(state,executionloop_context_t::INIT) &&
+                    !ctx.get_inf(state,executionloop_context_t::FINAL) &&
+                    !ctx.get_inf(state,executionloop_context_t::HIDDEN) &&
+                    ctx.get_inf(state,executionloop_context_t::HAS_LABEL) ){
+                   label2states[ctx.state_labels[state]].push_back(state);
+                }
+            }
+        }
+        if (root2states.size() == 0){
+            for(std::size_t i = 0;i != ctx.coverage_state_table.size();++i){
+                auto state = i+ctx.start_of_covering_states;
+                if (!ctx.get_inf(state,executionloop_context_t::SM) &&
+                    !ctx.get_inf(state,executionloop_context_t::DONT_COVER) &&
+                    !ctx.get_inf(state,executionloop_context_t::INIT) &&
+                    !ctx.get_inf(state,executionloop_context_t::FINAL) &&
+                    !ctx.get_inf(state,executionloop_context_t::HIDDEN)  ){
+                   root2states[get_root_sm(ctx,state)].push_back(state);
+                }
+            }
+        }
+
         std::stringstream ss;
         ss << "\"ok\":" << "true" << "," << "\n";
         ss << "\"what\":" << "\"" << "init" <<"\""<<  "," << "\n";
@@ -1225,6 +1240,38 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         for(std::size_t i = 0;i != top_level_sms.size();++i){
             if (!first_in_list) ss << ",";
             ss << sm2cov[top_level_sms[i]];
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+        ss << "\"labeled_states\":" << "[";
+        first_in_list = true;
+        for(auto label: label2states){
+            if (!label.second.size()) continue;
+            if (!first_in_list) ss << ",";
+            ss << "\""<<label.first<<"\"";
+            for(auto state: label.second) ss << "," << state;
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+        ss << "\"root2childstates\":" << "[";
+        first_in_list = true;
+        for(auto root: root2states){
+            if (!root.second.size()) continue;
+            if (!first_in_list) ss << ",";
+            ss << root.first;
+            for(auto state: root.second) ss << "," << state;
+            ss << ",0";
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+        ss << "\"covered_states\":" << "[";
+        first_in_list = true;
+        for(auto s=0;s !=coverage_table.size();++s){
+            if (!coverage_table[s]) continue;
+            if (!first_in_list) ss << ",";
+            auto state = s+ctx.start_of_covering_states;
+            ss << state;
+
             first_in_list = false;
         }
         ss << "]" << "\n";
@@ -1275,12 +1322,23 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
             ss << sm2cov[changed_sms[i]];
             first_in_list = false;
         }
+        ss << "]," << "\n";
+        ss << "\"covered_states\":" << "[";
+        first_in_list = true;
+        for(auto s=0;s !=coverage_table_new.size();++s){
+            if (!coverage_table_new[s]) continue;
+            if (coverage_table_new[s] == coverage_table_old[s]) continue;
+            if (!first_in_list) ss << ",";
+            auto state = s+ctx.start_of_covering_states;
+            ss << state;
+            first_in_list = false;
+        }
         ss << "]" << "\n";
         return ss;
     };
 
     auto create_init_msg = [&](){
-        auto m = compute_init_msg_main_part(coverage_transitions_table_last);
+        auto m = compute_init_msg_main_part(coverage_transitions_table_last,coverage_state_table_last);
         {
           std::lock_guard<std::mutex> lk(channel_mutex);
           channel_out.clear();

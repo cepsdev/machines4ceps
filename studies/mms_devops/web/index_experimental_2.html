@@ -278,12 +278,15 @@
 <script>
  let tiles = undefined;
 
- function create_tiles_deck(msg){
+ function create_tiles_deck(msg,sm2idx){
   let data_size = msg.toplevel_sms.length;
+  let idx2sm = {};
   let THIS = {
+     cache             : {state_labels:{}},
      filters           : [],
      permutations      : [],
      size              : data_size,
+     sm2idx            : sm2idx,
      info              : {
        status      : new Array(data_size),
        cov         : new Array(data_size),
@@ -291,7 +294,22 @@
        state       : new Array(data_size), //a non negative integer
        up_since    : undefined,
        state_labels : function (tile_idx){
-         return ["State 1","State 2","State 3","State 4","State 5","State 6","State 7"];
+         let v = THIS.cache.state_labels[tile_idx];
+         if (v == undefined) { THIS.cache.state_labels[tile_idx] = []; v = THIS.cache.state_labels[tile_idx]; }
+         else return v;
+         let vv = [];
+         let states = THIS.tile2states[idx2sm[tile_idx]];
+         if (states == undefined) return [];
+         for(let i = 0 ; i < states.length;++i){
+          vv.push(states[i]);
+         }
+         for(let i = 0 ; i < vv.length;++i){
+           let l = THIS.state2label[vv[i]];
+           if (l == undefined) continue;
+           v.push(l);
+         }
+         //console.log(v);
+         return v;
        },
        state_reached_at : function (tile_idx){
          return [undefined,undefined,undefined,undefined,undefined,undefined,undefined];
@@ -318,6 +336,9 @@
        return undefined;     
      }
   };
+  for (let k in sm2idx){
+    idx2sm[sm2idx[k]] = k;
+  }
   let data = THIS;
   for(let i = 0; i != data_size; ++i){
    data.info.state[i] = 0;
@@ -325,13 +346,101 @@
    data.info.title[i]  = msg.toplevel_sms_labels[i];
    data.info.cov[i]    = msg.toplevel_sms_transition_coverage[i];
   }
+  data.tile2states = {};
+  data.tile2_visited_states = {};
+  data.state2root = {};
+  data.state2label = {};
+  for(let i = 0; i < msg.labeled_states.length;++i){
+    let label = msg.labeled_states[i];
+    for(++i;i < msg.labeled_states.length;++i){
+      if (typeof msg.labeled_states[i] === "string") break;
+      data.state2label[msg.labeled_states[i]] = label;
+    }
+    if(i < msg.labeled_states.length) --i;
+  }
+  for(let i = 0; i != msg.root2childstates.length;++i){
+   let root = msg.root2childstates[i];
+   data.tile2_visited_states[root] = [];
+   data.state2root[root] = root;
+   let v = [];
+   for(++i; i != msg.root2childstates.length;++i){
+     if (msg.root2childstates[i]==0) break;
+     data.state2root[msg.root2childstates[i]] = root;
+     if(data.state2label[msg.root2childstates[i]] == undefined) continue;
+     v.push(msg.root2childstates[i]);     
+   }
+   data.tile2states[root] = v;
+  }
+
+  /*for(let i = 0; i < msg.covered_states.length;++i){
+    if (data.state2root[msg.covered_states[i]] == undefined) {
+      continue;
+    }
+    let v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]];
+    if (v == undefined) {v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]] = [];}
+    v.push(msg.covered_states[i]);
+  }
+  for (let root in data.tile2states){
+    let tile = sm2idx[root];
+    let states = data.tile2states[root];
+    let i = 0;
+    let covered = data.tile2_visited_states[root];
+    //console.log(states);console.log(covered);
+    for(; i != states.length;++i){
+      let found = false;
+      for(let j = 0;j != covered.length;++j ){
+        if (states[i] == covered[j]){
+          found = true;
+          break;
+        }
+      }
+      if(!found) break;
+    }
+    if (i == states.length && states.length > 0) --i;
+    data.info.state[tile] = i;
+    //console.log(i);
+  }*/
+  update_states(msg,data,sm2idx);
   THIS.compute_ordering();
   THIS.compute_visibility();
+  //console.log(data);
   let old_component = document.getElementById("info_tiles").firstChild;
   if (old_component) document.getElementById("info_tiles").removeChild(old_component);
   tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
 }
 
+function update_states(msg,data,sm2idx,f){
+  for(let i = 0; i < msg.covered_states.length;++i){
+    if (data.state2root[msg.covered_states[i]] == undefined) {
+      continue;
+    }
+    let v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]];
+    if (v == undefined) {v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]] = [];}
+    v.push(msg.covered_states[i]);
+  }
+  for (let root in data.tile2states){
+    let tile = sm2idx[root];
+    let states = data.tile2states[root];
+    let i = 0;
+    let covered = data.tile2_visited_states[root];
+    //console.log(states);console.log(covered);
+    for(; i != states.length;++i){
+      let found = false;
+      for(let j = 0;j != covered.length;++j ){
+        if (states[i] == covered[j]){
+          found = true;
+          break;
+        }
+      }
+      if(!found) break;
+    }
+    if (i == states.length && states.length > 0) --i;
+    //data.info.state[tile] = i;
+    if (f != undefined) f(tile,i);
+    else data.info.state[tile] = i;
+    //console.log(i);
+  }
+}
 </script>
 
 <script>
@@ -356,8 +465,8 @@
       let connection_info = document.getElementById("nav_info_connection");
       channel.subscribe("COVERAGE", 
        (msg)=>{
-         console.log(msg);
          if (msg.what != undefined && msg.what == "init"){
+          console.log(msg);
           if (connection_info != undefined) setTimeout( () => {
             connection_info.setAttribute("class","badge badge-success");
             connection_info.innerHTML =
@@ -366,11 +475,13 @@
           for(let i = 0; i != msg.toplevel_sms.length;++i){
             sm2idx[msg.toplevel_sms[i]] = i;
           }
-          create_tiles_deck(msg);          
+          create_tiles_deck(msg,sm2idx);          
          } else if (msg.what != undefined && msg.what == "update"){
           for(let i = 0; i != msg.toplevel_sms.length;++i){
             tiles.set_coverage(sm2idx[msg.toplevel_sms[i]],msg.toplevel_sms_transition_coverage[i]);
           }
+          console.log(msg);
+          update_states(msg,tiles.data,sm2idx,tiles.set_state);
          }        
        }
       );      
