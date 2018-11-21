@@ -68,6 +68,7 @@ static_for(rss: root.rollout_steps_sorted){
                     e.content().criticality_def;
                     e.content().params_ext;
                     e.content().settings;
+                    e.content().description;
                 };
                 ignore_value{s_ctr = s_ctr + 1;};
             }            
