@@ -174,7 +174,9 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		if (!cur_sm->cover() && !non_cover_sm) return;
 
 		cur_sm->idx_ = ctr++;
-		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
+        std::vector<State_machine::State*> stts{cur_sm->states().begin(),cur_sm->states().end()};
+        std::sort(stts.begin(),stts.end(),[](State_machine::State* a, State_machine::State* b){return a->order_ < b->order_;});
+        for(auto it = stts.begin(); it != stts.end(); ++it){
 		 auto state = *it;
 		 state->idx_ = ctr++;
 		 if (!state->is_sm_) continue;

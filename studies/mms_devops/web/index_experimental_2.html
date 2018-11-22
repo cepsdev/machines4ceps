@@ -371,6 +371,7 @@
    }
    data.tile2states[root] = v;
   }
+  
 
   /*for(let i = 0; i < msg.covered_states.length;++i){
     if (data.state2root[msg.covered_states[i]] == undefined) {
@@ -434,11 +435,9 @@ function update_states(msg,data,sm2idx,f){
       }
       if(!found) break;
     }
-    if (i == states.length && states.length > 0) --i;
-    //data.info.state[tile] = i;
+    if (i > 0) --i;
     if (f != undefined) f(tile,i);
     else data.info.state[tile] = i;
-    //console.log(i);
   }
 }
 </script>
@@ -446,7 +445,7 @@ function update_states(msg,data,sm2idx,f){
 <script>
  let ceps_core_channel;
  
- window.onload = () => {
+ window.onload = () => {   
   ceps_core_channel = cepS_API(window.location.hostname+":11001");
   ceps_core_channel.register_handler("open",
     (channel) =>{
@@ -465,8 +464,9 @@ function update_states(msg,data,sm2idx,f){
       let connection_info = document.getElementById("nav_info_connection");
       channel.subscribe("COVERAGE", 
        (msg)=>{
+        //console.log(msg);
          if (msg.what != undefined && msg.what == "init"){
-          console.log(msg);
+          
           if (connection_info != undefined) setTimeout( () => {
             connection_info.setAttribute("class","badge badge-success");
             connection_info.innerHTML =
@@ -480,7 +480,7 @@ function update_states(msg,data,sm2idx,f){
           for(let i = 0; i != msg.toplevel_sms.length;++i){
             tiles.set_coverage(sm2idx[msg.toplevel_sms[i]],msg.toplevel_sms_transition_coverage[i]);
           }
-          console.log(msg);
+          
           update_states(msg,tiles.data,sm2idx,tiles.set_state);
          }        
        }
