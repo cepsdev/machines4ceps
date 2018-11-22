@@ -3,7 +3,9 @@ const TILE_STATUS_DONE  = 1;
 const TILE_STATUS_ERROR = 2;
 const TILE_STATUS_WARN  = 3;
 
+
 let rollaut_infobox = function (parent,tile_idx, data) {
+ 
   let THIS = {
     initialized : false,
     visible     : false,
@@ -22,17 +24,20 @@ let rollaut_infobox = function (parent,tile_idx, data) {
         outer                 : undefined,
         three_steps_tbl       : undefined,
         three_steps_tbl_outer : undefined,
-        three_steps_steps     : []
+        three_steps_steps     : [],
+        three_steps_left_side : []
       }
     },
     layout      : {
-      get_width_css         : function() {return "700px;";},
+      get_width_css         : function() {return "500px;";},
       get_height_css        : function() {return "300px;";},
       get_header_height_css : function() {return "100px";},
-      get_three_steps_view_height_css : function() {return "120px";},
-      get_three_steps_step_height_css : function() {return "40px";},
-      get_three_steps_step_height : function() {return 40;},
-      get_three_steps_view_width_css : function() {return "600px";}
+      get_three_steps_view_height_css : function() {return "180px";},
+      get_three_steps_step_height_css : function() {return "60px";},
+      get_three_steps_outer_div_step_height_css : function() {return "56px";},
+      get_three_steps_outer_div_base_css : function() {return `padding-left:4px;padding-right:4px;`;},
+      get_three_steps_step_height : function() {return 60;},
+      get_three_steps_view_width_css : function() {return "480px";}
     },
     get_associated_tile_idx : function () {return THIS.tile_idx;},
     hide : function(){
@@ -81,10 +86,18 @@ let rollaut_infobox = function (parent,tile_idx, data) {
        let current_state = THIS.data.info.state[THIS.tile_idx];
        let labels = THIS.data.info.state_labels(THIS.tile_idx);
        let steps = THIS.dom_cache.main.three_steps_steps;
-       for(let i = 0; i != steps.length;++i) steps[i].setAttribute("style","");               
-       if (current_state-1 >= 0) steps[current_state-1].setAttribute("style","filter:opacity(50%) blur(0.6px);");
-       if (current_state+1 < steps.length ) steps[current_state+1].setAttribute("style","filter:opacity(50%) blur(0.6px);");
-       steps[current_state].setAttribute("style","transform:scale(1.2,1.2);border-top:1px solid;border-bottom:1px solid;");     
+       let left_side = THIS.dom_cache.main.three_steps_left_side;
+       
+       for(let i = 0; i != steps.length;++i) 
+       { 
+         left_side[i].setAttribute("class","");
+         steps[i].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;`);               
+       }
+       if (current_state-1 >= 0) steps[current_state-1].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;filter:opacity(50%) blur(0.6px);`);
+       if (current_state+1 < steps.length ) steps[current_state+1].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;filter:opacity(50%) blur(0.6px);`);
+       steps[current_state].setAttribute("style",
+        `${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;border-top:1px solid;border-bottom:1px solid;font-weight: bold;`);     
+       if (current_state+1 !=  steps.length) left_side[current_state].setAttribute("class","loading");
        let offset = -current_state*THIS.layout.get_three_steps_step_height()+THIS.layout.get_three_steps_step_height();
        outer.setAttribute("style",`position:relative;top:${offset}px;`);
      }
@@ -106,23 +119,40 @@ let rollaut_infobox = function (parent,tile_idx, data) {
      tbl_outer.appendChild(tbl);
      THIS.dom_cache.main.three_steps_tbl = tbl;
      THIS.dom_cache.main.three_steps_tbl_outer =  tbl_outer;
-     tbl.setAttribute("style",`table-layout: fixed;text-align:center;width:100%`);
+     tbl.setAttribute("style",`table-layout: fixed;text-align:center;vertical-align:middle;width:100%;overflow:hidden;`);
 
      function build_steps_list(tbl){
        let labels = THIS.data.info.state_labels(THIS.tile_idx);
        THIS.dom_cache.main.three_steps_steps = [];
        for(let i = 0; i != labels.length;++i){
          let tr=document.createElement("tr");
+         let td_left=document.createElement("td");
+         let td_right=document.createElement("td");
          let td=document.createElement("td");
-         td.setAttribute("style",`height:${THIS.layout.get_three_steps_step_height_css()};`);
+         td.setAttribute("style",`height:${THIS.layout.get_three_steps_step_height_css()};overflow:hidden;`);
+         td_left.setAttribute("style",`text-align:center;vertical-align:middle;width:80px;overflow:hidden;`);
+         td_right.setAttribute("style",`text-align:center;vertical-align:middle;width:80px;overflow:hidden;`);
          
          let tdc = document.createTextNode(labels[i]);
          let tdc_outer = document.createElement("div");
+         tdc_outer.setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;`);
+         
+         
+         let left_side = document.createElement("div");
+         let right_side = document.createElement("div");
+         //loader.setAttribute("class","rollaut_connection_loader_medium");
+         left_side.setAttribute("style","float:right;");
+
+         td_left.appendChild(left_side);
+         td_right.appendChild(right_side);
          tdc_outer.appendChild(tdc);
 
          THIS.dom_cache.main.three_steps_steps.push(tdc_outer);
+         THIS.dom_cache.main.three_steps_left_side.push(left_side);
          td.appendChild(tdc_outer);
+         tr.appendChild(td_left);
          tr.appendChild(td);
+         tr.appendChild(td_right);
          tbl.appendChild(tr);
        }        
      }

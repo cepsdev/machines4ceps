@@ -17,6 +17,7 @@
     <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
     <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">   
     <link href="rollaut/rollaut_basic.css" rel="stylesheet">
+    <link href="spin/spin.css" rel="stylesheet">
     
 <style>
     @font-face {
@@ -132,7 +133,9 @@
 
         </div>
       </div>
-      <div class="col-xs-2 col-sm-2"></div>
+      <div class="col-xs-2 col-sm-2">
+        
+      </div>
     </div>
   </main>
 </body>
@@ -140,7 +143,7 @@
 <script src="jquery/js/jquery.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="rollaut/tiles.js"></script>
-
+<script src="spin/spin.js"></script>
 
 <script>
  function test_data(data_size){
@@ -442,10 +445,13 @@ function update_states(msg,data,sm2idx,f){
 }
 </script>
 
+
 <script>
- let ceps_core_channel;
+
+let ceps_core_channel;
  
  window.onload = () => {   
+
   ceps_core_channel = cepS_API(window.location.hostname+":11001");
   ceps_core_channel.register_handler("open",
     (channel) =>{

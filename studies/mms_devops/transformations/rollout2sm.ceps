@@ -10,12 +10,11 @@ static_for(e:root.rollout){
    //label{"This is \"" + market_name+"\"";};
 
    states { Initial;
+            e.steps.content().is_id();
+            static_for(step : e.steps.content().is_id()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};
             Done;
             Final;
             Killed;
-            e.steps.content().is_id();
-            static_for(step : e.steps.content().is_id()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};
-                      
             categories{
               static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_critical","WarnState");};
               static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_error","FailState");};
@@ -27,6 +26,7 @@ static_for(e:root.rollout){
             };
    };
    static_for(s_details : e.steps.content().step_details){label{as_identifier(s_details.id.content());s_details.description.content();};};
+   label{Done;"Done";};
     
 
    cover{edges_upto_1;dont_cover_loops;};
