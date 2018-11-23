@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <unordered_set>
 #include <limits>
 #include <chrono>
@@ -232,6 +233,9 @@ public:
         using exit_times_t = enter_times_t;
         exit_times_t exit_times;
         std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;
+        std::chrono::time_point<std::chrono::high_resolution_clock> start_execution_time_stamp_hres;
+        std::chrono::time_point<std::chrono::system_clock> start_execution_time_stamp_system;
+
         using state_labels_t = std::unordered_map<int,std::string>;
         state_labels_t state_labels;
 

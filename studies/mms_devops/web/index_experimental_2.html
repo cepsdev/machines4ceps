@@ -374,37 +374,10 @@
    }
    data.tile2states[root] = v;
   }
-  
-
-  /*for(let i = 0; i < msg.covered_states.length;++i){
-    if (data.state2root[msg.covered_states[i]] == undefined) {
-      continue;
-    }
-    let v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]];
-    if (v == undefined) {v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]] = [];}
-    v.push(msg.covered_states[i]);
-  }
-  for (let root in data.tile2states){
-    let tile = sm2idx[root];
-    let states = data.tile2states[root];
-    let i = 0;
-    let covered = data.tile2_visited_states[root];
-    //console.log(states);console.log(covered);
-    for(; i != states.length;++i){
-      let found = false;
-      for(let j = 0;j != covered.length;++j ){
-        if (states[i] == covered[j]){
-          found = true;
-          break;
-        }
-      }
-      if(!found) break;
-    }
-    if (i == states.length && states.length > 0) --i;
-    data.info.state[tile] = i;
-    //console.log(i);
-  }*/
   update_states(msg,data,sm2idx);
+  if (msg.exec_context_start_utc != undefined){
+    data.up_since = msg.exec_context_start_utc;
+  }
   THIS.compute_ordering();
   THIS.compute_visibility();
   //console.log(data);
@@ -470,7 +443,7 @@ let ceps_core_channel;
       let connection_info = document.getElementById("nav_info_connection");
       channel.subscribe("COVERAGE", 
        (msg)=>{
-        //console.log(msg);
+        console.log(msg);
          if (msg.what != undefined && msg.what == "init"){
           
           if (connection_info != undefined) setTimeout( () => {

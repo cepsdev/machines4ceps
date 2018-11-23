@@ -768,6 +768,9 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  int cur_states_size = execution_ctxt.current_states.size();
  taking_epsilon_transitions = false;
 
+ execution_ctxt.start_execution_time_stamp_hres = std::chrono::high_resolution_clock::now();
+ execution_ctxt.start_execution_time_stamp_system = std::chrono::system_clock::now();
+
  if(execution_ctxt.start_of_covering_states_valid()){
 	 bool changed = false;
 	 for(int i = execution_ctxt.start_of_covering_states; i != execution_ctxt.number_of_states;++i){

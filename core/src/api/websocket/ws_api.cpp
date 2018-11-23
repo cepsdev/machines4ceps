@@ -1002,17 +1002,28 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
         status = 4;
         return true;
     }
-    ctxt->last = t;
+    auto timestamp_barrier = ctxt->last;
     auto& exec = ctxt->smc->executionloop_context();
+    if (exec.log_timing && exec.time_stamp < timestamp_barrier) timestamp_barrier = exec.time_stamp;
+    ctxt->last = t;
+
     if (exec.start_of_covering_states_valid()){
+        //Handling of Entering & Exiting times
+        //>>
+        //std::cerr << exec.log_timing << std::endl;
+        //<<
         Websocket_interface::coverage_update_msg_t msg;
         msg.what = Websocket_interface::coverage_update_msg_t::what_t::UPDATE;
         msg.coverage_state_table = exec.coverage_state_table;
         msg.coverage_transitions_table = exec.coverage_transitions_table;
+        msg.enter_times = exec.enter_times;
+        msg.exit_times = exec.exit_times;
+        msg.time_stamp = timestamp_barrier;
         ctxt->q->push(msg);
     } else return false;
     return true;
 }
+
 
 class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
     threadsafe_queue<Websocket_interface::coverage_update_msg_t,std::queue<Websocket_interface::coverage_update_msg_t>>* q;
@@ -1023,13 +1034,15 @@ class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
                        threadsafe_queue<Websocket_interface::coverage_update_msg_t,std::queue<Websocket_interface::coverage_update_msg_t>>*q_)
                        :subscribe_channel_id{subscribe_channel_id_},q{q_}{}
     void run(State_machine_simulation_core* ctxt){
+        auto ts = std::chrono::high_resolution_clock::now();
+        if (ctxt->executionloop_context().log_timing) ts = ctxt->executionloop_context().time_stamp;
         ctxt->register_execution_context_loop_handler_cover_state_changed(
                     subscribe_channel_id,
                     subscribe_coverage_handler,
                     new Websocket_interface::subscribe_coverage_handler_ctxt_t{ctxt,
                                                           q,
                                                           subscribe_channel_id,
-                                                          std::chrono::high_resolution_clock::now(),
+                                                          ts,
                                                           ctxt->min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms()}
             );
     }
@@ -1172,7 +1185,10 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
     bool coverage_tables_are_current = false;
     auto& ctx = this->smc_->executionloop_context();
 
-    auto compute_init_msg_main_part = [&](std::vector<int>& coverage_transitions_table,std::vector<int>& coverage_table)->std::stringstream{
+    auto compute_init_msg_main_part = [&]( std::vector<int>& coverage_transitions_table,
+                                           std::vector<int>& coverage_table,
+                                           executionloop_context_t::enter_times_t& enter_times,
+                                           executionloop_context_t::exit_times_t& exit_times)->std::stringstream{
         top_level_sms = compute_root_sms(ctx);
         for(auto e : top_level_sms) {
             sm2cov[e] = 0.0;sm2_total_transitions[e] = 0;sm2_covered_transitions[e] = 0;
@@ -1274,14 +1290,49 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
 
             first_in_list = false;
         }
-        ss << "]" << "\n";
+        ss << "]," << "\n";
+
+        ss << "\"entering_times\":" << "[";
+        first_in_list = true;
+        for(auto e:enter_times){
+            if (!first_in_list) ss << ",";
+            auto state = e.first;
+            ss << state;
+            auto d = e.second - ctx.start_execution_time_stamp_hres;
+            auto secs = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+            auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(d).count() % 1000;
+            auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(d).count() % 1000;
+            ss << "," << secs << "," << millisecs << "," << microsecs;
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+
+        ss << "\"exiting_times\":" << "[";
+        first_in_list = true;
+        for(auto e:exit_times){
+            if (!first_in_list) ss << ",";
+            auto state = e.first;
+            ss << state;
+            auto d = e.second - ctx.start_execution_time_stamp_hres;
+            auto secs = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+            auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(d).count() % 1000;
+            auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(d).count() % 1000;
+            ss << "," << secs << "," << millisecs << "," << microsecs;
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+        ss << "\"exec_context_start_utc\":" << std::chrono::system_clock::to_time_t(ctx.start_execution_time_stamp_system) << "\n";
         return ss;
     };
 
     auto compute_update_msg_main_part = [&](std::vector<int>& coverage_table_new,
                                             std::vector<int>& coverage_table_old,
                                             std::vector<int>& coverage_transitions_table_new,
-                                            std::vector<int>& coverage_transitions_table_old)->std::stringstream{
+                                            std::vector<int>& coverage_transitions_table_old,
+                                            executionloop_context_t::enter_times_t& enter_times,
+                                            executionloop_context_t::exit_times_t& exit_times,
+                                            std::chrono::time_point<std::chrono::high_resolution_clock>& time_stamp
+                                            )->std::stringstream{
         std::vector<int> changed_sms;
         for(std::size_t i = 0; i != coverage_table_new.size(); ++i){
             auto state = i+ctx.start_of_covering_states;
@@ -1333,12 +1384,57 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
             ss << state;
             first_in_list = false;
         }
+        ss << "]," << "\n";
+
+        ss << "\"covered_states\":" << "[";
+        first_in_list = true;
+        for(auto s=0;s !=coverage_table_new.size();++s){
+            if (!coverage_table_new[s]) continue;
+            if (coverage_table_new[s] == coverage_table_old[s]) continue;
+            if (!first_in_list) ss << ",";
+            auto state = s+ctx.start_of_covering_states;
+            ss << state;
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+
+        ss << "\"entering_times\":" << "[";
+        first_in_list = true;
+        for(auto e:enter_times){
+            if (time_stamp > e.second) continue;
+            if (!first_in_list) ss << ",";
+            auto state = e.first;
+            ss << state;
+            auto d = e.second - ctx.start_execution_time_stamp_hres;
+            auto secs = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+            auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(d).count() % 1000;
+            auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(d).count() % 1000;
+            ss << "," << secs << "," << millisecs << "," << microsecs;
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+
+        ss << "\"exiting_times\":" << "[";
+        first_in_list = true;
+        for(auto e:exit_times){
+            if (time_stamp > e.second) continue;
+            if (!first_in_list) ss << ",";
+            auto state = e.first;
+            ss << state;
+            auto d = e.second - ctx.start_execution_time_stamp_hres;
+            auto secs = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+            auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(d).count() % 1000;
+            auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(d).count() % 1000;
+            ss << "," << secs << "," << millisecs << "," << microsecs;
+            first_in_list = false;
+        }
         ss << "]" << "\n";
+
         return ss;
     };
 
-    auto create_init_msg = [&](){
-        auto m = compute_init_msg_main_part(coverage_transitions_table_last,coverage_state_table_last);
+    auto create_init_msg = [&](coverage_update_msg_t& msg){
+        auto m = compute_init_msg_main_part(coverage_transitions_table_last,coverage_state_table_last,msg.enter_times,msg.exit_times);
         {
           std::lock_guard<std::mutex> lk(channel_mutex);
           channel_out.clear();
@@ -1357,7 +1453,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         } else q->wait_and_pop(msg);
         if (msg.what == coverage_update_msg_t::what_t::NEW_CHANNEL){
             if (msg.payload.channel.socket == -1) continue;
-            if (coverage_tables_are_current) create_init_msg();
+            if (coverage_tables_are_current) create_init_msg(msg);
 
             channel2socket[msg.payload.channel.id] = msg.payload.channel.socket;
             {
@@ -1406,9 +1502,15 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
             coverage_state_table_last = msg.coverage_state_table;
             coverage_transitions_table_last = msg.coverage_transitions_table;
             coverage_tables_are_current = true;
-            create_init_msg();
+            create_init_msg(msg);
         } else if (msg.what == coverage_update_msg_t::what_t::UPDATE) {
-            auto m = compute_update_msg_main_part (msg.coverage_state_table,coverage_state_table_last, msg.coverage_transitions_table, coverage_transitions_table_last);
+            auto m = compute_update_msg_main_part (msg.coverage_state_table,
+                                                   coverage_state_table_last,
+                                                   msg.coverage_transitions_table,
+                                                   coverage_transitions_table_last,
+                                                   msg.enter_times,
+                                                   msg.exit_times,
+                                                   msg.time_stamp);
             coverage_state_table_last = msg.coverage_state_table;
             coverage_transitions_table_last = msg.coverage_transitions_table;
             {

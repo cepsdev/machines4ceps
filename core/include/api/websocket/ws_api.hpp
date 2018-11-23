@@ -10,6 +10,8 @@
 #include "core/include/serialization.hpp"
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 #include "core/include/threadsafequeue.hpp"
+#include "core/include/state_machine.hpp"
+#include "core/include/sm_execution_ctxt.hpp"
 
 class State_machine_simulation_core;
 
@@ -26,6 +28,9 @@ public:
      } payload;
      std::vector<int> coverage_state_table;
      std::vector<int> coverage_transitions_table;
+     executionloop_context_t::enter_times_t enter_times;
+     executionloop_context_t::exit_times_t exit_times;
+     std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;
     };
 
     struct subscribe_coverage_handler_ctxt_t{

@@ -147,7 +147,7 @@ public:
         //
         // Statemachine execution context loop handler
 private:
-        long long min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms_ = 100;
+        long long min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms_ = 250;
         bool dangling_cover_state_changed_handler_call_ = false;
 public:
         long long& min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms() {return min_time_delta_between_coverage_status_updates_for_coverage_handlers_in_ms_;}
