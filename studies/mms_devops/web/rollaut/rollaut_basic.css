@@ -45,11 +45,11 @@
 .loading {
   dddisplay: inline-block;
   xxmargin-left : 6px;
-  width: 22px;
-  height: 22px;
-  border: 2px solid rgba(0,0,0,.4);
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0,0,0,.4);
   border-radius: 50%;
-  border-top-color: rgba(0,0,0,.6);
+  border-top-color: rgba(0,0,0,.8);
   animation: spinx 1s ease-in-out infinite;
   -webkit-animation: spin 1s ease-in-out infinite;
 }

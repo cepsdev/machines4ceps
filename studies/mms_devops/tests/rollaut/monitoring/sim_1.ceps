@@ -13,12 +13,11 @@ static_for(e:root.rollout){
         };
 
         on_enter{
-            start_periodic_timer(1.0*s,as_symbol(market_name+"sim_next","Event"));
+            start_periodic_timer(SIMULATION_BASE_PERIOD*s,as_symbol(market_name+"sim_next","Event"));
         };
 
         Actions{
          val action_counter = 1;
-
          static_for( step:e.steps.content().is_id()) {
             make_struct("do_action_"+text(action_counter), as_symbol(market_name+text(step)+"_finished","Event") );
             ignore_value { prev = step;action_counter=action_counter+1; };

@@ -1,5 +1,6 @@
-val number_of_markets = 2;
-val number_of_steps = 24;
+val number_of_markets = 1;
+val number_of_steps = 600;
+val SIMULATION_BASE_PERIOD = 3.4;
 
 rollout{
  markets{
@@ -14,7 +15,7 @@ rollout{
       as_identifier("step "+text(stp));
       step_details{
           id{"step "+text(stp);};
-          description{text(__uniform_dist(100,10000))+"This is the description of step #"+text(stp);};
+          description{text(__uniform_dist(100,10000))+"This is the description of step #"+text(stp)+" basmnb hasdgjahd jgjjjdh jghjghdj hgjgjasd jgjajhgdjsdg jhgjgd jasgdjasd jasdgjas dasjdajsd ajsdgajsdgasj";};
       };
   }
  };

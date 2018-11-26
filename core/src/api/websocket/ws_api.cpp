@@ -990,6 +990,9 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
             msg.what = Websocket_interface::coverage_update_msg_t::what_t::INIT;
             msg.coverage_state_table = exec.coverage_state_table;
             msg.coverage_transitions_table = exec.coverage_transitions_table;
+            msg.enter_times = exec.enter_times;
+            msg.exit_times = exec.exit_times;
+            msg.time_stamp = exec.start_execution_time_stamp_hres;
             ctxt->q->push(msg);
         } else return false;
         return true;
@@ -1433,8 +1436,10 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         return ss;
     };
 
-    auto create_init_msg = [&](coverage_update_msg_t& msg){
-        auto m = compute_init_msg_main_part(coverage_transitions_table_last,coverage_state_table_last,msg.enter_times,msg.exit_times);
+    auto create_init_msg = [&](coverage_update_msg_t& msg,
+                               executionloop_context_t::enter_times_t& enter_times,
+                               executionloop_context_t::exit_times_t& exit_times){
+        auto m = compute_init_msg_main_part(coverage_transitions_table_last,coverage_state_table_last,enter_times,exit_times);
         {
           std::lock_guard<std::mutex> lk(channel_mutex);
           channel_out.clear();
@@ -1445,15 +1450,25 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         cv_channel.notify_all();
     };
 
+    executionloop_context_t::enter_times_t current_enter_times;
+    executionloop_context_t::exit_times_t current_exit_times;
+
     for(;;){
         coverage_update_msg_t msg;
+
         if (!q->wait_for_data_with_timeout(std::chrono::milliseconds(5000))){
             cv_channel.notify_all();
             continue;
         } else q->wait_and_pop(msg);
+
+        if (msg.what != coverage_update_msg_t::NEW_CHANNEL){
+           current_enter_times = msg.enter_times;
+           current_exit_times = msg.exit_times;
+        }
+
         if (msg.what == coverage_update_msg_t::what_t::NEW_CHANNEL){
             if (msg.payload.channel.socket == -1) continue;
-            if (coverage_tables_are_current) create_init_msg(msg);
+            if (coverage_tables_are_current) create_init_msg(msg,current_enter_times,current_exit_times);
 
             channel2socket[msg.payload.channel.id] = msg.payload.channel.socket;
             {
@@ -1502,7 +1517,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
             coverage_state_table_last = msg.coverage_state_table;
             coverage_transitions_table_last = msg.coverage_transitions_table;
             coverage_tables_are_current = true;
-            create_init_msg(msg);
+            create_init_msg(msg,current_enter_times,current_exit_times);
         } else if (msg.what == coverage_update_msg_t::what_t::UPDATE) {
             auto m = compute_update_msg_main_part (msg.coverage_state_table,
                                                    coverage_state_table_last,

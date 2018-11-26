@@ -290,6 +290,8 @@
      permutations      : [],
      size              : data_size,
      sm2idx            : sm2idx,
+     enter_times       : {},
+     exit_times        : {},
      info              : {
        status      : new Array(data_size),
        cov         : new Array(data_size),
@@ -314,8 +316,19 @@
          //console.log(v);
          return v;
        },
-       state_reached_at : function (tile_idx){
-         return [undefined,undefined,undefined,undefined,undefined,undefined,undefined];
+       enter_time : function (tile_idx,state){
+        let states = THIS.tile2states[idx2sm[tile_idx]];
+        if (states == undefined) return undefined;
+        if (state >= states.length) return undefined;
+        let et = THIS.enter_times[states[state]];
+        return et;
+       },
+       exit_time : function (tile_idx,state){
+        let states = THIS.tile2states[idx2sm[tile_idx]];
+        if (states == undefined) return undefined;
+        if (state >= states.length) return undefined;
+        let et = THIS.exit_times[states[state]];
+        return et;
        }       
      },
      ordering    : new Array(data_size), // pos => tile index
@@ -374,16 +387,33 @@
    }
    data.tile2states[root] = v;
   }
-  update_states(msg,data,sm2idx);
   if (msg.exec_context_start_utc != undefined){
     data.up_since = msg.exec_context_start_utc;
   }
+  update_states(msg,data,sm2idx);
+  update_timings(msg,data,sm2idx);
+
   THIS.compute_ordering();
   THIS.compute_visibility();
-  //console.log(data);
+  console.log(data);
   let old_component = document.getElementById("info_tiles").firstChild;
   if (old_component) document.getElementById("info_tiles").removeChild(old_component);
   tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
+}
+
+function update_timings(msg,data,sm2idx,f){
+  function read_timings(v,o){
+    for(let i = 0; i != v.length && i + 3 < v.length;++i){
+     let state = v[i];
+     let secs_since_uptime = v[i+1];
+     let msecs_since_uptime = v[i+2];
+     let microsecs_since_uptime = v[i+3];
+     o[state] = {secs_since_uptime:secs_since_uptime,msecs_since_uptime:msecs_since_uptime,microsecs_since_uptime:microsecs_since_uptime};
+     i += 3;
+    }
+  };
+  read_timings(msg.entering_times,data.enter_times);
+  read_timings(msg.exiting_times,data.exit_times);  
 }
 
 function update_states(msg,data,sm2idx,f){
@@ -400,7 +430,6 @@ function update_states(msg,data,sm2idx,f){
     let states = data.tile2states[root];
     let i = 0;
     let covered = data.tile2_visited_states[root];
-    //console.log(states);console.log(covered);
     for(; i != states.length;++i){
       let found = false;
       for(let j = 0;j != covered.length;++j ){
@@ -461,6 +490,7 @@ let ceps_core_channel;
           }
           
           update_states(msg,tiles.data,sm2idx,tiles.set_state);
+          update_timings(msg,tiles.data,sm2idx);
          }        
        }
       );      

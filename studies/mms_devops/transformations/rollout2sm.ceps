@@ -27,6 +27,7 @@ static_for(e:root.rollout){
    };
    static_for(s_details : e.steps.content().step_details){label{as_identifier(s_details.id.content());s_details.description.content();};};
    label{Done;"Done";};
+   log{state_enter_timestamp;state_exit_timestamp;};
     
 
    cover{edges_upto_1;dont_cover_loops;};

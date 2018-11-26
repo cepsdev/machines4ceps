@@ -7,12 +7,13 @@ const TILE_STATUS_WARN  = 3;
 let rollaut_infobox = function (parent,tile_idx, data) {
  
   let THIS = {
-    initialized : false,
-    visible     : false,
-    data        : data,
-    tile_idx    : tile_idx,
-    dom         : undefined,
-    dom_cache   : {
+    initialized   : false,
+    visible       : false,
+    data          : data,
+    tile_idx      : tile_idx,
+    rendered_step : undefined,
+    dom           : undefined,
+    dom_cache     : {
       header : {
         main        : undefined,
         middle_text : undefined,
@@ -25,7 +26,8 @@ let rollaut_infobox = function (parent,tile_idx, data) {
         three_steps_tbl       : undefined,
         three_steps_tbl_outer : undefined,
         three_steps_steps     : [],
-        three_steps_left_side : []
+        three_steps_left_side : [],
+        three_steps_right_side : []
       }
     },
     layout      : {
@@ -82,28 +84,54 @@ let rollaut_infobox = function (parent,tile_idx, data) {
     },
     three_steps_view:{
      highlight_current_step:function(){
+      
        let outer = THIS.dom_cache.main.three_steps_tbl_outer;
        let current_state = THIS.data.info.state[THIS.tile_idx];
        let labels = THIS.data.info.state_labels(THIS.tile_idx);
        let steps = THIS.dom_cache.main.three_steps_steps;
        let left_side = THIS.dom_cache.main.three_steps_left_side;
-       
-       for(let i = 0; i != steps.length;++i) 
-       { 
-         left_side[i].setAttribute("class","");
-         steps[i].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;`);               
+       if (THIS.rendered_step != current_state) {
+         console.log("render");
+        for(let i = 0; i != steps.length;++i) 
+        { 
+          left_side[i].setAttribute("class","");
+          steps[i].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;`);               
+        }
+        if (current_state-1 >= 0) steps[current_state-1].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;filter:opacity(50%) blur(0.6px);`);
+        if (current_state+1 < steps.length ) steps[current_state+1].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;filter:opacity(50%) blur(0.6px);`);
+        steps[current_state].setAttribute("style",
+          `${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;border-top:1px solid;border-bottom:1px solid;font-weight: bold;`);     
+        if (current_state+1 !=  steps.length) left_side[current_state].setAttribute("class","loading");
+        if (current_state-1 >= 0){
+          if (left_side[current_state-1].firstChild != undefined) left_side[current_state-1].removeChild(left_side[current_state-1].firstChild);
+          left_side[current_state-1].setAttribute("style","text-align:left;padding-left:4px;font-size: small;filter:opacity(50%) blur(0.6px);");
+          let enter_t = THIS.data.info.enter_time(THIS.tile_idx,current_state-1);
+          let exit_t = THIS.data.info.exit_time(THIS.tile_idx,current_state-1);
+          if (exit_t != undefined && enter_t != undefined ){
+            THIS.rendered_step = current_state;
+            let d_msecs_tot = (exit_t.secs_since_uptime*1000+exit_t.msecs_since_uptime) - (enter_t.secs_since_uptime*1000+enter_t.msecs_since_uptime);
+            let d_min = Math.floor(d_msecs_tot / 60000 );
+            let d_secs = Math.floor(d_msecs_tot / 1000) % 60;
+            let d_msecs = d_msecs_tot % 1000;
+            function two_digits(d){
+              if (d == 0) return "00";
+              if (d < 10) return `0${d}`;
+              return `${d}`;
+            }
+
+            left_side[current_state-1].appendChild(document.createTextNode(`${two_digits(d_min)}:${two_digits(d_secs)}.${d_msecs}`+"\n(Duration)" ));
+          } else {
+            left_side[current_state-1].appendChild(document.createTextNode(`computing...`));
+          }
+
+        }
        }
-       if (current_state-1 >= 0) steps[current_state-1].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;filter:opacity(50%) blur(0.6px);`);
-       if (current_state+1 < steps.length ) steps[current_state+1].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;filter:opacity(50%) blur(0.6px);`);
-       steps[current_state].setAttribute("style",
-        `${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;border-top:1px solid;border-bottom:1px solid;font-weight: bold;`);     
-       if (current_state+1 !=  steps.length) left_side[current_state].setAttribute("class","loading");
-       let offset = -current_state*THIS.layout.get_three_steps_step_height()+THIS.layout.get_three_steps_step_height();
+       let offset = -current_state*THIS.layout.get_three_steps_step_height()+THIS.layout.get_three_steps_step_height();       
        outer.setAttribute("style",`position:relative;top:${offset}px;`);
      }
     },
     build_steps_view        : function() {      
-     //console.log(THIS.data.info.state[THIS.tile_idx]);
+     console.log("RENDER");
      let info_1 = document.createElement("div");
      info_1.setAttribute("style","height:1em;");
      let main = document.createElement("div");
@@ -139,6 +167,7 @@ let rollaut_infobox = function (parent,tile_idx, data) {
          
          
          let left_side = document.createElement("div");
+
          let right_side = document.createElement("div");
          //loader.setAttribute("class","rollaut_connection_loader_medium");
          left_side.setAttribute("style","float:right;");
@@ -149,6 +178,7 @@ let rollaut_infobox = function (parent,tile_idx, data) {
 
          THIS.dom_cache.main.three_steps_steps.push(tdc_outer);
          THIS.dom_cache.main.three_steps_left_side.push(left_side);
+         THIS.dom_cache.main.three_steps_right_side.push(right_side);
          td.appendChild(tdc_outer);
          tr.appendChild(td_left);
          tr.appendChild(td);
