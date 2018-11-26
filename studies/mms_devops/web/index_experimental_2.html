@@ -151,12 +151,13 @@
      filters           : [],
      permutations      : [],
      size              : data_size,
+     up_since          : undefined,
      info              : {
        status      : new Array(data_size),
        cov         : new Array(data_size),
        title       : new Array(data_size),
        state       : new Array(data_size), //a non negative integer
-       up_since    : undefined,
+       
        state_labels : function (tile_idx){
          return ["State 1","State 2","State 3","State 4","State 5","State 6","State 7"];
        },
@@ -395,7 +396,7 @@
 
   THIS.compute_ordering();
   THIS.compute_visibility();
-  console.log(data);
+  //console.log(data);
   let old_component = document.getElementById("info_tiles").firstChild;
   if (old_component) document.getElementById("info_tiles").removeChild(old_component);
   tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
@@ -472,13 +473,15 @@ let ceps_core_channel;
       let connection_info = document.getElementById("nav_info_connection");
       channel.subscribe("COVERAGE", 
        (msg)=>{
-        console.log(msg);
+        //console.log(msg);
          if (msg.what != undefined && msg.what == "init"){
-          
+          console.log(msg);          
           if (connection_info != undefined) setTimeout( () => {
             connection_info.setAttribute("class","badge badge-success");
             connection_info.innerHTML =
-            `<span>Ok</span>`;
+            `<span>Ok<br/>
+             Workflow has <b>${msg.total_of_states}</b> states<br/>
+             and <b>${msg.total_of_transitions}</b> transitions</span>`;
           },2000);
           for(let i = 0; i != msg.toplevel_sms.length;++i){
             sm2idx[msg.toplevel_sms[i]] = i;
@@ -489,8 +492,9 @@ let ceps_core_channel;
             tiles.set_coverage(sm2idx[msg.toplevel_sms[i]],msg.toplevel_sms_transition_coverage[i]);
           }
           
-          update_states(msg,tiles.data,sm2idx,tiles.set_state);
           update_timings(msg,tiles.data,sm2idx);
+          update_states(msg,tiles.data,sm2idx,tiles.set_state);
+          
          }        
        }
       );      

@@ -1324,7 +1324,9 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
             first_in_list = false;
         }
         ss << "]," << "\n";
-        ss << "\"exec_context_start_utc\":" << std::chrono::system_clock::to_time_t(ctx.start_execution_time_stamp_system) << "\n";
+        ss << "\"exec_context_start_utc\":" << std::chrono::system_clock::to_time_t(ctx.start_execution_time_stamp_system) << ",\n";
+        ss << "\"total_of_states\":" << coverage_table.size() << ",\n";
+        ss << "\"total_of_transitions\":" << coverage_transitions_table.size() << "\n";
         return ss;
     };
 
