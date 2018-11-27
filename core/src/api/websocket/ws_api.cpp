@@ -1088,9 +1088,50 @@ class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
 };
 
 void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q){
-
     std::map<int,std::vector<std::string>> stateindex2categories;
     std::map<std::string,int> categories;
+    std::vector<executionloop_context_t::state_present_rep_t> current_states;
+    std::unordered_map<int, unsigned long long> root2active_categories;
+    auto& ctx = this->smc_->executionloop_context();
+
+    auto get_root_sm = [&](executionloop_context_t const & ctx, int state){
+        for(;ctx.get_parent(state) != 0;) state = ctx.get_parent(state);
+        return state;
+    };
+
+    auto compute_categories = [&](){
+        for(auto& e : root2active_categories){
+            e.second = 0;
+        }
+        for(auto i = ctx.start_of_covering_states;  i < current_states.size();++i){
+            if (!current_states[i]) continue;
+            if (!stateindex2categories[i].size()) continue;
+            auto const & v = stateindex2categories[i];
+            auto & r = root2active_categories[get_root_sm(ctx,i)];
+            for(auto const & c : v) r|=(1 << categories[c]);
+        }
+    };
+
+    auto compute_categories_diff = [&](){
+        auto t = root2active_categories;
+
+        std::vector<int> r;
+        for(auto& e : root2active_categories){
+            e.second = 0;
+        }
+        for(auto i = ctx.start_of_covering_states;  i < current_states.size();++i){
+            if (!current_states[i]) continue;
+            if (!stateindex2categories[i].size()) continue;
+            auto const & v = stateindex2categories[i];
+            auto & r = root2active_categories[get_root_sm(ctx,i)];
+            for(auto const & c : v) r|=(1 << categories[c]);
+        }
+        for(auto e: root2active_categories){
+            //std::cerr  << e.first << " " << e.second << std::endl;
+            if (e.second != t[e.first]) r.push_back(e.first);
+        }
+        return r;
+    };
 
     auto send_reply = [&](int sck,std::string const & reply,std::string const & prefix="",std::string const & postfix="") -> bool   {
         auto len = prefix.length()+reply.length()+postfix.length();
@@ -1124,10 +1165,6 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
     auto cleanup_f = [this](){
         using namespace std;
 
-    };
-    auto get_root_sm = [&](executionloop_context_t const & ctx, int state){
-        for(;ctx.get_parent(state) != 0;) state = ctx.get_parent(state);
-        return state;
     };
 
     auto compute_root_sms = [&](executionloop_context_t const & ctx){
@@ -1226,13 +1263,12 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
     std::mutex writer_thread_map_mutex;
     std::condition_variable cv_channel;
     bool coverage_tables_are_current = false;
-    auto& ctx = this->smc_->executionloop_context();
+    top_level_sms = compute_root_sms(ctx);
 
     auto compute_init_msg_main_part = [&]( std::vector<int>& coverage_transitions_table,
                                            std::vector<int>& coverage_table,
                                            executionloop_context_t::enter_times_t& enter_times,
                                            executionloop_context_t::exit_times_t& exit_times)->std::stringstream{
-        top_level_sms = compute_root_sms(ctx);
         for(auto e : top_level_sms) {
             sm2cov[e] = 0.0;sm2_total_transitions[e] = 0;sm2_covered_transitions[e] = 0;
         }
@@ -1482,8 +1518,20 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
             ss << "," << secs << "," << millisecs << "," << microsecs;
             first_in_list = false;
         }
-        ss << "]" << "\n";
+        ss << "]," << "\n";
 
+        {
+            auto v = compute_categories_diff();
+            ss << "\"category_changes\":" << "[";
+            first_in_list = true;
+            for(auto e:v){
+                if (!first_in_list) ss << ",";
+                auto cats = root2active_categories[e];
+                ss << e << "," << cats;
+                first_in_list = false;
+            }
+            ss << "]" << "\n";
+        }
         return ss;
     };
 
@@ -1514,13 +1562,18 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
          for(auto e: state->categories()) {
              v.push_back(e);
              auto it = categories.find(e);
-             if (it==categories.end()) categories[e] = ++counter;
+             if (it==categories.end()) categories[e] = counter++;
          }
-         stateindex2categories[state->idx_] = v;
+         if (v.size()) stateindex2categories[state->idx_] = v;
         }
      };
 
     traverse_sms(State_machine::statemachines,f);
+    //Computation of Categories
+
+    for(auto i : top_level_sms){
+        root2active_categories[i] = 0;
+    }
 
     for(;;){
         coverage_update_msg_t msg;
@@ -1533,6 +1586,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         if (msg.what != coverage_update_msg_t::NEW_CHANNEL){
            current_enter_times = msg.enter_times;
            current_exit_times = msg.exit_times;
+           current_states = msg.current_states;
         }
 
         if (msg.what == coverage_update_msg_t::what_t::NEW_CHANNEL){

@@ -40,4 +40,6 @@ cloud/server/push
 cloud/trash
 cloud/sim_nodes
 nohup.out
-
+studies/mms_devops/node_modules/
+*.jar
+*.war

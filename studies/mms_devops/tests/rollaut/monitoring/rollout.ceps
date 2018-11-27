@@ -1,6 +1,6 @@
 val number_of_markets = 40;
 val number_of_steps = 20;
-val SIMULATION_BASE_PERIOD = 1.0;
+
 
 rollout{
  markets{

@@ -16,9 +16,7 @@
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
     <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">   
-    <link href="rollaut/rollaut_basic.css" rel="stylesheet">
-    <link href="spin/spin.css" rel="stylesheet">
-    
+    <link href="rollaut/rollaut_basic.css" rel="stylesheet">    
 <style>
     @font-face {
    font-family: 'Material Icons';
@@ -143,7 +141,6 @@
 <script src="jquery/js/jquery.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="rollaut/tiles.js"></script>
-<script src="spin/spin.js"></script>
 
 <script>
  function test_data(data_size){
@@ -469,13 +466,25 @@ let ceps_core_channel;
 
   ceps_core_channel.register_handler("open",
     (channel,handler) => {
+      let map_tile_status2cat_idx=undefined;
       let sm2idx = {};
       let connection_info = document.getElementById("nav_info_connection");
       channel.subscribe("COVERAGE", 
        (msg)=>{
         //console.log(msg);
          if (msg.what != undefined && msg.what == "init"){
-          console.log(msg);          
+          if(msg.category_mapping!=undefined){
+            map_tile_status2cat_idx = {};
+            for(let i = 0; i != msg.category_mapping.length; ++i){
+              let cat_name = msg.category_mapping[i];
+              let idx = 1 << msg.category_mapping[i+1];
+              if (cat_name == "FailState") map_tile_status2cat_idx[TILE_STATUS_ERROR] = idx ;
+              else if (cat_name == "WarnState") map_tile_status2cat_idx[TILE_STATUS_WARN] = idx;
+              else if (cat_name == "DoneState") map_tile_status2cat_idx[TILE_STATUS_DONE] = idx;
+              ++i;
+            }
+          }
+          //console.log(msg.category_mapping,map_cat_idx2_tile_status);          
           if (connection_info != undefined) setTimeout( () => {
             connection_info.setAttribute("class","badge badge-success");
             connection_info.innerHTML =
@@ -494,7 +503,17 @@ let ceps_core_channel;
           
           update_timings(msg,tiles.data,sm2idx);
           update_states(msg,tiles.data,sm2idx,tiles.set_state);
-          
+          let v = msg.category_changes;
+          if (v != undefined)
+           for(let i = 0; i != v.length;++i){
+             let tile_idx = sm2idx[v[i]];
+             let cat_idx = v[i+1];
+             if (cat_idx == 0) tiles.set_status(tile_idx,TILE_STATUS_OK);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_ERROR]) tiles.set_status(tile_idx,TILE_STATUS_ERROR);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_WARN]) tiles.set_status(tile_idx,TILE_STATUS_WARN);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_DONE]) tiles.set_status(tile_idx,TILE_STATUS_DONE);
+             ++i;
+           }
          }        
        }
       );      

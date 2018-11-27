@@ -19,7 +19,7 @@ static_for(e:root.rollout){
               static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_critical","WarnState");};
               static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_error","FailState");};
               as_symbol("Killed","FailState");
-              as_symbol("Done","DoneState");              
+              as_symbol("Final","DoneState");              
             };
             
             dont_cover{
