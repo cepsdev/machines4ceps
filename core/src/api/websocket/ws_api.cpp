@@ -11,6 +11,40 @@
 #include "core/include/base_defs.hpp"
 
 /*
+* State Machine Utilities
+*/
+
+template<typename F, typename T> void traverse_sm(std::unordered_set<State_machine*>& m,State_machine* sm, T const & sms, F f){
+    f(sm);
+
+    for(auto state: sm->states()){
+        if (!state->is_sm() || state->smp() == nullptr) continue;
+        if (m.find(state->smp()) != m.end()) continue;
+        m.insert(state->smp());
+        traverse_sm(m,state->smp(),sms,f);
+    }
+
+    for(auto subsm: sm->children()){
+        //assert(m.find(subsm) != m.end());
+        if (m.find(subsm) != m.end()) continue;
+
+        m.insert(subsm);
+        traverse_sm(m,subsm,sms,f);
+    }
+}
+
+template<typename F, typename T> void traverse_sms(T const & sms, F f){
+    std::unordered_set<State_machine*> m;
+    for(auto sm: sms){
+     if (m.find(sm.second) != m.end()) continue;
+     traverse_sm(m,sm.second,sms,f);
+
+     m.insert(sm.second);
+    }
+}
+
+
+/*
  * http/websocket routines
 */
 static std::string escape_json_string(std::string const & s){
@@ -981,7 +1015,7 @@ void Websocket_interface::handler(int sck){
 }
 
 
-static bool subscribe_coverage_handler(void* ctxt_,int& status){
+static bool subscribe_coverage_handler(std::vector<executionloop_context_t::state_present_rep_t> const & new_states,void* ctxt_,int& status){
     auto ctxt = static_cast<Websocket_interface::subscribe_coverage_handler_ctxt_t*>(ctxt_);
     if (status == 1){ // Very first call
         auto& exec = ctxt->smc->executionloop_context();
@@ -993,6 +1027,7 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
             msg.enter_times = exec.enter_times;
             msg.exit_times = exec.exit_times;
             msg.time_stamp = exec.start_execution_time_stamp_hres;
+            msg.current_states = new_states;
             ctxt->q->push(msg);
         } else return false;
         return true;
@@ -1022,6 +1057,7 @@ static bool subscribe_coverage_handler(void* ctxt_,int& status){
         msg.enter_times = exec.enter_times;
         msg.exit_times = exec.exit_times;
         msg.time_stamp = timestamp_barrier;
+        msg.current_states = new_states;
         ctxt->q->push(msg);
     } else return false;
     return true;
@@ -1052,6 +1088,10 @@ class Subscribe_coverage : public sm4ceps_plugin_int::Executioncontext {
 };
 
 void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<coverage_update_msg_t,std::queue<coverage_update_msg_t>>* q){
+
+    std::map<int,std::vector<std::string>> stateindex2categories;
+    std::map<std::string,int> categories;
+
     auto send_reply = [&](int sck,std::string const & reply,std::string const & prefix="",std::string const & postfix="") -> bool   {
         auto len = prefix.length()+reply.length()+postfix.length();
         bool fin = true;
@@ -1295,6 +1335,15 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         }
         ss << "]," << "\n";
 
+        ss << "\"category_mapping\":" << "[";
+        first_in_list = true;
+        for(auto & e : categories){
+            if (!first_in_list) ss << ",";
+            ss << "\""<<e.first<< "\","<<e.second;
+            first_in_list = false;
+        }
+        ss << "]," << "\n";
+
         ss << "\"entering_times\":" << "[";
         first_in_list = true;
         for(auto e:enter_times){
@@ -1454,6 +1503,24 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
 
     executionloop_context_t::enter_times_t current_enter_times;
     executionloop_context_t::exit_times_t current_exit_times;
+
+    //Compute Category Mapping
+
+    int counter = 0;
+    auto f = [this,&stateindex2categories,&counter,&categories](State_machine* cur_sm){
+        for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
+         auto state = *it;
+         std::vector<std::string> v;
+         for(auto e: state->categories()) {
+             v.push_back(e);
+             auto it = categories.find(e);
+             if (it==categories.end()) categories[e] = ++counter;
+         }
+         stateindex2categories[state->idx_] = v;
+        }
+     };
+
+    traverse_sms(State_machine::statemachines,f);
 
     for(;;){
         coverage_update_msg_t msg;

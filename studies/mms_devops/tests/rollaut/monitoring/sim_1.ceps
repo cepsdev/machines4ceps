@@ -1,4 +1,5 @@
 static_for(e:root.rollout){
+    val counter = 0.0;
     static_for(market:e.markets.market){
        val market_name = text(market.content().id.content());
        sm{
@@ -13,7 +14,7 @@ static_for(e:root.rollout){
         };
 
         on_enter{
-            start_periodic_timer(SIMULATION_BASE_PERIOD*s,as_symbol(market_name+"sim_next","Event"));
+            start_periodic_timer(SIMULATION_BASE_PERIOD*s+counter*s,as_symbol(market_name+"sim_next","Event"));
         };
 
         Actions{
@@ -43,5 +44,6 @@ static_for(e:root.rollout){
         t{prev;Final; as_symbol(market_name+"sim_next","Event");as_identifier("do_action_"+text(action_counter));};
 
        };
+       counter = counter + 0.1;
     }
  }

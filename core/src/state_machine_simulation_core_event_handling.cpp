@@ -428,7 +428,7 @@ do{
         {
             for(;;){
              auto r = this->main_event_queue().wait_for_data_with_timeout(std::chrono::milliseconds(100));
-             run_execution_context_loop_cover_state_changed_handlers();
+             run_execution_context_loop_cover_state_changed_handlers(executionloop_context().current_states);
              if(r) break;
              if (!dangling_cover_state_changed_handler_call()) break;
             }

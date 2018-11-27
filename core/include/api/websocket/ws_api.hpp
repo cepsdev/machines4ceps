@@ -28,6 +28,7 @@ public:
      } payload;
      std::vector<int> coverage_state_table;
      std::vector<int> coverage_transitions_table;
+     std::vector<executionloop_context_t::state_present_rep_t> current_states;
      executionloop_context_t::enter_times_t enter_times;
      executionloop_context_t::exit_times_t exit_times;
      std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;

@@ -156,17 +156,17 @@ public:
         bool dangling_cover_state_changed_handler_call() const {return dangling_cover_state_changed_handler_call_;}
         void register_execution_context_loop_handler_cover_state_changed(
                 int id,
-                bool (*)(void*,int&),
+                bool (*)(std::vector<executionloop_context_t::state_present_rep_t> const &,void*,int&),
                 void* data
         );
 
         struct execution_context_loop_handler_cover_state_changed_handler_info_t{
           bool active;
-          bool (*handler)(void*,int&);
+          bool (*handler)(std::vector<executionloop_context_t::state_present_rep_t> const &,void*,int&);
           void* data;
         };
         std::vector<execution_context_loop_handler_cover_state_changed_handler_info_t> execution_context_loop_handler_cover_state_changed_handler_infos;
-        void run_execution_context_loop_cover_state_changed_handlers();
+        void run_execution_context_loop_cover_state_changed_handlers(std::vector<executionloop_context_t::state_present_rep_t> const & new_states);
 
         //
         //
@@ -582,6 +582,7 @@ public:
         bool stateindex2categories_valid = false;
         std::map<int,std::vector<std::string>> stateindex2categories;
         std::map<std::string,int> statistics_category;
+        std::map<int,std::vector<std::string>> & state2categories() {return stateindex2categories;}
 public:
 	std::vector<event_triggered_sender_t>& event_triggered_sender(){return event_triggered_sender_;};
 	bool running_as_node() const {return running_as_node_;}

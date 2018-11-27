@@ -932,7 +932,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
       if(!changes_exists)for(std::size_t i = execution_ctxt.start_of_covering_states; i < execution_ctxt.current_states.size();++i){
          if (temp[i] != execution_ctxt.current_states[i]){changes_exists=true;break;}
       }
-      if (changes_exists)run_execution_context_loop_cover_state_changed_handlers();
+      if (changes_exists)run_execution_context_loop_cover_state_changed_handlers(temp);
  }
 
  memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));
@@ -952,13 +952,13 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 
 void State_machine_simulation_core::register_execution_context_loop_handler_cover_state_changed(
            int id,
-           bool (*handler)(void*,int&),
+           bool (*handler)(std::vector<executionloop_context_t::state_present_rep_t> const &,void*,int&),
            void* data){
     if(handler == nullptr) {
         return;
     }
     int status = 1;
-    if(!handler(data,status)) return;
+    if(!handler(executionloop_context().current_states,data,status)) return;
     for(auto& e: execution_context_loop_handler_cover_state_changed_handler_infos){
         if (e.active) continue;
         e = {true,handler,data};
@@ -968,12 +968,12 @@ void State_machine_simulation_core::register_execution_context_loop_handler_cove
 }
 
 
-void State_machine_simulation_core::run_execution_context_loop_cover_state_changed_handlers() {
+void State_machine_simulation_core::run_execution_context_loop_cover_state_changed_handlers(std::vector<executionloop_context_t::state_present_rep_t> const & new_states) {
     dangling_cover_state_changed_handler_call() = false;
     for(auto& e: execution_context_loop_handler_cover_state_changed_handler_infos){
         if (!e.active) continue;
         int status = 0;
-        e.active = e.handler(e.data,status);
+        e.active = e.handler(new_states,e.data,status);
         if (status == 4) dangling_cover_state_changed_handler_call() = true;
     }
 }
