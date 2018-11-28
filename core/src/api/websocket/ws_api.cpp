@@ -1326,7 +1326,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
             if (!first_in_list) ss << ",";
             auto label = assoc_sm->label();
             if(label.length()==0) label = assoc_sm->id();
-            ss << "\""<<label<<"\"";
+            ss << "\""<<escape_json_string(label)<<"\"";
             first_in_list = false;
         }
         ss << "]," << "\n";
@@ -1343,7 +1343,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         for(auto label: label2states){
             if (!label.second.size()) continue;
             if (!first_in_list) ss << ",";
-            ss << "\""<<label.first<<"\"";
+            ss << "\""<<escape_json_string(label.first)<<"\"";
             for(auto state: label.second) ss << "," << state;
             first_in_list = false;
         }
@@ -1375,7 +1375,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         first_in_list = true;
         for(auto & e : categories){
             if (!first_in_list) ss << ",";
-            ss << "\""<<e.first<< "\","<<e.second;
+            ss << "\""<<escape_json_string(e.first)<< "\","<<e.second;
             first_in_list = false;
         }
         ss << "]," << "\n";
