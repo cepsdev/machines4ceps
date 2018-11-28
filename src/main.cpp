@@ -41,28 +41,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define VERSION_SM4CEPS_MAJOR "0"
-#define VERSION_SM4CEPS_MINOR "7.2"
+#define VERSION_SM4CEPS_MINOR "8.0"
 
 vector < string > generated_sql_file_names;
-
-
-
-
-
-
-
 bool DUMP_PLANTUML_REP_TO_COUT = false;
 bool SIMULATION_PRINT_CURRENT_STATES = true;
-
 auto SM_COUNTER = 0;
-
 bool gen_doc = false;
 std::string doc_out_dir;
-
-
-
-
-
 State_machine* entry_machine = nullptr;
 
 
@@ -81,9 +67,9 @@ void fatal(int code, std::string const & msg )
 {
 	stringstream ss;
 	if (State_machine_simulation_core::ERR_FILE_OPEN_FAILED == code)
-		ss << "Couldn't open file '" << msg <<"'.";
+        ss << "Couldn't open '" << msg <<"'.";
 	else if (State_machine_simulation_core::ERR_CEPS_PARSER == code)
-		ss << "A parser exception occured in file '" << msg << "'.";
+        ss << "A parser exception occured in '" << msg << "'.";
 	else ss << msg;
 	throw runtime_error{ss.str()};
 }
@@ -121,14 +107,7 @@ void warn(int code, std::string const & msg)
 
 }
 
-
-
-
-
-
-
 void process_simulation(ceps::ast::Nodeset& sim,ceps::Ceps_Environment& ceps_env,ceps::ast::Nodeset& universe);
-
 
 void run_as_monitor(Result_process_cmd_line const & result_cmd_line){
 
@@ -248,9 +227,6 @@ void run_as_monitor(Result_process_cmd_line const & result_cmd_line){
 
 			delete[] data;
 		}
-
-		//std:cout << "***Table of Systemstates***\n";
-
 		std::this_thread::sleep_for(std::chrono::microseconds(update_interval));
 	}
 
@@ -261,50 +237,16 @@ int main(int argc,char ** argv)
 {
 	if (argc <= 1)
 	{
-		cout <<  "ceps is a tool for writing executable specifications.\n";
-		cout << "Usage: " << argv[0] << " FILE [FILE...] [-i] [-oPATH] [--debug]\n";
+        cout <<  "ceps is a tool for writing executable specifications and supports the cepS Ansatz.\n";
+        cout << "Usage: " << argv[0] << " FILE [FILE...] [option...]\n";
 		cout << "\n";
-		cout << "Example:\n " << argv[0] <<" a.ceps b.ceps .\n";
+        cout << "Example:\n " << argv[0] <<" a.ceps b.ceps\n";
 		return EXIT_FAILURE;
 	}
-
-
 	auto result_cmd_line = process_cmd_line(argc,argv);
 
 	if (result_cmd_line.version_flag_set)
-	{
-			#ifdef __GNUC__
-			 		std::cout << "\n"
-							  << "VERSION " VERSION_SM4CEPS_MAJOR << "."<<  VERSION_SM4CEPS_MINOR   <<" (" __DATE__ << ") BUILT WITH GCC "<< "" __VERSION__ ""<< " on GNU/LINUX "
-			 #ifdef __LP64__
-							  << "64BIT"
-			 #else
-							  << "32BIT"
-			 #endif
-							  << "\n(C) BY THE AUTHORS OF ceps \n" << std::endl;
-			#else
-				#ifdef _MSC_FULL_VER
-					std::cout << "\n"
-						<< "VERSION " VERSION_SM4CEPS_MAJOR << "." << VERSION_SM4CEPS_MINOR << " (" __DATE__ << ") BUILT WITH MS VISUAL C++ " <<  _MSC_FULL_VER  << " on Windows "
-					#ifdef _WIN64
-						<< "64BIT"
-					#else
-						<< "32BIT"
-					#endif
-						<< "\n(C) BY THE AUTHORS OF ceps\n" << std::endl;
-				#endif
-			#endif
-	}
-
-	// Do sanity checks
-
-	for(std::string const & f : result_cmd_line.definition_file_rel_paths)
-	 if (!std::ifstream{f})
-	 {
-		 std::cerr << "\n***Error: Couldn't open file '" << f << "' " << std::endl << std::endl;
-		 return EXIT_FAILURE;
-	 }
-
+        std::cout << "ceps version " VERSION_SM4CEPS_MAJOR << "."<<  VERSION_SM4CEPS_MINOR<<"\n";
 #ifdef _WIN32
 	WORD wVersionRequested;
 	WSADATA wsaData;
@@ -323,9 +265,7 @@ int main(int argc,char ** argv)
 	}
 #else
 	signal(SIGPIPE, SIG_IGN);
-#endif
-
-	
+#endif	
 
 	State_machine_simulation_core sm_core;
 	sm_core.set_fatal_error_handler(fatal);

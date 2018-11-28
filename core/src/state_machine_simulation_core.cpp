@@ -116,9 +116,32 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
         std::string& last_file_processed)
 {
 	std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
-	for(auto const & file_name : file_names)
+    bool next_is_expression = false;
+    for(auto const & file_name : file_names)
 	{
-		if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) == ".xml"){
+        if (next_is_expression){
+            next_is_expression = false;
+            std::stringstream def_file{ last_file_processed = file_name};
+            if (!def_file) fatal_(ERR_FILE_OPEN_FAILED,file_name);
+
+            Ceps_parser_driver driver{ceps_env_current().get_global_symboltable(),def_file};
+            ceps::Cepsparser parser{driver};
+            if (parser.parse() != 0 || driver.errors_occured())
+                fatal_(ERR_CEPS_PARSER, file_name);
+            ceps::interpreter::evaluate(current_universe(),
+                                        driver.parsetree().get_root(),
+                                        ceps_env_current().get_global_symboltable(),
+                                        ceps_env_current().interpreter_env(),
+                                        &generated_nodes
+                                        );
+            continue;
+
+        }
+        else if (file_name == "-e"){
+          next_is_expression = true;
+          continue;
+        }
+        else if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) == ".xml"){
 
 			auto root_node = ceps::ast::read_xml_file(file_name);
 			if (root_node == nullptr) fatal_(ERR_FILE_OPEN_FAILED, file_name);
@@ -200,12 +223,6 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 									ceps_env_current().interpreter_env(),
 									&generated_nodes
 									);
-        /*std::cout << "!!!!!!!!!!!!" << std::endl;
-        for (auto e : ceps_env_current().get_global_symboltable().scopes[0]->name_to_symbol ){
-            std::cout << e.first << std::endl;
-        }*/
-
-
 	}//for
 	return generated_nodes;
 }//process_files
@@ -1131,14 +1148,18 @@ void init_state_machine_simulation(	int argc,
 
 	std::vector<std::string> v = result_cmd_line.definition_file_rel_paths;
 	v.insert(v.end(),result_cmd_line.post_processing_rel_paths.begin(),result_cmd_line.post_processing_rel_paths.end() );
-	for(std::string const & f : v)
-		 if (!std::ifstream{f})
-		 {
-			 last_file_processed = f;
-			 std::stringstream ss;
-			 ss << "\n***Error: Couldn't open file '" << f << "' " << std::endl << std::endl;
-			 throw std::runtime_error(ss.str()) ;
-		 }
+    bool skip_next = false;
+    for(std::string const & f : v){
+      if (skip_next){skip_next=false;continue;}
+      if (f =="-e"){skip_next=true;continue;}
+      if (!std::ifstream{f})
+      {
+         last_file_processed = f;
+         std::stringstream ss;
+         ss << "\n***Error: Couldn't open file '" << f << "' " << std::endl << std::endl;
+         throw std::runtime_error(ss.str()) ;
+      }
+    }
 
 
 #ifdef __gnu_linux__
