@@ -471,8 +471,22 @@ let ceps_core_channel;
       let connection_info = document.getElementById("nav_info_connection");
       channel.subscribe("COVERAGE", 
        (msg)=>{
+        function update_status(msg){
+          let v = msg.category_changes;
+          if (v != undefined)
+           for(let i = 0; i != v.length;++i){
+             let tile_idx = sm2idx[v[i]];
+             let cat_idx = v[i+1];
+             if (cat_idx == 0) tiles.set_status(tile_idx,TILE_STATUS_OK);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_ERROR]) tiles.set_status(tile_idx,TILE_STATUS_ERROR);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_WARN]) tiles.set_status(tile_idx,TILE_STATUS_WARN);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_DONE]) tiles.set_status(tile_idx,TILE_STATUS_DONE);
+             ++i;
+           }
+        }
         //console.log(msg);
          if (msg.what != undefined && msg.what == "init"){
+          console.log(msg);
           if(msg.category_mapping!=undefined){
             map_tile_status2cat_idx = {};
             for(let i = 0; i != msg.category_mapping.length; ++i){
@@ -495,7 +509,8 @@ let ceps_core_channel;
           for(let i = 0; i != msg.toplevel_sms.length;++i){
             sm2idx[msg.toplevel_sms[i]] = i;
           }
-          create_tiles_deck(msg,sm2idx);          
+          create_tiles_deck(msg,sm2idx);
+          update_status(msg);
          } else if (msg.what != undefined && msg.what == "update"){
           for(let i = 0; i != msg.toplevel_sms.length;++i){
             tiles.set_coverage(sm2idx[msg.toplevel_sms[i]],msg.toplevel_sms_transition_coverage[i]);
@@ -503,17 +518,7 @@ let ceps_core_channel;
           
           update_timings(msg,tiles.data,sm2idx);
           update_states(msg,tiles.data,sm2idx,tiles.set_state);
-          let v = msg.category_changes;
-          if (v != undefined)
-           for(let i = 0; i != v.length;++i){
-             let tile_idx = sm2idx[v[i]];
-             let cat_idx = v[i+1];
-             if (cat_idx == 0) tiles.set_status(tile_idx,TILE_STATUS_OK);
-             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_ERROR]) tiles.set_status(tile_idx,TILE_STATUS_ERROR);
-             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_WARN]) tiles.set_status(tile_idx,TILE_STATUS_WARN);
-             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_DONE]) tiles.set_status(tile_idx,TILE_STATUS_DONE);
-             ++i;
-           }
+          update_status(msg);
          }        
        }
       );      
