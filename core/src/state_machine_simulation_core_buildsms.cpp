@@ -168,7 +168,6 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	for(auto sm : sms) smsv.push_back(sm.second);
     int ctr = 1;
     bool non_cover_sm = true;
-
 	auto compute_state_ids_fn = [&ctr,&ev_to_id,&non_cover_sm](State_machine* cur_sm){
 		if (cur_sm->cover() && non_cover_sm) return;
 		if (!cur_sm->cover() && !non_cover_sm) return;
@@ -238,10 +237,19 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	 }
 	);
 
+    //Build a map which maps any sm A to the sm's A(i) s.t. there exists a transition A(i) -> A
 
+    std::map<State_machine*, std::set<State_machine*> > mmm;
+    traverse_sms(smsv,[&ctx,&mmm](State_machine* sm){
+        for(auto & t : sm->transitions()){
+            if (!t.from_.is_sm_) continue;
+            if (t.to_.smp_ == sm) continue;
+            mmm[t.from_.smp_].insert(sm);
+        }
+    });
 
 	//Build loop execution context
-	auto build_transitions_table = [&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv,smp,&non_cover_sm](State_machine* cur_sm){
+    auto build_transitions_table = [&ctr,&ev_ctr,&ev_to_id, &ctx,&smsv,smp,&non_cover_sm,&mmm](State_machine* cur_sm){
 
 		if (cur_sm->cover() && non_cover_sm) return;
 		if (!cur_sm->cover() && !non_cover_sm) return;
@@ -254,8 +262,8 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		auto insert_transitions = [&ctx,&ev_to_id,smp](State_machine* sm_from, State_machine* sm_to){
 			 for(auto & t : sm_from->transitions()){
 			  if (sm_from != sm_to){
-			   if (!t.from_.is_sm_) continue;
-			   if (t.from_.smp_ != sm_to) continue;
+               if (!t.from_.is_sm_) continue;
+               if (t.from_.smp_ != sm_to) continue;
 			  } else {
 			   if (t.from_.is_sm_) continue;
 			   if (t.from_.parent_!= nullptr && t.from_.parent_ != sm_from) continue;
@@ -300,11 +308,16 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			  ctx.state_to_first_transition[tt.from] = ctx.transitions.size()-1;
 			 }
 		};
-		//Fetch foreign transitions i.e. transitions with from == cur_sm
-		traverse_sms(smsv,[&ctx,&cur_sm,&ev_to_id,insert_transitions](State_machine* sm){
-			if (sm != cur_sm) insert_transitions(sm,cur_sm);
-		});
-		insert_transitions(cur_sm,cur_sm);
+
+        //Fetch foreign transitions i.e. transitions with from != cur_sm
+
+        for(auto sm : mmm[cur_sm]) {
+            insert_transitions(sm,cur_sm);
+        }
+        /*traverse_sms(smsv,[&ctx,&cur_sm,&ev_to_id,insert_transitions](State_machine* sm){
+            if (sm != cur_sm) insert_transitions(sm,cur_sm);
+        });*/
+        insert_transitions(cur_sm,cur_sm);
     };
 	non_cover_sm = true;
 	traverse_sms(smsv,build_transitions_table);
@@ -1417,11 +1430,9 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 			tbl.push_back(std::make_pair(lkt.nodes()[i],lkt.nodes()[i+1]));
 	}
 	build_signal_structures(result_cmd_line);
-
 	{
 	 std::map<std::string,int> map_fullqualified_sm_id_to_computed_idx;
 	 compute_state_and_event_ids(this,State_machine::statemachines,map_fullqualified_sm_id_to_computed_idx);
-
 	 for(auto p : map_fullqualified_sm_id_to_computed_idx)
 		 map_state_id_to_full_qualified_id[p.second] = p.first;
      for(auto e: executionloop_context().ev_to_id) executionloop_context().id_to_ev[e.second] = e.first;
@@ -1715,6 +1726,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         ws_api()->start();
         running_as_node() = true;
     }
+
 
     if(result_cmd_line.start_paused){
         bool start_event_triggered = false;

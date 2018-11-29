@@ -1,29 +1,80 @@
-kind Event;
-Event success;
+/*
+*
+*   ROLLOUT2SM.CEPS
+*
+*   State Machine Abstraction Of A Linear Rollout.
+*   
+*   For each market in every rollout there is a state machine which *represents*
+*   the current state of affairs. The state machines do no work at all, their sole purpose
+*   is to track the computation process as it proceeds. 
+*
+*   Extensively commented for instructional reasons.
+*
+*/
+
+
+kind Event;                                                   // We talk about things like an "Event" in what follows, the way this is done is by declaring a new 'kind' of thing
+
+Event success;                                                // Now that we have introduced a 'kind' of things we can start naming particular things belonging to this kind. 
 Event start_rollout;
 
-static_for(e:root.rollout){
- static_for(market:e.markets.market){
-  sm{
-   val market_name = text(market.content().id.content()); 
-   as_identifier(market_name);
-   //label{"This is \"" + market_name+"\"";};
+static_for(e:root.rollout){                                   //For every rollout ...
+ static_for(market:e.markets.market){                         // ... and each market therein
 
-   states { Initial;
-            e.steps.content().is_id();
-            static_for(step : e.steps.content().is_id()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};
-            Done;
-            Final;
-            Killed;
-            categories{
-              static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_critical","WarnState");};
-              static_for(step : e.steps.content().is_id()){as_symbol(text(step)+"_error","FailState");};
-              as_symbol("Killed","FailState");
-              as_symbol("Final","DoneState");              
+  sm{                                                         // Create a state machine
+                                                              // ... Possibly makes for a lot of state machines : Number of state machines = Number of Markets * Number of Rollouts
+
+   val market_name = text(market.content().id.content());     // Market definitions are of the form 'market{id{...};...;};' 
+                                                              // we use the content of the id - part as name. The way to do is to write a path - expression. In this particular case
+                                                              // this is 'market.content().id.content()' which means: take the content of 'market' and search it for all 'id'-elements and 
+                                                              // return the concatenated content of these elements
+
+   as_identifier(market_name);                                // The variable 'market_name' contains a string, we need an IDENTIFIER for the state machine's name
+                                                              // The function identifier(...), the construct static_for and val-definitions are all statically computed - 
+                                                              // i.e. during compile time: We do meta-programming here.
+
+   states {                                                   // Every state which is not a compound state, i.e. another state machine contained in this one, has to be declared.
+
+            Initial;                                          // You need to explicitly ask for an inital state to get one.
+            e.steps.content().is_id();                        // Fetch all identifiers in steps retaining their relative order and create a state for each. 
+                                                              // These states represent the individual steps of a rollout
+
+            static_for(step : e.steps.content().is_id()) {    // We need states which represent the fact that a rolloout is in a critical or even erroneous condition 
+                                                              // for each step create an "error" and "critical" step which represent the respective *abnormal* states a process can be in.
+               as_identifier(text(step)+"_error");            // we use as_identifier() again because the state machine compiler requires a step to be an identifier
+               as_identifier(text(step)+"_critical");
+            }
+
+            Done;                                             // We are in the state Done if we are done, "Done" serves no particular technical purpose, i.e. it bears no particular meaning for the SM Engine
+            Final;                                            // After we are "Done" we become "Final" - a state the state machine execution engine (sm engine) knows about.  
+            Killed;                                           // Rollouts can be aborted, e.g. by user interaction, we have to represent this too
+
+            categories {
+                                                              // We distinguished a state representing a critical condition from a normal state by name only, i.e. by appending "_critical" to its name.
+                                                              // The SM Engine allows us to make distinctions between states explicit, by categorizing them.
+                                                              // The way this works is to list all categorizations in form of declarations.
+                                                              // Example:
+                                                              //  categories{ kind FailState;FailState MyState; };
+                                                              //
+                                                              // The fragment above categorizes the state 'MyState' - which has tob listed in the states -section - as "FailState" 
+                                                              //
+                                                              // We can't do that this way here - because we don't know the states in advance. So we do a little metaprogramming
+              static_for(step : e.steps.content().is_id()){
+                as_symbol(text(step)+"_critical","WarnState");// <=> kind WarnState;WarnState stepXY_critical;
+              }
+              static_for(step : e.steps.content().is_id()) {
+                 as_symbol(text(step)+"_error","FailState");  // <=> kind WarnState;WarnState stepXY_critical;
+              }
+              as_symbol("Killed","FailState");                // <=> kind FailState;FailState Killed;
+              as_symbol("Final","DoneState");                 // <=> kind DoneState;DoneState Final; - yes you can categorize states with predefined meanings like 'Final'
             };
             
             dont_cover{
-              Killed;static_for(step : e.steps.content().is_id()){as_identifier(text(step)+"_error");as_identifier(text(step)+"_critical");};              
+              Killed;
+              static_for(step : e.steps.content().is_id()){
+                 as_identifier(text(step)+"_error");
+                 as_identifier(text(step)+"_critical");
+              }              
             };
    };
    static_for(s_details : e.steps.content().step_details){label{as_identifier(s_details.id.content());s_details.description.content();};};

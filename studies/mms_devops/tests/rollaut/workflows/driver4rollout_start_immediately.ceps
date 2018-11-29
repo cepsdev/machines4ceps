@@ -1,0 +1,19 @@
+Simulation{
+    Start{
+        static_for(e:root.rollout){
+            static_for(market:e.markets.market){
+                val market_name = text(market.content().id.content());
+                as_identifier(market_name+"_worker");
+                as_identifier(market_name);
+                //as_identifier("watch_dog_"+market_name);
+            }
+        }
+    };
+    static_for(e:root.rollout){
+        static_for(market:e.markets.market){
+            val market_name = text(market.content().id.content());
+            //print(market_name,"\n"); 
+            as_symbol("start_rollout_"+market_name,"Event");
+        }
+    }
+};

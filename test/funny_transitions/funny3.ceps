@@ -1,0 +1,19 @@
+sm{
+ SM1;
+ states{Initial;A;B;};
+ sm{
+  SM1_SM1;
+  states{Initial;C;D;};
+  sm{
+   SM1_SM1_SM1;
+   states{Initial;E;F;};
+   t{Initial;E;};
+   t{E;SM1;};
+  };
+ };
+ t{Initial;A;};
+ t{A;SM1_SM1.SM1_SM1_SM1;};
+};
+Simulation{
+ Start{SM1;};
+};

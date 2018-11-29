@@ -1,0 +1,20 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+kind IOManip;IOManip endl;
+
+Event big_step,small_step,step_failure,trigger_status_check,job_not_done_yet,job_finished,result_ok,result_nok;
+
+macro sub_step_check{    
+       sm{
+            hd(arglist);
+        };
+};
+
+
+macro sub_step_run{    
+       sm{
+            hd(arglist);
+        };
+    
+};

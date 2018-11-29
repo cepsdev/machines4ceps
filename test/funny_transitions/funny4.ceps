@@ -1,0 +1,18 @@
+sm{
+ A;
+ states{Initial;};
+ sm{
+  A1;
+  states{Initial;};
+ };
+ sm{
+  A2;
+  states{Initial;};
+ };
+ t{Initial;A1;};
+ t{A1;A2;};
+};
+
+Simulation {
+ Start{A;};
+};

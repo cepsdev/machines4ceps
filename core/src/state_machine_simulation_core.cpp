@@ -1244,7 +1244,6 @@ void init_state_machine_simulation(	int argc,
     }
 
     smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);
-
 }
 
 
