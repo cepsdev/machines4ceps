@@ -4,6 +4,7 @@ Event start_rollout;
 
 
 static_for(e:root.rollout){
+ val rollout2worker_market_counter = 1;
  static_for(market:e.markets.content()){
   sm{
    val market_name = text(strip(market.content().id.content()));
@@ -15,22 +16,26 @@ static_for(e:root.rollout){
        Initial;
        Final;    
    };
-
+   val rollout2worker_step_counter = 1;
    static_for(step: e.steps.content().step_details) {
     sm{
         as_identifier(strip(step.content().id.content()));
+        val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter); 
         
         on_enter{
         };
      
         states{
             Initial;
+            CheckError;
+            RunError;
+            Critical;
             Final;
         };      
 
         sub_step_check { 
             Check;
-            step.job_check;
+            step.job_check.content();
             make_struct("params",
              make_struct("param",
               make_struct("name",env("ROLLAUT_JENKINS_SAPCODE_PARAM")),
@@ -38,21 +43,30 @@ static_for(e:root.rollout){
              ),
              step.params_ext.content().check.content()
             );
+            identification;
+            market.content().code.content();
         };
                        
         sub_step_run{ Run; };
 
         t{Initial;Check;};
-        t{Check;Run;as_symbol("small_step_"+market_name,"Event");};
-        t{Run;Check;as_symbol("small_step_"+market_name,"Event");};
+        t{Check;CheckError;as_symbol("ev_step_"+identification+"_failed","Event");};
+
+        t{Check;Run;as_symbol("small_step_"+identification,"Event");};
+        t{Run;Check;as_symbol("small_step_"+identification,"Event");};
+        t{Run;RunError;as_symbol("ev_step_"+identification+"_failed","Event");};
     };
+    rollout2worker_step_counter = rollout2worker_step_counter + 1;
    }
 
    Actions{
+       val rollout2worker_step_counter = 1;
        static_for( step:e.steps.content().is_id() ) {
-           make_struct("propagate_"+text(step)+"_done",
-            as_symbol(market_name+text(step)+"_finished","Event")
+           val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter); 
+           make_struct("propagate_"+identification+"_done",
+            as_symbol("ev_step_finished_"+identification,"Event")
            );
+           rollout2worker_step_counter = rollout2worker_step_counter + 1;
        }
    };
 
@@ -63,24 +77,26 @@ static_for(e:root.rollout){
      prev;
      as_symbol("start_rollout_"+market_name,"Event");
    };
-   
+   val rollout2worker_step_counter = 1;
    static_for( step: tail(e.steps.content().is_id()) ) {
+    val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter);
     t {
       prev;
       step;
-      as_symbol("big_step_"+market_name,"Event");
-      as_identifier("propagate_"+text(prev)+"_done");
+      as_symbol("big_step_"+identification,"Event");
+      as_identifier("propagate_"+identification+"_done");
     };
-    ignore_value { prev = step; };
+    ignore_value { prev = step;rollout2worker_step_counter = rollout2worker_step_counter + 1;};
    }
 
    t { prev;
        Final;
-       as_symbol("big_step_"+market_name,"Event");
-       as_identifier("propagate_"+text(prev)+"_done"); 
-   };  
+       as_symbol("big_step_"+text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter),"Event");
+       as_identifier("propagate_"+text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter)+"_done"); 
+   };
  };
  }
+ rollout2worker_market_counter = rollout2worker_market_counter+1;
 }
 
 

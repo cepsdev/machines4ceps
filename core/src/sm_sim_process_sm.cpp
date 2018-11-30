@@ -607,12 +607,7 @@ void State_machine_simulation_core::process_statemachine(
     	   if (v->kind() == ceps::ast::Ast_node_kind::identifier)
     		   current_statemachine->insert_action(State_machine::Transition::Action(name(as_id_ref(v))));
     	   else if (v->kind() == ceps::ast::Ast_node_kind::structdef)
-    		   current_statemachine->insert_action(State_machine::Transition::Action(name(as_struct_ref(v)),v));
-    	   else {
-    		   std::stringstream ss;
-    		   ss << *v;
-    		   fatal_(-1,"State machine '"+ id +"': Illformed Action declaration. Should be of the form IDENT; or IDENT{...};. Found:"+ss.str());
-    	   }
+    		   current_statemachine->insert_action(State_machine::Transition::Action(name(as_struct_ref(v)),v));    	   
     	}
   }
 

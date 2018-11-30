@@ -18,7 +18,8 @@ kind Event;                                                   // We talk about t
 Event success;                                                // Now that we have introduced a 'kind' of things we can start naming particular things belonging to this kind. 
 Event start_rollout;
 
-static_for(e:root.rollout){                                   //For every rollout ...
+static_for(e:root.rollout){                                   // For every rollout ...
+ val rollout2sm_market_counter = 1;                       // We count the markets and the steps to generate a unique ud for the individual steps and events 
  static_for(market:e.markets.market){                         // ... and each market therein
 
   sm{                                                         // Create a state machine
@@ -82,87 +83,118 @@ static_for(e:root.rollout){                                   //For every rollou
    log{state_enter_timestamp;state_exit_timestamp;};
     
 
-   cover{edges_upto_1;dont_cover_loops;};
+   cover{ 
+      edges_upto_1;
+      dont_cover_loops;
+   };
    
-    t {  
+   t {  
       Initial; 
       e.steps.content().is_id().first();
       as_symbol("start_rollout_"+market_name,"Event");        
-    };
+   };
 
-    t{
+   t{
       Initial;
       Killed;
       as_symbol("dump_rollout_"+market_name,"Event");
-    };
+   };
 
    val prev = e.steps.content().is_id().first();
-
+   val rollout2sm_step_counter = 1;
    static_for( step:tail(e.steps.content().is_id()) ) {
-    t {
+     val identification = text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter);
+     t {
       prev;
       as_identifier(text(prev)+"_error");
-      as_symbol(market_name+text(prev)+"_failed","Event");
-    };
+      as_symbol("ev_step_"+identification+"_failed","Event");
+     };
 
     t {
       prev;
       as_identifier(text(prev)+"_critical");
-      as_symbol(market_name+text(prev)+"_critical","Event");
+      as_symbol("ev_step_"+identification+"_critical","Event");
     };
     t {
       prev;
       prev;
-      as_symbol(market_name+text(prev)+"_critical","Event");
+      as_symbol("ev_step_"+identification+"_critical","Event");
     };
 
     t {
       as_identifier(text(prev)+"_critical");
       as_identifier(text(prev)+"_error");
-      as_symbol(market_name+text(prev)+"_failed","Event");
+      as_symbol("ev_step_"+identification+"_failed","Event");
     };
+
+    t {
+      as_identifier(text(prev)+"_critical");
+      prev;
+      as_symbol("ev_step_"+identification+"_healed","Event");
+    };
+
+    t {
+      as_identifier(text(prev)+"_error");
+      prev;
+      as_symbol("ev_step_"+identification+"_healed","Event");
+    };
+
     t {
       as_identifier(text(prev)+"_critical");
       step;
-      as_symbol(market_name+text(prev)+"_finished","Event");
+      as_symbol("ev_step_"+identification+"_finished","Event");
     };
 
     t { prev;
         step;
-        as_symbol(market_name+text(prev)+"_finished","Event");
+        as_symbol("ev_step_"+identification+"_finished","Event");
     };
     
-    ignore_value { prev = step; };
+    ignore_value { prev = step;rollout2sm_step_counter=rollout2sm_step_counter+1;};
    };
 
    t {
       prev;
       prev;
-      as_symbol(market_name+text(prev)+"_critical","Event");
+      as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_critical","Event");
    };
 
    t {
       prev;
       as_identifier(text(prev)+"_critical");
-      as_symbol(market_name+text(prev)+"_critical","Event");
+      as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_critical","Event");
     };
    t {
       as_identifier(text(prev)+"_critical");
       as_identifier(text(prev)+"_error");
-      as_symbol(market_name+text(prev)+"_failed","Event");
-    };
+      as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_failed","Event");
+   };
+
+   t {
+      as_identifier(text(prev)+"_critical");
+      prev;
+      as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_healed","Event");
+   };
+
+   t {
+      as_identifier(text(prev)+"_error");
+      prev;
+      as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_healed","Event");
+   };
+
    t {
       prev;
       as_identifier(text(prev)+"_error");
-      as_symbol(market_name+text(prev)+"_failed","Event");
+      as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_failed","Event");
     };
    t {
       as_identifier(text(prev)+"_critical");
       Done;
-      as_symbol(market_name+text(prev)+"_finished","Event");
+      as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_finished","Event");
      };
-   t { prev;Done;as_symbol(market_name+text(prev)+"_finished","Event"); };
-   t{Done;Final;};
+   t { prev;Done;as_symbol("ev_step_"+text(rollout2sm_market_counter)+"_"+text(rollout2sm_step_counter)+"_finished","Event"); };
+   t { Done;Final;};
  };
+ rollout2sm_market_counter = rollout2sm_market_counter + 1;
  }
 }
