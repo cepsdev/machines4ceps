@@ -1113,7 +1113,7 @@ rollout_db{
 
 val number_of_markets_in_rollout_1 = 500;
 
-static_for(i: 1 .. 9){
+static_for(i: 0 .. 9){
   rollout_store_db{
   id{i;};
   rollout{1;};

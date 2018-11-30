@@ -4,12 +4,49 @@ kind Systemstate;
 kind IOManip;IOManip endl;
 
 Event big_step,small_step,step_failure,trigger_status_check,job_not_done_yet,job_finished,result_ok,result_nok;
+Event job_finished_successfully_event,job_failed_event,job_queued;
 
+paramsx{
+    comment{
+     "Jenkins Parameters";
+    };
+    param{
+     name{"sapcode";};value{3333;};
+    };
+    param{
+     name{"ROLLOUTNAME";};value{"Gargamel42";};
+    };
+   };
+   
 macro sub_step_check{    
-       sm{
-            hd(arglist);
-        };
-};
+ sm{
+
+    val sm_name = hd(arglist);
+    val job_name = hd(tail(arglist));
+    val arguments = hd(tail(tail(arglist)));
+
+    sm_name;
+
+    states{Initial;};
+
+    on_enter {
+      kind Parameter;
+      Parameter on_job_queued,option,command,url,parameters,
+                hostname,port,job_name,authorization,on_success,on_error;                  
+      jenkins(
+              command                = "build",
+              option                 = "follow",
+              authorization          = env("ROLLAUT_JENKINS_AUTH"),
+              url                    = env("ROLLAUT_JENKINS_URL"),
+              job_name               = "pos_rollout_automated_002_auto_prepare_and_start_rollout_protocol",
+              parameters             = arguments,
+              on_success             = job_finished_successfully_event,
+              on_error               = job_failed_event,
+              on_job_queued          = job_queued
+      );
+    };//on_enter
+  };//sm
+};//macro
 
 
 macro sub_step_run{    
