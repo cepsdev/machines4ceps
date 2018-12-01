@@ -64,7 +64,7 @@ static_for(e:root.rollout){
        static_for( step:e.steps.content().is_id() ) {
            val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter); 
            make_struct("propagate_"+identification+"_done",
-            as_symbol("ev_step_finished_"+identification,"Event")
+            as_symbol("ev_step_"+identification+"_finished","Event")
            );
            rollout2worker_step_counter = rollout2worker_step_counter + 1;
        }

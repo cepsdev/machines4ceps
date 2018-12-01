@@ -1113,7 +1113,7 @@ rollout_db{
 
 val number_of_markets_in_rollout_1 = 500;
 
-static_for(i: 0 .. 9){
+static_for(i: 0 .. 0){
   rollout_store_db{
   id{i;};
   rollout{1;};
@@ -1122,6 +1122,7 @@ static_for(i: 0 .. 9){
   };
 }
 
+/*
 static_for(i: 10 .. 99){
   rollout_store_db{
   id{i;};
@@ -1139,7 +1140,7 @@ static_for(i: 100 .. number_of_markets_in_rollout_1){
   sap_code{"m"+text(i);};
   };
 }
-
+*/
 
 rollout_step_db{
  id{0;};

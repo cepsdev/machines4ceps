@@ -37,7 +37,7 @@ macro sub_step_check{
       Parameter hostname;
       Parameter passwd;
       Parameter user;
-      Parameter timestamp;
+      Parameter time_stamp;
       Parameter database;
       Parameter job_name;
       Parameter sap_code;
@@ -45,7 +45,6 @@ macro sub_step_check{
       Parameter check_for_empty_resultset_only;
       Parameter on_error;
       Parameter on_success;
-      print(timestamp(),"\n");
       mms_rollaut_db_check(
         hostname   = env("ROLLAUT_DB_HOST"),
         user       = env("ROLLAUT_DB_USER"),
@@ -53,7 +52,7 @@ macro sub_step_check{
         database   = env("ROLLAUT_DB_DB"),
         sap_code   = job_code,
         job_name   = jenkins_job,
-        timestamp  = timestamp(),
+        time_stamp  = timestamp(),
         on_error   = as_symbol("small_step_"+step_id,"Event"),
         on_success = as_symbol("big_step_"+step_id,"Event")
       );
