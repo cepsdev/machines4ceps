@@ -1414,6 +1414,7 @@ void Websocket_interface::handle_subscribe_coverage_thread(threadsafe_queue<cove
         ss << "\"total_of_transitions\":" << coverage_transitions_table.size() << ",\n";
 
         {
+            compute_categories();
             ss << "\"category_changes\":" << "[";
             first_in_list = true;
             for(auto e:root2active_categories){

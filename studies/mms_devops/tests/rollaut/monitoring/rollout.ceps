@@ -1,5 +1,4 @@
-val number_of_markets = 400;
-val number_of_steps = 20;
+//val number_of_markets = 400;val number_of_steps = 20;
 
 
 rollout{

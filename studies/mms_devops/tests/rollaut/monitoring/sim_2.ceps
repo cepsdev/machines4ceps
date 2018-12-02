@@ -1,7 +1,6 @@
-val SIMULATION_BASE_PERIOD = 0.5;
-
 static_for(e:root.rollout){
     val counter = 0.0;
+    val mc = 1;
     static_for(market:e.markets.market){
        val market_name = text(market.content().id.content());
        sm{
@@ -24,10 +23,11 @@ static_for(e:root.rollout){
 
         Actions{
          val action_counter = 1;
+         val sc = 1;
          static_for( step:e.steps.content().is_id()) {
-            make_struct("do_action_"+text(action_counter), as_symbol(market_name+text(step)+"_finished","Event") );
-            make_struct("do_action_critical_"+text(action_counter), as_symbol(market_name+text(step)+"_critical","Event") );
-            ignore_value { prev = step;action_counter=action_counter+1; };
+            make_struct("do_action_"+text(action_counter), as_symbol("ev_step_"+text(mc)+"_"+text(sc)+"_finished","Event") );
+            make_struct("do_action_critical_"+text(action_counter), as_symbol("ev_step_"+text(mc)+"_"+text(sc)+"_critical","Event") );
+            ignore_value { prev = step;action_counter=action_counter+1;sc = sc+1; };
          }
         };
 
@@ -56,6 +56,6 @@ static_for(e:root.rollout){
         t{prev;Final; as_symbol(market_name+"sim_next","Event");as_identifier("do_action_"+text(action_counter));};
 
        };
-       counter = counter + 0.5;
+       counter = counter + 0.5;mc = mc +1;
     }
  }
