@@ -47,7 +47,19 @@ static_for(e:root.rollout){
             market.content().code.content();
         };
                        
-        sub_step_run{ Run; };
+        sub_step_run { 
+            Run;
+            step.job_run.content();
+            make_struct("params",
+             make_struct("param",
+              make_struct("name",env("ROLLAUT_JENKINS_SAPCODE_PARAM")),
+              make_struct("value",market.content().code.content())              
+             ),
+             step.params_ext.content().run.content()
+            );
+            identification;
+            market.content().code.content();
+        };
 
         t{Initial;Check;};
         t{Check;CheckError;as_symbol("ev_step_"+identification+"_failed","Event");};
@@ -95,8 +107,8 @@ static_for(e:root.rollout){
        as_identifier("propagate_"+text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter)+"_done"); 
    };
  };
- }
  rollout2worker_market_counter = rollout2worker_market_counter+1;
+ } 
 }
 
 

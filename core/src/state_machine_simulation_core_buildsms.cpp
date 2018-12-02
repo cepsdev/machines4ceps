@@ -243,7 +243,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
     traverse_sms(smsv,[&ctx,&mmm](State_machine* sm){
         for(auto & t : sm->transitions()){
             if (!t.from_.is_sm_) continue;
-            if (t.to_.smp_ == sm) continue;
+            if (t.from_.smp_ == sm) continue;
             mmm[t.from_.smp_].insert(sm);
         }
     });

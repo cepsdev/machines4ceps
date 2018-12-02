@@ -1111,7 +1111,7 @@ rollout_db{
  when{"2018-09-10 06:10:00";};
 };
 
-val number_of_markets_in_rollout_1 = 500;
+val number_of_markets_in_rollout_1 = 999;
 
 static_for(i: 0 .. 0){
   rollout_store_db{

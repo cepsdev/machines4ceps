@@ -45,16 +45,18 @@ macro sub_step_check{
       Parameter check_for_empty_resultset_only;
       Parameter on_error;
       Parameter on_success;
+      Parameter on_success_code_is_not_zero;
+      Parameter on_success_code_is_zero;
       mms_rollaut_db_check(
-        hostname   = env("ROLLAUT_DB_HOST"),
-        user       = env("ROLLAUT_DB_USER"),
-        passwd     = env("ROLLAUT_DB_PASSWD"),
-        database   = env("ROLLAUT_DB_DB"),
-        sap_code   = job_code,
-        job_name   = jenkins_job,
-        time_stamp  = timestamp(),
-        on_error   = as_symbol("small_step_"+step_id,"Event"),
-        on_success = as_symbol("big_step_"+step_id,"Event")
+        hostname                     = env("ROLLAUT_DB_HOST"),
+        user                         = env("ROLLAUT_DB_USER"),
+        passwd                       = env("ROLLAUT_DB_PASSWD"),
+        database                     = env("ROLLAUT_DB_DB"),
+        sap_code                     = job_code,
+        job_name                     = jenkins_job,
+        time_stamp                   = timestamp(),
+        on_success_code_is_not_zero  = as_symbol("small_step_"+step_id,"Event"),
+        on_success_code_is_zero      = as_symbol("big_step_"+step_id,"Event")
       );
      };
     };
@@ -83,8 +85,18 @@ macro sub_step_check{
 
 
 macro sub_step_run{    
-       sm{
-            hd(arglist);
-        };
-    
-};
+  sm{
+     val sm_name = hd(arglist);
+     val jenkins_job = hd(tail(arglist));
+     val arguments = hd(tail(tail(arglist)));
+     val step_id = hd(tail(tail(tail(arglist))));
+     val job_code = hd(tail(tail(tail(tail(arglist)))));
+ 
+     sm_name;
+     
+     states{Initial;
+            TrackJob;};
+ 
+   };//sm
+ };//macro
+ 
