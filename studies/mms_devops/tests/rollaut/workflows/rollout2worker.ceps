@@ -57,12 +57,19 @@ static_for(e:root.rollout){
         val jenkins_job_check_normal = text(step.job_check.content());
         val jenkins_job_run_normal = text(step.job_run.content());
         val arguments_check_normal = make_struct("params",
-        make_struct("param",
-         make_struct("name",env("ROLLAUT_JENKINS_SAPCODE_PARAM")),
-         make_struct("value",market.content().code.content())              
-        ),
-        step.params_ext.content().check.content()
-        );
+                                      make_struct("param",
+                                       make_struct("name",env("ROLLAUT_JENKINS_SAPCODE_PARAM")),
+                                       make_struct("value",market.content().code.content())              
+                                      ),
+                                      step.params_ext.content().check.content()
+                                     );
+        val arguments_run_normal = make_struct("params",
+                                     make_struct("param",
+                                      make_struct("name",env("ROLLAUT_JENKINS_SAPCODE_PARAM")),
+                                      make_struct("value",market.content().code.content())              
+                                     ),
+                                     step.params_ext.content().run.content()
+                                    );
 
         states {Initial;Final;WarnMode;NormalMode;};
         on_enter{
@@ -109,13 +116,51 @@ static_for(e:root.rollout){
 
          t{Initial;JobQueued;as_symbol("ev_check_"+identification+"_start_tracking","Event");do_track_job;};
         };
-         sm{
+        
+        sm{
           NormalModeDoRun;
-          states{Initial;};
           if (jenkins_job_run_normal == ""){
+           states{Initial;};
            on_enter{
             as_symbol("small_step_"+identification,"Event");
            };
+          } else {
+            states{Initial;JobQueued;TrackJob;};
+            on_enter{
+                as_symbol("timestamp_"+text(rollout2worker_market_counter),"Systemstate") = timestamp();
+                kind Parameter;
+                Parameter on_job_queued,option,command,url,parameters,
+                          hostname,port,job_name,authorization,on_success,on_error;
+                jenkins(
+                    command                      = "build",
+                    //option                     = "follow",
+                    authorization                = env("ROLLAUT_JENKINS_AUTH"),
+                    url                          = env("ROLLAUT_JENKINS_URL"),
+                    job_name                     = jenkins_job_run_normal,
+                    parameters                   = arguments_run_normal,
+                    //on_success                 = job_finished_successfully_event,
+                    on_error                     = as_symbol("ev_step_"+identification+"_failed","Event"),
+                    on_success/*on_job_queued*/  = as_symbol("ev_check_"+identification+"_start_tracking","Event")
+                );
+             };
+             Actions{
+                do_track_job{
+                    kind Parameter;
+                    Parameter hostname, passwd, user, time_stamp, database, job_name, sap_code, time_delta;
+                    Parameter check_for_empty_resultset_only, on_error, on_success, on_success_code_is_not_zero,on_success_code_is_zero;
+                    mms_rollaut_db_check(
+                      hostname                     = env("ROLLAUT_DB_HOST"),
+                      user                         = env("ROLLAUT_DB_USER"),
+                      passwd                       = env("ROLLAUT_DB_PASSWD"),
+                      database                     = env("ROLLAUT_DB_DB"),
+                      sap_code                     = market_code,
+                      job_name                     = jenkins_job_run_normal,
+                      time_stamp                   = as_symbol("timestamp_"+text(rollout2worker_market_counter),"Systemstate"),
+                      on_success                   = as_symbol("small_step_"+identification,"Event")
+                    );
+                };
+             };
+             t{Initial;JobQueued;as_symbol("ev_check_"+identification+"_start_tracking","Event");do_track_job;};
           }
          };
         sm{
