@@ -55,6 +55,7 @@ static_for(e:root.rollout){
         as_identifier(strip(step.content().id.content()));
         val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter);
         val jenkins_job_check_normal = text(step.job_check.content());
+        val jenkins_job_run_normal = text(step.job_run.content());
         val arguments_check_normal = make_struct("params",
         make_struct("param",
          make_struct("name",env("ROLLAUT_JENKINS_SAPCODE_PARAM")),
@@ -108,11 +109,15 @@ static_for(e:root.rollout){
 
          t{Initial;JobQueued;as_symbol("ev_check_"+identification+"_start_tracking","Event");do_track_job;};
         };
-        sm{
-         NormalModeDoRun;
-         states{Initial;};
-         on_enter{};
-        };
+         sm{
+          NormalModeDoRun;
+          states{Initial;};
+          if (jenkins_job_run_normal == ""){
+           on_enter{
+            as_symbol("small_step_"+identification,"Event");
+           };
+          }
+         };
         sm{
          WarnModeDoCheck;
          states{Initial;};
@@ -132,18 +137,18 @@ static_for(e:root.rollout){
         t{Initial;NormalModeDoCheck;};
         t{NormalModeDoCheck;NormalModeDoRun;as_symbol("small_step_"+identification,"Event");};
      
-        t{WarnModeDoCheck;WarnModeDoRun;as_symbol("small_step_"+identification,"Event");;};
+        t{WarnModeDoCheck;WarnModeDoRun;as_symbol("small_step_"+identification,"Event");};
      
-        t{NormalModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");;};
-        t{NormalModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");;};
-        t{NormalModeDoRun;ErrorModeDoRun;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==2;as_symbol("small_step_"+identification,"Event");;};
+        t{NormalModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");};
+        t{NormalModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");};
+        t{NormalModeDoRun;ErrorModeDoRun;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==2;as_symbol("small_step_"+identification,"Event");};
      
-        t{WarnModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");;};
-        t{WarnModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");;};
-        t{WarnModeDoRun;ErrorModeDoRun;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==2;as_symbol("small_step_"+identification,"Event");;};
+        t{WarnModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");};
+        t{WarnModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");};
+        t{WarnModeDoRun;ErrorModeDoRun;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==2;as_symbol("small_step_"+identification,"Event");};
      
-        t{ErrorModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");;};
-        t{ErrorModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");;};
+        t{ErrorModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");};
+        t{ErrorModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");};
     };
     rollout2worker_step_counter = rollout2worker_step_counter + 1;
    }
