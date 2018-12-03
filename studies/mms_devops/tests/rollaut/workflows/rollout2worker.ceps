@@ -1,28 +1,112 @@
 kind Event;
+kind Guard;
+kind Systemstate;
+
 Event success;
 Event start_rollout;
-
 
 static_for(e:root.rollout){
  val rollout2worker_market_counter = 1;
  static_for(market:e.markets.content()){
+  as_symbol("current_warn_level_"+text(rollout2worker_market_counter),"Guard");
+  as_symbol("timestamp_"+text(rollout2worker_market_counter),"Systemstate");
   sm{
    val market_name = text(strip(market.content().id.content()));
    val market_code = text(strip(market.content().code.content())); 
    as_identifier(market_name+"_worker");
    hidden;
-
+   
    states { 
-       Initial;
-       Final;    
+    Initial;
+    WaitForStart;
+    Final;   
    };
+
+   sm{
+        as_identifier("Workflow_warnlevel_"+text(rollout2worker_market_counter));
+        states{Initial;Normal;Warn;Error;};
+        on_enter{
+            as_symbol("current_warn_level_"+text(workflow_counter),"Guard")=0;
+        };
+        Actions{
+            set_current_warn_level_to_normal{as_symbol("current_warn_level_"+text(workflow_counter),"Guard")=0;};
+            set_current_warn_level_to_error{as_symbol("current_warn_level_"+text(workflow_counter),"Guard")=2;};
+            set_current_warn_level_to_warn{as_symbol("current_warn_level_"+text(workflow_counter),"Guard")=1;};
+        };
+        t{Initial;Normal;set_current_warn_level_to_normal;};
+        t{Normal;Warn;as_symbol("EnterWarnMode_"+text(rollout2worker_market_counter),"Event");set_current_warn_level_to_warn;};
+        t{Normal;Error;as_symbol("EnterErrorMode_"+text(rollout2worker_market_counter),"Event");set_current_warn_level_to_error;};
+        t{Warn;Normal;as_symbol("EnterNormalMode_"+text(rollout2worker_market_counter),"Event");set_current_warn_level_to_normal;};
+        t{Warn;Error;as_symbol("EnterErrorMode_"+text(rollout2worker_market_counter),"Event");set_current_warn_level_to_error;};   
+        t{Error;Warn;as_symbol("EnterWarnMode_"+text(rollout2worker_market_counter),"Event");set_current_warn_level_to_warn;};
+        t{Error;Normal;as_symbol("EnterNormalMode_"+text(rollout2worker_market_counter),"Event");set_current_warn_level_to_normal;};
+   };
+   
    val rollout2worker_step_counter = 1;
+   val market_code = market.content().code.content();
+
    static_for(step: e.steps.content().step_details) {
     sm{
         as_identifier(strip(step.content().id.content()));
-        val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter); 
-        
+        val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter);
+        val jenkins_job_check_normal = step.job_check.content();
+        val arguments_check_normal = make_struct("params",
+        make_struct("param",
+         make_struct("name",env("ROLLAUT_JENKINS_SAPCODE_PARAM")),
+         make_struct("value",market.content().code.content())              
+        ),
+        step.params_ext.content().check.content()
+        );
+    
+
+        states {Initial;Final;WarnMode;NormalMode;};
         on_enter{
+            as_symbol("EnterNormalMode_"+text(rollout2worker_market_counter),"Event");
+        };
+        sm{
+         NormalModeDoCheck;
+         states{Initial;};
+         on_enter{};
+        };
+        sm{
+         NormalModeDoRun;
+         states{Initial;};
+         on_enter{};
+        };
+        sm{
+         WarnModeDoCheck;
+         states{Initial;};
+         on_enter{};
+        };
+        sm{
+         WarnModeDoRun;
+         states{Initial;};
+         on_enter{};
+        };
+        sm{
+         ErrorModeDoRun;
+         states{Initial;};
+         on_enter{};
+        };
+     
+        t{Initial;NormalModeDoCheck;};
+        t{NormalModeDoCheck;NormalModeDoRun;as_symbol("small_step_"+identification,"Event");};
+     
+        t{WarnModeDoCheck;WarnModeDoRun;as_symbol("small_step_"+identification,"Event");;};
+     
+        t{NormalModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");;};
+        t{NormalModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");;};
+        t{NormalModeDoRun;ErrorModeDoRun;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==2;as_symbol("small_step_"+identification,"Event");;};
+     
+        t{WarnModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");;};
+        t{WarnModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");;};
+        t{WarnModeDoRun;ErrorModeDoRun;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==2;as_symbol("small_step_"+identification,"Event");;};
+     
+        t{ErrorModeDoRun;NormalModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==0;as_symbol("small_step_"+identification,"Event");;};
+        t{ErrorModeDoRun;WarnModeDoCheck;as_symbol("current_warn_level_"+text(workflow_counter),"Guard")==1;as_symbol("small_step_"+identification,"Event");;};
+     
+        
+        /*on_enter{
         };
      
         states{
@@ -66,7 +150,7 @@ static_for(e:root.rollout){
 
         t{Check;Run;as_symbol("small_step_"+identification,"Event");};
         t{Run;Check;as_symbol("small_step_"+identification,"Event");};
-        t{Run;RunError;as_symbol("ev_step_"+identification+"_failed","Event");};
+        t{Run;RunError;as_symbol("ev_step_"+identification+"_failed","Event");};*/
     };
     rollout2worker_step_counter = rollout2worker_step_counter + 1;
    }
@@ -83,12 +167,21 @@ static_for(e:root.rollout){
    };
 
    val prev = e.steps.content().is_id().first();
+   t{
+     Initial;as_identifier("Workflow_warnlevel_"+text(rollout2worker_market_counter));
+   };
 
    t{
      Initial;
+     WaitForStart;
+   };
+
+   t{
+     WaitForStart;
      prev;
      as_symbol("start_rollout_"+market_name,"Event");
    };
+
    val rollout2worker_step_counter = 1;
    static_for( step: tail(e.steps.content().is_id()) ) {
     val identification = text(rollout2worker_market_counter)+"_"+text(rollout2worker_step_counter);
@@ -110,6 +203,3 @@ static_for(e:root.rollout){
  rollout2worker_market_counter = rollout2worker_market_counter+1;
  } 
 }
-
-
-

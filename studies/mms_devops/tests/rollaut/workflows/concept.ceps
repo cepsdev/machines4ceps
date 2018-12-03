@@ -1,0 +1,112 @@
+kind Event;kind Systemstate;kind Guard;
+Event BigStep,SmallStep,EnterErrorMode,Loop,EnterWarnMode,EnterNormalMode,E,F,G,H,I,J,K;
+val t_delta = 0.1;
+Systemstate counter_enter_step1_check;
+counter_enter_step1_check = 0;
+
+Guard current_warn_level;
+
+sm{
+    Warnlevel;
+    states{Initial;Normal;Warn;Error;};
+    Actions{
+        set_current_warn_level_to_normal{current_warn_level=0;print("Normal Mode Active\n");};
+        set_current_warn_level_to_error{current_warn_level=2;print("Error Mode Active\n");};
+        set_current_warn_level_to_warn{current_warn_level=1;print("Warn Mode Active\n");};
+    };
+    t{Initial;Normal;set_current_warn_level_to_normal;};
+    t{Normal;Warn;EnterWarnMode;set_current_warn_level_to_warn;};
+    t{Normal;Error;EnterErrorMode;set_current_warn_level_to_error;};
+    t{Warn;Normal;EnterNormalMode;set_current_warn_level_to_normal;};
+    t{Warn;Error;EnterErrorMode;set_current_warn_level_to_error;};   
+    t{Error;Warn;EnterWarnMode;set_current_warn_level_to_warn;};
+    t{Error;Normal;EnterNormalMode;set_current_warn_level_to_normal;};
+};
+
+sm{
+ Workflow;
+ sm{
+  Step1;
+  states {Initial;Final;WarnMode;NormalMode;};
+  on_enter{
+    current_warn_level = 0;
+  };
+  sm{
+    NormalModeDoCheck;
+    states{Initial;};
+    on_enter{print("Start Check Job\n");};
+  };
+  sm{
+    NormalModeDoRun;
+    states{Initial;};
+    on_enter{print("Start Run Job\n");};
+  };
+  sm{
+    WarnModeDoCheck;
+    states{Initial;};
+    on_enter{print("Start Check Job (Warn Mode)\n");};
+  };
+  sm{
+    WarnModeDoRun;
+    states{Initial;};
+    on_enter{print("Start Run Job (Warn Mode)\n");};
+  };
+  sm{
+    ErrorModeDoRun;
+    states{Initial;};
+    on_enter{print("Start Run Job (Error Mode)\n");};
+  };
+
+  t{Initial;NormalModeDoCheck;};
+  t{NormalModeDoCheck;NormalModeDoRun;SmallStep;};
+
+  t{WarnModeDoCheck;WarnModeDoRun;SmallStep;};
+
+  t{NormalModeDoRun;NormalModeDoCheck;current_warn_level==0;SmallStep;};
+  t{NormalModeDoRun;WarnModeDoCheck;current_warn_level==1;SmallStep;};
+  t{NormalModeDoRun;ErrorModeDoRun;current_warn_level==2;SmallStep;};
+
+  t{WarnModeDoRun;NormalModeDoCheck;current_warn_level==0;SmallStep;};
+  t{WarnModeDoRun;WarnModeDoCheck;current_warn_level==1;SmallStep;};
+  t{WarnModeDoRun;ErrorModeDoRun;current_warn_level==2;SmallStep;};
+
+  t{ErrorModeDoRun;NormalModeDoCheck;current_warn_level==0;SmallStep;};
+  t{ErrorModeDoRun;WarnModeDoCheck;current_warn_level==1;SmallStep;};
+ 
+};
+
+ sm{
+    Step2;
+    states {Initial;Final;};
+ };
+
+ states{Initial;Final;};
+ 
+ t{Initial;Step1;};
+ t{Step1;Step2;BigStep;};
+ t{Step2;Final;BigStep;};
+
+};
+
+
+Simulation{
+    Start{Workflow;Warnlevel;};
+    start_timer(t_delta*s,SmallStep);
+    start_timer((2*t_delta)*s,SmallStep);
+    start_timer((3*t_delta)*s,EnterWarnMode);
+    start_timer((4*t_delta)*s,SmallStep);
+    start_timer((5*t_delta)*s,SmallStep);
+    start_timer((6*t_delta)*s,SmallStep);
+    start_timer((7*t_delta)*s,SmallStep);
+    start_timer((8*t_delta)*s,SmallStep);
+    start_timer((9*t_delta)*s,SmallStep);
+    start_timer((10*t_delta)*s,SmallStep);
+    start_timer((11*t_delta)*s,EnterNormalMode);
+    start_timer((12*t_delta)*s,SmallStep);
+    start_timer((13*t_delta)*s,SmallStep);
+    start_timer((14*t_delta)*s,SmallStep);
+    start_timer((15*t_delta)*s,SmallStep);
+    start_timer((16*t_delta)*s,EnterErrorMode);
+    start_timer((17*t_delta)*s,SmallStep);
+    //start_timer(4.0*s,BigStep);
+};
