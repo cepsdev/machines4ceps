@@ -621,18 +621,90 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
   for(int i = 0; i != 16;++i)callback_ceps_str_vec.push_back(new ceps::ast::String("", nullptr, nullptr, nullptr));
 //Compute optimizations
   //std::cerr << "S" << std::endl;
-  execution_ctxt.states2transitions_slot_start.clear();
-  execution_ctxt.states2transitions_slot_start.resize(execution_ctxt.number_of_states+1);
-  execution_ctxt.states2transitions_slots.clear();
   //std::cerr << execution_ctxt.number_of_states << std::endl;
-  for(std::size_t i = 0; i < execution_ctxt.number_of_states+1;++i){
-      execution_ctxt.states2transitions_slot_start[i] = execution_ctxt.states2transitions_slots.size();
+  //std::cerr << "Compute optimizations..." << std::endl;
+
+  {
+      std::vector<int> v; v.resize(execution_ctxt.number_of_states+1);
+      for(auto& e: v) e = 0;
       for(std::size_t j = 0; j!= execution_ctxt.transitions.size();++j){
-          if (execution_ctxt.transitions[j].from == i)
-             execution_ctxt.states2transitions_slots.push_back(j);
+          if (execution_ctxt.transitions[j].from != 0)
+              ++v[execution_ctxt.transitions[j].from];
       }
-      execution_ctxt.states2transitions_slots.push_back(-1);
+      int m = 0;
+      for(auto& e: v) if (e > m) m = e;
+      //std::cerr << "max transitions per state:"<<m<<std::endl;
+      int vv_n = (m+1)*execution_ctxt.number_of_states;
+      int* vv = (int*)malloc(vv_n*sizeof(int));
+      if (vv == nullptr){
+          //std::cerr << ":-(" << std::endl;
+          //Default long running optimization may be improved by parallelization
+          execution_ctxt.states2transitions_slot_start.clear();
+          execution_ctxt.states2transitions_slot_start.resize(execution_ctxt.number_of_states+1);
+          execution_ctxt.states2transitions_slots.clear();
+
+          for(std::size_t i = 0; i < execution_ctxt.number_of_states+1;++i){
+              execution_ctxt.states2transitions_slot_start[i] = execution_ctxt.states2transitions_slots.size();
+              for(std::size_t j = 0; j!= execution_ctxt.transitions.size();++j){
+                  if (execution_ctxt.transitions[j].from == 0) continue;
+                  if (execution_ctxt.transitions[j].from == i)
+                     execution_ctxt.states2transitions_slots.push_back(j);
+              }
+              execution_ctxt.states2transitions_slots.push_back(-1);
+          }
+      } else {
+          //std::cerr << ":-)" << std::endl;
+          //Here we go
+          for(int i = 0; i != vv_n;++i) vv[i] = 0;
+          for(std::size_t j = 0; j!= execution_ctxt.transitions.size();++j){
+              if (execution_ctxt.transitions[j].from == 0) continue;
+              auto s = execution_ctxt.transitions[j].from;
+              auto s_i = (s-1)*(m+1);
+              ++vv[s_i];vv[s_i+vv[s_i]] = j;
+          }
+          //for(int i = 0; i != vv_n;++i) std::cout <<  (i / (m+1) + 1) << ":" << vv[i] << "\n";
+          std::vector<int> states2transitions_slot_start;
+          states2transitions_slot_start.resize(execution_ctxt.number_of_states+1);
+          std::vector<int> states2transitions_slots;
+
+          states2transitions_slot_start[0] = 0;
+          states2transitions_slots.push_back(-1);
+          for(int s = 1; s <= execution_ctxt.number_of_states; ++s ){
+              states2transitions_slot_start[s] = states2transitions_slots.size();
+              int ts = vv[(s-1)*(m+1)];
+              if (ts > 0){
+                  for(int i = 0; i < ts;++i)
+                      states2transitions_slots.push_back(vv[(s-1)*(m+1)+i+1]);
+              }
+              states2transitions_slots.push_back(-1);
+          }
+          free(vv);
+          execution_ctxt.states2transitions_slot_start = std::move(states2transitions_slot_start);
+          execution_ctxt.states2transitions_slots = std::move(states2transitions_slots);
+#if 0
+          for(std::size_t i = 0; i < execution_ctxt.number_of_states+1;++i){
+              execution_ctxt.states2transitions_slot_start[i] = execution_ctxt.states2transitions_slots.size();
+              for(std::size_t j = 0; j!= execution_ctxt.transitions.size();++j){
+                  if (execution_ctxt.transitions[j].from == 0) continue;
+                  if (execution_ctxt.transitions[j].from == i)
+                     execution_ctxt.states2transitions_slots.push_back(j);
+              }
+              execution_ctxt.states2transitions_slots.push_back(-1);
+          }
+
+          assert(states2transitions_slot_start.size() == execution_ctxt.states2transitions_slot_start.size());
+          for(auto i = 0; i != states2transitions_slot_start.size();++i){
+              assert(states2transitions_slot_start[i]==execution_ctxt.states2transitions_slot_start[i]);
+          }
+          assert(states2transitions_slots.size() == execution_ctxt.states2transitions_slots.size());
+          for(auto i = 0; i != states2transitions_slots.size();++i){
+              assert(states2transitions_slots[i]==execution_ctxt.states2transitions_slots[i]);
+          }
+#endif
+      }
   }
+
+  //std::cerr << "...Done" << std::endl;
   //std::cerr << execution_ctxt.states2transitions_slots.size() << std::endl;
   //std::cerr << execution_ctxt.states2transitions_slot_start.size() << std::endl;
   //std::cerr << "E" << std::endl;

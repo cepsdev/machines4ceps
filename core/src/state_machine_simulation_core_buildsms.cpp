@@ -143,7 +143,6 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	using namespace ceps::ast;
 	using namespace std;
 	DEBUG_FUNC_PROLOGUE;
-	
 	int ev_ctr = 1;
 
 	auto & ev_to_id = smp->executionloop_context().ev_to_id;
@@ -321,7 +320,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
     };
 	non_cover_sm = true;
 	traverse_sms(smsv,build_transitions_table);
-	auto count_transitions = ctx.transitions.size();
+    auto count_transitions = ctx.transitions.size();
 
 	non_cover_sm = false;
 	traverse_sms(smsv,build_transitions_table);
@@ -1726,8 +1725,6 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
         ws_api()->start();
         running_as_node() = true;
     }
-
-
     if(result_cmd_line.start_paused){
         bool start_event_triggered = false;
         for(;!start_event_triggered;){
