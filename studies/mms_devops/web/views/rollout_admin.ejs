@@ -210,7 +210,7 @@
                 
                 <li class="nav-item"><button id="btn_stop" class="btn btn-outline-success">Stop</button></li-->
             </ul>
-            <span class="badge badge-info xs">v201809181615</span>&nbsp;&nbsp;
+            <button style="margin-right:10px;" id="version_info_dlg" type="button" class="btn btn-info" onclick='$("#dlg_version").modal("show");'>RollAut1K+<br/>Alpha</button>
             <span class="badge badge-danger" id="nav_info_connection">Not Connected</span>
         </div>
     </nav>
@@ -256,6 +256,81 @@
             <hr/>
         
 
+
+    <div class="modal fade" id="dlg_version" tabindex="-1" role="dialog" aria-labelledby="dlg_login" style="z-index: 10000;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                  <h4 class="modal-title" id="dlg_select_a_signal_label">Version Info</h4>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div id="dlg_select_a_signal_body" class="modal-body">
+                    <h6>Buildnumber: 201804121700</h6>
+                    <table>
+                    <tr><th>New Features</th></tr>
+                    <tr><td>
+                        <ul>
+                            <li>
+                                Support of large Workflows:
+                                <ul>
+                                    <li>
+                                        New State Machine Engine capable of running workflows with 1M+ transitions/states on a single i7 6700K Core.
+                                    </li>
+                                    <li>
+                                        WebSocket based event driven Monitoring Service API.  
+                                    </li>
+                                    <li>
+                                        Fast and responsive Monitoring - WebGUI
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                Jenkins: New Plugin for control and monitoring of Jenkins instances. 
+                            </li>
+                            <li>
+                                Maria DB: New Plugin for monitoring of DB change 
+                            </li>
+                        </ul>
+                      </td>
+                    </tr>
+                    <tr><th>Known Bugs</th></tr>
+                    <tr><td>
+                            <ul>
+                                <li>
+                                    WebGUI:
+                                    <ul>
+                                        <li>
+                                            Rollout Overview Page: 'Overall Status' remains at 0% , 'Health' says 'Computing...'
+                                        </li>
+                                        <li>
+                                            Details Page: Click on tile doesn't do anything - should show complete status information.  
+                                        </li>
+                                        <li>
+                                            Details Page: All tiles of a category end up in a single column: float layout not implemented yet
+                                        </li>
+                                        <li>
+                                            Details Page: No possibility of Killing/Restarting individual markets
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    Workflow: Criticality Information,e.g. timeouts, currently ignored.
+                                </li>
+                                <li>
+                                    Maria DB: New Plugin for monitoring of DB change 
+                                </li>
+                            </ul>
+                          </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+            
     <!---------------------------- COMPONENT: Login ---------------------------->
     <div class="modal fade" id="dlg_login" tabindex="-1" role="dialog" aria-labelledby="dlg_login" style="z-index: 10000;">
         <div class="modal-dialog" role="document">

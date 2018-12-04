@@ -1,0 +1,26 @@
+kind Event;
+Event E,F,G,H;
+
+sm{
+ S;
+ states{Initial;C;D;};
+ sm{
+  S_1;
+  states{Initial;A;B;C;D;};
+  t{Initial;C;};
+  t{Initial;D;};
+  t{D;A;E;};
+  t{D;B;F;};
+ };
+ 
+ t{Initial;S_1;};
+ t{S_1.A; C; G;};
+ t{S_1.B; D; G;};
+
+};
+
+Simulation{
+ Start{S;};
+ start_timer(2.0*s,E);
+ start_timer(4.0*s,G);
+};

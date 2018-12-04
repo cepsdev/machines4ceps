@@ -445,9 +445,9 @@ setInterval( () => {
         if (info == undefined) continue;
         let proc_idx = i;
         let rollout = info.rollout;
-        log_debug("cepS Core Watch",
-        `'${rollout.name}': spawn=${(info.status & CEPS_INSTANCE_SPAWNING) != 0},terminated:${ (info.status & CEPS_INSTANCE_EXITED) != 0},`+
-        `connecting:${ (info.status & CEPS_INSTANCE_WSAPI_CONNECTING) != 0},connected:${ (info.status & CEPS_INSTANCE_WSAPI_CONNECTED) != 0} `);
+        //log_debug("cepS Core Watch",
+        //`'${rollout.name}': spawn=${(info.status & CEPS_INSTANCE_SPAWNING) != 0},terminated:${ (info.status & CEPS_INSTANCE_EXITED) != 0},`+
+        //`connecting:${ (info.status & CEPS_INSTANCE_WSAPI_CONNECTING) != 0},connected:${ (info.status & CEPS_INSTANCE_WSAPI_CONNECTED) != 0} `);
 
         if (info.status & CEPS_INSTANCE_COMPLETE) continue;
         if (info.status & CEPS_INSTANCE_RUNNING_ROLLOUT){
@@ -542,7 +542,9 @@ setInterval( () => {
 
                                         info.periodic_status = setInterval(
                                             function(){
-                                                try{ws_ceps_api.send("QUERY root.__proc.coverage");}catch(err){
+                                                try{
+                                                    //ws_ceps_api.send("QUERY root.__proc.coverage");
+                                                } catch(err){
                                                     //log_err(`launch_rollout()/cepS core running,pid=${ceps_process.pid} ${rollout.name}`,`${err}`); 
                                                 }
                                             },5000
@@ -562,7 +564,9 @@ setInterval( () => {
 
                                             }
                                         });
-                                        try{ws_ceps_api.send("QUERY root.__proc.coverage");}catch(err){}
+                                        try{
+                                            //ws_ceps_api.send("QUERY root.__proc.coverage");
+                                        }catch(err){}
                                     });
                                     try{ws_ceps_api.send("QUERY root.rollout;");}catch(err){}
                                 }
@@ -594,42 +598,33 @@ setInterval( () => {
                                rollout_path_suffix){
     
     let cmd_args = [];
+    if (global_conf.core_plugins != undefined){
+        for(let i = 0; i != global_conf.core_plugins.length;++i){
+            let plugin = global_conf.core_plugins[i];
+             cmd_args.push(`--plugin../lib/${plugin}`);
+        }
+    }
 
     if (global_conf.skip_worker_sm_creation){
         log_debug(`launch_rollout()`,`Worker State Machines will not be created. global_conf.skip_worker_sm_creation == true`);
-        cmd_args = [
-            `${rollout_path_base}/globals.ceps`,
+        cmd_args = cmd_args.concat( [
             `../${rollout_db_full}`,
             "../db_descr/gen.ceps",
             `${rollout_path_base}/extract_rollout.ceps`,
-            "../lib/conf.ceps",
-            "../lib/rollout_step.ceps",
             "../transformations/rollout2sm.ceps",
-            "../transformations/rollout2watchdogs.ceps",
             "../transformations/driver4rollout_start_immediately_no_worker.ceps",
-            "--dot_gen_one_file_per_top_level_statemachine",
-            "--dot_gen",
-            "--no_file_output",
-            "--start_paused"
-        ];
-    } else cmd_args = [
-        `${rollout_path_base}/globals.ceps`,
+            "--start_paused",
+            "--quiet"
+        ]);
+    } else cmd_args = cmd_args.concat( [
         `../${rollout_db_full}`,
         "../db_descr/gen.ceps",
         `${rollout_path_base}/extract_rollout.ceps`,
-        "../lib/conf.ceps",
-        "../lib/rollout_step.ceps",
         "../transformations/rollout2worker.ceps",
         "../transformations/rollout2sm.ceps",
-        "../transformations/rollout2watchdogs.ceps",
         "../transformations/driver4rollout_start_immediately.ceps",
-        "--dot_gen_one_file_per_top_level_statemachine",
-        "--dot_gen",
-        "--no_file_output",
-        "--start_paused"/*,
-        "--sleep_before_ws_api",
-        "6000000"*/
-    ];
+        "--quiet"
+    ]);
 
     let cmd_args2 = cmd_args.concat(["--ws_api",`${ws_api_port}`]);
 
@@ -747,7 +742,8 @@ dump_rollout_${sm}
 
 
 
-function launch_rollout(back_channel,rollout){
+function launch_rollout( back_channel,
+                         rollout ){
     function two_digits(n){
         if (n < 10) return "0"+n.toString();
         else return n.toString();
@@ -757,7 +753,6 @@ function launch_rollout(back_channel,rollout){
     rollout.state = ROLLOUT_STARTED_PENDING;
     let t = new Date(rollout.up_since);
     let timestamp = `${t.getFullYear()}-${two_digits(t.getMonth()+1)}-${two_digits(t.getDate())} ${two_digits(t.getHours())}:${two_digits(t.getMinutes())}:${two_digits(t.getSeconds())}`;
-    //console.log(`TIMESTAMP: ${timestamp}`);
     log_info("launch_rollout()",`Trigger ${rollout.name}`);
 
     let ws_api_port = get_next_ws_api_port();
@@ -812,56 +807,11 @@ function launch_rollout(back_channel,rollout){
     `);}catch(err){
         try{if(err != undefined) log_err(`launch_rollout()`,err.stack);}catch(e){} 
     }
-
-
-    try{
-    fs.writeFileSync(rollout_run_path+"/start.sh",
-    `    
-     cd runs
-     cp ../${rollout_db_full} ./${rollout_path_base}
-     cd ${rollout_path_base}
-     ../../ceps ${rollout_db} \\
-             globals.ceps\\
-             ../../db_descr/gen.ceps \\
-             extract_rollout.ceps \\
-             ../../lib/conf.ceps \\
-             ../../lib/rollout_step.ceps \\
-             ../../transformations/rollout2worker.ceps \\
-             ../../transformations/rollout2sm.ceps \\
-             ../../transformations/driver4rollout_start_immediately.ceps \\
-             --dot_gen_one_file_per_top_level_statemachine \\
-             --dot_gen \\
-             --ignore_simulations
-     mkdir ../../web/${rollout_path_base}__svgs -p
-     for e in *.dot ; do
-        dot $e -Tsvg -o ../../web/${rollout_path_base}__svgs/$\{e%%.dot\}.svg
-     done
-
-     for e in *.dot ; do
-        rm $e
-     done             
-     
-    `);}catch(err){
-        try{if(err != undefined) log_err(`launch_rollout()`,err.stack);}catch(e){} 
-    }
-
-    log_debug("launch_rollout()",`${rollout_run_path}/start.sh Written`);
-    let svg_generating_proc = spawn("sh",["runs/"+rollout_path_suffix+"/start.sh"]);
-    log_debug("launch_rollout()",`SVG generating process spawned, pid=${svg_generating_proc.pid}`);
-    
-    svg_generating_proc.stdout.on('data', (data) => {
-        log_debug(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,`${data}`);
-    });
-    svg_generating_proc.stderr.on('data', (data) => {
-        log_err(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,`${data}`);
-    });
-    svg_generating_proc.on('close', (code) => {
-        log_debug(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,`Child Process pid=${svg_generating_proc.pid} exited with code ${code}`);
-        start_ceps_instance(rollout,rollout_path_base,rollout_db_full,ws_api_port,rollout_path_suffix);
-    });
-    svg_generating_proc.on('error', (err) => {
-        try{if(err != undefined) log_err(`launch_rollout()/svg_generating_proc.pid{svg_generating_proc.pid}`,err.stack);}catch(e){}
-    });    
+    start_ceps_instance( rollout,
+                         rollout_path_base,
+                         rollout_db_full,
+                         ws_api_port,
+                         rollout_path_suffix);
 }
 
 function kill_rollout(back_channel,rollout){
@@ -905,7 +855,7 @@ function fetch_rollout_plan(callback){
 }
 
 console.log(chalk.bold.green(
-`Media Markt Saturn Rollout Automation (RollAut) Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").`));
+`Rollout Automation (RollAut) Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").`));
 
 function main(){
 

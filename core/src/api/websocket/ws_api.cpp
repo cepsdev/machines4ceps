@@ -1730,16 +1730,21 @@ void Websocket_interface::dispatcher(){
  for(;!smc_->shutdown();)
  {
   cfd = accept(lfd, (struct sockaddr*) &claddr, &addrlen);
+
   if (cfd == -1)  continue;
   {
     using namespace std;
-    lock_guard<std::mutex> lg(handler_threads_status_mutex_);
-    thread_status_type* pp = nullptr;
-    for(auto& s : handler_threads_status_) if (!get<1>(s) && get<0>(s)) {
-        get<0>(s)->join();delete get<0>(s);get<0>(s)=nullptr;if(!pp) pp = &s;
-    }//for
-    auto tp = new thread(&Websocket_interface::handler,this,cfd);
-    if (pp) {*pp = thread_status_type{tp,true,cfd};} else handler_threads_status_.push_back(thread_status_type{tp,true,cfd});
+    {
+     lock_guard<std::mutex> lg(handler_threads_status_mutex_);
+     thread_status_type* pp = nullptr;
+     for(auto& s : handler_threads_status_) if (!get<1>(s) && get<0>(s)) {
+        if(!pp) pp = &s;
+     }//for
+     if (pp) {*pp = thread_status_type{nullptr,true,cfd};} else handler_threads_status_.push_back(thread_status_type{nullptr,true,cfd});
+    }
+    std::thread tp {&Websocket_interface::handler,this,cfd};
+    tp.detach();
+
   }
  }
 }

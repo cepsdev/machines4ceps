@@ -15,15 +15,8 @@
     <meta name="author" content="(c) ceps technologies, all rights reserved">
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
-    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">
-    <!-- link href="datatables/css/dataTables.material.min.css" rel="stylesheet" -->
-    <!-- link href="datatables/css/jquery.dataTables.min.css" rel="stylesheet" -->
-    <link href="datatables/css/dataTables.bootstrap.min.css" rel="stylesheet" >
-    <link href="datatables-responsive/dataTables.responsive.css" rel="stylesheet">
-    <link href="cepscloud-ui/cepscloud-ui.css" rel="stylesheet">
-    <link href="animate/animate.css" rel="stylesheet">
-    <!--link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"-->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">   
+    <link href="rollaut/rollaut_basic.css" rel="stylesheet">    
 <style>
     @font-face {
    font-family: 'Material Icons';
@@ -61,9 +54,6 @@
   /* Support for IE. */
   font-feature-settings: 'liga';
 }
-
-</style>
-    <style>
         /* Rules for sizing the icon. */
 .material-icons.md-18 { font-size: 18px; }
 .material-icons.md-24 { font-size: 24px; }
@@ -89,183 +79,33 @@
 .material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
 .material-icons.orange600 { color: #FB8C00; }
 
-
-.spinner {
-  margin: 100px auto;
-  width: 50px;
-  height: 40px;
-  text-align: center;
-  font-size: 10px;
-}
-
-.spinner > div {
-  background-color: #333;
-  height: 100%;
-  width: 6px;
-  display: inline-block;
-  
-  -webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
-  animation: sk-stretchdelay 1.2s infinite ease-in-out;
-}
-
-.spinner .rect2 {
-  -webkit-animation-delay: -1.1s;
-  animation-delay: -1.1s;
-}
-
-.spinner .rect3 {
-  -webkit-animation-delay: -1.0s;
-  animation-delay: -1.0s;
-}
-
-.spinner .rect4 {
-  -webkit-animation-delay: -0.9s;
-  animation-delay: -0.9s;
-}
-
-.spinner .rect5 {
-  -webkit-animation-delay: -0.8s;
-  animation-delay: -0.8s;
-}
-
-@-webkit-keyframes sk-stretchdelay {
-  0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
-  20% { -webkit-transform: scaleY(1.0) }
-}
-
-@keyframes sk-stretchdelay {
-  0%, 40%, 100% { 
-    transform: scaleY(0.4);
-    -webkit-transform: scaleY(0.4);
-  }  20% { 
-    transform: scaleY(1.0);
-    -webkit-transform: scaleY(1.0);
-  }
-}
-
-    </style>
+  </style>
     <title>MediaMarktSaturn - Rollouts</title>
 </head>
 
-<style>
- .ceps-ui-minimized:hover{
-    
- }
- 
- .ceps-ui-minimized-inactive{
-    
-    
- }
- .ceps-ui-minimized-active{
-    
-    
- }
- .ceps-ui-minimized-warning{
-    
-   
- }
- .ceps-ui-minimized-failure{
-    
-   
- }
- .ceps-ui-minimized-done{
-    
-    
- }
-
-
- @keyframes show-details-anim{
-     from {transform:rotate(0deg)}
-     to {transform:rotate(-180deg)}
- }
-
-
- @keyframes hide-details-anim{
-     from {transform:rotate(-180deg)}
-     to {transform:rotate(0deg)}
- }
-
-.sm-details-info{
-    font-weight: bold;
-    border-radius: 25px;
-    border: 2px solid rgb(115, 173, 221);
-}
-
-
-
-</style>
 
 <script>
-    var global_observer_handlers = [];
-    let SM_STATUS_INACTIVE = 0;
-    let SM_STATUS_ACTIVE = 1;
-    let SM_STATUS_WARNING = 2;
-    let SM_STATUS_FAILURE = 3;
-    let SM_STATUS_DONE = 4;
     
-
-    function register_observer(name, fn) {
-        for (let e of global_observer_handlers)
-            if (e.name == name) { e.handler = fn; return; }
-        if (fn == undefined) return;
-        for (let e of global_observer_handlers)
-            if (e.handler == undefined) { e.name = name; e.handler = fn; return; }
-
-        global_observer_handlers.push({name:name, handler:fn});
-    }
-
-    function set_css_class_for_sm_viz(elem,status,minimized){
-        if(minimized){
-            $(elem).removeClass("ceps-ui-minimized-inactive")
-                   .removeClass("ceps-ui-minimized-active")
-                   .removeClass("ceps-ui-minimized-warning")
-                   .removeClass("ceps-ui-minimized-failure")
-                   .removeClass("ceps-ui-minimized-done");
-            if (status == SM_STATUS_INACTIVE) $(elem).addClass("ceps-ui-minimized-inactive");
-            else if (status == SM_STATUS_ACTIVE) $(elem).addClass("ceps-ui-minimized-active");
-            else if (status == SM_STATUS_WARNING) $(elem).addClass("ceps-ui-minimized-warning");
-            else if (status == SM_STATUS_FAILURE) $(elem).addClass("ceps-ui-minimized-failure");
-            else if (status == SM_STATUS_DONE) $(elem).addClass("ceps-ui-minimized-done");
-        }        
-    }
-
-    function unregister_observer(name) { register_observer(name, undefined); }
-
-    function set_page_title(s) {
-        $("#page_title").html(s);
-    }
-
-    function warn(s) {
-        $.notify({/* options*/message: s
-        },
-            {/*settings*/ delay: 10000, type: 'warning', showProgressbar: false,
-                animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
-            }
-        );        
-    }
-
-    function limit_to_n_characters(s, n) {
-        if (s.length < n) return s;
-        return s.substr(0, n) + "...";
-    }
 </script>
 
 
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<body style="padding-top: 70px;">
+    <nav class="navbar navbar-expand-md  navbar-dark bg-dark fixed-top">
             <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
             <h3 style="color:white;vertical-align:center;text-align:center;"><%=rollout.name%></h3>
 
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-                <!---li class="nav-item"><button id="btn_start" class="btn btn-outline-success">Start</button></li>
-                <li class="nav-item">&nbsp;&nbsp;&nbsp;</li>
                 
-                <li class="nav-item"><button id="btn_stop" class="btn btn-outline-success">Stop</button></li-->
             </ul>
-            <span class="badge badge-danger" id="nav_info_connection">Not Connected</span>
+            <button style="margin-right:10px;" id="version_info_dlg" type="button" class="btn btn-info" onclick='$("#dlg_version").modal("show");'>RollAut1K+<br/>Alpha</button>
+
+            <span class="badge badge-danger" id="nav_info_connection">
+             <div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>
+            </span>
         </div>
     </nav>
+    <main role="main" class="container">
     <div class="row">
         <div class="col-xs-6 col-sm-12">
             <h2><span id="page_title"></span></h2>
@@ -286,1088 +126,508 @@
         <div class="col-xs-2 col-sm-2"></div>        
     </div>
 
-        <div class="row" id="first_row">
-                <!--div class="col-xs-2 col-sm-2">
-                    <table width="100%" >
-                        <tr><td></td><td style="text-align:center;">Inactive/Ready</td></tr>
-                        <tr><td style="width:4px;"></td><td style="border-top: 8px; border-top-color: grey;border-top-style: solid;"></td></tr>
-                    </table>
-                        <div id="toplevel_sms_inactive" >
+    <div class="row" id="first_row">
+      <div class="col-xs-2 col-sm-2"></div>
+      <div class="col-xs-6 col-sm-6">
+        <div id="info_tiles" style="display:block;overflow:hidden;position:absolute;width:100%;">
 
-                                <div class="spinner">
-                                        <div class="rect1"></div>
-                                        <div class="rect2"></div>
-                                        <div class="rect3"></div>
-                                        <div class="rect4"></div>
-                                        <div class="rect5"></div>
-                                </div>
-
-                        </div>
-                </div-->
-                <div class="col-xs-2 col-sm-3">
-                        <table width="100%">
-                                <tr><td style="text-align:center;">Active</td></tr>
-                                <tr><td style="border-top: 8px; border-top-color:darkslateblue;border-top-style: solid;"></td></tr>
-                        </table>                            
-                        <div id="toplevel_sms" >
-
-                                <div class="spinner">
-                                        <div class="rect1"></div>
-                                        <div class="rect2"></div>
-                                        <div class="rect3"></div>
-                                        <div class="rect4"></div>
-                                        <div class="rect5"></div>
-                                </div>
-                            
-                        </div>
-                </div>
-                <div class="col-xs-2 col-sm-3">
-                    <table width="100%">
-                            <tr><td style="text-align:center;">Warning</td><td></td></tr>
-                            <tr><td style="border-top: 8px; border-top-color:yellow;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
-                            </table>
-                    <div id="toplevel_sms_in_warn_state">
-
-                            <div class="spinner">
-                                    <div class="rect1"></div>
-                                    <div class="rect2"></div>
-                                    <div class="rect3"></div>
-                                    <div class="rect4"></div>
-                                    <div class="rect5"></div>
-                            </div>
-
-                    </div>
-                </div>
-            
-                <div class="col-xs-2 col-sm-3">
-                        <table width="100%">
-                                <tr><td style="text-align:center;">Failure</td><td></td></tr>
-                                <tr><td style="border-top: 8px; border-top-color:red;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
-                                </table>
-                        <div id="toplevel_sms_in_error_state">
-
-                                <div class="spinner">
-                                        <div class="rect1"></div>
-                                        <div class="rect2"></div>
-                                        <div class="rect3"></div>
-                                        <div class="rect4"></div>
-                                        <div class="rect5"></div>
-                                </div>
-
-
-                        </div>
-                </div>
-                <div class="col-xs-2 col-sm-3">
-                    <table width="100%">
-                            <tr><td style="text-align:center;">Done</td><td style="width:4px;"></td></tr>
-                            <tr><td style="border-top: 8px; border-top-color:green;border-top-style: solid;"></td><td style="width:4px;"></td></tr>
-                    </table>                            
-                    <div id="toplevel_sms_in_final_state" >
-
-                            <div class="spinner">
-                                    <div class="rect1"></div>
-                                    <div class="rect2"></div>
-                                    <div class="rect3"></div>
-                                    <div class="rect4"></div>
-                                    <div class="rect5"></div>
-                            </div>
-
-
-                    </div>
-                </div>
-                <div class="col-xs-2 col-sm-2">
-                </div>
-
-            </div>
-            <hr/>
-        
-
-    <!---------------------------- COMPONENT: Login ---------------------------->
-    <div class="modal fade" id="dlg_login" tabindex="-1" role="dialog" aria-labelledby="dlg_login" style="z-index: 10000;">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="dlg_select_a_signal_label">Connect</h4>
-                </div>
-                <div id="dlg_select_a_signal_body" class="modal-body">
-                    <div class="input-group">
-                        <span class="input-group-addon"><i class="glyphicon glyphicon-log-in"></i></span>
-                        <!--input id="sim_url" type="text" class="form-control" name="user" value="tomas-cepsdev-win:10163" placeholder=""-->
-                        <input id="sim_url" type="text" class="form-control" name="user" value="localhost:1063" placeholder="">
-                    </div>                      
-                </div>
-                <div class="modal-footer">
-                    <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button id="dlg_select_a_signal_btn_ok" type="button" class="btn btn-primary" onclick="login($('#sim_url').val());">Ok</button>
-                </div>
-            </div>
         </div>
+      </div>
+      <div class="col-xs-2 col-sm-2">
+        
+      </div>
     </div>
-    <!---------------------------- COMPONENT: Login ---------------------------->
-
-    <!---------------------------- COMPONENT: state machine view ---------------------------->
-    <div class="modal fade" 
-         id="dlg_state_machine_details" 
-         tabindex="-1" 
-         role="dialog" 
-         aria-labelledby="dlg_state_machine_label" 
-         style="z-index: 10000;">
-
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                        <h4 class="modal-title" id="dlg_state_machine_details_label"></h4>
-                        <button id="btn_restart_sm" class="btn btn-primary" style="margin-left:64px;" >Restart</button>
-                        <button id="btn_kill_sm" class="btn btn-primary" style="margin-left:8px;" >Kill</button>
-
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                </div>
-                <div id="dlg_state_machine_details_body" class="modal-body" 
-                     style="max-height:700px;overflow:auto;">
-                    <div id="dlg_state_machine_details_svg"></div> 
-                </div>
-                <div class="modal-footer">
-                    <!--button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-default" data-dismiss="modal">Close</button-->
-                </div>
-            </div>
-        </div>
-    </div>
-    <!---------------------------- COMPONENT: Choose Signal ---------------------------->
+  </main>
 
 
 
-
-
-    <script src="jquery/js/jquery.min.js"></script>
-    <script src="bootstrap/js/bootstrap.min.js"></script>
-    <script src="jquery-ui/jquery-ui.min.js"></script>
-    <script src="datatables/js/jquery.dataTables.min.js"></script>
-    <script src="datatables-plugins/dataTables.bootstrap.min.js"></script>
-    <script src="datatables-responsive/dataTables.responsive.js"></script>
-    <script src="chartjs/Chart.js"></script>
-    <script src="bootstrap-notify/bootstrap-notify.js"></script>
-    <script src="cepscloud-ui/widget_properties_panel.js"></script>
-    <script src="cepscloud-ui/widget_toggle_signal.js"></script>
-    <script src="cepscloud-ui/widget_plot_signal.js"></script>
-    <script src="cepscloud-ui/persistence.js"></script>
-    <script src="cepscloud-ui/sm_tile.js"></script>
-    <script src="cepscloud-ui/svg_tools.js"></script>
-    <script src="d3/d3.js"></script>
-
-    <script>
-        function traverse_ceps_as_json(doc, f) {
-            if (doc === undefined) return true;
-            if (Object.prototype.toString.call(doc) == "[object Array]") {
-                for (let e of doc) {
-                    if (!f(e)) return false;
-                    if(!traverse_ceps_as_json(e, f)) return false;
-                }
-                return true;
-            } else if (doc.content) {
-                return(traverse_ceps_as_json(doc.content, f));
-            }
-            return f(doc);
-        }
-        
-        function normalize_id(s){
-            return s.replace(" ","__").replace(":","___");
-        }
-
-    </script>
-
-    <script>
-        let rollout_market = "<%=rollout_market %>";
-        var connected = false;
-        var cmd_channel_established = false;
-        var new_remote_site  = false;
-        var remote_url = undefined;
-        var simcore_ws = undefined;
-        var global_sysstates = [];
-        var command_socket = undefined;
-
-        let lane_spinners_active = true;
-
-//  +#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!+#!
-//Here comes the new stuff
-//
-//
-//
-        let DEBUG_GUI_EVENTS = false;
-
-        function simplifyceps2json(o,m){
-
-            function is_attr(e){
-                if (e.type == "struct" && e.content.length == 1 && e.content[0].type == undefined) return true;
-                return false;
-            }
-
-            if (m.content == undefined){
-                if (m.type == "binop"){
-                    
-                }
-            } else for(let i = 0; i != m.content.length;++i){
-                let e = m.content[i];
-                if (!is_attr(e)){
-                    let field = e.name;
-                    if (o[field] == undefined) o[field] = [];
-                    let t = {};
-                    simplifyceps2json(t,e);
-                    o[field].push(t);
-                } else {
-                    o[e.name]  = e.content[0];
-                }
-            }
-        }
-
-
-        let states_info = {
-            /*
-            states : [{
-                       full_name:"fullqualified state id, e.g. a.b.c.d", 
-                       svg_id:"Technical Id of this state's svg representation",
-                       idx : "Numerical id"
-                      }
-                     ],
-            states_per_sm : {
-                sm1 : [1,2,3],
-                sm2 : [4,5,6]
-            },
-            ids_of_marked_nodes :{sm1:[],sm2:[]}
-
-            */
-            
-        };
-        let callback_proc_consumer = function () {};
-        let svgs = [];
-        let consumed_events = {};
-
-        let components = {};
-
-        function get_sm_of_node_given_by_idx(idx){
-            for(let i = 0; i!=states_info.states.length;++i){
-                let e = states_info.states[i];
-                if (e.idx == idx) {
-                    return e.full_name;
-                    let k = e.full_name.indexOf(".");
-                    if (k < 0) return e.full_name;
-                    return e.full_name.substr(0,k);
-                }
-            }
-            return undefined;
-        }
-
-        function find_sm_node_id_by_idx(idx){
-            for(let i = 0; i!=states_info.states.length;++i){
-                let e = states_info.states[i];
-                if (e.idx == idx) return e.svg_id;
-            }
-            return undefined;
-        }
-
-        function find_sm_node_name_by_idx(idx){
-            for(let i = 0; i!=states_info.states.length;++i){
-                let e = states_info.states[i];
-                if (e.idx == idx) return e.full_name;
-            }
-
-            return undefined;
-        }
-
-        function find_sm_node_marked_nodes_info_by_name(name){
-            return states_info.ids_of_marked_nodes[name];
-        }
-
-        function get_svg_infos(name){
-            for(let i = 0; i != svgs.length;++i)
-             if (svgs[i].name == name) return svgs[i];
-            return undefined;
-        }
-
-        function gui_action_shrink_to_tile_sm_view(sm_name,btn){
-            if (DEBUG_GUI_EVENTS) console.log("function gui_action_shrink_to_tile_sm_view(sm_name,btn)");
-            btn.removeClass("cepscloud-ui-btn-tile");
-            btn.addClass("cepscloud-ui-btn-expand");
-            let sm = get_svg_infos(sm_name);
-
-            $(`#sm_viz_${normalize_id(sm_name)}`).css("height",`${layout_info.sm_widget_tile.outter_height}px`);
-            $(`#sm_viz_${normalize_id(sm_name)}`).css("width",`${layout_info.sm_widget_tile.outter_width}px`);
-            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("height",`${layout_info.sm_widget_tile.height}px`);
-            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("width",`${layout_info.sm_widget_tile.width}px`);
-            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("height",`${layout_info.sm_widget_tile.height}px`);
-            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("width",`${layout_info.sm_widget_tile.width}px`);
-            d3_util_scale(d3.select(`#sm_viz_${normalize_id(sm_name)}`).select("svg").select("g"),sm.tile_scale,sm.tile_scale);
-            $(`#sm_viz_${normalize_id(sm_name)}`).addClass("ceps-ui-tile");
-            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).removeClass("glyphicon-minus");
-            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).addClass("glyphicon-fullscreen");
-        }
-
-        function gui_action_expand_sm_view(sm_name,btn){
-            if (DEBUG_GUI_EVENTS) console.log("function gui_action_expand_sm_view(sm_name,btn)");
-            btn.removeClass("cepscloud-ui-btn-expand");
-            btn.addClass("cepscloud-ui-btn-tile");
-            let sm = get_svg_infos(sm_name);
-            $(`#sm_viz_${normalize_id(sm_name)}`).css("height",`${sm.svg_orig_height+40}px`);
-            $(`#sm_viz_${normalize_id(sm_name)}`).css("width",`${sm.svg_orig_width+10}px`);
-            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("height",`${sm.svg_orig_height}px`);
-            $(`#sm_viz_container_${normalize_id(sm_name)}`).css("width",`${sm.svg_orig_width}px`);
-            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("height",`${sm.svg_orig_height}px`);
-            $(`#sm_viz_container_parent_div_${normalize_id(sm_name)}`).css("width",`${sm.svg_orig_width}px`);
-            d3_util_scale(d3.select(`#sm_viz_${normalize_id(sm_name)}`).select("svg").select("g"),1,1);
-            $(`#sm_viz_${normalize_id(sm_name)}`).removeClass("ceps-ui-tile");
-            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).removeClass("glyphicon-fullscreen");
-            $(`#btn_glyph_${normalize_id(sm_name)}_view_size`).addClass("glyphicon-minus");
-        }
-
-        function gui_action_toggle_sm_view(sm_name){
-            if (DEBUG_GUI_EVENTS) console.log("function gui_action_toggle_sm_view(sm_name)");
-            let btn = $(`#btn_${normalize_id(sm_name)}_view_size`);
-            if (btn.hasClass("cepscloud-ui-btn-expand"))
-             gui_action_expand_sm_view(sm_name,btn);
-            else
-             gui_action_shrink_to_tile_sm_view(sm_name,btn);
-        }
-
-        function gui_action_move_one_down_sm_view(sm_name){
-            let e = $(`#sm_viz_${normalize_id(sm_name)}`);
-            let p = e.parent();//.css("background-color","red");
-            let n = e.next();
-            //if(n.empty()) return;
-            e.remove();
-            e.insertAfter(n);
-            if (DEBUG_GUI_EVENTS) console.log(p);
-        }
-
-        function change_lane_of_sm_view(sm_name,current_lane,new_lane){
-            states_info.lane[sm_name] = new_lane;
-            let e = $(`#sm_viz_${normalize_id(sm_name)}`);
-            e.remove();
-            $(new_lane).append(e);
-        }
-
-
-
-        function update_info_cards(){
-            
-            $(".ceps-ui-tile").each( function(idx){
-                
-                mark_active_nodes(states_info.active_states);
-                let sm_name = $(this).attr("sm-name");
-                let sm_viz = $(`#sm_viz_${normalize_id(sm_name)}`);                
-                let coverage = states_info.coverage[sm_name];
-                if (coverage == undefined){
-
-                } else {
-                    let percentage = Math.round(100.0 * coverage);
-                    $(`#sm_viz_progress_${normalize_id(sm_name)}`).css("width",`${percentage}%`);
-                    $(`#sm_viz_progress_${normalize_id(sm_name)}_info_text`).html(`${percentage}%`);
-                }
-
-                if ($(sm_viz).hasClass("details-active")){
-                    let t = states_info.states_per_sm[sm_name];
-                    let s = "";
-                    for (let i = 0; i != t.length;++i){
-                        for(let j = 0; j != states_info.active_states.length; ++j)
-                          if (t[i] == states_info.active_states[j]){
-                              let ss = find_sm_node_name_by_idx(t[i]);
-                              if (ss == sm_name) continue;
-                              ss = ss.substr(sm_name.length+1);
-                              s = s + " " + ss;                             
-                          }
-                    }
-                    
-                    if (!$(`#info_${normalize_id(sm_name)}`).hasClass("sm-details-info")) $(`#info_${normalize_id(sm_name)}`).addClass("sm-details-info");
-                    $(`#info_${normalize_id(sm_name)}`).html(s);
-                }
-             }
-            );
-        }
-        
-        function update_gui(){
-            update_info_cards();
-        }
-
-        function html_gen_sm_widget(title,content,as_tile,minimized) {
-            if (as_tile){
-               return `    
-               <div class="panel panel-primary sm_viz ceps-ui-tile" id="sm_viz_${normalize_id(title)}" 
-                    style="margin:2px;width:${layout_info.sm_widget_tile.outter_width}px;height:${layout_info.sm_widget_tile.outter_height}px;float:left;">
-                    
-                    <div class="panel-heading" style="height:24px;padding:0px;padding-left:5px;" >
-                    ${title}
-                    <button type="button" 
-                            class="btn btn-default btn-xs pull-right cepscloud-ui-menu-btn cepscloud-ui-btn-expand" 
-                            style= "padding-top:2px;border-width:0px;outline:none;background-color:transparent;"
-                            onclick="gui_action_toggle_sm_view('${title}');"
-                            id="btn_${normalize_id(title)}_view_size"
-                            >
-                        <span id="btn_glyph_${normalize_id(title)}_view_size" class="glyphicon glyphicon-fullscreen"></span>
-                    </button>
-                    <button type="button" 
-                            class="btn btn-default btn-xs pull-right cepscloud-ui-menu-btn" 
-                            style= "padding-top:2px;border-width:0px;outline:none;background-color:transparent;"
-                            onclick="gui_action_move_one_down_sm_view('${title}');"
-                            id="btn_${normalize_id(title)}_view_move_one_down"
-                            >
-                        <span id="btn_glyph_${normalize_id(title)}_view_move_one_down" class="glyphicon glyphicon-chevron-right"></span>
-                    </button>
-                    <button type="button" 
-                            class="btn btn-default btn-xs pull-right cepscloud-ui-menu-btn" 
-                            style= "padding-top:2px;border-width:0px;outline:none;background-color:transparent;"
-                            onclick="gui_action_move_one_up_sm_view('${title}');"
-                            id="btn_${normalize_id(title)}_view_move_one_up"
-                            >
-                        <span id="btn_glyph_${normalize_id(title)}_view_move_one_down" class="glyphicon glyphicon-chevron-left"></span>
-                    </button>
-
-                    </div>
-                    <div class="panel-body" 
-                                 id="sm_viz_container_parent_div_${normalize_id(title)}"
-                                 style="padding-left:2px;overflow:hidden;width:${layout_info.sm_widget_tile.width}px;height:${layout_info.sm_widget_tile.height}px;"
-                                 >
-                            <div id="sm_viz_container_${normalize_id(title)}" style="position:relative;">${content}</div>
-                     </div>
-               </div>`;
-                        
-            }
-            if (minimized){
-
-                let ctrls = "";
-                if (rollout_market == undefined) ctrls = `
-<i 
-       id = "show_details_btn_${normalize_id(title)}"
-       class="material-icons md-24 md-dark details-show-btn" 
-       onclick="handle_tile_click('${title}')"
-       style = "cursor:pointer;">details</i>
-`;
-
-                content =`
-<table style="width:100%;">
-<tr><td style="vertical-align:top;" >${title}</td></tr><tr><td style="vertical-align:center;height:16px;">
-<div class="progress">
-  <div style="width:0%;" 
-       id="sm_viz_progress_${normalize_id(title)}" 
-       class="progress-bar progress-bar-striped active" 
-       role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" >
-       <span id="sm_viz_progress_${normalize_id(title)}_info_text"></span>
+  <div class="modal fade" id="dlg_version" tabindex="-1" role="dialog" aria-labelledby="dlg_login" style="z-index: 10000;">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="dlg_select_a_signal_label">Version Info</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              </div>
+              <div id="dlg_select_a_signal_body" class="modal-body">
+                  <h6>Buildnumber: 201804121700</h6>
+                  <table>
+                  <tr><th>New Features</th></tr>
+                  <tr><td>
+                      <ul>
+                          <li>
+                              Support of large Workflows:
+                              <ul>
+                                  <li>
+                                      New State Machine Engine capable of running workflows with 1M+ transitions/states on a single i7 6700K Core.
+                                  </li>
+                                  <li>
+                                      WebSocket based event driven Monitoring Service API.  
+                                  </li>
+                                  <li>
+                                      Fast and responsive Monitoring - WebGUI
+                                  </li>
+                              </ul>
+                          </li>
+                          <li>
+                              Jenkins: New Plugin for control and monitoring of Jenkins instances. 
+                          </li>
+                          <li>
+                              Maria DB: New Plugin for monitoring of DB change 
+                          </li>
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr><th>Known Bugs</th></tr>
+                  <tr><td>
+                          <ul>
+                              <li>
+                                  WebGUI:
+                                  <ul>
+                                      <li>
+                                          Rollout Overview Page: 'Overall Status' remains at 0% , 'Health' says 'Computing...'
+                                      </li>
+                                      <li>
+                                          Details Page: Click on tile doesn't do anything - should show complete status information.  
+                                      </li>
+                                      <li>
+                                          Details Page: All tiles of a category end up in a single column: float layout not implemented yet
+                                      </li>
+                                      <li>
+                                          Details Page: No possibility of Killing/Restarting individual markets
+                                      </li>
+                                  </ul>
+                              </li>
+                              <li>
+                                  Workflow: Criticality Information,e.g. timeouts, currently ignored.
+                              </li>
+                              <li>
+                                  Maria DB: New Plugin for monitoring of DB change 
+                              </li>
+                          </ul>
+                        </td>
+                      </tr>
+                  </table>
+              </div>
+              <div class="modal-footer">
+                  <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+              </div>
+          </div>
+      </div>
   </div>
-</div></td>
-<td style="width:20px;vertical-align:top;">
-${ctrls}
-</td>
-</tr>
-<tr><td colspan="3" style="text-align:center;"><div id="info_${normalize_id(title)}" class=""></div></td></tr>
-</table>
-                `;
 
-            return `    
-<div id="sm_viz_${normalize_id(title)}" 
-     style="padding:2px;" 
-     class="ceps-ui-minimized ceps-ui-tile" 
-     sm-name="${title}" 
-     >     
- ${content}
-  <div id="sm_viz_details_${normalize_id(title)}" style="width:100%; style=""
-       onclick="sm_viz_details_click_handler('${title}')"
-   >
-   <div id="sm_viz_details_svg_div_${normalize_id(title)}"></div>
-  </div>
- </div>
-               `;
-                
-            }
-            return `    <div class="panel panel-primary sm_viz" id="sm_viz_${normalize_id(title)}" >
-                            <div class="panel-heading">${title}</div>
-                            <div class="panel-body">${content}</div>
-                        </div>`;
-        }
 
-
-        function sm_viz_details_click_handler(sm_name){
-            let svg_info = get_svg_infos(sm_name);            
-            $(`#dlg_state_machine_details_svg`).html(svg_info.data);
-            $(`#btn_restart_sm`).off("click");
-            $(`#btn_kill_sm`).off("click");
-            
-            $(`#btn_restart_sm`).click(()=>{
-                command_socket.send(JSON.stringify({cmd:"restart",what:sm_name,rollout_name:"<%=rollout.name%>"}));    
-                $("#dlg_state_machine_details").modal("hide");            
-            });
-            $(`#btn_kill_sm`).click(()=>{
-                command_socket.send(JSON.stringify({cmd:"kill",what:sm_name,rollout_name:"<%=rollout.name%>"}));
-                $("#dlg_state_machine_details").modal("hide");        
-            });            
-            $("#dlg_state_machine_details").modal("show");
-            $("#dlg_state_machine_details_label").html(sm_name);
-        }
-
-
-        function mark_active_nodes(v){
-
-            return;
-
-            for(let k in states_info.ids_of_marked_nodes)
-            {
-                let t = states_info.ids_of_marked_nodes[k];
-                for(let i = 0; i != t.length; ++i)
-                  d3.selectAll(`#${t[i]}`).style("stroke","black");
-                t = []; 
-            }
-
-            for(let i = 0; i != v.length;++i){
-                let sm_name = get_sm_of_node_given_by_idx(v[i]);
-                if (sm_name == undefined) continue;
-                let node_id = find_sm_node_id_by_idx(v[i]);
-                if (node_id == undefined) continue;
-                states_info.ids_of_marked_nodes[sm_name] = [];
-                states_info.ids_of_marked_nodes[sm_name].push(node_id);
-                d3.selectAll(`#${node_id}`).style("stroke","red");
-            }
-        }
-
-        
-        let get_sm_cache = {};
-        function get_sm(idx){
-            let t = undefined;
-            if ( (t = get_sm_cache[idx]) != undefined) return t;
-
-            if (states_info.states == undefined) return undefined;
-            let sinfo = undefined;
-            for (let i = 0; i!=states_info.states.length;++i){
-                if (states_info.states[i].idx == idx) {sinfo = states_info.states[i];break;}
-            }
-            if (sinfo == undefined) {                
-                return undefined;
-            }
-            let full_name = sinfo.full_name;
-            
-            if(sinfo.svg_id.startsWith("cluster")) return get_sm_cache[idx] = full_name;
-
-            return get_sm_cache[idx] = full_name.substring(0,full_name.lastIndexOf("."));
-        }
-
-        function get_sms_with_changes(old_states,new_states){
-            if (DEBUG_GUI_EVENTS) console.log(`get_sms_with_changes: ${old_states.length} ${new_states.length}`);
-            let sms_changed = {};
-            //INVARIANT old_states,new_states are already sorted(in ascending order) integer arrays
-            if (old_states.length == 0 && new_states.length == 0) return; //nothing todo here
-            if (new_states.length == 0 || old_states.length == 0){
-                let v = new_states;
-                if (new_states.length == 0) v = old_states;
-                for(let i = 0; i != v.length; ++i){
-                    sms_changed[get_sm(v[i])] = 1;
-                }
-            }
-            let v1 = old_states;
-            let v2 = new_states;
-            let j = 0;let i = 0;
-            for(; i != v1.length && j != v2.length;++i){
-                if (v1[i] == v2[j]) ++j;
-                else if (v1[i] < v2[j]) sms_changed[get_sm(v1[i])] = 1;
-                else /*v1[i] > v2[j]*/ {++j;--i;}
-            }
-            if (i < v1.length) {
-                for(; i != v1.length;++i) sms_changed[get_sm(v1[i])] = 1;
-            }
-            v2 = old_states;
-            v1 = new_states;
-            j = 0;i = 0;
-            for(; i != v1.length && j != v2.length;++i){
-                if (v1[i] == v2[j]) ++j;
-                else if (v1[i] < v2[j]) sms_changed[get_sm(v1[i])] = 1;
-                else /*v1[i] > v2[j]*/ {++j;--i;}
-            }
-            if (i < v1.length) {
-                for(; i != v1.length;++i) sms_changed[get_sm(v1[i])] = 1;
-            }        
-            return sms_changed;
-        }
-
-        function start_ceps_proc_consumer(ws){
-            let no_lanes = rollout_market != undefined;
-            function h(ev){  
-                let msg = JSON.parse(ev.data);
-                let to = {};
-                simplifyceps2json(to,msg.sresult.coverage);
-                msg.sresult.coverage = to.coverage[0];
-                states_info["coverage"] = msg.sresult.coverage.transition_coverage[0].toplevel_state_machines[0];
-
-               if (!no_lanes)  if (states_info.active_states != undefined) {
-
-                    let sms_changed = get_sms_with_changes(states_info.active_states,msg.sresult.current_states);
-
-                    for(let sm in sms_changed){
-                        let new_lane = get_sm_lane(sm,msg.sresult.current_states);
-                        
-                        if (new_lane != states_info.lane[sm])
-                         change_lane_of_sm_view(sm,states_info.lane[sm],new_lane);    
-                        states_info.lane[sm] = new_lane;                    
-                    }
-                   
-                }
-                states_info.active_states = msg.sresult.current_states;
-                callback_proc_consumer();                       
-            }
-            ws.addEventListener("message", h);
-            let f = undefined;
-            setInterval(
-                f = function () {
-                 if (ws.readyState == ws.CLOSING || ws.readyState == ws.CLOSED){
-                     clearInterval(f);return;
-                 }
-                 ws.send("QUERY root.__proc.current_states_with_coverage");                       
-                }, 1000);            
-        }
-
-        function on_change_input_search_statemachines(){          
-            let s = $("#input_search_statemachines").val().split(" ");
-            let search_empty = true;
-            let r = {};
-            for(let i = 0; i != s.length; ++i){
-                if (s[i].length == 0) continue;
-                search_empty = false;
-                for(let j = 0; j!=states_info.states.length;++j) {
-                    let e = states_info.states[j];
-                    if (e.full_name.indexOf(s[i]) == -1) continue;
-                    let ss = e.full_name.split(".");
-                    r[ss[0]] = 1;                    
-                }
-            }
-            if (search_empty){
-                for(let i = 0; i != svgs.length; ++i ) 
-                    $(`#sm_viz_${svgs[i].name}`).css("display","inline");
-                return;
-            }
-            for(let i = 0; i != svgs.length;++i) svgs[i].matched = false;
-
-            for(let e in r){
-                for(let i = 0; i != svgs.length;++i){ 
-                 if (svgs[i].name == e){
-                    svgs[i].matched = true;
-                    $(`#sm_viz_${e}`).css("display","inline");
-                 }
-                }
-            }
-            for(let i = 0; i != svgs.length;++i) if (!svgs[i].matched) $(`#sm_viz_${svgs[i].name}`).css("display","none");
-        }
-
-        function compute_consumed_events(sm){
-            let t = {};
-            if (sm.content == undefined) return t;
-            for(let i = 0; i != sm.content.length;++i){
-                let e = sm.content[i];
-                if (e.name != "t" || e.type != "struct") {
-                    let tt = compute_consumed_events(e);
-                    for(let k in tt) t[k] = tt[k];
-                    continue;
-                }
-                for (let j = 0; j!=e.content.length;++j)
-                  if(e.content[j].type == "symbol" && e.content[j].kind == "Event")
-                   t[e.content[j].name] = 1;
-            }
-            return t;
-        }
-
-        function id_of_sm(sm_struct){
-            if (sm_struct.content.length > 0 && sm_struct.content[0].type == undefined) return sm_struct.content[0];
-            return undefined
-        }
-
-        function get_all_states_of_sm(sm_name){
-            let all_included_states = [];
-            let all_toplevel_final_states = [];
-            let all_fail_states = [];
-            let all_warn_states = [];
-            let all_initial_states = [];
-            let sm_states = [];
-            
-            if (states_info.states_per_sm == undefined) {
-                states_info.states_per_sm = {};
-                states_info.toplevel_final_states_per_sm = {};
-                states_info.fail_states_per_sm = {};
-                states_info.warn_states_per_sm = {};
-                states_info.initial_states_per_sm = {};
-                states_info.sm_states_per_sm = {};
-            }            
-            if (states_info.states_per_sm[sm_name] == undefined){
-            
-                for(let i = 0; i != states_info.states.length;++i){
-                    if (states_info.states[i].full_name == sm_name || states_info.states[i].full_name.startsWith(`${sm_name}.`)){
-                        all_included_states.push(states_info.states[i].idx);
-                        if ((states_info.states[i].full_name == `${sm_name}.Final`)) all_toplevel_final_states.push(states_info.states[i].idx);
-                        if ((states_info.states[i].full_name == `${sm_name}.Initial`)) all_initial_states.push(states_info.states[i].idx);
-
-                        if (states_info.states[i].categories != undefined)
-                         for(let j = 0; j != states_info.states[i].categories.length; ++j )
-                          if (states_info.states[i].categories[j].category == "FailState") all_fail_states.push(states_info.states[i].idx);
-                          else if (states_info.states[i].categories[j].category == "WarnState") all_warn_states.push(states_info.states[i].idx);
-                    }
-                }
-                states_info.states_per_sm[sm_name] = all_included_states;
-                states_info.toplevel_final_states_per_sm[sm_name] = all_toplevel_final_states;
-                states_info.fail_states_per_sm[sm_name] = all_fail_states;
-                states_info.warn_states_per_sm[sm_name] = all_warn_states;
-                states_info.initial_states_per_sm[sm_name] = all_initial_states;
-                states_info.sm_states_per_sm[sm_name] = sm_states;
-            }
-            return states_info.states_per_sm[sm_name];
-        }
-
-        function is_sm_active(sm_name,active_states){            
-            let v = get_all_states_of_sm(sm_name);
-            
-            for(let i = 0; i != active_states.length; ++i ){
-                for(let j = 0; j != v.length; ++j){
-                    if (active_states[i] == v[j]) return true;
-                }
-            }
-            return false;     
-        }
-
-        function is_in_final_state(sm_name,active_states){
-            get_all_states_of_sm(sm_name);
-            let v = states_info.toplevel_final_states_per_sm[sm_name];
-            for(let i = 0; i != active_states.length; ++i ){
-                for(let j = 0; j != v.length; ++j){
-                    if (active_states[i] == v[j]) {return true;}
-                }
-            }
-            return false;
-        }
-
-        function is_in_fail_state(sm_name,active_states){
-            get_all_states_of_sm(sm_name);
-            let v = states_info.fail_states_per_sm[sm_name];
-            for(let i = 0; i != active_states.length; ++i ){
-                for(let j = 0; j != v.length; ++j){
-                    if (active_states[i] == v[j]) return true;
-                }
-            }
-            return false;
-        }
-
-        function is_in_warn_state(sm_name,active_states){
-            get_all_states_of_sm(sm_name);
-            let v = states_info.warn_states_per_sm[sm_name];
-            for(let i = 0; i != active_states.length; ++i ){
-                for(let j = 0; j != v.length; ++j){
-                    if (active_states[i] == v[j]) return true;
-                }
-            }
-            return false;
-        }
-
-        function is_sm_in_initial_only(sm_name,active_states){
-            let all_states = get_all_states_of_sm(sm_name);
-            let v = states_info.initial_states_per_sm[sm_name];
-            
-            for(let i = 0; i != active_states.length; ++i ){
-                for(let j = 0; j != all_states.length; ++j){
-                    if (active_states[i] != all_states[j]) continue;
-                    let b = false;
-                    for(let k = 0; k!=v.length;++k ){
-                        if (v[k] == all_states[j]) {b = true;break;}
-                    }
-                    if (!b){
-                        for(let k = 0; k!=states_info.sm_states_per_sm[sm_name].length;++k ){
-                            if (states_info.sm_states_per_sm[sm_name][k] == all_states[j]) {b = true;break;}
-                        }                        
-                    }
-                    if(!b) return false;                    
-                }
-            }
-            return true;
-        }
-
-        function get_sm_status(sm_name,active_states){
-            if (!is_sm_active(sm_name,active_states)) return SM_STATUS_INACTIVE;
-            if (is_sm_in_initial_only(sm_name,active_states)) return SM_STATUS_INACTIVE;
-            if (is_in_fail_state(sm_name,active_states)) return SM_STATUS_FAILURE;
-            if (is_in_warn_state(sm_name,active_states)) return SM_STATUS_WARNING;
-            if (is_in_final_state(sm_name,active_states)) return SM_STATUS_DONE;
-            return SM_STATUS_ACTIVE;
-        }
-
-        function get_sm_lane_given_status(sm_status){
-            //if (sm_status == SM_STATUS_INACTIVE) return '#toplevel_sms_inactive';
-            if (sm_status == SM_STATUS_FAILURE) return "#toplevel_sms_in_error_state";
-            if (sm_status == SM_STATUS_WARNING) return "#toplevel_sms_in_warn_state";
-            if (sm_status == SM_STATUS_DONE) return "#toplevel_sms_in_final_state";
-            return '#toplevel_sms';
-        }
-
-        function get_sm_lane(sm_name,active_states){
-            if (!is_sm_active(sm_name,active_states)) return '#toplevel_sms_inactive';
-            if (is_sm_in_initial_only(sm_name,active_states)) return '#toplevel_sms_inactive';
-            if (is_in_fail_state(sm_name,active_states)) return "#toplevel_sms_in_error_state";
-            if (is_in_warn_state(sm_name,active_states)) return "#toplevel_sms_in_warn_state";
-            if (is_in_final_state(sm_name,active_states)) return "#toplevel_sms_in_final_state";
-            return '#toplevel_sms';
-        }
-
-        function fetch_sm_svgs_from_simcore(ws) {
-            
-            function h(ev) {
-                ws.removeEventListener("message", h);
-
-                let msg = JSON.parse(ev.data);
-                for(let k = 0; k != msg.sresult.length;++k) {
-                    if (msg.sresult[k].name != "sm" || msg.sresult[k].type != "struct") continue;
-                    consumed_events[id_of_sm(msg.sresult[k])] = compute_consumed_events(msg.sresult[k]);
-                }
-                //states_info = {};components={};svgs=[];
-                $(".ceps-ui-tile").remove();
-
-                if (msg.ok) {
-                    for(let i = 0; i != msg.sresult.length;++i){
-                        let e = msg.sresult[i];
-                        if(e.name != "__dot_gen" || e.type != "struct") continue;
-                        let v = {};
-                        simplifyceps2json(v,e);
-                        
-                        let svgs_to_load = v.sm.length;
-                        states_info.states = v.states[0].state;
-                        states_info.ids_of_marked_nodes = {};
-                        
-                        for(let i = 0; i != v.sm.length;++i){
-                            if (v.sm[i].name.indexOf(".") >= 0) continue;
-                            states_info.ids_of_marked_nodes[v.sm[i].name]=[];
-                            if (rollout_market != undefined){
-                                if (rollout_market != v.sm[i].name) continue;
-                                let sm_status = get_sm_status(v.sm[i].name,states_info.active_states);
-                                $("#single_market_view").append(html_gen_sm_widget(v.sm[i].name,/*res*/"",false,true));
-                                set_css_class_for_sm_viz($(`#sm_viz_${v.sm[i].name}`),sm_status,true);
-                                components[v.sm[i].name] = {};
-                            }
-                            else $.get("<%=rollout.svgs%>"+"/"+v.sm[i].svg_filename,{},function(res){
-
-                                
-
-                                if (lane_spinners_active){
-                                    lane_spinners_active = false;
-                                    $(".spinner").remove();
-                                }
-
-                                let sm_status = get_sm_status(v.sm[i].name,states_info.active_states);
-                                let lane = get_sm_lane_given_status(sm_status);
-
-                                $(lane)
-                                 .append(html_gen_sm_widget(v.sm[i].name,/*res*/"",false,true));
-                                
-                                set_css_class_for_sm_viz($(`#sm_viz_${v.sm[i].name}`),sm_status,true);                               
-
-                                if (states_info.lane == undefined) states_info.lane={};
-                                states_info.lane[v.sm[i].name] = lane;
-
-                                components[v.sm[i].name] = {};
-                                components[v.sm[i].name].setup_tile = function(){setup_tile(tile_scale,v.sm[i].name,svg_orig_width,svg_orig_height);}
-
-                                svgs.push({name:v.sm[i].name, data:res/*, tile_scale:tile_scale,svg_orig_width:svg_orig_width,svg_orig_height:svg_orig_height*/});
-                                svgs_to_load--;
-                                if (svgs_to_load == 0){
-                                    
-                                    $('#input_search_statemachines').bind("input",function(){
-                                        on_change_input_search_statemachines();
-                                    });
-                                }
-                            },"text");                          
-                        }
-                        break;
-                    }
-                }
-                //fetch_frames_from_simcore(ws);
-            }           
-
-            let active_states_monitoring_ws = new WebSocket("ws://"+remote_url);
-
-            function active_states_monitoring_ws_open(){
-                start_ceps_proc_consumer(active_states_monitoring_ws);
-                let t = callback_proc_consumer;
-                callback_proc_consumer = function () {
-                    callback_proc_consumer = update_gui;
-                    ws.addEventListener("message", h);
-                    ws.send("QUERY root;");
-                };
-            }
-            function active_states_monitoring_ws_close(){
-                
-            }
-            function active_states_monitoring_ws_error(){
-                
-            }
-
-            active_states_monitoring_ws.addEventListener("open", active_states_monitoring_ws_open);
-            active_states_monitoring_ws.addEventListener("close", active_states_monitoring_ws_close);
-            active_states_monitoring_ws.addEventListener("error", active_states_monitoring_ws_error);       
-            
-            /*start_ceps_proc_consumer(ws);
-            
-            ws.addEventListener("message", h);
-            ws.send("QUERY root;");*/
-        }
-
-        var login_retry_timeout = undefined;
-        function stop_login_retry_timeout() {
-            if (login_retry_timeout == undefined) return;
-            window.clearTimeout(login_retry_timeout);
-            login_retry_timeout = undefined;
-        }
-
-        function enter_credentials() {
-           $('#dlg_login').modal('show');
-        }
-
-        var failed_connect_notification_container = undefined;
-        function show_failed_connect_notification(url) {
-            if (failed_connect_notification_container != undefined) {
-                failed_connect_notification_container.close();
-            }
-            var time_elapsed_to_retry_connect = 10;
-            function time_elapsed_to_retry_connect_fn(){
-                --time_elapsed_to_retry_connect;
-                if (time_elapsed_to_retry_connect <= 0) {
-                    if (failed_connect_notification_container != undefined) {
-                        failed_connect_notification_container.close();
-                        setTimeout(() => { do_login(remote_url); }, 1500);
-                    }
-                } else {
-                    $("#info_btn_log_again").html(time_elapsed_to_retry_connect.toString());
-                    login_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
-                }
-            }
-            login_retry_timeout = setTimeout(time_elapsed_to_retry_connect_fn, 1000);
-            failed_connect_notification_container=
-            $.notify({/* options*/message: 'Failed to connect with \'' + url +
-                `' <p></p><button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick="stop_login_retry_timeout();do_login('${remote_url}');">Try again in <span id="info_btn_log_again">${time_elapsed_to_retry_connect}</span> seconds</button>&nbsp;&nbsp;` +
-                `<button type="button" class="btn btn-primary btn-xs" data-dismiss="alert" onclick=" stop_login_retry_timeout();enter_credentials();">Reenter Credentials</button>`
-            },
-                {/*settings*/ delay: 0, type: 'danger', showProgressbar: false,
-                    animate: { enter: 'animated zoomInDown', exit: 'animated zoomOutUp' }
-                }
-            );                    
-        }
-
-        function connection_lost() {
-            connected = false;
-            simcore_ws = undefined;
-        }
-
-
-        let main_socket = undefined;
-        function on_ws_initial_connect(ev) {
-            connected = true;
-            states_info = {};
-            $(".sm_viz").each(function(a,b){$(this).remove();});
-            fetch_sm_svgs_from_simcore(main_socket);
-        }
-
-        function on_ws_close(ev) {
-            conected = false;
-            setTimeout(function (){
-                main_socket = new WebSocket("ws://"+remote_url);
-                main_socket.addEventListener("open", on_ws_initial_connect);
-                main_socket.addEventListener("close", on_ws_close);
-                main_socket.addEventListener("error", on_ws_error);
-            },1000);           
-        }
-
-        function on_ws_error(ev) {
-            
-        }
-
-        function do_login(url) {
-            new_remote_site = remote_url != url;
-            remote_url = url;          
-            connected = false;
-            main_socket = new WebSocket("ws://"+url);
-            main_socket.addEventListener("open", on_ws_initial_connect);
-            main_socket.addEventListener("close", on_ws_close);
-            main_socket.addEventListener("error", on_ws_error);                
-        }
-
-        function login(url) {
-            
-            do_login(url);
-        }
-
-        function establish_command_channel(){
-            
-            function on_command_channel_connect(){
-                let ws = command_socket;
-                function msg_arrived(msg){
-                }              
-
-                cmd_channel_established = true;
-                $("#btn_start").attr("disabled",false);
-                //command_socket
-                $("#btn_start").click(function () {
-                    command_socket.send(JSON.stringify({cmd:"start"}));
-                });
-                ws.addEventListener("message", msg_arrived);
-            }
-            function on_command_channel_close(){
-                cmd_channel_established = false;
-                $("#btn_start").attr("disabled","disabled");
-                setTimeout(establish_command_channel,1000);                
-            }
-            function on_command_channel_error(){
-                cmd_channel_established = false;
-            }
-
-            command_socket = new WebSocket("ws://"+window.location.hostname+":<%=command_port%>");
-            command_socket.addEventListener("open", on_command_channel_connect);
-            command_socket.addEventListener("close", on_command_channel_close);
-            command_socket.addEventListener("error", on_command_channel_error);        
-        }
-        
-        $(document).ready(() => {
-
-            if (rollout_market == "") rollout_market = undefined;
-            if (rollout_market != undefined){
-                $("#searchfield_row").remove();
-                $("#first_row").html(`
-                <div class="col-xs-2 col-sm-2"></div>
-                <div class="col-xs-8 col-sm-8" id="single_market_view"></div>
-                `);
-            }
-
-            $("#btn_start").attr("disabled","disabled");
-            $("#btn_stop").attr("disabled","disabled");
-
-            setInterval(() => {
-                for (let e of global_observer_handlers) if (e.handler != undefined) e.handler();
-             } , 250);
-
-             let last_cmd_channel_established = cmd_channel_established;
-             let last_connected = connected;
-
-             register_observer("Check Connections", function(){
-
-                 if (last_cmd_channel_established != cmd_channel_established ){
-                   
-                    last_cmd_channel_established = cmd_channel_established;
-                    
-                    let healthy = cmd_channel_established;               
-
-                    if(healthy) $("#nav_info_connection").html("Connected");
-                    else $("#nav_info_connection").html("Not Connected");
-
-                    $("#nav_info_connection").removeClass("badge-danger");
-                    $("#nav_info_connection").removeClass("badge-success");
-
-                    if(healthy)$("#nav_info_connection").addClass("badge-success");else $("#nav_info_connection").addClass("badge-danger");
-                 }
-             })
-
-            if (!connected)
-                setTimeout(() => {
-                    login(window.location.hostname+":<%=ceps_api_port%>");
-                    establish_command_channel();
-                }, 0);
-        });
-    </script>
 </body>
 
+<script src="jquery/js/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="rollaut/tiles.js"></script>
+
+<script>
+ function test_data(data_size){
+   let THIS = {
+     filters           : [],
+     permutations      : [],
+     size              : data_size,
+     up_since          : undefined,
+     info              : {
+       status      : new Array(data_size),
+       cov         : new Array(data_size),
+       title       : new Array(data_size),
+       state       : new Array(data_size), //a non negative integer
+       
+       state_labels : function (tile_idx){
+         return ["State 1","State 2","State 3","State 4","State 5","State 6","State 7"];
+       },
+       state_reached_at : function (tile_idx){
+         return [undefined,undefined,undefined,undefined,undefined,undefined,undefined];
+       }       
+     },
+     ordering    : new Array(data_size), // pos => tile index
+     visibility  : new Array(data_size),
+     compute_ordering  : function () {
+      for(let i = 0; i != THIS.ordering.length;++i)
+       THIS.ordering[i] = i;
+     },
+     compute_visibility  : function () {
+      for(let i = 0; i != THIS.visibility.length;++i)
+       THIS.visibility[i] = true;
+     },
+     get_tile_at_row : function(row,cols,col){
+       let r = -1;
+       for(let i = 0; i < THIS.ordering.length; ++i){
+         if (!THIS.visibility[THIS.ordering[i]]) continue;
+         if (THIS.info.status[[THIS.ordering[i]]] != col) continue;         
+         ++r;
+         if (r == row) return i;
+       }
+       return undefined;     
+     }
+  };
+  let data = THIS;
+  for(let i = 0; i != data_size; ++i){
+   data.info.state[i] = Math.floor(Math.random()*data.info.state_labels(i).length);
+   data.info.status[i] = [TILE_STATUS_OK,TILE_STATUS_ERROR,TILE_STATUS_WARN][Math.floor(Math.random() * 3)];
+   data.info.title[i]  = `market ${i+1}`;
+   data.info.cov[i]    = Math.random();
+   if (data.info.cov[i] >= 0.75){
+    data.info.cov[i] = 1.0;
+    data.info.status[i] = TILE_STATUS_DONE;
+   }
+  }
+  THIS.compute_ordering();
+  THIS.compute_visibility();
+
+  return data;
+ }
+ 
+</script>
+
+<script>
+  let cepS_API = function (url){
+    THIS = {
+      main_socket : undefined,
+      connected   : false,
+      on_connect_handler : [],
+      on_close_handler   : [],
+      unregister_handler   : function (what,f){
+        let v = undefined;
+        if ("open" == what) v = THIS.on_connect_handler;
+        else if ("close" == what) v = THIS.on_close_handler;
+        for(let i = 0; i != v.length;++i) if (v[i] == f) {v[i]=undefined;break;}
+      },
+      register_handler   : function (what,f){
+        let v = undefined;
+        if ("open" == what) v = THIS.on_connect_handler;
+        else if ("close" == what) v = THIS.on_close_handler;
+        let slot = -1;
+        if (v.length){
+          for(let i = 0; i != v.length;++i) if (v[i] == undefined) {slot=i;break;}
+        }
+        if (slot != -1) v[slot] = f;
+        else v.push(f);
+      },
+      pending_subscribers : { }, //topic -> list of handlers
+      topic_subscribers   : { }, //channel -> list of handlers
+      subscribe   : function(topic,f) {
+        if (f == undefined) return;
+        if(THIS.pending_subscribers[topic] == undefined) THIS.pending_subscribers[topic] = [f];
+        else  THIS.pending_subscribers[topic].push(f);
+        THIS.main_socket.send(`SUBSCRIBE ${topic}`);      
+      },
+      connect     : function(){
+            THIS.connected = false;
+            THIS.main_socket = new WebSocket("ws://"+url);
+            THIS.main_socket.addEventListener("open", THIS.on_ws_initial_connect);
+            THIS.main_socket.addEventListener("close", THIS.on_ws_close);
+            THIS.main_socket.addEventListener("error", THIS.on_ws_error);
+            THIS.main_socket.addEventListener("message",THIS.on_message);
+      },
+      on_ws_initial_connect: function (ev) {
+            THIS.connected = true;
+            for(let i = 0; i!=THIS.on_connect_handler.length;++i)
+             if (THIS.on_connect_handler[i]!=undefined) THIS.on_connect_handler[i](THIS,THIS.on_connect_handler[i]);
+      },
+      on_ws_close: function (ev) {
+            let connection_status = THIS.connected;
+            THIS.connected = false;
+            for(let i = 0; i!=THIS.on_close_handler.length;++i)
+             if (THIS.on_close_handler[i]!=undefined) THIS.on_close_handler[i](THIS,connection_status,THIS.on_connect_handler[i]);
+      },
+      on_ws_error: function (ev) {
+            
+      },
+      on_message: function (ev){
+        let msg = JSON.parse(ev.data);
+        //console.log(msg);
+        if (msg.topic != undefined && msg.channel != undefined){
+          let v = THIS.pending_subscribers[msg.topic];
+          if (v == undefined || v.length == 0) return;
+          THIS.topic_subscribers[msg.channel] = v[0];
+          v[0](msg);v.shift();
+          return;
+        } else {
+          let f = THIS.topic_subscribers[msg.channel];
+          if (f == undefined) return;
+          f(msg);
+        }
+      }
+    };
+    return THIS;
+  }
+</script>
+
+<script>
+ let tiles = undefined;
+
+ function create_tiles_deck(msg,sm2idx){
+  let data_size = msg.toplevel_sms.length;
+  let idx2sm = {};
+  let THIS = {
+     cache             : {state_labels:{}},
+     filters           : [],
+     permutations      : [],
+     size              : data_size,
+     sm2idx            : sm2idx,
+     enter_times       : {},
+     exit_times        : {},
+     info              : {
+       status      : new Array(data_size),
+       cov         : new Array(data_size),
+       title       : new Array(data_size),
+       state       : new Array(data_size), //a non negative integer
+       up_since    : undefined,
+       state_labels : function (tile_idx){
+         let v = THIS.cache.state_labels[tile_idx];
+         if (v == undefined) { THIS.cache.state_labels[tile_idx] = []; v = THIS.cache.state_labels[tile_idx]; }
+         else return v;
+         let vv = [];
+         let states = THIS.tile2states[idx2sm[tile_idx]];
+         if (states == undefined) return [];
+         for(let i = 0 ; i < states.length;++i){
+          vv.push(states[i]);
+         }
+         for(let i = 0 ; i < vv.length;++i){
+           let l = THIS.state2label[vv[i]];
+           if (l == undefined) continue;
+           v.push(l);
+         }
+         //console.log(v);
+         return v;
+       },
+       enter_time : function (tile_idx,state){
+        let states = THIS.tile2states[idx2sm[tile_idx]];
+        if (states == undefined) return undefined;
+        if (state >= states.length) return undefined;
+        let et = THIS.enter_times[states[state]];
+        return et;
+       },
+       exit_time : function (tile_idx,state){
+        let states = THIS.tile2states[idx2sm[tile_idx]];
+        if (states == undefined) return undefined;
+        if (state >= states.length) return undefined;
+        let et = THIS.exit_times[states[state]];
+        return et;
+       }       
+     },
+     ordering    : new Array(data_size), // pos => tile index
+     visibility  : new Array(data_size),
+     compute_ordering  : function () {
+      for(let i = 0; i != THIS.ordering.length;++i)
+       THIS.ordering[i] = i;
+     },
+     compute_visibility  : function () {
+      for(let i = 0; i != THIS.visibility.length;++i)
+       THIS.visibility[i] = true;
+     },
+     get_tile_at_row : function(row,cols,col){
+       let r = -1;
+       for(let i = 0; i < THIS.ordering.length; ++i){
+         if (!THIS.visibility[THIS.ordering[i]]) continue;
+         if (THIS.info.status[[THIS.ordering[i]]] != col) continue;         
+         ++r;
+         if (r == row) return i;
+       }
+       return undefined;     
+     }
+  };
+  for (let k in sm2idx){
+    idx2sm[sm2idx[k]] = k;
+  }
+  let data = THIS;
+  for(let i = 0; i != data_size; ++i){
+   data.info.state[i] = 0;
+   data.info.status[i] = TILE_STATUS_OK;
+   data.info.title[i]  = msg.toplevel_sms_labels[i];
+   data.info.cov[i]    = msg.toplevel_sms_transition_coverage[i];
+  }
+  data.tile2states = {};
+  data.tile2_visited_states = {};
+  data.state2root = {};
+  data.state2label = {};
+  for(let i = 0; i < msg.labeled_states.length;++i){
+    let label = msg.labeled_states[i];
+    for(++i;i < msg.labeled_states.length;++i){
+      if (typeof msg.labeled_states[i] === "string") break;
+      data.state2label[msg.labeled_states[i]] = label;
+    }
+    if(i < msg.labeled_states.length) --i;
+  }
+  for(let i = 0; i != msg.root2childstates.length;++i){
+   let root = msg.root2childstates[i];
+   data.tile2_visited_states[root] = [];
+   data.state2root[root] = root;
+   let v = [];
+   for(++i; i != msg.root2childstates.length;++i){
+     if (msg.root2childstates[i]==0) break;
+     data.state2root[msg.root2childstates[i]] = root;
+     if(data.state2label[msg.root2childstates[i]] == undefined) continue;
+     v.push(msg.root2childstates[i]);     
+   }
+   data.tile2states[root] = v;
+  }
+  if (msg.exec_context_start_utc != undefined){
+    data.up_since = msg.exec_context_start_utc;
+  }
+  update_states(msg,data,sm2idx);
+  update_timings(msg,data,sm2idx);
+
+  THIS.compute_ordering();
+  THIS.compute_visibility();
+  //console.log(data);
+  let old_component = document.getElementById("info_tiles").firstChild;
+  if (old_component) document.getElementById("info_tiles").removeChild(old_component);
+  tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
+}
+
+function update_timings(msg,data,sm2idx,f){
+  function read_timings(v,o){
+    for(let i = 0; i != v.length && i + 3 < v.length;++i){
+     let state = v[i];
+     let secs_since_uptime = v[i+1];
+     let msecs_since_uptime = v[i+2];
+     let microsecs_since_uptime = v[i+3];
+     o[state] = {secs_since_uptime:secs_since_uptime,msecs_since_uptime:msecs_since_uptime,microsecs_since_uptime:microsecs_since_uptime};
+     i += 3;
+    }
+  };
+  read_timings(msg.entering_times,data.enter_times);
+  read_timings(msg.exiting_times,data.exit_times);  
+}
+
+function update_states(msg,data,sm2idx,f){
+  for(let i = 0; i < msg.covered_states.length;++i){
+    if (data.state2root[msg.covered_states[i]] == undefined) {
+      continue;
+    }
+    let v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]];
+    if (v == undefined) {v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]] = [];}
+    v.push(msg.covered_states[i]);
+  }
+  for (let root in data.tile2states){
+    let tile = sm2idx[root];
+    let states = data.tile2states[root];
+    let i = 0;
+    let covered = data.tile2_visited_states[root];
+    for(; i != states.length;++i){
+      let found = false;
+      for(let j = 0;j != covered.length;++j ){
+        if (states[i] == covered[j]){
+          found = true;
+          break;
+        }
+      }
+      if(!found) break;
+    }
+    if (i > 0) --i;
+    if (f != undefined) f(tile,i);
+    else data.info.state[tile] = i;
+  }
+}
+</script>
+
+
+<script>
+
+let ceps_core_channel;
+ 
+ window.onload = () => {   
+
+  ceps_core_channel = cepS_API(/*window.location.hostname+":11001"*/window.location.hostname+":<%=ceps_api_port%>");
+  ceps_core_channel.register_handler("open",
+    (channel) =>{
+      let connection_info = document.getElementById("nav_info_connection");
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-success");
+      connection_info.innerHTML =
+        `<span>Connected</span>`
+      ;
+    }
+  );
+
+  ceps_core_channel.register_handler("open",
+    (channel,handler) => {
+      let map_tile_status2cat_idx=undefined;
+      let sm2idx = {};
+      let connection_info = document.getElementById("nav_info_connection");
+      channel.subscribe("COVERAGE", 
+       (msg)=>{
+        function update_status(msg){
+          let v = msg.category_changes;
+          if (v != undefined)
+           for(let i = 0; i != v.length;++i){
+             let tile_idx = sm2idx[v[i]];
+             let cat_idx = v[i+1];
+             if (cat_idx == 0) tiles.set_status(tile_idx,TILE_STATUS_OK);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_ERROR]) tiles.set_status(tile_idx,TILE_STATUS_ERROR);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_WARN]) tiles.set_status(tile_idx,TILE_STATUS_WARN);
+             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_DONE]) tiles.set_status(tile_idx,TILE_STATUS_DONE);
+             ++i;
+           }
+        }
+        //console.log(msg);
+         if (msg.what != undefined && msg.what == "init"){
+          //console.log(msg);
+          if(msg.category_mapping!=undefined){
+            map_tile_status2cat_idx = {};
+            for(let i = 0; i != msg.category_mapping.length; ++i){
+              let cat_name = msg.category_mapping[i];
+              let idx = 1 << msg.category_mapping[i+1];
+              if (cat_name == "FailState") map_tile_status2cat_idx[TILE_STATUS_ERROR] = idx ;
+              else if (cat_name == "WarnState") map_tile_status2cat_idx[TILE_STATUS_WARN] = idx;
+              else if (cat_name == "DoneState") map_tile_status2cat_idx[TILE_STATUS_DONE] = idx;
+              ++i;
+            }
+          }
+          //console.log(msg.category_mapping,map_cat_idx2_tile_status);          
+          if (connection_info != undefined) setTimeout( () => {
+            connection_info.setAttribute("class","badge badge-success");
+            connection_info.innerHTML =
+            `<span>Ok<br/>
+             Workflow has <b>${msg.total_of_states}</b> states<br/>
+             and <b>${msg.total_of_transitions}</b> transitions</span>`;
+          },2000);
+          for(let i = 0; i != msg.toplevel_sms.length;++i){
+            sm2idx[msg.toplevel_sms[i]] = i;
+          }
+          create_tiles_deck(msg,sm2idx);
+          update_status(msg);
+         } else if (msg.what != undefined && msg.what == "update"){
+          for(let i = 0; i != msg.toplevel_sms.length;++i){
+            tiles.set_coverage(sm2idx[msg.toplevel_sms[i]],msg.toplevel_sms_transition_coverage[i]);
+          }
+          
+          update_timings(msg,tiles.data,sm2idx);
+          update_states(msg,tiles.data,sm2idx,tiles.set_state);
+          update_status(msg);
+         }        
+       }
+      );      
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-info");
+      connection_info.innerHTML =
+        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Fetching Data</span>`
+      ;          
+    }
+  );
+  
+  ceps_core_channel.register_handler("close",
+    (channel,connection_status) =>{
+      setTimeout(()=>{ceps_core_channel.connect();},1000);
+      if (!connection_status) return;
+      let connection_info = document.getElementById("nav_info_connection");
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-danger");
+      connection_info.innerHTML =
+        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>`
+      ;          
+    }
+  );
+
+  ceps_core_channel.connect();
+  return;
+
+
+ }; 
+
+</script>
 </html>
