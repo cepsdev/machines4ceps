@@ -2,7 +2,7 @@ const TILE_STATUS_OK    = 0;
 const TILE_STATUS_DONE  = 1;
 const TILE_STATUS_ERROR = 2;
 const TILE_STATUS_WARN  = 3;
-
+const TILE_STATUS_INACTIVE  = 4;
 
 let rollaut_infobox = function (parent,tile_idx, data) { 
   let THIS = {
@@ -307,9 +307,38 @@ let rollaut_infobox = function (parent,tile_idx, data) {
  };
 
 
-let ceps_tiles_component = function (parent, data) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let ceps_tiles_component = function (parent, data, style_info) {
+ let tile_width_default = 200;
+ if (style_info != null && style_info.tile_width != null)
+  tile_width_default = style_info.tile_width;
+ section_name = new Map();
+ section_name.set(TILE_STATUS_ERROR, "Failed");
+ section_name.set(TILE_STATUS_WARN  , "Critical");
+ section_name.set(TILE_STATUS_OK    , "OK");
+ section_name.set(TILE_STATUS_DONE,"Complete");
+
  let THIS = {
-    tile_width                        : 200,
+    tile_width                        : tile_width_default,
     tile_height_em                    : 3.0,
     progress_bar_height_em            : 0.5,
     dom_cache                         : [],
@@ -323,10 +352,11 @@ let ceps_tiles_component = function (parent, data) {
     register_coverage_changed_handler : function (f) {THIS.cov_changed = f;},
     register_status_changed_handler   : function (f) {THIS.tile_status_changed = f;},
     register_state_changed_handler    : function (f) {THIS.state_changed = f;},
-
+    section_name : section_name,
     tiles_dom_slots          : {
-     columns : [TILE_STATUS_OK,TILE_STATUS_WARN,TILE_STATUS_ERROR,TILE_STATUS_DONE],      
-     slots   : [new Array(data.size),new Array(data.size),new Array(data.size),new Array(data.size)]
+     columns  : [TILE_STATUS_OK,TILE_STATUS_WARN,TILE_STATUS_ERROR,TILE_STATUS_DONE],
+     sections : [TILE_STATUS_ERROR,TILE_STATUS_WARN,TILE_STATUS_OK,TILE_STATUS_DONE,TILE_STATUS_INACTIVE],   
+     slots    : [new Array(data.size),new Array(data.size),new Array(data.size),new Array(data.size)]
     },
 
     get_progress_bar_height_css      : function(tile_idx) {
@@ -542,17 +572,79 @@ let ceps_tiles_component = function (parent, data) {
     },
 
     build_dom : function() {
+     let colsPerRow = 4;
+     let tw = THIS.tile_width;
+
      THIS.dom_cache = new Array(THIS.data.size);
      THIS.tileidx2dom_slot = new Array(THIS.data.size);
 
-     for(let i = 0; i != THIS.dom_cache.length;++i) THIS.dom_cache[i] = {progress_bar: undefined, percentage_information: undefined};
+     for(let i = 0; i != THIS.dom_cache.length;++i) THIS.dom_cache[i] = {
+       progress_bar: undefined, 
+       percentage_information: undefined
+     };
+     
      let table = document.createElement("table");
      table.addEventListener("mousemove",THIS.handler_mouse_move);
      table.addEventListener("mouseleave",THIS.handler_mouse_leave);
-     table.setAttribute("style","table-layout: fixed;display: inline-block;overflow: hidden;");
+     table.setAttribute("style","table-layout: fixed;display: inline-block;overflow: hidden;width:100%;");
      
      let tile_idx_previous = -1;
      let tile_idx = -1;
+
+     for (let i = 0; i != THIS.tiles_dom_slots.sections.length;++i){
+       let sec = THIS.tiles_dom_slots.sections[i];
+       let tiles = THIS.data.get_tiles_with_status(sec);
+       if (tiles.length == 0) continue;
+       let header_row = document.createElement("tr");
+       let tdh = document.createElement("td");
+       tdh.setAttribute("colspan",colsPerRow);
+       tdh.setAttribute("style",
+                        `width:${colsPerRow*tw}px;
+                         text-align:center;`);
+      let sec_div = document.createElement("div");
+      if (sec == TILE_STATUS_OK)
+       sec_div.setAttribute("class","alert alert-primary");
+      else if (sec == TILE_STATUS_DONE)
+       sec_div.setAttribute("class","alert alert-success");
+      else if (sec == TILE_STATUS_ERROR)
+       sec_div.setAttribute("class","alert alert-danger");
+      else if (sec == TILE_STATUS_WARN) 
+       sec_div.setAttribute("class","alert alert-warning");
+      else
+       sec_div.setAttribute("class","alert alert-secondary");
+
+
+      let sec_title = document.createTextNode(THIS.section_name.get(sec));
+      sec_div.appendChild(sec_title);
+       tdh.appendChild(
+         sec_div
+       );
+       header_row.appendChild(tdh);
+       table.appendChild(header_row);
+       let num_of_rows = Math.ceil(tiles.length / colsPerRow);
+       let cur_tile_idx = 0;
+       for(let row_index = 0; row_index != num_of_rows; ++row_index){
+         let row = document.createElement("tr");
+         for(let col_index = 0;col_index != colsPerRow;++col_index){
+           if (cur_tile_idx >= tiles.length) break;
+           let tile = tiles[cur_tile_idx++];
+           let td = document.createElement("td");
+           td.setAttribute("valign","top");
+           td.setAttribute("style",
+            `table-layout: fixed;width: ${THIS.tile_width}px;
+             overflow:hidden;`);
+           let content = document.createElement("div");
+           content.appendChild(THIS.build_tile_content(tile));
+           td.appendChild(content);
+           row.appendChild(td);
+         }         
+         table.appendChild(row);
+       }
+     }
+
+     parent.appendChild(table);
+
+     return;
 
      for(let row_number = 0; row_number != THIS.data.size;++row_number){
       let row = document.createElement("tr");
@@ -560,9 +652,12 @@ let ceps_tiles_component = function (parent, data) {
       for(let k in THIS.tiles_dom_slots.columns){
        let col = k;
        k = THIS.tiles_dom_slots.columns[k];
+
        tile_idx = THIS.data.get_tile_at_row(row_number,THIS.tiles_dom_slots.columns,k);
        let td = document.createElement("td");
-       td.setAttribute("style",`table-layout: fixed;width: ${THIS.tile_width}px;height: ${THIS.get_tile_height_css(row_number,col)};overflow:hidden;`);
+       td.setAttribute("style",
+        `table-layout: fixed;width: ${THIS.tile_width}px;
+        height: ${THIS.get_tile_height_css(row_number,col)};overflow:hidden;`);
        let content = document.createElement("div");
        //content.setAttribute("style","padding:8px;");
        
@@ -582,6 +677,8 @@ let ceps_tiles_component = function (parent, data) {
      parent.appendChild(table);
     }
  };
+ 
+ 
  THIS.build_dom();
 
  let info_box = rollaut_infobox(undefined,undefined,data);
