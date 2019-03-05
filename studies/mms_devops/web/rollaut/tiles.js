@@ -572,7 +572,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
     },
 
     build_dom : function() {
-     let colsPerRow = 4;
+     let colsPerRow = 5;
      let tw = THIS.tile_width;
 
      THIS.dom_cache = new Array(THIS.data.size);

@@ -102,7 +102,7 @@
                     id="version_info_dlg" 
                     type="button" 
                     class="btn btn-info" 
-                    onclick='$("#dlg_version").modal("show");'>RollAut1K+ 1.0<br/>Now powered by Kafka<b>esk</b><br/>Android/iOS App Available Soon!</button>
+                    onclick='$("#dlg_version").modal("show");'>RollAut1K+ 1.0<br/>Powered by Kafka<b>esk</b></button>
 
             <span class="badge badge-danger" id="nav_info_connection">
              <div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>
@@ -288,8 +288,8 @@
 <script>
  let tiles = undefined;
 
- function create_tiles_deck(dbView){
-  let rolllout_entities = dbView.getTopLevelEntities("rollout","false");
+ function create_tiles_deck(parentWidget,rolllout_entities){
+  //let rolllout_entities = dbView.getTopLevelEntities("rollout","false");
   let data_size = rolllout_entities.length;
   let idx2sm = {};
   let THIS = {
@@ -301,6 +301,7 @@
      sm2idx            : [],
      enter_times       : {},
      exit_times        : {},
+     tiles_widget      : null,
      info              : {
        status      : new Array(data_size),
        cov         : new Array(data_size),
@@ -412,13 +413,13 @@
   THIS.compute_ordering();
   THIS.compute_visibility();
   //console.log(data);
-  let old_component = document.getElementById("info_tiles").firstChild;
-  if (old_component) document.getElementById("info_tiles").removeChild(old_component);
-  tiles = ceps_tiles_component(
-    document.getElementById("info_tiles"),
+  
+  THIS.tiles_widget = ceps_tiles_component(
+    parentWidget,
     data,
     {tile_width:300}
   );
+  return THIS;
 }
 
 function update_timings(msg,data,sm2idx,f){
@@ -473,22 +474,200 @@ function update_states(msg,data,sm2idx,f){
 </script>
 
 
+<script>
 
+let TimeLineWidget = function (parent, 
+                               data, 
+                               style_info) {
+  let THIS = {
+   groupedEntities : [],
+   create   : function(){
+    let entities_raw = data.getTopLevelEntities("rollout","false");
+    let es = THIS.extractEntities(entities_raw);
+
+    let t1 = Math.floor((Date.now() / 1000));
+    let aDay = 24*3600;
+    let today = Math.floor(t1 / (aDay)) * aDay +1;
+    let tomorrow = today + aDay;
+    let overmorrow = today + 2*aDay;
+    let yesterday = today - aDay ;
+    let ereyesterday = today - 2*aDay;
+
+    let grouped_es = THIS.groupEntities(
+      [
+        {
+          time  : ereyesterday,
+          title : (new Date(ereyesterday*1000)).toDateString() + " and older",
+          entities: [],
+        },
+        {
+          time  : yesterday,
+          title : "Yesterday <small>("+(new Date(yesterday*1000)).toDateString()+")</small>",
+          entities: [],
+        },
+        {
+          time  : today,
+          title : "Today <small>("+(new Date(today*1000)).toDateString()+")</small>",
+          entities: []
+        },
+        {
+          time  : tomorrow,
+          title : "Tomorrow <small>("+(new Date(tomorrow*1000)).toDateString()+")</small>",
+          entities: []
+        },
+        {
+          time  : overmorrow,
+          title : (new Date(overmorrow*1000)).toDateString() + " and younger",
+          entities: []
+        }          
+      ],
+      es
+      );
+    //console.log(grouped_es);
+    THIS.groupedEntities = grouped_es;
+   },
+   updateEntity : function (groupIdx,entityIdx,new_data){
+      e_orig = THIS.groupedEntities[groupIdx].entities[entityIdx];
+      tiles = THIS.groupedEntities[groupIdx]["tiles"];
+      //tiles.tiles_widget.set_coverage(1,0.3);
+      //console.log(new_data);
+      let new_cov = null;
+      for(let i = 0; i != new_data.children.length;++i){
+         if (new_data.children[i]["class"] == "attribute" && new_data.children[i]["name"]=="coverage" )
+          new_cov = new_data.children[i]["value"];
+      }
+      if (new_cov != null)
+       tiles.tiles_widget.set_coverage(entityIdx,new_cov);
+   },
+   update : function(changed_entities){
+     for(let i = 0; i != changed_entities.length;++i){
+       let e = changed_entities[i];
+       let e_orig = null;
+       let tiles = null;
+       for(let g = 0; g != THIS.groupedEntities.length;++g)
+       {
+        let found = false;
+        for(let j = 0; j != THIS.groupedEntities[g].entities.length;++j){
+          if(THIS.groupedEntities[g].entities[j].id != e.id) continue;
+          found = true;
+          THIS.updateEntity(g,j,e);
+          break;
+        }
+        if (!found) continue;
+        break;
+       }
+     }
+   },
+   buildDom : function(){
+     let content = document.createElement("div");
+     for(let i = 0; i != THIS.groupedEntities.length;++i){
+       let g = THIS.groupedEntities[i];
+       if (g.entities.length == 0) continue;
+       let header = document.createElement("div");
+       let body = document.createElement("div");
+       header.setAttribute("style",
+       `border-bottom: 2px solid;margin:4px;padding:2px;`);
+       let hh = document.createElement("h4");
+       //let title = document.crete.createTextNode(g.title);
+       hh.innerHTML = g.title;//Child(title);
+       header.appendChild(hh);
+       content.appendChild(header);
+       content.appendChild(body);
+       let raw_data = [];
+       for(let j = 0; j != g.entities.length;++j){
+         raw_data.push(g.entities[j].raw);
+       }
+       g["tiles"] = create_tiles_deck(body, raw_data);
+
+     }
+
+     parent.appendChild(content);
+   },
+   extractEntities: function (rawData){
+     let r = [];
+     for (let i = 0; i != rawData.length;++i){
+       r.push(
+         {
+           raw: rawData[i],
+           id: parseInt(rawData[i]["id"],10),
+           time: data.readAttr("scheduled_time_unix_time", rawData[i])
+         }
+       );       
+     }     
+     return r.sort(function (lhs,rhs){ return lhs.time - rhs.time; });
+   },
+   groupEntities: function(groups,sorted_entities){
+     let cur_group = 0;
+     let ng = groups.length;
+     for(let i = 0; i < sorted_entities.length;++i){
+       let e = sorted_entities[i];
+       if (cur_group + 1 < ng && e.time >= groups[cur_group+1].time)
+       {
+         for(;cur_group < ng;++cur_group){
+          if( e.time >= groups[cur_group].time)
+          {
+            if (cur_group+1 == ng) break;
+            if (groups[cur_group+1].time > e.time ) break;
+          } else break;
+         }
+       }
+       groups[cur_group].entities.push(e);
+     }
+     return groups;
+   }
+ };
+ THIS.create();
+ THIS.buildDom();
+ return THIS;
+}
+</script>
 
 
 
 <script>
-  let RollAutKafkaeskAPI = function (url){
+  
+  function diff_merge(db,diff){
+  
+  }
+
+  let RollAutKafkaeskAPI = function (url,on_db_changed){
     THIS = {
       dbviews : [],
       main_socket : undefined,
       connected   : false,
       on_connect_handler : [],
       on_close_handler   : [],
+
+      //
+      //
+      //  {
+      //    loc: Location
+      //    db : Database
+      //    getTopLevelEntities:function (type,deleted)
+      //  }
+      //
+      //
       create_db_view: function(loc){
         let r = {
           loc: loc,
           db : null,
+          merge: function(diff){
+            diff_merge(diff,THIS.db);
+            return diff;
+          },
+          readAttr:function(attr,node){
+            if (attr == null || node == null) return null;
+            let v = node["children"];
+            if (v == undefined ) return null;
+            for(let i = 0; i != v.length;++i){
+              if (v[i]["class"] != "attribute")
+               continue;
+              if (v[i]["name"] != attr) 
+               continue;
+              return v[i]["value"];
+            }
+            return null;
+          },
           getTopLevelEntities:function (type,deleted){
             let r = [];
             for(let i = 0; i != this.db.length;++i){
@@ -572,18 +751,21 @@ function update_states(msg,data,sm2idx,f){
       },
       on_message: function (ev){
         let msg = JSON.parse(ev.data);
-        console.log(ev.data);
+        //console.log(ev.data);
         if (msg.class == "diff"){
           let db_view = THIS.get_db_view(msg.watched_location);
           if (db_view == null){
             db_view = THIS.create_db_view(msg.watched_location);
           }
           if (db_view.db == null){
-            db_view.db = msg.children[0].children; 
-            create_tiles_deck(db_view);
-            update_status(db_view);
+            db_view.db = msg.children[0].children;
+            on_db_changed(db_view,null);
+            return;
+          } else {
+            //MERGE
+            let changed_items = db_view.merge(msg.children[0].children);
+            on_db_changed(db_view,changed_items);
           }
-          
         }
       }
     };
@@ -595,10 +777,22 @@ function update_states(msg,data,sm2idx,f){
 <script>
 
 let ceps_core_channel;
+let timeLineWidget = null;
  
  window.onload = () => {
  data_channel = 
-  RollAutKafkaeskAPI(/*window.location.hostname+":11001"*/window.location.hostname+":3333");
+  RollAutKafkaeskAPI(/*window.location.hostname+":11001"*/window.location.hostname+":3333",
+  function (dbView,changed_items){
+    if (changed_items == null){
+      let container = document.getElementById("info_tiles");
+      for(;container.hasChildNodes();)container.removeChild(container.firstChild);
+      timeLineWidget = TimeLineWidget(container,dbView);
+    } else {
+      //Update
+      timeLineWidget.update(changed_items);      
+    }
+  }
+  );
  data_channel.connect();
  data_channel.subscribe("rollouts/scheduled");
 
