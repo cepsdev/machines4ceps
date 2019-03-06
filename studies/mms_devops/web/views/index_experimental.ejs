@@ -532,12 +532,17 @@ let TimeLineWidget = function (parent,
       //tiles.tiles_widget.set_coverage(1,0.3);
       //console.log(new_data);
       let new_cov = null;
+      let new_health = null;
       for(let i = 0; i != new_data.children.length;++i){
-         if (new_data.children[i]["class"] == "attribute" && new_data.children[i]["name"]=="coverage" )
+        if (new_data.children[i]["class"] != "attribute") continue;
+        if (new_data.children[i]["name"]=="coverage" )
           new_cov = new_data.children[i]["value"];
+        else if (new_data.children[i]["name"]=="health" )
+        new_health = new_data.children[i]["value"];
       }
       if (new_cov != null)
        tiles.tiles_widget.set_coverage(entityIdx,new_cov);
+      console.log(new_cov,new_health);
    },
    update : function(changed_entities){
      for(let i = 0; i != changed_entities.length;++i){

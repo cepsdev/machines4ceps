@@ -237,7 +237,7 @@ app.get("/rollout_status", function(req, res) {
 });
 
 app.get("/", function(req, res) {
-    res.render("rollout_admin",{ 
+    res.render("index_experimental",{ 
         server_name : host_name,
         command_port : command_port  }
     );
