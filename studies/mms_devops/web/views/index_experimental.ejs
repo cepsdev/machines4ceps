@@ -102,7 +102,7 @@
                     id="version_info_dlg" 
                     type="button" 
                     class="btn btn-info" 
-                    onclick='$("#dlg_version").modal("show");'>RollAut1K+ 1.0<br/>Powered by Kafka<b>esk</b></button>
+                    onclick='$("#dlg_version").modal("show");'>RollAut1K+ 1.0<br/>Powered by <b>Staccato</b></button>
 
             <span class="badge badge-danger" id="nav_info_connection">
              <div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>
@@ -374,7 +374,7 @@
   let data = THIS;
   for(let i = 0; i != data_size; ++i){
    data.info.state[i] = 0;
-   data.info.status[i] = TILE_STATUS_OK;
+   data.info.status[i] = TILE_STATUS_INACTIVE;
    data.info.title[i]  = rolllout_entities[i].name;
    data.info.cov[i]    = 0.0; //TODO: COVERAGE
   }
@@ -542,29 +542,50 @@ let TimeLineWidget = function (parent,
       }
       if (new_cov != null)
        tiles.tiles_widget.set_coverage(entityIdx,new_cov);
+      if (new_health != null)
+       tiles.tiles_widget.set_status(entityIdx,
+        { 
+            "ok":TILE_STATUS_OK,
+            "complete":TILE_STATUS_DONE,
+            "failed":TILE_STATUS_ERROR,
+            "failure":TILE_STATUS_ERROR,
+            "fatal":TILE_STATUS_ERROR,
+            "critical":TILE_STATUS_WARN,
+            "n/a":TILE_STATUS_INACTIVE 
+        } [new_health]       
+       );
+       if (new_data["name"] != tiles.tiles_widget.data.info.title[entityIdx])
+       {
+        tiles.tiles_widget.set_title(entityIdx,new_data["name"]);         
+       }
+
       console.log(new_cov,new_health);
    },
    update : function(changed_entities){
+     console.log("update",changed_entities);
      for(let i = 0; i != changed_entities.length;++i){
        let e = changed_entities[i];
        let e_orig = null;
        let tiles = null;
+       let found = false;
        for(let g = 0; g != THIS.groupedEntities.length;++g)
        {
-        let found = false;
         for(let j = 0; j != THIS.groupedEntities[g].entities.length;++j){
           if(THIS.groupedEntities[g].entities[j].id != e.id) continue;
-          found = true;
           THIS.updateEntity(g,j,e);
+          found = true;
           break;
         }
         if (!found) continue;
         break;
        }
+       if (!found)
+        console.log("new");
      }
    },
    buildDom : function(){
      let content = document.createElement("div");
+     console.log(THIS.groupedEntities);
      for(let i = 0; i != THIS.groupedEntities.length;++i){
        let g = THIS.groupedEntities[i];
        if (g.entities.length == 0) continue;
@@ -583,7 +604,6 @@ let TimeLineWidget = function (parent,
          raw_data.push(g.entities[j].raw);
        }
        g["tiles"] = create_tiles_deck(body, raw_data);
-
      }
 
      parent.appendChild(content);
@@ -676,7 +696,7 @@ let TimeLineWidget = function (parent,
           getTopLevelEntities:function (type,deleted){
             let r = [];
             for(let i = 0; i != this.db.length;++i){
-              let v = this.db[i];    
+              let v = this.db[i];  
               if (v["class"] == "entry" && v["deleted"] == deleted){
                 for(let i = 0; i != v.children.length;++i){
                   let a = v.children[i];
@@ -807,7 +827,7 @@ let timeLineWidget = null;
       if(connection_info == undefined) return;
       connection_info.setAttribute("class","badge badge-success");
       connection_info.innerHTML =
-        `<span>Connected to<br/><h4>RollAutKafkaesk Service</h4></span>`
+        `<span>Connected to<br/><h4>RollAut@Staccato Service</h4></span>`
       ;
     }
  );

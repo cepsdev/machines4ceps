@@ -855,7 +855,7 @@ function fetch_rollout_plan(callback){
 }
 
 console.log(chalk.bold.green(
-`Rollout Automation (RollAut) Service, powered by cepS (\"https://github.com/cepsdev/ceps.git\").`));
+`Rollout Automation (RollAut) Service, powered by staccato and cepS (\"https://github.com/cepsdev/ceps.git\").`));
 
 function main(){
 

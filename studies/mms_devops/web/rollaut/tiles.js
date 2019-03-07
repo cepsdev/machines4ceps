@@ -3,6 +3,8 @@ const TILE_STATUS_DONE  = 1;
 const TILE_STATUS_ERROR = 2;
 const TILE_STATUS_WARN  = 3;
 const TILE_STATUS_INACTIVE  = 4;
+const TILE_STATUS_MAX = 4;
+
 
 let rollaut_infobox = function (parent,tile_idx, data) { 
   let THIS = {
@@ -336,7 +338,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
  section_name.set(TILE_STATUS_WARN  , "Critical");
  section_name.set(TILE_STATUS_OK    , "OK");
  section_name.set(TILE_STATUS_DONE,"Complete");
-
+ section_name.set(TILE_STATUS_INACTIVE,"Ready");
  let THIS = {
     tile_width                        : tile_width_default,
     tile_height_em                    : 3.0,
@@ -352,6 +354,10 @@ let ceps_tiles_component = function (parent, data, style_info) {
     register_coverage_changed_handler : function (f) {THIS.cov_changed = f;},
     register_status_changed_handler   : function (f) {THIS.tile_status_changed = f;},
     register_state_changed_handler    : function (f) {THIS.state_changed = f;},
+
+    dom                               : [],
+    tiles_dom_cache                   : [],
+
     section_name : section_name,
     tiles_dom_slots          : {
      columns  : [TILE_STATUS_OK,TILE_STATUS_WARN,TILE_STATUS_ERROR,TILE_STATUS_DONE],
@@ -374,15 +380,33 @@ let ceps_tiles_component = function (parent, data, style_info) {
      return "bg-success";      
     },
 
+    set_progbar_color:function(tile_idx){
+      let backcol="black";
+      if(TILE_STATUS_INACTIVE == THIS.data.info.status[tile_idx]){
+       backcol = "#6c757d";
+      } else if(TILE_STATUS_OK == THIS.data.info.status[tile_idx]){
+       backcol = "#007bff";
+      } else if (TILE_STATUS_WARN == THIS.data.info.status[tile_idx]){
+      backcol = "#ffc107";
+      }  else if (TILE_STATUS_ERROR == THIS.data.info.status[tile_idx]){
+       backcol = "#dc3545";
+      } else if (TILE_STATUS_DONE == THIS.data.info.status[tile_idx]) {
+       backcol = "#28a745";
+      }
+      THIS.dom_cache[tile_idx].progress_bar.style.backgroundColor=backcol;
+    },
+
     build_progress_indicator : function(tile_idx){
      let outer = document.createElement("div");
      let inner = document.createElement("div");
      THIS.dom_cache[tile_idx].progress_bar = inner;
-     inner.setAttribute("class",THIS.get_progress_bar_bootstrap_class(THIS.data.info.status[tile_idx]));
+     //inner.setAttribute("class",THIS.get_progress_bar_bootstrap_class(THIS.data.info.status[tile_idx]));
      inner.setAttribute("style",
       `width:${Math.floor(THIS.data.info.cov[tile_idx]*100)}%;`+
       `border-radius:4px;`+
-      `height:${THIS.get_progress_bar_height_css(tile_idx)};`);
+      `height:${THIS.get_progress_bar_height_css(tile_idx)};`+
+      ``);
+     THIS.set_progbar_color(tile_idx);
      outer.setAttribute("style",`padding:3px;`);
      outer.appendChild(inner);
      return outer;      
@@ -409,18 +433,50 @@ let ceps_tiles_component = function (parent, data, style_info) {
      tr.appendChild(td2);
      tbl.appendChild(tr);
      let inner = document.createElement("small");
-     inner.appendChild(document.createTextNode(THIS.data.info.title[tile_idx]));
+     THIS.dom_cache[tile_idx].title = document.createElement("div");
+     inner.appendChild(
+      THIS.dom_cache[tile_idx].title       
+     );
+     THIS.dom_cache[tile_idx].title.appendChild(document.createTextNode(THIS.data.info.title[tile_idx]));
      td1.appendChild(inner);
      outer.appendChild(tbl);
      return outer;      
     },
 
+    set_tile_style: function (tile_idx){
+      let outer = THIS.tiles_dom_cache[tile_idx];
+      let backcol = "";
+      if(TILE_STATUS_INACTIVE == THIS.data.info.status[tile_idx]){
+        backcol = "background-color:#6c757d38;";
+      } else if(TILE_STATUS_OK == THIS.data.info.status[tile_idx]){
+       backcol = "background-color:#007bff38;";
+      } else if (TILE_STATUS_WARN == THIS.data.info.status[tile_idx]){
+        backcol = "background-color:#ffc10738;";
+      }  else if (TILE_STATUS_ERROR == THIS.data.info.status[tile_idx]){
+        backcol = "background-color:#dc354538;";
+      } else if (TILE_STATUS_DONE == THIS.data.info.status[tile_idx]) {
+        backcol = "background-color:#28a74538;";
+      }
+      
+      outer.setAttribute("style",`margin-right:4px;
+      margin-bottom:4px;
+      border-radius: 5px;
+      box-shadow: 2px 2px 4px #aaaaaa;${backcol}`);
+
+      THIS.set_progbar_color(tile_idx);
+    },
+
     build_tile_content : function(tile_idx) {
      let pi = THIS.build_progress_indicator(tile_idx);
      let header = THIS.build_header(tile_idx);
+     for (;THIS.tiles_dom_cache.length < tile_idx;) THIS.tiles_dom_cache.push(null); 
+
      let outer = document.createElement("div");
+     THIS.tiles_dom_cache[tile_idx] = outer;
+     THIS.set_tile_style(tile_idx);
+
      outer.appendChild(header);outer.appendChild(pi);
-     outer.setAttribute("style",`margin-right:4px;margin-bottom:4px;border-radius: 5px;box-shadow: 2px 2px 4px #aaaaaa;`);
+
      outer.setAttribute("class","rollaut_info_tile_minimized");
      return outer;
     },
@@ -459,11 +515,16 @@ let ceps_tiles_component = function (parent, data, style_info) {
        }
      }
     },
-    set_state(tile_idx,new_state){      
+    set_state(tile_idx,new_state){
       if (tile_idx == undefined) return;
       let old_state = THIS.data.info.state[tile_idx];
       THIS.data.info.state[tile_idx] = new_state;
       if(THIS.state_changed) THIS.state_changed(tile_idx,new_state,old_state);
+    },
+    set_title(tile_idx,t){
+      THIS.data.info.title[tile_idx] = t;
+      THIS.dom_cache[tile_idx].title.removeChild(THIS.dom_cache[tile_idx].title.firstChild);
+      THIS.dom_cache[tile_idx].title.appendChild(document.createTextNode(t));
     },
     set_coverage(tile_idx,cov){
      THIS.data.info.cov[tile_idx] = cov;
@@ -473,6 +534,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
        THIS.dom_cache[tile_idx].percentage_information.removeChild(THIS.dom_cache[tile_idx].percentage_information.firstChild);
        THIS.dom_cache[tile_idx].percentage_information.appendChild(document.createTextNode(`${Math.floor(THIS.data.info.cov[tile_idx]*10000)/100}%`));
        THIS.dom_cache[tile_idx].progress_bar.style.width = `${Math.floor(THIS.data.info.cov[tile_idx]*100)}%`;
+       THIS.set_progbar_color(tile_idx);
      }       
     },
 
@@ -499,20 +561,71 @@ let ceps_tiles_component = function (parent, data, style_info) {
     },
 
     set_status(tile_idx,new_status){
+    //console.log(THIS.dom);
+
      if (tile_idx >= THIS.data.info.status.length) return;
-     if (new_status < 0 || new_status > 3) return;
+     console.log("A");
+     if (new_status < 0 || new_status > TILE_STATUS_MAX) return;
+     console.log("B");
      let current_status = THIS.data.info.status[tile_idx];
+     console.log("C");
      if (current_status == new_status) return;
+     console.log("D");
+
      
      if (!THIS.data.visibility[tile_idx]){
        THIS.data.info.status[tile_idx] == new_status;return;
      }
+     console.log("E");
+
      //Step 1: Remove from column
      //Step 2: Move remaining tiles in column to fill hole
      //Step 3: Make place in destination column
      //Step 4: Insert in destination column
-     
+
+     //1 && 2
+
      let v = THIS.compute_tiles_in_current_order_of_given_status(current_status,true);
+     let tile_idx_in_section = -1;
+     for(tile_idx_in_section = 0; v.length > tile_idx_in_section; ++tile_idx_in_section)
+      if (v[tile_idx_in_section] == tile_idx) break;
+     let tile_content = THIS.dom[current_status].tile_divs[tile_idx_in_section].firstChild;
+     //console.log(tile_content.parent);
+     tile_content.parentNode.removeChild(tile_content);
+     for(let i = tile_idx_in_section; i + 1 < THIS.dom[current_status].tile_divs.length;++i){
+       let e = THIS.dom[current_status].tile_divs[i+1].firstChild;
+       if (e == null) break;
+       e.parentNode.removeChild(e);
+       THIS.dom[current_status].tile_divs[i].appendChild(e);
+     }
+
+     //3 && 4
+     THIS.data.info.status[tile_idx] = new_status;
+     let w = THIS.compute_tiles_in_current_order_of_given_status(new_status,true);
+     let newTileIdx = 0;
+     for(;newTileIdx != w.length;++newTileIdx)
+      if (w[newTileIdx] == tile_idx) break;
+     let destV = THIS.dom[new_status].tile_divs;
+     for(let i = newTileIdx; i < destV.length && tile_content != null;++i){
+       let container = destV[i];
+       let content = container.firstChild;
+       if (content != null) container.removeChild(content);
+       container.appendChild(tile_content);
+       tile_content = content;
+     }
+
+     
+     THIS.data.info.status[tile_idx] = new_status;
+     THIS.update_section_header(current_status,THIS.compute_number_of_tiles_in_current_order_of_given_status(current_status,true) > 0);
+     THIS.update_section_header(new_status,THIS.compute_number_of_tiles_in_current_order_of_given_status(new_status,true) > 0);
+     THIS.set_tile_style(tile_idx);
+     
+
+
+     return;
+     
+     v = THIS.compute_tiles_in_current_order_of_given_status(current_status,true);
+
      THIS.data.info.status[tile_idx] = new_status;
      if(THIS.tile_status_changed) THIS.tile_status_changed(tile_idx,new_status,current_status);
      
@@ -571,6 +684,26 @@ let ceps_tiles_component = function (parent, data, style_info) {
      THIS.update_progress_indicator_when_status_changes(tile_idx);
     },
 
+    update_section_header : function(sec,visible){
+      let sec_div = THIS.dom[sec].header;
+      if (!visible) { sec_div.setAttribute("style","display:none;"); return}
+      else sec_div.setAttribute("style","display:block;");
+
+      sec_div.setAttribute("style","padding:2px;");
+
+      if (sec == TILE_STATUS_OK)
+       sec_div.setAttribute("class","alert alert-primary small");
+      else if (sec == TILE_STATUS_DONE)
+       sec_div.setAttribute("class","alert alert-success small");
+      else if (sec == TILE_STATUS_ERROR)
+       sec_div.setAttribute("class","alert alert-danger small");
+      else if (sec == TILE_STATUS_WARN) 
+       sec_div.setAttribute("class","alert alert-warning small");
+      else
+       sec_div.setAttribute("class","alert alert-secondary small");
+
+    },
+
     build_dom : function() {
      let colsPerRow = 5;
      let tw = THIS.tile_width;
@@ -591,28 +724,38 @@ let ceps_tiles_component = function (parent, data, style_info) {
      let tile_idx_previous = -1;
      let tile_idx = -1;
 
+     THIS.dom = [];
+     for(let i = 0; i!= TILE_STATUS_MAX+1;++i){
+       THIS.dom.push(
+         {
+           empty     : true,
+           header    : null,
+           rows      : null,
+           tile_divs : null
+         }
+       )
+     }
      for (let i = 0; i != THIS.tiles_dom_slots.sections.length;++i){
        let sec = THIS.tiles_dom_slots.sections[i];
-       let tiles = THIS.data.get_tiles_with_status(sec);
-       if (tiles.length == 0) continue;
+       let tiles = THIS.compute_tiles_in_current_order_of_given_status(sec,true);//THIS.data.get_tiles_with_status(sec);
+       //console.log(tiles);
+       //if (tiles.length == 0) continue;
+
+
        let header_row = document.createElement("tr");
        let tdh = document.createElement("td");
        tdh.setAttribute("colspan",colsPerRow);
        tdh.setAttribute("style",
                         `width:${colsPerRow*tw}px;
                          text-align:center;`);
-      let sec_div = document.createElement("div");
-      if (sec == TILE_STATUS_OK)
-       sec_div.setAttribute("class","alert alert-primary");
-      else if (sec == TILE_STATUS_DONE)
-       sec_div.setAttribute("class","alert alert-success");
-      else if (sec == TILE_STATUS_ERROR)
-       sec_div.setAttribute("class","alert alert-danger");
-      else if (sec == TILE_STATUS_WARN) 
-       sec_div.setAttribute("class","alert alert-warning");
-      else
-       sec_div.setAttribute("class","alert alert-secondary");
 
+      
+      THIS.dom[sec].empty = tiles.length == 0;
+      THIS.dom[sec].rows = [];
+      THIS.dom[sec].tile_divs = [];
+     
+      let sec_div = THIS.dom[sec].header = document.createElement("div");
+      THIS.update_section_header(sec,tiles.length != 0);
 
       let sec_title = document.createTextNode(THIS.section_name.get(sec));
       sec_div.appendChild(sec_title);
@@ -621,22 +764,24 @@ let ceps_tiles_component = function (parent, data, style_info) {
        );
        header_row.appendChild(tdh);
        table.appendChild(header_row);
-       let num_of_rows = Math.ceil(tiles.length / colsPerRow);
+       let num_of_rows = Math.ceil(tiles.length / colsPerRow)+1;
        let cur_tile_idx = 0;
        for(let row_index = 0; row_index != num_of_rows; ++row_index){
          let row = document.createElement("tr");
+         THIS.dom[sec].rows.push(row);
          for(let col_index = 0;col_index != colsPerRow;++col_index){
-           if (cur_tile_idx >= tiles.length) break;
-           let tile = tiles[cur_tile_idx++];
+           let tile = tiles[cur_tile_idx];
            let td = document.createElement("td");
            td.setAttribute("valign","top");
            td.setAttribute("style",
             `table-layout: fixed;width: ${THIS.tile_width}px;
              overflow:hidden;`);
            let content = document.createElement("div");
-           content.appendChild(THIS.build_tile_content(tile));
+           THIS.dom[sec].tile_divs.push(content);
+           if (cur_tile_idx < tiles.length) content.appendChild(THIS.build_tile_content(tile));
            td.appendChild(content);
            row.appendChild(td);
+           ++cur_tile_idx;
          }         
          table.appendChild(row);
        }
