@@ -340,6 +340,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
  section_name.set(TILE_STATUS_DONE,"Complete");
  section_name.set(TILE_STATUS_INACTIVE,"Ready");
  let THIS = {
+    cols_per_row                      : 5,
     tile_width                        : tile_width_default,
     tile_height_em                    : 3.0,
     progress_bar_height_em            : 0.5,
@@ -400,7 +401,6 @@ let ceps_tiles_component = function (parent, data, style_info) {
      let outer = document.createElement("div");
      let inner = document.createElement("div");
      THIS.dom_cache[tile_idx].progress_bar = inner;
-     //inner.setAttribute("class",THIS.get_progress_bar_bootstrap_class(THIS.data.info.status[tile_idx]));
      inner.setAttribute("style",
       `width:${Math.floor(THIS.data.info.cov[tile_idx]*100)}%;`+
       `border-radius:4px;`+
@@ -424,13 +424,20 @@ let ceps_tiles_component = function (parent, data, style_info) {
      tbl.setAttribute("style",`table-layout: fixed;width:100%;`);
      let tr = document.createElement("tr");
      let td1 = document.createElement("td");
-     td1.setAttribute("style",`text-align: left;width:70%;overflow:hidden;`);
+     
+     if(THIS.data.info.cov[tile_idx] != null)
+      td1.setAttribute("style",`text-align: left;width:70%;overflow:hidden;padding-left:4px;`);
+     else
+      td1.setAttribute("style",`text-align: left;width:100%;overflow:hidden;padding-left:4px;font-size:120%;`);
+
      let td2 = document.createElement("td");
      THIS.dom_cache[tile_idx].percentage_information = td2;
      td2.setAttribute("style",`overflow:hidden;text-align: right;`);
      td2.appendChild(document.createTextNode(`${Math.floor(THIS.data.info.cov[tile_idx]*10000)/100}%`));
      tr.appendChild(td1);
-     tr.appendChild(td2);
+     
+     if(THIS.data.info.cov[tile_idx] != null) tr.appendChild(td2);
+     
      tbl.appendChild(tr);
      let inner = document.createElement("small");
      THIS.dom_cache[tile_idx].title = document.createElement("div");
@@ -560,23 +567,131 @@ let ceps_tiles_component = function (parent, data, style_info) {
      return r;
     },
 
+    compute_index_of_entity_in_section:function (tile_idx,status){
+      //Assume No sort enabled,TODO:Replace with general case
+      let r = 0;
+      for(let i = 0; THIS.data.ordering.length != i;++i){
+        if(THIS.data.ordering[i] == tile_idx) return r;
+        if( THIS.data.info.status[THIS.data.ordering[i]] != status) continue;
+        if(!THIS.data.visibility[THIS.data.ordering[i]]) continue;
+        ++r;
+      }
+      return null;
+    },
+    
+    compute_visibility_of_entity:function (tile_idx){
+      return true;
+    },
+
+    build_empty_row: function (sec,tr) {
+      for(let col_index = 0;col_index != this.cols_per_row;++col_index){
+        let td = document.createElement("td");
+        td.setAttribute("valign","top");
+        td.setAttribute("style",
+         `table-layout: fixed;width: ${THIS.tile_width}px;
+          overflow:hidden;`);
+        let content = document.createElement("div");
+        THIS.dom[sec].tile_divs.push(content);
+        td.appendChild(content);
+        tr.appendChild(td);
+      }
+    },
+
+    remove_entity:function(tile_idx){
+      let status = THIS.data.info.status[tile_idx];
+      let visibility = THIS.data.visibility[tile_idx];
+      let order_idx = THIS.compute_index_of_entity_in_section(tile_idx,status);
+
+      THIS.data.info.status.splice(tile_idx,1);
+      THIS.data.info.state.splice(tile_idx,1);
+      THIS.data.info.title.splice(tile_idx,1);
+      
+      THIS.data.info.cov.splice(order_idx,1);
+      
+      THIS.data.ordering.splice(tile_idx,1);
+      for(let i = 0; i!=THIS.data.ordering.length;++i){
+        if (THIS.data.ordering[i] > tile_idx)
+         --THIS.data.ordering[i];
+      }
+
+      THIS.data.visibility.splice(tile_idx,1);
+      if (!visibility) return;
+      THIS.dom[status].tile_divs[order_idx].removeChild(THIS.dom[status].tile_divs[order_idx].firstChild);
+      for(let i = order_idx; i+1 != THIS.dom[status].tile_divs.length;++i) {
+        let right_tile = THIS.dom[status].tile_divs[i+1];
+        let this_tile = THIS.dom[status].tile_divs[i];
+        if (right_tile.firstChild == null) break;
+        let tile_content = right_tile.firstChild;
+        right_tile.removeChild(tile_content);
+        this_tile.appendChild(tile_content);        
+      }
+      THIS.update_section_header(status,
+        THIS.compute_number_of_tiles_in_current_order_of_given_status(status,true)>0); 
+    },
+
+    insert_entity: function (tile_idx,elem_data){
+      THIS.data.info.status.splice(tile_idx,0,elem_data.status);
+      THIS.data.info.state.splice(tile_idx,0,elem_data.state);
+      THIS.data.info.title.splice(tile_idx,0,elem_data.title);
+      THIS.data.info.cov.splice(tile_idx,0,elem_data.cov);
+
+      THIS.data.ordering.splice(tile_idx,0,tile_idx);//TODO: Consider Order other than identity 
+      let order_idx = THIS.compute_index_of_entity_in_section(tile_idx,elem_data.status);
+      THIS.data.visibility[tile_idx] = THIS.compute_visibility_of_entity(tile_idx);
+
+      THIS.dom_cache.push({
+        progress_bar: undefined, 
+        percentage_information: undefined
+      });
+
+      if (!THIS.data.visibility[tile_idx]) return;
+
+      let tile_content = THIS.build_tile_content(tile_idx);
+
+      let destV = THIS.dom[elem_data.status].tile_divs;
+      // INVARIANT destV.length > 0
+      if (destV[destV.length-1].firstChild != null){
+        //Out of space => Insert Row
+        let tr = document.createElement("tr");
+        THIS.build_empty_row(elem_data.status,tr);
+        THIS.dom[elem_data.status].rows.push(tr);
+        
+        let display_order_of_sec = 0;
+        for(;THIS.tiles_dom_slots.sections.length > display_order_of_sec;++display_order_of_sec){
+          if (THIS.tiles_dom_slots.sections[display_order_of_sec] == elem_data.status) break;
+        }
+
+        if (display_order_of_sec + 1 < THIS.tiles_dom_slots.sections.length){
+          let following_sec = THIS.tiles_dom_slots.sections[display_order_of_sec+1];
+          THIS.dom[following_sec].header.parentNode.parentNode.parentNode.insertBefore(
+            tr,
+            THIS.dom[following_sec].header.parentNode.parentNode);
+                              
+        } else {
+          THIS.dom[elem_data.status].header.parentNode.parentNode.parentNode.appendChild(tr);                    
+        }
+      }
+      for(let i = order_idx; i < destV.length && tile_content != null;++i){
+       let container = destV[i];
+       let content = container.firstChild;
+       if (content != null) container.removeChild(content);
+       container.appendChild(tile_content);
+       tile_content = content;
+      }
+      THIS.update_section_header(elem_data.status,true);     
+    },
+
     set_status(tile_idx,new_status){
     //console.log(THIS.dom);
 
      if (tile_idx >= THIS.data.info.status.length) return;
-     console.log("A");
      if (new_status < 0 || new_status > TILE_STATUS_MAX) return;
-     console.log("B");
      let current_status = THIS.data.info.status[tile_idx];
-     console.log("C");
      if (current_status == new_status) return;
-     console.log("D");
-
      
      if (!THIS.data.visibility[tile_idx]){
        THIS.data.info.status[tile_idx] == new_status;return;
      }
-     console.log("E");
 
      //Step 1: Remove from column
      //Step 2: Move remaining tiles in column to fill hole
@@ -622,7 +737,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
      
 
 
-     return;
+     if(Math.PI >= 3.0) return;
      
      v = THIS.compute_tiles_in_current_order_of_given_status(current_status,true);
 
@@ -705,7 +820,8 @@ let ceps_tiles_component = function (parent, data, style_info) {
     },
 
     build_dom : function() {
-     let colsPerRow = 5;
+     let colsPerRow = THIS.cols_per_row;
+
      let tw = THIS.tile_width;
 
      THIS.dom_cache = new Array(THIS.data.size);
