@@ -348,9 +348,11 @@ let ceps_tiles_component = function (parent, data, style_info) {
     tileidx2dom_slot                  : [],
     data                              : data,
     mm_handler                        : undefined,
+    mclick_handler                    : undefined,
     cov_changed                       : undefined,
     tile_status_changed               : undefined,
     state_changed                     : undefined,
+    register_click_tile_handler       : function (f) {THIS.mclick_handler = f;},
     register_move_over_tile_handler   : function (f) {THIS.mm_handler = f;},
     register_coverage_changed_handler : function (f) {THIS.cov_changed = f;},
     register_status_changed_handler   : function (f) {THIS.tile_status_changed = f;},
@@ -487,11 +489,49 @@ let ceps_tiles_component = function (parent, data, style_info) {
      outer.setAttribute("class","rollaut_info_tile_minimized");
      return outer;
     },
+    handler_mouse_click : function(ev){
+      if (THIS.mclick_handler == null) return;
+      for(let sec = 0; sec != THIS.dom.length;++sec){
+       for(let i = 0; i !=  THIS.dom[sec].tile_divs.length;++i){
+        let div = THIS.dom[sec].tile_divs[i];
+        if (div.firstChild == null) break;
+        let r = div.getBoundingClientRect();
+        if (ev.clientX-r.left < 0) continue;
+        if (ev.clientY-r.top < 0) continue; 
+        if (ev.clientX-r.left > r.width) continue;
+        if (ev.clientY-r.top > r.height) continue; 
+        //hit
+        let order_idx = i;
+        let group_index = sec;
+        let tile_idx = 0;
+        let jj = 0;
+        //compute tile index
+        for(let h = 0; h != THIS.data.ordering.length;++h){
+          let ti = THIS.data.ordering[h];
+          if (!THIS.data.visibility[ti]) continue;
+          if (THIS.data.info.status[ti] != sec) continue;
+          if (jj==order_idx){
+            tile_idx = ti;
+            break;
+          }
+          ++jj;                      
+        }
+        THIS.mclick_handler(tile_idx,
+          {
+            status: THIS.data.info.status[tile_idx],
+            state: THIS.data.info.state[tile_idx],
+            title: THIS.data.info.title[tile_idx],
+            cov  : THIS.data.info.cov[tile_idx]        
+          });
+       }
+      }
+    },
     handler_mouse_leave : function (ev){
+      return;
         if (THIS.mm_handler != undefined) THIS.mm_handler(undefined,ev.clientX,ev.clientY,ev); 
     },
-    handler_mouse_move : function (ev){       
-      for(let row_number = 0; row_number != THIS.data.size;++row_number){
+    handler_mouse_move : function (ev){
+      /*for(let row_number = 0; row_number != THIS.data.size;++row_number){
        for(let k in THIS.tiles_dom_slots.columns){
         let col = k;
         k = THIS.tiles_dom_slots.columns[k];
@@ -506,7 +546,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
         return;
        }
       }
-      if (THIS.mm_handler != undefined) THIS.mm_handler(undefined,ev.clientX,ev.clientY,ev); 
+      if (THIS.mm_handler != undefined) THIS.mm_handler(undefined,ev.clientX,ev.clientY,ev); */
     },
 
     update : function(){
@@ -835,6 +875,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
      let table = document.createElement("table");
      table.addEventListener("mousemove",THIS.handler_mouse_move);
      table.addEventListener("mouseleave",THIS.handler_mouse_leave);
+     table.addEventListener("click",THIS.handler_mouse_click);
      table.setAttribute("style","table-layout: fixed;display: inline-block;overflow: hidden;width:100%;");
      
      let tile_idx_previous = -1;
