@@ -245,8 +245,7 @@
             <div id="dlg_rollout_details_body" class="modal-body">
                 
             </div>
-            <div class="xxxmodal-footer" id="dlg_rollout_details_footer">
-                <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            <div class="modal-footer" id="dlg_rollout_details_footer">
             </div>
         </div>
     </div>
@@ -261,7 +260,19 @@
 
 <script>
 
+function extractAttributesFromStaccatoEntity(e){
+     let r = {
+     }
+     for(let i = 0; i != e.children.length;++i){
+        if (e.children[i]["class"] != "attribute") 
+          continue;
+        r[e.children[i]["name"]] = e.children[i]["value"];
+      }
+     return r;
+   }
+
  let staccatoAPI = null;
+ let build_running_rollout_overview_dlg_update = null;
 
  function issue_rollaut_staccato_write_command (data){
   staccatoAPI.main_socket.send(JSON.stringify(
@@ -278,12 +289,160 @@
   ));
  }
 
- function build_rollout_overview_dlg(id,idx,data){
-   let dlg = document.getElementById(id);
-   let header = dlg.firstElementChild.firstElementChild.firstElementChild.firstElementChild;
-   let body = dlg.firstElementChild.firstElementChild.getElementsByTagName("DIV")[1];
-   let footer = dlg.firstElementChild.firstElementChild.getElementsByTagName("DIV")[2];
-   header.innerHTML = data.title;
+ function build_running_rollout_overview_dlg (id,idx,data,header,body,footer){
+   let cw = 280;
+   let ch = 280;
+   let radius = Math.floor(cw/2 * 0.50);
+   let lw1 = 40;
+
+   body.innerHTML =
+   `
+   <div style="text-align:center;" >
+    <canvas id="running_rollout_overview_dlg_canvas" width="${cw}px" height="${ch}px" style="background-color:white;">
+    </canvas>
+   `;
+
+   build_running_rollout_overview_dlg_update = setInterval(
+     function () {
+       let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
+       //console.log(attrs);
+       let cov_critical = 0.0;
+       let cov_fatal = 0.0;
+       let cov_complete = 0.0;
+       let n_critical = 0;
+       let n_fatal = 0;
+       let n_complete = 0;
+       let n_stores = attrs.stores.length;
+
+       for(let i = 0; i != n_stores; ++i){
+         if (attrs.stores[i].health == "critical") { 
+           cov_critical += 
+            (1/n_stores)*attrs.coverage;
+            ++n_critical;
+          }
+         else if (attrs.stores[i].health == "fatal") cov_fatal +=  
+          (1/n_stores)*attrs.coverage;
+         else if (attrs.stores[i].health == "complete") cov_complete +=  
+          (1/n_stores)*attrs.coverage;        
+       }
+
+
+
+       let c = document.getElementById("running_rollout_overview_dlg_canvas");
+       let ctx = c.getContext("2d");
+       ctx.clearRect(0, 0, cw, ch);
+       ctx.imageSmoothingEnabled = true;
+       let center_x = cw/2;
+       let center_y = ch/2;
+       //background
+
+       ctx.beginPath();
+
+       ctx.shadowOffsetX = 2;
+       ctx.shadowOffsetY = 2;
+       ctx.shadowBlur = 4;
+       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+       ctx.lineWidth = lw1;
+       ctx.strokeStyle = "rgba(173, 216, 230,0.2)";
+       ctx.arc(center_x, center_y, radius, 0, 2 * Math.PI);
+       ctx.stroke();
+
+       //Coverage: ALL
+
+       ctx.beginPath();
+       ctx.lineWidth = lw1;
+       ctx.strokeStyle = "rgba(0, 120, 204,0.8)";//"rgba(102, 204, 0,0.9)";
+       ctx.arc(center_x, center_y, radius, - 1/2 * Math.PI, - 1/2 * Math.PI +  2 * Math.PI * attrs.coverage);
+       ctx.stroke();
+
+       ctx.font = "20px Arial";
+       let t = `${ Math.round(attrs.coverage*10000)/100 }%`;
+       let m = ctx.measureText(t);
+       ctx.lineWidth = 1;
+       ctx.fillStyle = ctx.strokeStyle;
+
+       ctx.fillText(t, center_x - m.width/2, center_y+7);
+       //ctx.fillText(t, center_x , center_y );
+
+      //Coverage: COMPLETE
+      let add_info = 0;
+
+      if (cov_complete > 0.01) {
+       ++add_info;
+       ctx.beginPath();
+       ctx.lineWidth = lw1;
+       ctx.strokeStyle = "rgba(102, 204, 0,0.9)";
+       ctx.arc(center_x, center_y, radius, - 1/2 * Math.PI, - 1/2 * Math.PI +  2 * Math.PI * (cov_complete+cov_critical+cov_fatal) );
+       ctx.stroke();
+       ctx.font = "10px Arial";
+       let t = `${ Math.round(cov_complete*10000)/100 }%`;
+       let m = ctx.measureText(t);
+       ctx.lineWidth = 1;
+       ctx.fillStyle = ctx.strokeStyle;
+
+       ctx.shadowOffsetX = 0;
+       ctx.shadowOffsetY = 0;
+       ctx.shadowBlur = 0;
+
+       ctx.font = "20px Arial";
+       ctx.fillStyle = ctx.strokeStyle = "rgba(102, 204, 0,1.0)";
+
+     
+       ctx.fillText(t, center_x + 1.4*radius*Math.cos( 2 * Math.PI * (1/2*cov_complete +cov_critical+cov_fatal) - 1/2*Math.PI), 
+                       center_y + 1.4*radius*Math.sin( 2* Math.PI * (1/2*cov_complete +cov_critical+cov_fatal) - 1/2*Math.PI));
+
+      }
+      //Coverage: CRITICAL
+      if (cov_critical > 0.01) {
+        ++add_info;
+       ctx.beginPath();
+       ctx.lineWidth = lw1;
+       ctx.strokeStyle = "rgba(255, 192, 24,0.8)";
+       ctx.arc(center_x, center_y, radius, - 1/2 * Math.PI, - 1/2 * Math.PI +  2 * Math.PI * (cov_critical+cov_fatal) );
+       ctx.stroke();
+
+       ctx.font = "20px Arial";
+       let t = `${ Math.round(cov_complete*10000)/100 }%`;
+       let m = ctx.measureText(t);
+       ctx.lineWidth = 1;
+       ctx.fillStyle = ctx.strokeStyle = "rgba(255, 192, 24,1.0)";
+       ctx.shadowOffsetX = 0;
+       ctx.shadowOffsetY = 0;
+       ctx.shadowBlur = 0;
+       
+       ctx.fillText(t, center_x + 1.4*radius*Math.cos( 2 * Math.PI * (cov_fatal+1/2*cov_critical) - 1/2*Math.PI), 
+                       center_y + 1.4*radius*Math.sin( 2* Math.PI * (cov_fatal+1/2*cov_critical) - 1/2*Math.PI));
+
+      }
+      //Coverage: FATAL
+      if (cov_fatal > 0.01) {
+       ctx.beginPath();
+       ctx.shadowOffsetX = 2;
+       ctx.shadowOffsetY = 2;
+       ctx.shadowBlur = 4;
+       ctx.lineWidth = lw1;
+       ctx.strokeStyle = "rgba(255, 50, 2,0.8)";
+       ctx.arc(center_x, center_y, radius, - 1/2 * Math.PI, - 1/2 * Math.PI +  2 * Math.PI * (cov_fatal) );
+       ctx.stroke();
+
+       ctx.shadowOffsetX = 0;
+       ctx.shadowOffsetY = 0;
+       ctx.shadowBlur = 0;
+
+       ctx.font = "20px Arial";
+       let t = `${ Math.round(cov_fatal*10000)/100 }%`;
+       ctx.fillStyle = ctx.strokeStyle = "rgba(255, 50, 2,1.0)";
+
+     
+       ctx.fillText(t, center_x + 1.4*radius*Math.cos( 2 * Math.PI * (1/2*cov_fatal) - 1/2*Math.PI), 
+                       center_y + 1.4*radius*Math.sin( 2* Math.PI * (1/2*cov_fatal) - 1/2*Math.PI));
+
+     }
+
+      },1000);
+ }
+
+ function build_scheduled_rollout_overview_dlg(id,idx,data,header,body,footer){
    let scheduled_time = data.attributes.scheduled_time_unix_time;
    let jd = new Date(scheduled_time*1000);
    let now = Math.floor(Date.now()/1000);
@@ -337,7 +496,30 @@
       issue_rollaut_staccato_write_command (data);
      }
    }
+ }
 
+ function build_rollout_overview_dlg(id,idx,data){
+   if (build_running_rollout_overview_dlg_update != null) {
+     clearInterval(build_running_rollout_overview_dlg_update);
+     build_running_rollout_overview_dlg_update = null;
+   }
+   let dlg = document.getElementById(id);
+   let divs = [];
+   for(let i = 0; i != dlg.firstElementChild.firstElementChild.children.length;++i){
+     let tg = dlg.firstElementChild.firstElementChild.children[i];
+     if(tg.tagName != "DIV") continue;
+     divs.push(tg);
+   } 
+   let header = divs[0].firstElementChild;
+   let body = divs[1];
+   let footer = divs[2];
+   for(;body.firstChild!=null;)body.removeChild(body.firstChild);
+   for(;footer.firstChild!=null;)footer.removeChild(footer.firstChild);
+   header.innerHTML = data.title;
+   if (data.attributes["processing_status"] != null)
+    build_running_rollout_overview_dlg(id,idx,data,header,body,footer);
+   else
+    build_scheduled_rollout_overview_dlg(id,idx,data,header,body,footer);
 }
 
  function test_data(data_size){
@@ -648,7 +830,7 @@ let TimeLineWidget = function (parent,
    },
    extractAttributes: function (e){
      let r = {
-       cov : null,
+       coverage : null,
        health: null,
        title : e["name"]
      }
@@ -677,12 +859,34 @@ let TimeLineWidget = function (parent,
             "n/a":TILE_STATUS_INACTIVE
         } [health];       
    },
+
+   mergeAttributes:function(e_new,e_orig){
+     for(let i = 0;i != e_new.children.length;++i){
+       let a = e_new.children[i];       
+       if (a["class"] == null || a["class"] != "attribute") continue;
+       //try to find attribute in e_orig
+       let found = false;
+       for(let j = 0; j != e_orig.children.length;++j){
+         let ao = e_orig.children[j];
+         if (ao["id"] == null) continue;
+         if (ao["id"] != a["id"]) continue;
+         if (a["deleted"] == "true") ao["value"] = null;
+         else ao["value"] = a["value"];
+         found = true; break;
+       } 
+       if (!found && a["deleted"] != "true"){
+         e_orig.children.push(a);
+       }
+     }
+   },
+
    updateEntity : function (groupIdx,entityIdx,new_data){
       e_orig = THIS.groupedEntities[groupIdx].entities[entityIdx];
+      THIS.mergeAttributes(new_data,e_orig.raw);
       tiles = THIS.groupedEntities[groupIdx]["tiles"];
       let attributes = THIS.extractAttributes(new_data);
-      if (attributes.cov != null)
-       tiles.tiles_widget.set_coverage(entityIdx,attributes.cov);
+      if (attributes.coverage != null)
+       tiles.tiles_widget.set_coverage(entityIdx,attributes.coverage);
       if (attributes.health != null)
        tiles.tiles_widget.set_status(
          entityIdx,
@@ -696,7 +900,6 @@ let TimeLineWidget = function (parent,
     THIS.groupedEntities[groupIndex]["tiles"].remove_entity(Index);
    },
    update : function(changed_entities){
-     
      let g = 0;
      let j = 0;
      for(let i = 0; i != changed_entities.length;++i){
@@ -734,7 +937,7 @@ let TimeLineWidget = function (parent,
              state : 0,
              status:tile_status,
              title : attrs.title,
-             cov   : attrs.cov
+             cov   : attrs.coverage
          }
          THIS.groupedEntities[indices.groupIndex]["tiles"].insert_entity(indices.idx,elem_data);
        }
@@ -791,7 +994,7 @@ let TimeLineWidget = function (parent,
            getCoverage: function(idx) { 
             if (this.a == null ) 
               this.a = THIS.extractAttributes(raw_data[idx]);
-             return this.a.cov;           
+             return this.a.coverage;           
            }
           }
        );
@@ -1017,7 +1220,7 @@ let timeLineWidget = null;
       timeLineWidget = TimeLineWidget(container,dbView);
       timeLineWidget.on_click = function (index,data){ 
         build_rollout_overview_dlg("dlg_rollout_details",index,data);
-        $("#dlg_rollout_details").modal();
+        setTimeout( function () {$("#dlg_rollout_details").modal();},200);
       };
     } else {
       //Update

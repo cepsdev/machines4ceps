@@ -840,6 +840,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
     },
 
     update_section_header : function(sec,visible){
+      return;
       let sec_div = THIS.dom[sec].header;
       if (!visible) { sec_div.setAttribute("style","display:none;"); return}
       else sec_div.setAttribute("style","display:block;");
@@ -900,6 +901,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
 
 
        let header_row = document.createElement("tr");
+
        let tdh = document.createElement("td");
        tdh.setAttribute("colspan",colsPerRow);
        tdh.setAttribute("style",
@@ -914,12 +916,14 @@ let ceps_tiles_component = function (parent, data, style_info) {
       let sec_div = THIS.dom[sec].header = document.createElement("div");
       THIS.update_section_header(sec,tiles.length != 0);
 
-      let sec_title = document.createTextNode(THIS.section_name.get(sec));
-      sec_div.appendChild(sec_title);
-       tdh.appendChild(
+      //let sec_title = document.createTextNode(THIS.section_name.get(sec));
+      //sec_div.appendChild(sec_title);
+      
+      tdh.appendChild(
          sec_div
        );
-       header_row.appendChild(tdh);
+       //header_row.appendChild(tdh);
+       header_row.setAttribute("style","display:none;height:0px;");
        table.appendChild(header_row);
        let num_of_rows = Math.ceil(tiles.length / colsPerRow)+1;
        let cur_tile_idx = 0;
