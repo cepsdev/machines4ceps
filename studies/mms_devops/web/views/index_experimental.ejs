@@ -133,7 +133,7 @@
                   id="input_search_statemachines" 
                   aria-describedby="search_statemachinesHelp" placeholder="Search Rollouts">
                  <small id="search_statemachinesHelp" class="form-text text-muted"></small>
-                  </div>
+          </div>
               <div id="info_tiles" 
                 xxstyle="display:block;overflow:hidden;position:absolute;background-color: black;">
              </div>
@@ -269,7 +269,20 @@ function extractAttributesFromStaccatoEntity(e){
         r[e.children[i]["name"]] = e.children[i]["value"];
       }
      return r;
-   }
+}
+
+function utilsTranslateHealthToTileStatus(health){
+  if (health == null) return TILE_STATUS_INACTIVE;
+  return { 
+      "ok":TILE_STATUS_OK,
+      "complete":TILE_STATUS_DONE,
+      "failed":TILE_STATUS_ERROR,
+      "failure":TILE_STATUS_ERROR,
+      "fatal":TILE_STATUS_ERROR,
+      "critical":TILE_STATUS_WARN,
+      "n/a":TILE_STATUS_INACTIVE
+  } [health];       
+}
 
  let staccatoAPI = null;
  let build_running_rollout_overview_dlg_update = null;
@@ -289,22 +302,208 @@ function extractAttributesFromStaccatoEntity(e){
   ));
  }
 
- function build_running_rollout_overview_dlg (id,idx,data,header,body,footer){
-   let cw = 280;
-   let ch = 280;
-   let radius = Math.floor(cw/2 * 0.50);
-   let lw1 = 40;
+ function build_running_rollout_overview_dlg_store_info_timeline(body_div,status,cov,steps,store){
+  function get_time_info(step_idx){
+    let outer = document.createElement("div");
+    outer.setAttribute("style","color:rgba(100,100,100,100);");
+    let inner = document.createElement("h6");
+    inner.appendChild(document.createTextNode("13:00:01"));
+    outer.append(inner);
+    return outer;
+  };
 
+  let outer_div = document.createElement("div");
+  let tbl = document.createElement("table");
+  tbl.setAttribute("style","");
+  let current_state = 2;
+
+  for(let i = 0; i != steps.length;++i){
+    let tr = document.createElement("tr");
+    let tdl = document.createElement("td");
+    tdl.setAttribute("style",
+     `border-right: 2px solid;border-right-color: rgba(100,100,100,150);`+
+     `width: 100px;margin-top:10px;`
+    );
+    if (i <= current_state ) tdl.appendChild(get_time_info(i));
+    let tdr = document.createElement("td");
+    if (i <= current_state) 
+     tdr.setAttribute("style","text-align:left;padding:4px;");
+    else 
+     tdr.setAttribute("style","text-align:left;padding:4px;filter: opacity(0.4);");
+    let title = document.createElement('h8');
+    let title_str = document.createTextNode(steps[i].description);
+    title.appendChild(title_str);
+    tdr.appendChild(title);
+    tr.appendChild(tdl);
+    tr.appendChild(tdr);
+    tbl.appendChild(tr);
+    let tr_spacer = document.createElement("tr");
+    tr_spacer.appendChild(document.createElement("td"));
+    tr_spacer.appendChild(document.createElement("td"));
+    tr_spacer.setAttribute("style","height:15px;");
+    tbl.appendChild(tr_spacer);
+  }
+  outer_div.appendChild(tbl);
+  body_div.appendChild(outer_div);
+ }
+
+ function build_running_rollout_overview_dlg_store_info(parent,status,cov,steps,store){
+  function get_header_class() {
+      if (status == undefined || status == undefined) return "bg-secondary";
+      if (status == TILE_STATUS_OK) return "bg-primary";
+      if (status == TILE_STATUS_WARN) return "bg-warning";
+      if (status == TILE_STATUS_ERROR) return "bg-danger";
+      return "bg-success";      
+   };
+
+
+   for(;parent.firstChild != null;) parent.removeChild(parent.firstChild);
+   let outer_div = document.createElement("div");
+   outer_div.setAttribute("style",`width:400px;`);
+
+   let header_div = document.createElement("div");
+   header_div.setAttribute("style",`position:relative;left:0px;top:0px;width:100%;`);
+   header_div.setAttribute("class",get_header_class());
+   let header_sub_div_top = document.createElement("div");
+   header_sub_div_top.setAttribute("style","height:2em;");
+   let header_sub_div_middle = document.createElement("div");
+   header_sub_div_middle.setAttribute("style","color:#F8F8FF;padding-left:12px;");
+   let header_sub_div_bottom = document.createElement("div");
+   header_sub_div_bottom.setAttribute("style","color:#F8F8FF;padding-right:12px;margin-bottom:10px;text-align:right;");
+
+   header_div.appendChild(header_sub_div_top);header_div.appendChild(header_sub_div_middle);header_div.appendChild(header_sub_div_bottom);
+   let middle_text = document.createTextNode(store.title);
+   let middle_h3 = document.createElement("h3");
+   middle_h3.appendChild(middle_text);
+   header_sub_div_middle.appendChild(middle_h3);
+   let middle_main = middle_h3;
+   let bottom_text = document.createTextNode(`${Math.trunc(cov*10000.0)/100}%`);
+   let h5_elem = document.createElement("h5");
+   h5_elem.appendChild(bottom_text);
+   bottom_main = h5_elem;
+   header_sub_div_bottom.appendChild(h5_elem);
+   outer_div.appendChild(header_div);
+   let body_div = document.createElement("div");
+   body_div.setAttribute("style",`overflow:scroll;height:300px;`);
+   build_running_rollout_overview_dlg_store_info_timeline(body_div,status,cov,steps,store);
+   outer_div.appendChild(body_div);
+   let footer_div = document.createElement("div");
+   footer_div.innerHTML = `<div class="form-group" style="width:140px;margin:0 auto;">
+    <button style="float:left;margin:8px;" 
+                    id="XXXX" 
+                    type="button" 
+                    class="btn btn-outline-primary btn-sm" 
+                    >Kill</button>
+    <button style="float:right;margin:8px;" 
+                    id="YYY" 
+                    type="button" 
+                    class="btn btn-outline-primary btn-sm" 
+                    >Restart</button>                    
+    </div>`;
+   outer_div.appendChild(footer_div);
+   parent.appendChild(outer_div);   
+ }
+
+ function build_running_rollout_overview_dlg (id,idx,data,header,body,footer){
+   let cw = 300;
+   let ch = 300;
+   let radius = Math.floor(cw/2 * 0.45);
+   let lw1 = 40;
+  
    body.innerHTML =
    `
-   <div style="text-align:center;" >
-    <canvas id="running_rollout_overview_dlg_canvas" width="${cw}px" height="${ch}px" style="background-color:white;">
-    </canvas>
+   <div style="text-align:center;align:center;" >
+    <div>
+    <div style="float:left;">
+      <canvas id="running_rollout_overview_dlg_canvas" width="${cw}px" height="${ch}px" style="background-color:white;">
+     </canvas>
+    </div>
+    <div id = "running_rollout_overview_dlg_store_info" style="float:right;">
+      
+    </div>
+    </div>
+    
+    <div class="form-group" style="padding-left: 4px;padding-right: 4px;">
+      <label for="rollout_overview_dlg_search_statemachines"></label>
+      <input type="text" 
+                  class="form-control" 
+                  id="rollout_overview_dlg_input_search_statemachines" 
+                  aria-describedby="search_statemachinesHelp" placeholder="Search Stores">
+       <small id="rollout_overview_dlg_search_statemachinesHelp" class="form-text text-muted"></small>
+    </div>
+
+    <div style = "height: ${Math.floor(window.outerHeight*0.6)}px;overflow: scroll;">
+     <div id="build_running_rollout_overview_dlg_details">
+
+     </div>
+    </div>
    `;
+   let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
+   let id2idx = new Map;
+   let stores = attrs.stores;
+   let steps = attrs.steps;
+
+   for(let i = 0; i != stores.length;++i){
+    id2idx.set(stores[i]["id"] , i);
+   }
+
+   let tiles = create_tiles_deck(
+     document.getElementById("build_running_rollout_overview_dlg_details"), 
+     {
+       getSize : function () {return stores.length;},
+       getTitle : function (idx) {return stores[idx]["name"];},
+       getState : function(idx) {return 0;},
+       getStatus: function(idx) { 
+             return utilsTranslateHealthToTileStatus(stores[idx]["health"]);           
+           },
+       getCoverage: function(idx) { 
+             return stores[idx]["coverage"];           
+       },       
+       getTile2StatesMapping  : function() { return {}; },
+       getState2VisitedStates : function() { return {}; },
+       getState2RootMapping   : function() { return {}; },
+       getState2LabelMapping  : function() { 
+         let m = {};
+         for(let i = 0; i != steps.length; ++i) {
+           m[i] = steps[i].description;
+         } 
+       },
+       getStateLabels  : function() { 
+         let v = [];
+         for(let i = 0; i != steps.length; ++i) {
+           v.push(steps[i].description);
+         }
+         return v;
+       }       
+     },
+     {},
+     {}
+   );
+   tiles.tiles_widget.register_click_tile_handler(
+     function (index,data){
+       build_running_rollout_overview_dlg_store_info(document.getElementById(
+         "running_rollout_overview_dlg_store_info"),
+         tiles.tiles_widget.data.info.status[index],
+         tiles.tiles_widget.data.info.cov[index],
+         steps,
+         data);
+     }
+   );
 
    build_running_rollout_overview_dlg_update = setInterval(
      function () {
        let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
+       //Update Tiles
+       let stores = attrs.stores;
+       for(let i = 0; i != stores.length;++i){
+        let tile_idx = id2idx.get(stores[i]["id"]);
+        if (stores[i]["coverage"] != tiles.tiles_widget.data.info.cov[tile_idx]) 
+         tiles.tiles_widget.set_coverage(tile_idx,stores[i]["coverage"]);
+        let new_status = utilsTranslateHealthToTileStatus(stores[i]["health"]);
+        if (new_status != tiles.tiles_widget.data.info.status[tile_idx])
+         tiles.tiles_widget.set_status(tile_idx,new_status);
+       }       
+
        //console.log(attrs);
        let cov_critical = 0.0;
        let cov_fatal = 0.0;
@@ -586,13 +785,16 @@ function extractAttributesFromStaccatoEntity(e){
 
  function create_tiles_deck(
              parentWidget,
-             dataModel) {
+             dataModel,
+             style_info,
+             info_box) {
 
   let data_size = dataModel.getSize();
   let idx2sm = {};
 
   let THIS = {
      cache             : {state_labels:{}},
+     stateLabels       : dataModel.getStateLabels(),
      filters           : [],
      permutations      : [],
      size              : data_size,
@@ -607,21 +809,7 @@ function extractAttributesFromStaccatoEntity(e){
        state       : new Array(data_size), //a non negative integer
        up_since    : undefined,
        state_labels : function (tile_idx){
-         let v = THIS.cache.state_labels[tile_idx];
-         if (v == undefined) { THIS.cache.state_labels[tile_idx] = []; v = THIS.cache.state_labels[tile_idx]; }
-         else return v;
-         let vv = [];
-         let states = THIS.tile2states[idx2sm[tile_idx]];
-         if (states == undefined) return [];
-         for(let i = 0 ; i < states.length;++i){
-          vv.push(states[i]);
-         }
-         for(let i = 0 ; i < vv.length;++i){
-           let l = THIS.state2label[vv[i]];
-           if (l == undefined) continue;
-           v.push(l);
-         }         
-         return v;
+         return THIS.stateLabels;
        },
        enter_time : function (tile_idx,state){
         let states = THIS.tile2states[idx2sm[tile_idx]];
@@ -681,10 +869,10 @@ function extractAttributesFromStaccatoEntity(e){
    data.info.title[i]  = dataModel.getTitle(i);
    data.info.cov[i]    = dataModel.getCoverage(i);
   }
-  data.tile2states = {};
-  data.tile2_visited_states = {};
-  data.state2root = {};
-  data.state2label = {};
+  data.tile2states = dataModel.getTile2StatesMapping();
+  data.tile2_visited_states = dataModel.getState2VisitedStates();
+  data.state2root = dataModel.getState2RootMapping();
+  data.state2label = dataModel.getState2LabelMapping();
   
   /*for(let i = 0; i < msg.labeled_states.length;++i){
     let label = msg.labeled_states[i];
@@ -715,12 +903,21 @@ function extractAttributesFromStaccatoEntity(e){
 
   THIS.compute_ordering();
   THIS.compute_visibility();
-  
-  THIS.tiles_widget = ceps_tiles_component(
+  if (style_info == null)
+   THIS.tiles_widget = ceps_tiles_component(
     parentWidget,
     data,
     {tile_width:300}
-  );
+   );
+  else {
+    if (style_info["tile_width"] == null) style_info["tile_width"]=300;
+    THIS.tiles_widget = ceps_tiles_component(
+    parentWidget,
+    data,
+    style_info,
+    info_box
+   );
+  }
   return THIS;
 }
 
@@ -995,8 +1192,13 @@ let TimeLineWidget = function (parent,
             if (this.a == null ) 
               this.a = THIS.extractAttributes(raw_data[idx]);
              return this.a.coverage;           
-           }
-          }
+           },
+           getTile2StatesMapping  : function() { return {}; },
+           getState2VisitedStates : function() { return {}; },
+           getState2RootMapping   : function() { return {}; },
+           getState2LabelMapping  : function() { return {}; },
+           getStateLabels         : function() { return []; }
+        }
        );
        g["tiles"]["tiles_widget"].register_click_tile_handler(
          function (index,data){

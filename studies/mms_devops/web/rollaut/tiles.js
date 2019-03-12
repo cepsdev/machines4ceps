@@ -6,7 +6,9 @@ const TILE_STATUS_INACTIVE  = 4;
 const TILE_STATUS_MAX = 4;
 
 
-let rollaut_infobox = function (parent,tile_idx, data) { 
+let rollaut_infobox = function (parent,
+                                tile_idx, 
+                                data) { 
   let THIS = {
     initialized   : false,
     visible       : false,
@@ -99,12 +101,19 @@ let rollaut_infobox = function (parent,tile_idx, data) {
        let left_side = THIS.dom_cache.main.three_steps_left_side;
        let right_side = THIS.dom_cache.main.three_steps_right_side;
 
-       if (current_state-1 >= 0 && right_side[current_state-1] !=undefined && right_side[current_state-1].firstChild != undefined) right_side[current_state-1].removeChild(right_side[current_state-1].firstChild);
-       if (current_state-1 >= 0 && left_side[current_state-1] !=undefined && left_side[current_state-1].firstChild != undefined) left_side[current_state-1].removeChild(left_side[current_state-1].firstChild);
-       if (right_side[current_state] !=undefined && right_side[current_state].firstChild != undefined) right_side[current_state].removeChild(right_side[current_state].firstChild);
-       if (left_side[current_state] !=undefined && left_side[current_state].firstChild != undefined) left_side[current_state].removeChild(left_side[current_state].firstChild);
-       if (current_state+1 !=  steps.length && right_side[current_state+1] !=undefined && right_side[current_state+1].firstChild != undefined) right_side[current_state+1].removeChild(right_side[current_state+1].firstChild);
-       if (current_state+1 !=  steps.length && left_side[current_state+1] !=undefined && left_side[current_state+1].firstChild != undefined) left_side[current_state+1].removeChild(left_side[current_state+1].firstChild);
+       if (current_state-1 >= 0 && right_side[current_state-1] !=undefined && right_side[current_state-1].firstChild != undefined) 
+        right_side[current_state-1].removeChild(right_side[current_state-1].firstChild);
+       if (current_state-1 >= 0 && left_side[current_state-1] !=undefined && left_side[current_state-1].firstChild != undefined) 
+        left_side[current_state-1].removeChild(left_side[current_state-1].firstChild);
+       
+       if (right_side[current_state] !=undefined && right_side[current_state].firstChild != undefined) 
+        right_side[current_state].removeChild(right_side[current_state].firstChild);
+       if (left_side[current_state] !=undefined && left_side[current_state].firstChild != undefined) 
+        left_side[current_state].removeChild(left_side[current_state].firstChild);
+       if (current_state+1 !=  steps.length && right_side[current_state+1] !=undefined && right_side[current_state+1].firstChild != undefined) 
+        right_side[current_state+1].removeChild(right_side[current_state+1].firstChild);       
+       if (current_state+1 !=  steps.length && left_side[current_state+1] !=undefined && left_side[current_state+1].firstChild != undefined) 
+        left_side[current_state+1].removeChild(left_side[current_state+1].firstChild);
 
        if (true/*THIS.rendered_step != current_state*/) {
         for(let i = 0; i != steps.length;++i) 
@@ -118,9 +127,10 @@ let rollaut_infobox = function (parent,tile_idx, data) {
         if (current_state+1 < steps.length ) steps[current_state+1].setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;filter:opacity(50%) blur(0.6px);`);
 
         steps[current_state].setAttribute("style",
-          `${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;border-top:1px solid;border-bottom:1px solid;font-weight: bold;`);     
+          `${THIS.layout.get_three_steps_outer_div_base_css()}
+          height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;border-top:1px solid;border-bottom:1px solid;font-weight: bold;`);     
 
-        {
+        if (THIS.data.up_since != null) {
           let enter_t = THIS.data.info.enter_time(THIS.tile_idx,current_state);
           let d1 = new Date(THIS.data.up_since*1000+enter_t.secs_since_uptime*1000+enter_t.msecs_since_uptime);
           if (current_state + 1 == steps.length)
@@ -183,8 +193,9 @@ let rollaut_infobox = function (parent,tile_idx, data) {
        outer.setAttribute("style",`position:relative;top:${offset}px;`);
      }
     },
+
     build_steps_view        : function() {      
-    THIS.rendered_step = undefined;
+     THIS.rendered_step = undefined;
      let info_1 = document.createElement("div");
      info_1.setAttribute("style","height:1em;");
      let main = document.createElement("div");
@@ -220,19 +231,15 @@ let rollaut_infobox = function (parent,tile_idx, data) {
          
          let tdc = document.createTextNode(labels[i]);
          let tdc_outer = document.createElement("div");
-         tdc_outer.setAttribute("style",`${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;`);
-         
-         
+         tdc_outer.setAttribute("style",
+          `${THIS.layout.get_three_steps_outer_div_base_css()}height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;`);
          let left_side = document.createElement("div");
-
          let right_side = document.createElement("div");
          //loader.setAttribute("class","rollaut_connection_loader_medium");
          left_side.setAttribute("style","float:right;");
-
          td_left.appendChild(left_side);
          td_right.appendChild(right_side);
          tdc_outer.appendChild(tdc);
-
          THIS.dom_cache.main.three_steps_steps.push(tdc_outer);
          THIS.dom_cache.main.three_steps_left_side.push(left_side);
          THIS.dom_cache.main.three_steps_right_side.push(right_side);
@@ -257,6 +264,7 @@ let rollaut_infobox = function (parent,tile_idx, data) {
       if (THIS.tile_idx == undefined) return;
        let outer_div = document.createElement("div");        
        outer_div.setAttribute("style",
+                              `z-index:1000000;`+
                               `position:absolute;width:${THIS.layout.get_width_css()};height:${THIS.layout.get_height_css()};`+
                               `border-radius:2px;background-color:#F8F8FF;box-shadow: 1px 1px 2px rgba(0, 0, 0, .1);`
        );
@@ -329,7 +337,7 @@ let rollaut_infobox = function (parent,tile_idx, data) {
 
 
 
-let ceps_tiles_component = function (parent, data, style_info) {
+let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
  let tile_width_default = 200;
  if (style_info != null && style_info.tile_width != null)
   tile_width_default = style_info.tile_width;
@@ -527,10 +535,41 @@ let ceps_tiles_component = function (parent, data, style_info) {
       }
     },
     handler_mouse_leave : function (ev){
-      return;
         if (THIS.mm_handler != undefined) THIS.mm_handler(undefined,ev.clientX,ev.clientY,ev); 
     },
     handler_mouse_move : function (ev){
+      if (THIS.mm_handler == undefined || THIS.mm_handler == null) 
+       return;
+      for(let sec = 0; sec != THIS.dom.length;++sec){
+        for(let i = 0; i !=  THIS.dom[sec].tile_divs.length;++i){
+         let div = THIS.dom[sec].tile_divs[i];
+         if (div.firstChild == null) break;
+         let r = div.getBoundingClientRect();
+         if (ev.clientX-r.left < 0) continue;
+         if (ev.clientY-r.top < 0) continue; 
+         if (ev.clientX-r.left > r.width) continue;
+         if (ev.clientY-r.top > r.height) continue;         
+         //hit
+         let order_idx = i;
+         let group_index = sec;
+         let tile_idx = -1;
+         let jj = 0;
+         //compute tile index
+         for(let h = 0; h != THIS.data.ordering.length;++h){
+           let ti = THIS.data.ordering[h];
+           if (!THIS.data.visibility[ti]) continue;
+           if (THIS.data.info.status[ti] != sec) continue;
+           if (jj==order_idx){
+             tile_idx = ti;
+             break;
+           }
+           ++jj;                      
+         }
+         THIS.mm_handler(tile_idx,ev.clientX,ev.clientY,ev); 
+         return; 
+        }
+        //THIS.mm_handler(undefined,ev.clientX,ev.clientY,ev); 
+      } 
       /*for(let row_number = 0; row_number != THIS.data.size;++row_number){
        for(let k in THIS.tiles_dom_slots.columns){
         let col = k;
@@ -744,9 +783,21 @@ let ceps_tiles_component = function (parent, data, style_info) {
      let tile_idx_in_section = -1;
      for(tile_idx_in_section = 0; v.length > tile_idx_in_section; ++tile_idx_in_section)
       if (v[tile_idx_in_section] == tile_idx) break;
+
+     if (tile_idx_in_section >= THIS.dom[current_status].tile_divs.length) 
+      console.log(tile_idx_in_section,"tile_idx_in_section >= THIS.dom[current_status].tile_divs.length");
+     if (THIS.dom[current_status].tile_divs[tile_idx_in_section] == null) 
+      console.log(tile_idx_in_section,"THIS.dom[current_status].tile_divs[tile_idx_in_section] == null");
+
      let tile_content = THIS.dom[current_status].tile_divs[tile_idx_in_section].firstChild;
+
+     if (tile_content == null) 
+      console.log(tile_idx_in_section,"tile_content == null");
+
      //console.log(tile_content.parent);
+
      tile_content.parentNode.removeChild(tile_content);
+     //INVARIANT: THIS.dom[current_status].tile_divs[tile_idx_in_section] has no children
      for(let i = tile_idx_in_section; i + 1 < THIS.dom[current_status].tile_divs.length;++i){
        let e = THIS.dom[current_status].tile_divs[i+1].firstChild;
        if (e == null) break;
@@ -761,6 +812,29 @@ let ceps_tiles_component = function (parent, data, style_info) {
      for(;newTileIdx != w.length;++newTileIdx)
       if (w[newTileIdx] == tile_idx) break;
      let destV = THIS.dom[new_status].tile_divs;
+     if (destV.length < w.length)
+     {
+        //Out of space => Insert Row         
+        let tr = document.createElement("tr");
+        THIS.build_empty_row(new_status,tr);
+        THIS.dom[new_status].rows.push(tr);
+        
+        let display_order_of_sec = 0;
+        for(;THIS.tiles_dom_slots.sections.length > display_order_of_sec;++display_order_of_sec){
+          if (THIS.tiles_dom_slots.sections[display_order_of_sec] == new_status) break;
+        }
+        if (display_order_of_sec + 1 < THIS.tiles_dom_slots.sections.length){
+          let following_sec = THIS.tiles_dom_slots.sections[display_order_of_sec+1];
+          THIS.dom[following_sec].header.parentNode.parentNode.parentNode.insertBefore(
+            tr,
+            THIS.dom[following_sec].header.parentNode.parentNode);
+                              
+        } else {
+          THIS.dom[new_status].header.parentNode.parentNode.parentNode.appendChild(tr);                    
+        }
+        destV = THIS.dom[new_status].tile_divs;
+
+     }
      for(let i = newTileIdx; i < destV.length && tile_content != null;++i){
        let container = destV[i];
        let content = container.firstChild;
@@ -841,7 +915,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
 
     update_section_header : function(sec,visible){
       return;
-      let sec_div = THIS.dom[sec].header;
+      /*let sec_div = THIS.dom[sec].header;
       if (!visible) { sec_div.setAttribute("style","display:none;"); return}
       else sec_div.setAttribute("style","display:block;");
 
@@ -856,7 +930,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
       else if (sec == TILE_STATUS_WARN) 
        sec_div.setAttribute("class","alert alert-warning small");
       else
-       sec_div.setAttribute("class","alert alert-secondary small");
+       sec_div.setAttribute("class","alert alert-secondary small");*/
 
     },
 
@@ -922,8 +996,8 @@ let ceps_tiles_component = function (parent, data, style_info) {
       tdh.appendChild(
          sec_div
        );
-       //header_row.appendChild(tdh);
-       header_row.setAttribute("style","display:none;height:0px;");
+       header_row.appendChild(tdh);
+       header_row.setAttribute("style","height:0px;");
        table.appendChild(header_row);
        let num_of_rows = Math.ceil(tiles.length / colsPerRow)+1;
        let cur_tile_idx = 0;
@@ -986,6 +1060,7 @@ let ceps_tiles_component = function (parent, data, style_info) {
  
  
  THIS.build_dom();
+ if (info_box_info == null) return THIS;
 
  let info_box = rollaut_infobox(undefined,undefined,data);
  info_box.show();
