@@ -2,6 +2,7 @@
 
 .rollaut_info_tile_minimized {margin-left:12px;margin-top:8px;}
 .rollaut_info_tile_minimized:hover{ cursor:pointer; transform: translateY(-2px) translateX(-4px) scale(1.07);  }
+.rollaut_info_tile_minimized_deactive {margin-left:12px;margin-top:8px;}
 
 .rollaut_connection_loader {
   border: 4px solid #d61d1d;
