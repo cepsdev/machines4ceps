@@ -303,11 +303,17 @@ function utilsTranslateHealthToTileStatus(health){
  }
 
  function build_running_rollout_overview_dlg_store_info_timeline(body_div,status,cov,steps,store){
+  console.log(store);
   function get_time_info(step_idx){
     let outer = document.createElement("div");
     outer.setAttribute("style","color:rgba(100,100,100,100);");
     let inner = document.createElement("h6");
-    inner.appendChild(document.createTextNode("13:00:01"));
+    let t = "";
+    if (step_idx <= store.state){
+     let date = new Date(1000*(store.enter_times[step_idx]+store.up_time));
+     t = date.toLocaleTimeString();
+     inner.appendChild(document.createTextNode(t));
+    }
     outer.append(inner);
     return outer;
   };
@@ -315,7 +321,7 @@ function utilsTranslateHealthToTileStatus(health){
   let outer_div = document.createElement("div");
   let tbl = document.createElement("table");
   tbl.setAttribute("style","");
-  let current_state = 2;
+  let current_state = store.state;
 
   for(let i = 0; i != steps.length;++i){
     let tr = document.createElement("tr");
@@ -405,6 +411,7 @@ function utilsTranslateHealthToTileStatus(health){
  }
 
  function build_running_rollout_overview_dlg (id,idx,data,header,body,footer){
+  
    let cw = 300;
    let ch = 300;
    let radius = Math.floor(cw/2 * 0.45);
@@ -440,6 +447,7 @@ function utilsTranslateHealthToTileStatus(health){
    `;
    let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
    let id2idx = new Map;
+
    let stores = attrs.stores;
    let steps = attrs.steps;
 
@@ -474,15 +482,27 @@ function utilsTranslateHealthToTileStatus(health){
            v.push(steps[i].description);
          }
          return v;
-       }       
+       },
+       getEnterTime : function (idx,state){
+         return {secs_since_uptime:stores[idx]["entering_times"][state],msecs_since_uptime:0};         
+       },
+       getExitTime : function (idx,state) {
+         return {secs_since_uptime:stores[idx]["exiting_times"][state],msecs_since_uptime:0};
+       },
+       getUpTime : function(){
+         return data.attributes["start_time_unix_time"];
+       },
+       getEnterTimes          : function(idx) {return stores[idx]["entering_times"];},
+       getExitTimes           : function(idx) {return stores[idx]["exiting_times"];}
+
      },
      {},
      {}
    );
    tiles.tiles_widget.register_click_tile_handler(
      function (index,data){
-       build_running_rollout_overview_dlg_store_info(document.getElementById(
-         "running_rollout_overview_dlg_store_info"),
+       build_running_rollout_overview_dlg_store_info(
+         document.getElementById("running_rollout_overview_dlg_store_info"),
          tiles.tiles_widget.data.info.status[index],
          tiles.tiles_widget.data.info.cov[index],
          steps,
@@ -494,14 +514,15 @@ function utilsTranslateHealthToTileStatus(health){
      function () {
        let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
        //Update Tiles
-       let stores = attrs.stores;
-       for(let i = 0; i != stores.length;++i){
+       stores = attrs.stores;
+       for(let i = 0; i != stores.length;++i) {
         let tile_idx = id2idx.get(stores[i]["id"]);
         if (stores[i]["coverage"] != tiles.tiles_widget.data.info.cov[tile_idx]) 
          tiles.tiles_widget.set_coverage(tile_idx,stores[i]["coverage"]);
         let new_status = utilsTranslateHealthToTileStatus(stores[i]["health"]);
         if (new_status != tiles.tiles_widget.data.info.status[tile_idx])
          tiles.tiles_widget.set_status(tile_idx,new_status);
+         tiles.tiles_widget.set_state(tile_idx,stores[i]["current_state"]);
        }       
 
        //console.log(attrs);
@@ -802,29 +823,27 @@ function utilsTranslateHealthToTileStatus(health){
      enter_times       : {},
      exit_times        : {},
      tiles_widget      : null,
+     up_since          : dataModel.getUpTime(),
      info              : {
        status      : new Array(data_size),
        cov         : new Array(data_size),
        title       : new Array(data_size),
        state       : new Array(data_size), //a non negative integer
-       up_since    : undefined,
        state_labels : function (tile_idx){
          return THIS.stateLabels;
        },
        enter_time : function (tile_idx,state){
-        let states = THIS.tile2states[idx2sm[tile_idx]];
-        if (states == undefined) return undefined;
-        if (state >= states.length) return undefined;
-        let et = THIS.enter_times[states[state]];
-        return et;
+        return dataModel.getEnterTime(tile_idx,state);
        },
        exit_time : function (tile_idx,state){
-        let states = THIS.tile2states[idx2sm[tile_idx]];
-        if (states == undefined) return undefined;
-        if (state >= states.length) return undefined;
-        let et = THIS.exit_times[states[state]];
-        return et;
-       }       
+        return dataModel.getExitTime(tile_idx,state);
+       },       
+       enter_times : function (tile_idx){
+        return dataModel.getEnterTimes(tile_idx);
+       },
+       exit_times : function (tile_idx){
+        return dataModel.getExitTimes(tile_idx);
+       }
      },
      ordering    : new Array(data_size), // pos => tile index
      visibility  : new Array(data_size),
@@ -1090,7 +1109,8 @@ let TimeLineWidget = function (parent,
          THIS.translateHealthToTileStatus(attributes.health)
        );
        if (attributes.title != tiles.tiles_widget.data.info.title[entityIdx])
-        tiles.tiles_widget.set_title(entityIdx,new_data["name"]);         
+        tiles.tiles_widget.set_title(entityIdx,new_data["name"]);
+       tiles.tiles_widget.data.up_since = attributes.start_time_unix_time;   
    },
    deleteEntity: function(groupIndex,Index){
     THIS.groupedEntities[groupIndex].entities.splice(Index,1);
@@ -1197,7 +1217,12 @@ let TimeLineWidget = function (parent,
            getState2VisitedStates : function() { return {}; },
            getState2RootMapping   : function() { return {}; },
            getState2LabelMapping  : function() { return {}; },
-           getStateLabels         : function() { return []; }
+           getStateLabels         : function() { return []; },
+           getEnterTime           : function(idx,state) { return 0; },
+           getExitTime            : function(idx,state) { return 0; },
+           getUpTime              : function() {return null;},
+           getEnterTimes          : function(idx) {return [];},
+           getExitTimes           : function(idx) {return [];}
         }
        );
        g["tiles"]["tiles_widget"].register_click_tile_handler(

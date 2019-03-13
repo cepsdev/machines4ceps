@@ -96,6 +96,7 @@ let rollaut_infobox = function (parent,
       
        let outer = THIS.dom_cache.main.three_steps_tbl_outer;
        let current_state = THIS.data.info.state[THIS.tile_idx];
+       //console.log(current_state);
        let labels = THIS.data.info.state_labels(THIS.tile_idx);
        let steps = THIS.dom_cache.main.three_steps_steps;
        let left_side = THIS.dom_cache.main.three_steps_left_side;
@@ -130,6 +131,7 @@ let rollaut_infobox = function (parent,
           `${THIS.layout.get_three_steps_outer_div_base_css()}
           height:${THIS.layout.get_three_steps_outer_div_step_height_css()};overflow:hidden;border-top:1px solid;border-bottom:1px solid;font-weight: bold;`);     
 
+      
         if (THIS.data.up_since != null) {
           let enter_t = THIS.data.info.enter_time(THIS.tile_idx,current_state);
           let d1 = new Date(THIS.data.up_since*1000+enter_t.secs_since_uptime*1000+enter_t.msecs_since_uptime);
@@ -526,10 +528,13 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
         }
         THIS.mclick_handler(tile_idx,
           {
-            status: THIS.data.info.status[tile_idx],
-            state: THIS.data.info.state[tile_idx],
-            title: THIS.data.info.title[tile_idx],
-            cov  : THIS.data.info.cov[tile_idx]        
+            status      : THIS.data.info.status[tile_idx],
+            state       : THIS.data.info.state[tile_idx],
+            title       : THIS.data.info.title[tile_idx],
+            cov         : THIS.data.info.cov[tile_idx],
+            up_time     : THIS.data.up_since,
+            enter_times : THIS.data.info.enter_times(tile_idx),
+            exit_times  : THIS.data.info.exit_times(tile_idx)
           });
        }
       }
