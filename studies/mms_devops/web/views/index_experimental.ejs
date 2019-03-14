@@ -119,9 +119,9 @@
              <label for="search_statemachines"></label>
                <input type="text" 
                   class="form-control" 
-                  id="input_search_statemachines" 
-                  aria-describedby="search_statemachinesHelp" placeholder="Search Rollouts">
-                 <small id="search_statemachinesHelp" class="form-text text-muted"></small>
+                  id="input_search_timeline" 
+                  aria-describedby="input_search_timeline" placeholder="Search Rollouts">
+                 <small id="input_search_timeline" class="form-text text-muted"></small>
           </div>
               <div id="info_tiles" 
                 xxstyle="display:block;overflow:hidden;position:absolute;background-color: black;">
@@ -132,7 +132,7 @@
     </div>
   </main>
 
-<div class="modal fade" 
+<div class="modal" 
        id="dlg_rollout_details" 
        tabindex="-1" 
        role="dialog" 
@@ -166,6 +166,48 @@
 
 let ceps_core_channel;
 let timeLineWidget = null;
+
+$("#input_search_timeline").keyup(function(e){
+  let t = $("#input_search_timeline").val();
+  let vt = t.split(" ");
+  let v = [];
+  for(let i = 0; i < vt.length; ++i){
+    if (vt[i].length == 0 || vt[i] == " " ) continue;
+    if (vt[i].startsWith("\"")){
+      let tt = vt[i].substring(1);
+      if (tt.endsWith("\"")) 
+       tt = tt.substring(0,tt.length-1);
+
+      let s = tt;++i;
+      
+      for(;i<vt.length;++i){
+        if (vt[i].length == 0 || vt[i] == " " ) continue;
+        if (vt[i].endsWith("\"")){
+          s += " "+ vt[i].substr(0,vt[i].length-1);
+          break;
+        }
+        else s += " "+vt[i];
+      }
+      v.push(s);
+      continue;
+    }
+    v.push(vt[i]);
+  }
+  //console.log(v);
+  if (v.length == 0){
+    timeLineWidget.applyFilter( function() {return true;});
+  } else {
+    timeLineWidget.applyFilter(
+      function(tile_idx,data){
+        for(let i = 0; i != v.length;++i){
+          if (data.title[tile_idx].indexOf(v[i]) != -1) return true;
+        }
+        return false;
+      }
+    );
+  }
+});
+
 
 function extractAttributesFromStaccatoEntity(e){
      let r = {
@@ -848,6 +890,9 @@ function utilsTranslateHealthToTileStatus(health){
      },
      setActive:function(idx,b){
       THIS.tiles_widget.set_active(idx,b);
+     },
+     apply_filter:function(f){
+      THIS.tiles_widget.apply_filter(f);
      }
   };
 
@@ -955,15 +1000,6 @@ function update_states(msg,data,sm2idx,f){
     else data.info.state[tile] = i;
   }
 }
-</script>
-
-<script>
-
-
-</script>
-
-
-<script>
 
 let TimeLineWidget = function (parent, 
                                data, 
@@ -973,6 +1009,12 @@ let TimeLineWidget = function (parent,
    on_click : null,
    setActive(groupIndex,idx,b){
     THIS.groupedEntities[groupIndex].tiles.setActive(idx,b);
+   },
+   applyFilter(f){
+     for(let i = 0; i != THIS.groupedEntities.length;++i ){
+       if (THIS.groupedEntities[i].entities.length == 0) continue;
+       THIS.groupedEntities[i].tiles.apply_filter(f);
+     }
    },
    create   : function(){
     let entities_raw = data.getTopLevelEntities("rollout","false");
@@ -1024,6 +1066,7 @@ let TimeLineWidget = function (parent,
        health: null,
        title : e["name"]
      }
+     if (e.children == null) return r;
      for(let i = 0; i != e.children.length;++i){
         if (e.children[i]["class"] != "attribute") 
           continue;
@@ -1051,6 +1094,7 @@ let TimeLineWidget = function (parent,
    },
 
    mergeAttributes:function(e_new,e_orig){
+     if (e_new.children == null) return;
      for(let i = 0;i != e_new.children.length;++i){
        let a = e_new.children[i];       
        if (a["class"] == null || a["class"] != "attribute") continue;
@@ -1070,8 +1114,9 @@ let TimeLineWidget = function (parent,
      }
    },
 
-   updateEntity : function (groupIdx,entityIdx,new_data){
-      e_orig = THIS.groupedEntities[groupIdx].entities[entityIdx];
+   updateEntity : function (groupIdx, entityIdx, new_data) {
+      e_orig = THIS.groupedEntities[groupIdx]
+                   .entities[entityIdx];
       THIS.mergeAttributes(new_data,e_orig.raw);
       tiles = THIS.groupedEntities[groupIdx]["tiles"];
       let attributes = THIS.extractAttributes(new_data);
@@ -1082,17 +1127,29 @@ let TimeLineWidget = function (parent,
          entityIdx,
          THIS.translateHealthToTileStatus(attributes.health)
        );
-       if (attributes.title != tiles.tiles_widget.data.info.title[entityIdx])
+      if (attributes.title != tiles.tiles_widget.data.info.title[entityIdx])
         tiles.tiles_widget.set_title(entityIdx,new_data["name"]);
-       tiles.tiles_widget.data.up_since = attributes.start_time_unix_time;   
+       tiles.tiles_widget.data.up_since = attributes.start_time_unix_time;
+      if (attributes.processing_status != null)
+        THIS.setActive(groupIdx,entityIdx,true);
+      if(attributes.scheduled_time_unix_time != null)
+       e_orig.time = attributes.scheduled_time_unix_time;
    },
    deleteEntity: function(groupIndex,Index){
     THIS.groupedEntities[groupIndex].entities.splice(Index,1);
     THIS.groupedEntities[groupIndex]["tiles"].remove_entity(Index);
    },
+   computeGroupIndex : function(groups,e){
+     let e_time = e.time;
+     for(let grp = 0;grp + 1 < groups.length;++grp){
+       if (e_time < groups[grp+1].time) return grp;
+     }
+     return groups.length - 1;
+   },
    update : function(changed_entities){
      let g = 0;
      let j = 0;
+     let processed_ids = new Map;
      for(let i = 0; i != changed_entities.length;++i){
        let e = changed_entities[i];
        let e_orig = null;
@@ -1103,8 +1160,26 @@ let TimeLineWidget = function (parent,
        {
         for(j = 0; j != THIS.groupedEntities[g].entities.length;++j){
           if(THIS.groupedEntities[g].entities[j].id != e.id) continue;
-          if (e.deleted != "true")
+          if (e.deleted != "true"){
            THIS.updateEntity(g,j,e);
+           let grp_idx_after_update = 
+            THIS.computeGroupIndex(THIS.groupedEntities,THIS.groupedEntities[g].entities[j]);
+           if (grp_idx_after_update != g){
+             let entity = THIS.groupedEntities[g].entities[j];
+             let state = THIS.groupedEntities[g].tiles.tiles_widget.data.info.state[j];
+             let status = THIS.groupedEntities[g].tiles.tiles_widget.data.info.status[j];
+             let cov = THIS.groupedEntities[g].tiles.tiles_widget.data.info.cov[j];
+             let title = THIS.groupedEntities[g].tiles.tiles_widget.data.info.title[j];
+             let cov = THIS.groupedEntities[g].tiles.tiles_widget.data.info.cov[j];
+
+             //etc: TODO finish case of changed schedule
+
+             THIS.deleteEntity(g,j);
+             let indices = THIS.insertIntoGroupedEntities(THIS.groupedEntities,entity);
+            console.log(indices,entity);
+            //THIS.groupedEntities[grp_idx_after_update]["tiles"].insert_entity(indices.idx,e);
+           }
+          }
           else deleted = true;
           found = true;
           break;
@@ -1393,6 +1468,7 @@ let TimeLineWidget = function (parent,
             return;
           } else {
             //MERGE
+            if (msg.children.length == 0) return; //Nothing to do
             let changed_items = db_view.merge(msg.children[0].children);
             on_db_changed(db_view,changed_items);
           }
