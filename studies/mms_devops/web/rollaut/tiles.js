@@ -468,7 +468,8 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
       let outer = THIS.tiles_dom_cache[tile_idx];
       let backcol = "";
       if(TILE_STATUS_INACTIVE == THIS.data.info.status[tile_idx]){
-        backcol = "background-color:#6c757d38;";
+        //backcol = "background-color:#6c757d38;";
+        backcol = "background-color:#e8eaf6;";
       } else if(TILE_STATUS_OK == THIS.data.info.status[tile_idx]){
        backcol = "background-color:#007bff38;";
       } else if (TILE_STATUS_WARN == THIS.data.info.status[tile_idx]){
@@ -610,8 +611,15 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
        }
      }
     },
+    apply_filter : function(f){
+      for (let tile_idx = 0; tile_idx != THIS.data.visibility.length;++tile_idx){
+        THIS.data.visibility[tile_idx] = f(tile_idx,THIS.data.info);
+      }
+      THIS.build_dom();
+    },
     set_active:function(idx,b){
       let old_value = THIS.data.info.active[idx];
+      if (old_value == b) return;
       THIS.data.info.active[idx] = b;
       if (!b){
         THIS.dom_cache[idx].outer.setAttribute("style",`color: grey;`);
@@ -697,6 +705,8 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
     },
 
     remove_entity:function(tile_idx){
+      if (tile_idx >= THIS.data.size) return;
+      
       let status = THIS.data.info.status[tile_idx];
       let visibility = THIS.data.visibility[tile_idx];
       let order_idx = THIS.compute_index_of_entity_in_section(tile_idx,status);
@@ -704,16 +714,16 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
       THIS.data.info.status.splice(tile_idx,1);
       THIS.data.info.state.splice(tile_idx,1);
       THIS.data.info.title.splice(tile_idx,1);
-      
+      THIS.data.info.active.splice(tile_idx,1);
       THIS.data.info.cov.splice(order_idx,1);
-      
       THIS.data.ordering.splice(tile_idx,1);
       for(let i = 0; i!=THIS.data.ordering.length;++i){
         if (THIS.data.ordering[i] > tile_idx)
          --THIS.data.ordering[i];
       }
-
       THIS.data.visibility.splice(tile_idx,1);
+      --THIS.data.size;
+
       if (!visibility) return;
       THIS.dom[status].tile_divs[order_idx].removeChild(THIS.dom[status].tile_divs[order_idx].firstChild);
       for(let i = order_idx; i+1 != THIS.dom[status].tile_divs.length;++i) {
@@ -729,19 +739,22 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
     },
 
     insert_entity: function (tile_idx,elem_data){
+      
       THIS.data.info.status.splice(tile_idx,0,elem_data.status);
       THIS.data.info.state.splice(tile_idx,0,elem_data.state);
       THIS.data.info.title.splice(tile_idx,0,elem_data.title);
       THIS.data.info.cov.splice(tile_idx,0,elem_data.cov);
+      THIS.data.info.active.splice(tile_idx,0,true);
 
       THIS.data.ordering.splice(tile_idx,0,tile_idx);//TODO: Consider Order other than identity 
       let order_idx = THIS.compute_index_of_entity_in_section(tile_idx,elem_data.status);
       THIS.data.visibility[tile_idx] = THIS.compute_visibility_of_entity(tile_idx);
-
+   
       THIS.dom_cache.push({
         progress_bar: undefined, 
         percentage_information: undefined
       });
+      ++THIS.data.size;
 
       if (!THIS.data.visibility[tile_idx]) return;
 
@@ -955,6 +968,9 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
     },
 
     build_dom : function() {
+
+     for(;parent.firstChild != null;) parent.removeChild(parent.firstChild);
+     
      let colsPerRow = THIS.cols_per_row;
 
      let tw = THIS.tile_width;
@@ -1033,7 +1049,11 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
              overflow:hidden;`);
            let content = document.createElement("div");
            THIS.dom[sec].tile_divs.push(content);
-           if (cur_tile_idx < tiles.length) content.appendChild(THIS.build_tile_content(tile));
+           if (cur_tile_idx < tiles.length) {
+             if (THIS.data.visibility[tile]) {
+               content.appendChild(THIS.build_tile_content(tile));
+             }
+           }
            td.appendChild(content);
            row.appendChild(td);
            ++cur_tile_idx;
@@ -1041,45 +1061,13 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
          table.appendChild(row);
        }
      }
-
-     parent.appendChild(table);
-
-     return;
-
-     for(let row_number = 0; row_number != THIS.data.size;++row_number){
-      let row = document.createElement("tr");
-      
-      for(let k in THIS.tiles_dom_slots.columns){
-       let col = k;
-       k = THIS.tiles_dom_slots.columns[k];
-
-       tile_idx = THIS.data.get_tile_at_row(row_number,THIS.tiles_dom_slots.columns,k);
-       let td = document.createElement("td");
-       td.setAttribute("style",
-        `table-layout: fixed;width: ${THIS.tile_width}px;
-        height: ${THIS.get_tile_height_css(row_number,col)};overflow:hidden;`);
-       let content = document.createElement("div");
-       //content.setAttribute("style","padding:8px;");
-       
-       if (tile_idx != undefined){
-         if (THIS.data.info.status[tile_idx] == k){
-          content.appendChild(THIS.build_tile_content(tile_idx)/*document.createTextNode(THIS.data.tiles_title[row_number])*/);
-          THIS.tileidx2dom_slot[tile_idx] = row_number; 
-         }
-       }
-
-       td.appendChild(content);
-       THIS.tiles_dom_slots.slots[k][row_number] = td;
-       row.appendChild(td);
-      }
-      table.appendChild(row);
-     }
      parent.appendChild(table);
     }
  };
  
  
  THIS.build_dom();
+
  if (info_box_info == null) return THIS;
 
  let info_box = rollaut_infobox(undefined,undefined,data);
