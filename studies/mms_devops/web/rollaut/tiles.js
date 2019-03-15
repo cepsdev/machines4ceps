@@ -724,6 +724,9 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
       THIS.data.visibility.splice(tile_idx,1);
       --THIS.data.size;
 
+      THIS.dom_cache.splice(tile_idx,1);
+      THIS.tiles_dom_cache.splice(tile_idx,1);
+
       if (!visibility) return;
       THIS.dom[status].tile_divs[order_idx].removeChild(THIS.dom[status].tile_divs[order_idx].firstChild);
       for(let i = order_idx; i+1 != THIS.dom[status].tile_divs.length;++i) {
@@ -745,16 +748,24 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
       THIS.data.info.title.splice(tile_idx,0,elem_data.title);
       THIS.data.info.cov.splice(tile_idx,0,elem_data.cov);
       THIS.data.info.active.splice(tile_idx,0,true);
+      
+      for(let i = 0; i!=THIS.data.ordering.length;++i){
+        if (THIS.data.ordering[i] >= tile_idx)
+         ++THIS.data.ordering[i];
+      }
 
-      THIS.data.ordering.splice(tile_idx,0,tile_idx);//TODO: Consider Order other than identity 
+      THIS.data.ordering.splice(tile_idx,0,tile_idx);
+      THIS.data.visibility.splice(tile_idx,0,THIS.compute_visibility_of_entity(tile_idx));
       let order_idx = THIS.compute_index_of_entity_in_section(tile_idx,elem_data.status);
-      THIS.data.visibility[tile_idx] = THIS.compute_visibility_of_entity(tile_idx);
-   
-      THIS.dom_cache.push({
-        progress_bar: undefined, 
-        percentage_information: undefined
-      });
+
+        
       ++THIS.data.size;
+
+      //Adjust DOM Cache
+      THIS.dom_cache.splice(tile_idx,0,
+        { progress_bar: undefined, 
+        percentage_information: undefined});
+      THIS.tiles_dom_cache.splice(tile_idx,0,null);
 
       if (!THIS.data.visibility[tile_idx]) return;
 

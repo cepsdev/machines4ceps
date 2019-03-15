@@ -17,7 +17,7 @@
     <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
     <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">   
     <link href="rollaut/rollaut_basic.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">    
+     
 <style>
     @font-face {
    font-family: 'Material Icons';
@@ -86,7 +86,8 @@
 
 <body style="padding-top: 70px;">
     <nav class="navbar navbar-expand-md  navbar-dark bg-dark fixed-top">
-            <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
+            <a class="navbar-brand" href="http://www.rollaut.org">
+              <sup>Roll<sub><span class="text-primary" style="font-size:22px;">A</span></sub>ut</sup></a>
             <h3 style="color:white;vertical-align:center;text-align:center;"></h3>
 
         <div class="collapse navbar-collapse">
@@ -106,14 +107,14 @@
         </div>
     </div>
     <div class="row"  id="searchfield_row">
-        <div class="col-xs-1 col-sm-1"></div>
-        <div class="col-xs-10 col-sm-10" 
+        <div class="col-xs-1 col-sm-1 col-md-1"></div>
+        <div class="col-xs-10 col-sm-10 col-md-10" 
              style="border-left:solid 1px;
                     border-right:solid 1px;
                     min-height:3000px;"
 
         >
-          <h2 style="text-align: center;" >Rollouts</h2>
+          <h2 style="text-align: center;" >Scheduled Rollouts</h2>
 
           <div class="form-group" style="padding-left: 4px;padding-right: 4px;">
              <label for="search_statemachines"></label>
@@ -128,7 +129,7 @@
              </div>
              
         </div>
-        <div class="col-xs-1 col-sm-1"></div>        
+        <div class="col-xs-1 col-sm-1 col-md-1"></div>        
     </div>
   </main>
 
@@ -1007,6 +1008,7 @@ let TimeLineWidget = function (parent,
   let THIS = {
    groupedEntities : [],
    on_click : null,
+   dom_cache : null,
    setActive(groupIndex,idx,b){
     THIS.groupedEntities[groupIndex].tiles.setActive(idx,b);
    },
@@ -1031,29 +1033,34 @@ let TimeLineWidget = function (parent,
     let grouped_es = THIS.groupEntities(
       [
         {
-          time  : ereyesterday,
-          title : (new Date(ereyesterday*1000)).toDateString() + " and older",
-          entities: [],
+          visible  : false,
+          time     : ereyesterday,
+          title    : (new Date(ereyesterday*1000)).toDateString() + " and older",
+          entities : [],
         },
         {
-          time  : yesterday,
-          title : "Yesterday <small>("+(new Date(yesterday*1000)).toDateString()+")</small>",
-          entities: [],
+          visible  : true,
+          time     : yesterday,
+          title    : "Yesterday <small>("+(new Date(yesterday*1000)).toDateString()+")</small>",
+          entities : [],
         },
         {
-          time  : today,
-          title : "Today <small>("+(new Date(today*1000)).toDateString()+")</small>",
-          entities: []
+          visible  : true,
+          time     : today,
+          title    : "Today <small>("+(new Date(today*1000)).toDateString()+")</small>",
+          entities : []
         },
         {
-          time  : tomorrow,
-          title : "Tomorrow <small>("+(new Date(tomorrow*1000)).toDateString()+")</small>",
-          entities: []
+          visible  : true,
+          time     : tomorrow,
+          title    : "Tomorrow <small>("+(new Date(tomorrow*1000)).toDateString()+")</small>",
+          entities : []
         },
         {
-          time  : overmorrow,
-          title : (new Date(overmorrow*1000)).toDateString() + " and younger",
-          entities: []
+          visible  : false,
+          time     : overmorrow,
+          title    : (new Date(overmorrow*1000)).toDateString() + " and younger",
+          entities : []
         }          
       ],
       es
@@ -1160,25 +1167,29 @@ let TimeLineWidget = function (parent,
        {
         for(j = 0; j != THIS.groupedEntities[g].entities.length;++j){
           if(THIS.groupedEntities[g].entities[j].id != e.id) continue;
+          if (processed_ids[e.id]) continue;
           if (e.deleted != "true"){
            THIS.updateEntity(g,j,e);
            let grp_idx_after_update = 
             THIS.computeGroupIndex(THIS.groupedEntities,THIS.groupedEntities[g].entities[j]);
            if (grp_idx_after_update != g){
+            processed_ids[e.id] = true;
              let entity = THIS.groupedEntities[g].entities[j];
              let state = THIS.groupedEntities[g].tiles.tiles_widget.data.info.state[j];
              let status = THIS.groupedEntities[g].tiles.tiles_widget.data.info.status[j];
              let cov = THIS.groupedEntities[g].tiles.tiles_widget.data.info.cov[j];
              let title = THIS.groupedEntities[g].tiles.tiles_widget.data.info.title[j];
-             let cov = THIS.groupedEntities[g].tiles.tiles_widget.data.info.cov[j];
-
-             //etc: TODO finish case of changed schedule
-
+             let visibility = THIS.groupedEntities[g].tiles.tiles_widget.data.visibility[j];
              THIS.deleteEntity(g,j);
              let indices = THIS.insertIntoGroupedEntities(THIS.groupedEntities,entity);
-            console.log(indices,entity);
-            //THIS.groupedEntities[grp_idx_after_update]["tiles"].insert_entity(indices.idx,e);
-           }
+             let elem_data = {
+             state : 0,
+              status: status,
+              title : title,
+              cov   : cov
+             }
+             THIS.groupedEntities[indices.groupIndex]["tiles"].insert_entity(indices.idx,elem_data);             
+            }
           }
           else deleted = true;
           found = true;
@@ -1189,7 +1200,7 @@ let TimeLineWidget = function (parent,
        }
        if (found && deleted){
          THIS.deleteEntity(g,j);
-       } else if (!found && e["deleted"]!="true"){
+       } else if (!found && e["deleted"]!="true" && processed_ids[e.id] == null){
          //CASE: New Entity
          let v = THIS.extractEntities([e]);
          if (v.length == 0) continue;
@@ -1228,8 +1239,16 @@ let TimeLineWidget = function (parent,
      };
    },
    buildDom : function(){
+     THIS.dom_cache = [];
      let content = document.createElement("div");
      for(let i = 0; i != THIS.groupedEntities.length;++i){
+       let dom_rep;
+       THIS.dom_cache.push(
+        dom_rep = {
+           checkbox : null,
+           body     : null
+         }
+       );
        let current_grp_index = i;
        let g = THIS.groupedEntities[i];
        if (g.entities.length == 0) continue;
@@ -1237,9 +1256,28 @@ let TimeLineWidget = function (parent,
        let body = document.createElement("div");
        header.setAttribute("style",
        `border-bottom: 2px solid;margin:4px;padding:2px;`);
-       let hh = document.createElement("h4");
+       let hh = document.createElement("div");
        //let title = document.crete.createTextNode(g.title);
-       hh.innerHTML = g.title;//Child(title);
+       
+       hh.innerHTML = `<h4>${g.title}</h4>`;//Child(title);
+       
+       let checkbox = dom_rep.check_box = document.createElement("div");
+       checkbox.setAttribute(
+         "style",
+         `float:left;margin-top:5px;
+         `
+       );
+       checkbox.setAttribute("class","rollaut_timeline_checkbox");
+       if (g.visible){
+         checkbox.innerHTML = `<i class="material-icons md-30">check_box</i>`;
+       }
+       else {
+         body.setAttribute("style","display:none;");
+         checkbox.innerHTML = `<i class="material-icons md-18">check_box_outline_blank</i>`;
+       }
+
+
+       header.appendChild(checkbox);
        header.appendChild(hh);
        content.appendChild(header);
        content.appendChild(body);
@@ -1247,6 +1285,7 @@ let TimeLineWidget = function (parent,
        for(let j = 0; j != g.entities.length;++j){
          raw_data.push(g.entities[j].raw);
        }
+       dom_rep.body = body;
        g["tiles"] = create_tiles_deck(body, 
          /*Data Model*/{
            a : null,
@@ -1284,6 +1323,16 @@ let TimeLineWidget = function (parent,
           }
          }
        );
+       checkbox.addEventListener("click",function (ev){
+         g.visible = !g.visible;
+         if (g.visible){
+          body.setAttribute("style","display:block;");
+          checkbox.innerHTML = `<i class="material-icons md-30">check_box</i>`;
+         } else {
+          body.setAttribute("style","display:none;");
+          checkbox.innerHTML = `<i class="material-icons md-18">check_box_outline_blank</i>`;
+        }                 
+       });
      }
      parent.appendChild(content);
    },
