@@ -86,8 +86,9 @@
 
 <body style="padding-top: 70px;">
     <nav class="navbar navbar-expand-md  navbar-dark bg-dark fixed-top">
-            <a class="navbar-brand" href="http://www.rollaut.org">
-              <sup>Roll<sub><span class="text-primary" style="font-size:22px;">A</span></sub>ut</sup></a>
+            <a class="navbar-brand">
+              <!-- >sup>Roll<sub><span class="text-primary" style="font-size:22px;">A</span></sub>ut</sup-->
+            </a>
             <h3 style="color:white;vertical-align:center;text-align:center;"></h3>
 
         <div class="collapse navbar-collapse">
@@ -367,7 +368,6 @@ function utilsTranslateHealthToTileStatus(health){
       return "bg-success";      
    };
 
-
    for(;parent.firstChild != null;) parent.removeChild(parent.firstChild);
    let outer_div = document.createElement("div");
    outer_div.setAttribute("style",`width:400px;`);
@@ -376,7 +376,7 @@ function utilsTranslateHealthToTileStatus(health){
    header_div.setAttribute("style",`position:relative;left:0px;top:0px;width:100%;`);
    header_div.setAttribute("class",get_header_class());
    let header_sub_div_top = document.createElement("div");
-   header_sub_div_top.setAttribute("style","height:2em;");
+   header_sub_div_top.setAttribute("style","height:1em;");
    let header_sub_div_middle = document.createElement("div");
    header_sub_div_middle.setAttribute("style","color:#F8F8FF;padding-left:12px;");
    let header_sub_div_bottom = document.createElement("div");
@@ -397,7 +397,7 @@ function utilsTranslateHealthToTileStatus(health){
    header_sub_div_bottom.appendChild(h5_elem);
    outer_div.appendChild(header_div);
    let body_div = document.createElement("div");
-   body_div.setAttribute("style",`overflow:scroll;height:300px;`);
+   body_div.setAttribute("style",`overflow:scroll;height:220px;`);
    build_running_rollout_overview_dlg_store_info_timeline(body_div,status,cov,steps,store,tiles,index);
    outer_div.appendChild(body_div);
    let footer_div = document.createElement("div");
@@ -427,13 +427,14 @@ function utilsTranslateHealthToTileStatus(health){
    body.innerHTML =
    `
    <div style="text-align:center;align:center;" >
-    <div>
-    <div style="float:left;">
+    <div>    
+    <div style="margin:10px;float:left;">
       <canvas id="running_rollout_overview_dlg_canvas" width="${cw}px" height="${ch}px" style="background-color:white;">
      </canvas>
     </div>
-    <div id = "running_rollout_overview_dlg_store_info" style="float:right;">
-      
+    <div id = "running_rollout_overview_dlg_store_info" style="width:auto;margin:auto;float:right;">
+     <div style="width:100%;height:100%;text-align:center;color:rgba(140,140,140,150);">
+     <h4 style="margin-top:150px;">Click on a market for full details.</h4></div>
     </div>
     </div>
     
@@ -446,7 +447,7 @@ function utilsTranslateHealthToTileStatus(health){
        <small id="rollout_overview_dlg_search_statemachinesHelp" class="form-text text-muted"></small>
     </div>
 
-    <div style = "height: ${Math.floor(window.outerHeight*0.6)}px;overflow: scroll;">
+    <div style = "height: ${Math.floor(window.outerHeight*0.30)}px;overflow: scroll;">
      <div id="build_running_rollout_overview_dlg_details">
 
      </div>
@@ -519,8 +520,8 @@ function utilsTranslateHealthToTileStatus(health){
      }
    );
 
-   build_running_rollout_overview_dlg_update = setInterval(
-     function () {
+
+   let update_running_rollout_overview_func = function () {
        let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
        //Update Tiles
        stores = attrs.stores;
@@ -617,8 +618,9 @@ function utilsTranslateHealthToTileStatus(health){
        ctx.fillStyle = ctx.strokeStyle = "rgba(102, 204, 0,1.0)";
 
      
-       ctx.fillText(t, center_x + 1.4*radius*Math.cos( 2 * Math.PI * (1/2*cov_complete +cov_critical+cov_fatal) - 1/2*Math.PI), 
-                       center_y + 1.4*radius*Math.sin( 2* Math.PI * (1/2*cov_complete +cov_critical+cov_fatal) - 1/2*Math.PI));
+       ctx.fillText(t, 
+        -m.width + center_x + 1.7*radius*Math.cos( 2 * Math.PI * (1/2*cov_complete +cov_critical+cov_fatal) - 1/2*Math.PI), 
+        center_y + 1.7*radius*Math.sin( 2* Math.PI * (1/2*cov_complete +cov_critical+cov_fatal) - 1/2*Math.PI));
 
       }
       //Coverage: CRITICAL
@@ -668,7 +670,12 @@ function utilsTranslateHealthToTileStatus(health){
 
      }
 
-      },1000);
+    };
+
+   update_running_rollout_overview_func();
+
+   build_running_rollout_overview_dlg_update = setInterval(
+     update_running_rollout_overview_func,1000);
  }
 
  function build_scheduled_rollout_overview_dlg(id,groupIndex,idx,data,header,body,footer){
@@ -1288,19 +1295,14 @@ let TimeLineWidget = function (parent,
        dom_rep.body = body;
        g["tiles"] = create_tiles_deck(body, 
          /*Data Model*/{
-           a : null,
            getSize : function () {return raw_data.length;},
            getTitle : function (idx) {return raw_data[idx]["name"];},
            getState : function(idx) {return 0;},
            getStatus: function(idx) { 
-             if (this.a == null ) 
-              this.a = THIS.extractAttributes(raw_data[idx]);
-             return THIS.translateHealthToTileStatus(this.a.health);           
+             return THIS.translateHealthToTileStatus(THIS.extractAttributes(raw_data[idx]).health);           
            },
            getCoverage: function(idx) { 
-            if (this.a == null ) 
-              this.a = THIS.extractAttributes(raw_data[idx]);
-             return this.a.coverage;           
+             return THIS.extractAttributes(raw_data[idx]).coverage;           
            },
            getTile2StatesMapping  : function() { return {}; },
            getState2VisitedStates : function() { return {}; },
@@ -1506,6 +1508,7 @@ let TimeLineWidget = function (parent,
       },
       on_message: function (ev){
         let msg = JSON.parse(ev.data);
+        console.log(msg);
         if (msg.class == "diff"){
           let db_view = THIS.get_db_view(msg.watched_location);
           if (db_view == null){
