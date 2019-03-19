@@ -243,7 +243,7 @@ function utilsTranslateHealthToTileStatus(health){
     { what  : "command",
       name  : "write_attribute_value",
       params: [
-        { loc       : "rollouts/scheduled",
+        { loc       : "rollouts/scheduled/",
           entity_id : data.entity.raw.id.toString(),
           attribute : "scheduled_time_unix_time",
           value     : Math.round(Date.now()/1000) 
