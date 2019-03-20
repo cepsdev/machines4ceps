@@ -1195,6 +1195,8 @@ let TimeLineWidget = function (parent,
               title : title,
               cov   : cov
              }
+             //console.log("!!!!",THIS.groupedEntities[indices.groupIndex]);
+
              THIS.groupedEntities[indices.groupIndex]["tiles"].insert_entity(indices.idx,elem_data);             
             }
           }
@@ -1258,7 +1260,7 @@ let TimeLineWidget = function (parent,
        );
        let current_grp_index = i;
        let g = THIS.groupedEntities[i];
-       if (g.entities.length == 0) continue;
+       //if (g.entities.length == 0) continue;
        let header = document.createElement("div");
        let body = document.createElement("div");
        header.setAttribute("style",
@@ -1293,6 +1295,7 @@ let TimeLineWidget = function (parent,
          raw_data.push(g.entities[j].raw);
        }
        dom_rep.body = body;
+
        g["tiles"] = create_tiles_deck(body, 
          /*Data Model*/{
            getSize : function () {return raw_data.length;},
@@ -1508,7 +1511,7 @@ let TimeLineWidget = function (parent,
       },
       on_message: function (ev){
         let msg = JSON.parse(ev.data);
-        console.log(msg);
+        //console.log(msg);
         if (msg.class == "diff"){
           let db_view = THIS.get_db_view(msg.watched_location);
           if (db_view == null){

@@ -854,12 +854,14 @@ function fetch_rollout_plan(callback){
     });    
 }
 
+spawn("./staccato");
+
 console.log(chalk.bold.green(
 `Rollout Automation (RollAut) Service, powered by staccato and cepS (\"https://github.com/cepsdev/ceps.git\").`));
 
 function main(){
 
-    setInterval(() => {
+    /*setInterval(() => {
         log_debug(`main()`,`Check for DB changes`);
 
         fetch_rollout_plan(
@@ -874,7 +876,7 @@ function main(){
               }
           );
     },
-    DB_CHECK_INTERVAL_MS);
+    DB_CHECK_INTERVAL_MS);*/
 
     http_port = 3000;
     log_debug(`HTTP Server`,`listening at ${host_name}:${http_port}`);
@@ -972,6 +974,8 @@ fetch_rollout_plan(
         });
     }
 );
+
+
 
 
 
