@@ -86,8 +86,8 @@
 
 <body style="padding-top: 70px;">
     <nav class="navbar navbar-expand-md  navbar-dark bg-dark fixed-top">
-            <a class="navbar-brand">
-              <!-- >sup>Roll<sub><span class="text-primary" style="font-size:22px;">A</span></sub>ut</sup-->
+            <a class="navbar-brand" style="color:white;" href="http://www.rollaut.org">
+              <sup>Roll<sub><span class="text-primary" style="font-size:20px;">A</span></sub>ut</sup>
             </a>
             <h3 style="color:white;vertical-align:center;text-align:center;"></h3>
 
@@ -212,8 +212,10 @@ $("#input_search_timeline").keyup(function(e){
 
 
 function extractAttributesFromStaccatoEntity(e){
+ 
      let r = {
      }
+     if (e.id != undefined) r["id"] = e.id; 
      for(let i = 0; i != e.children.length;++i){
         if (e.children[i]["class"] != "attribute") 
           continue;
@@ -253,8 +255,27 @@ function utilsTranslateHealthToTileStatus(health){
   ));
  }
 
- 
- 
+ function staccato_append_attribute (loc,name,attr,v){
+  staccatoAPI.main_socket.send(JSON.stringify(
+    { what  : "command",
+      name  : "append_attribute",
+      params: [
+        { loc         : loc,
+          entity_name : name,
+          attribute   : attr,
+          value       : v 
+        }
+      ]
+    }
+  ));
+ }
+
+ function kill_store(store,rollout_id){
+   staccato_append_attribute("smcores/rollouts/scheduled/",rollout_id,"kill",store);
+ }
+
+
+
  let update_running_rollout_overview_dlg_store_info_timeline_timer = null;
  function build_running_rollout_overview_dlg_store_info_timeline(body_div,status,cov,steps,store,tiles,tile_index){
   
@@ -359,7 +380,7 @@ function utilsTranslateHealthToTileStatus(health){
   update_running_rollout_overview_dlg_store_info_timeline();
  }
 
- function build_running_rollout_overview_dlg_store_info(parent,status,cov,steps,store,tiles,index){
+ function build_running_rollout_overview_dlg_store_info(parent,status,cov,steps,store,tiles,index,rollout_id){
   function get_header_class() {
       if (status == undefined || status == undefined) return "bg-secondary";
       if (status == TILE_STATUS_OK) return "bg-primary";
@@ -405,7 +426,8 @@ function utilsTranslateHealthToTileStatus(health){
     <button style="float:left;margin:8px;" 
                     id="XXXX" 
                     type="button" 
-                    class="btn btn-outline-primary btn-sm" 
+                    class="btn btn-outline-primary btn-sm"
+                    onclick="kill_store('${store.title}','${rollout_id}')"
                     >Kill</button>
     <button style="float:right;margin:8px;" 
                     id="YYY" 
@@ -454,6 +476,7 @@ function utilsTranslateHealthToTileStatus(health){
     </div>
    `;
    let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
+   console.log(attrs);
    let id2idx = new Map;
 
    let stores = attrs.stores;
@@ -516,7 +539,8 @@ function utilsTranslateHealthToTileStatus(health){
          steps,
          data,
          tiles,
-         index);
+         index,
+         attrs.id);
      }
    );
 
@@ -1511,7 +1535,7 @@ let TimeLineWidget = function (parent,
       },
       on_message: function (ev){
         let msg = JSON.parse(ev.data);
-        //console.log(msg);
+        
         if (msg.class == "diff"){
           let db_view = THIS.get_db_view(msg.watched_location);
           if (db_view == null){
@@ -1519,6 +1543,7 @@ let TimeLineWidget = function (parent,
           }
           if (db_view.db == null){
             db_view.db = msg.children[0].children;
+            if (db_view.db == undefined) db_view.db = [];
             on_db_changed(db_view,null);
             return;
           } else {
