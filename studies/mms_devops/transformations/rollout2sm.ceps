@@ -51,7 +51,7 @@ static_for(e:root.rollout){                                   // For every rollo
             Killed;                                           // Rollouts can be aborted, e.g. by user interaction, we have to represent this too
 
             categories {
-                                                              // We distinguished a state representing a critical condition from a normal state by name only, i.e. by appending "_critical" to its name.
+                                                              // We distinguish a state representing a critical condition from a normal state by name only, i.e. by appending "_critical" to its name.
                                                               // The SM Engine allows us to make distinctions between states explicit, by categorizing them.
                                                               // The way this works is to list all categorizations in form of declarations.
                                                               // Example:
