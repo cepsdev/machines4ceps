@@ -275,7 +275,7 @@ function utilsTranslateHealthToTileStatus(health){
  }
 
  function restart_store(store,rollout_id){
-   staccato_append_attribute("smcores/rollouts/scheduled/",rollout_id,"kill",store);
+   staccato_append_attribute("smcores/rollouts/scheduled/",rollout_id,"restart",store);
  }
 
 
@@ -437,7 +437,7 @@ function utilsTranslateHealthToTileStatus(health){
                     id="YYY" 
                     type="button" 
                     class="btn btn-outline-primary btn-sm"
-                    onclick="restart_store('${store.title}','${rollout_id}' 
+                    onclick="restart_store('${store.title}','${rollout_id}')"
                     >Restart</button>                    
     </div>`;
    outer_div.appendChild(footer_div);

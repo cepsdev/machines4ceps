@@ -974,6 +974,10 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
       for(auto sm_to_be_restarted_ : current_event().payload_native_){
           auto sm_to_be_restarted = sm_to_be_restarted_.iv_;
           temp[sm_to_be_restarted] = 0;
+          for(auto i = execution_ctxt.state_to_children[sm_to_be_restarted]+1;
+              execution_ctxt.children[i];++i){
+              execution_ctxt.set_inf(i,executionloop_context_t::VISITED,false);
+          }
       }
       compute_enter_and_exit_states();
       memcpy(execution_ctxt.current_states.data(),temp.data(),cur_states_size*sizeof(executionloop_context_t::state_present_rep_t));

@@ -438,7 +438,7 @@ function watch_ceps_instance(info){
     return ceps_instances.length - 1;
 }
 
-setInterval( () => {
+if(0!=0) setInterval( () => {
     for(let i = 0; i != ceps_instances.length; ++i)
     {
         let info = ceps_instances[i];
