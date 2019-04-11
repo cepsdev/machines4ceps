@@ -1,3 +1,42 @@
+/*
+
+Copyright 2018,2019 Tomas Prerovsky <tomas.prerovsky@ceps.technology> 
+and the RollAut project authors. 
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+    * Neither the name of Google Inc. nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+
+
+
+
 const TILE_STATUS_OK    = 0;
 const TILE_STATUS_DONE  = 1;
 const TILE_STATUS_ERROR = 2;
@@ -1115,3 +1154,126 @@ let ceps_tiles_component = function (parent, data, style_info,info_box_info) {
 
  return THIS; 
 };
+
+
+
+
+
+function create_tiles_deck(
+  parentWidget,
+  dataModel,
+  style_info,
+  info_box) {
+
+let data_size = dataModel.getSize();
+let idx2sm = {};
+
+let THIS = {
+    cache             : {state_labels:{}},
+    stateLabels       : dataModel.getStateLabels(),
+    filters           : [],
+    permutations      : [],
+    size              : data_size,
+    sm2idx            : [],
+    enter_times       : {},
+    exit_times        : {},
+    tiles_widget      : null,
+    up_since          : dataModel.getUpTime(),
+    info              : {
+      active      : new Array(data_size),
+      status      : new Array(data_size),
+      cov         : new Array(data_size),
+      title       : new Array(data_size),
+      state       : new Array(data_size), //a non negative integer
+      state_labels : function (tile_idx){
+        return THIS.stateLabels;
+      },
+      enter_time : function (tile_idx,state){
+        return dataModel.getEnterTime(tile_idx,state);
+      },
+      exit_time : function (tile_idx,state){
+        return dataModel.getExitTime(tile_idx,state);
+      },       
+      enter_times : function (tile_idx){
+        return dataModel.getEnterTimes(tile_idx);
+      },
+      exit_times : function (tile_idx){
+        return dataModel.getExitTimes(tile_idx);
+      }
+    },
+    ordering    : new Array(data_size), // pos => tile index
+    visibility  : new Array(data_size),
+    compute_ordering  : function () {
+      for(let i = 0; i != THIS.ordering.length;++i)
+        THIS.ordering[i] = i;
+    },
+    compute_visibility  : function () {
+      for(let i = 0; i != THIS.visibility.length;++i)
+        THIS.visibility[i] = true;
+    },
+    get_tile_at_row : function(row,cols,col){
+      let r = -1;
+      for(let i = 0; i < THIS.ordering.length; ++i){
+        if (!THIS.visibility[THIS.ordering[i]]) continue;
+        if (THIS.info.status[[THIS.ordering[i]]] != col) continue;         
+        ++r;
+        if (r == row) return i;
+      }
+      return undefined;     
+    },
+    get_tiles_with_status: function (status_wanted){
+      let r = [];
+      for(let i = 0; i < THIS.ordering.length; ++i){
+        if (!THIS.visibility[THIS.ordering[i]]) continue;
+        if (THIS.info.status[[THIS.ordering[i]]] != status_wanted) continue;
+        r.push(THIS.ordering[i]);
+      }
+      return r;
+    },
+    insert_entity: function (tile_idx,elem_data){
+      THIS.tiles_widget.insert_entity(tile_idx,elem_data);
+    },
+    remove_entity:function(Index){
+      THIS.tiles_widget.remove_entity(Index);
+    },
+    setActive:function(idx,b){
+      THIS.tiles_widget.set_active(idx,b);
+    },
+    apply_filter:function(f){
+      THIS.tiles_widget.apply_filter(f);
+    }
+  };
+
+  let data = THIS;
+  for(let i = 0; i    != data_size; ++i){
+    data.info.state[i]  = dataModel.getState(i);
+    data.info.status[i] = dataModel.getStatus(i);
+    data.info.title[i]  = dataModel.getTitle(i);
+    data.info.cov[i]    = dataModel.getCoverage(i);
+    data.info.active[i] = true;
+  }
+  
+  data.tile2states = dataModel.getTile2StatesMapping();
+  data.tile2_visited_states = dataModel.getState2VisitedStates();
+  data.state2root = dataModel.getState2RootMapping();
+  data.state2label = dataModel.getState2LabelMapping();
+
+  THIS.compute_ordering();
+  THIS.compute_visibility();
+  if (style_info == null)
+    THIS.tiles_widget = ceps_tiles_component(
+      parentWidget,
+      data,
+      {tile_width:300}
+    );
+  else {
+    if (style_info["tile_width"] == null) style_info["tile_width"]=300;
+    THIS.tiles_widget = ceps_tiles_component(
+      parentWidget,
+      data,
+      style_info,
+      info_box
+    );
+}
+return THIS;
+}
