@@ -16,7 +16,8 @@
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
     <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">   
-    <link href="rollaut/rollaut_basic.css" rel="stylesheet">    
+    <link href="rollaut/rollaut_basic.css" rel="stylesheet">
+     
 <style>
     @font-face {
    font-family: 'Material Icons';
@@ -80,28 +81,23 @@
 .material-icons.orange600 { color: #FB8C00; }
 
   </style>
-    <title>MediaMarktSaturn - Rollouts</title>
+    <title>RollAut</title>
 </head>
-
-
-<script>
-    
-</script>
-
 
 <body style="padding-top: 70px;">
     <nav class="navbar navbar-expand-md  navbar-dark bg-dark fixed-top">
-            <a class="navbar-brand" href="#">MediaMarktSaturn<sup>Roll<sub><span class="text-primary" style="font-size:16px;">A</span></sub>ut</sup></a>
-            <h3 style="color:white;vertical-align:center;text-align:center;"><%=rollout.name%></h3>
+            <a class="navbar-brand" style="color:white;" href="http://www.rollaut.org">
+              <sup>Roll<sub><span class="text-primary" style="font-size:20px;">A</span></sub>ut</sup>
+            </a>
+            <h3 style="color:white;vertical-align:center;text-align:center;"></h3>
 
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                 
             </ul>
-            <button style="margin-right:10px;" id="version_info_dlg" type="button" class="btn btn-info" onclick='$("#dlg_version").modal("show");'>RollAut1K+<br/>Alpha</button>
-
             <span class="badge badge-danger" id="nav_info_connection">
-             <div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>
+             <div style="float:left;margin:2px;" class="rollaut_connection_loader"></div>
+             <span style="vertical-align: sub;">Not Connected</span>
             </span>
         </div>
     </nav>
@@ -112,108 +108,54 @@
         </div>
     </div>
     <div class="row"  id="searchfield_row">
-        <div class="col-xs-2 col-sm-2"></div>
-        <div class="col-xs-6 col-sm-8" >
-                        <div class="form-group" style="padding-left: 4px;padding-right: 4px;">
-                            <label for="search_statemachines"></label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="input_search_statemachines" 
-                                   aria-describedby="search_statemachinesHelp" placeholder="Search">
-                            <small id="search_statemachinesHelp" class="form-text text-muted"></small>
-                          </div>
-        </div>
-        <div class="col-xs-2 col-sm-2"></div>        
-    </div>
+        <div class="col-xs-1 col-sm-1 col-md-1"></div>
+        <div class="col-xs-10 col-sm-10 col-md-10" 
+             style="border-left:solid 1px;
+                    border-right:solid 1px;
+                    min-height:3000px;"
 
-    <div class="row" id="first_row">
-      <div class="col-xs-2 col-sm-2"></div>
-      <div class="col-xs-6 col-sm-6">
-        <div id="info_tiles" style="display:block;overflow:hidden;position:absolute;width:100%;">
+        >
+          <h2 style="text-align: center;" >Scheduled Rollouts</h2>
 
+          <div class="form-group" style="padding-left: 4px;padding-right: 4px;">
+             <label for="search_statemachines"></label>
+               <input type="text" 
+                  class="form-control" 
+                  id="input_search_timeline" 
+                  aria-describedby="input_search_timeline" placeholder="Search Rollouts">
+                 <small id="input_search_timeline" class="form-text text-muted"></small>
+          </div>
+              <div id="info_tiles" 
+                xxstyle="display:block;overflow:hidden;position:absolute;background-color: black;">
+             </div>
+             
         </div>
-      </div>
-      <div class="col-xs-2 col-sm-2">
-        
-      </div>
+        <div class="col-xs-1 col-sm-1 col-md-1"></div>        
     </div>
   </main>
 
+<div class="modal" 
+       id="dlg_rollout_details" 
+       tabindex="-1" 
+       role="dialog" 
+       aria-labelledby="dlg_rollout_details" 
+       style="z-index: 10000;">
 
-
-  <div class="modal fade" id="dlg_version" tabindex="-1" role="dialog" aria-labelledby="dlg_login" style="z-index: 10000;">
-      <div class="modal-dialog" role="document">
-          <div class="modal-content">
-              <div class="modal-header">
-                <h4 class="modal-title" id="dlg_select_a_signal_label">Version Info</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              </div>
-              <div id="dlg_select_a_signal_body" class="modal-body">
-                  <h6>Buildnumber: 201804121700</h6>
-                  <table>
-                  <tr><th>New Features</th></tr>
-                  <tr><td>
-                      <ul>
-                          <li>
-                              Support of large Workflows:
-                              <ul>
-                                  <li>
-                                      New State Machine Engine capable of running workflows with 1M+ transitions/states on a single i7 6700K Core.
-                                  </li>
-                                  <li>
-                                      WebSocket based event driven Monitoring Service API.  
-                                  </li>
-                                  <li>
-                                      Fast and responsive Monitoring - WebGUI
-                                  </li>
-                              </ul>
-                          </li>
-                          <li>
-                              Jenkins: New Plugin for control and monitoring of Jenkins instances. 
-                          </li>
-                          <li>
-                              Maria DB: New Plugin for monitoring of DB change 
-                          </li>
-                      </ul>
-                    </td>
-                  </tr>
-                  <tr><th>Known Bugs</th></tr>
-                  <tr><td>
-                          <ul>
-                              <li>
-                                  WebGUI:
-                                  <ul>
-                                      <li>
-                                          Rollout Overview Page: 'Overall Status' remains at 0% , 'Health' says 'Computing...'
-                                      </li>
-                                      <li>
-                                          Details Page: Click on tile doesn't do anything - should show complete status information.  
-                                      </li>
-                                      <li>
-                                          Details Page: All tiles of a category end up in a single column: float layout not implemented yet
-                                      </li>
-                                      <li>
-                                          Details Page: No possibility of Killing/Restarting individual markets
-                                      </li>
-                                  </ul>
-                              </li>
-                              <li>
-                                  Workflow: Criticality Information,e.g. timeouts, currently ignored.
-                              </li>
-                              <li>
-                                  Maria DB: New Plugin for monitoring of DB change 
-                              </li>
-                          </ul>
-                        </td>
-                      </tr>
-                  </table>
-              </div>
-              <div class="modal-footer">
-                  <button id="dlg_select_a_signal_btn_close" type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-              </div>
-          </div>
-      </div>
-  </div>
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title" id="dlg_select_a_signal_label">Rollout Details</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+            </div>
+            <div id="dlg_rollout_details_body" class="modal-body">
+                
+            </div>
+            <div class="modal-footer" id="dlg_rollout_details_footer">
+            </div>
+        </div>
+    </div>
+</div>
 
 
 </body>
@@ -221,319 +163,43 @@
 <script src="jquery/js/jquery.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="rollaut/tiles.js"></script>
-
-<script>
- function test_data(data_size){
-   let THIS = {
-     filters           : [],
-     permutations      : [],
-     size              : data_size,
-     up_since          : undefined,
-     info              : {
-       status      : new Array(data_size),
-       cov         : new Array(data_size),
-       title       : new Array(data_size),
-       state       : new Array(data_size), //a non negative integer
-       
-       state_labels : function (tile_idx){
-         return ["State 1","State 2","State 3","State 4","State 5","State 6","State 7"];
-       },
-       state_reached_at : function (tile_idx){
-         return [undefined,undefined,undefined,undefined,undefined,undefined,undefined];
-       }       
-     },
-     ordering    : new Array(data_size), // pos => tile index
-     visibility  : new Array(data_size),
-     compute_ordering  : function () {
-      for(let i = 0; i != THIS.ordering.length;++i)
-       THIS.ordering[i] = i;
-     },
-     compute_visibility  : function () {
-      for(let i = 0; i != THIS.visibility.length;++i)
-       THIS.visibility[i] = true;
-     },
-     get_tile_at_row : function(row,cols,col){
-       let r = -1;
-       for(let i = 0; i < THIS.ordering.length; ++i){
-         if (!THIS.visibility[THIS.ordering[i]]) continue;
-         if (THIS.info.status[[THIS.ordering[i]]] != col) continue;         
-         ++r;
-         if (r == row) return i;
-       }
-       return undefined;     
-     }
-  };
-  let data = THIS;
-  for(let i = 0; i != data_size; ++i){
-   data.info.state[i] = Math.floor(Math.random()*data.info.state_labels(i).length);
-   data.info.status[i] = [TILE_STATUS_OK,TILE_STATUS_ERROR,TILE_STATUS_WARN][Math.floor(Math.random() * 3)];
-   data.info.title[i]  = `market ${i+1}`;
-   data.info.cov[i]    = Math.random();
-   if (data.info.cov[i] >= 0.75){
-    data.info.cov[i] = 1.0;
-    data.info.status[i] = TILE_STATUS_DONE;
-   }
-  }
-  THIS.compute_ordering();
-  THIS.compute_visibility();
-
-  return data;
- }
- 
-</script>
-
-<script>
-  let cepS_API = function (url){
-    THIS = {
-      main_socket : undefined,
-      connected   : false,
-      on_connect_handler : [],
-      on_close_handler   : [],
-      unregister_handler   : function (what,f){
-        let v = undefined;
-        if ("open" == what) v = THIS.on_connect_handler;
-        else if ("close" == what) v = THIS.on_close_handler;
-        for(let i = 0; i != v.length;++i) if (v[i] == f) {v[i]=undefined;break;}
-      },
-      register_handler   : function (what,f){
-        let v = undefined;
-        if ("open" == what) v = THIS.on_connect_handler;
-        else if ("close" == what) v = THIS.on_close_handler;
-        let slot = -1;
-        if (v.length){
-          for(let i = 0; i != v.length;++i) if (v[i] == undefined) {slot=i;break;}
-        }
-        if (slot != -1) v[slot] = f;
-        else v.push(f);
-      },
-      pending_subscribers : { }, //topic -> list of handlers
-      topic_subscribers   : { }, //channel -> list of handlers
-      subscribe   : function(topic,f) {
-        if (f == undefined) return;
-        if(THIS.pending_subscribers[topic] == undefined) THIS.pending_subscribers[topic] = [f];
-        else  THIS.pending_subscribers[topic].push(f);
-        THIS.main_socket.send(`SUBSCRIBE ${topic}`);      
-      },
-      connect     : function(){
-            THIS.connected = false;
-            THIS.main_socket = new WebSocket("ws://"+url);
-            THIS.main_socket.addEventListener("open", THIS.on_ws_initial_connect);
-            THIS.main_socket.addEventListener("close", THIS.on_ws_close);
-            THIS.main_socket.addEventListener("error", THIS.on_ws_error);
-            THIS.main_socket.addEventListener("message",THIS.on_message);
-      },
-      on_ws_initial_connect: function (ev) {
-            THIS.connected = true;
-            for(let i = 0; i!=THIS.on_connect_handler.length;++i)
-             if (THIS.on_connect_handler[i]!=undefined) THIS.on_connect_handler[i](THIS,THIS.on_connect_handler[i]);
-      },
-      on_ws_close: function (ev) {
-            let connection_status = THIS.connected;
-            THIS.connected = false;
-            for(let i = 0; i!=THIS.on_close_handler.length;++i)
-             if (THIS.on_close_handler[i]!=undefined) THIS.on_close_handler[i](THIS,connection_status,THIS.on_connect_handler[i]);
-      },
-      on_ws_error: function (ev) {
-            
-      },
-      on_message: function (ev){
-        let msg = JSON.parse(ev.data);
-        //console.log(msg);
-        if (msg.topic != undefined && msg.channel != undefined){
-          let v = THIS.pending_subscribers[msg.topic];
-          if (v == undefined || v.length == 0) return;
-          THIS.topic_subscribers[msg.channel] = v[0];
-          v[0](msg);v.shift();
-          return;
-        } else {
-          let f = THIS.topic_subscribers[msg.channel];
-          if (f == undefined) return;
-          f(msg);
-        }
-      }
-    };
-    return THIS;
-  }
-</script>
-
-<script>
- let tiles = undefined;
-
- function create_tiles_deck(msg,sm2idx){
-  let data_size = msg.toplevel_sms.length;
-  let idx2sm = {};
-  let THIS = {
-     cache             : {state_labels:{}},
-     filters           : [],
-     permutations      : [],
-     size              : data_size,
-     sm2idx            : sm2idx,
-     enter_times       : {},
-     exit_times        : {},
-     info              : {
-       status      : new Array(data_size),
-       cov         : new Array(data_size),
-       title       : new Array(data_size),
-       state       : new Array(data_size), //a non negative integer
-       up_since    : undefined,
-       state_labels : function (tile_idx){
-         let v = THIS.cache.state_labels[tile_idx];
-         if (v == undefined) { THIS.cache.state_labels[tile_idx] = []; v = THIS.cache.state_labels[tile_idx]; }
-         else return v;
-         let vv = [];
-         let states = THIS.tile2states[idx2sm[tile_idx]];
-         if (states == undefined) return [];
-         for(let i = 0 ; i < states.length;++i){
-          vv.push(states[i]);
-         }
-         for(let i = 0 ; i < vv.length;++i){
-           let l = THIS.state2label[vv[i]];
-           if (l == undefined) continue;
-           v.push(l);
-         }
-         //console.log(v);
-         return v;
-       },
-       enter_time : function (tile_idx,state){
-        let states = THIS.tile2states[idx2sm[tile_idx]];
-        if (states == undefined) return undefined;
-        if (state >= states.length) return undefined;
-        let et = THIS.enter_times[states[state]];
-        return et;
-       },
-       exit_time : function (tile_idx,state){
-        let states = THIS.tile2states[idx2sm[tile_idx]];
-        if (states == undefined) return undefined;
-        if (state >= states.length) return undefined;
-        let et = THIS.exit_times[states[state]];
-        return et;
-       }       
-     },
-     ordering    : new Array(data_size), // pos => tile index
-     visibility  : new Array(data_size),
-     compute_ordering  : function () {
-      for(let i = 0; i != THIS.ordering.length;++i)
-       THIS.ordering[i] = i;
-     },
-     compute_visibility  : function () {
-      for(let i = 0; i != THIS.visibility.length;++i)
-       THIS.visibility[i] = true;
-     },
-     get_tile_at_row : function(row,cols,col){
-       let r = -1;
-       for(let i = 0; i < THIS.ordering.length; ++i){
-         if (!THIS.visibility[THIS.ordering[i]]) continue;
-         if (THIS.info.status[[THIS.ordering[i]]] != col) continue;         
-         ++r;
-         if (r == row) return i;
-       }
-       return undefined;     
-     }
-  };
-  for (let k in sm2idx){
-    idx2sm[sm2idx[k]] = k;
-  }
-  let data = THIS;
-  for(let i = 0; i != data_size; ++i){
-   data.info.state[i] = 0;
-   data.info.status[i] = TILE_STATUS_OK;
-   data.info.title[i]  = msg.toplevel_sms_labels[i];
-   data.info.cov[i]    = msg.toplevel_sms_transition_coverage[i];
-  }
-  data.tile2states = {};
-  data.tile2_visited_states = {};
-  data.state2root = {};
-  data.state2label = {};
-  for(let i = 0; i < msg.labeled_states.length;++i){
-    let label = msg.labeled_states[i];
-    for(++i;i < msg.labeled_states.length;++i){
-      if (typeof msg.labeled_states[i] === "string") break;
-      data.state2label[msg.labeled_states[i]] = label;
-    }
-    if(i < msg.labeled_states.length) --i;
-  }
-  for(let i = 0; i != msg.root2childstates.length;++i){
-   let root = msg.root2childstates[i];
-   data.tile2_visited_states[root] = [];
-   data.state2root[root] = root;
-   let v = [];
-   for(++i; i != msg.root2childstates.length;++i){
-     if (msg.root2childstates[i]==0) break;
-     data.state2root[msg.root2childstates[i]] = root;
-     if(data.state2label[msg.root2childstates[i]] == undefined) continue;
-     v.push(msg.root2childstates[i]);     
-   }
-   data.tile2states[root] = v;
-  }
-  if (msg.exec_context_start_utc != undefined){
-    data.up_since = msg.exec_context_start_utc;
-  }
-  update_states(msg,data,sm2idx);
-  update_timings(msg,data,sm2idx);
-
-  THIS.compute_ordering();
-  THIS.compute_visibility();
-  //console.log(data);
-  let old_component = document.getElementById("info_tiles").firstChild;
-  if (old_component) document.getElementById("info_tiles").removeChild(old_component);
-  tiles = ceps_tiles_component(document.getElementById("info_tiles"),data);
-}
-
-function update_timings(msg,data,sm2idx,f){
-  function read_timings(v,o){
-    for(let i = 0; i != v.length && i + 3 < v.length;++i){
-     let state = v[i];
-     let secs_since_uptime = v[i+1];
-     let msecs_since_uptime = v[i+2];
-     let microsecs_since_uptime = v[i+3];
-     o[state] = {secs_since_uptime:secs_since_uptime,msecs_since_uptime:msecs_since_uptime,microsecs_since_uptime:microsecs_since_uptime};
-     i += 3;
-    }
-  };
-  read_timings(msg.entering_times,data.enter_times);
-  read_timings(msg.exiting_times,data.exit_times);  
-}
-
-function update_states(msg,data,sm2idx,f){
-  for(let i = 0; i < msg.covered_states.length;++i){
-    if (data.state2root[msg.covered_states[i]] == undefined) {
-      continue;
-    }
-    let v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]];
-    if (v == undefined) {v = data.tile2_visited_states[data.state2root[msg.covered_states[i]]] = [];}
-    v.push(msg.covered_states[i]);
-  }
-  for (let root in data.tile2states){
-    let tile = sm2idx[root];
-    let states = data.tile2states[root];
-    let i = 0;
-    let covered = data.tile2_visited_states[root];
-    for(; i != states.length;++i){
-      let found = false;
-      for(let j = 0;j != covered.length;++j ){
-        if (states[i] == covered[j]){
-          found = true;
-          break;
-        }
-      }
-      if(!found) break;
-    }
-    if (i > 0) --i;
-    if (f != undefined) f(tile,i);
-    else data.info.state[tile] = i;
-  }
-}
-</script>
-
+<script src="rollaut/search_utils.js"></script>
+<script src="rollaut/utils.js"></script>
+<script src="rollaut/overview_dialog.js"></script>
+<script src="rollaut/timeline_widget.js"></script>
+<script src="rollaut/staccato.js"></script>
 
 <script>
 
 let ceps_core_channel;
- 
- window.onload = () => {   
+let timeLineWidget = null;
+let staccatoAPI = null;
 
-  ceps_core_channel = cepS_API(/*window.location.hostname+":11001"*/window.location.hostname+":<%=ceps_api_port%>");
-  ceps_core_channel.register_handler("open",
+rollaut_search_utils_connect_search_box("input_search_timeline", () => {return timeLineWidget;});
+
+ window.onload = () => {
+
+ staccatoAPI = data_channel = 
+ RollAutStaccatoAPI(window.location.hostname+":3333",
+  function (dbView,changed_items){
+    if (changed_items == null){
+      let container = document.getElementById("info_tiles");
+      for(;container.hasChildNodes();)container.removeChild(container.firstChild);
+      timeLineWidget = TimeLineWidget(container,dbView);
+      timeLineWidget.on_click = function (index,data,groupIndex){
+        build_rollout_overview_dlg("dlg_rollout_details",groupIndex,index,data);
+        setTimeout( function () {$("#dlg_rollout_details").modal();},200);
+      };
+    } else {
+      //Update
+      timeLineWidget.update(changed_items);      
+    }
+  }
+  );
+ data_channel.connect();
+ data_channel.subscribe("rollouts/scheduled");
+
+ data_channel.register_handler("open",
     (channel) =>{
       let connection_info = document.getElementById("nav_info_connection");
       if(connection_info == undefined) return;
@@ -542,77 +208,14 @@ let ceps_core_channel;
         `<span>Connected</span>`
       ;
     }
-  );
+ );
 
-  ceps_core_channel.register_handler("open",
-    (channel,handler) => {
-      let map_tile_status2cat_idx=undefined;
-      let sm2idx = {};
-      let connection_info = document.getElementById("nav_info_connection");
-      channel.subscribe("COVERAGE", 
-       (msg)=>{
-        function update_status(msg){
-          let v = msg.category_changes;
-          if (v != undefined)
-           for(let i = 0; i != v.length;++i){
-             let tile_idx = sm2idx[v[i]];
-             let cat_idx = v[i+1];
-             if (cat_idx == 0) tiles.set_status(tile_idx,TILE_STATUS_OK);
-             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_ERROR]) tiles.set_status(tile_idx,TILE_STATUS_ERROR);
-             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_WARN]) tiles.set_status(tile_idx,TILE_STATUS_WARN);
-             else if (cat_idx & map_tile_status2cat_idx[TILE_STATUS_DONE]) tiles.set_status(tile_idx,TILE_STATUS_DONE);
-             ++i;
-           }
-        }
-        //console.log(msg);
-         if (msg.what != undefined && msg.what == "init"){
-          //console.log(msg);
-          if(msg.category_mapping!=undefined){
-            map_tile_status2cat_idx = {};
-            for(let i = 0; i != msg.category_mapping.length; ++i){
-              let cat_name = msg.category_mapping[i];
-              let idx = 1 << msg.category_mapping[i+1];
-              if (cat_name == "FailState") map_tile_status2cat_idx[TILE_STATUS_ERROR] = idx ;
-              else if (cat_name == "WarnState") map_tile_status2cat_idx[TILE_STATUS_WARN] = idx;
-              else if (cat_name == "DoneState") map_tile_status2cat_idx[TILE_STATUS_DONE] = idx;
-              ++i;
-            }
-          }
-          //console.log(msg.category_mapping,map_cat_idx2_tile_status);          
-          if (connection_info != undefined) setTimeout( () => {
-            connection_info.setAttribute("class","badge badge-success");
-            connection_info.innerHTML =
-            `<span>Ok<br/>
-             Workflow has <b>${msg.total_of_states}</b> states<br/>
-             and <b>${msg.total_of_transitions}</b> transitions</span>`;
-          },2000);
-          for(let i = 0; i != msg.toplevel_sms.length;++i){
-            sm2idx[msg.toplevel_sms[i]] = i;
-          }
-          create_tiles_deck(msg,sm2idx);
-          update_status(msg);
-         } else if (msg.what != undefined && msg.what == "update"){
-          for(let i = 0; i != msg.toplevel_sms.length;++i){
-            tiles.set_coverage(sm2idx[msg.toplevel_sms[i]],msg.toplevel_sms_transition_coverage[i]);
-          }
-          
-          update_timings(msg,tiles.data,sm2idx);
-          update_states(msg,tiles.data,sm2idx,tiles.set_state);
-          update_status(msg);
-         }        
-       }
-      );      
-      if(connection_info == undefined) return;
-      connection_info.setAttribute("class","badge badge-info");
-      connection_info.innerHTML =
-        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Fetching Data</span>`
-      ;          
-    }
-  );
-  
-  ceps_core_channel.register_handler("close",
+ data_channel.register_handler("close",
     (channel,connection_status) =>{
-      setTimeout(()=>{ceps_core_channel.connect();},1000);
+      setTimeout(()=>{
+        data_channel.connect();
+        data_channel.subscribe("rollouts/scheduled",true);
+      },1000);
       if (!connection_status) return;
       let connection_info = document.getElementById("nav_info_connection");
       if(connection_info == undefined) return;
@@ -622,11 +225,6 @@ let ceps_core_channel;
       ;          
     }
   );
-
-  ceps_core_channel.connect();
-  return;
-
-
  }; 
 
 </script>

@@ -15,9 +15,6 @@ met:
       copyright notice, this list of conditions and the following
       disclaimer in the documentation and/or other materials provided
       with the distribution.
-    * Neither the name of Google Inc. nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -111,11 +108,6 @@ let TimeLineWidget = function (parent,
           continue;
         r[e.children[i]["name"]] = e.children[i]["value"];
 
-        /*  
-        if (e.children[i]["name"]=="coverage" )
-          r.cov = e.children[i]["value"];
-        else if (e.children[i]["name"]=="health" )
-          r.health = e.children[i]["value"];*/
       }
      return r;
    },
@@ -137,7 +129,6 @@ let TimeLineWidget = function (parent,
      for(let i = 0;i != e_new.children.length;++i){
        let a = e_new.children[i];       
        if (a["class"] == null || a["class"] != "attribute") continue;
-       //try to find attribute in e_orig
        let found = false;
        for(let j = 0; j != e_orig.children.length;++j){
          let ao = e_orig.children[j];
@@ -220,8 +211,6 @@ let TimeLineWidget = function (parent,
               title : title,
               cov   : cov
              }
-             //console.log("!!!!",THIS.groupedEntities[indices.groupIndex]);
-
              THIS.groupedEntities[indices.groupIndex]["tiles"].insert_entity(indices.idx,elem_data);             
             }
           }
@@ -242,8 +231,6 @@ let TimeLineWidget = function (parent,
          let indices = THIS.insertIntoGroupedEntities(THIS.groupedEntities,e);
          let attrs = THIS.extractAttributes(e.raw);
          let tile_status = THIS.translateHealthToTileStatus(attrs.health);
-         //let cov = 0.0;
-         //if (attrs.cov != null) cov = attrs.cov;
          let elem_data = {
              state : 0,
              status:tile_status,
@@ -285,13 +272,11 @@ let TimeLineWidget = function (parent,
        );
        let current_grp_index = i;
        let g = THIS.groupedEntities[i];
-       //if (g.entities.length == 0) continue;
        let header = document.createElement("div");
        let body = document.createElement("div");
        header.setAttribute("style",
        `border-bottom: 2px solid;margin:4px;padding:2px;`);
        let hh = document.createElement("div");
-       //let title = document.crete.createTextNode(g.title);
        
        hh.innerHTML = `<h4>${g.title}</h4>`;//Child(title);
        

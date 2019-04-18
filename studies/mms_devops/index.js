@@ -237,7 +237,15 @@ app.get("/rollout_status", function(req, res) {
 });
 
 app.get("/", function(req, res) {
-    res.render("index_experimental",{ 
+    let rollout_id = req.query.rollout;
+    if (rollout_id != undefined){
+        res.render("rollout_details",{ 
+            server_name  : host_name,
+            command_port : command_port,
+            rollout      : rollout_id  }
+        );
+    }
+    else res.render("index",{ 
         server_name : host_name,
         command_port : command_port  }
     );
@@ -856,28 +864,7 @@ function fetch_rollout_plan(callback){
 
 spawn("./staccato");
 
-console.log(chalk.bold.green(
-`Rollout Automation (RollAut) Service, powered by staccato and cepS (\"https://github.com/cepsdev/ceps.git\").`));
-
 function main(){
-
-    /*setInterval(() => {
-        log_debug(`main()`,`Check for DB changes`);
-
-        fetch_rollout_plan(
-            function(){
-                try{
-                  fetch_planned_rollouts(undefined,(err)=>{
-                      
-                  });
-                } catch(err){
-                    log_err("fetch_rollout_plan",err.stack);
-                }
-              }
-          );
-    },
-    DB_CHECK_INTERVAL_MS);*/
-
     http_port = 3000;
     log_debug(`HTTP Server`,`listening at ${host_name}:${http_port}`);
     http.createServer(app).listen(http_port);

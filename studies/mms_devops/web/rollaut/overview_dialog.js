@@ -15,9 +15,6 @@ met:
       copyright notice, this list of conditions and the following
       disclaimer in the documentation and/or other materials provided
       with the distribution.
-    * Neither the name of Google Inc. nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -216,11 +213,13 @@ function kill_store(store,rollout_id){
    let ch = 300;
    let radius = Math.floor(cw/2 * 0.45);
    let lw1 = 40;
+   let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
   
    body.innerHTML =
    `
+   <a href="?rollout=${attrs.id}" target="_blank">Open in Tab</a>
    <div style="text-align:center;align:center;" >
-    <div>    
+   <div>
     <div style="margin:10px;float:left;">
       <canvas id="running_rollout_overview_dlg_canvas" width="${cw}px" height="${ch}px" style="background-color:white;">
      </canvas>
@@ -246,7 +245,6 @@ function kill_store(store,rollout_id){
      </div>
     </div>
    `;
-   let attrs = extractAttributesFromStaccatoEntity(data.entity.raw);
    console.log(attrs);
    let id2idx = new Map;
 
