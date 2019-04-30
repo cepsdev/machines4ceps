@@ -1,0 +1,312 @@
+﻿<!DOCTYPE html>
+<html lang=en>
+<!-- 
+    
+    Cool effects
+
+    https://blog.trackduck.com/2015/06/10/15-impressive-pop-animation-effects-codepen/
+    
+    
+    -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="(c) ceps technologies, all rights reserved">
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet">   
+    <link href="rollaut/rollaut_basic.css" rel="stylesheet">
+     
+<style>
+    @font-face {
+   font-family: 'Material Icons';
+   font-style: normal;
+   font-weight: 400;
+   src: url(iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
+   src: local('Material Icons'),
+        local('MaterialIcons-Regular'),
+        url(iconfont/MaterialIcons-Regular.woff2) format('woff2'),
+        url(iconfont/MaterialIcons-Regular.woff) format('woff'),
+        url(iconfont/MaterialIcons-Regular.ttf) format('truetype');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+        /* Rules for sizing the icon. */
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+
+/* Rules for using icons as black on a light background. */
+.material-icons.md-dark { color: rgba(0, 0, 0, 0.54); }
+.material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }
+
+/* Rules for using icons as white on a dark background. */
+.material-icons.md-light { color: rgba(255, 255, 255, 1); }
+.material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
+
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+.material-icons.md-dark { color: rgba(0, 0, 0, 0.54); }
+.material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }
+
+.material-icons.md-light { color: rgba(255, 255, 255, 1); }
+.material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
+.material-icons.orange600 { color: #FB8C00; }
+
+  </style>
+    <title>RollAut</title>
+</head>
+
+<body style="padding-top: 70px;">
+    <nav class="navbar navbar-expand-md  navbar-dark bg-dark fixed-top">
+            <a class="navbar-brand" style="color:white;" href="http://www.rollaut.org">
+              <sup>Roll<sub><span class="text-primary" style="font-size:20px;">A</span></sub>ut</sup>
+            </a>
+            <h3 style="color:white;vertical-align:center;text-align:center;"></h3>
+
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                
+            </ul>
+            <span class="badge badge-danger" id="nav_info_connection">
+             <div style="float:left;margin:2px;" class="rollaut_connection_loader"></div>
+             <span style="vertical-align: sub;">Not Connected</span>
+            </span>
+        </div>
+   </nav>
+<main role="main" class="container">
+</main>
+
+<div style="width:100%;">
+<h2 style="text-align: center;" >Team Planner</h2>
+<div id="team_lanes" style="margin:auto;border: 3px solid black;width:70%;overflow:hidden;"></div>
+</div>
+
+<div class="modal" 
+       id="dlg_rollout_details" 
+       tabindex="-1" 
+       role="dialog" 
+       aria-labelledby="dlg_rollout_details" 
+       style="z-index: 10000;">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title" id="dlg_select_a_signal_label">Rollout Details</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+            </div>
+            <div id="dlg_rollout_details_body" class="modal-body">
+                
+            </div>
+            <div class="modal-footer" id="dlg_rollout_details_footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+
+<script src="jquery/js/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="rollaut/tiles.js"></script>
+<script src="rollaut/search_utils.js"></script>
+<script src="rollaut/utils.js"></script>
+<script src="rollaut/overview_dialog.js"></script>
+<script src="rollaut/timeline_widget.js"></script>
+<script src="rollaut/staccato.js"></script>
+
+<script>
+
+function MatrixWidget(container,data){
+ let THIS = null;
+ let r = THIS = {
+  outer_div: null,
+  inner_div: null,
+  buildDom: function (){
+    //container.appendChild(document.createTextNode("bnmnbmnb"));
+    
+    let max_cols = 0;
+    if (data.data != null && data.data.length > 0){
+      for(let i = 0; i < data.data.length;++i){
+        let v = data.data[i];
+        if (v.length > max_cols) max_cols = v.length;
+      }
+    }
+
+    THIS.outer_div = document.createElement("div");
+    THIS.inner_div = document.createElement("div");
+    THIS.outer_div.appendChild(THIS.inner_div);
+    THIS.outer_div.setAttribute("xstyle",
+                                `xposition:relative;overflow:hidden;height:200px;width:600px;`);
+    THIS.inner_div.setAttribute("style",`xposition:absolute;width:200000px;`);
+    let tbl = document.createElement("table");
+    tbl.setAttribute("style",`
+     table-layout:fixed;
+     white-space: nowrap;
+     width:${max_cols * data.cell_width}px;
+    `);
+
+    if (data.axis != null){
+      let horiz = data.axis.horz;
+      if (horiz != null){
+        let f = horiz.labels;
+        if (f == null)
+         data.axis.horz.labels = (cont,cell_idx) => {
+           cont.appendChild(document.createTextNode(`${cell_idx}`));
+         };
+      }
+    }
+
+    if (data.axis != null && data.axis.horz != null && data.data != null && data.data.length > 0 && data.data[0].length > 0)
+    {
+      let header = document.createElement("tr");
+      let first_row = data.data[0];
+      let n = first_row.length;
+      for(let i = 0; i < n; ++i){
+        let td = document.createElement("td");
+        td.setAttribute("style",`
+         width:${data.cell_width}px;
+         height:${data.cell_height}px;
+         overflow:hidden;
+         white-space: nowrap; 
+        `);
+        let cont = document.createElement("div");
+        data.axis.horz.labels(cont,i);
+        td.appendChild(cont);
+        header.appendChild(td);
+      }
+      tbl.appendChild(header); 
+    }
+
+    for(let i = 0; i < data.data.length;++i) {
+      let row = document.createElement("tr");
+      let v = data.data[i];
+      for(let j = 0; j < v.length;++j){
+        let cell = document.createElement("td");
+        cell.setAttribute("style",`
+         width:${data.cell_width}px;
+         height:${data.cell_height}px;
+         border-width:1px;
+         border-style:solid;
+         overflow:hidden;       
+        `);
+        
+        //let cell_content = document.createTextNode("X");
+        //cell.appendChild(cell_content);
+        row.appendChild(cell);
+      }
+      tbl.appendChild(row);
+    }
+    THIS.inner_div.appendChild(tbl);
+    container.appendChild(THIS.inner_div);
+   }
+ };
+ r.buildDom();
+ return r;
+}
+
+
+let ceps_core_channel;
+let matrixWidget = null;
+let staccatoAPI = null;
+
+matrixTestData = {
+  
+};
+
+ window.onload = () => {
+   function generateTestData(){
+     let t = {
+       cell_width: 30,
+       cell_height: 10,
+       axis : {
+         horz : {
+           label : null
+         }
+       },
+       data: []
+     };
+     for(let i = 0; i != 40; ++i){
+      let v = [];
+      for(let j = 0; j != 200; ++j){
+        v.push({});
+      }
+      t.data.push(v);
+     }
+     return t;
+   }
+
+   staccatoAPI = data_channel = 
+   RollAutStaccatoAPI(window.location.hostname+":3333",
+     function (dbView,changed_items){
+     if (changed_items == null){
+      let container = document.getElementById("team_lanes");
+      for(;container.hasChildNodes();)container.removeChild(container.firstChild);
+      matrixWidget = MatrixWidget(container,matrixTestData=generateTestData());
+     } else {
+      //Update
+      timeLineWidget.update(changed_items);      
+    }
+  }
+  );
+ data_channel.connect();
+ data_channel.subscribe("rollouts/scheduled");
+
+ data_channel.register_handler("open",
+    (channel) =>{
+      let connection_info = document.getElementById("nav_info_connection");
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-success");
+      connection_info.innerHTML =
+        `<span>Connected</span>`
+      ;
+    }
+ );
+
+ data_channel.register_handler("close",
+    (channel,connection_status) =>{
+      setTimeout(()=>{
+        data_channel.connect();
+        data_channel.subscribe("rollouts/scheduled",true);
+      },1000);
+      if (!connection_status) return;
+      let connection_info = document.getElementById("nav_info_connection");
+      if(connection_info == undefined) return;
+      connection_info.setAttribute("class","badge badge-danger");
+      connection_info.innerHTML =
+        `<div style="float:left;margin:2px;" class="rollaut_connection_loader"></div><span style="vertical-align: sub;">Not Connected</span>`
+      ;          
+    }
+  );
+ }; 
+
+</script>
+</html>
