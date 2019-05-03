@@ -276,7 +276,7 @@ function TreeWidget(container,data){
          let alloc = childData.allocations[i];
          entry.innerHTML = `
          <i class="material-icons" style="vertical-align: text-top;">pool</i>
-         x ${alloc.units * alloc.weight} <span class="badge badge-info">${alloc.name}</span>
+         x ${Math.round(100*(alloc.units * alloc.weight))/100 } <span class="badge badge-info">${alloc.name}</span>
          `;
          body.appendChild(entry);
        }
@@ -309,9 +309,112 @@ function TreeWidget(container,data){
 function MatrixWidget(container,data){
  let THIS = null;
  let r = THIS = {
-  outer_div: null,
-  inner_div: null,
-  buildDom: function (){
+  outer_div         : null,
+  inner_div         : null,
+  in_selection_mode : false,
+  start_cell        : null,
+  current_cell      : null,
+  dom_cache         : null,
+  selection_changed : null,
+
+  cellBaseStyleAttribute : function (row,col){
+    return `
+         width:${data.cell_width}px;
+         height:${data.cell_height}px;
+         overflow:hidden;       
+        `;
+  },
+
+  drawSelection      : function (from_,to_,reset) {    
+    let from = [from_[0],from_[1]];
+    let to = [to_[0],to_[1]];
+
+    if (from[0] > to[0]){
+      let t = [0,0];
+      t[0] = from[0];t[1] = from[1];
+      from[0] = to[0];from[1] = to[1]; 
+      to[0] = t[0];to[1] = t[1]; 
+    }
+    if(from[1] > to[1]){
+      let t = from[1];
+      from[1] = to[1];
+      to[1] = t;
+    }
+    //console.log("drawSelection",from,to);
+
+    if (from[0] == to[0] && from[1] == to[1]){
+      let sattr = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr += `border-width:1px;border-style:solid;`;
+      THIS.dom_cache[from[0]][from[1]].setAttribute("style",sattr);      
+    } else if (from[0] == to[0] && from[1] != to[1]){
+      let sattr0 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr0 += `border-bottom:1px solid black;border-top:1px solid black;border-left:1px solid black;`;
+      let sattr1 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr1 += `border-bottom:1px solid black;border-top:1px solid black;border-right:1px solid black;`;
+      THIS.dom_cache[from[0]][from[1]].setAttribute("style",sattr0);
+      THIS.dom_cache[to[0]][to[1]].setAttribute("style",sattr1);
+
+    } else if (from[1] == to[1] && from[0] != to[0])  {
+      let sattr0 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr0 += `border-right:1px solid black;border-top:1px solid black;border-left:1px solid black;`;
+      let sattr1 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr1 += `border-bottom:1px solid black;border-left:1px solid black;border-right:1px solid black;`;
+      THIS.dom_cache[from[0]][from[1]].setAttribute("style",sattr0);
+      THIS.dom_cache[to[0]][to[1]].setAttribute("style",sattr1);
+
+    } else {
+      let sattr0 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr0 += `border-top:1px solid black;border-left:1px solid black;`;
+      let sattr1 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr1 += `border-top:1px solid black;border-right:1px solid black;`;
+      let sattr2 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr2 += `border-bottom:1px solid black;border-left:1px solid black;`;
+      let sattr3 = THIS.cellBaseStyleAttribute();
+      if (!reset) sattr3 += `border-bottom:1px solid black;border-right:1px solid black;`;
+
+      THIS.dom_cache[from[0]][from[1]].setAttribute("style",sattr0);      
+      THIS.dom_cache[from[0]][to[1]].setAttribute("style",sattr1);      
+      THIS.dom_cache[to[0]][from[1]].setAttribute("style",sattr2);      
+      THIS.dom_cache[to[0]][to[1]].setAttribute("style",sattr3);      
+    }
+   
+    /*if (from[0] == to[0] && from[1] == to[1]){
+      THIS.dom_cache[from[0]][from[1]].setAttribute(
+        "style",THIS.cellBaseStyleAttribute()+`border-width:1px;border-style:solid;`);      
+    }
+    
+    for(let i = from[0]+1; i < to[0] && i < THIS.dom_cache.length;++i){
+      for(let j = from[1]+1; j < to[1] && THIS.dom_cache[i].length;++j){
+        THIS.dom_cache[i][j].setAttribute("style",THIS.cellBaseStyleAttribute()+`background-color:black;`);
+      }
+    }*/
+  },
+  mouseenter: function(ev,row,col){
+    if(!THIS.in_selection_mode) return;
+    THIS.drawSelection(THIS.start_cell,THIS.current_cell,true);
+    THIS.current_cell = [row,col];
+    THIS.drawSelection(THIS.start_cell,THIS.current_cell,false);
+    if (THIS.selection_changed != null) THIS.selection_changed(THIS.start_cell,THIS.current_cell,data);  
+  },
+  mouseleave: function(ev,row,col){
+
+  },
+  mousedown : function(ev,row,col){
+    if(!THIS.in_selection_mode){
+      if (THIS.start_cell != null && THIS.current_cell != null)
+       THIS.drawSelection(THIS.start_cell,THIS.current_cell,true);
+      THIS.in_selection_mode = true;
+      THIS.start_cell = THIS.current_cell = [row,col];
+      THIS.drawSelection(THIS.start_cell,THIS.current_cell,false);
+      if (THIS.selection_changed != null) THIS.selection_changed(THIS.start_cell,THIS.current_cell,data);
+    }
+  },
+  mouseup   : function(ev,row,col){
+    if(THIS.in_selection_mode){
+      THIS.in_selection_mode = false;
+    }
+  },
+  buildDom  : function (){
     //container.appendChild(document.createTextNode("bnmnbmnb"));
     
     let max_cols = 0;
@@ -367,22 +470,41 @@ function MatrixWidget(container,data){
       }
       tbl.appendChild(header); 
     }
-
+    THIS.dom_cache = [];
     for(let i = 0; i < data.data.length;++i) {
       let row = document.createElement("tr");
       let v = data.data[i];
+      THIS.dom_cache.push([]);
+      
       for(let j = 0; j < v.length;++j){
         let cell = document.createElement("td");
-        cell.setAttribute("style",`
-         width:${data.cell_width}px;
-         height:${data.cell_height}px;
-         border-width:1px;
-         border-style:solid;
-         overflow:hidden;       
-        `);
-        
-        //let cell_content = document.createTextNode("X");
-        //cell.appendChild(cell_content);
+        cell.setAttribute("style",THIS.cellBaseStyleAttribute(i,j));
+        THIS.dom_cache[THIS.dom_cache.length-1].push(cell);
+
+        cell.addEventListener("mouseenter",
+          function (ev){
+            THIS.mouseenter(ev,i,j);
+          }        
+        );     
+
+        cell.addEventListener("mouseleave",
+          function (ev){
+            THIS.mouseleave(ev,i,j);
+          }        
+        );     
+
+        cell.addEventListener("mousedown",
+          function (ev){
+            THIS.mousedown(ev,i,j);
+          }        
+        );     
+
+        cell.addEventListener("mouseup",
+          function (ev){
+            THIS.mouseup(ev,i,j);
+          }        
+        );     
+
         row.appendChild(cell);
       }
       tbl.appendChild(row);
@@ -409,7 +531,7 @@ matrixTestData = {
    function generateTestData(){
      let t = {
        cell_width: 30,
-       cell_height: 10,
+       cell_height: 20,
        axis : {
          horz : {
            label : null
@@ -417,10 +539,63 @@ matrixTestData = {
        },
        data: []
      };
-     for(let i = 0; i != 40; ++i){
+     for(let i = 0; i != 10; ++i){
       let v = [];
       for(let j = 0; j != 200; ++j){
-        v.push({});
+        v.push([
+          {
+              name:"APP #1",
+              children: [
+                {
+                  name: "SUB APP #1",
+                  allocations : [
+                    {
+                      name    : "SAP", 
+                      units   : 1,
+                      weight  : 0.3,
+                    },
+                    {
+                      name   : "JAVA", 
+                      units  : 1,
+                      weight : 0.3,
+                    }
+                  ]
+                },
+                {name: "SUB APP #1"}   
+              ] 
+          },
+          {
+            name:"APP #2",
+            children: [
+            {name: "SUB APP #1",
+              children: [
+                {
+                  name: "SUB SUB APP #1",
+                  allocations : [
+                    {
+                      name    : "DevOps", 
+                      units   : 1,
+                      weight  : 0.2,
+                    },
+                    {
+                      name   : "SAP HANA", 
+                      units  : 1,
+                      weight : 0.2,
+                    }
+                  ]
+                  
+
+                }
+              ]
+            }
+          ] 
+          },
+          {
+            name:"APP #3",
+            children: [
+          ] 
+          }
+        ]);
       }
       t.data.push(v);
      }
@@ -434,10 +609,82 @@ matrixTestData = {
       let container = document.getElementById("team_lanes");
       for(;container.hasChildNodes();)container.removeChild(container.firstChild);
       matrixWidget = MatrixWidget(container,matrixTestData=generateTestData());
+      matrixWidget.selection_changed = (from,to,data) => {
+        //console.log(`${from[0]},${from[1]}:${to[0]},${to[1]}`);
+        
+        function compute_cumulation(){
+          function merge(dest,source){
+            for(let i = 0; i < source.length;++i){
+              let found = -1;
+              for(let j = 0; j < dest.length;++j){
+                if (dest[j].name == source[i].name){found = j; break;}
+              }
+              let dest_bucket = null;
+              if (found < 0) 
+              { 
+                dest_bucket = {name:source[i].name,children:[]};
+                dest.push(dest_bucket);
+              } else dest_bucket = dest[found];
+              if (source[i].children != null) merge(dest_bucket.children,source[i].children);
+              if(source[i].allocations != null){
+                let dest_allocs = null;
+                if (dest_bucket.allocations == null)
+                  dest_bucket.allocations = [];
+                dest_allocs = dest_bucket.allocations;
+                for(let j=0;j < source[i].allocations.length;++j){
+                  let found = -1;
+                  for(let k=0;k < dest_allocs.length;++k){
+                    if (dest_allocs[k].name == source[i].allocations[j].name ){
+                      found = k;
+                      break;
+                    }
+                  }
+                  let dest_alloc = null;
+                  if (found < 0){ dest_alloc = {name:source[i].allocations[j].name,vunits:[],vweights:[]};dest_allocs.push(dest_alloc); }
+                  else dest_alloc = dest_allocs[found];
+                  dest_alloc.vunits.push(source[i].allocations[j].units);
+                  dest_alloc.vweights.push(source[i].allocations[j].weight);
+                }
+              }
+            }
+          }
+          let d = [];
+          for(let i = from[0]; i <= to[0]; ++i){
+            for(let j = from[1]; j <= to[1];++j){
+              merge(d,data.data[i][j]);              
+            }
+          }
+          function sum(trees){
+            for(let i = 0; i < trees.length;++i){
+              let sub_tree = trees[i];
+              if (sub_tree.allocations != null){
+                for(let j = 0; j < sub_tree.allocations.length; ++j){
+                  let alloc = sub_tree.allocations[j];
+                  alloc.weight = 0.0;
+                  for(let k = 0;k < alloc.vweights.length;++k){
+                    alloc.weight += alloc.vweights[k]*alloc.vunits[k];
+                  }
+                  alloc.units = 1;
+                }
+              }
+              if (sub_tree.children != null)
+                sum(sub_tree.children);
+            }
+          }
+          sum(d);
+          console.log(JSON.stringify(d));
+          return d;
+        }
+        let cumulated_data = compute_cumulation();
 
-      container = document.getElementById("product_projections");
+        container = document.getElementById("product_projections");
+        for(;container.hasChildNodes();) container.removeChild(container.firstChild);
+        TreeWidget(container,cumulated_data);
+      }
+
+      /*container = document.getElementById("product_projections");
       for(;container.hasChildNodes();) container.removeChild(container.firstChild);
-      treeWidget = TreeWidget(container,example_1);
+      treeWidget = TreeWidget(container,example_1);*/
      } else {
       //Update
       timeLineWidget.update(changed_items);      
