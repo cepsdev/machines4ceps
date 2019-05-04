@@ -317,14 +317,21 @@ function MatrixWidget(container,data){
   dom_cache             : null,
   selection_changed     : null,
   header_height_default : 30,
+  default_distribution_colors : ["#ef5350","#ab47bc","#42a5f5","#26a69a","#9ccc65","#ffee58","#ffa726","#ff7043","#8d6e63","#78909c"],
+
+  colorDistributionClass: function(class_idx){
+    return THIS.default_distribution_colors[class_idx];
+  },
 
   cellBaseStyleAttribute : function (row,col){
     if (data.type == "distribution"){
       return `
          width:${data.cell_width}px;
-         height:${data.col_height*data.cell_relative_height(row,col)}px;
-         border : 1px black solid;
-         overflow:hidden;       
+         height:${data.col_height}px;
+         xxoverflow:hidden;
+         border-collapse: collapse;
+     border:0px;
+     border-spacing:0px;       
         `;
     }
 
@@ -387,6 +394,9 @@ function MatrixWidget(container,data){
       THIS.dom_cache[to[0]][from[1]].setAttribute("style",sattr2);      
       THIS.dom_cache[to[0]][to[1]].setAttribute("style",sattr3);      
     }
+    //console.log("drawSelection",from,to);
+
+
    
     /*if (from[0] == to[0] && from[1] == to[1]){
       THIS.dom_cache[from[0]][from[1]].setAttribute(
@@ -425,6 +435,32 @@ function MatrixWidget(container,data){
     }
   },
   buildDom  : function (){
+    function addMouseHandling(cell,i,j){
+      cell.addEventListener("mouseenter",
+          function (ev){
+            THIS.mouseenter(ev,i,j);
+          }        
+        );     
+
+        cell.addEventListener("mouseleave",
+          function (ev){
+            THIS.mouseleave(ev,i,j);
+          }        
+        );     
+
+        cell.addEventListener("mousedown",
+          function (ev){
+            THIS.mousedown(ev,i,j);
+          }        
+        );     
+
+        cell.addEventListener("mouseup",
+          function (ev){
+            THIS.mouseup(ev,i,j);
+          }        
+        );    
+    }
+
     //container.appendChild(document.createTextNode("bnmnbmnb"));
     let total_tbl_height = 0;
     let draw_header = data.axis != null && data.axis.horz != null && data.data != null && data.data.length > 0 && data.data[0].length > 0;
@@ -460,6 +496,9 @@ function MatrixWidget(container,data){
      white-space: nowrap;
      width:${max_cols * data.cell_width}px;
      height: ${total_tbl_height}px;
+     border-collapse: collapse;
+     border:0px;
+     border-spacing:0px;
     `);
 
     if (data.axis != null){
@@ -496,43 +535,44 @@ function MatrixWidget(container,data){
       tbl.appendChild(header); 
     }
     THIS.dom_cache = [];
-    for(let i = 0; i < data.data.length;++i) {
+    if (data.type == "distribution"){
       let row = document.createElement("tr");
-      let v = data.data[i];
-      THIS.dom_cache.push([]);
-      
-      for(let j = 0; j < v.length;++j){
-        let cell = document.createElement("td");
-        cell.setAttribute("style",THIS.cellBaseStyleAttribute(i,j));
-        THIS.dom_cache[THIS.dom_cache.length-1].push(cell);
+        let v = data.data[0];
+        THIS.dom_cache.push([]);
+        
+        for(let j = 0; j < v.length;++j){
+          let cell = document.createElement("td");
+          cell.setAttribute("style",THIS.cellBaseStyleAttribute(0,j));
+          THIS.dom_cache[0].push(cell);
+          for(let row = 0; row < data.data.length;++row){
+            //colorDistributionClass
+            let div = document.createElement("div");
+            let tt = null;
+            div.setAttribute("style",tt=`background-color:${THIS.colorDistributionClass(row)};
+                                      height:${data.col_height * data.data[row][j]}px;
+                                      width:${data.cell_width+1}px;`);
+            cell.appendChild(div);
+          }
 
-        cell.addEventListener("mouseenter",
-          function (ev){
-            THIS.mouseenter(ev,i,j);
-          }        
-        );     
-
-        cell.addEventListener("mouseleave",
-          function (ev){
-            THIS.mouseleave(ev,i,j);
-          }        
-        );     
-
-        cell.addEventListener("mousedown",
-          function (ev){
-            THIS.mousedown(ev,i,j);
-          }        
-        );     
-
-        cell.addEventListener("mouseup",
-          function (ev){
-            THIS.mouseup(ev,i,j);
-          }        
-        );     
-
-        row.appendChild(cell);
+          addMouseHandling(cell,0,j);
+          row.appendChild(cell);
+        }
+        tbl.appendChild(row);
+    } else {
+      for(let i = 0; i < data.data.length;++i) {
+        let row = document.createElement("tr");
+        let v = data.data[i];
+        THIS.dom_cache.push([]);
+        
+        for(let j = 0; j < v.length;++j){
+          let cell = document.createElement("td");
+          cell.setAttribute("style",THIS.cellBaseStyleAttribute(i,j));
+          THIS.dom_cache[THIS.dom_cache.length-1].push(cell);
+          addMouseHandling(cell,i,j);
+          row.appendChild(cell);
+        }
+        tbl.appendChild(row);
       }
-      tbl.appendChild(row);
     }
     THIS.inner_div.appendChild(tbl);
     container.appendChild(THIS.inner_div);
@@ -552,13 +592,13 @@ matrixTestData = {
   
 };
 
- window.onload = () => {
+ window.onload = function() {
  
    function generateTestDataSkillDistribution(){
-
-    let t = {
+    let t = null;
+    t = {
        type : "distribution",
-       cell_width: 20,
+       cell_width: 16,
        col_height: 300,
        //header_height: 30,
 
@@ -582,12 +622,18 @@ matrixTestData = {
       t.data.push(v);
      }
      for(let i = 0; i < rows; ++i){
-      for(let j = 0; j != 200; ++j){
+      for(let j = 0; j != 300; ++j){
         let s = 0.0;
         let val = 0.0;
-        for (let h = 0; h < i;++h) s+= t.data[h][j];
-        if (i + 1 == rows ) val = 1.0 - s;
-        else val = (1-s)*Math.random(); 
+        if (i == 0){
+          val = 0.3* Math.abs(Math.sin(1.0+2*Math.PI*(j/300.0)));
+        } else if (i == 1){
+          val = 0.3* Math.abs(Math.cos(2*Math.PI*(j/300.0)));
+        }  else {
+         for (let h = 0; h < i;++h) s+= t.data[h][j];
+         if (i + 1 == rows ) val = 1.0 - s;
+         else val = (1-s)*Math.random();
+        } 
         t.data[i][j] = val;
       }
      }
