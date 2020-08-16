@@ -1,0 +1,5 @@
+Simulation{
+ static_for(w:root.workflow){
+     Start{w.content().is_id().first();};
+ }
+};

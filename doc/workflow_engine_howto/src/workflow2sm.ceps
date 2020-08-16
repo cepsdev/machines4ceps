@@ -1,0 +1,26 @@
+static_for(w:root.workflow){
+ sm
+ {     
+     w.content().is_id().first();
+     states{Initial;Final;};
+     static_for(mod:w.module){
+      sm{
+          mod.content().is_id().first();
+          states{Initial;Final;};
+          on_enter{
+              system("sleep 1");
+          };
+      };
+     }
+     if (w.module.size() > 0){
+         val prev = w.module.first().content().is_id().first();
+         t{Initial;prev;};
+         static_for(mod:tail(w.module)){
+             val step = mod.content().is_id().first();
+             t{prev;step;};
+             val dummy = prev = step; 
+         }
+         t{prev;Final;};
+     }
+ };
+}

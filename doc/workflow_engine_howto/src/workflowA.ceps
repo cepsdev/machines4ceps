@@ -1,0 +1,15 @@
+workflow{
+ MyWorkflow1;
+ input{"test.jpg";};
+ module{
+   Scale;
+   arguments{factor{0.9;};};
+ };
+ module{
+   EntropyFilter;
+ };
+ module{
+   BinaryImageAreaAnalyser;
+ };
+};
+
