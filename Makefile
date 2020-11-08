@@ -2,7 +2,7 @@
 # sm4ceps - Makefile
 #
 
-includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src" -I"../log4kmw/include" -I"core/src_gen/logging" -I"./utils" 
+includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"pugixml-1.6/src" -I"../log4ceps/include" -I"core/src_gen/logging" -I"./utils" 
 #cflags := -std=c++17 -O3 -s -Wall -MD -fmessage-length=0 -Wl,--no-as-needed
 #cflags := -g3 -O2 -pg -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
 cflags := -O3 -g3 -Wall -MD -fmessage-length=0 -std=c++17 -Wl,--no-as-needed -fPIC
@@ -10,7 +10,7 @@ TARGET :=
 OBJDIR := $(TARGET)
 objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_machine_simulation_core.o sm_sim_core_simulation_loop.o state_machine_simulation_core_action_handling.o state_machine_simulation_core_event_handling.o \
   state_machine_simulation_core_guard_handling.o cmdline_utils.o sm_raw_frame.o sm_xml_frame.o pugixml.o  cal_sender.o cal_receiver.o state_machine_simulation_core_plugin_interface.o state_machine_simulation_core_buildsms.o \
-  log4kmw_events.o log4kmw_loggers.o log4kmw_records.o log4kmw_states.o log4kmw_serialization.o log4kmw_dynamic_bitset.o log4kmw_record.o log4kmw_utils.o sm_comm_naive_msg_prot.o cppgen.o dotgen.o livelogger.o rdwrn.o \
+  log4ceps_events.o log4ceps_loggers.o log4ceps_records.o log4ceps_states.o log4ceps_serialization.o log4ceps_dynamic_bitset.o log4ceps_record.o log4ceps_utils.o sm_comm_naive_msg_prot.o cppgen.o dotgen.o livelogger.o rdwrn.o \
   sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o sm_sim_core_shadow_states.o sm_sim_process_sm.o concept_dependency_graph.o stddoc.o \
   ws_api.o virtual_can_api.o streamtransform.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
@@ -18,7 +18,7 @@ CEPSLIB := ../ceps/core/bin$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
 cepslibs := ../ceps/core/bin
 pugisrc = pugixml-1.6/src
-log4kmwsrc = ../log4kmw/src
+log4cepssrc = ../log4ceps/src
 SM4CEPSLIB := libsm4ceps.a
 
 all: $(TARGET)/ceps
@@ -60,14 +60,14 @@ $(TARGET)/ceps: $(objfiles) $(cepslibs)/ceps_interpreter.o
 	$(TARGET)/cal_receiver.o \
 	$(TARGET)/state_machine_simulation_core_buildsms.o \
 	$(TARGET)/pugixml.o \
-	$(TARGET)/log4kmw_events.o \
-	$(TARGET)/log4kmw_loggers.o \
-	$(TARGET)/log4kmw_records.o \
-	$(TARGET)/log4kmw_states.o \
-	$(TARGET)/log4kmw_serialization.o \
-	$(TARGET)/log4kmw_dynamic_bitset.o \
-	$(TARGET)/log4kmw_record.o \
-	$(TARGET)/log4kmw_utils.o \
+	$(TARGET)/log4ceps_events.o \
+	$(TARGET)/log4ceps_loggers.o \
+	$(TARGET)/log4ceps_records.o \
+	$(TARGET)/log4ceps_states.o \
+	$(TARGET)/log4ceps_serialization.o \
+	$(TARGET)/log4ceps_dynamic_bitset.o \
+	$(TARGET)/log4ceps_record.o \
+	$(TARGET)/log4ceps_utils.o \
 	$(TARGET)/livelogger.o \
 	$(TARGET)/sm_livelog_storage_utils.o \
 	$(TARGET)/rdwrn.o \
@@ -129,24 +129,24 @@ $(TARGET)/cmdline_utils.o: core/include/cmdline_utils.hpp
 	$(CXX)   $(cflags) $(includes) core/src/cmdline_utils.cpp -c -o $(TARGET)/cmdline_utils.o
 $(TARGET)/state_machine_simulation_core_buildsms.o: core/src/state_machine_simulation_core_buildsms.cpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) core/src/state_machine_simulation_core_buildsms.cpp -c -o $(TARGET)/state_machine_simulation_core_buildsms.o
-$(TARGET)/log4kmw_events.o: core/src_gen/logging/log4kmw_events.cpp
-	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4kmw_events.cpp -c -o $(TARGET)/log4kmw_events.o
-$(TARGET)/log4kmw_loggers.o: core/src_gen/logging/log4kmw_loggers.cpp
-	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4kmw_loggers.cpp -c -o $(TARGET)/log4kmw_loggers.o	
-$(TARGET)/log4kmw_records.o: core/src_gen/logging/log4kmw_records.cpp
-	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4kmw_records.cpp -c -o $(TARGET)/log4kmw_records.o
-$(TARGET)/log4kmw_states.o: core/src_gen/logging/log4kmw_states.cpp
-	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4kmw_states.cpp -c -o $(TARGET)/log4kmw_states.o
-$(TARGET)/log4kmw_loggers_tests.o: core/src_gen/logging/log4kmw_loggers_tests.cpp
-	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4kmw_loggers_tests.cpp -c -o $(TARGET)/log4kmw_loggers_tests.o	
-$(TARGET)/log4kmw_serialization.o: $(log4kmwsrc)/log4kmw_serialization.cpp
-	$(CXX)   $(cflags) $(includes) $(log4kmwsrc)/log4kmw_serialization.cpp -c -o $(TARGET)/log4kmw_serialization.o	
-$(TARGET)/log4kmw_dynamic_bitset.o: $(log4kmwsrc)/log4kmw_dynamic_bitset.cpp
-	$(CXX)   $(cflags) $(includes) $(log4kmwsrc)/log4kmw_dynamic_bitset.cpp -c -o $(TARGET)/log4kmw_dynamic_bitset.o	
-$(TARGET)/log4kmw_record.o: $(log4kmwsrc)/log4kmw_record.cpp
-	$(CXX)   $(cflags) $(includes) $(log4kmwsrc)/log4kmw_record.cpp -c -o $(TARGET)/log4kmw_record.o	
-$(TARGET)/log4kmw_utils.o: $(log4kmwsrc)/log4kmw_utils.cpp
-	$(CXX)   $(cflags) $(includes) $(log4kmwsrc)/log4kmw_utils.cpp -c -o $(TARGET)/log4kmw_utils.o	
+$(TARGET)/log4ceps_events.o: core/src_gen/logging/log4ceps_events.cpp
+	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4ceps_events.cpp -c -o $(TARGET)/log4ceps_events.o
+$(TARGET)/log4ceps_loggers.o: core/src_gen/logging/log4ceps_loggers.cpp
+	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4ceps_loggers.cpp -c -o $(TARGET)/log4ceps_loggers.o	
+$(TARGET)/log4ceps_records.o: core/src_gen/logging/log4ceps_records.cpp
+	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4ceps_records.cpp -c -o $(TARGET)/log4ceps_records.o
+$(TARGET)/log4ceps_states.o: core/src_gen/logging/log4ceps_states.cpp
+	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4ceps_states.cpp -c -o $(TARGET)/log4ceps_states.o
+$(TARGET)/log4ceps_loggers_tests.o: core/src_gen/logging/log4ceps_loggers_tests.cpp
+	$(CXX)   $(cflags) $(includes) core/src_gen/logging/log4ceps_loggers_tests.cpp -c -o $(TARGET)/log4ceps_loggers_tests.o	
+$(TARGET)/log4ceps_serialization.o: $(log4cepssrc)/log4ceps_serialization.cpp
+	$(CXX)   $(cflags) $(includes) $(log4cepssrc)/log4ceps_serialization.cpp -c -o $(TARGET)/log4ceps_serialization.o	
+$(TARGET)/log4ceps_dynamic_bitset.o: $(log4cepssrc)/log4ceps_dynamic_bitset.cpp
+	$(CXX)   $(cflags) $(includes) $(log4cepssrc)/log4ceps_dynamic_bitset.cpp -c -o $(TARGET)/log4ceps_dynamic_bitset.o	
+$(TARGET)/log4ceps_record.o: $(log4cepssrc)/log4ceps_record.cpp
+	$(CXX)   $(cflags) $(includes) $(log4cepssrc)/log4ceps_record.cpp -c -o $(TARGET)/log4ceps_record.o	
+$(TARGET)/log4ceps_utils.o: $(log4cepssrc)/log4ceps_utils.cpp
+	$(CXX)   $(cflags) $(includes) $(log4cepssrc)/log4ceps_utils.cpp -c -o $(TARGET)/log4ceps_utils.o	
 $(TARGET)/livelogger.o: core/src/livelog/livelogger.cpp core/include/livelog/livelogger.hpp
 	$(CXX)   $(cflags) $(includes) core/src/livelog/livelogger.cpp -c -o $(TARGET)/livelogger.o	
 $(TARGET)/sm_livelog_storage_utils.o: core/src/sm_livelog_storage_utils.cpp core/include/livelog/livelogger.hpp core/include/sm_livelog_storage_utils.hpp

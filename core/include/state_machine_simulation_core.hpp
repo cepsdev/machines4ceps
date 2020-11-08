@@ -28,12 +28,12 @@
 #include "core/include/signalgenerator.hpp"
 
 
-#include "log4kmw_state.hpp"
-#include "log4kmw_record.hpp"
-#include "log4kmw_logger.hpp"
-#include "log4kmw_states.hpp"
-#include "log4kmw_records.hpp"
-#include "log4kmw_loggers.hpp"
+#include "log4ceps_state.hpp"
+#include "log4ceps_record.hpp"
+#include "log4ceps_logger.hpp"
+#include "log4ceps_states.hpp"
+#include "log4ceps_records.hpp"
+#include "log4ceps_loggers.hpp"
 
 #include "core/include/sm_execution_ctxt.hpp"
 #include "core/include/livelog/livelogger.hpp"
@@ -44,8 +44,7 @@
 #include "core/include/transform/streamtransform.hpp"
 #include "core/include/threadsafequeue.hpp"
 
-namespace log4ceps = log4kmw;
-namespace log4cepsloggers = log4kmw_loggers;
+namespace log4cepsloggers = log4ceps_loggers;
 
 constexpr int SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH = 128;
 
