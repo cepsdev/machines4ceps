@@ -1,2 +1,2 @@
 # sm4ceps
-UML2ish statecharts. Composite states, orthogonal regions, events, actions, init/exit etc. 
+Engine for UML2ish state charts. Supports composite states, orthogonal regions, events, actions, init/exit etc. Small, fast, portable. Handles large state spaces (100k+).
