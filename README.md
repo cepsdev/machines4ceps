@@ -5,6 +5,10 @@ Engine for UML2ish state charts. Supports composite states, orthogonal regions, 
 
 ### Prerequisites:
 * ceps
-* cryptopp (5.x)
-  * Clone https://github.com/weidai11/cryptopp.git
+* log4ceps
+* cryptopp (5.x):
+  * Clone https://github.com/weidai11/cryptopp.git (sm4ceps build script expects cryptopp to be in the same directory as the sm4ceps repo) 
+  * Change working directory to cryptopp
+  * Checkout tag CRYPTOPP_5_6_5 (git checkout CRYPTOPP_5_6_5)
+  * run make
   
