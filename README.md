@@ -1,4 +1,4 @@
-# sm4ceps
+# machines4ceps
 Engine for UML2ish state charts. Supports composite states, orthogonal regions, events, actions, init/exit etc. Small, fast, portable. Handles large state spaces (100k+). Monitoring, tracing, and a variety of communication protocols e.g. websockets, CAN field bus etc.
 
 ## Installation
