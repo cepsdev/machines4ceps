@@ -72,11 +72,15 @@ To run this example, open a shell/terminal, change your working directory to the
 * __cd__ examples/first_steps
 * ../../bin/__ceps__ basic_uml_state_diagram.ceps simulation_1.ceps
 
-After executing the last command, you should see the following output:
+After executing the last command, you should get the following output:
 
-__basic_example.Initial- basic_example.default+__
+```Pascal
 
-*Meaning:* The machine __basic_example__ makes the transition from state *Initial* to the state *default*. 
+basic_example.Initial- basic_example.default+
+
+```
+
+The meaning of which is, that the machine __basic_example__ made a single transition from the initial state *Initial* to the state *default*. 
 
 #### __A basic state machine__: Execution (Part II)
 
@@ -103,7 +107,7 @@ basic_example.default+ basic_example.caps_locked-
 basic_example.default- basic_example.caps_locked+
 ```
 
-The default behaviour of __ceps__ is approximately as follows: fetch an event, process all transitions triggered by the event, report the set of affected states, and repeat. If we run our simulation inside a terminal window, __ceps__ will report the set of changed states by simply printing the name of each state followed by a __+__ or __-__, indicating whether the state is active or not. Each iteration produces one line of output.  We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has no associated event and is therefore triggered simply by starting the state machine (epsilon transition).
+The default behaviour of __ceps__ is approximately as follows: fetch an event, process all transitions triggered by that event, report the set of affected states, and repeat. If we run our simulation inside a terminal window, __ceps__ will report the set of changed states by simply printing the name of each state followed by a __+__ or __-__, indicating whether the state is active or not. Each iteration produces one line of output.  We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has no associated event and is therefore triggered simply by starting the state machine (epsilon transition).
 
 ### Visualization
 
