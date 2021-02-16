@@ -150,7 +150,7 @@ Actions{
 
 The code can be found in __examples/first_steps/basic_uml_state_diagram_with_actions.ceps__.
 
-The extended version works perfectly fine with our simulations (*simulation_1.ceps* and *simulation_2.ceps*) developed so far, and exhibits exactly the same behaviour as our previous version. To get a somehow different behaviour, we need to trigger at least one __ANY_KEY__ transition. That's done
+The extended version works perfectly fine with our simulations (*simulation_1.ceps* and *simulation_2.ceps*) developed so far, and exhibits exactly the same behaviour as our previous version under the current set of simulations. To get a somehow different behaviour, we need to trigger at least one __ANY_KEY__ transition. That's done
 by adding a couple of __ANY_KEY__ events to our simulation.
 
 ```javascript
