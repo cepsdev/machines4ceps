@@ -34,27 +34,38 @@ All repositories need to be in the same directory as machines4ceps.
 ![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
 *Source:Wikipedia*
 
-In cepS notation:
+__In cepS notation:__
 
-
+```bash
 kind Event;
 
 Event CAPS_LOCK, ANY_KEY;
 
 sm{
  basic_example;
+ 
  states{Initial; default; caps_locked;};
- t{Initial;default;};
+
+ t{Initial;default;}; 
  t{default;caps_locked;CAPS_LOCK;};
  t{caps_locked;default;CAPS_LOCK;}; 
 };
-
-
-
-
-
-Open a shell/terminal, change working directory to *machines4ceps*. Type:
+```
+The state machine can be found in __examples/first_steps/basic_uml_state_diagram.ceps__
+#### Executing a state machine
+One way to execute a state machine is through *simulation*.
+The most basic simulation is to simply start a state machine:
+```
+Simulation{
+ Start{basic_example;};
+ };
+```
+To run this example, open a shell/terminal, change your working directory to the *machines4ceps* repo, and type:
 * cd examples/first_steps
 * ../../bin/ceps basic_uml_state_diagram.ceps simulation_1.ceps
-  
+
+After executing the last command, you should see the following output:
+__basic_example.Initial- basic_example.default+__
+
+*Meaning:* The machine __basic_example__ makes the transition from state *Initial* to the state *default*. 
   
