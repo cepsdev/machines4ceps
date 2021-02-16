@@ -1,0 +1,20 @@
+kind Event;
+
+
+Event CAPS_LOCK, ANY_KEY;
+
+sm{
+ basic_example;
+ states{Initial; default; caps_locked;};
+ Actions{
+  send_lower_case_scan_code {print("basic_example.send_lower_case_scan_code()\n");};
+  send_upper_case_scan_code{print("basic_example.send_upper_case_scan_code()\n");};
+ };
+ t{Initial;default;};
+ t{default;caps_locked;CAPS_LOCK;};
+ t{caps_locked;default;CAPS_LOCK;};
+
+ t{default;default;ANY_KEY;send_lower_case_scan_code;}; 
+ t{caps_locked;caps_locked;ANY_KEY;send_upper_case_scan_code;};
+};
+
