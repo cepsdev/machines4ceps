@@ -105,6 +105,20 @@ basic_example.default- basic_example.caps_locked+
 
 The default behaviour of __ceps__ is: for each event, and after all transitions triggered by this particular event had been taken, print on a single line the set of all changed states (i.e. a state diff). Each state printed is annotated by a __+__ or __-__, indicating whether the state is active or not. We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has no associated event and is therefore triggered simply by starting the state machine (epsilon transition).
 
+### Visualization
+
+The following requires *graphviz* to be installed on your machine (see https://graphviz.org).
+
+With the option __--dot_gen--__ set, __ceps__ writes a *dot* representation of all top level state machines into the file __out.dot__.
+
+The commands
+
+* ../../bin/ceps basic_uml_state_diagram.ceps --dot_gen
+* dot -Tpng out.dot -o img/basic_uml_state_diagram.png
+
+produce the following graphical representation of the state machine __basic_example__.
+
+![](examples/first_steps/img/basic_uml_state_diagram.png)
 
 
 
