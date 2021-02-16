@@ -103,7 +103,7 @@ basic_example.default+ basic_example.caps_locked-
 basic_example.default- basic_example.caps_locked+
 ```
 
-The default behaviour of __ceps__ is approximately as follows: fetch an event, process all transitions triggered by the event, report the set of changed states, and repeat. If we run our simulations inside a terminal windows, __ceps__ reports the set of changed states by simply printing the states' names followed by a newline character  and annotated by a __+__ or __-__, indicating whether the state is active or not. We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has no associated event and is therefore triggered simply by starting the state machine (epsilon transition).
+The default behaviour of __ceps__ is approximately as follows: fetch an event, process all transitions triggered by the event, report the set of affected states, and repeat. If we run our simulation inside a terminal window, __ceps__ will report the set of changed states by simply printing the name of each state followed by a __+__ or __-__, indicating whether the state is active or not. Each iteration produces one line of output.  We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has no associated event and is therefore triggered simply by starting the state machine (epsilon transition).
 
 ### Visualization
 
