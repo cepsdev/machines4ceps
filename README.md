@@ -32,6 +32,29 @@ All repositories need to be in the same directory as machines4ceps.
 ## First Steps:
 ### A basic state machine (see https://en.wikipedia.org/wiki/UML_state_machine)
 ![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
+*Source:Wikipedia*
 
+In cepS notation:
+
+
+kind Event;
+
+Event CAPS_LOCK, ANY_KEY;
+
+sm{
+ basic_example;
+ states{Initial; default; caps_locked;};
+ t{Initial;default;};
+ t{default;caps_locked;CAPS_LOCK;};
+ t{caps_locked;default;CAPS_LOCK;}; 
+};
+
+
+
+
+
+Open a shell/terminal, change working directory to *machines4ceps*. Type:
+* cd examples/first_steps
+* ../../bin/ceps basic_uml_state_diagram.ceps simulation_1.ceps
   
   
