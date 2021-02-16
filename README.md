@@ -37,7 +37,7 @@ This should produce a binary called __ceps__ in the directory machines4ceps/bin.
 ![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
 *Source:Wikipedia*
 
-#### Notation
+#### __A basic state machine__: Notation
 
 Written in a notation supported by ceps (the tool built in the previous section):  
 
@@ -58,7 +58,7 @@ sm{
 ```
 The code can be found in __examples/first_steps/basic_uml_state_diagram.ceps__.
 
-#### Execution
+#### __A basic state machine__: Execution (Part I)
 
 One way to execute a state machine is through *simulation*.
 The most basic simulation is to simply start a state machine:
@@ -76,4 +76,10 @@ After executing the last command, you should see the following output:
 __basic_example.Initial- basic_example.default+__
 
 *Meaning:* The machine __basic_example__ makes the transition from state *Initial* to the state *default*. 
-  
+
+#### __A basic state machine__: Execution (Part II)
+
+
+
+
+
