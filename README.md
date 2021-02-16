@@ -80,11 +80,11 @@ __basic_example.Initial- basic_example.default+__
 
 #### __A basic state machine__: Execution (Part II)
 
-Let's fire some events and look how the state machine behaves.
+Let's fire three __CAPS_LOCK__ events and look how the state machine behaves.
 
 ```Pascal
 Simulation{
- Start{basic_example;}; // as above
+ Start{basic_example;};
  
  CAPS_LOCK;
  CAPS_LOCK;
