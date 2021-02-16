@@ -1,5 +1,5 @@
 # machines4ceps
-Write,run and trace complex state machines (UML2 statecharts, harel statecharts, state diagrams). Supports composite states, orthogonal regions, events, actions, init/exit etc. Small, fast, portable. Handles large state spaces (100k+). Monitoring, tracing, and a variety of communication protocols e.g. websockets, CAN field bus etc.
+__Write, run__ and __trace__ complex __state machines__ (__UML2__ statecharts, __Harel__ statecharts, state diagrams). Supports composite states, orthogonal regions, events, actions, init/exit etc. Small, fast, portable. Handles large state spaces (100k+). Monitoring, tracing, and a variety of communication protocols e.g. websockets, CAN field bus etc.
 
 ## Installation
 
