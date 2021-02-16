@@ -95,7 +95,7 @@ To run this simulation - assuming your working directory is machines4ceps/exampl
 * ../../bin/__ceps__ basic_uml_state_diagram.ceps simulation_2.ceps
 
 This should produce the following output:
-```C
+```Pascal
 basic_example.Initial- basic_example.default+
 basic_example.default- basic_example.caps_locked+
 basic_example.default+ basic_example.caps_locked- 
