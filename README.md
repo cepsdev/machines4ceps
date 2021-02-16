@@ -109,7 +109,7 @@ The default behaviour of __ceps__ is: for each event, and after all transitions 
 
 The following requires *graphviz* to be installed on your machine (see https://graphviz.org).
 
-With the option __--dot_gen--__ set, __ceps__ writes a *dot* representation of all top level state machines into the file __out.dot__.
+With the option __--dot_gen__ set, __ceps__ writes a *dot* representation of all top level state machines into the file __out.dot__.
 
 The commands
 
