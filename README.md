@@ -55,14 +55,14 @@ The state machine can be found in __examples/first_steps/basic_uml_state_diagram
 #### Executing a state machine
 One way to execute a state machine is through *simulation*.
 The most basic simulation is to simply start a state machine:
-```
+```C
 Simulation{
  Start{basic_example;};
  };
 ```
 To run this example, open a shell/terminal, change your working directory to the *machines4ceps* repo, and type:
-* cd examples/first_steps
-* ../../bin/ceps basic_uml_state_diagram.ceps simulation_1.ceps
+* __cd__ examples/first_steps
+* ../../bin/__ceps__ basic_uml_state_diagram.ceps simulation_1.ceps
 
 After executing the last command, you should see the following output:
 
