@@ -29,9 +29,9 @@ All repositories need to be in the same directory as machines4ceps.
   * cd machines4ceps
   * mkdir bin
   * make TARGET=bin
-### First Steps:
-
-![A simple state machine] https://en.wikipedia.org/wiki/UML_state_machine#/media/File:UML_state_machine_Fig1.png
+## First Steps:
+### A basic state machine (see https://en.wikipedia.org/wiki/UML_state_machine)
+![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
 
   
   
