@@ -81,7 +81,7 @@ __basic_example.Initial- basic_example.default+__
 
 Let's fire some events and look how the state machine behaves.
 
-```C
+```Pascal
 Simulation{
  Start{basic_example;}; // as above
  
