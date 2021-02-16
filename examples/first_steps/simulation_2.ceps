@@ -1,0 +1,7 @@
+Simulation{
+ Start{basic_example;}; // as above
+ 
+ CAPS_LOCK;
+ CAPS_LOCK;
+ CAPS_LOCK;
+ };

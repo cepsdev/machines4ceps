@@ -1,0 +1,13 @@
+kind Event;
+
+
+Event CAPS_LOCK, ANY_KEY;
+
+sm{
+ basic_example;
+ states{Initial; default; caps_locked;};
+ t{Initial;default;};
+ t{default;caps_locked;CAPS_LOCK;};
+ t{caps_locked;default;CAPS_LOCK;}; 
+};
+
