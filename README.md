@@ -65,6 +65,7 @@ To run this example, open a shell/terminal, change your working directory to the
 * ../../bin/ceps basic_uml_state_diagram.ceps simulation_1.ceps
 
 After executing the last command, you should see the following output:
+
 __basic_example.Initial- basic_example.default+__
 
 *Meaning:* The machine __basic_example__ makes the transition from state *Initial* to the state *default*. 
