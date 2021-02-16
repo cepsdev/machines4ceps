@@ -31,7 +31,7 @@ All repositories need to be in the same directory as machines4ceps.
   * make TARGET=bin
 ### First Steps:
 
-https://en.wikipedia.org/wiki/UML_state_machine#/media/File:UML_state_machine_Fig1.png
+![A simple state machine] https://en.wikipedia.org/wiki/UML_state_machine#/media/File:UML_state_machine_Fig1.png
 
   
   
