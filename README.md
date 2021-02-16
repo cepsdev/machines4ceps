@@ -4,11 +4,20 @@ Engine for UML2ish state charts. Supports composite states, orthogonal regions, 
 ## Installation
 
 ### Prerequisites:
-* ceps (https://github.com/cepsdev/ceps.git)
-* log4ceps(https://github.com/cepsdev/log4ceps.git)
-* cryptopp (5.x):
-  * Clone https://github.com/weidai11/cryptopp.git (sm4ceps build script expects cryptopp to be in the same directory as the machines4ceps repo) 
-  * Change working directory to cryptopp
-  * Checkout tag CRYPTOPP_5_6_5 (git checkout CRYPTOPP_5_6_5)
-  * run make
+### Build Steps:
+All repositories need to be in the same directory as machines4ceps.
+* Clone pugixml:
+  * git clone https://github.com/zeux/pugixml.git
+* Clone and build ceps:
+  * git clone https://github.com/cepsdev/ceps.git
+  * cd ceps/core
+  * make
+  * cd ../..
+* Clone log4ceps
+  * git clone https://github.com/cepsdev/log4ceps.git
+* Clone and build cryptopp:
+  * git clone https://github.com/weidai11/cryptopp.git 
+  * cd cryptopp
+  * git checkout CRYPTOPP_5_6_5
+  * make
   
