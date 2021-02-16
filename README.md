@@ -4,6 +4,10 @@ Engine for UML2ish state charts. Supports composite states, orthogonal regions, 
 ## Installation
 
 ### Prerequisites:
+* Linux (Kernel Version >= 2.6)
+* g++ (Version >= 9.0)
+* bison (Version >= 2.3)
+* make
 ### Build Steps:
 All repositories need to be in the same directory as machines4ceps.
 * Clone pugixml:
@@ -20,4 +24,10 @@ All repositories need to be in the same directory as machines4ceps.
   * cd cryptopp
   * git checkout CRYPTOPP_5_6_5
   * make
+* Clone machines4ceps
+  * git clone https://github.com/cepsdev/machines4ceps.git
+  * cd machines4ceps
+  * mkdir bin
+  * make TARGET=bin
+  
   
