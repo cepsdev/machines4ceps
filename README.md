@@ -40,7 +40,7 @@ This should produce a binary called __ceps__ in the directory machines4ceps/bin.
 
 #### __A basic state machine__: Notation
 
-Written in a notation supported by ceps (the tool built in the previous section):  
+Our version of the depicted state machine is:  
 
 ```bash
 kind Event;
@@ -57,7 +57,7 @@ sm{
  t{caps_locked;default;CAPS_LOCK;}; 
 };
 ```
-The code can be found in __examples/first_steps/basic_uml_state_diagram.ceps__.
+There are a much terser notations available, but that's outside the scope of this introduction. The code can be found in __examples/first_steps/basic_uml_state_diagram.ceps__.
 
 #### __A basic state machine__: Execution (Part I)
 
