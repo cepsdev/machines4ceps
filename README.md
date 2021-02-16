@@ -79,6 +79,36 @@ __basic_example.Initial- basic_example.default+__
 
 #### __A basic state machine__: Execution (Part II)
 
+Let's fire some events and look how the state machine behaves.
+
+```C
+Simulation{
+ Start{basic_example;}; // as above
+ 
+ CAPS_LOCK;
+ CAPS_LOCK;
+ CAPS_LOCK;
+ };
+```
+
+To run this simulation - assuming your working directory is machines4ceps/examples/first_steps:
+* ../../bin/__ceps__ basic_uml_state_diagram.ceps simulation_2.ceps
+
+This should produce the following output:
+
+__basic_example.Initial- basic_example.default+__
+
+__basic_example.default- basic_example.caps_locked+__
+
+__basic_example.default+ basic_example.caps_locked-__ 
+
+__basic_example.default- basic_example.caps_locked+__ 
+
+
+
+
+
+
 
 
 
