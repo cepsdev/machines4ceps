@@ -92,7 +92,7 @@ Simulation{
  };
 ```
 
-To run this simulation - assuming your working directory is machines4ceps/examples/first_steps:
+To run this simulation type (assuming you are in a shell/terminal and your working directory is machines4ceps/examples/first_steps):
 * ../../bin/__ceps__ basic_uml_state_diagram.ceps simulation_2.ceps
 
 This should produce the following output:
