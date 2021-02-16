@@ -120,6 +120,67 @@ produce the following graphical representation of the state machine __basic_exam
 
 ![](examples/first_steps/img/basic_uml_state_diagram.png)
 
+### Completing the basic example: Adding Actions
+
+We complete the ceps version of the basic state machine, by adding the missing transitions under the __ANY_KEY__ event together with the associated actions.
+
+```javascript
+kind Event;
+
+Event CAPS_LOCK, ANY_KEY;
+
+sm{
+ basic_example;
+ states{Initial; default; caps_locked;};
+
+Actions{
+  send_lower_case_scan_code {print("basic_example.send_lower_case_scan_code()\n");};
+  send_upper_case_scan_code{print("basic_example.send_upper_case_scan_code()\n");};
+ };
+
+ t{Initial;default;};
+ t{default;caps_locked;CAPS_LOCK;};
+ t{caps_locked;default;CAPS_LOCK;};
+
+ t{default;default;ANY_KEY;send_lower_case_scan_code;};
+ t{caps_locked;caps_locked;ANY_KEY;send_upper_case_scan_code;};
+};
+
+```
+
+The code can be found in __examples/first_steps/basic_uml_state_diagram_with_actions.ceps__.
+
+The extended version still works with our simulations (*simulation_1.ceps* and *simulation_2.ceps*) and exhibits exactly the same behaviour.
+We need to trigger at least one __ANY_KEY__ event to activate our new transitions.
+
+```javascript
+Simulation{
+ Start{basic_example;};
+
+ ANY_KEY;
+ CAPS_LOCK;
+ ANY_KEY;
+ CAPS_LOCK;
+ ANY_KEY;
+
+ };
+```
+The code can be found in __examples/first_steps/simulation_3.ceps__.
+
+If we run 
+
+* ../../bin/ceps basic_uml_state_diagram_with_actions.ceps simulation_3.ceps
+
+we get the following output.
+
+```javascript
+basic_example.Initial- basic_example.default+ 
+basic_example.send_lower_case_scan_code()
+basic_example.default- basic_example.caps_locked+ 
+basic_example.send_upper_case_scan_code()
+basic_example.default+ basic_example.caps_locked- 
+basic_example.send_lower_case_scan_code()
+```
 
 
 
