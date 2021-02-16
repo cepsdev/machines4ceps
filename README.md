@@ -102,6 +102,7 @@ basic_example.default+ basic_example.caps_locked-
 basic_example.default- basic_example.caps_locked+
 ```
 
+The default behaviour of __ceps__ is: for each event, after all transitions have been taken, print on single line the set of all changed states (i.e. a state diff). Each state printed is annotated by a __+__ or __-__, indicating whether the state is active or not.
 
 
 
