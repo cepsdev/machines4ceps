@@ -24,17 +24,22 @@ All repositories need to be in the same directory as machines4ceps.
   * cd cryptopp
   * git checkout CRYPTOPP_5_6_5
   * make
-* Clone machines4ceps
+* Cloneand build  machines4ceps
   * git clone https://github.com/cepsdev/machines4ceps.git
   * cd machines4ceps
   * mkdir bin
   * make TARGET=bin
-## First Steps:
+
+This should produce a binary called __ceps__ in the directory machines4ceps/bin.
+
+## Writing and running state machines - Quick Start
 ### A basic state machine (see https://en.wikipedia.org/wiki/UML_state_machine)
 ![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
 *Source:Wikipedia*
 
-__In cepS notation:__
+#### Notation
+
+Written in a notation supported by ceps (the tool built in the previous section):  
 
 ```bash
 kind Event;
@@ -51,8 +56,10 @@ sm{
  t{caps_locked;default;CAPS_LOCK;}; 
 };
 ```
-The state machine can be found in __examples/first_steps/basic_uml_state_diagram.ceps__
-#### Executing a state machine
+The code can be found in __examples/first_steps/basic_uml_state_diagram.ceps__.
+
+#### Execution
+
 One way to execute a state machine is through *simulation*.
 The most basic simulation is to simply start a state machine:
 ```C
