@@ -102,7 +102,7 @@ basic_example.default+ basic_example.caps_locked-
 basic_example.default- basic_example.caps_locked+
 ```
 
-The default behaviour of __ceps__ is: for each event, after all transitions have been taken, print on single line the set of all changed states (i.e. a state diff). Each state printed is annotated by a __+__ or __-__, indicating whether the state is active or not.
+The default behaviour of __ceps__ is: for each event, and after all transitions triggered by this particular event had been taken, print on a single line the set of all changed states (i.e. a state diff). Each state printed is annotated by a __+__ or __-__, indicating whether the state is active or not. We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has now associated event and is therefore triggered simply by starting the state machine (epsilon transition).
 
 
 
