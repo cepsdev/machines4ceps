@@ -244,7 +244,7 @@ sm{
 };
 
 ```
-The code can be found in __extended_uml_state_diagram_with_actions.ceps__.
+The code can be found in __examples/first_steps/extended_uml_state_diagram_with_actions.ceps__.
 
 To run this example, open a shell/terminal, change your working directory to the *machines4ceps* repo, and type:
 * __cd__ examples/first_steps
@@ -265,7 +265,7 @@ key_count=7
 ```
 
 
-#### on_enter,on_exit
+#### Setting up preconditions/postconditions: *on_enter* and *on_exit*
 
 
 
