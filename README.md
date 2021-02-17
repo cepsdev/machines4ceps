@@ -189,7 +189,15 @@ basic_example.default+ basic_example.caps_locked-
 basic_example.send_lower_case_scan_code()
 ```
 
-### Extended States and guards
+## Extended States and guards
+
+### Extended States
+
+State machines combined with variables holding values, like integers, strings etc., are called __extended state machines__ (see https://en.wikipedia.org/wiki/UML_state_machine#Extended_states). We call extended states *Systemstate*.
+Extended states are introduced, or declared, using the notation
+
+__Systemstate__ *variable_name*;
+
 
 
 ```javascript
@@ -199,6 +207,7 @@ basic_example.send_lower_case_scan_code()
 kind Event;
 kind Systemstate;
 
+Systemstate key_count;
 
 Event CAPS_LOCK, 
       ANY_KEY;
@@ -235,6 +244,28 @@ sm{
 };
 
 ```
+The code can be found in __extended_uml_state_diagram_with_actions.ceps__.
+
+To run this example, open a shell/terminal, change your working directory to the *machines4ceps* repo, and type:
+* __cd__ examples/first_steps
+* ../../bin/__ceps__ extended_uml_state_diagram_with_actions.ceps simulation_3.ceps 
+
+This will generate the following output:
+
+```bash
+
+basic_example.Initial- basic_example.default+ 
+key_count=9
+basic_example.default- basic_example.caps_locked+ 
+key_count=8
+basic_example.default+ basic_example.caps_locked- 
+key_count=7
+
+
+```
+
+
+#### on_enter,on_exit
 
 
 
