@@ -43,7 +43,7 @@ This intro follows closely the discussion in https://en.wikipedia.org/wiki/UML_s
 
 #### __A basic state machine__: Notation
 
-Our version of the depicted state machine is:  
+Our first version of the depicted state machine is (the lacking __ANY_KEY__ transitions will be added in the following section):  
 
 ```bash
 kind Event;
