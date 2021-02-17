@@ -34,7 +34,10 @@ All repositories need to be in the same directory as machines4ceps.
 This should produce a binary called __ceps__ in the directory machines4ceps/bin.
 
 ## Writing and running state machines - Quick Start
-### A basic state machine (see https://en.wikipedia.org/wiki/UML_state_machine)
+
+This intro follows closely the discussion in https://en.wikipedia.org/wiki/UML_state_machine.
+
+### A basic state machine
 ![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
 *Source:Wikipedia*
 
@@ -185,6 +188,54 @@ basic_example.send_upper_case_scan_code()
 basic_example.default+ basic_example.caps_locked- 
 basic_example.send_lower_case_scan_code()
 ```
+
+### Extended States and guards
+
+
+```javascript
+
+
+
+kind Event;
+kind Systemstate;
+
+
+Event CAPS_LOCK, 
+      ANY_KEY;
+
+
+sm{
+ basic_example;
+
+ states{Initial; 
+        default; 
+        caps_locked;};
+ 
+ on_enter{
+     key_count = 10;
+ };
+ 
+ Actions{
+  send_lower_case_scan_code {
+     key_count = key_count - 1; 
+     print("key_count=",key_count,"\n");
+  };
+  send_upper_case_scan_code{
+     key_count = key_count - 1;
+     print("key_count=",key_count,"\n");
+  };
+ };
+ 
+ t{Initial; default;};
+ t{default; caps_locked; CAPS_LOCK;};
+ t{caps_locked; default; CAPS_LOCK;};
+
+ t{default; default; ANY_KEY; send_lower_case_scan_code;}; 
+ t{caps_locked; caps_locked; ANY_KEY; send_upper_case_scan_code;};
+};
+
+```
+
 
 
 
