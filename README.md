@@ -284,16 +284,25 @@ A state machine is *started* by visiting it, e.g. the previously mentioned __Sta
 
 Another important notion is the __set of active transitions__  __SAT(s,E)__ . This is - roughly - the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
 
-#### Execution of a state machin
+#### Execution of a state machine
 
-Conceptually the execution of a state machine follows the following "algorithm":
+Conceptually the execution of a state machine follows the following schema - very approximate :
 
 * While *AST* is not empty do
    * Fetch an event E
    * *L* := [] 
    * for each state s in *AST* do
-     * for each 
+     * for each transition t{s,s',E,actions,guards} in *SAT(s,E)* with at least one true g in guards do
+         * L += [s']
+         * Run each action in *actions*
+         * if s' is not in *AST* call *s'.on_enter*   (A)
+   * OLD_AST = AST
+   * N = set of all s in OLD_AST which weren't visited
+   * AST = L + N
+   * for each state s in OLD_AST - AST do
+     * call s.on_exit  (B)
 
+Especially steps (A) and (B) don't tell the whole truth - more on this later.
 
 
 
