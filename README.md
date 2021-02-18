@@ -1,5 +1,5 @@
 # machines4ceps
-__Write, run__, and __trace__ complex __state machines__ (__UML2__ statecharts, __Harel__ statecharts, state diagrams). Supports composite states, orthogonal regions, events, actions, init/exit etc. Small, fast, portable. Handles large state spaces (100k+). Monitoring, tracing, and a variety of communication protocols e.g. websockets, CAN field bus etc.
+__Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams). Supports composite states, orthogonal regions, events, actions, init/exit etc. Small, fast, portable. Handles large state spaces (100k+). Monitoring, tracing, and a variety of communication protocols e.g. websockets, CAN field bus etc.
 
 ## Installation
 
@@ -264,8 +264,15 @@ key_count=7
 
 ```
 
+### Setting up preconditions/ensuring invariants: *on_enter*
 
-#### Setting up preconditions/postconditions: *on_enter* and *on_exit*
+In order to give a sufficiently precise explanation of *on_enter* we need a couple of
+more fundamental definitions first. The single most important structure, when it comes to the execution of a state machine, is the *active states set*. 
+A state is __active__ exactly if it is in the *active states set* or *ASS*, a state is *inactive* if it is not active, 
+i.e. not a member of the *active states set*. The *ASS* is intially empty, a command like 
+__Start{__*NameOfStateMachine*__;};__ puts, conceptually speaking, the state referred to by *NameOfStateMachine* in the *active states set*. A state machine is a state. States with an inner structure - like state machines - are called __composite states__. If an inactive state becomes active, i.e. a state which is not in the *ASS* being put into the *ASS*, we say the state is being __entered__. A state is being __visited__ if it is added to the *ASS*, this includes the case of the state being already in the *ASS*.  A state machine is *started* by visiting it, e.g. the previously mentioned __Start{__*NameOfStateMachine*__};__ command visits the (composite) state referred to by *NameOfStateMachine*. Another important notion is the __set of viable transitions__  __SVT(s,E)__ . This is -roughly- the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
+
+
 
 
 
