@@ -378,6 +378,44 @@ S.T- S.T.Initial- S.U+ S.U.Initial+
 ```
 
 
+### Guards
+
+```javascript
+
+kind Event;
+kind Systemstate;
+kind Guard;
+
+
+Guard g1,g2;
+
+g1 = 1 < 2;
+g2 = 1 > 2;
+
+Event E;
+
+sm{
+ S;
+ states{Initial;a;b;c;};
+ t{Initial;a;g1;};
+ t{a;b;E;g2;};
+ t{a;c;E;!g2;};
+};
+
+Simulation{
+ Start{S;};
+ E;
+};
+
+```
+
+Output:
+
+```javascript
+S.Initial- S.a+ 
+S.a- S.c+ 
+```
+
 
 
 
