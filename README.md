@@ -292,6 +292,7 @@ Conceptually the execution of a state machine follows the following "algorithm":
    * Fetch an event E
    * *L* := [] 
    * for each state s in *AST* do
+     * for each 
 
 
 
