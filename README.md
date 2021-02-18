@@ -313,7 +313,7 @@ In the case a state machines is exited a potential *on_exit* routine is called.
 
 __Example:__
 
-```Pascal
+```javascript
 kind Event;
 kind Systemstate;
 
