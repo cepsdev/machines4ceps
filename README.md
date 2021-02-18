@@ -357,7 +357,7 @@ Simulation{
 };
 
 ```
-
+![](examples/first_steps/img/exit_enter_handlers.png)
 The code can be found in __examples/first_steps/exit_enter_handlers.ceps.
 
 To run this example, open a shell/terminal, change your working directory to the *machines4ceps* repo, and type:
