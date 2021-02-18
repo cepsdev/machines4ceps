@@ -266,11 +266,23 @@ key_count=7
 
 ### Setting up preconditions/ensuring invariants: *on_enter*
 
+#### Some definitions - skip this if you are not into details
+
 In order to give a sufficiently precise explanation of *on_enter* we need a couple of
-more fundamental definitions first. The single most important structure, when it comes to the execution of a state machine, is the *active states set*. 
+more fundamental definitions first. 
+
+The single most important structure, when it comes to the execution of a state machine, is the *active states set*. 
+
 A state is __active__ exactly if it is in the *active states set* or *ASS*, a state is *inactive* if it is not active, 
 i.e. not a member of the *active states set*. The *ASS* is intially empty, a command like 
-__Start{__*NameOfStateMachine*__;};__ puts, conceptually speaking, the state referred to by *NameOfStateMachine* in the *active states set*. A state machine is a state. States with an inner structure - like state machines - are called __composite states__. If an inactive state becomes active, i.e. a state which is not in the *ASS* being put into the *ASS*, we say the state is being __entered__. A state is being __visited__ if it is added to the *ASS*, this includes the case of the state being already in the *ASS*.  A state machine is *started* by visiting it, e.g. the previously mentioned __Start{__*NameOfStateMachine*__};__ command visits the (composite) state referred to by *NameOfStateMachine*. Another important notion is the __set of viable transitions__  __SVT(s,E)__ . This is -roughly- the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
+__Start{__*NameOfStateMachine*__;};__ puts, conceptually speaking, the state referred to by *NameOfStateMachine* in the *active states set*. 
+Yes, a state machine is a state. States with an inner structure - like state machines - are called __composite states__. 
+
+If an inactive state becomes active, i.e. a state which is not in the *ASS* being put into the *ASS*, we say the state is being __entered__. A state is being __visited__ if it is added to the *ASS*, this includes the case of the state being already in the *ASS*.  
+
+A state machine is *started* by visiting it, e.g. the previously mentioned __Start{__*NameOfStateMachine*__};__ command visits the (composite) state referred to by *NameOfStateMachine*. 
+
+Another important notion is the __set of viable transitions__  __SVT(s,E)__ . This is -roughly- the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
 
 
 
