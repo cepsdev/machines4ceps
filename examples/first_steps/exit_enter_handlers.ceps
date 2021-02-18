@@ -1,0 +1,39 @@
+kind Event;
+kind Systemstate;
+
+Event E;
+
+sm {
+ S;
+ on_enter{
+  print("S.on_enter()\n");
+ };
+
+ sm{
+   T;
+   on_enter{
+    print("T.on_enter()\n");
+   };
+   on_exit{
+    print("T.on_exit()\n");
+   };
+   states{Initial;};
+ };
+
+ sm {
+  U;
+  on_enter{
+   print("U.on_enter()\n");
+  };
+  states {Initial;};
+ };
+
+ states{Initial;};
+ t{Initial;T;};
+ t{T;U;E;};
+};
+
+Simulation{
+ Start{S;};
+ E;
+};

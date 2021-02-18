@@ -5,7 +5,6 @@ kind Systemstate;
 Event CAPS_LOCK, 
       ANY_KEY;
 
-Systemstate key_count;
 
 sm{
  basic_example;
