@@ -266,7 +266,8 @@ key_count=7
 
 ### Setting up preconditions/ensuring invariants: *on_enter*
 
-#### Some definitions - skip this if you are not into details
+#### Some definitions
+*(skip this if you are not into details)*
 
 In order to give a sufficiently precise explanation of *on_enter* we need a couple of
 more fundamental definitions first. 
@@ -284,7 +285,8 @@ A state machine is *started* by visiting it, e.g. the previously mentioned __Sta
 
 Another important notion is the __set of active transitions__  __SAT(s,E)__ . This is - roughly - the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
 
-#### Execution of a state machine - skip this if you are not into details
+#### Execution of a state machine  
+*(skip this if you are not into details)*
 
 Conceptually the execution of a state machine follows the following schema - very approximate :
 
@@ -305,7 +307,7 @@ Conceptually the execution of a state machine follows the following schema - ver
 
 Especially steps (A) and (B) don't tell the whole truth - a little bit more on this in the following paragraph.
 
-#### on_enter,on_exit
+#### on_enter, on_exit
 
 A state machine can define a special action *on_enter* which is called when the state machine is entered, i.e visted the very first time.
 The purpose of *on_enter* is the same as that of contructors in C++: to setup invariants.
