@@ -308,7 +308,7 @@ Especially steps (A) and (B) don't tell the whole truth - a little bit more on t
 #### on_enter,on_exit
 
 A state machine can define a special action *on_enter* which is called when the state machine is entered, i.e visted the very first time.
-The *on_enter* routines of sub states are called first. The purpose of *on_enter* is the same as that of contructors in C++: to setup invariants.
+The purpose of *on_enter* is the same as that of contructors in C++: to setup invariants.
 In the case a state machines is exited a potential *on_exit* routine is called.
 
 
