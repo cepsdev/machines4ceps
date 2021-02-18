@@ -311,6 +311,70 @@ A state machine can define a special action *on_enter* which is called when the 
 The purpose of *on_enter* is the same as that of contructors in C++: to setup invariants.
 In the case a state machines is exited a potential *on_exit* routine is called.
 
+__Example:__
+
+```Pascal
+kind Event;
+kind Systemstate;
+
+Event E;
+
+sm {
+ S;
+ on_enter{
+  print("S.on_enter()\n");
+ };
+ 
+ sm{
+   T;
+   on_enter{
+    print("T.on_enter()\n");
+   };
+   on_exit{
+    print("T.on_exit()\n");
+   };
+   states{Initial;};
+ };
+
+ sm {
+  U;
+  on_enter{
+   print("U.on_enter()\n");
+  };
+  states {Initial;};
+ };
+ 
+ states{Initial;};
+ t{Initial;T;};
+ t{T;U;E;};
+};
+
+Simulation{
+ Start{S;};
+ E;
+};
+
+```
+
+The code can be found in __examples/first_steps/exit_enter_handlers.ceps.
+
+To run this example, open a shell/terminal, change your working directory to the *machines4ceps* repo, and type:
+* __cd__ examples/first_steps
+* ../../bin/__ceps__ exit_enter_handlers.ceps
+
+Output is:
+
+```bash
+S.on_enter()
+T.on_enter()
+S.Initial- S.T+ S.T.Initial+ 
+T.on_exit()
+U.on_enter()
+S.T- S.T.Initial- S.U+ S.U.Initial+ 
+```
+
+
+
 
 
 
