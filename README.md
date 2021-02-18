@@ -282,7 +282,16 @@ If an inactive state becomes active, i.e. a state which is not in the *ASS* bein
 
 A state machine is *started* by visiting it, e.g. the previously mentioned __Start{__*NameOfStateMachine*__};__ command visits the (composite) state referred to by *NameOfStateMachine*. 
 
-Another important notion is the __set of viable transitions__  __SVT(s,E)__ . This is -roughly- the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
+Another important notion is the __set of active transitions__  __SAT(s,E)__ . This is - roughly - the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
+
+#### Execution of a state machin
+
+Conceptually the execution of a state machine follows the following "algorithm":
+
+* While *AST* is not empty do
+   * Fetch an event E
+   * *L* := [] 
+   * for each state s in *AST* do
 
 
 
