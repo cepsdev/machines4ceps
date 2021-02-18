@@ -278,7 +278,7 @@ i.e. not a member of the *active states set*. The *ASS* is intially empty, a com
 __Start{__*NameOfStateMachine*__;};__ puts, conceptually speaking, the state referred to by *NameOfStateMachine* in the *active states set*. 
 Yes, a state machine is a state. States with an inner structure - like state machines - are called __composite states__. 
 
-If an inactive state becomes active, i.e. a state which is not in the *ASS* being put into the *ASS*, we say the state is being __entered__. A state is being __visited__ if it is added to the *ASS*, this includes the case of the state being already in the *ASS*.  
+If an inactive state becomes active, i.e. a state which is not in the *ASS* being put into the *ASS*, we say the state is being __entered__. A state is being __visited__ if it is added to the *ASS*, this includes the case of the state being already in the *ASS*. A state being *entered* is also *visited*, but you can visit a state without entering it.  
 
 A state machine is *started* by visiting it, e.g. the previously mentioned __Start{__*NameOfStateMachine*__};__ command visits the (composite) state referred to by *NameOfStateMachine*. 
 
