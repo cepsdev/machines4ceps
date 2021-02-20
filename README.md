@@ -409,6 +409,8 @@ Simulation{
 
 ```
 
+![](examples/first_steps/img/simple_guard_example.png)
+
 Output:
 
 ```javascript
