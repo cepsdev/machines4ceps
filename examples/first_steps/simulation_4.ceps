@@ -1,0 +1,21 @@
+Simulation{
+ Start{basic_example;}; // as above
+
+ ANY_KEY;
+ CAPS_LOCK;
+ ANY_KEY;
+ CAPS_LOCK;
+ ANY_KEY;
+ ANY_KEY;
+ CAPS_LOCK;
+ ANY_KEY;
+ ANY_KEY;
+ ANY_KEY;
+ ANY_KEY;
+ CAPS_LOCK;
+ ANY_KEY;
+ ANY_KEY;
+ ANY_KEY;
+ ANY_KEY;
+ ANY_KEY;
+ };

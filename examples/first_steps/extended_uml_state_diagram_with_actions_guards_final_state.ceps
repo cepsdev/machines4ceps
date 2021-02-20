@@ -1,0 +1,46 @@
+kind Event;
+kind Systemstate;
+kind Guard;
+
+
+
+Event CAPS_LOCK, 
+      ANY_KEY;
+Systemstate key_count;
+
+Guard g,not_g;
+g = key_count == 0; 
+not_g = !g;
+
+sm{
+ basic_example;
+
+ states{Initial; 
+        default; 
+        caps_locked;
+        Final;};
+ 
+ on_enter{
+     key_count = 10;
+ };
+ 
+ Actions{
+  send_lower_case_scan_code {
+     key_count = key_count - 1; 
+     print("key_count=",key_count,"\n");
+  };
+  send_upper_case_scan_code{
+     key_count = key_count - 1;
+     print("key_count=",key_count,"\n");
+  };
+ };
+ 
+ t{Initial; default;};
+ t{default; caps_locked; CAPS_LOCK;};
+ t{caps_locked; default; CAPS_LOCK;};
+ t{default;Final;ANY_KEY;g;};
+ t{caps_locked;Final;ANY_KEY;g;};
+ t{default; default; ANY_KEY;not_g; send_lower_case_scan_code;}; 
+ t{caps_locked; caps_locked; ANY_KEY;not_g; send_upper_case_scan_code;};
+};
+
