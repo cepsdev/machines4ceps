@@ -471,7 +471,7 @@ sm{
 ```
 
 
-![](img/extended_uml_state_diagram_with_actions_guards_final_state.png)
+![](examples/first_steps/img/extended_uml_state_diagram_with_actions_guards_final_state.png)
 
 
 
