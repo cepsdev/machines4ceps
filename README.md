@@ -477,7 +477,68 @@ sm{
 
 
 
+### A Calculator
 
+
+```javascript
+kind Event;
+kind Systemstate;
+kind Guard;
+
+
+Event DigitOrDot, Equals, Operator, C, OFF;
+
+sm{
+ calculator;
+ states{Initial;Final;};
+ sm{
+  on;
+  on_enter{
+   print("on.on_enter()\n");
+  };
+  states{operand1;opEntered;operand2;result;Initial;};
+
+  t{Initial;operand1;};
+  t{operand1;operand1;DigitOrDot;};
+  t{operand1;opEntered;Operator;};
+  t{opEntered;operand2;};
+  t{operand2;operand2;DigitOrDot;};
+  t{operand2;result;Equals;};
+  t{result;operand1;};
+ };
+
+ t{Initial;on;};
+ t{on;on;C;};
+ t{on;Final;OFF;};
+};
+
+
+Simulation{
+ Start{calculator;};
+ DigitOrDot;
+ DigitOrDot;
+ Operator;
+ C;
+ DigitOrDot;
+ OFF;
+};
+```
+Source in __examples/first_steps/calculator.ceps__.
+
+Output:
+
+
+```javascript
+on.on_enter()
+calculator.Initial- calculator.on+ calculator.on.Initial+ 
+calculator.on.operand1+ calculator.on.Initial- 
+calculator.on.operand1- calculator.on.opEntered+ 
+calculator.on.opEntered- calculator.on.operand2+ 
+calculator.Final+ calculator.on- calculator.on.operand2-
+```
+
+
+![](examples/first_steps/img/calculator.png)
 
 
 
