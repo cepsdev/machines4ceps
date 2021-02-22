@@ -1,7 +1,8 @@
 #!/bin/sh
 
-echo parallelization="-j 12"
+parallelization="-j 12"
 cd ..
+echo $
 
 if ! git clone https://github.com/zeux/pugixml.git ; then
         echo >/dev/stderr "Couldn't clone pugixml"
