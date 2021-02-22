@@ -1,5 +1,6 @@
 #!/bin/sh
 
+echo parallelization="-j 12"
 cd ..
 
 if ! git clone https://github.com/zeux/pugixml.git ; then
@@ -15,7 +16,7 @@ fi
 cd ceps/core
 mkdir bin
 
-if ! make ; then
+if ! make $parallelization ; then
 	echo >/dev/stderr "Failed to make ceps"
 	exit 3
 fi
@@ -38,7 +39,7 @@ if ! git checkout CRYPTOPP_5_6_5 ; then
 	exit 6
 fi
 
-if ! make ; then
+if ! make $parallelization ; then
 	echo >/dev/stderr "Couldn't build cryptopp"
 	exit 7
 fi
@@ -48,7 +49,7 @@ cd ..
 
 cd machines4ceps
 mkdir bin
-if ! make TARGET=bin ; then 
+if ! make $parallelization TARGET=bin ; then 
 	echo >/dev/stderr "Couldn't buuild machines4ceps"
 	exit 9
 fi
