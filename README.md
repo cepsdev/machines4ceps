@@ -8,13 +8,18 @@ __Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, _
 * g++ (Version >= 9.0)
 * bison (Version >= 2.3)
 * make
-### Build Steps:
+### Using the Build Script
+ * git clone https://github.com/cepsdev/machines4ceps.git
+ * cd machines4ceps
+ * ./make_machines
+### Build Manually:
 All repositories need to be in the same directory as machines4ceps.
 * Clone pugixml:
   * git clone https://github.com/zeux/pugixml.git
 * Clone and build ceps:
   * git clone https://github.com/cepsdev/ceps.git
   * cd ceps/core
+  * mkdir bin
   * make
   * cd ../..
 * Clone log4ceps
