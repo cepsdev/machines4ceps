@@ -193,6 +193,39 @@ basic_example.send_upper_case_scan_code()
 basic_example.default+ basic_example.caps_locked- 
 basic_example.send_lower_case_scan_code()
 ```
+## Communication via WebSockets
+
+One of the supported protocols is __WebSocket__ (https://en.wikipedia.org/wiki/WebSocket). 
+
+### The option --ws_api PORT
+
+The option *--ws_api PORT*, where port is a 16 bit unsigned integer, will start ceps as a *WebSocket* server listening on port *PORT*. This allows us to send and receive events, set values etc. remotely via the WebSocket API.
+
+### Running the basic example as a WebSocket server
+
+Run 
+
+```bash
+ ../../bin/ceps basic_uml_state_diagram_with_actions.ceps empty_simulation.ceps --ws_api 3001
+```
+Open a second shell/terminal, and run websocat (https://github.com/vi/websocat):
+
+```bash
+ websocat ws://localhost:3001
+```
+
+If you type 
+
+```bash
+ EVENT CAPS_LOCK
+```
+
+You should observe a transition to the state __basic_example.caps_locked__, i.e the shell running the state machine should produce the output
+
+```bash
+basic_example.default- basic_example.caps_locked+ 
+```
+
 
 ## Extended States and guards
 
