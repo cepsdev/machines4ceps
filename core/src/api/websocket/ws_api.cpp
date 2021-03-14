@@ -194,11 +194,18 @@ std::string Websocket_interface::query(State_machine_simulation_core* smc,std::s
 }
 
 static std::pair<bool,std::string> get_http_attribute_content(std::string attr, std::vector<std::pair<std::string,std::string>> const & http_header){
- for(auto const & v : http_header){
-	 if (v.first == attr)
+    auto make_lower_case = [](std::string const & in)->std::string{
+        std::string r;
+
+        std::transform(in.begin(), in.end(), std::back_inserter(r), ::tolower);
+        
+        return r;
+    };
+    for(auto const & v : http_header){
+	 if (make_lower_case(v.first) == make_lower_case(attr))
 		 return {true,v.second};
- }
- return {false,{}};
+    }
+    return {false,{}};
 }
 
 static char base64set[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -713,11 +720,19 @@ void Websocket_interface::handler(int sck){
 
  std::string unconsumed_data;
  auto rhr = read_http_request(sck,unconsumed_data);
+ 
  if (!std::get<0>(rhr)) return;
 
+
+
  auto const & attrs = std::get<2>(rhr);
- if (!field_with_content("Upgrade","websocket",attrs) || !field_with_content("Connection","Upgrade",attrs)) return;
+ /*if (!field_with_content("upgrade","websocket",attrs)  || !field_with_content("Upgrade","websocket",attrs) || !field_with_content("Connection","Upgrade",attrs)) {
+     return;
+     }*/
+
+
  auto r = get_http_attribute_content("Sec-WebSocket-Key",attrs);
+ 
  if (!r.first)return;
 
  auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
