@@ -1,0 +1,8 @@
+Simulation{
+ Start{
+       a_spec;
+       start_program;
+ };
+
+};
+

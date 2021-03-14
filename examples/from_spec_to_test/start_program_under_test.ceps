@@ -1,0 +1,13 @@
+Event EXIT;
+
+sm{
+ start_program;
+ states{Initial;Run;Final;};
+ on_enter{
+  os_system("./start_prog");
+  start_timer(10.0*s,EXIT);
+ };
+ 
+ t{Initial;Run;};
+};
+

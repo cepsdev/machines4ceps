@@ -1,0 +1,2 @@
+#!/bin/sh
+cd vertx && gradle run 1> /dev/null 2> /dev/null 

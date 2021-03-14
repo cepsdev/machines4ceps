@@ -1,0 +1,21 @@
+
+Event DoneA, DoneB, DoneC, Error; 
+
+sm{ 
+
+ a_spec;
+
+ cover{ 
+      edges_upto_1;
+ };
+
+ states{Initial;A;B;C;};
+
+ t{Initial;A;DoneA;};
+ t{A;B;DoneB;};
+ t{B;C;DoneC;};
+};
+
+
+
+

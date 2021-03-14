@@ -1,0 +1,3 @@
+#!/bin/sh
+../../bin/ceps common.ceps a_spec.ceps start_program_under_test.ceps test_rig.ceps --ws_api 3001
+
