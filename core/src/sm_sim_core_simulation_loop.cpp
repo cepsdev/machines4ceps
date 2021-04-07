@@ -643,7 +643,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
           execution_ctxt.states2transitions_slot_start.resize(execution_ctxt.number_of_states+1);
           execution_ctxt.states2transitions_slots.clear();
 
-          for(std::size_t i = 0; i < execution_ctxt.number_of_states+1;++i){
+          for(ssize_t i = 0; i < execution_ctxt.number_of_states+1;++i){
               execution_ctxt.states2transitions_slot_start[i] = execution_ctxt.states2transitions_slots.size();
               for(std::size_t j = 0; j!= execution_ctxt.transitions.size();++j){
                   if (execution_ctxt.transitions[j].from == 0) continue;

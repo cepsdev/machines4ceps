@@ -1368,7 +1368,7 @@ int parse_sideeffect_ASSIGN()
 	 auto n = rw_rules_.size();
 
 	 int enter_rule = -1;
-	 for (int i = 0; i < n;++i) {
+	 for (size_t i = 0; i < n;++i) {
 	  if (lexer_id != rw_rules_[i].lexer_id_)continue;
 
 	  if (rw_rules_[i].pattern_len_ == 1 &&  prog_buffer_[rw_rules_[i].pattern_].t_.kind() == Token::TOK_ON_ENTER) {enter_rule=i;break;}
@@ -1457,14 +1457,14 @@ int parse_sideeffect_ASSIGN()
    bool active_state_with_composite_pattern = false;
    int current_pos = 0;
    std::vector<bool> guard_is_true(n);
-   for (int i = 0; i < n;++i) {
+   for (size_t i = 0; i < n;++i) {
     matching_rules_[i] = false;
     if (lexer_id != rw_rules_[i].lexer_id_){guard_is_true[i] = false;continue;}
     guard_is_true[i] = evaluate_guard(rw_rules_[i]);
    }
 
-   int min_matching_idx = INT_MAX;
-   int last_min_matching_idx = INT_MAX;
+   size_t min_matching_idx = INT_MAX;
+   size_t last_min_matching_idx = INT_MAX;
    auto state_raw_lexer = this->p_.get_state();
 
    bool dangling_token = false;
@@ -1480,7 +1480,7 @@ int parse_sideeffect_ASSIGN()
     last_min_matching_idx = min_matching_idx;
     //min_matching_idx = INT_MAX;
     active_state_with_composite_pattern = false;
-    for(decltype(n) i = 0; i < n;++i)
+    for(size_t i = 0; i < n;++i)
     {
      auto & cur_rule = rw_rules_[i];
      //std::cout << cur_rule.pattern_ <<" mt:" << prog_buffer_[cur_rule.pattern_].match_type_ << " mct:"<< prog_buffer_[cur_rule.pattern_].match_content_<< std::endl;
