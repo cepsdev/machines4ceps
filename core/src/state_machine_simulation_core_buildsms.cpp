@@ -802,18 +802,25 @@ static std::tuple<bool, std::string, std::vector<std::pair<std::string, std::str
 
 
 struct fmt_out_ctx{
+	bool inside_schema = false;
+
 	bool bold = false;
 	bool italic = false;
+	bool underline = false;
+
 	std::string foreground_color;
+	std::string foreground_color_modifier;
 	std::string suffix;
 	std::string eol="\n";
-	std::vector<std::string> info; 
+	std::vector<std::string> info;
+	std::vector<std::string> modifiers; 
     std::string indent_str = "  ";
 	int indent = 0;
 };
 
 static void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx){
 	if (is_schema) {
+		ctx.underline = true;
 		ctx.foreground_color = "214";
 		ctx.suffix = ":";
 		ctx.info.push_back("schema");
@@ -821,7 +828,8 @@ static void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx){
 }
 
 static void fmt_out_layout_inner_strct(fmt_out_ctx& ctx){
-	ctx.foreground_color = "25";
+	if (ctx.inside_schema) ctx.foreground_color = "184";
+	else ctx.foreground_color = "25";
 	ctx.suffix = ":";
 	//ctx.info.push_back("schema");
 }
@@ -832,6 +840,8 @@ static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
   os << ctx.indent_str;
  os << "\033[0m"; //reset
  if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+ if (ctx.underline) os << "\033[4m";
+ if (ctx.italic) os << "\033[3m";
  os << s;
  if (ctx.info.size()){
     os << "\033[0m"; //reset
@@ -861,12 +871,18 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 	{
 		auto lctx{ctx};
 		fmt_out_layout_inner_strct(lctx);
-		fmt_out(os,ceps::ast::name(strct),lctx);
+		if (ceps::ast::name(strct) == "one_of"){
+			lctx.italic = true;
+			lctx.suffix = "";
+			if (lctx.inside_schema) lctx.foreground_color = "228";
+			fmt_out(os,"one of",lctx);
+		} else fmt_out(os,ceps::ast::name(strct),lctx);
 	}
 	++ctx.indent;
 	for(auto n: strct.children()){
 		if (is_a_struct(n)){
-			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),ctx);
+			auto& strct{ceps::ast::as_struct_ref(n)};
+			fmt_out_handle_inner_struct(os,strct,ctx);
 		}
 	}
 }
@@ -874,6 +890,7 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx){
 	auto v = fetch_symbols_standing_alone(strct.children());
 	auto is_schema = v.end() != std::find_if(v.begin(),v.end(),[](ceps::ast::Symbol* p){ return ceps::ast::kind(*p) == "Schema"; });
+	ctx.inside_schema = is_schema;
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_outer_strct(is_schema,local_ctx);
