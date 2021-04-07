@@ -866,6 +866,19 @@ static std::vector<ceps::ast::Symbol*> fetch_symbols_standing_alone(std::vector<
 	 	r.push_back(ceps::ast::as_symbol_ptr(n));
 	return r;
 }
+static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx);
+
+static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> children, fmt_out_ctx ctx){
+	for(auto n: children){
+		if (is_a_struct(n)){
+			auto& strct{ceps::ast::as_struct_ref(n)};
+			fmt_out_handle_inner_struct(os,strct,ctx);
+		} else if (is_a_string(n)){
+			ctx.foreground_color = "25";
+			fmt_out(os,"\""+value(as_string_ref(n))+"\"",ctx);
+		}
+	}
+}
 
 static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx){		    
 	{
@@ -879,12 +892,7 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 		} else fmt_out(os,ceps::ast::name(strct),lctx);
 	}
 	++ctx.indent;
-	for(auto n: strct.children()){
-		if (is_a_struct(n)){
-			auto& strct{ceps::ast::as_struct_ref(n)};
-			fmt_out_handle_inner_struct(os,strct,ctx);
-		}
-	}
+	fmt_out_handle_children(os,strct.children(),ctx);
 }
 
 static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx){
