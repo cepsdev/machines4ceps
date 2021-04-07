@@ -874,8 +874,30 @@ static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nod
 			auto& strct{ceps::ast::as_struct_ref(n)};
 			fmt_out_handle_inner_struct(os,strct,ctx);
 		} else if (is_a_string(n)){
-			ctx.foreground_color = "25";
+			ctx.foreground_color = "78";
 			fmt_out(os,"\""+value(as_string_ref(n))+"\"",ctx);
+		} else if (is_an_identifier(n)){
+			auto& id = as_id_ref(n);
+			if("uint16" == name(id) || "uint32" == name(id) || "uint64" == name(id) || "uint8" == name(id) ||
+			   "int16" == name(id) || "int32" == name(id) || "int64" == name(id) || "int8" == name(id)){
+				ctx.foreground_color = "";
+				fmt_out(os,name(id),ctx);
+			}
+		} else if (is_binop(n)){
+			auto& opr = ceps::ast::as_binop_ref(n);
+			if (op_val(opr) == ".."){
+				auto left = opr.children()[0];
+				auto right = opr.children()[1];
+				auto is_int_rl = is_int(left);
+				auto is_int_rr = is_int(right);
+
+				if (is_int_rl.first && is_int_rr.first){
+					ctx.foreground_color = "";
+					std::stringstream s1; s1 << is_int_rl.second; 
+					std::stringstream s2; s2 << is_int_rr.second;
+					fmt_out(os,s1.str() + " .. " + s2.str(),ctx);
+				}
+			}
 		}
 	}
 }
