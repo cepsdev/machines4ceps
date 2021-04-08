@@ -217,6 +217,9 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 		ceps::Cepsparser parser{driver};
 		if (parser.parse() != 0 || driver.errors_occured())
 			fatal_(ERR_CEPS_PARSER, file_name);
+		
+		fmt_out(std::cout, driver.parsetree().get_root().children());
+
 		ceps::interpreter::evaluate(current_universe(),
 									driver.parsetree().get_root(),
 									ceps_env_current().get_global_symboltable(),

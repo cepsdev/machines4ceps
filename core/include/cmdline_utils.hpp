@@ -52,8 +52,17 @@ struct Result_process_cmd_line
    bool print_statemachines = false;
    bool dot_gen = false;
    bool dot_gen_one_file_per_top_level_statemachine = false;
+   
+
+   // The following two flags control the console dump of the
+   // evaluated and raw representation 
    bool print_evaluated_input_tree = false;
+   bool print_raw_input_tree = false;
+   // The format of the console dump can be altered via diverse format options
+   // --format OP1 --format OP2 ... --format OPn
+   // OPi can be asciidoc, ansi
    std::vector<std::string> output_format_flags;
+
    bool print_evaluated_postprocessing_tree = false;
    bool print_signal_generators = false;
    std::string live_log_port = "3000";
