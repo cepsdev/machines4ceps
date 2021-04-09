@@ -24,6 +24,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 struct Result_process_cmd_line
 {
+   bool valid = false;
    bool version_flag_set = false;
    bool debug_mode = false;
    bool interactive_mode = false;

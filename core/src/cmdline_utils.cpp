@@ -192,6 +192,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 	std::vector<std::string> post_processing_rel_paths;
 
 	Result_process_cmd_line r = r_init;
+	r.valid = true;
 
 	for(int i = 1; i < argc;++i)
 	{

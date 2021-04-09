@@ -131,7 +131,8 @@ static std::stringstream read(Statefulscanner<Memory<char>,char>& scanner){
 
 std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_files(
         std::vector<std::string> const & file_names,
-        std::string& last_file_processed)
+        std::string& last_file_processed,
+		Result_process_cmd_line result_cmd_line)
 {
 	std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
     bool next_is_expression = false;
@@ -235,8 +236,9 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 		ceps::Cepsparser parser{driver};
 		if (parser.parse() != 0 || driver.errors_occured())
 			fatal_(ERR_CEPS_PARSER, file_name);
-		
-		//fmt_out(std::cout, driver.parsetree().get_root().children());
+
+		if (result_cmd_line.print_raw_input_tree)
+		 fmt_out(std::cout, ceps::ast::nlf_ptr(driver.parsetree().get_root())->children());
 
 		ceps::interpreter::evaluate(current_universe(),
 									driver.parsetree().get_root(),
@@ -1264,7 +1266,7 @@ void init_state_machine_simulation(	int argc,
         }
     }
 
-    smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed);
+    smc->process_files(result_cmd_line.definition_file_rel_paths,last_file_processed,result_cmd_line);
 }
 
 

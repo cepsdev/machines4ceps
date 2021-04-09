@@ -17,6 +17,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include "core/include/docgen/docgenerator.hpp"
 
+using namespace ceps::ast;
+
 
 
 struct fmt_out_ctx{
@@ -88,6 +90,7 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 
 static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> children, fmt_out_ctx ctx){
 	for(auto n: children){
+		//std::cout << *n << std::endl;
 		if (is_a_struct(n)){
 			auto& strct{ceps::ast::as_struct_ref(n)};
 			fmt_out_handle_inner_struct(os,strct,ctx);
@@ -116,6 +119,10 @@ static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nod
 					fmt_out(os,s1.str() + " .. " + s2.str(),ctx);
 				}
 			}
+		} else if (is<Ast_node_kind::loop>(n)){
+			std::cout << "!!" << std::endl;
+		} else if (auto inner = nlf_ptr(n)){
+			 fmt_out_handle_children(os, inner->children(), ctx);
 		}
 	}
 }
@@ -146,7 +153,7 @@ static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& str
 	}
 	++ctx.indent;
 	for(auto n: strct.children()){
-		if (is_a_struct(n)){
+		if (is<Ast_node_kind::structdef>(n)){
 			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),ctx);
 		}
 	}
@@ -155,19 +162,10 @@ static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& str
 void fmt_out(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> const & ns){
 	using namespace ceps::ast;
 	fmt_out_ctx ctx;
-
 	for(auto n : ns){
-		//os << "\033[1;34m" << "Hello!"  << "\033[0;39m" << "\n";
-		//os << "\033[38;5;19m\033[3;m" << "Hello!"  << "\033[0;39m" << "\n";
-		if (is_a_struct(n)){
+		if (is<Ast_node_kind::structdef>(n)){
 			auto&  current_struct{as_struct_ref(n)};
 			fmt_out_handle_outer_struct(os,current_struct,ctx);
-
-
-
-			//os << "\033[1;34m" << name(as_struct_ref(n)) << "\033[0;39m" << "\n";
-			//os << "\033[1;34m" << v.size() << "\033[0;39m" << "\n";
-
 		}
 	}
 }
