@@ -238,7 +238,9 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 			fatal_(ERR_CEPS_PARSER, file_name);
 
 		if (result_cmd_line.print_raw_input_tree)
-		 fmt_out(std::cout, ceps::ast::nlf_ptr(driver.parsetree().get_root())->children());
+		 fmt_out(std::cout, 
+		         ceps::ast::nlf_ptr(driver.parsetree().get_root())->children(),
+				 &ceps_env_current().get_global_symboltable());
 
 		ceps::interpreter::evaluate(current_universe(),
 									driver.parsetree().get_root(),

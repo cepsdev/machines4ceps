@@ -31,6 +31,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <condition_variable>
 #include "ceps_all.hh"
 
-void fmt_out(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> const & ns);
+void fmt_out(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> const & ns, ceps::parser_env::Symboltable* symtab = nullptr);
 
 #endif

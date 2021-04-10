@@ -27,16 +27,23 @@ struct fmt_out_ctx{
 	bool bold = false;
 	bool italic = false;
 	bool underline = false;
+	bool ignore_indent = false;
 
 	std::string foreground_color;
 	std::string foreground_color_modifier;
 	std::string suffix;
+	std::string prefix;
 	std::string eol="\n";
 	std::vector<std::string> info;
 	std::vector<std::string> modifiers; 
     std::string indent_str = "  ";
 	int indent = 0;
+	ceps::parser_env::Symboltable* symtab = nullptr;
 };
+
+static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx);
+static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx);
+static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx);
 
 static void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx){
 	if (is_schema) {
@@ -54,14 +61,61 @@ static void fmt_out_layout_inner_strct(fmt_out_ctx& ctx){
 	//ctx.info.push_back("schema");
 }
 
+static void fmt_out_layout_macro_name(fmt_out_ctx& ctx){
+	if (ctx.inside_schema) ctx.foreground_color = "4";
+	else ctx.foreground_color = "4";
+	ctx.bold = true;
+	ctx.italic = true;
+	ctx.suffix = ":";
+}
+
+static void fmt_out_layout_macro_keyword(fmt_out_ctx& ctx){
+	if (ctx.inside_schema) ctx.foreground_color = "5";
+	else ctx.foreground_color = "5";
+	ctx.bold = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+}
+
+static void fmt_out_layout_loop_keyword(fmt_out_ctx& ctx){
+	if (ctx.inside_schema) ctx.foreground_color = "5";
+	else ctx.foreground_color = "5";
+	ctx.bold = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+}
+
+static void fmt_out_layout_loop_in_keyword(fmt_out_ctx& ctx){
+	if (ctx.inside_schema) ctx.foreground_color = "5";
+	else ctx.foreground_color = "5";
+	ctx.bold = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+	ctx.ignore_indent = true;
+}
+
+static void fmt_out_layout_loop_variable(fmt_out_ctx& ctx){
+	if (ctx.inside_schema) ctx.foreground_color = "6";
+	else ctx.foreground_color = "6";
+	ctx.italic = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+	ctx.ignore_indent = true;
+}
 
 static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
- for(int i = 0; i < ctx.indent; ++ i)
-  os << ctx.indent_str;
+ if(!ctx.ignore_indent) for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
  os << "\033[0m"; //reset
  if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
  if (ctx.underline) os << "\033[4m";
  if (ctx.italic) os << "\033[3m";
+ if (ctx.bold) os << "\033[1m";
+
+ os << ctx.prefix;
  os << s;
  if (ctx.info.size()){
     os << "\033[0m"; //reset
@@ -86,11 +140,67 @@ static std::vector<ceps::ast::Symbol*> fetch_symbols_standing_alone(std::vector<
 	 	r.push_back(ceps::ast::as_symbol_ptr(n));
 	return r;
 }
-static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx);
 
-static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> children, fmt_out_ctx ctx){
+static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx){
+	if (ctx.symtab == nullptr) 
+		return;
+	auto symbol = ctx.symtab->lookup(name(macro),false,false,false);
+	if (symbol == nullptr || symbol->category != ceps::parser_env::Symbol::MACRO)
+		return;
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_macro_keyword(local_ctx);
+		fmt_out(os,"Macro",local_ctx);
+	}
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_macro_name(local_ctx);
+		fmt_out(os,name(macro),local_ctx);
+	}
+	++ctx.indent;
+	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),ctx);
+}
+
+static void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out_ctx ctx){
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_loop_keyword(local_ctx);
+		fmt_out(os,"for each",local_ctx);
+	}
+	auto& loop_head =  as_loop_head_ref(loop.children()[0]);
+	ceps::ast::Nodebase_ptr body = loop.children()[1];
+	//std::cout << loop_head << std::endl;
+	ceps::ast::Identifier& id  = ceps::ast::as_id_ref(loop_head.children()[0]);
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_loop_variable(local_ctx);
+		fmt_out(os,name(id),local_ctx);
+	}
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_loop_in_keyword(local_ctx);
+		fmt_out(os,"in",local_ctx);
+	}
+	os << ":" << ctx.eol;
+	++ctx.indent;
+	fmt_out_handle_children(os,nlf_ptr(body)->children(),ctx);
+}
+
+static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx){
+	if (is<Ast_node_kind::loop>(n)){
+		fmt_out_handle_loop(os,as_loop_ref(n),ctx);			
+	} else if (is<Ast_node_kind::macro_definition>(n)) {
+		fmt_out_handle_macro_definition(os,as_macrodef_ref(n),ctx);
+	} else if (is<Ast_node_kind::valdef>(n)){
+
+	}
+	else if (auto inner = nlf_ptr(n)){
+			 fmt_out_handle_children(os, inner->children(), ctx);
+	}
+}
+
+static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx){
 	for(auto n: children){
-		//std::cout << *n << std::endl;
 		if (is_a_struct(n)){
 			auto& strct{ceps::ast::as_struct_ref(n)};
 			fmt_out_handle_inner_struct(os,strct,ctx);
@@ -119,11 +229,7 @@ static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nod
 					fmt_out(os,s1.str() + " .. " + s2.str(),ctx);
 				}
 			}
-		} else if (is<Ast_node_kind::loop>(n)){
-			std::cout << "!!" << std::endl;
-		} else if (auto inner = nlf_ptr(n)){
-			 fmt_out_handle_children(os, inner->children(), ctx);
-		}
+		} else fmt_handle_node(os, n, ctx);
 	}
 }
 
@@ -159,13 +265,14 @@ static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& str
 	}
 }
 
-void fmt_out(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> const & ns){
+void fmt_out(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> const & ns,ceps::parser_env::Symboltable* symtab){
 	using namespace ceps::ast;
 	fmt_out_ctx ctx;
+	ctx.symtab = symtab;
 	for(auto n : ns){
 		if (is<Ast_node_kind::structdef>(n)){
 			auto&  current_struct{as_struct_ref(n)};
 			fmt_out_handle_outer_struct(os,current_struct,ctx);
-		}
+		} else fmt_handle_node(os,n,ctx);
 	}
 }
