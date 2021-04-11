@@ -28,6 +28,7 @@ struct fmt_out_ctx{
 	bool italic = false;
 	bool underline = false;
 	bool ignore_indent = false;
+	bool normal_intensity = false;
 
 	std::string foreground_color;
 	std::string foreground_color_modifier;
@@ -126,6 +127,15 @@ static void fmt_out_layout_val_keyword(fmt_out_ctx& ctx){
 	ctx.eol = "";
 }
 
+static void fmt_out_layout_label(fmt_out_ctx& ctx){
+	ctx.suffix = "";
+	ctx.underline = true;
+	ctx.normal_intensity = true;
+}
+
+
+
+
 
 static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
  if(!ctx.ignore_indent) for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
@@ -134,6 +144,7 @@ static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
  if (ctx.underline) os << "\033[4m";
  if (ctx.italic) os << "\033[3m";
  if (ctx.bold) os << "\033[1m";
+ if (ctx.normal_intensity) os << "\033[22m";
 
  os << ctx.prefix;
  os << s;
@@ -239,6 +250,25 @@ static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out
 
 
 		os <<  ctx.eol;
+	} else if (is<Ast_node_kind::label>(n)){
+		auto& label{ceps::ast::as_label_ref(n)};
+		auto& attrs{ceps::ast::attributes(label)};
+		std::stringstream title;
+		std::string stitle;
+		for(size_t i = 0; i != attrs.size(); i+=2){
+			std::string what = value(ceps::ast::as_string_ref(attrs[i]));
+			if (what != "title") continue;
+			if (ceps::ast::is_a_string(attrs[i+1]))
+				title << ceps::ast::value(ceps::ast::as_string_ref(attrs[i+1]));
+		}
+		if (title.str().length() == 0) stitle = ceps::ast::name(label);
+		else stitle = title.str();
+		{
+			auto local_ctx{ctx};
+			fmt_out_layout_label(local_ctx);
+			fmt_out(os,stitle,local_ctx);
+		}
+
 	}
 	else if (auto inner = nlf_ptr(n)){
 			 fmt_out_handle_children(os, inner->children(), ctx);
