@@ -107,6 +107,26 @@ static void fmt_out_layout_loop_variable(fmt_out_ctx& ctx){
 	ctx.ignore_indent = true;
 }
 
+static void fmt_out_layout_val_var(fmt_out_ctx& ctx){
+	if (ctx.inside_schema) ctx.foreground_color = "6";
+	else ctx.foreground_color = "6";
+	ctx.italic = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+	ctx.ignore_indent = true;
+}
+
+static void fmt_out_layout_val_keyword(fmt_out_ctx& ctx){
+	if (ctx.inside_schema) ctx.foreground_color = "5";
+	else ctx.foreground_color = "5";
+	ctx.bold = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+}
+
+
 static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
  if(!ctx.ignore_indent) for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
  os << "\033[0m"; //reset
@@ -192,7 +212,33 @@ static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out
 	} else if (is<Ast_node_kind::macro_definition>(n)) {
 		fmt_out_handle_macro_definition(os,as_macrodef_ref(n),ctx);
 	} else if (is<Ast_node_kind::valdef>(n)){
+		{
+			auto local_ctx{ctx};
+			fmt_out_layout_val_keyword(local_ctx);
+			fmt_out(os,"val",local_ctx);
+		}
+		auto& valdef {as_valdef_ref(n)};
+		auto lhs = name(valdef); 
 
+		{
+			auto local_ctx{ctx};
+			fmt_out_layout_val_var(local_ctx);
+			fmt_out(os,lhs,local_ctx);
+		}
+
+		{
+			auto local_ctx{ctx};
+			fmt_out_layout_val_keyword(local_ctx);
+			local_ctx.ignore_indent = true;
+			fmt_out(os,"=",local_ctx);
+		}
+
+		
+
+
+
+
+		os <<  ctx.eol;
 	}
 	else if (auto inner = nlf_ptr(n)){
 			 fmt_out_handle_children(os, inner->children(), ctx);
