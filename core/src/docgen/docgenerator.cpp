@@ -129,7 +129,8 @@ static void fmt_out_layout_val_keyword(fmt_out_ctx& ctx){
 
 static void fmt_out_layout_label(fmt_out_ctx& ctx){
 	ctx.suffix = "";
-	ctx.underline = true;
+	//ctx.underline = true;
+	ctx.prefix = "📎 ";
 	ctx.normal_intensity = true;
 }
 
