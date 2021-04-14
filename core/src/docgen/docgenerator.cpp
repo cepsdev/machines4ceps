@@ -41,6 +41,7 @@ struct fmt_out_ctx{
 	std::vector<std::string> modifiers; 
     std::string indent_str = "  ";
 	int indent = 0;
+	int linebreaks_before = 0;
 	ceps::parser_env::Symboltable* symtab = nullptr;
 	std::shared_ptr<std::vector<Nodebase_ptr>> comment_stmt_stack;
 };
@@ -73,7 +74,7 @@ static void fmt_out_layout_macro_name(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.italic = true;
 	ctx.suffix = ":";
-	ctx.eol = "\n\n";
+	//ctx.eol = "\n\n";
 }
 
 static void fmt_out_layout_macro_keyword(fmt_out_ctx& ctx){
@@ -164,6 +165,7 @@ static void fmt_out_layout_if_keyword(fmt_out_ctx& ctx){
 }
 
 static void fmt_out_layout_label(fmt_out_ctx& ctx){
+	ctx.linebreaks_before = 1;
 	ctx.suffix = "";
 	ctx.eol = "\n\n";
 	//ctx.underline = true;
@@ -291,6 +293,7 @@ static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
  if (ctx.bold) os << "\033[1m";
  if (ctx.normal_intensity) os << "\033[22m";
  if (ctx.faint_intensity) os << "\033[2m";
+ for(int i = 0; i < ctx.linebreaks_before;++i) os << ctx.eol; 
 
  os << ctx.prefix;
  os << s;
@@ -331,15 +334,39 @@ static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrode
 	auto symbol = ctx.symtab->lookup(name(macro),false,false,false);
 	if (symbol == nullptr || symbol->category != ceps::parser_env::Symbol::MACRO)
 		return;
+
+	auto const & attrs = attributes(macro);
+	std::stringstream title;
+	std::stringstream initial;
+
+	std::string stitle;
+	std::string sinitial;
+	
+	for(size_t i = 0; i != attrs.size(); i+=2){
+		std::string what = value(ceps::ast::as_string_ref(attrs[i]));
+		auto where = &title;
+		if (what == "initial") where = &initial;
+		
+		if (ceps::ast::is_a_string(attrs[i+1]))
+			*where << ceps::ast::value(ceps::ast::as_string_ref(attrs[i+1]));
+		else if (ceps::ast::is_int(attrs[i+1]).first)
+			*where << ceps::ast::value(ceps::ast::as_int_ref(attrs[i+1]));
+		else if (is<Ast_node_kind::float_literal>(attrs[i+1]))
+			*where << ceps::ast::value(ceps::ast::as_double_ref(attrs[i+1]));
+	}
+	stitle = title.str();
+	sinitial = initial.str();
+
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_macro_keyword(local_ctx);
-		fmt_out(os,"Macro",local_ctx);
+
+		fmt_out(os,sinitial.length() > 0 ? sinitial : "Macro",local_ctx);
 	}
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_macro_name(local_ctx);
-		fmt_out(os,name(macro),local_ctx);
+		fmt_out(os,stitle.length() > 0 ? stitle : name(macro),local_ctx);
 	}
 	++ctx.indent;
 	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),ctx);
