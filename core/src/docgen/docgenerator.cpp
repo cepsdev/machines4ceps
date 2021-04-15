@@ -24,24 +24,25 @@ using namespace ceps::ast;
 struct fmt_out_ctx{
 	bool inside_schema = false;
 
-	bool bold = false;
-	bool italic = false;
-	bool underline = false;
-	bool ignore_indent = false;
-	bool normal_intensity = false;
-	bool faint_intensity = false;
-	bool c_style_struct = true;
+	bool bold                         = false;
+	bool italic                       = false;
+	bool underline                    = false;
+	bool ignore_indent                = false;
+	bool normal_intensity             = false;
+	bool faint_intensity              = false;
+	bool c_style_struct               = true;
+	std::string inline_comment_prefix = " -- ";
 
 	std::string foreground_color;
 	std::string foreground_color_modifier;
 	std::string suffix;
 	std::string prefix;
-	std::string eol="\n";
+	std::string eol                   ="\n";
 	std::vector<std::string> info;
 	std::vector<std::string> modifiers; 
-    std::string indent_str = "  ";
-	int indent = 0;
-	int linebreaks_before = 0;
+    std::string indent_str            = "  ";
+	int indent                        = 0;
+	int linebreaks_before             = 0;
 	ceps::parser_env::Symboltable* symtab = nullptr;
 	bool ignore_comment_stmt_stack = false;
 	std::shared_ptr<std::vector<Nodebase_ptr>> comment_stmt_stack;
@@ -123,11 +124,13 @@ static void fmt_out_layout_loop_complete_line(fmt_out_ctx& ctx){
 	if (ctx.inside_schema) ctx.foreground_color = "6";
 	else ctx.foreground_color = "6";
 	ctx.bold = true;
+	ctx.ignore_indent = true;
 }
 
 static void fmt_out_layout_valdef_complete_line(fmt_out_ctx& ctx){
 	if (ctx.inside_schema) ctx.foreground_color = "6";
 	else ctx.foreground_color = "6";
+	ctx.ignore_indent = true;
 	ctx.bold = true;
 }
 
@@ -160,6 +163,15 @@ static void fmt_out_layout_val_keyword(fmt_out_ctx& ctx){
 	ctx.eol = "";
 }
 
+static void fmt_out_layout_val_arrow(fmt_out_ctx& ctx){
+	ctx.foreground_color = "";
+	ctx.bold = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+	ctx.ignore_indent = true;
+}
+
 static void fmt_out_layout_if_keyword(fmt_out_ctx& ctx){
 	if (ctx.inside_schema) ctx.foreground_color = "5";
 	else ctx.foreground_color = "5";
@@ -185,25 +197,18 @@ static void print_comment_impl(std::ostream& os,std::vector<Nodebase*> const & v
 	local_ctx_string.foreground_color = "";
 	local_ctx_string.italic = true;
 	local_ctx_string.ignore_indent = true;
+	local_ctx_string.normal_intensity = false;
+	local_ctx_string.bold = false;
+
 	for ( auto n :v){		
 		if (is<Ast_node_kind::stmts>(n))
 			print_comment_impl(os, as_stmts_ref(n).children(), ctx);
-		else fmt_out_handle_expr(os,n,ctx,false,local_ctx_string);		 
-		/*else if (is<Ast_node_kind::int_literal>(n))
-			os << value(as_int_ref(n));		 
-		else if (is<Ast_node_kind::float_literal>(n))
-			os << value(as_double_ref(n));
-		else if (is<Ast_node_kind::float_literal>(n))
-			os << value(as_double_ref(n));
-		else if (auto inner = nlf_ptr(n)){
-			 print_comment_impl(os, inner->children(), ctx);
-		}			 */
+		else fmt_out_handle_expr(os,n,ctx,false,local_ctx_string);		
 	}
 }
 
 static void print_comment(std::ostream& os, fmt_out_ctx const & ctx){
-	//std::stringstream ss;
-	os << "-- ";// << ss.str();
+	os <<  ctx.inline_comment_prefix;
 	print_comment_impl(os, *ctx.comment_stmt_stack, ctx);
 }
 
@@ -229,25 +234,27 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 	else if (is<Ast_node_kind::binary_operator>(expr))
 	{
 		auto& bop{as_binop_ref(expr)};
-		fmt_out_handle_expr(os,bop.left(), ctx,escape_strings,ctx_base_string);
-		auto sop = op_val(bop);
-
+		if (op_val(bop) != "#") //comment operator
 		{
-			auto local_ctx{ctx};
-			local_ctx.foreground_color ="3";
-			if (sop.length() > 1 || sop == ">" || sop == "<" || sop == "=") fmt_out(os," "+sop+" ",local_ctx);
-				else fmt_out(os,sop,local_ctx);
+			fmt_out_handle_expr(os,bop.left(), ctx,escape_strings,ctx_base_string);
+			auto sop = op_val(bop);
+			{
+				auto local_ctx{ctx};
+				local_ctx.foreground_color ="3";
+				if (sop.length() > 1 || sop == ">" || sop == "<" || sop == "=") fmt_out(os," "+sop+" ",local_ctx);
+					else fmt_out(os,sop,local_ctx);
+			}
 		}
-
 		fmt_out_handle_expr(os,bop.right(), ctx,escape_strings,ctx_base_string);
 	} 
 	else if (is<Ast_node_kind::unary_operator>(expr))
 	{
 		auto& uop{as_unary_op_ref(expr)};
-		auto sop = "";
+		std::string sop = "";
 		if (op(uop) == '!') sop = "!";
 		else if (op(uop) == '-') sop = "-";
 		else if (op(uop) == '~') sop = "~";
+		else if ( (unsigned short)op(uop) <= 255) sop.push_back(op(uop));
 		{
 			auto local_ctx{ctx};
 			local_ctx.foreground_color = "3";
@@ -270,7 +277,8 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 		ss << value(as_double_ref(expr));
 		fmt_out(os,ss.str(),ctx);
 	} else if (is<Ast_node_kind::identifier>(expr)){
-		fmt_out(os,name(as_id_ref(expr)),ctx);
+		if (name(as_id_ref(expr)) == "Infinity") fmt_out(os,"∞",ctx);
+		else fmt_out(os,name(as_id_ref(expr)),ctx);
 	} else if (is<Ast_node_kind::symbol>(expr)){
 		fmt_out(os,name(as_symbol_ref(expr)),ctx);
 	} else if (is<Ast_node_kind::func_call>(expr)){
@@ -331,7 +339,11 @@ static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
 	 os << "\033[0m";
 	 os << "\033[2m";
 	 os << "\033[3m";
+	 std::string eol_temp = ctx.eol;
+	 ctx.eol = "";
+	 ctx.suffix = "";
      print_comment(os,ctx);
+	 ctx.eol = eol_temp;
 	 ctx.comment_stmt_stack->clear();
  }
  os << "\033[0m"; //reset
@@ -426,23 +438,23 @@ static void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out
 }
 
 static void fmt_out_handle_valdef(std::ostream& os, Valdef& valdef, fmt_out_ctx ctx){
-	{
+	/*{
 		auto local_ctx{ctx};
 		fmt_out_layout_val_keyword(local_ctx);
 		fmt_out(os,"val",local_ctx);
-	}
+	}*/
 	auto lhs = name(valdef); 
-
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_val_var(local_ctx);
+		local_ctx.ignore_indent = false;
 		fmt_out(os,lhs,local_ctx);
 	}
 	{
 		auto local_ctx{ctx};
-		fmt_out_layout_val_keyword(local_ctx);
+		fmt_out_layout_val_arrow(local_ctx);
 		local_ctx.ignore_indent = true;
-		fmt_out(os,"=",local_ctx);
+		fmt_out(os,"←",local_ctx);
 	}
 
     //std::cout << *valdef.children()[0] << std::endl;
