@@ -43,6 +43,7 @@ struct fmt_out_ctx{
 	int indent = 0;
 	int linebreaks_before = 0;
 	ceps::parser_env::Symboltable* symtab = nullptr;
+	bool ignore_comment_stmt_stack = false;
 	std::shared_ptr<std::vector<Nodebase_ptr>> comment_stmt_stack;
 };
 
@@ -51,6 +52,8 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx);
 static void fmt_out_handle_valdef(std::ostream& os, ceps::ast::Valdef& valdef, fmt_out_ctx ctx);
 static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx);
+static void fmt_out_layout_inner_strct(fmt_out_ctx& ctx);
+static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings= true, fmt_out_ctx ctx_base_string = {});
 
 static void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx){
 	if (is_schema) {
@@ -58,7 +61,7 @@ static void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx){
 		ctx.foreground_color = "214";
 		ctx.suffix = ":";
 		ctx.info.push_back("schema");
-	}
+	} else return fmt_out_layout_inner_strct(ctx);
 }
 
 static void fmt_out_layout_inner_strct(fmt_out_ctx& ctx){
@@ -146,6 +149,8 @@ static void fmt_out_layout_val_var(fmt_out_ctx& ctx){
 	ctx.ignore_indent = true;
 }
 
+
+
 static void fmt_out_layout_val_keyword(fmt_out_ctx& ctx){
 	if (ctx.inside_schema) ctx.foreground_color = "5";
 	else ctx.foreground_color = "5";
@@ -174,23 +179,32 @@ static void fmt_out_layout_label(fmt_out_ctx& ctx){
 }
 
 static void print_comment_impl(std::ostream& os,std::vector<Nodebase*> const & v, fmt_out_ctx const & ctx){
-	for ( auto n :v){
-		if (is<Ast_node_kind::string_literal>(n))
-			os << value(as_string_ref(n));		 
-		else if (is<Ast_node_kind::int_literal>(n))
+	auto local_ctx_string{ctx};
+	local_ctx_string.ignore_comment_stmt_stack = true;
+	local_ctx_string.faint_intensity = true;
+	local_ctx_string.foreground_color = "";
+	local_ctx_string.italic = true;
+	local_ctx_string.ignore_indent = true;
+	for ( auto n :v){		
+		if (is<Ast_node_kind::stmts>(n))
+			print_comment_impl(os, as_stmts_ref(n).children(), ctx);
+		else fmt_out_handle_expr(os,n,ctx,false,local_ctx_string);		 
+		/*else if (is<Ast_node_kind::int_literal>(n))
 			os << value(as_int_ref(n));		 
+		else if (is<Ast_node_kind::float_literal>(n))
+			os << value(as_double_ref(n));
 		else if (is<Ast_node_kind::float_literal>(n))
 			os << value(as_double_ref(n));
 		else if (auto inner = nlf_ptr(n)){
 			 print_comment_impl(os, inner->children(), ctx);
-		}			 
+		}			 */
 	}
 }
 
 static void print_comment(std::ostream& os, fmt_out_ctx const & ctx){
-	std::stringstream ss;
-	print_comment_impl(ss, *ctx.comment_stmt_stack, ctx);
-	os << " -- " << ss.str();
+	//std::stringstream ss;
+	os << "-- ";// << ss.str();
+	print_comment_impl(os, *ctx.comment_stmt_stack, ctx);
 }
 
 static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
@@ -207,15 +221,15 @@ static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodeb
 	v.push_back(r);
 }
 
-static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx){
+static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings, fmt_out_ctx ctx_base_string){
 	ctx.suffix = ctx.prefix = ctx.eol = ""; ctx.ignore_indent = true; ctx.foreground_color = "6";
 	if (is<Ast_node_kind::expr>(expr))
 	 for(auto e : nlf_ptr(expr)->children())  
-	  fmt_out_handle_expr(os,e, ctx);
+	  fmt_out_handle_expr(os,e, ctx,escape_strings,ctx_base_string);
 	else if (is<Ast_node_kind::binary_operator>(expr))
 	{
 		auto& bop{as_binop_ref(expr)};
-		fmt_out_handle_expr(os,bop.left(), ctx);
+		fmt_out_handle_expr(os,bop.left(), ctx,escape_strings,ctx_base_string);
 		auto sop = op_val(bop);
 
 		{
@@ -225,7 +239,7 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 				else fmt_out(os,sop,local_ctx);
 		}
 
-		fmt_out_handle_expr(os,bop.right(), ctx);
+		fmt_out_handle_expr(os,bop.right(), ctx,escape_strings,ctx_base_string);
 	} 
 	else if (is<Ast_node_kind::unary_operator>(expr))
 	{
@@ -239,10 +253,14 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 			local_ctx.foreground_color = "3";
 	 		fmt_out(os,sop,local_ctx);
 		}
-		fmt_out_handle_expr(os,uop.children()[0], ctx);
+		fmt_out_handle_expr(os,uop.children()[0], ctx,escape_strings,ctx_base_string);
 	} 
-	else if (is<Ast_node_kind::string_literal>(expr))
-		fmt_out(os,"\""+value(as_string_ref(expr))+"\"",ctx);		 
+	else if (is<Ast_node_kind::string_literal>(expr)){
+		{ auto local_ctx = ctx_base_string;
+		  if (escape_strings) fmt_out(os,"\""+value(as_string_ref(expr))+"\"",ctx); 
+		  else fmt_out(os,value(as_string_ref(expr)),local_ctx);
+		}
+	}		 
 	else if (is<Ast_node_kind::int_literal>(expr)){
 		std::stringstream ss;
 		ss << value(as_int_ref(expr));
@@ -274,7 +292,7 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 			std::vector<ceps::ast::Nodebase_ptr> args;
 		 	flatten_args(params.children()[0], args);
 		 	for(size_t i = 0; i != args.size();++i){
-			 	fmt_out_handle_expr(os,args[i],ctx);
+			 	fmt_out_handle_expr(os,args[i],ctx,escape_strings,ctx_base_string);
 				if (i+1 < args.size())
 			  	fmt_out(os,",",ctx);
 		 	}
@@ -309,7 +327,7 @@ static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
     if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
  }
  os << ctx.suffix;
- if (ctx.eol.length() && ctx.comment_stmt_stack->size()){
+ if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
 	 os << "\033[0m";
 	 os << "\033[2m";
 	 os << "\033[3m";
@@ -557,6 +575,10 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx){
 	auto v = fetch_symbols_standing_alone(strct.children());
 	auto is_schema = v.end() != std::find_if(v.begin(),v.end(),[](ceps::ast::Symbol* p){ return ceps::ast::kind(*p) == "Schema"; });
+	if (!is_schema) {
+		fmt_out_handle_inner_struct(os,strct,ctx);
+		return;
+	}
 	ctx.inside_schema = is_schema;
 	if (is_schema) ctx.c_style_struct = false;
 	{
