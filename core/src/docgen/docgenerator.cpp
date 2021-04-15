@@ -55,6 +55,7 @@ static void fmt_out_handle_valdef(std::ostream& os, ceps::ast::Valdef& valdef, f
 static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx);
 static void fmt_out_layout_inner_strct(fmt_out_ctx& ctx);
 static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings= true, fmt_out_ctx ctx_base_string = {});
+static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx);
 
 static void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx){
 	if (is_schema) {
@@ -454,11 +455,41 @@ static void fmt_out_handle_valdef(std::ostream& os, Valdef& valdef, fmt_out_ctx 
 		auto local_ctx{ctx};
 		fmt_out_layout_val_arrow(local_ctx);
 		local_ctx.ignore_indent = true;
-		fmt_out(os,"←",local_ctx);
+		fmt_out(os,":=",local_ctx);
 	}
 
     //std::cout << *valdef.children()[0] << std::endl;
 	fmt_out_handle_expr(os,valdef.children()[0],ctx);
+
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_valdef_complete_line(local_ctx);
+		fmt_out(os,"",local_ctx);
+	}
+}
+
+static void fmt_out_handle_let(std::ostream& os, Let& let, fmt_out_ctx ctx){
+	/*{
+		auto local_ctx{ctx};
+		fmt_out_layout_val_keyword(local_ctx);
+		fmt_out(os,"val",local_ctx);
+	}*/
+	auto lhs = name(let); 
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_val_var(local_ctx);
+		local_ctx.ignore_indent = false;
+		fmt_out(os,lhs,local_ctx);
+	}
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_val_arrow(local_ctx);
+		local_ctx.ignore_indent = true;
+		fmt_out(os,"←",local_ctx);
+	}
+
+    //std::cout << *valdef.children()[0] << std::endl;
+	fmt_out_handle_expr(os,let.children()[0],ctx);
 
 	{
 		auto local_ctx{ctx};
@@ -487,7 +518,10 @@ static void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx 
 	}
 
 	++ctx.indent;
-	if (if_branch) fmt_out_handle_children(os,nlf_ptr(if_branch)->children(),ctx);
+	if (if_branch) {
+		//std::cout << *if_branch << std::endl;
+		fmt_handle_node(os,if_branch,ctx);
+	}
 	if (else_branch){
 		--ctx.indent;
 		{
@@ -512,6 +546,8 @@ static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out
 		fmt_out_handle_macro_definition(os,as_macrodef_ref(n),ctx);
 	} else if (is<Ast_node_kind::valdef>(n)){
 		fmt_out_handle_valdef(os, as_valdef_ref(n), ctx);
+	} else if (is<Ast_node_kind::let>(n)){
+		fmt_out_handle_let(os, as_let_ref(n), ctx);
 	} else if (is<Ast_node_kind::label>(n)){
 		auto& label{ceps::ast::as_label_ref(n)};
 		auto& attrs{ceps::ast::attributes(label)};
@@ -533,7 +569,7 @@ static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out
 
 	} else if (is<Ast_node_kind::ifelse>(n)){
 		fmt_out_handle_ifelse(os,as_ifelse_ref(n),ctx);
-	} else if (!is<Ast_node_kind::stmts>(n)){
+	} else if (!is<Ast_node_kind::stmts>(n) && !is<Ast_node_kind::scope>(n)){
 		{auto local_ctx{ctx}; local_ctx.suffix = local_ctx.eol = "";fmt_out(os,"",local_ctx);}
 		fmt_out_handle_expr(os, n, ctx);
 		{auto local_ctx{ctx}; local_ctx.suffix = ""; local_ctx.ignore_indent = true; fmt_out(os,"",local_ctx);}
