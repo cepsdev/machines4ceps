@@ -17,7 +17,7 @@ cd ceps/core
 mkdir bin 2>/dev/null
 
 echo "\033[1;32mBuilding ceps/core\033[0m"
-if ! make $parallelization ; then
+if ! make -B ; then
 	echo >/dev/stderr "Failed to make ceps"
 	exit 3
 fi
