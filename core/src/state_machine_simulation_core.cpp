@@ -134,6 +134,8 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
         std::string& last_file_processed,
 		Result_process_cmd_line result_cmd_line)
 {
+	ceps::docgen::context docgen_context; // Information which needs to be preserved between docgen calls
+
 	std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
     bool next_is_expression = false;
     for(auto const & file_name : file_names)
@@ -229,6 +231,8 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
             }
         }
 
+		//We are assuming here the file is in ceps format
+
 		std::fstream def_file{ last_file_processed = file_name};
 		if (!def_file) fatal_(ERR_FILE_OPEN_FAILED,file_name);
 
@@ -238,8 +242,10 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 			fatal_(ERR_CEPS_PARSER, file_name);
 
 		if (result_cmd_line.print_raw_input_tree)
-		 fmt_out(std::cout, 
+		 ceps::docgen::fmt_out(std::cout, 
 		         ceps::ast::nlf_ptr(driver.parsetree().get_root())->children(),
+				 docgen_context,
+				 result_cmd_line.output_format_flags,
 				 &ceps_env_current().get_global_symboltable());
 
 		ceps::interpreter::evaluate(current_universe(),

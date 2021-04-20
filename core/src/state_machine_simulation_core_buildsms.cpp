@@ -837,7 +837,12 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 	if (result_cmd_line.print_evaluated_input_tree){
 		if (result_cmd_line.output_format_flags.size()){
-			fmt_out(std::cout,current_universe().nodes());
+			ceps::docgen::context cntxt;
+			ceps::docgen::fmt_out(std::cout, 
+		         current_universe().nodes(),
+				 cntxt,
+				 result_cmd_line.output_format_flags,
+				 &ceps_env_current().get_global_symboltable());
 		}
 		else 
 			std::cout << ceps::ast::Nodebase::pretty_print << this->current_universe() << std::endl;

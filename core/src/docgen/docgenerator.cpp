@@ -21,42 +21,60 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 using namespace ceps::ast;
 
-struct fmt_out_ctx{
-	bool inside_schema = false;
-
-	bool bold                         = false;
-	bool italic                       = false;
-	bool underline                    = false;
-	bool ignore_indent                = false;
-	bool normal_intensity             = false;
-	bool faint_intensity              = false;
-	bool c_style_struct               = true;
-	bool quote_string                 = true;
-	std::string inline_comment_prefix = " -- ";
-
-	std::string foreground_color;
-	std::string foreground_color_modifier;
-	std::string suffix;
-	std::string prefix;
-	std::string eol                   ="\n";
-	std::vector<std::string> info;
-	std::vector<std::string> modifiers; 
-    std::string indent_str            = "  ";
-	int indent                        = 0;
-	int linebreaks_before             = 0;
-	ceps::parser_env::Symboltable* symtab = nullptr;
-	bool ignore_comment_stmt_stack = false;
-	std::shared_ptr<std::vector<Nodebase_ptr>> comment_stmt_stack;
-};
+using ceps::docgen::fmt_out_ctx;
 
 static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx);
 static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx);
 static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx);
 static void fmt_out_handle_valdef(std::ostream& os, ceps::ast::Valdef& valdef, fmt_out_ctx ctx);
-static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx);
+static void formatted_out(std::ostream& os, std::string s, fmt_out_ctx ctx);
 static void fmt_out_layout_inner_strct(fmt_out_ctx& ctx);
 static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings= true, fmt_out_ctx ctx_base_string = {});
 static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx);
+
+static std::string escape_ceps_string(std::string const & s){
+    bool transform_necessary = false;
+    for(std::size_t i = 0; i!=s.length();++i){
+        auto ch = s[i];
+        if (ch == '\n' || ch == '\t'|| ch == '\r' || ch == '"' || ch == '\\'){
+            transform_necessary = true; break;
+        }
+    }
+    if (!transform_necessary) return s;
+
+    std::stringstream ss;
+    for(std::size_t i = 0; i!=s.length();++i){
+        char buffer[2] = {0};
+        char ch = buffer[0] = s[i];
+        if (ch == '\n') ss << "\\n";
+        else if (ch == '\t') ss << "\\t";
+        else if (ch == '\r' ) ss << "\\r";
+        else if (ch == '"') ss << "\\\"";
+        else if (ch == '\\') ss << "\\\\";
+        else ss << buffer;
+    }
+    return ss.str();
+}
+
+// START ceps::docgen::symbol_info
+
+void ceps::docgen::symbol_info::push_scope(){
+	id2kind_maps.push_back({});
+}
+
+void ceps::docgen::symbol_info::pop_scope(){
+	if (id2kind_maps.size() > 1) id2kind_maps.pop_back();
+}
+
+void ceps::docgen::symbol_info::reg_id_as(std::string id, std::string kind){
+	id2kind_maps.back()[id] = kind;	
+}
+
+std::optional<std::string> ceps::docgen::symbol_info::kind_of(std::string id){
+	return {};
+}
+
+// END ceps::docgen::symbol_info
 
 static void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx){
 	if (is_schema) {
@@ -86,6 +104,14 @@ static void fmt_out_layout_macro_name(fmt_out_ctx& ctx){
 static void fmt_out_layout_macro_keyword(fmt_out_ctx& ctx){
 	if (ctx.inside_schema) ctx.foreground_color = "5";
 	else ctx.foreground_color = "5";
+	ctx.bold = true;
+	ctx.suffix = " ";
+	ctx.prefix = "";
+	ctx.eol = "";
+}
+
+static void fmt_out_layout_state_machine_keyword(fmt_out_ctx& ctx){
+	ctx.foreground_color = "5";
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
@@ -192,6 +218,15 @@ static void fmt_out_layout_label(fmt_out_ctx& ctx){
 	ctx.normal_intensity = true;
 }
 
+static void fmt_out_layout_funcname(fmt_out_ctx& ctx){
+	ctx.suffix = "";
+	ctx.eol = "";
+	ctx.prefix = "";
+	ctx.normal_intensity = true;
+	ctx.suffix = "";
+	ctx.ignore_indent = true;
+	ctx.foreground_color = "229";
+}
 static void print_comment_impl(std::ostream& os,std::vector<Nodebase*> const & v, fmt_out_ctx const & ctx){
 	auto local_ctx_string{ctx};
 	local_ctx_string.ignore_comment_stmt_stack = true;
@@ -243,8 +278,8 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 			{
 				auto local_ctx{ctx};
 				local_ctx.foreground_color ="3";
-				if (sop.length() > 1 || sop == ">" || sop == "<" || sop == "=") fmt_out(os," "+sop+" ",local_ctx);
-					else fmt_out(os,sop,local_ctx);
+				if (sop.length() > 1 || sop == ">" || sop == "<" || sop == "=") formatted_out(os," "+sop+" ",local_ctx);
+					else formatted_out(os,sop,local_ctx);
 			}
 		}
 		fmt_out_handle_expr(os,bop.right(), ctx,escape_strings,ctx_base_string);
@@ -260,19 +295,19 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 		{
 			auto local_ctx{ctx};
 			local_ctx.foreground_color = "3";
-	 		fmt_out(os,sop,local_ctx);
+	 		formatted_out(os,sop,local_ctx);
 		}
 		fmt_out_handle_expr(os,uop.children()[0], ctx,escape_strings,ctx_base_string);
 	} 
 	else if (is<Ast_node_kind::string_literal>(expr)){
 		{ auto local_ctx = ctx_base_string;
 		  if (!escape_strings || !ctx.quote_string){
-		    if (!escape_strings) fmt_out(os,value(as_string_ref(expr)),local_ctx);
-			else fmt_out(os,value(as_string_ref(expr)),ctx);
+		    if (!escape_strings) formatted_out(os,value(as_string_ref(expr)),local_ctx);
+			else formatted_out(os,value(as_string_ref(expr)),ctx);
 		  } 
 		  else {
 			  auto local_ctx{ctx}; local_ctx.foreground_color = "2"; 
-			  fmt_out(os,"\""+value(as_string_ref(expr))+"\"",local_ctx);
+			  formatted_out(os,"\""+escape_ceps_string(value(as_string_ref(expr)))+"\"",local_ctx);
 		  } 
 		}
 	}		 
@@ -280,18 +315,18 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 		std::stringstream ss;
 		ss << value(as_int_ref(expr));
 		{auto local_ctx{ctx}; local_ctx.foreground_color = "2"; 
-	    fmt_out(os,ss.str(),local_ctx);}
+	    formatted_out(os,ss.str(),local_ctx);}
 	} else if (is<Ast_node_kind::float_literal>(expr)){
 		std::stringstream ss;
 		ss << value(as_double_ref(expr));
 		{auto local_ctx{ctx}; local_ctx.foreground_color = "2"; 
-	    fmt_out(os,ss.str(),local_ctx);}
+	    formatted_out(os,ss.str(),local_ctx);}
 	} else if (is<Ast_node_kind::identifier>(expr)){
 		{auto local_ctx{ctx}; local_ctx.foreground_color = "37";
-		if (name(as_id_ref(expr)) == "Infinity") fmt_out(os,"∞",local_ctx);
-		else fmt_out(os,name(as_id_ref(expr)),local_ctx);}
+		if (name(as_id_ref(expr)) == "Infinity") formatted_out(os,"∞",local_ctx);
+		else formatted_out(os,name(as_id_ref(expr)),local_ctx);}
 	} else if (is<Ast_node_kind::symbol>(expr)){
-		fmt_out(os,name(as_symbol_ref(expr)),ctx);
+		formatted_out(os,name(as_symbol_ref(expr)),ctx);
 	} else if (is<Ast_node_kind::func_call>(expr)){
 		auto func_call = as_func_call_ref(expr);
 	 	auto fcall_target = func_call_target(func_call);
@@ -303,9 +338,9 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 		 {
 			auto local_ctx{ctx};
 			local_ctx.foreground_color ="229";
-			fmt_out(os,name(as_id_ref(fcall_target)),local_ctx);	 
+			formatted_out(os,name(as_id_ref(fcall_target)),local_ctx);	 
 		 }
-		 fmt_out(os,"(",ctx);
+		 formatted_out(os,"(",ctx);
 		 ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
 		 if (params.children().size()){
 			std::vector<ceps::ast::Nodebase_ptr> args;
@@ -313,15 +348,15 @@ static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx 
 		 	for(size_t i = 0; i != args.size();++i){
 			 	fmt_out_handle_expr(os,args[i],ctx,escape_strings,ctx_base_string);
 				if (i+1 < args.size())
-			  	fmt_out(os,",",ctx);
+			  	formatted_out(os,",",ctx);
 		 	}
 		 }
-		 fmt_out(os,")",ctx);
+		 formatted_out(os,")",ctx);
 		}
 	}
 }
 
-static void fmt_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
+static void formatted_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
  if(!ctx.ignore_indent) for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
  os << "\033[0m"; //reset
  if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
@@ -401,13 +436,12 @@ static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrode
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_macro_keyword(local_ctx);
-
-		fmt_out(os,sinitial.length() > 0 ? sinitial : "Macro",local_ctx);
+		formatted_out(os,sinitial.length() > 0 ? sinitial : "Macro",local_ctx);
 	}
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_macro_name(local_ctx);
-		fmt_out(os,stitle.length() > 0 ? stitle : name(macro),local_ctx);
+		formatted_out(os,stitle.length() > 0 ? stitle : name(macro),local_ctx);
 	}
 	++ctx.indent;
 	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),ctx);
@@ -417,7 +451,7 @@ static void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_loop_keyword(local_ctx);
-		fmt_out(os,"for each",local_ctx);
+		formatted_out(os,"for each",local_ctx);
 	}
 	auto& loop_head =  as_loop_head_ref(loop.children()[0]);
 	ceps::ast::Nodebase_ptr body = loop.children()[1];
@@ -428,12 +462,12 @@ static void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_loop_variable(local_ctx);
-		fmt_out(os,name(id),local_ctx);
+		formatted_out(os,name(id),local_ctx);
 	}
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_loop_in_keyword(local_ctx);
-		fmt_out(os,"in",local_ctx);
+		formatted_out(os,"in",local_ctx);
 	}
 
 	fmt_out_handle_expr(os,loop_expr,ctx);
@@ -441,7 +475,7 @@ static void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_loop_complete_line(local_ctx);
-		fmt_out(os,"",local_ctx);
+		formatted_out(os,"",local_ctx);
 	}
 
 	++ctx.indent;
@@ -459,13 +493,13 @@ static void fmt_out_handle_valdef(std::ostream& os, Valdef& valdef, fmt_out_ctx 
 		auto local_ctx{ctx};
 		fmt_out_layout_val_var(local_ctx);
 		local_ctx.ignore_indent = false;
-		fmt_out(os,lhs,local_ctx);
+		formatted_out(os,lhs,local_ctx);
 	}
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_val_arrow(local_ctx);
 		local_ctx.ignore_indent = true;
-		fmt_out(os,":=",local_ctx);
+		formatted_out(os,":=",local_ctx);
 	}
 
     //std::cout << *valdef.children()[0] << std::endl;
@@ -474,7 +508,7 @@ static void fmt_out_handle_valdef(std::ostream& os, Valdef& valdef, fmt_out_ctx 
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_valdef_complete_line(local_ctx);
-		fmt_out(os,"",local_ctx);
+		formatted_out(os,"",local_ctx);
 	}
 }
 
@@ -489,13 +523,13 @@ static void fmt_out_handle_let(std::ostream& os, Let& let, fmt_out_ctx ctx){
 		auto local_ctx{ctx};
 		fmt_out_layout_val_var(local_ctx);
 		local_ctx.ignore_indent = false;
-		fmt_out(os,lhs,local_ctx);
+		formatted_out(os,lhs,local_ctx);
 	}
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_val_arrow(local_ctx);
 		local_ctx.ignore_indent = true;
-		fmt_out(os,"←",local_ctx);
+		formatted_out(os,"←",local_ctx);
 	}
 
     //std::cout << *valdef.children()[0] << std::endl;
@@ -504,7 +538,7 @@ static void fmt_out_handle_let(std::ostream& os, Let& let, fmt_out_ctx ctx){
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_valdef_complete_line(local_ctx);
-		fmt_out(os,"",local_ctx);
+		formatted_out(os,"",local_ctx);
 	}
 }
 
@@ -516,7 +550,7 @@ static void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx 
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_if_keyword(local_ctx);
-		fmt_out(os,"if",local_ctx);
+		formatted_out(os,"if",local_ctx);
 	}
 
 	fmt_out_handle_expr(os,cond,ctx);
@@ -524,7 +558,7 @@ static void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx 
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_if_complete_line(local_ctx);
-		fmt_out(os,"",local_ctx);
+		formatted_out(os,"",local_ctx);
 	}
 
 	++ctx.indent;
@@ -537,12 +571,12 @@ static void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx 
 		{
 			auto local_ctx{ctx};
 			fmt_out_layout_if_keyword(local_ctx);
-			fmt_out(os,"else",local_ctx);
+			formatted_out(os,"else",local_ctx);
 		}
 		{
 			auto local_ctx{ctx};
 			fmt_out_layout_if_complete_line(local_ctx);
-			fmt_out(os,"",local_ctx);
+			formatted_out(os,"",local_ctx);
 		}
 		++ctx.indent;
 		fmt_out_handle_children(os,nlf_ptr(else_branch)->children(),ctx);
@@ -574,15 +608,15 @@ static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out
 		{
 			auto local_ctx{ctx};
 			fmt_out_layout_label(local_ctx);
-			fmt_out(os,stitle,local_ctx);
+			formatted_out(os,stitle,local_ctx);
 		}
 
 	} else if (is<Ast_node_kind::ifelse>(n)){
 		fmt_out_handle_ifelse(os,as_ifelse_ref(n),ctx);
 	} else if (!is<Ast_node_kind::stmts>(n) && !is<Ast_node_kind::scope>(n)){
-		{auto local_ctx{ctx}; local_ctx.suffix = local_ctx.eol = "";fmt_out(os,"",local_ctx);}
+		{auto local_ctx{ctx}; local_ctx.suffix = local_ctx.eol = "";formatted_out(os,"",local_ctx);}
 		fmt_out_handle_expr(os, n, ctx);
-		{auto local_ctx{ctx}; local_ctx.suffix = ""; local_ctx.ignore_indent = true; fmt_out(os,"",local_ctx);}
+		{auto local_ctx{ctx}; local_ctx.suffix = ""; local_ctx.ignore_indent = true; formatted_out(os,"",local_ctx);}
 	} else if(is<Ast_node_kind::structdef>(n)){
 		fmt_out_handle_inner_struct(os, ceps::ast::as_struct_ref(n), ctx);
 	} else if (auto inner = nlf_ptr(n)){
@@ -600,27 +634,7 @@ static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nod
 }
 
 
-namespace ceps{
-	namespace docgen{
-		using namespace ceps::ast;
-		struct Docelement{
-			virtual void print(std::ostream& os) = 0;
-		};
-		struct Comment: public Docelement{
-			private:
-			void print_block(std::ostream& os,std::vector<Nodebase_ptr> const &, bool outer = true);
-			void print_section(std::ostream& os,std::vector<Nodebase_ptr> const &, bool outer = true);
-			void print_content(std::ostream& os, std::vector<Nodebase_ptr> const &);
-			public:
-			Struct strct;
-			fmt_out_ctx ctx;
-			Comment(Struct const& strct, fmt_out_ctx const & ctx):strct{strct}, ctx{ctx}{ 
-				this->ctx.comment_stmt_stack->clear();
-			}
-			void print(std::ostream& os) override;
-		};
-	}
-}
+//Comment
 
 void ceps::docgen::Comment::print_section(std::ostream& os,std::vector<Nodebase_ptr> const & v, bool outer){
 	for(auto e:v){
@@ -629,7 +643,7 @@ void ceps::docgen::Comment::print_section(std::ostream& os,std::vector<Nodebase_
 				auto local_ctx{ctx};
 				local_ctx.eol = "";
 				local_ctx.suffix = "";
-				fmt_out(os,"",local_ctx);
+				formatted_out(os,"",local_ctx);
 				local_ctx.bold = true;			
 				local_ctx.quote_string = false;
 				local_ctx.ignore_indent = true;
@@ -642,7 +656,7 @@ void ceps::docgen::Comment::print_section(std::ostream& os,std::vector<Nodebase_
 		}
 	}
 	if(!outer) return;
-	{auto local_ctx{ctx}; local_ctx.ignore_indent = true; fmt_out(os,"",local_ctx);}
+	{auto local_ctx{ctx}; local_ctx.ignore_indent = true; formatted_out(os,"",local_ctx);}
 	++ctx.indent;
 	{		
 		print_content(os, v);
@@ -652,10 +666,10 @@ void ceps::docgen::Comment::print_section(std::ostream& os,std::vector<Nodebase_
 
 void ceps::docgen::Comment::print_block(std::ostream& os,std::vector<Nodebase_ptr> const & v, bool outer){	
 	++ctx.indent;
-	{auto local_ctx{ctx}; local_ctx.eol = ""; fmt_out(os,"",local_ctx);}
+	{auto local_ctx{ctx}; local_ctx.eol = ""; formatted_out(os,"",local_ctx);}
 	print_content(os, v);
 	--ctx.indent;
-	fmt_out(os,"",ctx);
+	formatted_out(os,"",ctx);
 }
 
 void ceps::docgen::Comment::print_content(std::ostream& os, std::vector<Nodebase_ptr> const &v){
@@ -665,7 +679,7 @@ void ceps::docgen::Comment::print_content(std::ostream& os, std::vector<Nodebase
 	    else if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "block" )
 			print_block(os,as_struct_ref(e).children());
 		else if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) != "title" ){
-			fmt_out(os,"",ctx);fmt_out_handle_inner_struct(os,as_struct_ref(e),ctx);			
+			formatted_out(os,"",ctx);fmt_out_handle_inner_struct(os,as_struct_ref(e),ctx);			
 		} else if (is<Ast_node_kind::stmts>(e))
 			print_content(os,as_stmts_ref(e).children());
 		else {
@@ -704,10 +718,10 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 			lctx.italic = true;
 			lctx.suffix = "";
 			if (lctx.inside_schema) lctx.foreground_color = "228";
-			fmt_out(os,"one of",lctx);
+			formatted_out(os,"one of",lctx);
 		} else {
 			lctx.suffix = "{";
-			fmt_out(os,ceps::ast::name(strct),lctx);
+			formatted_out(os,ceps::ast::name(strct),lctx);
 			lbrace = true;
 		}
 	}
@@ -718,7 +732,7 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 		auto lctx{ctx};
 		fmt_out_layout_inner_strct(lctx);
 		lctx.suffix = "}";
-		fmt_out(os,"",lctx);
+		formatted_out(os,"",lctx);
 	}
 }
 
@@ -734,7 +748,7 @@ static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& str
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_outer_strct(is_schema,local_ctx);
-		fmt_out(os,ceps::ast::name(strct),local_ctx);
+		formatted_out(os,ceps::ast::name(strct),local_ctx);
 	}
 	++ctx.indent;
 	for(auto n: strct.children()){
@@ -744,15 +758,205 @@ static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& str
 	}
 }
 
-void fmt_out(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr> const & ns,ceps::parser_env::Symboltable* symtab){
+
+// ceps::docgen::Statemachine START
+void ceps::docgen::Statemachine::print(std::ostream& os){
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_state_machine_keyword(local_ctx);
+		formatted_out(os,"State Machine",local_ctx);
+	}
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_macro_name(local_ctx);
+		local_ctx.eol = "";
+		local_ctx.suffix = "";
+		local_ctx.ignore_indent = true;
+		formatted_out(os,name,local_ctx);
+	}
+	{
+		auto local_ctx{ctx};
+		fmt_out_layout_macro_keyword(local_ctx);
+		local_ctx.eol = ctx.eol;
+		local_ctx.suffix = ":";
+		local_ctx.ignore_indent = true;
+		formatted_out(os,"",local_ctx);
+	}
+	++ctx.indent;
+	if (actions_vec.size()){
+		{
+			auto local_ctx{ctx};
+			fmt_out_layout_state_machine_keyword(local_ctx);
+			local_ctx.eol = ctx.eol;
+			local_ctx.suffix = ":";
+			formatted_out(os,"Actions",local_ctx);
+		}
+		++ctx.indent;
+		for(auto e: actions_vec)
+		{
+			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+			{auto local_ctx{ctx};fmt_out_layout_funcname(local_ctx);formatted_out(os,e,local_ctx);}
+			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix=":";formatted_out(os,"",local_ctx);}
+			++ctx.indent;
+			fmt_out_handle_children(os,action2body[e]->children(),ctx);
+			--ctx.indent;
+		}
+	--ctx.indent;
+	}
+	if (states.size()){
+		{
+			auto local_ctx{ctx};
+			fmt_out_layout_state_machine_keyword(local_ctx);
+			local_ctx.eol = ctx.eol;
+			local_ctx.suffix = ":";
+			formatted_out(os,"States",local_ctx);
+		}
+		++ctx.indent;
+		{
+			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}			
+			for(size_t i = 0; i!=states.size();++i){
+				{auto local_ctx{ctx};fmt_out_layout_funcname(local_ctx);formatted_out(os,states[i],local_ctx);}
+				if (i + 1 != states.size()) {auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";local_ctx.ignore_indent = true; formatted_out(os,", ",local_ctx);}
+			}
+			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+		}
+		--ctx.indent;
+	}
+	if (transitions.size()){
+		{
+			auto local_ctx{ctx};
+			fmt_out_layout_state_machine_keyword(local_ctx);
+			local_ctx.eol = ctx.eol;
+			local_ctx.suffix = ":";
+			formatted_out(os,"Transitions",local_ctx);
+		}
+		++ctx.indent;
+		for(auto& t : transitions){
+			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+			fmt_out_handle_expr(os,t.from, ctx);
+			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," -",local_ctx);}
+			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"-▶ ",local_ctx);}
+			fmt_out_handle_expr(os,t.to, ctx);
+
+			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+		}
+		--ctx.indent;
+	}
+	--ctx.indent;
+	{auto local_ctx{ctx};local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+}
+
+void ceps::docgen::Statemachine::build(){
+	auto traverse_pred = [](Nodebase_ptr n) ->bool { return is<Ast_node_kind::stmts>(n) || is<Ast_node_kind::stmt>(n) || is<Ast_node_kind::expr>(n); };
+	auto process_name = [&](Nodebase_ptr n)->bool {
+	 	if (is<Ast_node_kind::identifier>(n)){
+			name = ceps::ast::name(as_id_ref(n));
+			return false;
+		}
+		return true;
+	};
+	auto process_transitions = [&](Nodebase_ptr n)->bool {
+	 	if (is<Ast_node_kind::structdef>(n) && ceps::ast::name(as_struct_ref(n)) == "t"){
+			 auto& ts{as_struct_ref(n)};
+			 transition t{};
+			 std::vector<Nodebase_ptr> v;
+			 shallow_traverse_ex(ts.children(),[&](Nodebase_ptr n){v.push_back(n);return true;},traverse_pred);
+			 if (v.size() < 2 || !is<Ast_node_kind::identifier>(v[0])|| !is<Ast_node_kind::identifier>(v[1])) return true;
+			 t.from = v[0];t.to = v[1];
+
+
+
+
+			 transitions.push_back(t);
+			 
+			
+			return true;
+		}
+		return true;
+	};
+
+	auto process_actions = [&](Nodebase_ptr n)->bool {
+	 	if (is<Ast_node_kind::structdef>(n)){
+			 auto& s{as_struct_ref(n)};
+			 auto sname = ceps::ast::name(s);
+
+			 if (sname == "Actions")
+			 	shallow_traverse_ex(s.children(),
+	                    			[&](Nodebase_ptr n)->bool{
+										if (is<Ast_node_kind::structdef>(n)) {
+											actions_vec.push_back(ceps::ast::name(as_struct_ref(n)));
+											actions.insert(ceps::ast::name(as_struct_ref(n)));
+											action2body[ceps::ast::name(as_struct_ref(n))] = as_struct_ptr(n);
+										}
+										return true;
+									}, 
+									traverse_pred);
+			 else if (sname == "on_enter" || sname == "on_exit") {
+				 actions_vec.push_back(sname);
+				 actions.insert(sname);
+				 action2body[sname] = as_struct_ptr(n);
+			 }							 
+			return true;
+		}
+		return true;
+	};
+
+	auto process_states = [&](Nodebase_ptr n)->bool {
+	 	if (is<Ast_node_kind::structdef>(n)){
+			 auto& s{as_struct_ref(n)};
+			 auto sname = ceps::ast::name(s);
+			 if (sname == "states")
+			 	shallow_traverse_ex(s.children(),
+	                    			[&](Nodebase_ptr n)->bool{
+										if (is<Ast_node_kind::identifier>(n)) {
+											states.push_back(ceps::ast::name(as_id_ref(n)));
+										}
+										return true;
+									}, 
+									traverse_pred);			  
+			return true;
+		}
+		return true;
+	};
+
+	shallow_traverse_ex(strct.children(),
+	                    process_name, 
+						traverse_pred);
+	shallow_traverse_ex(strct.children(),
+	                    process_actions, 
+						traverse_pred);						
+	shallow_traverse_ex(strct.children(),
+	                    process_transitions, 
+						traverse_pred);
+	shallow_traverse_ex(strct.children(),
+	                    process_states, 
+						traverse_pred);
+}
+// ceps::docgen::Statemachine END
+
+void ceps::docgen::fmt_out(	std::ostream& os, 
+							std::vector<ceps::ast::Nodebase_ptr> const & ns,
+							context& lookuptbls,
+							std::vector<std::string> output_format_flags,
+							ceps::parser_env::Symboltable* symtab)
+{
 	using namespace ceps::ast;
 	fmt_out_ctx ctx;
 	ctx.comment_stmt_stack = std::make_shared<std::vector<ceps::ast::Nodebase_ptr>>(std::vector<ceps::ast::Nodebase_ptr>{});
 	ctx.symtab = symtab;
-	for(auto n : ns){
+	shallow_traverse(ns, [&](Nodebase_ptr n) -> bool{
 		if (is<Ast_node_kind::structdef>(n)){
 			auto&  current_struct{as_struct_ref(n)};
-			fmt_out_handle_outer_struct(os,current_struct,ctx);
+			if (name(current_struct) == "sm"){
+				Statemachine sm{current_struct,ctx,lookuptbls,output_format_flags,symtab};
+				sm.print(os);
+			}
+			else fmt_out_handle_outer_struct(os,current_struct,ctx);
+		} else if (is<Ast_node_kind::kind_def>(n)) {
+			auto& kd{as_kinddef_ref(n)};
+			auto k = kind(kd);
+			for(auto id: kd.children()) lookuptbls.global_symbols.reg_id_as(name(as_id_ref(id)),k);
 		} else fmt_handle_node(os,n,ctx);
-	}
+		return true;
+	});
 }
