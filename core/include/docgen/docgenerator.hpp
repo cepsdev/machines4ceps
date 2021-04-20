@@ -108,6 +108,7 @@ namespace ceps{
             std::set<std::string> actions;
             std::vector<std::string> actions_vec;
             std::map<std::string,Struct_ptr> action2body;
+            std::vector<std::shared_ptr<Statemachine>> sub_machines;
             struct transition{
                 Nodebase_ptr from = nullptr;
                 Nodebase_ptr to = nullptr;

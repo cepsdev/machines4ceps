@@ -71,6 +71,11 @@ void ceps::docgen::symbol_info::reg_id_as(std::string id, std::string kind){
 }
 
 std::optional<std::string> ceps::docgen::symbol_info::kind_of(std::string id){
+	for(size_t i = id2kind_maps.size(); i != 0; --i){
+		auto& m = id2kind_maps[i-1];
+		auto it = m.find(id);
+		if (it != m.end()) return it->second;
+	}
 	return {};
 }
 
@@ -835,6 +840,30 @@ void ceps::docgen::Statemachine::print(std::ostream& os){
 			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}
 			fmt_out_handle_expr(os,t.from, ctx);
 			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," -",local_ctx);}
+			if (t.ev){
+				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
+				fmt_out_handle_expr(os,t.ev, ctx);
+				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
+			}
+			if (t.guards.size()){
+				{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"[",local_ctx);}
+				for(size_t i = 0; i != t.guards.size();++i){
+					fmt_out_handle_expr(os,t.guards[i], ctx);
+					if(i + 1 != t.guards.size()) {auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," && ",local_ctx);}
+					//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,";",local_ctx);}
+				}
+				{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"]",local_ctx);}
+			}
+			if (t.actions.size()){
+				{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"/",local_ctx);}
+				for(size_t i = 0; i != t.actions.size();++i){
+					fmt_out_handle_expr(os,t.actions[i], ctx);
+					{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"()",local_ctx);}
+					{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,";",local_ctx);}
+				}
+				//fmt_out_handle_expr(os,t.ev, ctx);
+				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
+			}
 			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"-▶ ",local_ctx);}
 			fmt_out_handle_expr(os,t.to, ctx);
 
@@ -863,6 +892,23 @@ void ceps::docgen::Statemachine::build(){
 			 shallow_traverse_ex(ts.children(),[&](Nodebase_ptr n){v.push_back(n);return true;},traverse_pred);
 			 if (v.size() < 2 || !is<Ast_node_kind::identifier>(v[0])|| !is<Ast_node_kind::identifier>(v[1])) return true;
 			 t.from = v[0];t.to = v[1];
+
+			 for(size_t i = 2; i != v.size(); ++i)
+			 {
+				 auto e = v[i];
+				 if (is<Ast_node_kind::identifier>(e)){
+					  auto r = ctxt.global_symbols.kind_of(ceps::ast::name(as_id_ref(e)));
+					  if (r){
+						  if( "Event" == r.value()) t.ev = e;
+						  if( "Guard" == r.value()) t.guards.push_back(e);
+					  } else if (actions.find(ceps::ast::name(as_id_ref(e))) != actions.end()){
+						  t.actions.push_back(e);
+					  }
+				 } else if(is<Ast_node_kind::symbol>(e)){
+					 if (kind(as_symbol_ref(e)) == "Event") t.ev = e;
+					 if (kind(as_symbol_ref(e)) == "Guard") t.guards.push_back(e);
+				 }
+			 }
 
 
 
