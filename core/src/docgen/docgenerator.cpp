@@ -765,7 +765,8 @@ static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& str
 
 
 // ceps::docgen::Statemachine START
-void ceps::docgen::Statemachine::print(std::ostream& os){
+void ceps::docgen::Statemachine::print(	std::ostream& os,
+										fmt_out_ctx& ctx){
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_state_machine_keyword(local_ctx);
@@ -871,6 +872,12 @@ void ceps::docgen::Statemachine::print(std::ostream& os){
 		}
 		--ctx.indent;
 	}
+	if (sub_machines.size()){	
+		for(auto sm:sub_machines){
+			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+			sm->print(os,ctx);
+		}
+	}
 	--ctx.indent;
 	{auto local_ctx{ctx};local_ctx.suffix="";formatted_out(os,"",local_ctx);}
 }
@@ -965,6 +972,18 @@ void ceps::docgen::Statemachine::build(){
 		return true;
 	};
 
+	auto process_submachines = [&](Nodebase_ptr n)->bool {
+	 	if (is<Ast_node_kind::structdef>(n)){
+			 auto& s{as_struct_ref(n)};
+			 auto sname = ceps::ast::name(s);
+			 if (sname == "sm")
+			  sub_machines.push_back(std::make_shared<Statemachine>(Statemachine{s,ctxt,output_format_flags,symtab}));
+			return true;
+		}
+		return true;
+	};
+
+
 	shallow_traverse_ex(strct.children(),
 	                    process_name, 
 						traverse_pred);
@@ -977,6 +996,9 @@ void ceps::docgen::Statemachine::build(){
 	shallow_traverse_ex(strct.children(),
 	                    process_states, 
 						traverse_pred);
+	shallow_traverse_ex(strct.children(),
+	                    process_submachines, 
+						traverse_pred);											
 }
 // ceps::docgen::Statemachine END
 
@@ -994,8 +1016,8 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 		if (is<Ast_node_kind::structdef>(n)){
 			auto&  current_struct{as_struct_ref(n)};
 			if (name(current_struct) == "sm"){
-				Statemachine sm{current_struct,ctx,lookuptbls,output_format_flags,symtab};
-				sm.print(os);
+				Statemachine sm{current_struct,lookuptbls,output_format_flags,symtab};
+				sm.print(os,ctx);
 			}
 			else fmt_out_handle_outer_struct(os,current_struct,ctx);
 		} else if (is<Ast_node_kind::kind_def>(n)) {

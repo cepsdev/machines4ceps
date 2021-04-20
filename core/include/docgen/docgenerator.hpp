@@ -102,7 +102,7 @@ namespace ceps{
 			void print(std::ostream& os) override;
 		};
 
-		struct Statemachine: public Docelement{
+		struct Statemachine{
 			private:
             std::vector<std::string> states;
             std::set<std::string> actions;
@@ -121,20 +121,18 @@ namespace ceps{
             std::string name;
 			public:
 			Struct strct;
-			fmt_out_ctx ctx;
             context& ctxt;
             std::vector<std::string> output_format_flags;
             ceps::parser_env::Symboltable* symtab;
 			Statemachine(   Struct const& strct, 
-                            fmt_out_ctx const & ctx,
                             context& ctxt,
                             std::vector<std::string> output_format_flags,
                             ceps::parser_env::Symboltable* symtab = nullptr
-                        ):strct{strct}, ctx{ctx}, ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
-				this->ctx.comment_stmt_stack->clear();
+                        ):strct{strct}, ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
+				
                 build();
 			}
-			void print(std::ostream& os) override;
+			void print(std::ostream& os, fmt_out_ctx& ctx);
 		};
 
         //Entry point for Terminal output
