@@ -23,14 +23,14 @@ using namespace ceps::ast;
 
 using ceps::docgen::fmt_out_ctx;
 
-static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx);
-static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx);
+static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx,bool ignore_macro_definitions);
+static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx, bool ignore_macro_definitions);
 static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx);
 static void fmt_out_handle_valdef(std::ostream& os, ceps::ast::Valdef& valdef, fmt_out_ctx ctx);
 static void formatted_out(std::ostream& os, std::string s, fmt_out_ctx ctx);
 static void fmt_out_layout_inner_strct(fmt_out_ctx& ctx);
 static void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings= true, fmt_out_ctx ctx_base_string = {});
-static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx);
+static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx,bool ignore_macro_definitions);
 
 static std::string escape_ceps_string(std::string const & s){
     bool transform_necessary = false;
@@ -449,7 +449,7 @@ static void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrode
 		formatted_out(os,stitle.length() > 0 ? stitle : name(macro),local_ctx);
 	}
 	++ctx.indent;
-	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),ctx);
+	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),ctx,true);
 }
 
 static void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out_ctx ctx){
@@ -484,7 +484,7 @@ static void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out
 	}
 
 	++ctx.indent;
-	fmt_out_handle_children(os,nlf_ptr(body)->children(),ctx);
+	fmt_out_handle_children(os,nlf_ptr(body)->children(),ctx,true);
 }
 
 static void fmt_out_handle_valdef(std::ostream& os, Valdef& valdef, fmt_out_ctx ctx){
@@ -569,7 +569,7 @@ static void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx 
 	++ctx.indent;
 	if (if_branch) {
 		//std::cout << *if_branch << std::endl;
-		fmt_handle_node(os,if_branch,ctx);
+		fmt_handle_node(os,if_branch,ctx,false);
 	}
 	if (else_branch){
 		--ctx.indent;
@@ -584,15 +584,15 @@ static void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx 
 			formatted_out(os,"",local_ctx);
 		}
 		++ctx.indent;
-		fmt_out_handle_children(os,nlf_ptr(else_branch)->children(),ctx);
+		fmt_out_handle_children(os,nlf_ptr(else_branch)->children(),ctx,true);
 	}
 }
 
-static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx){
+static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx,bool ignore_macro_definitions){
 	if (is<Ast_node_kind::loop>(n)){
 		fmt_out_handle_loop(os,as_loop_ref(n),ctx);			
 	} else if (is<Ast_node_kind::macro_definition>(n)) {
-		fmt_out_handle_macro_definition(os,as_macrodef_ref(n),ctx);
+		if (!ignore_macro_definitions) fmt_out_handle_macro_definition(os,as_macrodef_ref(n),ctx);
 	} else if (is<Ast_node_kind::valdef>(n)){
 		fmt_out_handle_valdef(os, as_valdef_ref(n), ctx);
 	} else if (is<Ast_node_kind::let>(n)){
@@ -623,18 +623,18 @@ static void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out
 		fmt_out_handle_expr(os, n, ctx);
 		{auto local_ctx{ctx}; local_ctx.suffix = ""; local_ctx.ignore_indent = true; formatted_out(os,"",local_ctx);}
 	} else if(is<Ast_node_kind::structdef>(n)){
-		fmt_out_handle_inner_struct(os, ceps::ast::as_struct_ref(n), ctx);
+		fmt_out_handle_inner_struct(os, ceps::ast::as_struct_ref(n), ctx,ignore_macro_definitions);
 	} else if (auto inner = nlf_ptr(n)){
-		fmt_out_handle_children(os, inner->children(), ctx);
+		fmt_out_handle_children(os, inner->children(), ctx,true);
 	}
 }
 
-static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx){
+static void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx, bool ignore_macro_definitions){
 	for(auto n: children){
 		if (is_a_struct(n)){
 			auto& strct{ceps::ast::as_struct_ref(n)};
-			fmt_out_handle_inner_struct(os,strct,ctx);
-		} else fmt_handle_node(os, n, ctx);
+			fmt_out_handle_inner_struct(os,strct,ctx,ignore_macro_definitions);
+		} else fmt_handle_node(os, n, ctx,ignore_macro_definitions);
 	}
 }
 
@@ -653,7 +653,7 @@ void ceps::docgen::Comment::print_section(std::ostream& os,std::vector<Nodebase_
 				local_ctx.quote_string = false;
 				local_ctx.ignore_indent = true;
 				for(auto ee: as_struct_ref(e).children()){
-					fmt_handle_node(os, ee, local_ctx);
+					fmt_handle_node(os, ee, local_ctx,true);
 				}
 			}			
 		} else if (is<Ast_node_kind::stmts>(e)){
@@ -684,7 +684,7 @@ void ceps::docgen::Comment::print_content(std::ostream& os, std::vector<Nodebase
 	    else if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "block" )
 			print_block(os,as_struct_ref(e).children());
 		else if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) != "title" ){
-			formatted_out(os,"",ctx);fmt_out_handle_inner_struct(os,as_struct_ref(e),ctx);			
+			formatted_out(os,"",ctx);fmt_out_handle_inner_struct(os,as_struct_ref(e),ctx,true);			
 		} else if (is<Ast_node_kind::stmts>(e))
 			print_content(os,as_stmts_ref(e).children());
 		else {
@@ -693,7 +693,7 @@ void ceps::docgen::Comment::print_content(std::ostream& os, std::vector<Nodebase
 			local_ctx.suffix = "";
 			local_ctx.quote_string = false;
 			local_ctx.ignore_indent = true;
-			fmt_handle_node(os, e, local_ctx);
+			fmt_handle_node(os, e, local_ctx,true);
 		}
 	}
 }
@@ -703,7 +703,7 @@ void ceps::docgen::Comment::print(std::ostream& os){
 }
 
 
-static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx){		    
+static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx, bool ignore_macro_definitions ){		    
 	bool lbrace = false;
 	auto& nm{name(strct)};
 
@@ -731,7 +731,7 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 		}
 	}
 	++ctx.indent;
-	fmt_out_handle_children(os,strct.children(),ctx);
+	fmt_out_handle_children(os,strct.children(),ctx,ignore_macro_definitions);
 	if (lbrace){
 		--ctx.indent;
 		auto lctx{ctx};
@@ -741,11 +741,11 @@ static void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& str
 	}
 }
 
-static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx){
+static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx,bool ignore_macro_definitions){
 	auto v = fetch_symbols_standing_alone(strct.children());
 	auto is_schema = v.end() != std::find_if(v.begin(),v.end(),[](ceps::ast::Symbol* p){ return ceps::ast::kind(*p) == "Schema"; });
 	if (!is_schema) {
-		fmt_out_handle_inner_struct(os,strct,ctx);
+		fmt_out_handle_inner_struct(os,strct,ctx,ignore_macro_definitions);
 		return;
 	}
 	ctx.inside_schema = is_schema;
@@ -758,7 +758,7 @@ static void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& str
 	++ctx.indent;
 	for(auto n: strct.children()){
 		if (is<Ast_node_kind::structdef>(n)){
-			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),ctx);
+			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),ctx, ignore_macro_definitions);
 		}
 	}
 }
@@ -804,7 +804,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			{auto local_ctx{ctx};fmt_out_layout_funcname(local_ctx);formatted_out(os,e,local_ctx);}
 			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix=":";formatted_out(os,"",local_ctx);}
 			++ctx.indent;
-			fmt_out_handle_children(os,action2body[e]->children(),ctx);
+			fmt_out_handle_children(os,action2body[e]->children(),ctx,true);
 			--ctx.indent;
 		}
 	--ctx.indent;
@@ -1006,6 +1006,7 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 							std::vector<ceps::ast::Nodebase_ptr> const & ns,
 							context& lookuptbls,
 							std::vector<std::string> output_format_flags,
+							bool ignore_macro_definitions,
 							ceps::parser_env::Symboltable* symtab)
 {
 	using namespace ceps::ast;
@@ -1019,12 +1020,12 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 				Statemachine sm{current_struct,lookuptbls,output_format_flags,symtab};
 				sm.print(os,ctx);
 			}
-			else fmt_out_handle_outer_struct(os,current_struct,ctx);
+			else fmt_out_handle_outer_struct(os,current_struct,ctx,ignore_macro_definitions);
 		} else if (is<Ast_node_kind::kind_def>(n)) {
 			auto& kd{as_kinddef_ref(n)};
 			auto k = kind(kd);
 			for(auto id: kd.children()) lookuptbls.global_symbols.reg_id_as(name(as_id_ref(id)),k);
-		} else fmt_handle_node(os,n,ctx);
+		} else fmt_handle_node(os,n,ctx,ignore_macro_definitions);
 		return true;
 	});
 }

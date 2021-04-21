@@ -246,6 +246,7 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 		         ceps::ast::nlf_ptr(driver.parsetree().get_root())->children(),
 				 docgen_context,
 				 result_cmd_line.output_format_flags,
+				 false,
 				 &ceps_env_current().get_global_symboltable());
 
 		ceps::interpreter::evaluate(current_universe(),
