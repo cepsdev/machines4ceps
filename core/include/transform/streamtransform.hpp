@@ -373,7 +373,7 @@ public:
     for(;p_.get(ch);)
     {
         //std::cerr << ch;
-        if (std::isalpha(ch))
+        if (std::isalpha(ch) || ch == '_')
         {
 
           bool not_eof = true;
