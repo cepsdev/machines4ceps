@@ -373,7 +373,7 @@ public:
     for(;p_.get(ch);)
     {
         //std::cerr << ch;
-        if (std::isalpha(ch) || ch == '_')
+        if (std::isalpha(ch))
         {
 
           bool not_eof = true;
@@ -395,6 +395,7 @@ public:
         }
         else if ( /*ch == '.' &&  ||*/ (starts_with_digit = std::isdigit(ch)) )
         {
+          
           bool dot_read = !starts_with_digit;
           bool not_eof = true;
           for (; (not_eof = p_.get(ch));)
@@ -419,10 +420,14 @@ public:
 
           memcpy(buffer,p_.ptr_+start,p_.pos_-start);
 
+          
+
 
           if (dot_read)
           {
+           
             t.v.dval_ = std::strtod(buffer,nullptr);
+           
             t.kind_ = Token::TOK_DOUBLE;
           }
           else
@@ -449,7 +454,7 @@ public:
            if (!std::isalnum(ch) && ch != '_') break;
           if (not_eof) p_.unget();
           auto keyword = nonmutable_string<C>(p_.ptr_+start,p_.pos_-start);
-          //std::cout << ">>>>>>>>>>>>'" << keyword << "'\n";
+          
           p_.skip_line();
           start = p_.pos_;
           if (keyword == "ignore_ws") ignore_space_ = true;
@@ -1035,6 +1040,10 @@ int parse_sideeffect_ASSIGN()
    else if (t.kind() == Token::TOK_INT64) {
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
       ++pat_len;
+   }
+   else if (t.kind() == Token::TOK_DOUBLE) {
+      prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
+      ++pat_len;
     }
    else if (t.kind() == Token::TOK_ID && t.sval_ == "endl") {
       t.kind() = Token::TOK_ENDL;
@@ -1144,6 +1153,11 @@ int parse_sideeffect_ASSIGN()
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
       ++body_len;
     }
+   else if (t.kind() == Token::TOK_DOUBLE)
+    {
+      prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
+      ++body_len;
+    }
    else if (t.kind() == Token::TOK_TOK && t.sval_ == ".") break;
    else if (t.kind() == Token::TOK_TOK && t.sval_ == "/")
    {
@@ -1176,9 +1190,15 @@ int parse_sideeffect_ASSIGN()
    } else if (t.kind() == Token::TOK_TOK && t.sval_ == "$")
    {
     if (!gettoken_local(t)) throw match_ex();
+    bool neg = false;
+    if (t.kind() == Token::TOK_TOK && t.sval_ == "-") {
+      neg = true;
+      if (!gettoken_local(t)) throw match_ex();
+    }
     if (t.kind() == Token::TOK_INT64)
     {
       t.kind() = Token::TOK_MATCH_REF;
+      if (neg) t.v.ival64_ *= -1;
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
       ++body_len;
     }else throw match_ex();
@@ -1293,7 +1313,7 @@ int parse_sideeffect_ASSIGN()
     {
 
       if (print_debug_info)std::cout << "t.v.ival64_="<<t.v.ival64_<<std::endl;
-      t = matched_tokens()[t.v.ival64_];
+      t = matched_tokens()[t.v.ival64_ < 0 ? (matched_tokens().size() + t.v.ival64_ ) : t.v.ival64_ ];
       if (print_debug_info)std::cout << t.sval_<<std::endl;
     }
   return true;
