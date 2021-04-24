@@ -132,6 +132,19 @@ produce the following graphical representation of the state machine __basic_exam
 
 ![](examples/first_steps/img/basic_uml_state_diagram.png)
 
+### Visualization (The *--pr* option)
+
+Another possibility, which requires nothing else than a shell, offers the *--pr* option. It outputs a python like representation on stdout.
+
+The commands
+
+* ../../bin/ceps basic_uml_state_diagram.ceps --pr
+
+produce the following output on the console:
+
+![](examples/first_steps/img/basic_example_pr.png)
+
+
 ### Completing the basic example: Adding Actions
 
 We complete the ceps version of the basic state machine, by adding the missing transitions under the __ANY_KEY__ event together with the associated actions.
