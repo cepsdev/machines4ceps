@@ -174,6 +174,7 @@ Actions{
 ```
 
 ![](examples/first_steps/img/basic_example2_pr.png)
+![](examples/first_steps/img/basic_uml_state_diagram_with_actions.png)
 
 The code can be found in __examples/first_steps/basic_uml_state_diagram_with_actions.ceps__.
 
