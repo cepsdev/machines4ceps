@@ -1,0 +1,18 @@
+print("curl -X POST 'http://localhost:8086/api/v2/write?org=Dev&bucket=Test&precision=ms' --header \"Authorization: Token 5B5EXtiCHO6lBpw7sTE9yHjreJuGBircJWATFa3ySiwjBaOqYSHK9MhO-FKWTumPUA3hESw4GHZTk05szyku-A==\" --data-binary \"");
+val i = 0;
+for(e: root.voltage){
+    if (i < 100000){
+    print ( "m13,host=host1 voltage=", (as_double(e.from.content())+as_double(e.to.content())) / 2.0, " ");
+    print(mktime(
+           as_int(e.timestamp.year.content()) ,
+           as_int(e.timestamp.month.content()),
+           as_int(e.timestamp.day.content()),
+           as_int(e.timestamp.hour.content()) ,
+           as_int(e.timestamp.minute.content()) ,
+           as_int(e.timestamp.sec.content())
+          )* 1000 + as_int(e.timestamp.millisecond.content()));
+    print (" \n");
+    }
+    let i = i +1;    
+}
+print("\"");
