@@ -920,14 +920,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			}
             else if (func_name == "print")
 			{
-
 				for(auto& n : args) {
 					n = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
 				}
                 std::stringstream ss;
-
                 bool do_flush = false;
-
 				for(auto& n : args)
 				{
                     if (n->kind() == ceps::ast::Ast_node_kind::byte_array){
