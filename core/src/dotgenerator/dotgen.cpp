@@ -126,7 +126,7 @@ static void write_copyright_and_timestamp(std::ostream& out, std::string title,b
 	    out << "      "<< f << "\n";
 	}
 
-	out << "\n\n";
+	out << "*/\n\n";
 }
 
 
