@@ -341,7 +341,7 @@ Yes, a state machine is a state. States with an inner structure - like state mac
 
 If an inactive state becomes active, i.e. a state which is not in the *ASS* being put into the *ASS*, we say the state is being __entered__. A state is being __visited__ if it is added to the *ASS*, this includes the case of the state being already in the *ASS*. A state being *entered* is also *visited*, but you can visit a state without entering it.  
 
-A state machine is *started* by visiting it, e.g. the previously mentioned __Start{__*NameOfStateMachine*__};__ command visits the (composite) state referred to by *NameOfStateMachine*. 
+A state machine is *started* by entering it, e.g. the previously mentioned __Start{__*NameOfStateMachine*__};__ command enters the (composite) state referred to by *NameOfStateMachine*. 
 
 Another important notion is the __set of active transitions__  __SAT(s,E)__ . This is - roughly - the set of all transitions of the form  t{s;.;E;...}; for a state __s__ and an event __E__. 
 
@@ -350,22 +350,22 @@ Another important notion is the __set of active transitions__  __SAT(s,E)__ . Th
 
 Conceptually the execution of a state machine follows the following schema - very approximate :
 
-* While *AST* is not empty do
+* While *ASS* is not empty do
    * Fetch an event E
    * *L* := [] 
-   * for each state s in *AST* do
+   * for each state s in *ASS* do
      * for each transition t{s,s',E,actions,guards} in *SAT(s,E)* with at least one true g in guards do
          * L += [s']
          * Run each action in *actions*
-         * if s' is not in *AST* call *s'.on_enter*   (A)
-   * OLD_AST = AST
-   * N = set of all s in OLD_AST which weren't visited
-   * AST = L + N
-   * Exited := OLD_AST - AST
+         * if s' is not in *ASS* call *s'.on_enter*   (A)
+   * OLD_ASS = ASS
+   * N = set of all s in OLD_ASS with no transition under E
+   * ASS = L + N
+   * Exited := OLD_ASS - ASS
    * for each state s in Exited do
      * call s.on_exit  (B)
 
-Especially steps (A) and (B) don't tell the whole truth - a little bit more on this in the following paragraph.
+Especially steps (A) and (B) don't tell the whole truth.
 
 #### on_enter, on_exit
 
