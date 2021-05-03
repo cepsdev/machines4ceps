@@ -1879,6 +1879,9 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	int number_of_states_covered = 0;
 	int number_of_transitions_covered = 0;
 	std::vector<std::string> state_coverage_state_list;
+	std::vector<std::string> states_hit_list;
+	std::vector<int> states_hit_counter;
+
 	std::vector<std::string> state_coverage_missing_states_list;
 	std::vector<ceps::ast::Nodebase_ptr> state_coverage_states_list_ceps_expr;
 	std::vector<ceps::ast::Nodebase_ptr> state_coverage_missing_states_list_ceps_expr;
@@ -1924,7 +1927,10 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 		 number_of_states_covered += ctx.coverage_state_table[i] != 0;
 		 ++number_of_states_to_cover;
 		 if (ctx.coverage_state_table[i]){
-				state_coverage_state_list.push_back(ctx.idx_to_state_id.find(i+ctx.start_of_covering_states)->second);
+			    auto sid_of_state = ctx.idx_to_state_id.find(i+ctx.start_of_covering_states)->second;
+			    states_hit_list.push_back(sid_of_state);
+				states_hit_counter.push_back(ctx.coverage_state_table[i]);
+				state_coverage_state_list.push_back(sid_of_state);
 				assert(ctx.assoc_sm[i+ctx.start_of_covering_states] != nullptr);
 				++sm_states_covered[get_toplevel(ctx.assoc_sm[i+ctx.start_of_covering_states])];
 		 } else {
@@ -1945,6 +1951,7 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 	}
 
 	state_coverage_states_list_ceps_expr = mk_sm_state_exprs(state_coverage_state_list);
+	auto states_hit_list_v =  mk_sm_state_exprs(states_hit_list);
 	state_coverage_missing_states_list_ceps_expr = mk_sm_state_exprs(state_coverage_missing_states_list);
 
 
@@ -2073,6 +2080,7 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 		    strct{"ratio",state_coverage},
             strct{"percentage",state_coverage*100.0},
 		    strct{"covered_states",state_coverage_states_list_ceps_expr},
+		    strct{"covered_states_visit_count",states_hit_counter},
 		    strct{"not_covered_states",state_coverage_missing_states_list_ceps_expr},
             strct{"toplevel_state_machines",toplevel_state_machines_state_coverage_stats}
 		   },
