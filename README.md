@@ -12,6 +12,10 @@ __Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, _
  * git clone https://github.com/cepsdev/machines4ceps.git
  * cd machines4ceps
  * ./make_machines
+
+__Important Remark:__ __machines4ceps__ is maintained in lockstep with __ceps__ which is __not__ referenced as a git submodule. 
+If you pull changes into your local copy of machines4ceps make sure that you have the latest version of the __ceps__ repo too. 
+
 ### Build Manually:
 All repositories need to be in the same directory as machines4ceps.
 * Clone pugixml:
