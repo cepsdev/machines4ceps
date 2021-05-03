@@ -1,5 +1,5 @@
 /*
-Copyright 2014,2015,2016,2017,2018,2019,2020,2021 Tomas Prerovsky (cepsdev@hotmail.com).
+Copyright 2021 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -142,6 +142,41 @@ namespace ceps{
                         std::vector<std::string> output_format_flags,
                         bool ignore_macro_definitions,
                         ceps::parser_env::Symboltable* symtab = nullptr);
+
+        //Helper routines
+
+        void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx,bool ignore_macro_definitions);
+        void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx, bool ignore_macro_definitions);
+        void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx, bool ignore_macro_definitions);
+        void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx);
+        void fmt_out_handle_valdef(std::ostream& os, ceps::ast::Valdef& valdef, fmt_out_ctx ctx);
+        void formatted_out(std::ostream& os, std::string s, fmt_out_ctx ctx);
+        void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings= true, fmt_out_ctx ctx_base_string = {});
+        void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx,bool ignore_macro_definitions);
+        void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out_ctx ctx);
+        void fmt_out_handle_let(std::ostream& os, Let& let, fmt_out_ctx ctx);
+        void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx ctx);
+
+        void fmt_out_layout_outer_strct(bool is_schema, fmt_out_ctx& ctx);
+        void fmt_out_layout_inner_strct(fmt_out_ctx& ctx);
+        void fmt_out_layout_macro_name(fmt_out_ctx& ctx);
+        void fmt_out_layout_macro_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_state_machine_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_loop_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_loop_in_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_loop_variable(fmt_out_ctx& ctx);
+        void fmt_out_layout_loop_complete_line(fmt_out_ctx& ctx);
+        void fmt_out_layout_valdef_complete_line(fmt_out_ctx& ctx);
+        void fmt_out_layout_if_complete_line(fmt_out_ctx& ctx);
+        void fmt_out_layout_val_var(fmt_out_ctx& ctx);
+        void fmt_out_layout_val_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_val_arrow(fmt_out_ctx& ctx);
+        void fmt_out_layout_if_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_label(fmt_out_ctx& ctx);
+        void fmt_out_layout_funcname(fmt_out_ctx& ctx);
+
+
+        std::string escape_ceps_string(std::string const & s);
 
         template <typename T> 
             bool shallow_traverse(std::vector<ceps::ast::Nodebase_ptr> const & ns, T f){
