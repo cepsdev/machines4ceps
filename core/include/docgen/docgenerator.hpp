@@ -83,6 +83,7 @@ namespace ceps{
         struct context{
             symbol_info global_symbols;
             sm_info state_machines;
+            ceps::ast::node_t coverage_summary = nullptr;
         };
 
 		struct Docelement{

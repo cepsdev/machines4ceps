@@ -1856,17 +1856,11 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
     if (!stateindex2categories_valid){
         //Compute categorizations
         auto f = [this](State_machine* cur_sm){
-
-            //cur_sm->idx_ = ctr++;
             for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
              auto state = *it;
              std::vector<std::string> v;
              for(auto e: state->categories()) {v.push_back(e);statistics_category[e]=0;}
              stateindex2categories[state->idx_] = v;
-
-             //state->idx_ = ctr++;
-             //if (!state->is_sm_) continue;
-             //state->smp_->idx_ = state->idx_;
             }
          };
         traverse_sms(State_machine::statemachines,f);
@@ -2063,6 +2057,7 @@ ceps::ast::Nodeset State_machine_simulation_core::make_report(){
 
     auto summary =
      new strct{ "summary",
+	 	  *ceps::ast::mk_symbol("coverage_summary","@@coverage_summary"),
     	  strct{"general",
     	   strct{"states_total",ctx.number_of_states},
 		   strct{"total_of_states_to_cover",number_of_states_to_cover},

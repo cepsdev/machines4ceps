@@ -747,8 +747,26 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 	fmt_out_ctx ctx;
 	ctx.comment_stmt_stack = std::make_shared<std::vector<ceps::ast::Nodebase_ptr>>(std::vector<ceps::ast::Nodebase_ptr>{});
 	ctx.symtab = symtab;
+
+	// Preprocess:
+	// - Find coverage summary (if it exists)
 	shallow_traverse(ns, [&](Nodebase_ptr n) -> bool{
 		if (is<Ast_node_kind::structdef>(n)){
+			auto&  strct{as_struct_ref(n)};
+			auto v = fetch_symbols_standing_alone(strct.children());
+			auto is_coverage_report = v.end() != std::find_if(v.begin(),v.end(),[](ceps::ast::Symbol* p){ return ceps::ast::kind(*p) == "@@coverage_summary"; });
+			if (is_coverage_report){
+				lookuptbls.coverage_summary = n;				
+				return false;
+			}
+		}
+		return true;
+	} );
+
+
+	shallow_traverse(ns, [&](Nodebase_ptr n) -> bool{
+		if (is<Ast_node_kind::structdef>(n)){
+			if (lookuptbls.coverage_summary == n) return true;
 			auto&  current_struct{as_struct_ref(n)};
 			if (name(current_struct) == "sm"){
 				Statemachine sm{current_struct,lookuptbls,output_format_flags,symtab};
