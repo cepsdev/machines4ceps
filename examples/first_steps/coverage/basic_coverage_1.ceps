@@ -19,8 +19,21 @@ sm{
    t{d;Final;E;};
 };
 
+sm{
+   basic_coverage_2;
+
+   states{a;b;c;d;Final;Initial;};
+
+   t{Initial;a;A;};
+   t{a;b;B;};
+   t{b;c;C;};
+   t{c;b;B;};
+   t{c;d;D;};
+   t{d;Final;E;};
+};
+
 
 Simulation{
-    Start{basic_coverage_1;};
+    Start{basic_coverage_1;basic_coverage_2;};
     A;B;C;B;C;D;E;
 };
