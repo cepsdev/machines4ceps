@@ -1,4 +1,3 @@
-
 /*
 Copyright 2021 Tomas Prerovsky (cepsdev@hotmail.com).
 
@@ -25,6 +24,9 @@ using ceps::docgen::fmt_out_ctx;
 
 
 
+void ceps::docgen::Statemachine::print_left_margin (std::ostream& os, fmt_out_ctx& ctx){
+
+}
 
 void ceps::docgen::Statemachine::print(	std::ostream& os,
 										fmt_out_ctx& ctx){
@@ -143,8 +145,9 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 	{auto local_ctx{ctx};local_ctx.suffix="";formatted_out(os,"",local_ctx);}
 }
 
-void ceps::docgen::Statemachine::build(){
+void ceps::docgen::Statemachine::build(ceps::docgen::Statemachine* parent){
 	auto traverse_pred = [](Nodebase_ptr n) ->bool { return is<Ast_node_kind::stmts>(n) || is<Ast_node_kind::stmt>(n) || is<Ast_node_kind::expr>(n); };
+
 	auto process_name = [&](Nodebase_ptr n)->bool {
 	 	if (is<Ast_node_kind::identifier>(n)){
 			name = ceps::ast::name(as_id_ref(n));
@@ -152,6 +155,7 @@ void ceps::docgen::Statemachine::build(){
 		}
 		return true;
 	};
+
 	auto process_transitions = [&](Nodebase_ptr n)->bool {
 	 	if (is<Ast_node_kind::structdef>(n) && ceps::ast::name(as_struct_ref(n)) == "t"){
 			 auto& ts{as_struct_ref(n)};
@@ -177,13 +181,7 @@ void ceps::docgen::Statemachine::build(){
 					 if (kind(as_symbol_ref(e)) == "Guard") t.guards.push_back(e);
 				 }
 			 }
-
-
-
-
-			 transitions.push_back(t);
-			 
-			
+			 transitions.push_back(t);			
 			return true;
 		}
 		return true;
@@ -238,16 +236,44 @@ void ceps::docgen::Statemachine::build(){
 			 auto& s{as_struct_ref(n)};
 			 auto sname = ceps::ast::name(s);
 			 if (sname == "sm")
-			  sub_machines.push_back(std::make_shared<Statemachine>(Statemachine{s,ctxt,output_format_flags,symtab}));
+			  sub_machines.push_back(
+				  std::make_shared<Statemachine>(Statemachine{this,s,ctxt,output_format_flags,symtab})
+				);
 			return true;
 		}
 		return true;
 	};
 
+	//The action starts here
 
 	shallow_traverse_ex(strct.children(),
 	                    process_name, 
 						traverse_pred);
+	//Here we know the name of the state machine, i.e. member 'name' is valid
+	if (parent == nullptr && ctxt.coverage_summary != nullptr && ctxt.composite_ids_with_coverage_info.size() != 0){
+		//Compute the subset of indices relevant for this state machine (and its substates)
+		for(size_t i = 0; i < ctxt.composite_ids_with_coverage_info.size(); ++i){
+			if(ctxt.composite_ids_with_coverage_info[i] != nullptr) break;
+			++i;
+			if (nullptr == ctxt.composite_ids_with_coverage_info[i] || !is<Ast_node_kind::identifier>(ctxt.composite_ids_with_coverage_info[i])) break;
+			if ( ceps::ast::name(as_id_ref(ctxt.composite_ids_with_coverage_info[i])) == name ){
+				active_pointers_to_composite_ids_with_coverage_info.push_back(i);
+			}
+			for(;i < ctxt.composite_ids_with_coverage_info.size() && ctxt.composite_ids_with_coverage_info[i]!=nullptr; ++i);
+			++i;
+			for(;i < ctxt.composite_ids_with_coverage_info.size() && ctxt.composite_ids_with_coverage_info[i]!=nullptr; ++i);			
+		}	
+	} else if (parent != nullptr && ctxt.coverage_summary != nullptr && ctxt.composite_ids_with_coverage_info.size() != 0){
+		for(size_t i = 0; i < parent->active_pointers_to_composite_ids_with_coverage_info.size(); ++i){
+			auto idx = parent->active_pointers_to_composite_ids_with_coverage_info[i];
+			if (ctxt.composite_ids_with_coverage_info.size() <= (size_t)idx + 1) break; //something is wrong
+			if (ctxt.composite_ids_with_coverage_info[idx +1 ] == nullptr) continue; //end of composite id
+			if (!is<Ast_node_kind::identifier>(ctxt.composite_ids_with_coverage_info[idx+1])) break; //something is wrong
+			if (ceps::ast::name(as_id_ref(ctxt.composite_ids_with_coverage_info[idx+1])) == name) active_pointers_to_composite_ids_with_coverage_info.push_back(idx+1); //we have a composite id which includes this state machine
+		}
+	}
+
+
 	shallow_traverse_ex(strct.children(),
 	                    process_actions, 
 						traverse_pred);						
@@ -261,4 +287,4 @@ void ceps::docgen::Statemachine::build(){
 	                    process_submachines, 
 						traverse_pred);											
 }
-// ceps::docgen::Statemachine END
+

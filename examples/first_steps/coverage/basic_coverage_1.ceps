@@ -3,11 +3,12 @@ kind Event;
 Event A,B,C,D,E;
 
 sm{
-    basic_coverage_1;
-    cover{ 
+   basic_coverage_1;
+
+   cover{ 
       edges_upto_1;
       dont_cover_loops;
-    };
+   };
 
    states{a;b;c;d;Final;Initial;};
 

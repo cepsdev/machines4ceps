@@ -83,7 +83,10 @@ namespace ceps{
         struct context{
             symbol_info global_symbols;
             sm_info state_machines;
-            ceps::ast::node_t coverage_summary = nullptr;
+            ceps::ast::Struct* coverage_summary = nullptr;
+            ceps::ast::Struct* covered_states = nullptr;
+            ceps::ast::Struct* covered_states_visit_count = nullptr;
+            std::vector<node_t> composite_ids_with_coverage_info; // a.b.c hits = 2 => NULL|POINTER TO a|POINTER TO b|POINTER TO c|NULL|POINTERR TO 2|NULL
         };
 
 		struct Docelement{
@@ -103,7 +106,13 @@ namespace ceps{
 			void print(std::ostream& os) override;
 		};
 
-		struct Statemachine{
+        class MarginPrinter{
+            int left_margin = 0;
+            public:
+            virtual void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) = 0;
+        };
+
+		class Statemachine : public MarginPrinter{
 			private:
             std::vector<std::string> states;
             std::set<std::string> actions;
@@ -118,22 +127,25 @@ namespace ceps{
                 std::vector<Nodebase_ptr> guards;
             };
             std::vector<transition> transitions;
-            void build();
+            void build(Statemachine* parent);
             std::string name;
+            std::vector<int> active_pointers_to_composite_ids_with_coverage_info;// p1|p2|...|p_n where p_i is an index into lookuptbls.composite_ids_with_coverage_info
 			public:
 			Struct strct;
             context& ctxt;
             std::vector<std::string> output_format_flags;
             ceps::parser_env::Symboltable* symtab;
-			Statemachine(   Struct const& strct, 
+			Statemachine(   Statemachine* parent,
+                            Struct const& strct, 
                             context& ctxt,
                             std::vector<std::string> output_format_flags,
                             ceps::parser_env::Symboltable* symtab = nullptr
                         ):strct{strct}, ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
 				
-                build();
+                build(parent);
 			}
 			void print(std::ostream& os, fmt_out_ctx& ctx);
+            void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) override ;
 		};
 
         //Entry point for Terminal output
@@ -179,24 +191,6 @@ namespace ceps{
 
         std::string escape_ceps_string(std::string const & s);
 
-        template <typename T> 
-            bool shallow_traverse(std::vector<ceps::ast::Nodebase_ptr> const & ns, T f){
-	            for(auto n : ns){
-		            if(is<Ast_node_kind::stmts>(n) || is<Ast_node_kind::stmt>(n)) {
-                        if(!shallow_traverse(nlf_ptr(n)->children(),f)) return false;
-                    } else if (!f(n)) return false;
-	            }
-                return true;
-            }
-        template <typename T1, typename T2> 
-            bool shallow_traverse_ex(std::vector<ceps::ast::Nodebase_ptr> const & ns, T1 f, T2 p){
-	            for(auto n : ns){
-		            if(p(n)) {
-                        if(!shallow_traverse_ex(nlf_ptr(n)->children(),f,p)) return false;
-                    } else if (!f(n)) return false;
-	            }
-                return true;
-            }
 	}
 }
 

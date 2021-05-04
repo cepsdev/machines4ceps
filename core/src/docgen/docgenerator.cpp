@@ -72,155 +72,6 @@ std::optional<std::string> ceps::docgen::symbol_info::kind_of(std::string id){
 
 // END ceps::docgen::symbol_info
 
-void ceps::docgen::fmt_out_layout_outer_strct(bool is_schema, ceps::docgen::fmt_out_ctx& ctx){
-	if (is_schema) {
-		ctx.underline = true;
-		ctx.foreground_color = "214";
-		ctx.suffix = ":";
-		ctx.info.push_back("schema");
-	} else return fmt_out_layout_inner_strct(ctx);
-}
-
-void ceps::docgen::fmt_out_layout_inner_strct(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "184";
-	else ctx.foreground_color = "3";
-	ctx.suffix = ":";
-	//ctx.info.push_back("schema");
-}
-
-void ceps::docgen::fmt_out_layout_macro_name(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "4";
-	else ctx.foreground_color = "4";
-	ctx.bold = true;
-	ctx.italic = true;
-	ctx.suffix = ":";
-	//ctx.eol = "\n\n";
-}
-
-void ceps::docgen::fmt_out_layout_macro_keyword(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "5";
-	else ctx.foreground_color = "5";
-	ctx.bold = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-}
-
-void ceps::docgen::fmt_out_layout_state_machine_keyword(fmt_out_ctx& ctx){
-	ctx.foreground_color = "5";
-	ctx.bold = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-}
-
-void ceps::docgen::fmt_out_layout_loop_keyword(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "5";
-	else ctx.foreground_color = "5";
-	ctx.bold = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-}
-
-void ceps::docgen::fmt_out_layout_loop_in_keyword(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "5";
-	else ctx.foreground_color = "5";
-	ctx.bold = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-	ctx.ignore_indent = true;
-}
-
-void ceps::docgen::fmt_out_layout_loop_variable(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "6";
-	else ctx.foreground_color = "6";
-	ctx.italic = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-	ctx.ignore_indent = true;
-}
-
-
-void ceps::docgen::fmt_out_layout_loop_complete_line(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "6";
-	else ctx.foreground_color = "6";
-	ctx.bold = true;
-	ctx.ignore_indent = true;
-}
-
-void ceps::docgen::fmt_out_layout_valdef_complete_line(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "6";
-	else ctx.foreground_color = "6";
-	ctx.ignore_indent = true;
-	ctx.bold = true;
-}
-
-void ceps::docgen::fmt_out_layout_if_complete_line(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "6";
-	else ctx.foreground_color = "6";
-	ctx.bold = true;
-	ctx.suffix = ":";
-	ctx.ignore_indent = true;
-}
-
-void ceps::docgen::fmt_out_layout_val_var(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "6";
-	else ctx.foreground_color = "6";
-	ctx.italic = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-	ctx.ignore_indent = true;
-}
-
-void ceps::docgen::fmt_out_layout_val_keyword(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "5";
-	else ctx.foreground_color = "5";
-	ctx.bold = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-}
-
-void ceps::docgen::fmt_out_layout_val_arrow(fmt_out_ctx& ctx){
-	ctx.foreground_color = "";
-	ctx.bold = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-	ctx.ignore_indent = true;
-}
-
-void ceps::docgen::fmt_out_layout_if_keyword(fmt_out_ctx& ctx){
-	if (ctx.inside_schema) ctx.foreground_color = "5";
-	else ctx.foreground_color = "5";
-	ctx.bold = true;
-	ctx.suffix = " ";
-	ctx.prefix = "";
-	ctx.eol = "";
-}
-
-void ceps::docgen::fmt_out_layout_label(fmt_out_ctx& ctx){
-	ctx.linebreaks_before = 1;
-	ctx.suffix = "";
-	ctx.eol = "\n\n";
-	//ctx.underline = true;
-	ctx.prefix = "📎 ";
-	ctx.normal_intensity = true;
-}
-
-void ceps::docgen::fmt_out_layout_funcname(fmt_out_ctx& ctx){
-	ctx.suffix = "";
-	ctx.eol = "";
-	ctx.prefix = "";
-	ctx.normal_intensity = true;
-	ctx.suffix = "";
-	ctx.ignore_indent = true;
-	ctx.foreground_color = "229";
-}
 static void print_comment_impl(std::ostream& os,std::vector<Nodebase*> const & v, fmt_out_ctx const & ctx){
 	auto local_ctx_string{ctx};
 	local_ctx_string.ignore_comment_stmt_stack = true;
@@ -736,6 +587,27 @@ void ceps::docgen::fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Stru
 	}
 }
 
+
+
+
+int flatten_composite_id(node_t root,std::vector<node_t>& dest){
+	if (root == nullptr) return 0;
+	if (is<Ast_node_kind::identifier>(root)) { dest.push_back(root); return 1; }
+	if (is<Ast_node_kind::binary_operator>(root)){
+		auto& oper = as_binop_ref(root);
+		if (op_val(oper) != ".") return -1;
+		auto lhs = flatten_composite_id(oper.left(), dest); if (lhs < 0) return lhs;
+		auto rhs = flatten_composite_id(oper.right(), dest); if (rhs < 0) return rhs;
+		return lhs + rhs;
+	}
+	return -1;
+}
+
+//
+// Enry point for formatted console output of:
+//  - unevaluated (raw) ceps trees
+//  - evaluated ceps trees which includes evaluated ceps trees in different stages (e.g. post processing)
+//
 void ceps::docgen::fmt_out(	std::ostream& os, 
 							std::vector<ceps::ast::Nodebase_ptr> const & ns,
 							context& lookuptbls,
@@ -750,26 +622,51 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 
 	// Preprocess:
 	// - Find coverage summary (if it exists)
-	shallow_traverse(ns, [&](Nodebase_ptr n) -> bool{
+	if (lookuptbls.coverage_summary == nullptr) shallow_traverse(ns, [&](node_t n) -> bool{
 		if (is<Ast_node_kind::structdef>(n)){
 			auto&  strct{as_struct_ref(n)};
 			auto v = fetch_symbols_standing_alone(strct.children());
 			auto is_coverage_report = v.end() != std::find_if(v.begin(),v.end(),[](ceps::ast::Symbol* p){ return ceps::ast::kind(*p) == "@@coverage_summary"; });
 			if (is_coverage_report){
-				lookuptbls.coverage_summary = n;				
+				lookuptbls.coverage_summary = as_struct_ptr(n);
+				//find coverage struct
+				lookuptbls.covered_states = as_struct_ptr(get_node_by_path({"coverage","state_coverage","covered_states"},strct.children()));
+				lookuptbls.covered_states_visit_count = as_struct_ptr(get_node_by_path({"coverage","state_coverage","covered_states_visit_count"},strct.children()));				
 				return false;
 			}
 		}
 		return true;
 	} );
 
-
+	if (lookuptbls.coverage_summary != nullptr && lookuptbls.composite_ids_with_coverage_info.size() == 0){
+		//compute lookup tables for coverage info 
+		//lookuptbls.covered_states
+		std::vector<node_t> composite_ids;
+		for(size_t i = 0; i < lookuptbls.covered_states->children().size(); ++i){
+			auto l = composite_ids.size(); 
+			composite_ids.push_back(nullptr);
+			if ( 0 > flatten_composite_id(lookuptbls.covered_states->children()[i],composite_ids)){
+				composite_ids.erase(composite_ids.begin()+l,composite_ids.end());
+			} else {
+				composite_ids.push_back(nullptr);
+				if (lookuptbls.covered_states_visit_count->children().size() > i) 
+				 composite_ids.push_back(lookuptbls.covered_states_visit_count->children()[i]);
+				composite_ids.push_back(nullptr);
+			}
+		}
+		lookuptbls.composite_ids_with_coverage_info = std::move(composite_ids);
+	}
+	
 	shallow_traverse(ns, [&](Nodebase_ptr n) -> bool{
 		if (is<Ast_node_kind::structdef>(n)){
 			if (lookuptbls.coverage_summary == n) return true;
 			auto&  current_struct{as_struct_ref(n)};
 			if (name(current_struct) == "sm"){
-				Statemachine sm{current_struct,lookuptbls,output_format_flags,symtab};
+				Statemachine sm{ nullptr,
+				                 current_struct,
+				                 lookuptbls,
+								 output_format_flags,
+								 symtab};
 				sm.print(os,ctx);
 			}
 			else fmt_out_handle_outer_struct(os,current_struct,ctx,ignore_macro_definitions);
