@@ -23,18 +23,24 @@ sm{
 sm{
    basic_coverage_2;
 
+   cover{ 
+      edges_upto_1;
+      dont_cover_loops;
+   };
+
    states{a;b;c;d;Final;Initial;};
 
    t{Initial;a;A;};
    t{a;b;B;};
-   t{b;c;C;};
-   t{c;b;B;};
-   t{c;d;D;};
+   t{b;c;D;};
+   t{c;b;D;};
+   
    t{d;Final;E;};
 };
 
 
 Simulation{
     Start{basic_coverage_1;basic_coverage_2;};
-    A;B;C;B;C;D;E;
+    for(e : 1 .. 100) {A;B;C;B;C;}
+    for(e : 1 .. 30) {D;}
 };

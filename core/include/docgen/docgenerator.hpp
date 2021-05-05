@@ -55,7 +55,7 @@ namespace ceps{
             std::string eol                   ="\n";
             std::vector<std::string> info;
             std::vector<std::string> modifiers; 
-            std::string indent_str            = "  ";
+            std::string indent_str            = " ";
             int indent                        = 0;
             int linebreaks_before             = 0;
             ceps::parser_env::Symboltable* symtab = nullptr;
@@ -107,6 +107,7 @@ namespace ceps{
 		};
 
         class MarginPrinter{
+            protected:
             int left_margin = 0;
             public:
             virtual void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) = 0;
@@ -127,9 +128,15 @@ namespace ceps{
                 std::vector<Nodebase_ptr> guards;
             };
             std::vector<transition> transitions;
-            void build(Statemachine* parent);
+            void build();
             std::string name;
             std::vector<int> active_pointers_to_composite_ids_with_coverage_info;// p1|p2|...|p_n where p_i is an index into lookuptbls.composite_ids_with_coverage_info
+            Statemachine* parent;
+            struct {
+                int hits = 0;
+                int hits_col_width = 0;
+                int max_hits = 0;
+            } coverage_statistics;
 			public:
 			Struct strct;
             context& ctxt;
@@ -140,9 +147,9 @@ namespace ceps{
                             context& ctxt,
                             std::vector<std::string> output_format_flags,
                             ceps::parser_env::Symboltable* symtab = nullptr
-                        ):strct{strct}, ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
+                        ):parent{parent},strct{strct}, ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
 				
-                build(parent);
+                build();
 			}
 			void print(std::ostream& os, fmt_out_ctx& ctx);
             void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) override ;
@@ -163,7 +170,7 @@ namespace ceps{
         void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx, bool ignore_macro_definitions);
         void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx);
         void fmt_out_handle_valdef(std::ostream& os, ceps::ast::Valdef& valdef, fmt_out_ctx ctx);
-        void formatted_out(std::ostream& os, std::string s, fmt_out_ctx ctx);
+        void formatted_out(std::ostream& os, std::string s, fmt_out_ctx ctx, MarginPrinter* mp = nullptr);
         void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings= true, fmt_out_ctx ctx_base_string = {});
         void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx,bool ignore_macro_definitions);
         void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out_ctx ctx);

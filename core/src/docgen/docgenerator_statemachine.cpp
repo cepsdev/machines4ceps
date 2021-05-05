@@ -16,20 +16,27 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include "core/include/docgen/docgenerator.hpp"
 #include <memory>
-
-
 using namespace ceps::ast;
-
 using ceps::docgen::fmt_out_ctx;
 
-
-
-void ceps::docgen::Statemachine::print_left_margin (std::ostream& os, fmt_out_ctx& ctx){
-
+void ceps::docgen::Statemachine::print_left_margin (std::ostream& os, fmt_out_ctx& ctx){	
+	os << std::setw(coverage_statistics.hits_col_width) << coverage_statistics.hits << " ";
+	int bar_width = std::round(8 *  ((double)coverage_statistics.hits / (double)coverage_statistics.max_hits));
+	os << "\033[1m";
+	for(int i = 0; i < bar_width; ++i) os << "░";
+	for(int i = 0; i < ctx.indent - coverage_statistics.hits_col_width - bar_width -1;++i) os << " ";
 }
 
 void ceps::docgen::Statemachine::print(	std::ostream& os,
 										fmt_out_ctx& ctx){
+	auto indent_old = ctx.indent;
+	if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
+	 ctx.indent = MarginPrinter::left_margin;
+
+	
+	bool states_on_single_line = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
+	bool print_coverage_statistics = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
+
 	{
 		auto local_ctx{ctx};
 		fmt_out_layout_state_machine_keyword(local_ctx);
@@ -82,10 +89,30 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		}
 		++ctx.indent;
 		{
-			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}			
+			if (!states_on_single_line){auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}			
 			for(size_t i = 0; i!=states.size();++i){
-				{auto local_ctx{ctx};fmt_out_layout_funcname(local_ctx);formatted_out(os,states[i],local_ctx);}
-				if (i + 1 != states.size()) {auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";local_ctx.ignore_indent = true; formatted_out(os,", ",local_ctx);}
+				bool margin_annotation = false;
+				if (print_coverage_statistics){
+					for(auto idx: active_pointers_to_composite_ids_with_coverage_info){
+						if (ctxt.composite_ids_with_coverage_info.size() <= idx) break;
+						if(ctxt.composite_ids_with_coverage_info[idx+1] == nullptr) continue;
+						if(!is<Ast_node_kind::identifier>(ctxt.composite_ids_with_coverage_info[idx+1])) continue;
+						if (ceps::ast::name(as_id_ref(ctxt.composite_ids_with_coverage_info[idx+1]))!=states[i]) continue;
+						if (ctxt.composite_ids_with_coverage_info[idx+2] != nullptr || ctxt.composite_ids_with_coverage_info[idx+3] == nullptr 
+						                                                            || !is<Ast_node_kind::int_literal>(ctxt.composite_ids_with_coverage_info[idx+3])) continue;
+						margin_annotation = true;
+						coverage_statistics.hits = value(as_int_ref(ctxt.composite_ids_with_coverage_info[idx+3]));
+												
+						break;
+					}										
+				}
+				{auto local_ctx{ctx};fmt_out_layout_funcname(local_ctx);if (states_on_single_line) local_ctx.ignore_indent = false; formatted_out(os,states[i],local_ctx, (margin_annotation?this:nullptr));}
+				if (states_on_single_line){
+					auto local_ctx{ctx};
+					local_ctx.ignore_indent =true; 
+					formatted_out(os,"",local_ctx);
+				}
+				else if (i + 1 != states.size()) {auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";local_ctx.ignore_indent = true; formatted_out(os,", ",local_ctx);}
 			}
 			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix="";formatted_out(os,"",local_ctx);}
 		}
@@ -143,9 +170,10 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 	}
 	--ctx.indent;
 	{auto local_ctx{ctx};local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+	ctx.indent = indent_old;
 }
 
-void ceps::docgen::Statemachine::build(ceps::docgen::Statemachine* parent){
+void ceps::docgen::Statemachine::build(){
 	auto traverse_pred = [](Nodebase_ptr n) ->bool { return is<Ast_node_kind::stmts>(n) || is<Ast_node_kind::stmt>(n) || is<Ast_node_kind::expr>(n); };
 
 	auto process_name = [&](Nodebase_ptr n)->bool {
@@ -261,9 +289,19 @@ void ceps::docgen::Statemachine::build(ceps::docgen::Statemachine* parent){
 			}
 			for(;i < ctxt.composite_ids_with_coverage_info.size() && ctxt.composite_ids_with_coverage_info[i]!=nullptr; ++i);
 			++i;
+
+			if (ctxt.composite_ids_with_coverage_info[i] != nullptr && is<Ast_node_kind::int_literal>(ctxt.composite_ids_with_coverage_info[i])){
+				auto val = value(as_int_ref(ctxt.composite_ids_with_coverage_info[i]));
+				if (val > coverage_statistics.max_hits) coverage_statistics.max_hits = val;
+			}
+
+			
 			for(;i < ctxt.composite_ids_with_coverage_info.size() && ctxt.composite_ids_with_coverage_info[i]!=nullptr; ++i);			
 		}	
+		if (active_pointers_to_composite_ids_with_coverage_info.size()) MarginPrinter::left_margin = 12;
+
 	} else if (parent != nullptr && ctxt.coverage_summary != nullptr && ctxt.composite_ids_with_coverage_info.size() != 0){
+		MarginPrinter::left_margin = parent->left_margin;
 		for(size_t i = 0; i < parent->active_pointers_to_composite_ids_with_coverage_info.size(); ++i){
 			auto idx = parent->active_pointers_to_composite_ids_with_coverage_info[i];
 			if (ctxt.composite_ids_with_coverage_info.size() <= (size_t)idx + 1) break; //something is wrong
@@ -271,8 +309,10 @@ void ceps::docgen::Statemachine::build(ceps::docgen::Statemachine* parent){
 			if (!is<Ast_node_kind::identifier>(ctxt.composite_ids_with_coverage_info[idx+1])) break; //something is wrong
 			if (ceps::ast::name(as_id_ref(ctxt.composite_ids_with_coverage_info[idx+1])) == name) active_pointers_to_composite_ids_with_coverage_info.push_back(idx+1); //we have a composite id which includes this state machine
 		}
+		coverage_statistics = parent->coverage_statistics;
 	}
 
+	if (active_pointers_to_composite_ids_with_coverage_info.size()) coverage_statistics.hits_col_width = 4;
 
 	shallow_traverse_ex(strct.children(),
 	                    process_actions, 

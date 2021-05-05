@@ -198,44 +198,52 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_o
 	}
 }
 
-void ceps::docgen::formatted_out(std::ostream& os, std::string s, fmt_out_ctx ctx){
- if(!ctx.ignore_indent) for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
- os << "\033[0m"; //reset
- if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
- if (ctx.underline) os << "\033[4m";
- if (ctx.italic) os << "\033[3m";
- if (ctx.bold) os << "\033[1m";
- if (ctx.normal_intensity) os << "\033[22m";
- if (ctx.faint_intensity) os << "\033[2m";
- for(int i = 0; i < ctx.linebreaks_before;++i) os << ctx.eol; 
-
- os << ctx.prefix;
- os << s;
- if (ctx.info.size()){
-    os << "\033[0m"; //reset
-	os << "\033[2m";
-	os << " (";
-	for(size_t i = 0; i + 1 < ctx.info.size(); ++i)
-	 os << ctx.info[i] << ",";
-	os << ctx.info[ctx.info.size()-1];
-	os << ")";
+void ceps::docgen::formatted_out(std::ostream& os, 
+                                 std::string s, 
+								 fmt_out_ctx ctx,
+								 MarginPrinter* mp){
 	os << "\033[0m"; //reset
-    if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
- }
- os << ctx.suffix;
- if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
-	 os << "\033[0m";
-	 os << "\033[2m";
-	 os << "\033[3m";
-	 std::string eol_temp = ctx.eol;
-	 ctx.eol = "";
-	 ctx.suffix = "";
-     print_comment(os,ctx);
-	 ctx.eol = eol_temp;
-	 ctx.comment_stmt_stack->clear();
- }
- os << "\033[0m"; //reset
- os << ctx.eol; 
+	if(!ctx.ignore_indent) {
+		if (mp != nullptr) mp->print_left_margin(os,ctx);
+		else for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
+	}
+	os << "\033[0m"; //reset
+	
+	if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+	if (ctx.underline) os << "\033[4m";
+	if (ctx.italic) os << "\033[3m";
+	if (ctx.bold) os << "\033[1m";
+	if (ctx.normal_intensity) os << "\033[22m";
+	if (ctx.faint_intensity) os << "\033[2m";
+	for(int i = 0; i < ctx.linebreaks_before;++i) os << ctx.eol; 
+
+	os << ctx.prefix;
+	os << s;
+	if (ctx.info.size()){
+		os << "\033[0m"; //reset
+		os << "\033[2m";
+		os << " (";
+		for(size_t i = 0; i + 1 < ctx.info.size(); ++i)
+		os << ctx.info[i] << ",";
+		os << ctx.info[ctx.info.size()-1];
+		os << ")";
+		os << "\033[0m"; //reset
+		if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+	}
+	os << ctx.suffix;
+	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
+		os << "\033[0m";
+		os << "\033[2m";
+		os << "\033[3m";
+		std::string eol_temp = ctx.eol;
+		ctx.eol = "";
+		ctx.suffix = "";
+		print_comment(os,ctx);
+		ctx.eol = eol_temp;
+		ctx.comment_stmt_stack->clear();
+	}
+	os << "\033[0m"; //reset
+	os << ctx.eol; 
 }
 
 static std::vector<ceps::ast::Symbol*> fetch_symbols_standing_alone(std::vector<ceps::ast::Nodebase_ptr> const & nodes){
@@ -661,6 +669,8 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 		if (is<Ast_node_kind::structdef>(n)){
 			if (lookuptbls.coverage_summary == n) return true;
 			auto&  current_struct{as_struct_ref(n)};
+			if (name(current_struct) == "Simulation") return true;
+
 			if (name(current_struct) == "sm"){
 				Statemachine sm{ nullptr,
 				                 current_struct,
