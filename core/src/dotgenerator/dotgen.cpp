@@ -261,6 +261,19 @@ void State_machine_simulation_core::do_generate_dot_code(std::map<std::string,St
                      o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" << dotgen.n2dotname[name+"."+t.to_.id()] << "[penwidth=1"<<  dotgen.edge_label(t,sm)<<"]";
                      edge_dumped = true;
                  }
+             } else if ((t.from_.parent_ != t.to_.parent_ ) && !(t.from_.is_sm_ || t.to_.is_sm_) ){
+                 // Case: Simple transition, i.e. from and to are both simple states, but the target lies in another state machine.
+                auto from_state = name+"."+t.from_.id(); // from is easy
+                std::string to_state{t.to_.id_};
+                auto sm = t.to_.smp_;
+                while(sm != nullptr){ to_state = sm->id_+"."+to_state; sm = sm->parent_;} //we build the fully qualified name of t.to_
+
+                if (dotgen.n2dotname.find(from_state) == dotgen.n2dotname.end() || dotgen.n2dotname.find(to_state) == dotgen.n2dotname.end()){ // shouldn't happen
+                    std::cerr<< "***Warning: "<< "(Graphviz-Dot Generator) Couldn't generate a graphviz-dot representation for the transition "<< from_state << "->" << to_state <<"."<<std::endl;
+                    continue;
+                }
+                o << dotgen.n2dotname[from_state] << "->" << dotgen.n2dotname[to_state] << "[penwidth=1"<<  dotgen.edge_label(t,sm)<<"]"; // Ready to dump transition
+                edge_dumped = true;
              }
              else if (!t.from_.is_sm_ && t.to_.is_sm_ && dotgen.n2dotname.find(name+"."+t.from_.id()) != dotgen.n2dotname.end() && dotgen.n2dotname.find(name+"."+t.to_.id()) != dotgen.n2dotname.end() ){
                  o << dotgen.n2dotname[name+"."+t.from_.id()] << "->" <<dotgen.sm2initial[t.to_.smp_];
