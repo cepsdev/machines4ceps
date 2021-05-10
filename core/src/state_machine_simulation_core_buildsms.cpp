@@ -235,6 +235,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		for(auto it = cur_sm->states().begin(); it != cur_sm->states().end(); ++it) {
 		 auto state = *it;
 		 for(auto & t : cur_sm->transitions()){
+		
 			if (t.from_.is_sm_) {t.from_.idx_ = t.from_.smp_->idx_;assert(t.from_.idx_>0);}
 			else if (t.from_.id_ == state->id_) {t.from_.idx_ = state->idx_;assert(t.from_.idx_>0);}
 			if (t.orig_parent_ != nullptr && t.orig_parent_ != cur_sm){
@@ -242,15 +243,22 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				else {
 					for(auto it = t.orig_parent_->states().begin(); it != t.orig_parent_->states().end(); ++it){
 						auto state = *it;
-						if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_;}
+						if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_; break;}
 					}
 					assert(t.to_.idx_>0);
 				}
 			} else{
+			 if (!t.to_.is_sm_ && t.to().smp_ != cur_sm ){
+				 	for(auto it = t.to().smp_->states().begin(); it != t.to().smp_->states().end(); ++it){
+						auto state = *it;
+						if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_;break;}
+					}
+					assert(t.to_.idx_>0);
+			 }
 			 if (t.to_.is_sm_) {t.to_.idx_ = t.to_.smp_->idx_;assert(t.to_.idx_>0);}
 			 else if (t.to_.id_ == state->id_) {t.to_.idx_ = state->idx_;assert(t.to_.idx_>0);}
 			}
-		 }//for
+		 }//for all transitions in cur_sm
 		}
 	 }
 	);
