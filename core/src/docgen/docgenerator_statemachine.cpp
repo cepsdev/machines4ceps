@@ -128,7 +128,6 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		}
 		++ctx.indent;
 		for(auto t : transitions){
-			std::cerr << "/// " << *t.from << "-->" << *t.to << std::endl;
 			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}
 			fmt_out_handle_expr(os,t.from, ctx);
 			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," -",local_ctx);}
@@ -187,7 +186,7 @@ void ceps::docgen::Statemachine::build(){
 
 	auto process_transitions = [&](Nodebase_ptr n)->bool {
 	 	if (is<Ast_node_kind::structdef>(n) && ceps::ast::name(as_struct_ref(n)) == "t"){
-			 auto& ts{as_struct_ref(n)};std::cerr << name << " " << ts << std::endl;
+			 auto& ts{as_struct_ref(n)};
 			 transition t{};
 			 std::vector<Nodebase_ptr> v;
 			 shallow_traverse_ex(ts.children(),[&](Nodebase_ptr n){v.push_back(n);return true;},traverse_pred);
@@ -211,7 +210,6 @@ void ceps::docgen::Statemachine::build(){
 				 }
 			 }
 			 transitions.push_back(t);
-			 std::cerr << name << " " << *t.from << " ===> " << *t.to << std::endl;	
 			return true;
 		}
 		return true;
@@ -329,7 +327,5 @@ void ceps::docgen::Statemachine::build(){
 	                    process_submachines, 
 						traverse_pred);				
 
-						for(auto t : transitions){
-			std::cerr << "!!!!  " << *t.from << "-->" << *t.to << std::endl;}							
 }
 
