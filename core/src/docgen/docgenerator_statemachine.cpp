@@ -127,7 +127,8 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			formatted_out(os,"Transitions",local_ctx);
 		}
 		++ctx.indent;
-		for(auto& t : transitions){
+		for(auto t : transitions){
+			std::cerr << "/// " << *t.from << "-->" << *t.to << std::endl;
 			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}
 			fmt_out_handle_expr(os,t.from, ctx);
 			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," -",local_ctx);}
@@ -186,7 +187,7 @@ void ceps::docgen::Statemachine::build(){
 
 	auto process_transitions = [&](Nodebase_ptr n)->bool {
 	 	if (is<Ast_node_kind::structdef>(n) && ceps::ast::name(as_struct_ref(n)) == "t"){
-			 auto& ts{as_struct_ref(n)};
+			 auto& ts{as_struct_ref(n)};std::cerr << name << " " << ts << std::endl;
 			 transition t{};
 			 std::vector<Nodebase_ptr> v;
 			 shallow_traverse_ex(ts.children(),[&](Nodebase_ptr n){v.push_back(n);return true;},traverse_pred);
@@ -209,7 +210,8 @@ void ceps::docgen::Statemachine::build(){
 					 if (kind(as_symbol_ref(e)) == "Guard") t.guards.push_back(e);
 				 }
 			 }
-			 transitions.push_back(t);			
+			 transitions.push_back(t);
+			 std::cerr << name << " " << *t.from << " ===> " << *t.to << std::endl;	
 			return true;
 		}
 		return true;
@@ -265,7 +267,7 @@ void ceps::docgen::Statemachine::build(){
 			 auto sname = ceps::ast::name(s);
 			 if (sname == "sm")
 			  sub_machines.push_back(
-				  std::make_shared<Statemachine>(Statemachine{this,s,ctxt,output_format_flags,symtab})
+				  std::make_shared<Statemachine>(Statemachine{this,as_struct_ptr(n),ctxt,output_format_flags,symtab})
 				);
 			return true;
 		}
@@ -274,7 +276,7 @@ void ceps::docgen::Statemachine::build(){
 
 	//The action starts here
 
-	shallow_traverse_ex(strct.children(),
+	shallow_traverse_ex(strct->children(),
 	                    process_name, 
 						traverse_pred);
 	//Here we know the name of the state machine, i.e. member 'name' is valid
@@ -314,17 +316,20 @@ void ceps::docgen::Statemachine::build(){
 
 	if (active_pointers_to_composite_ids_with_coverage_info.size()) coverage_statistics.hits_col_width = 4;
 
-	shallow_traverse_ex(strct.children(),
+	shallow_traverse_ex(strct->children(),
 	                    process_actions, 
 						traverse_pred);						
-	shallow_traverse_ex(strct.children(),
+	shallow_traverse_ex(strct->children(),
 	                    process_transitions, 
 						traverse_pred);
-	shallow_traverse_ex(strct.children(),
+	shallow_traverse_ex(strct->children(),
 	                    process_states, 
 						traverse_pred);
-	shallow_traverse_ex(strct.children(),
+	shallow_traverse_ex(strct->children(),
 	                    process_submachines, 
-						traverse_pred);											
+						traverse_pred);				
+
+						for(auto t : transitions){
+			std::cerr << "!!!!  " << *t.from << "-->" << *t.to << std::endl;}							
 }
 

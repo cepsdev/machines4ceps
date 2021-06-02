@@ -129,7 +129,8 @@ namespace ceps{
             };
             std::vector<transition> transitions;
             void build();
-            std::string name;
+            Struct* strct; // The first state machine defining struct (sm-struct), there can be more
+            std::string name; // name of the state machine, this is the very first identifier in the sm-struct
             std::vector<int> active_pointers_to_composite_ids_with_coverage_info;// p1|p2|...|p_n where p_i is an index into lookuptbls.composite_ids_with_coverage_info
             Statemachine* parent;
             struct {
@@ -138,12 +139,11 @@ namespace ceps{
                 int max_hits = 0;
             } coverage_statistics;
 			public:
-			Struct strct;
             context& ctxt;
             std::vector<std::string> output_format_flags;
             ceps::parser_env::Symboltable* symtab;
 			Statemachine(   Statemachine* parent,
-                            Struct const& strct, 
+                            Struct*  strct, 
                             context& ctxt,
                             std::vector<std::string> output_format_flags,
                             ceps::parser_env::Symboltable* symtab = nullptr

@@ -254,48 +254,6 @@ static std::vector<ceps::ast::Symbol*> fetch_symbols_standing_alone(std::vector<
 	return r;
 }
 
-void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx){
-	if (ctx.symtab == nullptr) 
-		return;
-	auto symbol = ctx.symtab->lookup(name(macro),false,false,false);
-	if (symbol == nullptr || symbol->category != ceps::parser_env::Symbol::MACRO)
-		return;
-
-	auto const & attrs = attributes(macro);
-	std::stringstream title;
-	std::stringstream initial;
-
-	std::string stitle;
-	std::string sinitial;
-	
-	for(size_t i = 0; i != attrs.size(); i+=2){
-		std::string what = value(ceps::ast::as_string_ref(attrs[i]));
-		auto where = &title;
-		if (what == "initial") where = &initial;
-		
-		if (ceps::ast::is_a_string(attrs[i+1]))
-			*where << ceps::ast::value(ceps::ast::as_string_ref(attrs[i+1]));
-		else if (ceps::ast::is_int(attrs[i+1]).first)
-			*where << ceps::ast::value(ceps::ast::as_int_ref(attrs[i+1]));
-		else if (is<Ast_node_kind::float_literal>(attrs[i+1]))
-			*where << ceps::ast::value(ceps::ast::as_double_ref(attrs[i+1]));
-	}
-	stitle = title.str();
-	sinitial = initial.str();
-
-	{
-		auto local_ctx{ctx};
-		fmt_out_layout_macro_keyword(local_ctx);
-		formatted_out(os,sinitial.length() > 0 ? sinitial : "Macro",local_ctx);
-	}
-	{
-		auto local_ctx{ctx};
-		fmt_out_layout_macro_name(local_ctx);
-		formatted_out(os,stitle.length() > 0 ? stitle : name(macro),local_ctx);
-	}
-	++ctx.indent;
-	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),ctx,true);
-}
 
 void ceps::docgen::fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out_ctx ctx){
 	{
@@ -673,7 +631,7 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 
 			if (name(current_struct) == "sm"){
 				Statemachine sm{ nullptr,
-				                 current_struct,
+				                 as_struct_ptr(n),
 				                 lookuptbls,
 								 output_format_flags,
 								 symtab};
