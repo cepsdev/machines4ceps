@@ -35,6 +35,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace ceps{
 	namespace docgen{
         using namespace ceps::ast;
+
+        class FormattedOutput{
+            public:
+            virtual void line_break() = 0;
+            virtual void set_foreground_color(int r, int g, int b, int alpha) = 0;
+        };
+
         struct fmt_out_ctx{
             bool inside_schema = false;
 

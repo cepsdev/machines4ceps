@@ -582,6 +582,10 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 							ceps::parser_env::Symboltable* symtab)
 {
 	using namespace ceps::ast;
+
+	//DEBUG
+	for(auto e: output_format_flags) std::cout << e << std::endl;
+
 	fmt_out_ctx ctx;
 	ctx.comment_stmt_stack = std::make_shared<std::vector<ceps::ast::Nodebase_ptr>>(std::vector<ceps::ast::Nodebase_ptr>{});
 	ctx.symtab = symtab;
