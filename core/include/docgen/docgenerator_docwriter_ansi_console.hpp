@@ -26,6 +26,7 @@ namespace ceps{
 
         class Doc_writer_ansi_console: public Doc_writer{
             public:
+            Doc_writer_ansi_console() = default;
             void out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) override;

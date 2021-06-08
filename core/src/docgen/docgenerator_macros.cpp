@@ -23,10 +23,10 @@ using namespace ceps::ast;
 
 using ceps::docgen::fmt_out_ctx;
 
-void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, fmt_out_ctx ctx){
-	if (ctx.symtab == nullptr) 
+void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, Doc_writer* doc_writer){
+	if (doc_writer->top().symtab == nullptr) 
 		return;
-	auto symbol = ctx.symtab->lookup(name(macro),false,false,false);
+	auto symbol = doc_writer->top().symtab->lookup(name(macro),false,false,false);
 	if (symbol == nullptr || symbol->category != ceps::parser_env::Symbol::MACRO)
 		return;
 
@@ -53,15 +53,17 @@ void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::
 	sinitial = initial.str();
 
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_macro_keyword(local_ctx);
-		formatted_out(os,sinitial.length() > 0 ? sinitial : "Macro",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_macro_keyword(doc_writer->top());
+		doc_writer->out(os,sinitial.length() > 0 ? sinitial : "Macro");
+		doc_writer->pop_ctx();
 	}
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_macro_name(local_ctx);
-		formatted_out(os,stitle.length() > 0 ? stitle : name(macro),local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_macro_name(doc_writer->top());
+		doc_writer->out(os,stitle.length() > 0 ? stitle : name(macro));
+		doc_writer->pop_ctx();
 	}
-	++ctx.indent;
-	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),ctx,true);
+	++doc_writer->top().indent;
+	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),doc_writer,true);
 }

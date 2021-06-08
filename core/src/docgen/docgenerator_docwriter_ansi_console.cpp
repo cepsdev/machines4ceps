@@ -22,4 +22,50 @@ void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os,
                              std::string s, 
 							 MarginPrinter* mp) {
 
+    auto& ctx = top(); 
+    os << "\033[0m"; //reset
+	if(!ctx.ignore_indent) {
+		if (mp != nullptr) mp->print_left_margin(os,ctx);
+		else for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
+	}
+	os << "\033[0m"; //reset
+	
+	if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+	if (ctx.underline) os << "\033[4m";
+	if (ctx.italic) os << "\033[3m";
+	if (ctx.bold) os << "\033[1m";
+	if (ctx.normal_intensity) os << "\033[22m";
+	if (ctx.faint_intensity) os << "\033[2m";
+	for(int i = 0; i < ctx.linebreaks_before;++i) os << ctx.eol; 
+
+	os << ctx.prefix;
+	os << s;
+
+	
+	if (ctx.info.size()){
+		os << "\033[0m"; //reset
+		os << "\033[2m";
+		os << " (";
+		for(size_t i = 0; i + 1 < ctx.info.size(); ++i)
+		os << ctx.info[i] << ",";
+		os << ctx.info[ctx.info.size()-1];
+		os << ")";
+		os << "\033[0m"; //reset
+		if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+	}
+	os << ctx.suffix;
+	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
+		os << "\033[0m";
+		os << "\033[2m";
+		os << "\033[3m";
+		std::string eol_temp = ctx.eol;
+		ctx.eol = "";
+		ctx.suffix = "";
+		print_comment(os,this);
+		ctx.eol = eol_temp;
+		ctx.comment_stmt_stack->clear();
+	}
+	os << "\033[0m"; //reset
+	os << ctx.eol; 
+
 }

@@ -19,7 +19,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 using namespace ceps::ast;
 using ceps::docgen::fmt_out_ctx;
 
-void ceps::docgen::Statemachine::print_left_margin (std::ostream& os, fmt_out_ctx& ctx){	
+void ceps::docgen::Statemachine::print_left_margin(std::ostream& os, fmt_out_ctx& ctx){	
 	os << std::setw(coverage_statistics.hits_col_width) << coverage_statistics.hits << " ";
 	int bar_width = std::round(8 *  ((double)coverage_statistics.hits / (double)coverage_statistics.max_hits));
 	os << "\033[1m";
@@ -28,68 +28,82 @@ void ceps::docgen::Statemachine::print_left_margin (std::ostream& os, fmt_out_ct
 }
 
 void ceps::docgen::Statemachine::print(	std::ostream& os,
-										fmt_out_ctx& ctx){
-	auto indent_old = ctx.indent;
+										Doc_writer* doc_writer){
+	auto indent_old = doc_writer->top().indent;
 	if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
-	 ctx.indent = MarginPrinter::left_margin;
+	 doc_writer->top().indent = MarginPrinter::left_margin;
 
 	
 	bool states_on_single_line = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
 	bool print_coverage_statistics = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
 
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_state_machine_keyword(local_ctx);
-		formatted_out(os,"State Machine",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_state_machine_keyword(doc_writer->top());
+		doc_writer->out(os,"State Machine");
+		doc_writer->pop_ctx();
 	}
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_macro_name(local_ctx);
-		local_ctx.eol = "";
-		local_ctx.suffix = "";
-		local_ctx.ignore_indent = true;
-		formatted_out(os,name,local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_macro_name(doc_writer->top());
+		doc_writer->top().eol = "";
+		doc_writer->top().suffix = "";
+		doc_writer->top().ignore_indent = true;
+		doc_writer->out(os,name);
+		doc_writer->pop_ctx();
 	}
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_macro_keyword(local_ctx);
-		local_ctx.eol = ctx.eol;
-		local_ctx.suffix = ":";
-		local_ctx.ignore_indent = true;
-		formatted_out(os,"",local_ctx);
+		auto eol_old = doc_writer->top().eol;
+		doc_writer->push_ctx();
+		fmt_out_layout_macro_keyword(doc_writer->top());
+		doc_writer->top().eol = eol_old;
+		doc_writer->top().suffix = ":";
+		doc_writer->top().ignore_indent = true;
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
 	}
-	++ctx.indent;
+	++doc_writer->top().indent;
 	if (actions_vec.size()){
 		{
-			auto local_ctx{ctx};
-			fmt_out_layout_state_machine_keyword(local_ctx);
-			local_ctx.eol = ctx.eol;
-			local_ctx.suffix = ":";
-			formatted_out(os,"Actions",local_ctx);
+			auto eol_old = doc_writer->top().eol;
+			doc_writer->push_ctx();
+			fmt_out_layout_state_machine_keyword(doc_writer->top());
+			doc_writer->top().eol = eol_old;
+			doc_writer->top().suffix = ":";
+			doc_writer->out(os,"Actions");
+			doc_writer->pop_ctx();
 		}
-		++ctx.indent;
+		++doc_writer->top().indent;
 		for(auto e: actions_vec)
 		{
-			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}
-			{auto local_ctx{ctx};fmt_out_layout_funcname(local_ctx);formatted_out(os,e,local_ctx);}
-			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix=":";formatted_out(os,"",local_ctx);}
-			++ctx.indent;
-			fmt_out_handle_children(os,action2body[e]->children(),ctx,true);
-			--ctx.indent;
+			{doc_writer->push_ctx();doc_writer->top().eol="";doc_writer->top().suffix="";doc_writer->out(os,"");doc_writer->pop_ctx();}
+			{doc_writer->push_ctx();fmt_out_layout_funcname(doc_writer->top());doc_writer->out(os,e);doc_writer->pop_ctx();}
+			{doc_writer->push_ctx();doc_writer->top().ignore_indent=true;doc_writer->top().suffix=":";doc_writer->out(os,"");doc_writer->pop_ctx();}
+			++doc_writer->top().indent;
+			fmt_out_handle_children(os,action2body[e]->children(),doc_writer,true);
+			--doc_writer->top().indent;
 		}
-	--ctx.indent;
+	--doc_writer->top().indent;
 	}
 	if (states.size()){
 		{
-			auto local_ctx{ctx};
-			fmt_out_layout_state_machine_keyword(local_ctx);
-			local_ctx.eol = ctx.eol;
-			local_ctx.suffix = ":";
-			formatted_out(os,"States",local_ctx);
+			auto eol_old = doc_writer->top().eol;
+			doc_writer->push_ctx();
+			fmt_out_layout_state_machine_keyword(doc_writer->top());
+			doc_writer->top().eol = eol_old;
+			doc_writer->top().suffix = ":";
+			doc_writer->out(os,"States");
+			doc_writer->pop_ctx();
 		}
-		++ctx.indent;
+		++doc_writer->top().indent;
 		{
-			if (!states_on_single_line){auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}			
+			if (!states_on_single_line){
+				doc_writer->push_ctx();
+				doc_writer->top().eol="";
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();
+			}			
 			for(size_t i = 0; i!=states.size();++i){
 				bool margin_annotation = false;
 				if (print_coverage_statistics){
@@ -106,71 +120,172 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 						break;
 					}										
 				}
-				{auto local_ctx{ctx};fmt_out_layout_funcname(local_ctx);if (states_on_single_line) local_ctx.ignore_indent = false; formatted_out(os,states[i],local_ctx, (margin_annotation?this:nullptr));}
-				if (states_on_single_line){
-					auto local_ctx{ctx};
-					local_ctx.ignore_indent =true; 
-					formatted_out(os,"",local_ctx);
+				{
+					doc_writer->push_ctx();
+					fmt_out_layout_funcname(doc_writer->top());
+					if (states_on_single_line) doc_writer->top().ignore_indent = false; 
+					doc_writer->out(os,states[i], (margin_annotation?this:nullptr));
+					doc_writer->pop_ctx();
 				}
-				else if (i + 1 != states.size()) {auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";local_ctx.ignore_indent = true; formatted_out(os,", ",local_ctx);}
+				if (states_on_single_line){
+					doc_writer->push_ctx();
+					doc_writer->top().ignore_indent =true; 
+					doc_writer->out(os,"");
+					doc_writer->pop_ctx();
+				}
+				else if (i + 1 != states.size()) {
+					doc_writer->push_ctx(); 
+					doc_writer->top().eol="";
+					doc_writer->top().suffix="";
+					doc_writer->top().ignore_indent = true; 
+					doc_writer->out(os,", ");
+					doc_writer->pop_ctx();
+				}
 			}
-			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+			{
+				doc_writer->push_ctx();
+				doc_writer->top().ignore_indent=true;
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();
+			}
 		}
-		--ctx.indent;
+		--doc_writer->top().indent;
 	}
 	if (transitions.size()){
 		{
-			auto local_ctx{ctx};
-			fmt_out_layout_state_machine_keyword(local_ctx);
-			local_ctx.eol = ctx.eol;
-			local_ctx.suffix = ":";
-			formatted_out(os,"Transitions",local_ctx);
+			auto eol_old = doc_writer->top().eol;
+			doc_writer->push_ctx();
+			fmt_out_layout_state_machine_keyword(doc_writer->top());
+			doc_writer->top().eol = eol_old;
+			doc_writer->top().suffix = ":";
+			doc_writer->out(os,"Transitions");
+			doc_writer->pop_ctx();
 		}
-		++ctx.indent;
+		++doc_writer->top().indent;
 		for(auto t : transitions){
-			{auto local_ctx{ctx};local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"",local_ctx);}
-			fmt_out_handle_expr(os,t.from, ctx);
-			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," -",local_ctx);}
+			{
+				doc_writer->push_ctx();
+				doc_writer->top().eol="";
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();
+			}
+			fmt_out_handle_expr(os,t.from, doc_writer);
+			{
+				doc_writer->push_ctx();
+				doc_writer->top().ignore_indent=true;
+				doc_writer->top().eol="";
+				doc_writer->top().suffix="";
+				doc_writer->out(os," -");
+				doc_writer->pop_ctx();
+			}
 			if (t.ev){
 				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
-				fmt_out_handle_expr(os,t.ev, ctx);
+				fmt_out_handle_expr(os,t.ev, doc_writer);
 				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
 			}
 			if (t.guards.size()){
-				{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"[",local_ctx);}
+				{
+					doc_writer->push_ctx();
+					doc_writer->top().ignore_indent=true;
+					doc_writer->top().eol="";
+					doc_writer->top().suffix="";
+					doc_writer->out(os,"[");
+					doc_writer->pop_ctx();
+				}
 				for(size_t i = 0; i != t.guards.size();++i){
-					fmt_out_handle_expr(os,t.guards[i], ctx);
-					if(i + 1 != t.guards.size()) {auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," && ",local_ctx);}
+					fmt_out_handle_expr(os,t.guards[i], doc_writer);
+					if(i + 1 != t.guards.size()) {
+						doc_writer->push_ctx();
+						doc_writer->top().ignore_indent=true;
+						doc_writer->top().eol="";
+						doc_writer->top().suffix="";
+						doc_writer->out(os," && ");
+						doc_writer->pop_ctx();
+					}
 					//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,";",local_ctx);}
 				}
-				{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"]",local_ctx);}
+				{
+					doc_writer->push_ctx();
+					doc_writer->top().ignore_indent=true;
+					doc_writer->top().eol="";
+					doc_writer->top().suffix="";
+					doc_writer->out(os,"]");
+					doc_writer->pop_ctx();
+				}
 			}
 			if (t.actions.size()){
-				{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"/",local_ctx);}
+				{
+					doc_writer->push_ctx();
+					doc_writer->top().ignore_indent=true;
+					doc_writer->top().eol="";
+					doc_writer->top().suffix="";
+					doc_writer->out(os,"/");
+					doc_writer->pop_ctx();
+				}
 				for(size_t i = 0; i != t.actions.size();++i){
-					fmt_out_handle_expr(os,t.actions[i], ctx);
-					{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"()",local_ctx);}
-					{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,";",local_ctx);}
+					fmt_out_handle_expr(os,t.actions[i], doc_writer);
+					{
+						doc_writer->push_ctx();
+						doc_writer->top().ignore_indent=true;
+						doc_writer->top().eol="";
+						doc_writer->top().suffix="";
+						doc_writer->out(os,"()");
+						doc_writer->pop_ctx();
+					}
+					{
+						doc_writer->push_ctx();
+						doc_writer->top().ignore_indent=true;
+						doc_writer->top().eol="";
+						doc_writer->top().suffix="";
+						doc_writer->out(os,";");
+						doc_writer->pop_ctx();
+					}
 				}
 				//fmt_out_handle_expr(os,t.ev, ctx);
 				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
 			}
-			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,"-▶ ",local_ctx);}
-			fmt_out_handle_expr(os,t.to, ctx);
+			{
+				doc_writer->push_ctx();
+				doc_writer->top().ignore_indent=true;
+				doc_writer->top().eol="";
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"-▶ ");
+				doc_writer->pop_ctx();
+			}
+			fmt_out_handle_expr(os,t.to, doc_writer);
 
-			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix="";formatted_out(os,"",local_ctx);}
+			{
+				doc_writer->push_ctx();
+				doc_writer->top().ignore_indent=true;
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();
+			}
 		}
-		--ctx.indent;
+		--doc_writer->top().indent;
 	}
 	if (sub_machines.size()){	
 		for(auto sm:sub_machines){
-			{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.suffix="";formatted_out(os,"",local_ctx);}
-			sm->print(os,ctx);
+			{
+				doc_writer->push_ctx();
+				doc_writer->top().ignore_indent=true;
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();
+			}
+			sm->print(os,doc_writer);
 		}
 	}
-	--ctx.indent;
-	{auto local_ctx{ctx};local_ctx.suffix="";formatted_out(os,"",local_ctx);}
-	ctx.indent = indent_old;
+	--doc_writer->top().indent;
+	{
+		doc_writer->push_ctx();
+		doc_writer->top().suffix="";
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
+	}
+	doc_writer->top().indent = indent_old;
 }
 
 void ceps::docgen::Statemachine::build(){

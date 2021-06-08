@@ -73,26 +73,27 @@ std::optional<std::string> ceps::docgen::symbol_info::kind_of(std::string id){
 
 // END ceps::docgen::symbol_info
 
-static void print_comment_impl(std::ostream& os,std::vector<Nodebase*> const & v, fmt_out_ctx const & ctx){
-	auto local_ctx_string{ctx};
-	local_ctx_string.ignore_comment_stmt_stack = true;
-	local_ctx_string.faint_intensity = true;
-	local_ctx_string.foreground_color = "";
-	local_ctx_string.italic = true;
-	local_ctx_string.ignore_indent = true;
-	local_ctx_string.normal_intensity = false;
-	local_ctx_string.bold = false;
+static void print_comment_impl(std::ostream& os,std::vector<Nodebase*> const & v, ceps::docgen::Doc_writer* doc_writer){
+	doc_writer->push_ctx();
+	doc_writer->top().ignore_comment_stmt_stack = true;
+	doc_writer->top().faint_intensity = true;
+	doc_writer->top().foreground_color = "";
+	doc_writer->top().italic = true;
+	doc_writer->top().ignore_indent = true;
+	doc_writer->top().normal_intensity = false;
+	doc_writer->top().bold = false;
 
-	for ( auto n :v){		
+	for (auto n : v){		
 		if (is<Ast_node_kind::stmts>(n))
-			print_comment_impl(os, as_stmts_ref(n).children(), ctx);
-		else ceps::docgen::fmt_out_handle_expr(os,n,ctx,false,local_ctx_string);		
+			print_comment_impl(os, as_stmts_ref(n).children(), doc_writer);
+		else ceps::docgen::fmt_out_handle_expr(os,n,doc_writer,false,doc_writer->top());		
 	}
+	doc_writer->pop_ctx();
 }
 
-static void print_comment(std::ostream& os, fmt_out_ctx const & ctx){
-	os <<  ctx.inline_comment_prefix;
-	print_comment_impl(os, *ctx.comment_stmt_stack, ctx);
+void ceps::docgen::print_comment(std::ostream& os, Doc_writer* doc_writer){
+	os <<  doc_writer->top().inline_comment_prefix;
+	print_comment_impl(os, *doc_writer->top().comment_stmt_stack, doc_writer);
 }
 
 static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
@@ -109,26 +110,31 @@ static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodeb
 	v.push_back(r);
 }
 
-void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_out_ctx ctx,bool escape_strings, fmt_out_ctx ctx_base_string){
-	ctx.suffix = ctx.prefix = ctx.eol = ""; ctx.ignore_indent = true; ctx.normal_intensity =true;//ctx.foreground_color = "6";
+void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_writer* doc_writer,bool escape_strings, fmt_out_ctx ctx_base_string){
+	doc_writer->push_ctx();
+
+	doc_writer->top().suffix = doc_writer->top().prefix = doc_writer->top().eol = ""; 
+	doc_writer->top().ignore_indent = true;
+	doc_writer->top().normal_intensity =true;
 	if (is<Ast_node_kind::expr>(expr))
 	 for(auto e : nlf_ptr(expr)->children())  
-	  fmt_out_handle_expr(os,e, ctx,escape_strings,ctx_base_string);
+	  fmt_out_handle_expr(os,e, doc_writer, escape_strings, ctx_base_string);
 	else if (is<Ast_node_kind::binary_operator>(expr))
 	{
 		auto& bop{as_binop_ref(expr)};
 		if (op_val(bop) != "#") //comment operator
 		{
-			fmt_out_handle_expr(os,bop.left(), ctx,escape_strings,ctx_base_string);
+			fmt_out_handle_expr(os,bop.left(), doc_writer, escape_strings, ctx_base_string);
 			auto sop = op_val(bop);
 			{
-				auto local_ctx{ctx};
-				local_ctx.foreground_color ="3";
-				if (sop.length() > 1 || sop == ">" || sop == "<" || sop == "=") formatted_out(os," "+sop+" ",local_ctx);
-					else formatted_out(os,sop,local_ctx);
+				doc_writer->push_ctx();
+				doc_writer->top().foreground_color ="3";
+				if (sop.length() > 1 || sop == ">" || sop == "<" || sop == "=") doc_writer->out(os," "+sop+" ");
+					else doc_writer->out(os,sop);
+				doc_writer->pop_ctx();
 			}
 		}
-		fmt_out_handle_expr(os,bop.right(), ctx,escape_strings,ctx_base_string);
+		fmt_out_handle_expr(os,bop.right(), doc_writer,escape_strings,ctx_base_string);
 	} 
 	else if (is<Ast_node_kind::unary_operator>(expr))
 	{
@@ -139,112 +145,81 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, fmt_o
 		else if (op(uop) == '~') sop = "~";
 		else if ( (unsigned short)op(uop) <= 255) sop.push_back(op(uop));
 		{
-			auto local_ctx{ctx};
-			local_ctx.foreground_color = "3";
-	 		formatted_out(os,sop,local_ctx);
+			doc_writer->push_ctx();
+			doc_writer->top().foreground_color = "3";
+	 		doc_writer->out(os,sop);
+			doc_writer->pop_ctx();
 		}
-		fmt_out_handle_expr(os,uop.children()[0], ctx,escape_strings,ctx_base_string);
+		fmt_out_handle_expr(os,uop.children()[0], doc_writer, escape_strings,ctx_base_string);
 	} 
 	else if (is<Ast_node_kind::string_literal>(expr)){
 		{ auto local_ctx = ctx_base_string;
-		  if (!escape_strings || !ctx.quote_string){
-		    if (!escape_strings) formatted_out(os,value(as_string_ref(expr)),local_ctx);
-			else formatted_out(os,value(as_string_ref(expr)),ctx);
+		  if (!escape_strings || !doc_writer->top().quote_string){
+		    if (!escape_strings) doc_writer->out(os,value(as_string_ref(expr)));
+			else doc_writer->out(os,value(as_string_ref(expr)));
 		  } 
 		  else {
-			  auto local_ctx{ctx}; local_ctx.foreground_color = "2"; 
-			  formatted_out(os,"\""+escape_ceps_string(value(as_string_ref(expr)))+"\"",local_ctx);
+			  doc_writer->push_ctx(); 
+			  doc_writer->top().foreground_color = "2"; 
+			  doc_writer->out(os,"\""+escape_ceps_string(value(as_string_ref(expr)))+"\"");
+			  doc_writer->pop_ctx();
 		  } 
 		}
 	}		 
 	else if (is<Ast_node_kind::int_literal>(expr)){
 		std::stringstream ss;
 		ss << value(as_int_ref(expr));
-		{auto local_ctx{ctx}; local_ctx.foreground_color = "2"; 
-	    formatted_out(os,ss.str(),local_ctx);}
+		{ 
+			doc_writer->push_ctx();
+			doc_writer->top().foreground_color = "2";
+			doc_writer->out(os,ss.str());
+			doc_writer->pop_ctx();
+		}
 	} else if (is<Ast_node_kind::float_literal>(expr)){
 		std::stringstream ss;
 		ss << value(as_double_ref(expr));
-		{auto local_ctx{ctx}; local_ctx.foreground_color = "2"; 
-	    formatted_out(os,ss.str(),local_ctx);}
+		{
+			doc_writer->push_ctx(); 
+			doc_writer->top().foreground_color = "2"; 
+	    	doc_writer->out(os,ss.str());
+			doc_writer->pop_ctx();
+		}
 	} else if (is<Ast_node_kind::identifier>(expr)){
-		{auto local_ctx{ctx}; local_ctx.foreground_color = "37";
-		if (name(as_id_ref(expr)) == "Infinity") formatted_out(os,"∞",local_ctx);
-		else formatted_out(os,name(as_id_ref(expr)),local_ctx);}
+		{
+			doc_writer->push_ctx(); 
+			doc_writer->top().foreground_color = "37";
+			if (name(as_id_ref(expr)) == "Infinity") doc_writer->out(os,"∞");
+			else doc_writer->out(os,name(as_id_ref(expr)));
+			doc_writer->pop_ctx();
+		}
 	} else if (is<Ast_node_kind::symbol>(expr)){
-		formatted_out(os,name(as_symbol_ref(expr)),ctx);
+		doc_writer->out(os,name(as_symbol_ref(expr)));
 	} else if (is<Ast_node_kind::func_call>(expr)){
 		auto func_call = as_func_call_ref(expr);
 	 	auto fcall_target = func_call_target(func_call);
 	 	if (is_an_identifier(fcall_target))
 	 	{
 		 {
-			auto local_ctx{ctx};
-			local_ctx.foreground_color ="229";
-			formatted_out(os,name(as_id_ref(fcall_target)),local_ctx);	 
+			doc_writer->push_ctx();
+			doc_writer->top().foreground_color ="229";
+			doc_writer->out(os,name(as_id_ref(fcall_target)));
+			doc_writer->pop_ctx();	 
 		 }
-		 formatted_out(os,"(",ctx);
+		 doc_writer->out(os,"(");
 		 ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(func_call.children()[1]);
 		 if (params.children().size()){
 			std::vector<ceps::ast::Nodebase_ptr> args;
 		 	flatten_args(params.children()[0], args);
 		 	for(size_t i = 0; i != args.size();++i){
-			 	fmt_out_handle_expr(os,args[i],ctx,escape_strings,ctx_base_string);
+			 	fmt_out_handle_expr(os,args[i],doc_writer,escape_strings,ctx_base_string);
 				if (i+1 < args.size())
-			  	formatted_out(os,",",ctx);
+			  	doc_writer->out(os,",");
 		 	}
 		 }
-		 formatted_out(os,")",ctx);
+		 doc_writer->out(os,")");
 		}
 	}
-}
-
-void ceps::docgen::formatted_out(std::ostream& os, 
-                                 std::string s, 
-								 fmt_out_ctx ctx,
-								 MarginPrinter* mp){
-	os << "\033[0m"; //reset
-	if(!ctx.ignore_indent) {
-		if (mp != nullptr) mp->print_left_margin(os,ctx);
-		else for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
-	}
-	os << "\033[0m"; //reset
-	
-	if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
-	if (ctx.underline) os << "\033[4m";
-	if (ctx.italic) os << "\033[3m";
-	if (ctx.bold) os << "\033[1m";
-	if (ctx.normal_intensity) os << "\033[22m";
-	if (ctx.faint_intensity) os << "\033[2m";
-	for(int i = 0; i < ctx.linebreaks_before;++i) os << ctx.eol; 
-
-	os << ctx.prefix;
-	os << s;
-	if (ctx.info.size()){
-		os << "\033[0m"; //reset
-		os << "\033[2m";
-		os << " (";
-		for(size_t i = 0; i + 1 < ctx.info.size(); ++i)
-		os << ctx.info[i] << ",";
-		os << ctx.info[ctx.info.size()-1];
-		os << ")";
-		os << "\033[0m"; //reset
-		if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
-	}
-	os << ctx.suffix;
-	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
-		os << "\033[0m";
-		os << "\033[2m";
-		os << "\033[3m";
-		std::string eol_temp = ctx.eol;
-		ctx.eol = "";
-		ctx.suffix = "";
-		print_comment(os,ctx);
-		ctx.eol = eol_temp;
-		ctx.comment_stmt_stack->clear();
-	}
-	os << "\033[0m"; //reset
-	os << ctx.eol; 
+	doc_writer->pop_ctx();
 }
 
 static std::vector<ceps::ast::Symbol*> fetch_symbols_standing_alone(std::vector<ceps::ast::Nodebase_ptr> const & nodes){
@@ -256,138 +231,145 @@ static std::vector<ceps::ast::Symbol*> fetch_symbols_standing_alone(std::vector<
 }
 
 
-void ceps::docgen::fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, fmt_out_ctx ctx){
+void ceps::docgen::fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, Doc_writer* doc_writer){
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_loop_keyword(local_ctx);
-		formatted_out(os,"for each",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_loop_keyword(doc_writer->top());
+		doc_writer->out(os,"for each");
+		doc_writer->pop_ctx();
 	}
 	auto& loop_head =  as_loop_head_ref(loop.children()[0]);
 	ceps::ast::Nodebase_ptr body = loop.children()[1];
 	ceps::ast::Identifier& id  = ceps::ast::as_id_ref(loop_head.children()[0]);
 	auto loop_expr = loop_head.children()[1];
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_loop_variable(local_ctx);
-		formatted_out(os,name(id),local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_loop_variable(doc_writer->top());
+		doc_writer->out(os,name(id));
+		doc_writer->pop_ctx();
 	}
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_loop_in_keyword(local_ctx);
-		formatted_out(os,"in",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_loop_in_keyword(doc_writer->top());
+		doc_writer->out(os,"in");
+		doc_writer->pop_ctx();
 	}
 
-	fmt_out_handle_expr(os,loop_expr,ctx);
+	fmt_out_handle_expr(os,loop_expr,doc_writer);
 
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_loop_complete_line(local_ctx);
-		formatted_out(os,"",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_loop_complete_line(doc_writer->top());
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
 	}
 
-	++ctx.indent;
-	fmt_out_handle_children(os,nlf_ptr(body)->children(),ctx,true);
+	++doc_writer->top().indent;
+	fmt_out_handle_children(os,nlf_ptr(body)->children(),doc_writer,true);
 }
 
-void ceps::docgen::fmt_out_handle_valdef(std::ostream& os, Valdef& valdef, fmt_out_ctx ctx){
+void ceps::docgen::fmt_out_handle_valdef(std::ostream& os, Valdef& valdef, Doc_writer* doc_writer){
 	auto lhs = name(valdef); 
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_val_var(local_ctx);
-		local_ctx.ignore_indent = false;
-		formatted_out(os,lhs,local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_val_var(doc_writer->top());
+		doc_writer->top().ignore_indent = false;
+		doc_writer->out(os,lhs);
+		doc_writer->pop_ctx();
 	}
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_val_arrow(local_ctx);
-		local_ctx.ignore_indent = true;
-		formatted_out(os,":=",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_val_arrow(doc_writer->top());
+		doc_writer->top().ignore_indent = true;
+		doc_writer->out(os,":=");
+		doc_writer->pop_ctx();
 	}
-
-	fmt_out_handle_expr(os,valdef.children()[0],ctx);
-
+	fmt_out_handle_expr(os,valdef.children()[0],doc_writer);
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_valdef_complete_line(local_ctx);
-		formatted_out(os,"",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_valdef_complete_line(doc_writer->top());
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
 	}
 }
 
-void ceps::docgen::fmt_out_handle_let(std::ostream& os, Let& let, fmt_out_ctx ctx){
+void ceps::docgen::fmt_out_handle_let(std::ostream& os, Let& let, Doc_writer* doc_writer){
 	auto lhs = name(let); 
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_val_var(local_ctx);
-		local_ctx.ignore_indent = false;
-		formatted_out(os,lhs,local_ctx);
+		doc_writer->push_ctx();
+		doc_writer->top().ignore_indent = false;
+		doc_writer->out(os,lhs);
+		doc_writer->pop_ctx();
 	}
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_val_arrow(local_ctx);
-		local_ctx.ignore_indent = true;
-		formatted_out(os,"←",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_val_arrow(doc_writer->top());
+		doc_writer->top().ignore_indent = true;
+		doc_writer->out(os,"←");
+		doc_writer->pop_ctx();
 	}
-
-    //std::cout << *valdef.children()[0] << std::endl;
-	fmt_out_handle_expr(os,let.children()[0],ctx);
-
+	fmt_out_handle_expr(os,let.children()[0],doc_writer);
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_valdef_complete_line(local_ctx);
-		formatted_out(os,"",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_valdef_complete_line(doc_writer->top());
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
 	}
 }
 
-void ceps::docgen::fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, fmt_out_ctx ctx){
+void ceps::docgen::fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, Doc_writer* doc_writer){
 	ceps::ast::Nodebase_ptr cond = ifelse.children()[0];
  	ceps::ast::Nodebase_ptr if_branch = nullptr,else_branch=nullptr;
 	if (ifelse.children().size() > 1) if_branch = ifelse.children()[1];
 	if (ifelse.children().size() > 2) else_branch = ifelse.children()[2];
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_if_keyword(local_ctx);
-		formatted_out(os,"if",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_if_keyword(doc_writer->top());
+		doc_writer->out(os,"if");
+		doc_writer->pop_ctx();
 	}
 
-	fmt_out_handle_expr(os,cond,ctx);
+	fmt_out_handle_expr(os,cond,doc_writer);
 
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_if_complete_line(local_ctx);
-		formatted_out(os,"",local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_if_complete_line(doc_writer->top());
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
 	}
 
-	++ctx.indent;
-	if (if_branch) {
-		//std::cout << *if_branch << std::endl;
-		fmt_handle_node(os,if_branch,ctx,false);
+	++doc_writer->top().indent;
+	if (if_branch) {		
+		fmt_handle_node(os,if_branch,doc_writer,false);
 	}
 	if (else_branch){
-		--ctx.indent;
+		--doc_writer->top().indent;
 		{
-			auto local_ctx{ctx};
-			fmt_out_layout_if_keyword(local_ctx);
-			formatted_out(os,"else",local_ctx);
+			doc_writer->push_ctx();
+			fmt_out_layout_if_keyword(doc_writer->top());
+			doc_writer->out(os,"else");
+			doc_writer->pop_ctx();
 		}
 		{
-			auto local_ctx{ctx};
-			fmt_out_layout_if_complete_line(local_ctx);
-			formatted_out(os,"",local_ctx);
+			doc_writer->push_ctx();
+			fmt_out_layout_if_complete_line(doc_writer->top());
+			doc_writer->out(os,"");
+			doc_writer->pop_ctx();
 		}
-		++ctx.indent;
-		fmt_out_handle_children(os,nlf_ptr(else_branch)->children(),ctx,true);
+		++doc_writer->top().indent;
+		fmt_out_handle_children(os,nlf_ptr(else_branch)->children(),doc_writer,true);
 	}
 }
 
-void ceps::docgen::fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, fmt_out_ctx ctx,bool ignore_macro_definitions){
+void ceps::docgen::fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n,Doc_writer* doc_writer,bool ignore_macro_definitions){
 	if (is<Ast_node_kind::loop>(n)){
-		fmt_out_handle_loop(os,as_loop_ref(n),ctx);			
+		fmt_out_handle_loop(os,as_loop_ref(n),doc_writer);			
 	} else if (is<Ast_node_kind::macro_definition>(n)) {
-		if (!ignore_macro_definitions) fmt_out_handle_macro_definition(os,as_macrodef_ref(n),ctx);
+		if (!ignore_macro_definitions) fmt_out_handle_macro_definition(os,as_macrodef_ref(n),doc_writer);
 	} else if (is<Ast_node_kind::valdef>(n)){
-		fmt_out_handle_valdef(os, as_valdef_ref(n), ctx);
+		fmt_out_handle_valdef(os, as_valdef_ref(n), doc_writer);
 	} else if (is<Ast_node_kind::let>(n)){
-		fmt_out_handle_let(os, as_let_ref(n), ctx);
+		fmt_out_handle_let(os, as_let_ref(n), doc_writer);
 	} else if (is<Ast_node_kind::label>(n)){
 		auto& label{ceps::ast::as_label_ref(n)};
 		auto& attrs{ceps::ast::attributes(label)};
@@ -402,30 +384,42 @@ void ceps::docgen::fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, 
 		if (title.str().length() == 0) stitle = ceps::ast::name(label);
 		else stitle = title.str();
 		{
-			auto local_ctx{ctx};
-			fmt_out_layout_label(local_ctx);
-			formatted_out(os,stitle,local_ctx);
+			doc_writer->push_ctx();
+			fmt_out_layout_label(doc_writer->top());
+			doc_writer->out(os,stitle);
+			doc_writer->pop_ctx();
 		}
 
 	} else if (is<Ast_node_kind::ifelse>(n)){
-		fmt_out_handle_ifelse(os,as_ifelse_ref(n),ctx);
+		fmt_out_handle_ifelse(os,as_ifelse_ref(n),doc_writer);
 	} else if (!is<Ast_node_kind::stmts>(n) && !is<Ast_node_kind::scope>(n)){
-		{auto local_ctx{ctx}; local_ctx.suffix = local_ctx.eol = "";formatted_out(os,"",local_ctx);}
-		fmt_out_handle_expr(os, n, ctx);
-		{auto local_ctx{ctx}; local_ctx.suffix = ""; local_ctx.ignore_indent = true; formatted_out(os,"",local_ctx);}
+		{
+			doc_writer->push_ctx(); 
+			doc_writer->top().suffix = doc_writer->top().eol = "";
+			doc_writer->out(os,"");
+			doc_writer->pop_ctx();
+		}
+		fmt_out_handle_expr(os, n, doc_writer);
+		{
+			doc_writer->push_ctx(); 
+			doc_writer->top().suffix = ""; 
+			doc_writer->top().ignore_indent = true; 
+			doc_writer->out(os,"");
+			doc_writer->pop_ctx();
+		}
 	} else if(is<Ast_node_kind::structdef>(n)){
-		fmt_out_handle_inner_struct(os, ceps::ast::as_struct_ref(n), ctx,ignore_macro_definitions);
+		fmt_out_handle_inner_struct(os, ceps::ast::as_struct_ref(n), doc_writer,ignore_macro_definitions);
 	} else if (auto inner = nlf_ptr(n)){
-		fmt_out_handle_children(os, inner->children(), ctx,true);
+		fmt_out_handle_children(os, inner->children(), doc_writer,true);
 	}
 }
 
-void ceps::docgen::fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, fmt_out_ctx ctx, bool ignore_macro_definitions){
+void ceps::docgen::fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, Doc_writer* doc_writer, bool ignore_macro_definitions){
 	for(auto n: children){
 		if (is_a_struct(n)){
 			auto& strct{ceps::ast::as_struct_ref(n)};
-			fmt_out_handle_inner_struct(os,strct,ctx,ignore_macro_definitions);
-		} else fmt_handle_node(os, n, ctx,ignore_macro_definitions);
+			fmt_out_handle_inner_struct(os,strct,doc_writer,ignore_macro_definitions);
+		} else fmt_handle_node(os, n, doc_writer,ignore_macro_definitions);
 	}
 }
 
@@ -436,36 +430,47 @@ void ceps::docgen::Comment::print_section(std::ostream& os,std::vector<Nodebase_
 	for(auto e:v){
 		if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "title" ){
 			{
-				auto local_ctx{ctx};
-				local_ctx.eol = "";
-				local_ctx.suffix = "";
-				formatted_out(os,"",local_ctx);
-				local_ctx.bold = true;			
-				local_ctx.quote_string = false;
-				local_ctx.ignore_indent = true;
+				doc_writer->push_ctx();
+				doc_writer->top().eol = "";
+				doc_writer->top().suffix = "";
+				doc_writer->out(os,"");
+				doc_writer->top().bold = true;			
+				doc_writer->top().quote_string = false;
+				doc_writer->top().ignore_indent = true;
 				for(auto ee: as_struct_ref(e).children()){
-					fmt_handle_node(os, ee, local_ctx,true);
+					fmt_handle_node(os, ee, doc_writer,true);
 				}
+				doc_writer->pop_ctx();
 			}			
 		} else if (is<Ast_node_kind::stmts>(e)){
 			print_section(os,as_stmts_ref(e).children(),false);
 		}
 	}
 	if(!outer) return;
-	{auto local_ctx{ctx}; local_ctx.ignore_indent = true; formatted_out(os,"",local_ctx);}
-	++ctx.indent;
+	{
+		doc_writer->push_ctx(); 
+		doc_writer->top().ignore_indent = true; 
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
+	}
+	++doc_writer->top().indent;
 	{		
 		print_content(os, v);
 	}
-	--ctx.indent;
+	--doc_writer->top().indent;
 }
 
 void ceps::docgen::Comment::print_block(std::ostream& os,std::vector<Nodebase_ptr> const & v, bool outer){	
-	++ctx.indent;
-	{auto local_ctx{ctx}; local_ctx.eol = ""; formatted_out(os,"",local_ctx);}
+	++doc_writer->top().indent;
+	{
+		doc_writer->push_ctx();
+		doc_writer->top().eol = ""; 
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
+	}
 	print_content(os, v);
-	--ctx.indent;
-	formatted_out(os,"",ctx);
+	--doc_writer->top().indent;
+	doc_writer->out(os,"");
 }
 
 void ceps::docgen::Comment::print_content(std::ostream& os, std::vector<Nodebase_ptr> const &v){
@@ -475,16 +480,18 @@ void ceps::docgen::Comment::print_content(std::ostream& os, std::vector<Nodebase
 	    else if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "block" )
 			print_block(os,as_struct_ref(e).children());
 		else if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) != "title" ){
-			formatted_out(os,"",ctx);fmt_out_handle_inner_struct(os,as_struct_ref(e),ctx,true);			
+			doc_writer->out(os,"");
+			fmt_out_handle_inner_struct(os,as_struct_ref(e),doc_writer,true);			
 		} else if (is<Ast_node_kind::stmts>(e))
 			print_content(os,as_stmts_ref(e).children());
 		else {
-			auto local_ctx{ctx};
-			local_ctx.eol = "";
-			local_ctx.suffix = "";
-			local_ctx.quote_string = false;
-			local_ctx.ignore_indent = true;
-			fmt_handle_node(os, e, local_ctx,true);
+			doc_writer->push_ctx();
+			doc_writer->top().eol = "";
+			doc_writer->top().suffix = "";
+			doc_writer->top().quote_string = false;
+			doc_writer->top().ignore_indent = true;
+			fmt_handle_node(os, e, doc_writer,true);
+			doc_writer->pop_ctx();
 		}
 	}
 }
@@ -494,62 +501,65 @@ void ceps::docgen::Comment::print(std::ostream& os){
 }
 
 
-void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx, bool ignore_macro_definitions ){		    
+void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, Doc_writer* doc_writer, bool ignore_macro_definitions ){		    
 	bool lbrace = false;
 	auto& nm{name(strct)};
 
 	if (nm == "comment"){
-		ceps::docgen::Comment comment{strct,ctx};
+		ceps::docgen::Comment comment{strct,doc_writer};
 		comment.print(os);		
 		return;
 	}
 
 	{
-		auto lctx{ctx};
-		fmt_out_layout_inner_strct(lctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_inner_strct(doc_writer->top());
 		if (nm == "comment_stmt"){
-			ctx.comment_stmt_stack->insert(std::end(*ctx.comment_stmt_stack), std::begin(strct.children()), std::end(strct.children()) );	
+			doc_writer->top().comment_stmt_stack->insert(std::end(*doc_writer->top().comment_stmt_stack), std::begin(strct.children()), std::end(strct.children()) );	
 			return;		
 		} else if (nm == "one_of"){
-			lctx.italic = true;
-			lctx.suffix = "";
-			if (lctx.inside_schema) lctx.foreground_color = "228";
-			formatted_out(os,"one of",lctx);
+			doc_writer->top().italic = true;
+			doc_writer->top().suffix = "";
+			if (doc_writer->top().inside_schema) doc_writer->top().foreground_color = "228";
+			doc_writer->out(os,"one of");
 		} else {
-			lctx.suffix = "{";
-			formatted_out(os,ceps::ast::name(strct),lctx);
+			doc_writer->top().suffix = "{";
+			doc_writer->out(os,ceps::ast::name(strct));
 			lbrace = true;
 		}
+		doc_writer->pop_ctx();
 	}
-	++ctx.indent;
-	fmt_out_handle_children(os,strct.children(),ctx,ignore_macro_definitions);
+	++doc_writer->top().indent;
+	fmt_out_handle_children(os,strct.children(),doc_writer,ignore_macro_definitions);
 	if (lbrace){
-		--ctx.indent;
-		auto lctx{ctx};
-		fmt_out_layout_inner_strct(lctx);
-		lctx.suffix = "}";
-		formatted_out(os,"",lctx);
+		--doc_writer->top().indent;
+		doc_writer->push_ctx();
+		fmt_out_layout_inner_strct(doc_writer->top());
+		doc_writer->top().suffix = "}";
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
 	}
 }
 
-void ceps::docgen::fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, fmt_out_ctx ctx,bool ignore_macro_definitions){
+void ceps::docgen::fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, Doc_writer* doc_writer,bool ignore_macro_definitions){
 	auto v = fetch_symbols_standing_alone(strct.children());
 	auto is_schema = v.end() != std::find_if(v.begin(),v.end(),[](ceps::ast::Symbol* p){ return ceps::ast::kind(*p) == "Schema"; });
 	if (!is_schema) {
-		fmt_out_handle_inner_struct(os,strct,ctx,ignore_macro_definitions);
+		fmt_out_handle_inner_struct(os,strct,doc_writer,ignore_macro_definitions);
 		return;
 	}
-	ctx.inside_schema = is_schema;
-	if (is_schema) ctx.c_style_struct = false;
+	doc_writer->top().inside_schema = is_schema;
+	if (is_schema) doc_writer->top().c_style_struct = false;
 	{
-		auto local_ctx{ctx};
-		fmt_out_layout_outer_strct(is_schema,local_ctx);
-		formatted_out(os,ceps::ast::name(strct),local_ctx);
+		doc_writer->push_ctx();
+		fmt_out_layout_outer_strct(is_schema,doc_writer->top());
+		doc_writer->out(os,ceps::ast::name(strct));
+		doc_writer->pop_ctx();
 	}
-	++ctx.indent;
+	++doc_writer->top().indent;
 	for(auto n: strct.children()){
 		if (is<Ast_node_kind::structdef>(n)){
-			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),ctx, ignore_macro_definitions);
+			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),doc_writer, ignore_macro_definitions);
 		}
 	}
 }
@@ -584,12 +594,9 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 {
 	using namespace ceps::ast;
 
-	//DEBUG
-	auto doc_writer{Doc_writer_factory(output_format_flags)};
-
-	fmt_out_ctx ctx;
-	ctx.comment_stmt_stack = std::make_shared<std::vector<ceps::ast::Nodebase_ptr>>(std::vector<ceps::ast::Nodebase_ptr>{});
-	ctx.symtab = symtab;
+	// Setup respective docwriter (determined by the format flags)
+	std::shared_ptr<ceps::docgen::Doc_writer> doc_writer = Doc_writer_factory(output_format_flags);
+	doc_writer->top().symtab = symtab; 
 
 	// Preprocess:
 	// - Find coverage summary (if it exists)
@@ -640,14 +647,37 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 				                 lookuptbls,
 								 output_format_flags,
 								 symtab};
-				sm.print(os,ctx);
+				sm.print(os,doc_writer.get());
 			}
-			else fmt_out_handle_outer_struct(os,current_struct,ctx,ignore_macro_definitions);
+			else fmt_out_handle_outer_struct(os,current_struct,doc_writer.get(),ignore_macro_definitions);
 		} else if (is<Ast_node_kind::kind_def>(n)) {
 			auto& kd{as_kinddef_ref(n)};
 			auto k = kind(kd);
 			for(auto id: kd.children()) lookuptbls.global_symbols.reg_id_as(name(as_id_ref(id)),k);
-		} else fmt_handle_node(os,n,ctx,ignore_macro_definitions);
+		} else fmt_handle_node(os,n,doc_writer.get(),ignore_macro_definitions);
 		return true;
 	});
+}
+
+
+
+
+////// fmt_out_ctx_stack
+
+ceps::docgen::fmt_out_ctx_stack::fmt_out_ctx_stack(){
+	push_ctx();
+	top().comment_stmt_stack = std::make_shared<std::vector<ceps::ast::Nodebase_ptr>>(std::vector<ceps::ast::Nodebase_ptr>{});
+}
+
+void ceps::docgen::fmt_out_ctx_stack::push_ctx(){
+	if (fmt_stack.size()) fmt_stack.push_back(fmt_stack.back());
+	else fmt_stack.push_back(fmt_out_ctx{});
+}
+
+ceps::docgen::fmt_out_ctx& ceps::docgen::fmt_out_ctx_stack::top(){
+	return fmt_stack.back();
+}
+
+void ceps::docgen::fmt_out_ctx_stack::pop_ctx(){
+	if (fmt_stack.size() > 1) fmt_stack.pop_back();	
 }
