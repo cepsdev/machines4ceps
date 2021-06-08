@@ -299,6 +299,11 @@ int main(int argc,char ** argv)
 		std::cout << "***Fatal Error:" << re.what() << std::endl;
 		return EXIT_FAILURE;
 	}
+	catch (std::invalid_argument & re)
+	{
+		std::cout << "***Fatal Error:" << re.what() << std::endl;
+		return EXIT_FAILURE;
+	}
 
 #ifdef _WIN32
 	WSACleanup();

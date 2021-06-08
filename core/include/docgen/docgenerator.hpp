@@ -35,14 +35,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace ceps{
 	namespace docgen{
         using namespace ceps::ast;
+        class MarginPrinter;
 
-        class FormattedOutput{
-            public:
-            virtual void line_break() = 0;
-            virtual void set_foreground_color(int r, int g, int b, int alpha) = 0;
-        };
-
-        struct fmt_out_ctx{
+        struct fmt_out_ctx {
             bool inside_schema = false;
 
             bool bold                         = false;
@@ -69,6 +64,22 @@ namespace ceps{
             bool ignore_comment_stmt_stack = false;
             std::shared_ptr<std::vector<ceps::ast::Nodebase_ptr>> comment_stmt_stack;
         };
+
+        struct fmt_out_ctx_stack{
+            std::vector<fmt_out_ctx> fmt_stack;
+            void push_ctx();
+            void pop_ctx();
+            fmt_out_ctx& top();
+        };
+
+        class Doc_writer: public fmt_out_ctx_stack{
+            public:
+            virtual void out(std::ostream& os, 
+                             std::string s, 
+							 MarginPrinter* mp) = 0;
+        };
+
+        
 
         struct symbol_info{
             std::vector<std::map<std::string,std::string>> id2kind_maps;
@@ -119,6 +130,8 @@ namespace ceps{
             public:
             virtual void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) = 0;
         };
+
+
 
 		class Statemachine : public MarginPrinter{
 			private:

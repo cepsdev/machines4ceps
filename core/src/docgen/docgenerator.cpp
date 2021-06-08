@@ -16,6 +16,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 #include "core/include/docgen/docgenerator.hpp"
+#include "core/include/docgen/docgenerator_docwriter_factory.hpp"
 #include <memory>
 
 
@@ -584,7 +585,7 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 	using namespace ceps::ast;
 
 	//DEBUG
-	for(auto e: output_format_flags) std::cout << e << std::endl;
+	auto doc_writer{Doc_writer_factory(output_format_flags)};
 
 	fmt_out_ctx ctx;
 	ctx.comment_stmt_stack = std::make_shared<std::vector<ceps::ast::Nodebase_ptr>>(std::vector<ceps::ast::Nodebase_ptr>{});
