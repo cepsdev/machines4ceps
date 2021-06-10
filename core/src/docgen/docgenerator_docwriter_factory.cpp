@@ -27,5 +27,5 @@ std::shared_ptr<ceps::docgen::Doc_writer> ceps::docgen::Doc_writer_factory(std::
     for(auto e : output_format_flags)
      if (e == "ansi") return std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
      else if (e == "markdown_jira" || e == "markdown_jira_style") return std::make_shared<Doc_writer_markdown_jira_style>(Doc_writer_markdown_jira_style{});
-     throw std::invalid_argument{"Wrong documentation format."};
+     return std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
 }
