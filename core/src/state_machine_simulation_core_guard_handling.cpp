@@ -1,3 +1,19 @@
+/*
+Copyright 2021 Tomas Prerovsky (cepsdev@hotmail.com).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 #include "core/include/state_machine_simulation_core.hpp"
 #include "core/include/base_defs.hpp"
 
@@ -81,11 +97,11 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::unfold(ceps::ast::Nodebas
 	ceps::ast::Nodebase_ptr nlf_base = nullptr;
 	if (expr->kind() == Ast_node_kind::binary_operator)
 	{
-		nlf_base = new Binary_operator(ceps::ast::op(ceps::ast::as_binop_ref(expr)), nullptr, nullptr, nullptr);
+		nlf_base = ceps::interpreter::mk_bin_op(ceps::ast::op(ceps::ast::as_binop_ref(expr)));
 	}
 	else if (expr->kind() == Ast_node_kind::unary_operator)
 	{
-		nlf_base = new Unary_operator(ceps::ast::op(*dynamic_cast<ceps::ast::Unary_operator*>(expr)), nullptr, nullptr, nullptr);
+		nlf_base = ceps::interpreter::mk_unary_op(ceps::ast::op(*dynamic_cast<ceps::ast::Unary_operator*>(expr)), nullptr);
 	}
 	else if (expr->kind() == Ast_node_kind::symbol)
 	{
@@ -124,7 +140,7 @@ bool contains_compund_states(ceps::ast::Nodebase_ptr expr, bool inside_dot_expr)
 
 	auto p = ceps::ast::nlf_ptr(expr);
 
-	if (expr->kind() == ceps::ast::Ast_node_kind::binary_operator && '.' == ceps::ast::op(ceps::ast::as_binop_ref(expr)))
+	if (expr->kind() == ceps::ast::Ast_node_kind::binary_operator && ('.' == ceps::ast::op(ceps::ast::as_binop_ref(expr))))
 		inside_dot_expr = true;
 
 	if (expr->kind() == ceps::ast::Ast_node_kind::symbol) return inside_dot_expr;
@@ -164,6 +180,7 @@ bool State_machine_simulation_core::eval_guard(ceps::Ceps_Environment& ceps_env,
 	std::set<std::string> guards_in_rhs;
 	guards_in_expr(guard_expr,  guards_in_rhs);
 	ceps::ast::Nodebase_ptr  result = nullptr;
+	
 
 	if (guards_in_rhs.size() || contains_sm_func_calls(guard_expr) || contains_compund_states(guard_expr,false) ){
 		if (guards_in_rhs.find(guard_name) != guards_in_rhs.end())

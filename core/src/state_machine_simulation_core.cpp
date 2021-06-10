@@ -1668,7 +1668,7 @@ void* State_machine_simulation_core::get_sm(std::string name){
 
 // Reporting
 static ceps::ast::Binary_operator* mkop(std::string o,ceps::ast::Nodebase_ptr l, ceps::ast::Nodebase_ptr r){
-	return new ceps::ast::Binary_operator(o[0],l,r,nullptr);
+	return new ceps::ast::Binary_operator(o[0],(o.size() > 1 ? o : ""),l,r,nullptr);
 }
 
 static ceps::ast::Nodebase_ptr compute_dot_expr_from_sm_state_given_as_string(std::string sm_state){

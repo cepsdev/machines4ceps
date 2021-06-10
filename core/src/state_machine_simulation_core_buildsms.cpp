@@ -1,5 +1,5 @@
 /*
-Copyright 2014,2015,2016,2017,2018,2019,2020,2021 Tomas Prerovsky (cepsdev@hotmail.com).
+Copyright 2021 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -801,7 +801,7 @@ static std::tuple<bool, std::string, std::vector<std::pair<std::string, std::str
      cmd << e.first << ": "<<e.second<<"\r\n";
     cmd << "\r\n";
     ssize_t r = send(sock, cmd.str().c_str(), cmd.str().length(), 0);
-    if (r != cmd.str().length()) return std::make_tuple(false,std::string{},std::vector<std::pair<std::string, std::string>>{});
+    if (r != (ssize_t)cmd.str().length()) return std::make_tuple(false,std::string{},std::vector<std::pair<std::string, std::string>>{});
     std::string unconsumed_data;
     return read_virtual_can_msg(sock, unconsumed_data);
 }

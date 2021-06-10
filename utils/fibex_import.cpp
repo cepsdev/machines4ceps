@@ -230,9 +230,7 @@ struct fibex_signal{
 
   for(auto const & s:sig_vec){
 	  glob_sec->children().push_back(
-	   new ceps::ast::Binary_operator('=',
-			                       new ceps::ast::Symbol(s.name,"Systemstate"),
-								   new ceps::ast::Double(s.default_value,ceps::ast::all_zero_unit()) )
+      ceps::interpreter::mk_bin_op('=',ceps::interpreter::mk_symbol(s.name,"Systemstate"),ceps::interpreter::mk_double_node(s.default_value,ceps::ast::all_zero_unit()))	   
 	  );
   }
 
@@ -422,18 +420,18 @@ struct fibex_signal{
    using namespace ceps::ast;
    auto out_scale = 1.0 / sig.encoding.internal_to_phs_scale;
    auto out_offs = -1.0*sig.encoding.internal_to_phs_offset*out_scale;
-   auto out_encoding = new Binary_operator('=',
-		                                   new Symbol("out",sig.encoding.ceps_encoding_type),
-										   new Binary_operator('+',
-												   new Binary_operator('*',new Double(out_scale, ceps::ast::all_zero_unit()), new Symbol(sig.name,"Systemstate")  ),
-												   new Double(out_offs, ceps::ast::all_zero_unit())
+   auto out_encoding = ceps::interpreter::mk_bin_op('=',
+		                                   ceps::interpreter::mk_symbol("out",sig.encoding.ceps_encoding_type),
+										   ceps::interpreter::mk_bin_op('+',
+												   ceps::interpreter::mk_bin_op('*',ceps::interpreter::mk_double_node(out_scale, ceps::ast::all_zero_unit()), ceps::interpreter::mk_symbol(sig.name,"Systemstate")  ),
+												   ceps::interpreter::mk_double_node(out_offs, ceps::ast::all_zero_unit())
                                            )
    );
-   auto in_encoding = new Binary_operator('=',
-		                                   new Symbol(sig.name,"Systemstate"),
-										   new Binary_operator('+',
-												   new Binary_operator('*',new Double(sig.encoding.internal_to_phs_scale, ceps::ast::all_zero_unit()), new Symbol("in",sig.encoding.ceps_encoding_type)  ),
-												   new Double(sig.encoding.internal_to_phs_offset, ceps::ast::all_zero_unit())
+   auto in_encoding = ceps::interpreter::mk_bin_op('=',
+		                                   ceps::interpreter::mk_symbol(sig.name,"Systemstate"),
+										   ceps::interpreter::mk_bin_op('+',
+												   ceps::interpreter::mk_bin_op('*',ceps::interpreter::mk_double_node(sig.encoding.internal_to_phs_scale, ceps::ast::all_zero_unit()), ceps::interpreter::mk_symbol("in",sig.encoding.ceps_encoding_type)  ),
+												   ceps::interpreter::mk_double_node(sig.encoding.internal_to_phs_offset, ceps::ast::all_zero_unit())
                                            )
    );
    encoding->children().push_back(out_encoding);
@@ -449,21 +447,15 @@ struct fibex_signal{
    using namespace ceps::ast;
    Nodebase_ptr a,b;
 
-   if (sig.encoding.strictly_smaller) a = new Binary_operator('<',
-    									   new Symbol(sig.name,"Systemstate"),
- 										   new Double(sig.encoding.max, ceps::ast::all_zero_unit())
-    ); else a = new Binary_operator(ceps::Cepsparser::token::REL_OP_LT_EQ,
-			   new Symbol(sig.name,"Systemstate"),
-			   new Double(sig.encoding.max, ceps::ast::all_zero_unit())
-   );
+   if (sig.encoding.strictly_smaller) a = ceps::interpreter::mk_bin_op('<',
+    									   ceps::interpreter::mk_symbol(sig.name,"Systemstate"),
+ 										   ceps::interpreter::mk_double_node(sig.encoding.max, ceps::ast::all_zero_unit())
+    ); else a = 
+    
+    ceps::interpreter::mk_bin_op(ceps::Cepsparser::token::REL_OP_LT_EQ,ceps::interpreter::mk_symbol(sig.name,"Systemstate"),ceps::interpreter::mk_double_node(sig.encoding.max,ceps::ast::all_zero_unit()));
 
-   if (sig.encoding.strictly_greater) b = new Binary_operator('>',
-      									   new Symbol(sig.name,"Systemstate"),
-   										   new Double(sig.encoding.min, ceps::ast::all_zero_unit())
-    ); else b = new Binary_operator(ceps::Cepsparser::token::REL_OP_GT_EQ,
-			   new Symbol(sig.name,"Systemstate"),
-			   new Double(sig.encoding.min, ceps::ast::all_zero_unit())
-   );
+   if (sig.encoding.strictly_greater) b = ceps::interpreter::mk_bin_op('>',ceps::interpreter::mk_symbol(sig.name,"Systemstate"),ceps::interpreter::mk_double_node(sig.encoding.min,ceps::ast::all_zero_unit())); 
+   else b = ceps::interpreter::mk_bin_op(ceps::Cepsparser::token::REL_OP_GT_EQ,ceps::interpreter::mk_symbol(sig.name,"Systemstate"),ceps::interpreter::mk_double_node(sig.encoding.min,ceps::ast::all_zero_unit()));
 
    constraints->children().push_back(a);
    constraints->children().push_back(b);

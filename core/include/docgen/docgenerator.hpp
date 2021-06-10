@@ -173,7 +173,7 @@ namespace ceps{
                             context& ctxt,
                             std::vector<std::string> output_format_flags,
                             ceps::parser_env::Symboltable* symtab = nullptr
-                        ):parent{parent},strct{strct}, ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
+                        ):strct{strct}, parent{parent},ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
 				
                 build();
 			}
