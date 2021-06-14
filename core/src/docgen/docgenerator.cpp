@@ -77,7 +77,7 @@ static void print_comment_impl(std::ostream& os,std::vector<Nodebase*> const & v
 	doc_writer->push_ctx();
 	doc_writer->top().ignore_comment_stmt_stack = true;
 	doc_writer->top().faint_intensity = true;
-	doc_writer->top().foreground_color = "";
+	doc_writer->top().set_text_foreground_color(""); 
 	doc_writer->top().italic = true;
 	doc_writer->top().ignore_indent = true;
 	doc_writer->top().normal_intensity = false;
@@ -128,7 +128,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 			auto sop = op_val(bop);
 			{
 				doc_writer->push_ctx();
-				doc_writer->top().foreground_color ="3";
+				doc_writer->top().set_text_foreground_color("expr.binary_operator");
 				if (sop.length() > 1 || sop == ">" || sop == "<" || sop == "=") doc_writer->out(os," "+sop+" ");
 					else doc_writer->out(os,sop);
 				doc_writer->pop_ctx();
@@ -146,7 +146,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 		else if ( (unsigned short)op(uop) <= 255) sop.push_back(op(uop));
 		{
 			doc_writer->push_ctx();
-			doc_writer->top().foreground_color = "3";
+			doc_writer->top().set_text_foreground_color("expr.unary_operator"); 
 	 		doc_writer->out(os,sop);
 			doc_writer->pop_ctx();
 		}
@@ -160,7 +160,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 		  } 
 		  else {
 			  doc_writer->push_ctx(); 
-			  doc_writer->top().foreground_color = "2"; 
+			  doc_writer->top().set_text_foreground_color("expr.string_literal"); 
 			  doc_writer->out(os,"\""+escape_ceps_string(value(as_string_ref(expr)))+"\"");
 			  doc_writer->pop_ctx();
 		  } 
@@ -171,7 +171,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 		ss << value(as_int_ref(expr));
 		{ 
 			doc_writer->push_ctx();
-			doc_writer->top().foreground_color = "2";
+			doc_writer->top().set_text_foreground_color("expr.int_literal");
 			doc_writer->out(os,ss.str());
 			doc_writer->pop_ctx();
 		}
@@ -180,14 +180,14 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 		ss << value(as_double_ref(expr));
 		{
 			doc_writer->push_ctx(); 
-			doc_writer->top().foreground_color = "2"; 
+			doc_writer->top().set_text_foreground_color("expr.double_literal"); 
 	    	doc_writer->out(os,ss.str());
 			doc_writer->pop_ctx();
 		}
 	} else if (is<Ast_node_kind::identifier>(expr)){
 		{
 			doc_writer->push_ctx(); 
-			doc_writer->top().foreground_color = "37";
+			doc_writer->top().set_text_foreground_color("expr.id");
 			if (name(as_id_ref(expr)) == "Infinity") doc_writer->out(os,"∞");
 			else doc_writer->out(os,name(as_id_ref(expr)));
 			doc_writer->pop_ctx();
@@ -201,7 +201,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 	 	{
 		 {
 			doc_writer->push_ctx();
-			doc_writer->top().foreground_color ="229";
+			doc_writer->top().set_text_foreground_color("expr.func_call_target_is_id");
 			doc_writer->out(os,name(as_id_ref(fcall_target)));
 			doc_writer->pop_ctx();	 
 		 }
@@ -520,7 +520,7 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Stru
 		} else if (nm == "one_of"){
 			doc_writer->top().italic = true;
 			doc_writer->top().suffix = "";
-			if (doc_writer->top().inside_schema) doc_writer->top().foreground_color = "228";
+			if (doc_writer->top().inside_schema) doc_writer->top().set_text_foreground_color("inside_schema.one_of_selector");
 			doc_writer->out(os,"one of");
 		} else {
 			doc_writer->top().suffix = "{";

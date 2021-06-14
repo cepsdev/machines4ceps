@@ -1376,9 +1376,9 @@ int parse_sideeffect_ASSIGN()
 		 env.on_exit_executed = true;
 		 auto n = rw_rules_.size();
 		 int exit_rule = -1;
-		 for (int i = 0; i < n;++i) {
+		 for (int i = 0; (size_t)i < n;++i) {
 		  if (lexer_id != rw_rules_[i].lexer_id_)continue;
-		  if (rw_rules_[i].pattern_len_ == 1 &&  prog_buffer_[rw_rules_[i].pattern_].t_.kind() == Token::TOK_ON_EXIT) {exit_rule=i;break;}
+		  if (rw_rules_[i].pattern_len_ == 1 &&  prog_buffer_[rw_rules_[i].pattern_].t_.kind() == Token::TOK_ON_EXIT) {exit_rule= i;break;}
 		 }
 	 	 if (exit_rule >= 0 && rw_rules_[exit_rule].body_len_ > 0) {
 	 		 env.rw_rule_in_execution_ = exit_rule;

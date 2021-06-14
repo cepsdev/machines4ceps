@@ -32,12 +32,93 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <condition_variable>
 #include "ceps_all.hh"
 
+
+/*
+
+
+ANSI
+
+inside_schema.one_of_selector -> 228 
+expr.func_call_target_is_id-> 229
+expr.id -> 37
+expr.double_literal -> 2
+expr.double_literal -> 2
+expr.string_literal -> 2
+expr.unary_operator -> 2
+expr.binary_operator -> 3
+schema.outer_struct -> 214
+schema.inner_struct -> 184
+inner_struct -> 3
+macro_name -> 4
+schema.macro_name -> 4
+keyword.macro -> 5
+chema.keyword.macro -> 5
+keyword.state_machine -> 5
+schema.keyword.loop -> 5
+keyword.loop -> 5
+schema.keyword.loop_in -> 5
+keyword.loop_in -> 5
+schema.keyword.loop_var -> 6
+keyword.loop_var -> 6
+schema.loop.eol -> 6
+loop.eol -> 6
+schema.value_definition.eol -> 6
+value_definition.eol -> 6
+schema.if.eol -> 6
+if.eol -> 6
+schema.val_var -> 6
+val_var -> 6
+schema.keyword.val -> 5
+keyword.val -> 5
+val.arrow -> {}
+schema.keyword.if -> 5
+keyword.if -> 5
+function.call.name -> 184
+
+
+*/
 namespace ceps{
 	namespace docgen{
         using namespace ceps::ast;
         class MarginPrinter;
 
+        struct color{
+            int ansi_8bit_color = 255;
+            int r = -1, g = -1, b = -1;
+            color() = default;
+            color(std::uint8_t ansi8bit):ansi_8bit_color{ansi8bit}{}
+            std::string as_ansi_8bit_str() const {
+                std::stringstream ss;
+                ss << ansi_8bit_color;
+                return ss.str();
+            }
+        }; 
+
+        struct Theme{
+            virtual color choose_color(std::string) = 0;
+        };
+
+        struct map_defined_theme:public Theme{
+            std::map<std::string,color> m;
+            color choose_color(std::string category) override{
+                auto it = m.find(category);
+                if (it != m.end()) return it->second;
+                return color{};
+            }
+
+            map_defined_theme() = default;
+
+            map_defined_theme(std::map<std::string,color> const & m ):m{m}{
+
+            }
+        };
+
         struct fmt_out_ctx {
+            std::string text_foreground_color;
+
+
+            void set_text_foreground_color(std::string v){text_foreground_color=v;}
+
             bool inside_schema = false;
 
             bool bold                         = false;
@@ -50,8 +131,7 @@ namespace ceps{
             bool quote_string                 = true;
             std::string inline_comment_prefix = " -- ";
 
-            std::string foreground_color;
-            std::string foreground_color_modifier;
+            //std::string foreground_color_modifier;
             std::string suffix;
             std::string prefix;
             std::string eol                   ="\n";
@@ -75,8 +155,12 @@ namespace ceps{
         };
 
         class Doc_writer: public fmt_out_ctx_stack{
+            protected:
+            std::shared_ptr<Theme> theme;
             public:
             Doc_writer() = default;
+            void set_theme(std::shared_ptr<Theme> new_theme){theme = new_theme;}
+            std::shared_ptr<Theme> get_theme() const {return theme;}
             virtual void out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp = nullptr) = 0;
@@ -207,7 +291,13 @@ namespace ceps{
         void fmt_out_layout_inner_strct(fmt_out_ctx& ctx);
         void fmt_out_layout_macro_name(fmt_out_ctx& ctx);
         void fmt_out_layout_macro_keyword(fmt_out_ctx& ctx);
+
         void fmt_out_layout_state_machine_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_state_machine_actions_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_state_machine_states_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_state_machine_transitions_keyword(fmt_out_ctx& ctx);
+        void fmt_out_layout_state_name(fmt_out_ctx& ctx);
+
         void fmt_out_layout_loop_keyword(fmt_out_ctx& ctx);
         void fmt_out_layout_loop_in_keyword(fmt_out_ctx& ctx);
         void fmt_out_layout_loop_variable(fmt_out_ctx& ctx);

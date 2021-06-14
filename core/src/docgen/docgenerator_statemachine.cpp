@@ -27,6 +27,8 @@ void ceps::docgen::Statemachine::print_left_margin(std::ostream& os, fmt_out_ctx
 	for(int i = 0; i < ctx.indent - coverage_statistics.hits_col_width - bar_width -1;++i) os << " ";
 }
 
+extern std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
+
 void ceps::docgen::Statemachine::print(	std::ostream& os,
 										Doc_writer* doc_writer){
 	auto indent_old = doc_writer->top().indent;
@@ -67,7 +69,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		{
 			auto eol_old = doc_writer->top().eol;
 			doc_writer->push_ctx();
-			fmt_out_layout_state_machine_keyword(doc_writer->top());
+			fmt_out_layout_state_machine_actions_keyword(doc_writer->top());
 			doc_writer->top().eol = eol_old;
 			doc_writer->top().suffix = ":";
 			doc_writer->out(os,"Actions");
@@ -89,7 +91,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		{
 			auto eol_old = doc_writer->top().eol;
 			doc_writer->push_ctx();
-			fmt_out_layout_state_machine_keyword(doc_writer->top());
+			fmt_out_layout_state_machine_states_keyword(doc_writer->top());
 			doc_writer->top().eol = eol_old;
 			doc_writer->top().suffix = ":";
 			doc_writer->out(os,"States");
@@ -122,7 +124,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 				}
 				{
 					doc_writer->push_ctx();
-					fmt_out_layout_funcname(doc_writer->top());
+					fmt_out_layout_state_name(doc_writer->top());
 					if (states_on_single_line) doc_writer->top().ignore_indent = false; 
 					doc_writer->out(os,states[i], (margin_annotation?this:nullptr));
 					doc_writer->pop_ctx();
@@ -156,13 +158,25 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		{
 			auto eol_old = doc_writer->top().eol;
 			doc_writer->push_ctx();
-			fmt_out_layout_state_machine_keyword(doc_writer->top());
+			fmt_out_layout_state_machine_transitions_keyword(doc_writer->top());
 			doc_writer->top().eol = eol_old;
 			doc_writer->top().suffix = ":";
 			doc_writer->out(os,"Transitions");
 			doc_writer->pop_ctx();
 		}
 		++doc_writer->top().indent;
+		std::sort(transitions.begin(),transitions.end(),[](ceps::docgen::Statemachine::transition const & lhs, ceps::docgen::Statemachine::transition const & rhs){
+			auto s1 =  default_text_representation(lhs.from);
+			auto s2 =  default_text_representation(rhs.from);
+			if (s1 == "Initial"){
+			 if (s2 == "Initial") return default_text_representation(lhs.to) <= default_text_representation(rhs.to);
+			 else return true;
+			}
+			else if (s2 == "Initial") return false;
+
+			if (s1 == s2) return default_text_representation(lhs.to) <= default_text_representation(rhs.to);
+			else return s1 <= s2;
+		});
 		for(auto t : transitions){
 			{
 				doc_writer->push_ctx();

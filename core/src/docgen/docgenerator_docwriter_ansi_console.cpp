@@ -30,7 +30,8 @@ void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os,
 	}
 	os << "\033[0m"; //reset
 	
-	if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+	if (ctx.text_foreground_color.length()) os << "\033[38;5;"<< theme->choose_color(ctx.text_foreground_color).as_ansi_8bit_str() << "m";
+	
 	if (ctx.underline) os << "\033[4m";
 	if (ctx.italic) os << "\033[3m";
 	if (ctx.bold) os << "\033[1m";
@@ -51,7 +52,8 @@ void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os,
 		os << ctx.info[ctx.info.size()-1];
 		os << ")";
 		os << "\033[0m"; //reset
-		if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+		
+		if (ctx.text_foreground_color.size()) os << "\033[38;5;"<< theme->choose_color(ctx.text_foreground_color).as_ansi_8bit_str() << "m";
 	}
 	os << ctx.suffix;
 	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){

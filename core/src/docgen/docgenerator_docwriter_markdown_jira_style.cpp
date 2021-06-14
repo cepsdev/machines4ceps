@@ -34,7 +34,7 @@ void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os,
 	}
 	os << "\033[0m"; //reset
 	
-	if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+	//if (ctx.text_foreground_color.size()) os << "\033[38;5;"<< ctx.text_foreground_color << "m";
 	
     if (s.size() + ctx.prefix.size()){ 
         if (ctx.underline) os << "+";
@@ -72,7 +72,7 @@ void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os,
 		os << ctx.info[ctx.info.size()-1];
 		os << ")";
 		os << "\033[0m"; //reset
-		if (ctx.foreground_color.size()) os << "\033[38;5;"<< ctx.foreground_color << "m";
+		//if (ctx.text_foreground_color.size()) os << "\033[38;5;"<< ctx.text_foreground_color << "m";
 	}
 	os << ctx.suffix;
 	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
