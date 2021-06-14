@@ -177,6 +177,13 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			if (s1 == s2) return default_text_representation(lhs.to) <= default_text_representation(rhs.to);
 			else return s1 <= s2;
 		});
+		std::string last_from_state_name;
+		auto max_from_len = 0;
+		for(auto t : transitions){
+			auto s = default_text_representation(t.from);
+		 if (s.length() > max_from_len) max_from_len = s.length();
+		}
+
 		for(auto t : transitions){
 			{
 				doc_writer->push_ctx();
@@ -185,7 +192,42 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 				doc_writer->out(os,"");
 				doc_writer->pop_ctx();
 			}
-			fmt_out_handle_expr(os,t.from, doc_writer);
+
+			auto st = default_text_representation(t.from);
+			
+			if (st.length() > 0 && last_from_state_name.length() > 0 && st != last_from_state_name){
+				doc_writer->push_ctx();
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->top().eol = "";
+				doc_writer->top().prefix ="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();				
+			}
+
+			if (st != last_from_state_name) {
+				fmt_out_handle_expr(os,t.from, doc_writer);
+				doc_writer->push_ctx();
+				doc_writer->top().suffix = doc_writer->top().prefix = doc_writer->top().eol = ""; 
+				doc_writer->top().ignore_indent = true;
+				doc_writer->top().normal_intensity =true;
+				doc_writer->out(os, ([&](){std::string s = ""; 
+				                           for(size_t i = 0; i < max_from_len - st.length(); ++i) s.append(" ");
+										   return s;})());
+				doc_writer->pop_ctx();
+			}
+			else {
+				doc_writer->push_ctx();
+				doc_writer->top().suffix = doc_writer->top().prefix = doc_writer->top().eol = ""; 
+				doc_writer->top().ignore_indent = true;
+				doc_writer->top().normal_intensity =true;
+				doc_writer->out(os, ([&](){std::string s = ""; 
+				                           for(size_t i = 0; i < max_from_len; ++i) s.append(" ");
+										   return s;})());
+				doc_writer->pop_ctx();
+			}
+			last_from_state_name = st;
+
 			{
 				doc_writer->push_ctx();
 				doc_writer->top().ignore_indent=true;

@@ -66,7 +66,8 @@ function.call.name -> 184*/
                 { "keyword.state_machine",color{5}},
                 { "state_machine.state_name",color{148}},
                 { "keyword.state_machine_states", color{144}},
-                { "keyword.state_machine_transitions", color{131}}
+                { "keyword.state_machine_transitions", color{144}},
+                { "keyword.state_machine_actions", color{144}}
 
 
             }
