@@ -193,6 +193,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 			doc_writer->pop_ctx();
 		}
 	} else if (is<Ast_node_kind::symbol>(expr)){
+		doc_writer->top().set_text_foreground_color("expr.symbol");
 		doc_writer->out(os,name(as_symbol_ref(expr)));
 	} else if (is<Ast_node_kind::func_call>(expr)){
 		auto func_call = as_func_call_ref(expr);

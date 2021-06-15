@@ -23,7 +23,6 @@ void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os,
                              std::string s, 
 							 MarginPrinter* mp) {
     auto& ctx = top(); 
-    os << "\033[0m"; //reset
 	if(!ctx.ignore_indent) {
 		if (mp != nullptr) 
             mp->print_left_margin(os,ctx);
@@ -32,9 +31,17 @@ void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os,
                  if (ctx.indent_str[j] == ' ') os << "&nbsp;";
                  else os << ctx.indent_str[j];
 	}
-	os << "\033[0m"; //reset
+
+	bool print_color_closing_tag = false;
+
 	
-	//if (ctx.text_foreground_color.size()) os << "\033[38;5;"<< ctx.text_foreground_color << "m";
+	if (ctx.text_foreground_color.length()){
+		auto col = theme->choose_color(ctx.text_foreground_color);
+		if (col != color{}){
+		 print_color_closing_tag = true;
+		 os << "{color:#" << col.as_rgb_str() << "}";
+		}
+	} 
 	
     if (s.size() + ctx.prefix.size()){ 
         if (ctx.underline) os << "+";
@@ -44,9 +51,6 @@ void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os,
 
 	for(int i = 0; i < ctx.linebreaks_before;++i)
 		os << ctx.eol; 
-     /*for (size_t j = 0; j < ctx.eol.size(); ++j) 
-      if (ctx.eol[j] == '\n') os << " \\\\ ";
-      else os << ctx.eol[j];*/
 
 	for(size_t i = 0; i < ctx.prefix.size();++i)
 	 if (ctx.prefix[i] == '-') os << "\\-";
@@ -64,21 +68,18 @@ void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os,
     }
 
 	if (ctx.info.size()){
-		os << "\033[0m"; //reset
-		os << "\033[2m";
 		os << " (";
 		for(size_t i = 0; i + 1 < ctx.info.size(); ++i)
 		os << ctx.info[i] << ",";
 		os << ctx.info[ctx.info.size()-1];
 		os << ")";
-		os << "\033[0m"; //reset
 		//if (ctx.text_foreground_color.size()) os << "\033[38;5;"<< ctx.text_foreground_color << "m";
 	}
 	os << ctx.suffix;
+	if(print_color_closing_tag)
+		 os << "{color}";
+
 	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
-		os << "\033[0m";
-		os << "\033[2m";
-		os << "\033[3m";
 		std::string eol_temp = ctx.eol;
 		ctx.eol = "";
 		ctx.suffix = "";
@@ -86,6 +87,5 @@ void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os,
 		ctx.eol = eol_temp;
 		ctx.comment_stmt_stack->clear();
 	}
-	os << "\033[0m"; //reset
     os << ctx.eol;
 }

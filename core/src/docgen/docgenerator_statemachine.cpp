@@ -222,7 +222,9 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 				doc_writer->top().ignore_indent = true;
 				doc_writer->top().normal_intensity =true;
 				doc_writer->out(os, ([&](){std::string s = ""; 
-				                           for(size_t i = 0; i < max_from_len; ++i) s.append(" ");
+				                           for(size_t i = 0; i < max_from_len/2; ++i) s.append(" ");
+										   s.append(".");
+										   for(size_t i = 0; i < max_from_len - ( 1 +max_from_len/2); ++i) s.append(" ");
 										   return s;})());
 				doc_writer->pop_ctx();
 			}
@@ -247,6 +249,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 					doc_writer->top().ignore_indent=true;
 					doc_writer->top().eol="";
 					doc_writer->top().suffix="";
+					doc_writer->top().set_text_foreground_color("state_machine.transition.guard.parentheses");
 					doc_writer->out(os,"[");
 					doc_writer->pop_ctx();
 				}
@@ -267,6 +270,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 					doc_writer->top().ignore_indent=true;
 					doc_writer->top().eol="";
 					doc_writer->top().suffix="";
+					doc_writer->top().set_text_foreground_color("state_machine.transition.guard.parentheses");
 					doc_writer->out(os,"]");
 					doc_writer->pop_ctx();
 				}

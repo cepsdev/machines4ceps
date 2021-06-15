@@ -22,6 +22,7 @@ using namespace ceps::ast;
 
 
  std::shared_ptr<ceps::docgen::Theme> ceps::docgen::Theme_factory(std::vector<std::string> output_format_flags){
+    
 
      return          std::make_shared<ceps::docgen::map_defined_theme> (ceps::docgen::map_defined_theme{
 
@@ -63,13 +64,14 @@ keyword.if -> 5
 function.call.name -> 184*/
 
             { 
-                { "keyword.state_machine",color{5}},
-                { "state_machine.state_name",color{148}},
-                { "keyword.state_machine_states", color{144}},
-                { "keyword.state_machine_transitions", color{144}},
-                { "keyword.state_machine_actions", color{144}}
-
-
+                { "keyword.state_machine",color{5,128,0,128}}, //#80080
+                //{ "state_machine.state_name",color{148,175,215,0}}, //#afd700
+                { "keyword.state_machine_states", color{144,175,175,135}}, //#afaf87
+                { "keyword.state_machine_transitions", color{144,175,175,135}}, //#afaf87
+                { "keyword.state_machine_actions", color{144,175,175,135}}, //#afaf87
+                { "state_machine.transition.guard.parentheses", color{220,255,215,0}}, //#ffd700
+                { "expr.id", color{6,0,128,128}}, //#008080
+                { "expr.symbol", color{39,0,175,255}}, //#00afff
             }
 
 

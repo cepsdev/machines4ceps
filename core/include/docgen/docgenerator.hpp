@@ -87,11 +87,32 @@ namespace ceps{
             int r = -1, g = -1, b = -1;
             color() = default;
             color(std::uint8_t ansi8bit):ansi_8bit_color{ansi8bit}{}
+            color(std::uint8_t ansi8bit,std::uint8_t r, std::uint8_t g, std::uint8_t b):ansi_8bit_color{ansi8bit},r{r},g{g},b{b}{
+
+            }
             std::string as_ansi_8bit_str() const {
                 std::stringstream ss;
                 ss << ansi_8bit_color;
                 return ss.str();
             }
+
+            std::string as_rgb_str(){
+                std::stringstream ss;
+                if (r < 16) ss << "0";
+                ss << std::hex << r;
+                if (g < 16) ss << "0";
+                ss << std::hex << g;
+                if (b < 16) ss << "0";
+                ss << std::hex << b;
+                return ss.str();
+            }
+            bool operator == (color const & rhs) const {
+                return r == rhs.r && g == rhs.g && b ==rhs.b;
+            }
+            bool operator != (color const & rhs) const {
+                return ! this->operator==(rhs);
+            }
+
         }; 
 
         struct Theme{
