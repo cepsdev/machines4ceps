@@ -976,7 +976,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				}
 			} else{
                 auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
-                if(r) delete r;
+                //if(r) delete r;
 			}
 		}
 	}
