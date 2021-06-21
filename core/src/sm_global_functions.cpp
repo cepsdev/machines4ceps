@@ -326,16 +326,16 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
               eval_guard_assign(node);
               result_vec.push_back(node.left());
            } else if (is_assignment_to_state(node,state_id))  {
-              auto rhs = ceps::interpreter::evaluate(node.right(),
+              auto rhs = ceps::interpreter::evaluate_generic(node.right(),
                                                         ceps_env_current().get_global_symboltable(),
-                                                        ceps_env_current().interpreter_env(),n,nullptr	);
+                                                        ceps_env_current().interpreter_env(),n,nullptr,nullptr	);
               if (rhs == nullptr) continue;
               get_global_states()[state_id] = rhs; result_vec.push_back(rhs);
            }
          }  else {
-            auto r = ceps::interpreter::evaluate(n,
+            auto r = ceps::interpreter::evaluate_generic(n,
                    ceps_env_current().get_global_symboltable(),
-                   ceps_env_current().interpreter_env(),n,nullptr	);
+                   ceps_env_current().interpreter_env(),n,nullptr,nullptr	);
             result_vec.push_back(r);
           }
         }//for

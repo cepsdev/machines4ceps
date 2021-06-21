@@ -774,9 +774,9 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
 
     if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
-	auto r = ceps::interpreter::evaluate(node,
+	auto r = ceps::interpreter::evaluate_generic(node,
 			smc->ceps_env_current().get_global_symboltable(),
-			smc->ceps_env_current().interpreter_env(),root_node,nullptr	);
+			smc->ceps_env_current().interpreter_env(),root_node,nullptr,nullptr	);
 	if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.pop_back();
 
 
