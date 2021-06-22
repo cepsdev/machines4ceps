@@ -360,6 +360,7 @@ void ceps::docgen::fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, Doc_w
 		++doc_writer->top().indent;
 		fmt_out_handle_children(os,nlf_ptr(else_branch)->children(),doc_writer,true);
 	}
+	--doc_writer->top().indent;
 }
 
 void ceps::docgen::fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n,Doc_writer* doc_writer,bool ignore_macro_definitions){
