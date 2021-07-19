@@ -166,16 +166,16 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		}
 		++doc_writer->top().indent;
 		std::sort(transitions.begin(),transitions.end(),[](ceps::docgen::Statemachine::transition const & lhs, ceps::docgen::Statemachine::transition const & rhs){
+			// strict weak order
 			auto s1 =  default_text_representation(lhs.from);
 			auto s2 =  default_text_representation(rhs.from);
 			if (s1 == "Initial"){
-			 if (s2 == "Initial") return default_text_representation(lhs.to) <= default_text_representation(rhs.to);
+			 if (s2 == "Initial") return default_text_representation(lhs.to) < default_text_representation(rhs.to);
 			 else return true;
 			}
 			else if (s2 == "Initial") return false;
-
-			if (s1 == s2) return default_text_representation(lhs.to) <= default_text_representation(rhs.to);
-			else return s1 <= s2;
+			if (s1 == s2) return default_text_representation(lhs.to) < default_text_representation(rhs.to);
+			else return s1 < s2;
 		});
 		std::string last_from_state_name;
 		auto max_from_len = 0;
