@@ -318,51 +318,6 @@ void ceps::docgen::fmt_out_handle_let(std::ostream& os, Let& let, Doc_writer* do
 	}
 }
 
-void ceps::docgen::fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, Doc_writer* doc_writer){
-	ceps::ast::Nodebase_ptr cond = ifelse.children()[0];
- 	ceps::ast::Nodebase_ptr if_branch = nullptr,else_branch=nullptr;
-	if (ifelse.children().size() > 1) if_branch = ifelse.children()[1];
-	if (ifelse.children().size() > 2) else_branch = ifelse.children()[2];
-	{
-		doc_writer->push_ctx();
-		fmt_out_layout_if_keyword(doc_writer->top());
-		doc_writer->out(os,"if");
-		doc_writer->pop_ctx();
-	}
-
-	fmt_out_handle_expr(os,cond,doc_writer);
-
-	{
-		doc_writer->push_ctx();
-		fmt_out_layout_if_complete_line(doc_writer->top());
-		doc_writer->out(os,"");
-		doc_writer->pop_ctx();
-	}
-
-	++doc_writer->top().indent;
-	if (if_branch) {		
-		fmt_handle_node(os,if_branch,doc_writer,false);
-	}
-	if (else_branch){
-		--doc_writer->top().indent;
-		{
-			doc_writer->push_ctx();
-			fmt_out_layout_if_keyword(doc_writer->top());
-			doc_writer->out(os,"else");
-			doc_writer->pop_ctx();
-		}
-		{
-			doc_writer->push_ctx();
-			fmt_out_layout_if_complete_line(doc_writer->top());
-			doc_writer->out(os,"");
-			doc_writer->pop_ctx();
-		}
-		++doc_writer->top().indent;
-		fmt_out_handle_children(os,nlf_ptr(else_branch)->children(),doc_writer,true);
-	}
-	--doc_writer->top().indent;
-}
-
 void ceps::docgen::fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n,Doc_writer* doc_writer,bool ignore_macro_definitions){
 	if (is<Ast_node_kind::loop>(n)){
 		fmt_out_handle_loop(os,as_loop_ref(n),doc_writer);			
