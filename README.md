@@ -13,7 +13,7 @@ __Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, _
  * cd machines4ceps
  * ./make_machines
 
-:warning: Build parallelization (make's -j option) is set to 12 in the build script. Set the variable __parallelization__ to a value that fits your needs better. If you intend to build on a machine where RAM is an issue you should set __paralellization__ to 1.  
+:warning: Build parallelization (make's -j option) is set to 12 in the build script. Set the variable __parallelization__ to a value that fits your needs better. If you intend to build on a machine where RAM is an issue you should set __parallelization__ to 1.  
 
 :warning: __Important Remark:__ __machines4ceps__ is maintained in lockstep with __ceps__ which is __not__ referenced as a git submodule. 
 If you pull changes into your local copy of machines4ceps make sure that you have the latest version of the __ceps__ repo too. 
