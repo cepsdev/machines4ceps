@@ -15,8 +15,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 
-#ifndef INCMACHINES4CEPSCORE_DOCGENDOCWRITERMARKDOWNJIRASTYLEHPP
-#define INCMACHINES4CEPSCORE_DOCGENDOCWRITERMARKDOWNJIRASTYLEHPP
+#ifndef INCMACHINES4CEPSCORE_DOCGENDOCWRITERHTML5HPP
+#define INCMACHINES4CEPSCORE_DOCGENDOCWRITERHTML5HPP
 
 #include "core/include/docgen/docgenerator.hpp"
 
@@ -24,11 +24,12 @@ namespace ceps{
 	namespace docgen{
         using namespace ceps::ast;
 
-        class Doc_writer_markdown_jira_style: public Doc_writer{
+        class Doc_writer_html5: public Doc_writer{
             public:
+            Doc_writer_html5() = default;
             void out(std::ostream& os, 
-                             std::string s, 
-							 MarginPrinter* mp) override;
+                     std::string s, 
+					 MarginPrinter* mp) override;
             bool handler_toplevel_struct( std::ostream& os, 
                                           ceps::ast::Struct& tplvl_struct) override;
         };

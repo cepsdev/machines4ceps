@@ -185,6 +185,7 @@ namespace ceps{
             virtual void out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp = nullptr) = 0;
+            virtual bool handler_toplevel_struct(std::ostream& os, ceps::ast::Struct& tplvl_struct) = 0;
         };
 
         

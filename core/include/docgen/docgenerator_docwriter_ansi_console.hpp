@@ -30,6 +30,8 @@ namespace ceps{
             void out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) override;
+            bool handler_toplevel_struct( std::ostream& os, 
+                                          ceps::ast::Struct& tplvl_struct) override;
         };
     }
 }

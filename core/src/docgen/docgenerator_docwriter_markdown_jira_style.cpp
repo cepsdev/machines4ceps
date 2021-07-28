@@ -18,6 +18,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 using namespace ceps::ast;
 
+bool ceps::docgen::Doc_writer_markdown_jira_style::handler_toplevel_struct( std::ostream& os, 
+                                          ceps::ast::Struct& tplvl_struct) {
+											  return false;
+}
+
 
 void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os, 
                              std::string s, 

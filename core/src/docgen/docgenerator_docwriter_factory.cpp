@@ -18,6 +18,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/docgen/docgenerator_theme_factory.hpp"
 #include "core/include/docgen/docgenerator_docwriter_ansi_console.hpp"
 #include "core/include/docgen/docgenerator_docwriter_markdown_jira_style.hpp"
+#include "core/include/docgen/docgenerator_docwriter_html5.hpp"
 #include <stdexcept>
 
 
@@ -28,9 +29,15 @@ std::shared_ptr<ceps::docgen::Doc_writer> ceps::docgen::Doc_writer_factory(std::
     std::shared_ptr<ceps::docgen::Doc_writer> r;
 
     for(auto e : output_format_flags)
-     if (e == "ansi") r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
-     else if (e == "markdown_jira" || e == "markdown_jira_style") r = std::make_shared<Doc_writer_markdown_jira_style>(Doc_writer_markdown_jira_style{});
-     if (!r)  r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
+     if (e == "ansi") 
+        r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
+     else if (e == "markdown_jira" || e == "markdown_jira_style") 
+        r = std::make_shared<Doc_writer_markdown_jira_style>(Doc_writer_markdown_jira_style{});
+     else if (e == "html" || e == "html5") 
+        r = std::make_shared<Doc_writer_html5>(Doc_writer_html5{});
+     
+     if (!r)  
+        r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
      r -> set_theme(ceps::docgen::Theme_factory(output_format_flags));
      return r;
 }

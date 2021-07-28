@@ -14,16 +14,18 @@ Licensed under the Apache License, Version 2.0 (the "License");
    limitations under the License.
 */
 
-#include "core/include/docgen/docgenerator_docwriter_ansi_console.hpp"
+#include "core/include/docgen/docgenerator_docwriter_html5.hpp"
 #include <memory>
 using namespace ceps::ast;
 
-bool ceps::docgen::Doc_writer_ansi_console::handler_toplevel_struct( std::ostream& os, 
-                                          ceps::ast::Struct& tplvl_struct) {
-											  return false;
+bool ceps::docgen::Doc_writer_html5::handler_toplevel_struct( 
+    std::ostream& os, 
+    ceps::ast::Struct& tplvl_struct) 
+{
+	return false;
 }
 
-void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os, 
+void ceps::docgen::Doc_writer_html5::out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) {
 
