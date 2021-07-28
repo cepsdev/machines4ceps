@@ -498,8 +498,15 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Stru
 	}
 }
 
-void ceps::docgen::fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, Doc_writer* doc_writer,bool ignore_macro_definitions){
+void ceps::docgen::fmt_out_handle_outer_struct(	std::ostream& os, 
+												ceps::ast::Struct& strct, 
+												Doc_writer* doc_writer,
+												bool ignore_macro_definitions){
+	//Fetch top level statements which are comprised of a single symbol only
 	auto v = fetch_symbols_standing_alone(strct.children());
+	//Let the doc writer handle special cases, e.g. CAN Frames 
+	if (doc_writer->handler_toplevel_struct(os,v,strct)) return;
+
 	auto is_schema = v.end() != std::find_if(v.begin(),v.end(),[](ceps::ast::Symbol* p){ return ceps::ast::kind(*p) == "Schema"; });
 	if (!is_schema) {
 		fmt_out_handle_inner_struct(os,strct,doc_writer,ignore_macro_definitions);

@@ -25,13 +25,22 @@ namespace ceps{
         using namespace ceps::ast;
 
         class Doc_writer_html5: public Doc_writer{
+            void handle_network_frame(  std::ostream& os,
+                                        std::string network_frame,                                        
+                                        ceps::ast::Struct& tplvl_struct,
+                                        std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols);
+            void handle_can_frame(  std::ostream& os,                          
+                                        ceps::ast::Struct& tplvl_struct,
+                                        std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols);
             public:
             Doc_writer_html5() = default;
             void out(std::ostream& os, 
                      std::string s, 
 					 MarginPrinter* mp) override;
-            bool handler_toplevel_struct( std::ostream& os, 
-                                          ceps::ast::Struct& tplvl_struct) override;
+            bool handler_toplevel_struct(   std::ostream& os,
+                                            std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
+                                            ceps::ast::Struct& tplvl_struct) override;
+
         };
     }
 }

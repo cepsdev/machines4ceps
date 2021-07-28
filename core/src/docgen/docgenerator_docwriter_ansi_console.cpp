@@ -18,9 +18,12 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 using namespace ceps::ast;
 
-bool ceps::docgen::Doc_writer_ansi_console::handler_toplevel_struct( std::ostream& os, 
-                                          ceps::ast::Struct& tplvl_struct) {
-											  return false;
+bool ceps::docgen::Doc_writer_ansi_console::handler_toplevel_struct( 
+																	std::ostream& os, 
+																	std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
+                                          							ceps::ast::Struct& tplvl_struct) 
+{
+	return false;
 }
 
 void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os, 

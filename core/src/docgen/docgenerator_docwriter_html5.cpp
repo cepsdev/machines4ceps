@@ -18,11 +18,260 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 using namespace ceps::ast;
 
+
+
+/*
+
+The function ceps::docgen::Doc_writer_html5::handle_can_frame generates a table representation of structures of the following form:
+
+frame{
+ ControlAreaNetworkBus
+ id{  heart_beat_can_frame }
+ data{ header{
+   cob_id{ uint11{1360} }
+   rtr{
+    bit{
+     0
+    }
+   }
+   data_length{
+    uint4{
+     __current_frame_size
+    }
+   }
+  }
+  payload{
+   out{
+    uint7{
+     ControlPilotDutyCycle
+    }
+    bit{
+     any
+    }
+    uint3{
+     if ControlPilotState == "A":
+      1
+     elif ControlPilotState == "B":
+      2
+     elif ControlPilotState == "C":
+      3
+     elif ControlPilotState == "D":
+      4
+     elif ControlPilotState == "E":
+      5
+     elif ControlPilotState == "F":
+      6
+     else :
+      0
+    }
+    uint2{
+     if ProximityPinState == "Not_Connected":
+      1
+     elif ProximityPinState == "Connected":
+      2
+     elif ProximityPinState == "Connected_but_not_latched":
+      3
+     else :
+      0
+    }
+    uint3{
+     if ActualChargeProtocol == "DIN70121":
+      0
+     elif ActualChargeProtocol == "ISO15118":
+      1
+     elif ActualChargeProtocol == "Not_supported":
+      2
+     else :
+      3
+    }
+    uint4{
+     if ProgressState == "Standby":
+      1
+     elif ProgressState == "Authentication":
+      2
+     elif ProgressState == "ChargeParameter":
+      3
+     elif ProgressState == "CableCheck":
+      4
+     elif ProgressState == "Precharge":
+      5
+     elif ProgressState == "Charge":
+      6
+     elif ProgressState == "WeldingDetection":
+      7
+     elif ProgressState == "StopCharge":
+      8
+     elif ProgressState == "SessionStop":
+      9
+     elif ProgressState == "ShutOff":
+      10
+     elif ProgressState == "Error":
+      11
+     elif ProgressState == "Pause":
+      12
+     elif ProgressState == "LLC_AC":
+      13
+     else :
+      0
+    }
+    uint2{
+     if TCPStatus == "TCP_Connected":
+      1
+     elif TCPStatus == "TLS_Connected":
+      2
+     else :
+      0
+    }
+    uint2{
+     any
+    }
+    bit{
+     EVAchargeSE_Version_EV
+    }
+    uint5{
+     EVAchargeSE_Version_Major
+    }
+    uint5{
+     EVAchargeSE_Version_Minor
+    }
+    uint5{
+     EVAchargeSE_Version_Patch
+    }
+    bit{
+     EVAchargeSE_Version_CustomLogic
+    }
+    uint3{
+     any
+    }
+    uint3{
+     if ProximityResistorState == "R0":
+      1
+     elif ProximityResistorState == "R100":
+      2
+     elif ProximityResistorState == "R220":
+      3
+     elif ProximityResistorState == "R680":
+      4
+     elif ProximityResistorState == "R1500":
+      5
+     elif ProximityResistorState == "RInf":
+      6
+     else :
+      0
+    }
+   }
+   in{
+    uint7{
+     ControlPilotDutyCycleCANIn
+    }
+    bit{
+     any
+    }
+    uint3{
+     ControlPilotStateCANIn
+    }
+    uint2{
+     ProximityPinStateCANIn
+    }
+    uint3{
+     ActualChargeProtocolCANIn
+    }
+    uint4{
+     ProgressStateCANIn
+    }
+    uint2{
+     TCPStatusCANIn
+    }
+    uint2{
+     any
+    }
+    bit{
+     EVAchargeSE_Version_EVCANIn
+    }
+    uint5{
+     EVAchargeSE_Version_MajorCANIn
+    }
+    uint5{
+     EVAchargeSE_Version_MinorCANIn
+    }
+    uint5{
+     EVAchargeSE_Version_PatchCANIn
+    }
+    bit{
+     EVAchargeSE_Version_CustomLogicCANIn
+    }
+    uint3{
+     any
+    }
+    uint3{
+     ProximityResistorStateCANIn
+    }
+   }
+  }
+ }
+}*/
+
+
+static void read_frame_and_build_bit_info_vectors(	std::vector<std::tuple<int,int,ceps::ast::Struct*>>& frame_in,
+ 													std::vector<std::tuple<int,int,ceps::ast::Struct*>> frame_out,
+													int & bit_ctr_in, int & bit_ctr_out,ceps::ast::Struct& tplvl_struct)
+{
+	bool payload_section_read{false};
+	shallow_traverse_ex(tplvl_struct.children(), 
+	
+							[&](ceps::ast::Nodebase_ptr tree_node) -> bool { return !payload_section_read; },
+
+							[&](ceps::ast::Nodebase_ptr tree_node) -> bool {
+								if (is<Ast_node_kind::structdef>(tree_node) && name(as_struct_ref(tree_node)) == "payload" ){
+
+									shallow_traverse_ex(
+										as_struct_ref(tree_node).children(),
+
+
+									);
+									
+									payload_section_read = true;
+									return false;
+								} 
+								return !is_leaf(tree_node->kind());}
+							);
+}
+
+void ceps::docgen::Doc_writer_html5::handle_can_frame(  std::ostream& os,                          
+                                        ceps::ast::Struct& tplvl_struct,
+                                        std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols)
+{
+	std::vector<std::tuple<int,int,ceps::ast::Struct*>> frame_in;
+	std::vector<std::tuple<int,int,ceps::ast::Struct*>> frame_out;
+	int bit_ctr_in = 0;
+	int bit_ctr_out = 0;
+	read_frame_and_build_bit_info_vectors(frame_in,frame_out,bit_ctr_in,bit_ctr_out,tplvl_struct);
+
+
+}
+
+void ceps::docgen::Doc_writer_html5::handle_network_frame(  std::ostream& os,
+                                        std::string network_frame,                                        
+                                        ceps::ast::Struct& tplvl_struct,
+                                        std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols)
+{
+	if (network_frame == "ControlAreaNetworkBus" || network_frame == "CAN") handle_can_frame(os,tplvl_struct,toplevel_isolated_symbols);
+}
+
+
+
 bool ceps::docgen::Doc_writer_html5::handler_toplevel_struct( 
-    std::ostream& os, 
+    std::ostream& os,
+	std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols, 
     ceps::ast::Struct& tplvl_struct) 
 {
-	return false;
+	for (auto e: toplevel_isolated_symbols) {
+		if (ceps::ast::kind(*e) == "NetworkFrame") {
+			handle_network_frame(os,ceps::ast::name(*e),tplvl_struct,toplevel_isolated_symbols);
+			continue;
+		}
+	}
+	return true;
 }
 
 void ceps::docgen::Doc_writer_html5::out(std::ostream& os, 
