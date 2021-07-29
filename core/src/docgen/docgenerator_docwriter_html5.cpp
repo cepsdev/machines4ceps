@@ -224,11 +224,6 @@ static void read_frame_and_build_bit_info_vectors(	std::vector<std::tuple<int,in
 							[&](ceps::ast::Nodebase_ptr tree_node) -> bool {
 								if (is<Ast_node_kind::structdef>(tree_node) && name(as_struct_ref(tree_node)) == "payload" ){
 
-									shallow_traverse_ex(
-										as_struct_ref(tree_node).children(),
-
-
-									);
 									
 									payload_section_read = true;
 									return false;
