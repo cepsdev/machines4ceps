@@ -18,6 +18,10 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 using namespace ceps::ast;
 
+void ceps::docgen::Doc_writer_ansi_console::start(std::ostream& os) {}
+void ceps::docgen::Doc_writer_ansi_console::end(std::ostream& os) {}
+
+
 bool ceps::docgen::Doc_writer_ansi_console::handler_toplevel_struct( 
 																	std::ostream& os, 
 																	std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,

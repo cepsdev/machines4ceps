@@ -40,7 +40,8 @@ namespace ceps{
             bool handler_toplevel_struct(   std::ostream& os,
                                             std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
                                             ceps::ast::Struct& tplvl_struct) override;
-
+            void start(std::ostream& os) override; 
+            void end(std::ostream& os) override; 
         };
     }
 }

@@ -182,6 +182,9 @@ namespace ceps{
             Doc_writer() = default;
             void set_theme(std::shared_ptr<Theme> new_theme){theme = new_theme;}
             std::shared_ptr<Theme> get_theme() const {return theme;}
+            virtual void start(std::ostream& os) = 0; 
+            virtual void end(std::ostream& os) = 0; 
+
             virtual void out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp = nullptr) = 0;

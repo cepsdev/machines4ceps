@@ -544,6 +544,12 @@ int flatten_composite_id(node_t root,std::vector<node_t>& dest){
 	return -1;
 }
 
+template <typename F> struct cleanup{
+	F f;
+	cleanup(F f): f{f}{}
+	~cleanup(){f();}
+};
+
 //
 // Enry point for formatted console output of:
 //  - unevaluated (raw) ceps trees
@@ -560,6 +566,9 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 
 	// Setup respective docwriter (determined by the format flags)
 	std::shared_ptr<ceps::docgen::Doc_writer> doc_writer = Doc_writer_factory(output_format_flags);
+	doc_writer->start(os);
+	cleanup onexit{[&doc_writer,&os]{doc_writer->end(os);}};
+
 	doc_writer->top().symtab = symtab; 
 
 	// Preprocess:
