@@ -39,6 +39,7 @@ void ceps::docgen::Doc_writer_html5::end(std::ostream& os) {
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
     </body>
 </html>
   )";
@@ -237,8 +238,8 @@ frame{
 
 
 static void read_frame_and_build_bit_info_vectors(	
-                          std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr> >>& frame_in,
- 													std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr> >>& frame_out,
+                          std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr>,ceps::ast::Nodebase_ptr >>& frame_in,
+ 													std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr>,ceps::ast::Nodebase_ptr >>& frame_out,
 													int & bit_ctr_in, int & bit_ctr_out,ceps::ast::Struct& tplvl_struct)
 {
   static std::map<std::string,std::tuple<int,bool> > n2bit_width{ 
@@ -285,7 +286,7 @@ static void read_frame_and_build_bit_info_vectors(
                         a.valid = true; a.signedness = std::get<1>(it->second);a.width = std::get<0>(it->second);
                         auto& store = a.in ? frame_in : frame_out;
                         auto& bit_ctr = a.in ? bit_ctr_in : bit_ctr_out;
-                        store.push_back({bit_ctr,a.width,{}});
+                        store.push_back({bit_ctr,a.width,{},nullptr});
                         bit_ctr += a.width;
                         return true;
                       }                                            
@@ -305,8 +306,8 @@ void ceps::docgen::Doc_writer_html5::handle_can_frame(  std::ostream& os,
                                         ceps::ast::Struct& tplvl_struct,
                                         std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols)
 {
-	std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr> >> frame_in;
-	std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr> >>frame_out;
+	std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr>, ceps::ast::Nodebase_ptr >> frame_in;
+	std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr>, ceps::ast::Nodebase_ptr >>frame_out;
 	int bit_ctr_in = 0;
 	int bit_ctr_out = 0;
 	read_frame_and_build_bit_info_vectors(frame_in,frame_out,bit_ctr_in,bit_ctr_out,tplvl_struct);
@@ -352,14 +353,46 @@ void ceps::docgen::Doc_writer_html5::handle_can_frame(  std::ostream& os,
 
   int bit_pos = 0;
   int bits_left_in_row = bits_per_row;
-  for (auto e:frame_in){
+  std::map<ceps::ast::Nodebase_ptr, std::vector<ceps::ast::Nodebase_ptr> > rep2expr;
+
+  for (auto& e:frame_out){
+    auto& nodes = std::get<2>(e);
+    auto& representative = std::get<3>(e);
+    shallow_traverse_ex(nodes,	
+			[&](ceps::ast::Nodebase_ptr tree_node) -> bool {      
+        if (representative) return false; 
+        if (is<Ast_node_kind::symbol>(tree_node) && kind(as_symbol_ref(tree_node))=="Systemstate"){
+          representative = tree_node;
+          return false;
+        }
+        else if (is<Ast_node_kind::identifier>(tree_node) && name(as_id_ref(tree_node)) == "any"){
+          representative = tree_node;
+          return false;
+        }
+        return true; 
+      },
+			[&](ceps::ast::Nodebase_ptr tree_node) -> bool {
+        return traversable_fragment(tree_node);
+      });
+      if (representative) rep2expr[representative] = nodes;
+  }
+
+  
+
+  for (auto e:frame_out){
+    auto representative = std::get<3>(e);
+
     auto w = std::get<1>(e);
     if (w > 0 && bits_left_in_row == bits_per_row) {os << "<tr>";}
     for(;w > 0;){
       if (bits_left_in_row == 0) {os << "</tr><tr>";bits_left_in_row=bits_per_row;}
       auto t = w > bits_left_in_row ? bits_left_in_row : w ;
       os << "<td style=\"border: 1px solid black;\" colspan=\""<< t <<"\">";
-      os << "X";
+      if (representative) {
+        if (is<Ast_node_kind::identifier>(representative) && "any" == name(as_id_ref(representative)))
+         os << "-";
+        else ceps::docgen::fmt_handle_node(os, representative, this,true);
+      }
       os << "</td>\n";
       w -= t;
       bits_left_in_row -= t;
@@ -370,9 +403,59 @@ void ceps::docgen::Doc_writer_html5::handle_can_frame(  std::ostream& os,
   os << "</tbody>";
 
   os << "</table>";
-  os << "</td></tr></tbody></table>";
+  os << "</td></tr>";
+
+  auto match_check_equality = [] (Nodebase_ptr compare_against, Nodebase_ptr p) -> std::tuple<bool,Nodebase_ptr,Nodebase_ptr,Nodebase_ptr >{
+    std::tuple<bool,Nodebase_ptr,Nodebase_ptr,Nodebase_ptr > r {false,nullptr,nullptr,nullptr};
+    if (is<Ast_node_kind::ifelse>(p) && as_ifelse_ref(p).children().size() && 
+        is<Ast_node_kind::binary_operator>(as_ifelse_ref(p).children()[0]) && op_val(as_binop_ref(as_ifelse_ref(p).children()[0])) == "==" ){
+          auto& comparison = as_binop_ref(as_ifelse_ref(p).children()[0]);
+          std::stringstream s1; s1 << *compare_against;
+          std::stringstream s2; s2 << *comparison.left();
+          std::stringstream s3; s3 << *comparison.right();
+          Nodebase_ptr rhs = nullptr;
+          if (s1.str() == s2.str()) rhs = comparison.right();
+          else if (s1.str() == s3.str()) rhs = comparison.left();
+          else return r;
+          return {true,rhs, as_ifelse_ref(p).children().size() > 1 ? as_ifelse_ref(p).children()[1] : nullptr, 
+                            as_ifelse_ref(p).children().size() > 2 ? as_ifelse_ref(p).children()[2] : nullptr};
+    }
+    return r;
+  };
+
+  
+  os << "</tbody></table>";
 
   os << "</div>";
+
+  //Print further Infos
+
+  if (rep2expr.size()){
+    os << R"(<div class="container">)";
+    for(auto e:rep2expr){
+      if (is<Ast_node_kind::identifier>(e.first) && name(as_id_ref(e.first))== "any") continue;
+      if (e.second.size() == 1 && is<Ast_node_kind::ifelse>( e.second[0] ) ){
+        os << R"(<table class="table table-bordered"> <thead> <tr> <th colspan="2">)";
+        ceps::docgen::fmt_handle_node(os, e.first, this,true);
+        os << R"(</th></tr>)";
+        os <<"<tr><th>Value</th><th>Encoding</th> </tr>";
+        os << "<tbody>";
+        auto cur_if = e.second[0];
+        for(;cur_if;){
+          auto r = match_check_equality(e.first,cur_if);
+          if (!std::get<0>(r) || std::get<1>(r) == nullptr || std::get<2>(r) == nullptr) break;
+          os << "<tr>";
+          os << "<td>"; ceps::docgen::fmt_handle_node(os, std::get<1>(r), this,true); os << "</td>";
+          os << "<td>"; ceps::docgen::fmt_handle_node(os, std::get<2>(r), this,true); os << "</td>";
+          os << "</tr>";
+          cur_if = std::get<3>(r);
+        }
+        os << "</tbody></table>";
+      }
+    }
+    os << R"(</div>)";
+  }
+
 }
 
 void ceps::docgen::Doc_writer_html5::handle_network_frame(  std::ostream& os,
