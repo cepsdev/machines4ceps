@@ -1,0 +1,2 @@
+#!/bin/bash
+echo -e "\e[104mRunning structure expressions tests\e[0m"

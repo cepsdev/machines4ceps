@@ -868,27 +868,44 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			std::stringstream ss;ss << *n;
 			fatal_(-1,"Invalid statement:"+ss.str());
 		} else if (n->kind() == ceps::ast::Ast_node_kind::ifelse) {
-			auto ifelse = ceps::ast::as_ifelse_ptr(n);
-			ceps::ast::Nodebase_ptr cond = eval_locked_ceps_expr(this,containing_smp,ifelse->children()[0],n);
+			using namespace ceps::ast;
 
-			if (cond->kind() != ceps::ast::Ast_node_kind::int_literal &&  cond->kind() != ceps::ast::Ast_node_kind::float_literal){
+			auto ifelse = as_ifelse_ptr(n);
+			Nodebase_ptr cond = eval_locked_ceps_expr(this,containing_smp,ifelse->children()[0],n);
+			bool take_left_branch{true};
+			bool erroneous_cond{false};
+
+			if (is<Ast_node_kind::nodeset>(cond)){
+				auto& set_of_nodes{as_ast_nodeset_ref(cond)};
+				if (!set_of_nodes.children().size()) take_left_branch = false;
+				else{
+					auto p = set_of_nodes.children()[0];
+					if (is<Ast_node_kind::int_literal>(p)) take_left_branch = value(as_int_ref(p)) != 0;
+					else if (is<Ast_node_kind::float_literal>(p)) take_left_branch = value(as_double_ref(p)) != 0;
+					else if (is<Ast_node_kind::string_literal>(p)) take_left_branch = value(as_string_ref(p)) != "1";
+					else erroneous_cond = true;
+				}
+			} else if (is<Ast_node_kind::int_literal>(cond) )
+				take_left_branch = value(as_int_ref(cond)) != 0;
+			else if (is<Ast_node_kind::float_literal>(cond) ) 
+			    take_left_branch = value(as_double_ref(cond)) != 0;
+			else  erroneous_cond = true;
+			
+
+			if (erroneous_cond){
 				std::stringstream ss; ss << *cond;
-				fatal_(-1,"Expression in conditional should evaluate to integral type (int or double). Read:"+ ss.str());
+				fatal_(-1,"Expression in conditional illformed: >>"+ ss.str()+"<<.");
 			}
-			bool take_left_branch = true;
-
-			if (cond->kind() == ceps::ast::Ast_node_kind::int_literal) take_left_branch = ceps::ast::value(ceps::ast::as_int_ref(cond)) != 0;
-			else if (cond->kind() == ceps::ast::Ast_node_kind::float_literal) take_left_branch = ceps::ast::value(ceps::ast::as_double_ref(cond)) != 0;
-
-			ceps::ast::Nodebase_ptr branch_to_take = nullptr;
+			
+			Nodebase_ptr branch_to_take = nullptr;
 
 			if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
 			else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
 			if (branch_to_take == nullptr) continue;
-			ceps::ast::Nodebase_ptr result_of_branch = nullptr;
-			if (branch_to_take->kind() != ceps::ast::Ast_node_kind::structdef && branch_to_take->kind() != ceps::ast::Ast_node_kind::scope)
+			Nodebase_ptr result_of_branch = nullptr;
+			if (branch_to_take->kind() != Ast_node_kind::structdef && branch_to_take->kind() != Ast_node_kind::scope)
 			{
-				ceps::ast::Scope scope(branch_to_take);scope.owns_children() = false;
+				Scope scope(branch_to_take);scope.owns_children() = false;
 				result_of_branch=execute_action_seq(containing_smp,&scope);
 				scope.children().clear();
 			} else { result_of_branch=execute_action_seq(containing_smp,branch_to_take);}

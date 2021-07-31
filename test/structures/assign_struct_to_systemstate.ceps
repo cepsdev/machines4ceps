@@ -1,0 +1,52 @@
+kind Systemstate;
+kind Event;
+Event E;
+
+Systemstate sys_state;
+Systemstate bit_field;
+
+bit_field = 7;
+
+sys_state = {"A";"B";"C";};
+print("sys_state = ",sys_state,"\n");
+if( sys_state.contains("A") )
+ print("A found\n");
+if( sys_state.contains("B") )
+ print("B found\n");
+if( !(sys_state.contains("D")) )
+ print("D not found.\n");
+
+
+print("sys_state = ",sys_state,"\n");
+push_back(sys_state,"D");
+print("sys_state = ",sys_state,"\n");
+
+if( sys_state.contains("D") )
+ print("D found.\n");
+
+ sm{
+     S;
+     on_enter{
+         
+     };
+     Actions{
+         do{
+            print("=================================================\n");
+            push_back(sys_state,"G");
+            print("sys_state = ",sys_state,"\n");
+            sys_state = {};
+            //sys_state = { if (mod(bit_field,2)) "A"; if (mod(bit_field/2,2)) "B"; if (mod(bit_field/4,2)) "C"; if (mod(bit_field/8,2)) "D"; if (mod(bit_field/16,2)) "E"; };
+            //bit_field = sys_state.contains("A") + sys_state.contains("B") * 2 + sys_state.contains("C") * 4 + sys_state.contains("D") * 8 + sys_state.contains("E") * 16;
+            //print("bit_field = ", bit_field,"\n");
+            print("sys_state = ",sys_state,"\n");
+        };
+     };
+     states{Initial;A;};
+     t{Initial;A;};
+     t{A;A;E;do;};
+ };
+
+ Simulation{
+    start_periodic_timer(0.1*s,E);
+    Start{S;};
+ };

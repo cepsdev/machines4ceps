@@ -387,19 +387,22 @@ size_t fill_raw_chunk(std::map<std::string /*systemstate*/,
 		 auto it = encoding.find(ceps::ast::name(state));
 		 if (it == encoding.end()){
 			auto r = eval_locked_ceps_expr(smc,nullptr,&state,nullptr);
-			if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
-			 delete r;}
+			if (r){ 
+				return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
+			}
 		 } else {
 			 auto func_it = it->second.find(bit_width*(signed_value?-1:1));
 			 if (func_it == it->second.end()){
 				 auto r = eval_locked_ceps_expr(smc,nullptr,&state,nullptr);
-				 if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
-				 	 delete r;}
+				 if (r){ 
+					 return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
+				 }
 			 } else {
 				 auto func = func_it->second;
 				 auto r = eval_locked_ceps_expr(smc,nullptr,func,nullptr);
-				 if (r){ return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
-				 	 delete r;}
+				 if (r){ 
+					 return fill_raw_chunk(encoding,header_length,smc,r,data_size, data, bit_offs,info, bit_width,signed_value,write_data,host_byte_order);
+				 }
 			 }
 		 }
 		}
@@ -493,7 +496,7 @@ Rawframe_generator::gen_msg_return_t Podframe_generator::gen_msg(State_machine_s
  bzero(data,chunk_size);
  std::uint32_t info = 0;
  fill_raw_chunk(encoding,header_length_, smc,ceps::ast::nlf_ptr(frame_pattern)->children(),chunk_size, data,0,&info);
- delete frame_pattern;
+
  scope.children().clear();
  if (info & Rawframe_generator::IS_BINARY) info = Rawframe_generator::IS_BINARY;
  return gen_msg_return_t{info,(void*)data};
