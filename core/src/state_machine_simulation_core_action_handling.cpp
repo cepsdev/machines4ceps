@@ -844,7 +844,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 						get_global_states()[state_id] = rhs->clone();
 					}					  
 					if (old_value) delete old_value;
-					delete rhs;
+					//delete rhs;
 				}
 			}
 			else {
@@ -975,7 +975,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
                 if(live_logger()){
                    this->live_logger_out()->log_console(ss.str());
                 } else {std::cout << ss.str(); if (do_flush) std::cout << std::endl; }
-				for(auto n : args) delete(n);
+				//for(auto n : args) delete(n);
 
 			}
 			else if (func_name == "kill_timer" || func_name == "stop_timer")
@@ -996,7 +996,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			} else{
                 auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
 				//if (r) std::cerr <<"===> "<< *r << std::endl;
-                if(r) delete r;
+                //if(r) delete r;
 			}
 		}
 	}
