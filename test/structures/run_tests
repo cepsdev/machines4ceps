@@ -1,2 +1,11 @@
 #!/bin/bash
-echo -e "\e[104mRunning structure expressions tests\e[0m"
+echo -e "\e[38;5;105mRunning tests in\e[0m $(pwd)"
+echo
+
+for f in $(ls *.ceps)
+do
+
+ echo -e "\e[38;5;135mExecuting\e[0m $f"
+ ceps $f > /dev/null
+
+done

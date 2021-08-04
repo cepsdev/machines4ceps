@@ -371,6 +371,10 @@ public:
 		}
 		bool is_epsilon() const {return id_ == "";}
 		event_t& operator = (event_rep_t const & rhs) { error_ = (error_t*) rhs.error_token_; id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;}
+		~event_t(){
+
+			
+		}
 	};
 #ifdef __gnu_linux__
 	struct timer_table_entry_t{

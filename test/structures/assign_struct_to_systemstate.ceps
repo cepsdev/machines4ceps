@@ -4,11 +4,13 @@ Event E;
 
 Systemstate sys_state;
 Systemstate bit_field;
+Systemstate ctr;
 
-bit_field = 7;
-
+ctr = 0;
+/*bit_field = 7;
 sys_state = {"A";"B";"C";};
 print("sys_state = ",sys_state,"\n");
+
 if( sys_state.contains("A") )
  print("A found\n");
 if( sys_state.contains("B") )
@@ -22,7 +24,7 @@ push_back(sys_state,"D");
 print("sys_state = ",sys_state,"\n");
 
 if( sys_state.contains("D") )
- print("D found.\n");
+ print("D found.\n");*/
 
  sm{
      S;
@@ -31,15 +33,29 @@ if( sys_state.contains("D") )
      };
      Actions{
          do{
-            print("=================================================\n");
-            push_back(sys_state,"G");
+            ctr = ctr + 1;
+           
+
+            /*print("\nExecute S::do() (Iteration #",ctr, ")\n");
+            print("Execute: push_back(sys_state,\"E\");\n"); 
+            sys_state = push_back(sys_state,"E");
             print("sys_state = ",sys_state,"\n");
-            sys_state = {};
-            //sys_state = { if (mod(bit_field,2)) "A"; if (mod(bit_field/2,2)) "B"; if (mod(bit_field/4,2)) "C"; if (mod(bit_field/8,2)) "D"; if (mod(bit_field/16,2)) "E"; };
-            //bit_field = sys_state.contains("A") + sys_state.contains("B") * 2 + sys_state.contains("C") * 4 + sys_state.contains("D") * 8 + sys_state.contains("E") * 16;
-            //print("bit_field = ", bit_field,"\n");
+            print("Execute: push_back(sys_state,\"F\");\n"); 
+            sys_state = push_back(sys_state,"F");
             print("sys_state = ",sys_state,"\n");
+            print("Execute: push_back(sys_state,\"G\");\n"); 
+            sys_state = push_back(sys_state,"G");
+            print("sys_state = ",sys_state,"\n");
+            print("Execute: sys_state = {};\n"); sys_state = {};
+            print("sys_state = ",sys_state,"\n");
+            print("bit_field = ", bit_field,"\n");
+            print("Execute: sys_state = { if (mod(bit_field,2)) \"A\"; if (mod(bit_field/2,2)) \"B\"; if (mod(bit_field/4,2))  \"C\"; if (mod(bit_field/8,2)) \"D\"; if (mod(bit_field/16,2)) \"E\"; };\n");            
+            sys_state = { if (mod(bit_field,2)) "A"; if (mod(bit_field/2,2)) "B"; if (mod(bit_field/4,2)) "C"; if (mod(bit_field/8,2)) "D"; if (mod(bit_field/16,2)) "E"; };
+            print("sys_state = ",sys_state,"\n");
+            bit_field = sys_state.contains("A") + sys_state.contains("B") * 2 + sys_state.contains("C") * 4 + sys_state.contains("D") * 8 + sys_state.contains("E") * 16;
+            print("bit_field = ", bit_field,"\n");*/
         };
+        do2{};
      };
      states{Initial;A;};
      t{Initial;A;};
@@ -47,6 +63,8 @@ if( sys_state.contains("D") )
  };
 
  Simulation{
-    start_periodic_timer(0.1*s,E);
+    Event EXIT;
+    start_periodic_timer(0.001*s,E);
     Start{S;};
+    start_periodic_timer(3600.0*s,EXIT);
  };

@@ -813,28 +813,22 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 
 		} else	if ( is_assignment_op(n) )
 		{
+			
 			auto & node = as_binop_ref(n);
 			std::string state_id;
-
-
 			if (is_assignment_to_guard(node))
 			{
 				eval_guard_assign(node);
 			} else if (is_assignment_to_state(node,state_id))
 			{
-
-
 				auto rhs = eval_locked_ceps_expr(this,containing_smp,node.right(),n);
-
 				if (rhs == nullptr) continue;
-
 				if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
 				{
 					std::lock_guard<std::recursive_mutex>g(states_mutex());
 					std::string id = ceps::ast::name(ceps::ast::as_id_ref(node.right()));
 					auto sym = this->ceps_env_current().get_global_symboltable().lookup(id);
 					if (sym != nullptr) {
-					  //std::cout <<  *(ceps::ast::Nodebase_ptr)sym->payload << std::endl;
 					  if (sym->payload) {get_global_states()[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;}
 					} else {
 					 auto it = type_definitions().find(id);
@@ -842,17 +836,24 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 							fatal_(-1,id+" is not a type.\n");
 					 define_a_struct(this,ceps::ast::as_struct_ptr(it->second),get_global_states(),name(as_symbol_ref(node.left())) );
 					}
-				} else 	{ std::lock_guard<std::recursive_mutex>g(states_mutex());get_global_states()[state_id] = rhs;}
+				} else 	{ 
+					ceps::ast::Nodebase_ptr old_value {nullptr};
+					{ 
+						std::lock_guard<std::recursive_mutex> g{states_mutex()};
+						old_value = get_global_states()[state_id];
+						get_global_states()[state_id] = rhs->clone();
+					}					  
+					if (old_value) delete old_value;
+					delete rhs;
+				}
 			}
 			else {
-			 std::stringstream ss;ss << *n;
-			 fatal_(-1,"Unsupported assignment:"+ss.str()+"\n");
+				std::stringstream ss;ss << *n;
+			 	fatal_(-1,"Unsupported assignment:"+ss.str()+"\n");
 			}
-
 		} else if (n->kind() == ceps::ast::Ast_node_kind::identifier) {
 			if (containing_smp != nullptr)
 			{
-				//auto it = containing_smp->actions().find(State_machine::Transition::Action(ceps::ast::name(ceps::ast::as_id_ref(n))));
 				auto it = containing_smp->find_action(ceps::ast::name(ceps::ast::as_id_ref(n)));
 				if (it != /*containing_smp->actions().end()*/nullptr && it->body() != nullptr){
 					execute_action_seq(containing_smp,it->body());
@@ -974,6 +975,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
                 if(live_logger()){
                    this->live_logger_out()->log_console(ss.str());
                 } else {std::cout << ss.str(); if (do_flush) std::cout << std::endl; }
+				for(auto n : args) delete(n);
 
 			}
 			else if (func_name == "kill_timer" || func_name == "stop_timer")
@@ -993,7 +995,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				}
 			} else{
                 auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
-                //if(r) delete r;
+				//if (r) std::cerr <<"===> "<< *r << std::endl;
+                if(r) delete r;
 			}
 		}
 	}

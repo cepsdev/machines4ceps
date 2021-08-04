@@ -463,7 +463,7 @@ static void run_triggered_actions(State_machine_simulation_core* smc,
    auto const & trans = execution_ctxt.transitions[t];
    smc->current_smp() = execution_ctxt.get_assoc_sm(trans.smp);
    if(!trans.native) {
-    if(trans.a1_script) smc->execute_action_seq(smc->current_smp(),(ceps::ast::Nodebase_ptr)trans.a1_script);
+    if(trans.a1_script) { auto r = smc->execute_action_seq(smc->current_smp(),(ceps::ast::Nodebase_ptr)trans.a1_script);}
     if(trans.a2_script) smc->execute_action_seq(smc->current_smp(),(ceps::ast::Nodebase_ptr)trans.a2_script);
     if(trans.a3_script) smc->execute_action_seq(smc->current_smp(),(ceps::ast::Nodebase_ptr)trans.a3_script);
    } else {

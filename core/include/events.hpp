@@ -19,7 +19,9 @@ namespace sm4ceps{
 		Ringbufferexception(const std::string & what) : std::runtime_error(what) {}
 	};
 
-	template<typename T> void call_destructor(T* t){t->~T();}
+	template<typename T> void call_destructor(T* t){
+		t->~T();
+	}
 
 
 	template<typename R, size_t default_size = 1024> class Ringbuffer
@@ -181,6 +183,8 @@ namespace sm4ceps{
 			start += size;
 			if (start >= capacity_ ) start = 0;
 			n_elems-=1;
+			if (empty()) clear(); // 'Trick' to avoid progressively larger chunks of virtual memory to be allocated.
+			// Excluding this line should lead to a steady increase in RES-memory (see top/htop tools) until the ringbuffer's capacity is reached. 
 			return true;
 		}
 
@@ -206,7 +210,7 @@ namespace sm4ceps{
 	template<typename T> bool is_unique_event(T const &) {return false;}
 	template<typename T> typename Eventqueue_traits<T>::id_t id(T const &) {return typename Eventqueue_traits<T>::id_t{};}
 
-        template<typename E,int defaultlength=65536,int defaultlength_evinfo=4096> class Eventqueue{
+        template<typename E,int defaultlength=sizeof(E)*2048,int defaultlength_evinfo=8192> class Eventqueue{
 		struct ev_info{
 			typename Eventqueue_traits<E>::id_t id_;
 			std::size_t stored_at_;

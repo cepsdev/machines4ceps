@@ -672,11 +672,10 @@ bool State_machine_simulation_core::is_assignment_to_state(ceps::ast::Binary_ope
 {
 
 	using namespace ceps::ast;
-	if (node_isrw_state(node.left()) 
-		//node.left()->kind() == ceps::ast::Ast_node_kind::symbol && kind(as_symbol_ref(node.left())) == "Systemstate"
-		)
+	if (node_isrw_state(node.left()))
 	 {
-		lhs_id = name(as_symbol_ref(node.left())); return true ;
+		lhs_id = name(as_symbol_ref(node.left())); 
+		return true ;
 	 }
 
 	if ( node.left()->kind() != ceps::ast::Ast_node_kind::binary_operator || '.' != ceps::ast::op(ceps::ast::as_binop_ref(node.left())))
