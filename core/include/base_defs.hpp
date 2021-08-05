@@ -4,6 +4,10 @@
 #include <mutex>
 #include <thread>
 #include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+#include <algorithm>
 
 const auto CEPS_REP_PUGI_XML_DOC = 12;
 const auto CEPS_REP_PUGI_XML_PATH = 13;
@@ -83,6 +87,11 @@ extern bool PRINT_DEBUG_INFO;
 
 #define NODEBUG_PRINT
 
+template<typename F> struct cleanup{
+	F f_;
+	cleanup(F f):f_(f){}
+	~cleanup(){f_();}
+};
 
 
 #endif

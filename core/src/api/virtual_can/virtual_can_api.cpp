@@ -89,15 +89,6 @@ static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string
  return std::make_tuple(false,std::string{},header_t{});
 }
 
-
-
-
-template<typename F> struct cleanup{
-	F f_;
-	cleanup(F f):f_(f){}
-	~cleanup(){f_();}
-};
-
 ceps::ast::Nodeset& Virtual_can_interface::hub_directory(){
     reset_directory_of_known_simcores_ = true;
     return this->hub_directory_;

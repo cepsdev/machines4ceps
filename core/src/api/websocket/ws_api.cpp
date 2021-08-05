@@ -391,13 +391,6 @@ extern ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_co
 		 ceps::ast::Nodebase_ptr root_node);
 
 
-
-template<typename F> struct cleanup{
-	F f_;
-	cleanup(F f):f_(f){}
-	~cleanup(){f_();}
-};
-
 static void comm_act_as_websocket_server(State_machine_simulation_core::dispatcher_thread_ctxt_t * ctx,
 		State_machine_simulation_core* smc,sockaddr_storage claddr, int sck,std::string ev_id,std::string sock_name,bool reg_sock,bool reuse_sock){
  auto cleanup_f = [smc,reg_sock,sck,sock_name](){

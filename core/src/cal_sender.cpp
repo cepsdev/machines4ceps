@@ -19,29 +19,7 @@ extern std::vector<std::thread*> comm_threads;
 #endif
 
 
-#ifdef USE_KMW_MULTIBUS
 
-namespace kmw {
-	constexpr auto MIN_CAN_FRAME_SIZE = 2;
-	constexpr auto MAX_CAN_FRAME_PAYLOAD = 8;
-	extern bool kmw_multibus_initialized;
-    #include "Multibus.h"
-	
-	void map_can_frame(CanMessage* out, char* frame,int frame_size) {
-		if (frame_size < MIN_CAN_FRAME_SIZE) return;
-		if (frame == nullptr) return;
-		out->id = *((std::uint16_t*)frame) & 0x7FF;
-		out->rtr = (*((std::uint16_t*)frame) & 0x800) >> 11;
-		out->length = std::min( ((*((std::uint16_t*)frame) & 0xF000) >> 12) - 2, MAX_CAN_FRAME_PAYLOAD);
-		memcpy(out->data, frame + 2, out->length);		
-	}
-}
-
-void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>* channel,
-	int can_bus, State_machine_simulation_core* smp);
-
-bool kmw::kmw_multibus_initialized = false;
-#else
 
 namespace sockcan{
 	constexpr auto MIN_CAN_FRAME_SIZE = 2;
@@ -78,7 +56,7 @@ std::mutex sockcan::interfaces_to_sockets_m;
 
 void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* channel,
         std::string can_bus, State_machine_simulation_core* smp,std::unordered_map<int,std::uint32_t>,bool);
-#endif	
+	
 
 static bool is_assignment(ceps::ast::Nodebase_ptr p){
 	if (p == nullptr) return false;
@@ -134,42 +112,7 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 	DEBUG_FUNC_PROLOGUE
 
 	if (call_name == "canbus") {
-#ifdef USE_KMW_MULTIBUS
 
-		if (!kmw::kmw_multibus_initialized) {
-			kmw::CanStart();
-			DEBUG << "[KMW_MULTIBUS_INITIALIZED]\n";
-		}
-		std::string channel_id;
-		int can_bus = 0;
-		if (ns["id"].size() != 1 || ns["id"].nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-			fatal_(-1,"A CAN(KMW MULTIBUS) CAL sender definition requires an id.");
-		channel_id = ceps::ast::name(ceps::ast::as_id_ref(ns["id"].nodes()[0]));
-		auto bus_id_ = ns["transport"]["canbus"]["bus_id"];
-		if (bus_id_.nodes().empty())
-			DEBUG << "[KMW_MULTIBUS_SENDER_DEFINITION][No bus specified, default assumed (0)]\n";
-		else {
-			try {
-				can_bus = bus_id_.as_int();
-			}
-			catch (...) {
-				fatal_(-1, "CAN(KMW MULTIBUS) CAL sender definition: bus_id must be an integer value.");
-			}
-
-			auto channel = new threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>;
-			this->set_out_channel(channel_id, channel);
-			if (!start_comm_threads()){
-			 running_as_node() = true;
-
-			 comm_threads.push_back(
-				new std::thread{ comm_sender_kmw_multibus,
-				channel,
-				can_bus,
-				this});
-			}
-		}
-		return true;
-#else
 		 if (ns["id"].size() != 1 || ns["id"].nodes()[0]->kind() != ceps::ast::Ast_node_kind::identifier)
 			fatal_(-1,"A CAN(Socket CAN) CAL sender definition requires an id.");
 		 auto channel_id = ceps::ast::name(ceps::ast::as_id_ref(ns["id"].nodes()[0]));
@@ -296,57 +239,12 @@ bool State_machine_simulation_core::handle_userdefined_sender_definition(std::st
 
 
 		return true;
-#endif
 	}
 
 	return false;
 }
 
 
-
-
-#ifdef USE_KMW_MULTIBUS
-void comm_sender_kmw_multibus(threadsafe_queue< std::pair<char*, size_t>, std::queue<std::pair<char*, size_t> >>* frames,
-	int can_bus, State_machine_simulation_core* smc) {
-	kmw::CanMessage can_message{ 0 };
-	auto multibus_queue = kmw::CanOpen((unsigned char)can_bus);
-	auto THIS = smc;
-	DEBUG_FUNC_PROLOGUE2
-
-	char* frame = nullptr;
-	size_t frame_size = 0;
-	bool pop_frame = true;
-	for (;;)
-	{
-		DEBUG << "[comm_sender_kmw_multibus][WAIT_FOR_FRAME][pop_frame=" << pop_frame << "]\n";
-		std::pair<char*, size_t> frame_info;
-
-		if (pop_frame) { 
-			frames->wait_and_pop(frame_info); frame_size = frame_info.second; frame = frame_info.first; 
-		}
-		pop_frame = false;
-
-		DEBUG << "[comm_sender_kmw_multibus][FETCHED_FRAME]\n";
-
-		auto len = frame_size;
-		int wr = 0;
-
-		if (len >= kmw::MIN_CAN_FRAME_SIZE && frame) {
-                        auto mr = map_can_frame(&can_message, frame, frame_size);
-                        if (!mr)
-                          smc->fatal_(-1,"CAN Frame incompatible (too long?)");
-
-			auto r = kmw::CanWrite(
-				multibus_queue,
-				&can_message);
-			DEBUG << "[comm_sender_kmw_multibus][FRAME_WRITTEN][(" << frame_size << " bytes)][CanWrite Return ("<<(int)r <<")]\n";
-		}
-		if (frame != nullptr) { delete[] frame; frame = nullptr; }
-		pop_frame = true;
-	}//for(;;)
-}
-#else
-//#define DEBUG std::cout
 void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames,
         std::string can_bus, State_machine_simulation_core* smc, std::unordered_map<int,std::uint32_t> frame2id, bool extended_can) {
     int s = -1;
@@ -392,7 +290,6 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 	{
 		State_machine_simulation_core::frame_queue_elem_t frame_info;
         frames->wait_and_pop(frame_info);
-
         {
 
             auto new_gtwy_sck = -1;
@@ -410,11 +307,8 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 			frame = (decltype(frame))std::get<1>(std::get<0>(frame_info));
 			header_size = std::get<2>(frame_info);
 		}
-		auto len = frame_size;
-        if (len > 8) continue;
         can_frame can_message{0};
 		if (header_size == 0 && frame){
-			//fetch can id
 			auto frame_id = std::get<3>(frame_info);
 			auto it = frame2id.find(frame_id);
 			bool can_id_found = it != frame2id.end();
@@ -449,7 +343,7 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
                 if (r != sizeof(can_frame)) {close(sck);sck=-1; /*necessary even in case of an EAGAIN/EWOULDBLOCK result*/}
             }
 		}
-		else if (len >= sockcan::MIN_CAN_FRAME_SIZE && frame) {
+		else if (frame_size >= sockcan::MIN_CAN_FRAME_SIZE && frame) {
 			sockcan::map_can_frame(&can_message, frame, frame_size,header_size);
 			auto r = write(s, &can_message, sizeof(struct can_frame));
 			if (r != sizeof(struct can_frame)){
@@ -463,6 +357,6 @@ void comm_sender_socket_can(State_machine_simulation_core::frame_queue_t* frames
 
 	}//for(;;)
 }
-#endif
+
 
 
