@@ -5,7 +5,7 @@ __Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, _
 ### Prerequisites:
 * Linux (Kernel Version >= 2.6)
 * g++ (Version >= 8)
-* bison (Version >= 2.3)
+* bison (Version >= __3.0__)
 * make
 
 ### Using the Build Script
@@ -43,6 +43,12 @@ All repositories need to be in the same directory as machines4ceps.
   * make TARGET=bin
 
 This should produce a binary called __ceps__ in the directory machines4ceps/bin.
+
+### Tested Platforms
+
+* Ubuntu 18.04 (bionic)
+* Ubuntu 20.04 (focal)
+* Raspberry Pi OS (Kernel >= 5.10)
 
 ## Writing and running state machines - Quick Start
 
