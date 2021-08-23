@@ -7,7 +7,7 @@ Systemstate bit_field;
 Systemstate ctr;
 
 ctr = 0;
-/*bit_field = 7;
+bit_field = 7;
 sys_state = {"A";"B";"C";};
 print("sys_state = ",sys_state,"\n");
 
@@ -23,8 +23,43 @@ print("sys_state = ",sys_state,"\n");
 push_back(sys_state,"D");
 print("sys_state = ",sys_state,"\n");
 
+
+Systemstate a_set,b_set;
+a_set = {1;2;3;};
+b_set = {1;2;};
+print("a_set=",a_set," b_set=",b_set,"\n");
+Systemstate c_set,d_set;
+c_set = {"gandalf";"ralph";};
+d_set = {"ralph";"gandalf";};
+print("c_set=",c_set," d_set=",d_set,"\n");
+
+if (a_set == b_set) print("{1,2,3} equals {1,2}\n"); else print("{1,2,3} doesn't equal {1,2}","\n");
+if (c_set == d_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+
+c_set = {"gandalf";"ralph";};
+d_set = {"ralph";"gandalf";1;};
+print("c_set=",c_set," d_set=",d_set,"\n");
+if (c_set == d_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+if (d_set == c_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+c_set = {1;2;};
+d_set = {"1";"2";};
+if (d_set == c_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+c_set = {1;2;};
+d_set = {1;2;};
+if (d_set == c_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+c_set = {1;2;};
+d_set = {2;1;};
+if (d_set == c_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+c_set = {};
+d_set = {};
+if (d_set == c_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+c_set = {1;};
+d_set = {};
+if (d_set == c_set) print(c_set," equals to ",d_set,"\n"); else print(c_set," doesn't equal to ",d_set,"\n");
+
+
 if( sys_state.contains("D") )
- print("D found.\n");*/
+ print("D found.\n");
 
  sm{
      S;
@@ -36,7 +71,7 @@ if( sys_state.contains("D") )
             ctr = ctr + 1;
            
 
-            /*print("\nExecute S::do() (Iteration #",ctr, ")\n");
+            print("\nExecute S::do() (Iteration #",ctr, ")\n");
             print("Execute: push_back(sys_state,\"E\");\n"); 
             sys_state = push_back(sys_state,"E");
             print("sys_state = ",sys_state,"\n");
@@ -53,7 +88,7 @@ if( sys_state.contains("D") )
             sys_state = { if (mod(bit_field,2)) "A"; if (mod(bit_field/2,2)) "B"; if (mod(bit_field/4,2)) "C"; if (mod(bit_field/8,2)) "D"; if (mod(bit_field/16,2)) "E"; };
             print("sys_state = ",sys_state,"\n");
             bit_field = sys_state.contains("A") + sys_state.contains("B") * 2 + sys_state.contains("C") * 4 + sys_state.contains("D") * 8 + sys_state.contains("E") * 16;
-            print("bit_field = ", bit_field,"\n");*/
+            print("bit_field = ", bit_field,"\n");
         };
         do2{};
      };
@@ -64,7 +99,7 @@ if( sys_state.contains("D") )
 
  Simulation{
     Event EXIT;
-    start_periodic_timer(0.001*s,E);
+    start_periodic_timer(2.0*s,E);
     Start{S;};
-    start_periodic_timer(3600.0*s,EXIT);
+    start_periodic_timer(20.0*s,EXIT);
  };
