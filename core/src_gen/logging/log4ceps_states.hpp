@@ -1,8 +1,8 @@
 #ifndef LOG4CEPS_STATES_HPP_INC
 #define LOG4CEPS_STATES_HPP_INC
 
-#include "log4ceps_state.hpp"
-#include "log4ceps_dynamic_bitset.hpp"
+#include "../log4ceps/include/log4ceps_state.hpp"
+#include "../log4ceps/include/log4ceps_dynamic_bitset.hpp"
 #include<string>
 #include<thread>
 #include<mutex>

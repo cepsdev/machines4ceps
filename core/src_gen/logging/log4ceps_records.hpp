@@ -1,10 +1,10 @@
 #ifndef LOG4CEPS_RECORDS_HPP_INC
 #define LOG4CEPS_RECORDS_HPP_INC
 
-#include "log4ceps_state.hpp"
+#include "../log4ceps/include/log4ceps_state.hpp"
 #include "log4ceps_states.hpp"
 #include "log4ceps_events.hpp"
-#include "log4ceps_record.hpp"
+#include "../log4ceps/include/log4ceps_record.hpp"
 #include<string>
 
 namespace log4ceps_records{
