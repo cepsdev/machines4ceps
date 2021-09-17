@@ -46,9 +46,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/signalgenerator.hpp"
 
 
-#include "log4ceps_state.hpp"
-#include "log4ceps_record.hpp"
-#include "log4ceps_logger.hpp"
+#include "../log4ceps/include/log4ceps_state.hpp"
+#include "../log4ceps/include/log4ceps_record.hpp"
+#include "../log4ceps/include/log4ceps_logger.hpp"
 #include "log4ceps_states.hpp"
 #include "log4ceps_records.hpp"
 #include "log4ceps_loggers.hpp"

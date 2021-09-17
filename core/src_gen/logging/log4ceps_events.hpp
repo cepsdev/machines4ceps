@@ -1,7 +1,7 @@
 #ifndef LOG4CEPS_EVENTS_HPP_INC
 #define LOG4CEPS_EVENTS_HPP_INC
 
-#include "log4ceps_event.hpp"
+#include "../log4ceps/include/log4ceps_event.hpp"
 
 
 namespace log4ceps_events{

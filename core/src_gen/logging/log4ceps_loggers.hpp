@@ -1,11 +1,11 @@
 #ifndef LOG4CEPS_LOGGERS_HPP_INC
 #define LOG4CEPS_LOGGERS_HPP_INC
 
-#include "log4ceps_state.hpp"
+#include "../log4ceps/include/log4ceps_state.hpp"
 #include "log4ceps_states.hpp"
 #include "log4ceps_events.hpp"
-#include "log4ceps_record.hpp"
-#include "log4ceps_logger.hpp"
+#include "log4ceps_records.hpp"
+#include "../log4ceps/include/log4ceps_logger.hpp"
 #include "log4ceps_events.hpp"
 #include <string>
 #include <thread>

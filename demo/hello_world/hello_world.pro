@@ -18,7 +18,7 @@ INCLUDEPATH += "../../../ceps/core/include" \
                "../../" \
                "../../../log4kmw/include"
 
-LIBS += -L../../../ceps/core/bin -L../../x86  -lsm4ceps -lcepscore -ldl -lpthread
+LIBS += -L../../../ceps/core/bin -L../../bin  -lsm4ceps -lcepscore -ldl -lpthread -L../../../cryptopp -lcryptopp
                
 SOURCES += main.cpp\
         mainwindow.cpp
