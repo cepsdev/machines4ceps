@@ -1,0 +1,41 @@
+data{
+ msg{
+     1;2;3;4;5;6;     
+ };
+  msg{
+     1;2;3;4;5;6;7;8;9;10;11;12;13;     
+ }; 
+ msg{
+     1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20;21;22;23;24;25;26;     
+ };
+ msg{
+     for(i:1 .. 500){
+         i;
+     }
+ };
+};
+
+val msg_ctr = 1;
+for(msg : root.data.msg){
+    val max_payload = 4;
+    val payload_size = 0;
+    val packets = (msg.content().size() + max_payload-1) / max_payload; 
+    val payload = msg.content();
+    for(i: 1 .. packets){
+        frame{
+           id{as_identifier("packet_"+msg_ctr+"_"+i);};
+           data{
+                header{
+                    cob_id{uint11{i;};};
+                    rtr{bit{0;};};
+                    data_length{uint4{__current_frame_size;};};
+                };
+                payload{
+                uint8{payload.slice( (i-1) * max_payload,  i * max_payload);};
+               };
+           };
+        };
+    }
+    let msg_ctr=msg_ctr+1;
+}
+
