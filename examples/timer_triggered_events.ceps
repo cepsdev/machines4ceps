@@ -17,6 +17,7 @@
 kind Event;
 
 Event E,F,G,H;
+Event I,J,K,L;
 
 
 
@@ -24,25 +25,61 @@ Statemachine
 {
  id{S1;};
  States{Initial;Final;a;b;c;d;e;};
- Actions{a1{start_timer(2.001*s,E);start_timer(5.001*s,F);start_timer(6.001*s,G);};};
+ Actions{a1{start_timer(2.001*s,E);start_timer(3.001*s,F);start_timer(4.001*s,G);};};
  Transition{Initial;a;a1;};
  Transition{a;b;E;};
  Transition{b;c;F;};
  Transition{c;d;G;};
 };
 
-Statemachine
+sm
 {
  id{S2;};
  States{Initial;Final;a;b;c;d;e;};
  Actions{
-   a1{start_timer(2.001*s,E);start_timer(5.001*s,F);start_timer(6.001*s,G,third_timer);};
-   a2{F;stop_timer(third_timer);};
+   a1{
+     val delta = 0.1;
+      for(tmr : 0 .. 9){
+        start_timer((tmr * 3.0 * delta)*s+1.0*s,E);
+        start_timer((tmr * 3.0 * delta)*s+1.0*s + delta*s,F);
+        start_timer((tmr * 3.0 * delta)*s+1.0*s + delta*2*s,G);
+      }
+     };
+   a2{
+   //stop_timer(third_timer);
+   };
  };
- Transition{Initial;a;a1;};
- Transition{a;b;E;a2;};
- Transition{b;c;F;};
- Transition{c;d;G;};
+ t{Initial;a;a1;};
+ t{a;b;E;a2;};
+ t{b;c;F;};
+ t{c;d;G;};
+ t{d;b;E;};
+};
+
+sm
+{
+ id{S2b;};
+ States{Initial;Final;a;b;c;d;e;};
+ Actions{
+   a1{
+     val delta = 0.1;
+      for(tmr : 0 .. 0){
+        start_timer((tmr * 3.0 * delta)*s+1.0*s,I);
+        start_timer((tmr * 3.0 * delta)*s+1.0*s + delta*s,J);
+        start_timer((tmr * 3.0 * delta)*s+1.0*s + delta*2*s,K,third_timer);
+      }
+     };
+   a2{
+  
+    stop_timer(third_timer);
+  
+   };
+ };
+ t{Initial;a;a1;};
+ t{a;b;I;a2;};
+ t{b;c;J;};
+ t{c;d;K;};
+ t{d;b;I;};
 };
 
 Statemachine
@@ -83,6 +120,7 @@ Statemachine
  * */
 Simulation
 {
+ print("### Simulation 1 ###\n");
  Start{S1;};
  ASSERT_EVENTUALLY_VISIT_STATES{S1.a;};
  ASSERT_EVENTUALLY_VISIT_STATES{S1.b;};
@@ -98,10 +136,9 @@ Simulation
  * */
 Simulation
 {
- Start{S2;};
- ASSERT_EVENTUALLY_VISIT_STATES{S2.a;};
- ASSERT_EVENTUALLY_VISIT_STATES{S2.b;};
- ASSERT_NEVER_VISIT_STATES{S2.d;};
+ print("### Simulation 2 ###\n");
+ Start{S2;S2b;};
+ 
 };
 
 /**
@@ -112,6 +149,7 @@ Simulation
  * */
 Simulation
 {
+  print("### Simulation 3 ###\n");
  Start{S3;};
  ASSERT_EVENTUALLY_VISIT_STATES{S3.a;};
  ASSERT_EVENTUALLY_VISIT_STATES{S3.b;};
@@ -128,6 +166,7 @@ Simulation
  * */
 Simulation
 {
+   print("### Simulation 4 ###\n");
  Start{S4;};
  ASSERT_NEVER_VISIT_STATES{S4.d;S4.b;};
 };

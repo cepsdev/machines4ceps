@@ -392,9 +392,10 @@ public:
 		event_t event;
 	};
 
-	size_t timer_table_size = 1024;
+	size_t timer_table_size = 256;
 
 	mutable std::mutex timer_table_mtx;
+	bool fdtimer_api_thread_running = false;
 	std::vector<timer_table_entry_t> timer_table;
 #endif
 	typedef ceps::ast::Nodebase_ptr (*smcore_plugin_fn_t)(ceps::ast::Call_parameters* params);
