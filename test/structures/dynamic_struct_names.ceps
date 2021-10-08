@@ -1,0 +1,8 @@
+
+val struct_name = a_struct;
+
+struct_name{
+    1;2;3;
+};
+
+print(root.a_struct, "\n");
