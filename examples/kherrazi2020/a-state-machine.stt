@@ -1,0 +1,12 @@
+kind Event;
+
+Event Open_door, Close_door, Reset, Lock, Unlock, Push_In;
+
+stt{
+                  Open_door  ;Close_door         ; Lock                  ; Unlock          ; Push_In      ; Reset    ;
+ Opened;          nil        ;Closed_Unlocked    ; nil                   ; nil             ; nil          ; nil      ;
+ Closed_Unlocked; Opened     ;nil                ; Closed_Locked         ; nil             ; Broken_Alarm ; nil      ;
+ Closed_Locked;   nil        ;nil                ; nil                   ; Closed_Unlocked ; Broken_Alarm ; nil      ;
+ Broken_Alarm;    nil        ;nil                ; nil                   ; nil             ; nil          ; Opened   ;
+};
+

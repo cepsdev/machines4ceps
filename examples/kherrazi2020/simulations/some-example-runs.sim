@@ -1,0 +1,8 @@
+Simulation{
+ Start{a_state_machine;};
+};
+
+Simulation{
+ Start{a_state_machine;};
+ Open_door;Close_door;Open_door;
+};

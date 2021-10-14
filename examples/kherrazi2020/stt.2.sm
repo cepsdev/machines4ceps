@@ -1,0 +1,29 @@
+val cols = root.stt.content().is_kind("Event").size();
+val events = root.stt.content().is_kind("Event");
+val from = nil;
+val ctr = 0;
+transitions{
+    for (e: root.stt.content().is_id()){
+        if (mod(ctr,cols+1) == 0) {
+            let from = e;
+        }
+        else if (text(e) != "nil") {
+            t{ from; e; events.at(mod(ctr,cols+1) - 1 );};
+        }
+        let ctr = ctr+1; 
+    }
+};
+let ctr = 0;
+states{
+  for (e: root.stt.content().is_id()){
+    if (mod(ctr,cols+1) == 0) e;
+    let ctr = ctr+1;
+  }  
+};
+
+sm{
+    a_state_machine;
+    states{Initial;root.states.content();};
+    t{Initial;root.states.content().at(0);};
+    root.transitions.content();
+};

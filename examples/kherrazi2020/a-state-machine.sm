@@ -1,0 +1,18 @@
+kind Event;
+
+Event Open_door, Close_door, Reset, Lock, Unlock, Push_In;
+
+sm{
+    a_state_machine;
+    states{Initial;Opened;Closed_Unlocked;Closed_Locked;Broken_Alarm;};
+    t{Initial;Opened;};
+    t{Opened;Closed_Unlocked;Open_door;};
+    t{Closed_Unlocked;Opened;Close_door;};
+    t{Closed_Unlocked;Closed_Locked;Lock;};
+    t{Closed_Locked;Closed_Unlocked;Unlock;};
+    t{Closed_Locked;Broken_Alarm;Push_In;};
+    t{Closed_Unlocked;Broken_Alarm;Push_In;};
+    t{Broken_Alarm;Opened;Reset;};
+
+};
+
