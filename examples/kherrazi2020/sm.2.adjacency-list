@@ -1,0 +1,25 @@
+val sm_nodes = root.sm.states.content();
+
+adj_lists{
+    for (e: sm_nodes){
+        adj{
+            source{e;};
+            nodes{
+                for(tr : root.sm.t){
+                    if(text(e) == text(tr.content().at(0))) {
+                        target{
+                            tr.content().at(1);
+                            val evts = tr.content().is_kind("Event");
+                            if(evts.size()){
+                                ev{
+                                    evts;
+                                };
+                            }
+                        };
+                    }
+                };
+            };
+            
+        };
+    }
+};

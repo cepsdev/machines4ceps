@@ -1,0 +1,25 @@
+
+
+val path_length = 30;
+val cur_node = Initial;
+
+run{
+    for(cur_path_length : 1 .. path_length){
+        val found = 0;
+        for(e:root.adj_lists.adj){
+            if(!found && text(e.source.content()) == text(cur_node) ){
+                let found = 1;
+                val targets = e.nodes.target;
+                val ntargets = targets.size();
+                if(ntargets){
+                 val select_target = targets.at(__uniform_dist(0,ntargets-1));
+                 val evs = select_target.content().ev;
+                 if(evs.size()){
+                     evs.content().at(0);                     
+                 } 
+                 let cur_node = select_target.content().at(0);
+                }                
+            }
+        }
+    }
+};
