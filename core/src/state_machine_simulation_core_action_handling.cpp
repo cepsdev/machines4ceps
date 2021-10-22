@@ -402,15 +402,19 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	return nullptr;
 }
 
+
 ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
 										 State_machine* containing_smp,
 										 ceps::ast::Nodebase_ptr node,
-										 ceps::ast::Nodebase_ptr root_node)
+										 ceps::ast::Nodebase_ptr root_node,
+										 ceps::parser_env::Scope* scope)
 {
 	ceps_interface_eval_func_callback_ctxt_t ctxt;
 	ctxt.active_smp = containing_smp;
 	ctxt.smc  = smc;
 	std::shared_ptr<ceps::parser_env::Scope> sms_global_scope = nullptr;
+	std::shared_ptr<ceps::parser_env::Scope> scope_ptr; 
+
 	State_machine * root_sms = containing_smp;
 	if (containing_smp){
 		for(;root_sms->parent();root_sms = root_sms->parent());
@@ -418,6 +422,8 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	    	sms_global_scope = root_sms->global_scope;
 	    }
 	}
+
+	if (scope){ scope_ptr = std::make_shared<ceps::parser_env::Scope>(*scope); }
 
 	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
 
@@ -435,12 +441,14 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
 
+	if (scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(scope_ptr);
     if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
+	auto ppp = smc->ceps_env_current().get_global_symboltable().lookup("mme_type");
 	auto r = ceps::interpreter::evaluate_generic(node,
 			smc->ceps_env_current().get_global_symboltable(),
 			smc->ceps_env_current().interpreter_env(),root_node,nullptr,nullptr	);
-	if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.pop_back();
-
+	if (sms_global_scope) { smc->ceps_env_current().get_global_symboltable().scopes.pop_back();}
+	if (scope) {smc->ceps_env_current().get_global_symboltable().scopes.pop_back();scope_ptr.reset();}
 
 	smc->ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
@@ -448,6 +456,25 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 
 	return r;
 }
+
+ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+										 State_machine* containing_smp,
+										 ceps::ast::Nodebase_ptr node,
+										 ceps::ast::Nodebase_ptr root_node)
+{
+	return eval_locked_ceps_expr(smc, containing_smp, node, root_node, nullptr);
+}
+
+void* State_machine_simulation_core::evaluate_fragment_in_global_context(void* node, void* scope){
+	if (node == nullptr) return node;
+	ceps::ast::Nodebase_ptr p = static_cast<ceps::ast::Nodebase_ptr>(node);
+	return eval_locked_ceps_expr(	this,
+								 	nullptr,
+									p,
+									nullptr,
+									static_cast<ceps::parser_env::Scope*>(scope));
+}
+
 
 extern void define_a_struct(State_machine_simulation_core*,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix);
 

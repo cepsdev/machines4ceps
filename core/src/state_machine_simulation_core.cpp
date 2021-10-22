@@ -128,6 +128,9 @@ static std::stringstream read(Statefulscanner<Memory<char>,char>& scanner){
     }
     return r;
 }
+State_machine_simulation_core* State_machine_simulation_core::get_runtime_engine(){
+	return this;
+}
 
 std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_files(
         std::vector<std::string> const & file_names,

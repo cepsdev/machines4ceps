@@ -900,8 +900,9 @@ public:
 	void sm_transition_add_action(void* sm,std::string id, void* assoc_sm);
 	void sm_set_join_state(void* sm, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx );
 	void sm_add_ref_to_sm_at_least_one_transition_was_moved_to(void* sm, void* sm_to);
-        void reg_ceps_plugin(std::string name,smcore_plugin_fn_t);
-
+    void reg_ceps_plugin(std::string name,smcore_plugin_fn_t);
+ 	void* evaluate_fragment_in_global_context(void* node,void* scope) override;
+ 	State_machine_simulation_core* get_runtime_engine() override;
 
 
 	private:

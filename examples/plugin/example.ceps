@@ -1,3 +1,29 @@
+kind Event;
+Event evCM_SLAC_PARM_REQ;
+
+{
+if (gaga == baba){
+    hj;
+}
+}
 
 
-route_events_sctp( arguments{a;b; c= 2;} );
+val CM_SLAC_PARM_REQ = 1;
+ 
+route_events_sctp( 
+    setup {
+        mme_type;
+        port{15867;};
+        incoming{
+            if(CM_SLAC_PARM_REQ == mme_type)
+            {
+                  evCM_SLAC_PARM_REQ(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }
+        };
+    
+    } 
+);
