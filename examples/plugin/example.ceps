@@ -1,28 +1,141 @@
 kind Event;
-Event evCM_SLAC_PARM_REQ;
-
-{
-if (gaga == baba){
-    hj;
-}
-}
+Event   evCM_SLAC_PARM_REQ,
+        evCM_SLAC_PARM_CNF,
+        evCM_START_ATTEN_CHAR_IND,
+        evCM_MNBC_SOUND_IND,
+        evCM_ATTEN_PROFILE_IND,
+        evCM_ATTEN_CHAR_RSP,
+        evCM_VALIDATE_REQ,
+        evCM_VALIDATE_CNF,
+        evCM_SLAC_MATCH_REQ,
+        evCM_SLAC_MATCH_CNF,
+        evCM_SET_KEY_REQ,
+        evCM_SET_KEY_CNF,
+        evCM_AMP_MAP_REQ,
+        evCM_AMP_MAP_CNF;
 
 
 val CM_SLAC_PARM_REQ = 1;
- 
+val CM_SLAC_PARM_CNF = 2;
+val CM_START_ATTEN_CHAR_IND = 3;
+val CM_MNBC_SOUND_IND = 4;
+val CM_ATTEN_PROFILE_IND = 5;
+val CM_ATTEN_CHAR_RSP = 6;
+val CM_VALIDATE_REQ = 7;
+val CM_VALIDATE_CNF = 8;
+val CM_SLAC_MATCH_REQ = 9;
+val CM_SLAC_MATCH_CNF = 10;
+val CM_SET_KEY_REQ = 11;
+val CM_SET_KEY_CNF = 12;
+val CM_AMP_MAP_REQ = 13;
+val CM_AMP_MAP_CNF = 14;
+
+
 route_events_sctp( 
     setup {
         mme_type;
         port{15867;};
-        incoming{
+        on_message{
             if(CM_SLAC_PARM_REQ == mme_type)
             {
-                  evCM_SLAC_PARM_REQ(mme{
+                evCM_SLAC_PARM_REQ(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            } else if(CM_SLAC_PARM_CNF == mme_type)
+            {
+                  evCM_SLAC_PARM_CNF(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_START_ATTEN_CHAR_IND == mme_type)
+            {
+                  evCM_START_ATTEN_CHAR_IND(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_MNBC_SOUND_IND == mme_type)
+            {
+                  evCM_MNBC_SOUND_IND(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_ATTEN_PROFILE_IND == mme_type)
+            {
+                  evCM_ATTEN_PROFILE_IND(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_ATTEN_CHAR_RSP == mme_type)
+            {
+                  evCM_ATTEN_CHAR_RSP(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_VALIDATE_REQ == mme_type)
+            {
+                  evCM_VALIDATE_REQ(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_VALIDATE_CNF == mme_type)
+            {
+                  evCM_VALIDATE_CNF(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_SLAC_MATCH_REQ == mme_type)
+            {
+                  evCM_SLAC_MATCH_REQ(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_SLAC_MATCH_CNF == mme_type)
+            {
+                  evCM_SLAC_MATCH_CNF(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_SET_KEY_REQ == mme_type)
+            {
+                  evCM_SET_KEY_REQ(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_SET_KEY_CNF == mme_type)
+            {
+                  evCM_SET_KEY_CNF(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_AMP_MAP_REQ == mme_type)
+            {
+                  evCM_AMP_MAP_REQ(mme{
+                    application_type{mme_application_type;};
+                    security_type{mme_security_type;};
+                    run_id{mme_run_id;};                                        
+                });
+            }else if(CM_AMP_MAP_CNF == mme_type)
+            {
+                  evCM_AMP_MAP_CNF(mme{
                     application_type{mme_application_type;};
                     security_type{mme_security_type;};
                     run_id{mme_run_id;};                                        
                 });
             }
+ 
         };
     
     } 

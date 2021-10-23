@@ -1,4 +1,4 @@
-cflags :=  -O3 -g3 -Wall -MD -fmessage-length=0 -std=c++17 -Wl,--no-as-needed -fPIC
+cflags :=   -Wall -MD -fmessage-length=0 -std=c++17 -Wl,--no-as-needed -fPIC
 CEPSOBJDIR := ../../../ceps/core/bin
 objfiles_ceps :=   ceps_ast.o ceps_interpreter.o ceps_interpreter_functions.o  
 objfiles := $(patsubst %,$(CEPSOBJDIR)/%,$(objfiles_ceps))
