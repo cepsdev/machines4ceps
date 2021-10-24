@@ -8,7 +8,8 @@
 #include <condition_variable>
 #include <queue>
 #include <unordered_map>
-#include "ceps_all.hh"
+#include "ceps_ast.hh"
+  
 #include "core/include/state_machine_simulation_core_reg_fun.hpp"
 #include "core/include/state_machine_simulation_core_plugin_interface.hpp"
 #include "core/include/state_machine_simulation_core.hpp"
@@ -18,6 +19,8 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <map>
+#include <algorithm>
 
 static Ism4ceps_plugin_interface* plugin_master = nullptr;
 
@@ -70,9 +73,23 @@ struct homeplug_mme_generic{
 };
 
 struct Ev2sctp_plugin{
-    ceps::parser_env::Scope scope;
-    ceps::ast::Nodebase_ptr msgtype2cepsfragment = nullptr;
+    
+    ceps::parser_env::Scope scope;    
+    ceps::ast::node_t associated_ceps_block = nullptr;
     Ism4ceps_plugin_interface* ceps_engine = nullptr;
+    std::map<uint16_t, bool (Ev2sctp_plugin::*)(homeplug_mme_generic&, size_t mme_size) > mme_msg_handler;
+    
+
+    /**
+     * The plugin is associated with a function name in the ceps context, each time this function gets called the plugin will be reinitialized using
+     * the single argument of the call which is called associated ceps block. 
+     ***/
+    void set_associated_ceps_block(ceps::ast::node_t v){
+      auto t = associated_ceps_block;
+      associated_ceps_block = v;
+      gc(t);
+    }
+
     void handle_homeplug_mme(homeplug_mme_generic&, size_t mme_size);
 };
 
@@ -82,14 +99,13 @@ void Ev2sctp_plugin::handle_homeplug_mme(homeplug_mme_generic&, size_t mme_size)
 
 static Ev2sctp_plugin plugn;
 
-static ceps::ast::Nodebase_ptr ev2sctp_plugin(ceps::ast::Call_parameters* params){
+static ceps::ast::node_t ev2sctp_plugin(ceps::ast::node_callparameters_t params){
 
-    plugn.msgtype2cepsfragment = static_cast<ceps::ast::Nodebase_ptr>(plugin_master->evaluate_fragment_in_global_context(params->children()[0],&plugn.scope));
-    
-    if (plugn.msgtype2cepsfragment)
-     plugn.msgtype2cepsfragment = plugn.msgtype2cepsfragment->clone(); 
+    auto t = get_first_child(params); // static_cast<ceps::ast::Nodebase_ptr>(plugin_master->evaluate_fragment_in_global_context(params->children()[0],&plugn.scope));
+    if (t) plugn.set_associated_ceps_block(t->clone());
 
-    
+
+
     return nullptr;
 }
 
