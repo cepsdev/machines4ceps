@@ -1,0 +1,8 @@
+val a = {1;2;3;};
+a;
+a.at(0);
+print(a.at(1),"\n");
+kind Systemstate;
+Systemstate a_state;
+a_state = {1;2;3;};
+print(a_state.at(1),"\n");

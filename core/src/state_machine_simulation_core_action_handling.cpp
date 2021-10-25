@@ -659,6 +659,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
                     } else if (n->kind() == ceps::ast::Ast_node_kind::symbol &&
                                ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "IOManip" &&
                                ceps::ast::name(ceps::ast::as_symbol_ref(n)) == "endl" ) do_flush = true;
+					else if (ceps::ast::is<ceps::ast::Ast_node_kind::nodeset>(n) && ceps::ast::as_ast_nodeset_ref(n).children().size() == 1 )
+						ss << default_text_representation(ceps::ast::as_ast_nodeset_ref(n).children()[0]);
                     else ss << default_text_representation(n);
                 }//for
                 if(live_logger()){
