@@ -71,6 +71,12 @@ bool State_machine_simulation_core::is_global_event(std::string const & ev_name)
 	return false;
 }
 
+
+void State_machine_simulation_core::queue_internal_event(std::string ev_name,std::vector<ceps::ast::Nodebase_ptr> args){
+	event_t ev{ev_name,args};
+	enqueue_event(ev,false);
+}
+
 void State_machine_simulation_core::enqueue_event(event_t ev, bool update_out_queues)
 {
 	ev.already_sent_to_out_queues_ = update_out_queues;

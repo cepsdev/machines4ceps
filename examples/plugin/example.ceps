@@ -31,112 +31,235 @@ val CM_AMP_MAP_REQ = 13;
 val CM_AMP_MAP_CNF = 14;
 
 
-route_events_sctp( 
-    setup {
-        mme_type;
-        port{15867;};
-        on_message{
-            if(CM_SLAC_PARM_REQ == mme_type)
-            {
-                evCM_SLAC_PARM_REQ(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            } else if(CM_SLAC_PARM_CNF == mme_type)
-            {
-                  evCM_SLAC_PARM_CNF(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_START_ATTEN_CHAR_IND == mme_type)
-            {
-                  evCM_START_ATTEN_CHAR_IND(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_MNBC_SOUND_IND == mme_type)
-            {
-                  evCM_MNBC_SOUND_IND(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_ATTEN_PROFILE_IND == mme_type)
-            {
-                  evCM_ATTEN_PROFILE_IND(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_ATTEN_CHAR_RSP == mme_type)
-            {
-                  evCM_ATTEN_CHAR_RSP(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_VALIDATE_REQ == mme_type)
-            {
-                  evCM_VALIDATE_REQ(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_VALIDATE_CNF == mme_type)
-            {
-                  evCM_VALIDATE_CNF(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_SLAC_MATCH_REQ == mme_type)
-            {
-                  evCM_SLAC_MATCH_REQ(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_SLAC_MATCH_CNF == mme_type)
-            {
-                  evCM_SLAC_MATCH_CNF(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_SET_KEY_REQ == mme_type)
-            {
-                  evCM_SET_KEY_REQ(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_SET_KEY_CNF == mme_type)
-            {
-                  evCM_SET_KEY_CNF(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_AMP_MAP_REQ == mme_type)
-            {
-                  evCM_AMP_MAP_REQ(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }else if(CM_AMP_MAP_CNF == mme_type)
-            {
-                  evCM_AMP_MAP_CNF(mme{
-                    application_type{mme_application_type;};
-                    security_type{mme_security_type;};
-                    run_id{mme_run_id;};                                        
-                });
-            }
- 
-        };
+macro on_cm_mnbc_sound_ind {
+    evCM_MNBC_SOUND_IND(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            sender_id{
+                mme_sender_id;
+            };
+            cnt{
+                mme_cnt;
+            };         
+            run_id{
+                mme_run_id;
+            };                                        
+            rnd{
+                mme_rnd;
+            };
+        }
+    );
+};
+
+macro on_cm_slac_parm_eq{
+    evCM_SLAC_PARM_REQ(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            run_id{
+                mme_run_id;
+            };                                        
+        }
+    );
+};
+
+macro on_cm_slac_parm_cnf{
+    evCM_SLAC_PARM_CNF(
+        payload{
+            m_sound_target{
+                mme_m_sound_target;
+            };
+            num_sounds{
+                mme_num_sounds;
+            };
+            time_out{
+                mme_time_out;
+            };
+            resp_type{
+                mme_resp_type;
+            };
+            forwarding_sta{
+                mme_forwarding_sta;
+            };
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            run_id{
+                mme_run_id;
+            };                                        
+        }
+    );
+};
+
+macro on_cm_start_atten_char_ind{
+    evCM_START_ATTEN_CHAR_IND(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            num_sounds{
+                mme_num_sounds;
+            };
+            time_out{
+                mme_time_out;
+            };
+            resp_type{
+                mme_resp_type;
+            };
+            forwarding_sta{
+                mme_forwarding_sta;
+            };
+            run_id{
+                mme_run_id;
+            };                                        
+        }
+    );
+};
+
+
+
+sm{
+    route_mme_events;
+    states{Initial;};
+    on_enter{
+        route_events_sctp( 
+            setup {
+                communication{
+                    port{15867;};
+                };
+                on_message{
+                    if(CM_SLAC_PARM_REQ == mme_type){
+                        on_cm_slac_parm_eq{};
+                    } 
+                    else if(CM_SLAC_PARM_CNF == mme_type){
+                        on_cm_slac_parm_cnf{};
+                    }
+                    else if(CM_START_ATTEN_CHAR_IND == mme_type){
+                        on_cm_start_atten_char_ind{};
+                    }
+                    else if(CM_MNBC_SOUND_IND == mme_type){
+                        on_cm_mnbc_sound_ind{};
+                    }else if(CM_ATTEN_PROFILE_IND == mme_type)
+                    {
+                        evCM_ATTEN_PROFILE_IND(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_ATTEN_CHAR_RSP == mme_type)
+                    {
+                        evCM_ATTEN_CHAR_RSP(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_VALIDATE_REQ == mme_type)
+                    {
+                        evCM_VALIDATE_REQ(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_VALIDATE_CNF == mme_type)
+                    {
+                        evCM_VALIDATE_CNF(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_SLAC_MATCH_REQ == mme_type)
+                    {
+                        evCM_SLAC_MATCH_REQ(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_SLAC_MATCH_CNF == mme_type)
+                    {
+                        evCM_SLAC_MATCH_CNF(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_SET_KEY_REQ == mme_type)
+                    {
+                        evCM_SET_KEY_REQ(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_SET_KEY_CNF == mme_type)
+                    {
+                        evCM_SET_KEY_CNF(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_AMP_MAP_REQ == mme_type)
+                    {
+                        evCM_AMP_MAP_REQ(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }else if(CM_AMP_MAP_CNF == mme_type)
+                    {
+                        evCM_AMP_MAP_CNF(mme{
+                            application_type{mme_application_type;};
+                            security_type{mme_security_type;};
+                            run_id{mme_run_id;};                                        
+                        });
+                    }
+        
+                };
+            
+            } 
+        );
+    };
+};
+
+sm{
+    S;
+    states{ Initial;
+            wait_for_cm_slac_parm_req; received_cm_slac_parm_req;
+            wait_for_sm_slac_parm_cnf; received_sm_slac_parm_cnf; 
+            wait_for_cm_start_atten_char_ind; received_cm_start_atten_char_ind;
+            wait_for_cm_mnbc_sound_ind; received_cm_mnbc_sound_ind;
+
+            c;d;e;f;};
     
-    } 
-);
+
+    t{Initial;wait_for_cm_slac_parm_req;};
+    t{Initial;wait_for_sm_slac_parm_cnf;};
+    t{Initial;wait_for_cm_start_atten_char_ind;};
+    t{Initial;wait_for_cm_mnbc_sound_ind;};
+
+
+    t{wait_for_cm_slac_parm_req;received_cm_slac_parm_req;evCM_SLAC_PARM_REQ;};  
+    t{wait_for_sm_slac_parm_cnf;received_sm_slac_parm_cnf;evCM_SLAC_PARM_CNF;};
+    t{wait_for_cm_start_atten_char_ind; received_cm_start_atten_char_ind;evCM_START_ATTEN_CHAR_IND;};
+    t{wait_for_cm_mnbc_sound_ind; received_cm_mnbc_sound_ind;evCM_MNBC_SOUND_IND;};
+    
+
+};
+
+Simulation{
+    Event TICK;
+    Start{route_mme_events;S;};
+    start_timer(1.0*s,TICK);
+};

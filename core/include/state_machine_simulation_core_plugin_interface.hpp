@@ -172,6 +172,7 @@ public:
  virtual void reg_ceps_plugin(std::string name, smcore_plugin_fn_t)=0;
  virtual void* evaluate_fragment_in_global_context(void* node,void* scope) = 0;
  virtual State_machine_simulation_core* get_runtime_engine() = 0;
+ virtual void queue_internal_event(std::string ev_name,std::vector<ceps::ast::Nodebase_ptr>) = 0;
 };
 
 #endif

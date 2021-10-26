@@ -903,7 +903,7 @@ public:
     void reg_ceps_plugin(std::string name,smcore_plugin_fn_t);
  	void* evaluate_fragment_in_global_context(void* node,void* scope) override;
  	State_machine_simulation_core* get_runtime_engine() override;
-
+    void queue_internal_event(std::string ev_name,std::vector<ceps::ast::Nodebase_ptr>) override;
 
 	private:
 		std::map<std::string, int(*) ()> regfntbl_i_;
@@ -912,7 +912,6 @@ public:
 		std::map<std::string, double(*) (int)> regfntbl_di_;
 		std::map<std::string, int(*) (double)> regfntbl_id_;
 		std::map<std::string, double(*) (double)> regfntbl_dd_;
-
 		std::map<std::string, int(*) (int,int)> regfntbl_iii_;
 		std::map<std::string, double(*) (int, int)> regfntbl_dii_;
 		std::map<std::string, int(*) (double, int)> regfntbl_idi_;
@@ -924,9 +923,6 @@ public:
 		std::map<std::string,  int(*) (int,int,int,int,int,int)> regfntbl_iiiiiii_;
 		std::map<std::string,  int(*) (std::string)> regfntbl_is_;
 		std::map<std::string,  std::string(*) (std::string)> regfntbl_ss_;
-
-
-
 };
 
 namespace sm4ceps{
