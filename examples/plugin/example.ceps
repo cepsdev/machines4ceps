@@ -12,23 +12,25 @@ Event   evCM_SLAC_PARM_REQ,
         evCM_SET_KEY_REQ,
         evCM_SET_KEY_CNF,
         evCM_AMP_MAP_REQ,
-        evCM_AMP_MAP_CNF;
+        evCM_AMP_MAP_CNF,
+        evCM_ATTEN_CHAR_IND;
 
 
 val CM_SLAC_PARM_REQ = 1;
 val CM_SLAC_PARM_CNF = 2;
 val CM_START_ATTEN_CHAR_IND = 3;
 val CM_MNBC_SOUND_IND = 4;
-val CM_ATTEN_PROFILE_IND = 5;
-val CM_ATTEN_CHAR_RSP = 6;
-val CM_VALIDATE_REQ = 7;
-val CM_VALIDATE_CNF = 8;
-val CM_SLAC_MATCH_REQ = 9;
-val CM_SLAC_MATCH_CNF = 10;
-val CM_SET_KEY_REQ = 11;
-val CM_SET_KEY_CNF = 12;
-val CM_AMP_MAP_REQ = 13;
-val CM_AMP_MAP_CNF = 14;
+val CM_ATTEN_CHAR_IND = 5;
+val CM_ATTEN_PROFILE_IND = 6;
+val CM_ATTEN_CHAR_RSP = 7;
+val CM_VALIDATE_REQ = 8;
+val CM_VALIDATE_CNF = 9;
+val CM_SLAC_MATCH_REQ = 10;
+val CM_SLAC_MATCH_CNF = 11;
+val CM_SET_KEY_REQ = 12;
+val CM_SET_KEY_CNF = 13;
+val CM_AMP_MAP_REQ = 14;
+val CM_AMP_MAP_CNF = 15;
 
 
 macro on_cm_mnbc_sound_ind {
@@ -131,7 +133,61 @@ macro on_cm_start_atten_char_ind{
     );
 };
 
+macro on_cm_mnbc_sound_ind{
+ evCM_MNBC_SOUND_IND(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            num_sender_id{
+                mme_sender_id;
+            };
+            cnt{
+                mme_cnt;
+            };
+            rnd{
+                mme_rnd;
+            };
+            run_id{
+                mme_run_id;
+            };                                        
+        }
+    );    
+};
 
+macro cm_atten_char_ind_setup{
+    evCM_ATTEN_CHAR_IND(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            source_address{
+                mme_source_address;
+            };                                        
+            run_id{
+                mme_run_id;
+            };                                        
+            source_id{
+                mme_source_id;
+            };                                        
+            resp_id{
+                mme_resp_id;
+            };                                        
+            num_sounds{
+                mme_num_sounds;
+            };                                        
+            atten_profile{
+                mme_atten_profile;
+            };
+        };
+    );
+};
 
 sm{
     route_mme_events;

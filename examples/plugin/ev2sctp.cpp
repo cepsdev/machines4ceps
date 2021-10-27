@@ -66,17 +66,17 @@ namespace mme{
   uint16_t constexpr CM_SLAC_PARM_CNF = 2;
   uint16_t constexpr CM_START_ATTEN_CHAR_IND = 3;
   uint16_t constexpr CM_MNBC_SOUND_IND = 4;
-  uint16_t constexpr CM_ATTEN_CHAR_IND = 6;
-  uint16_t constexpr CM_ATTEN_PROFILE_IND = 7;
-  uint16_t constexpr CM_ATTEN_CHAR_RSP = 8;
-  uint16_t constexpr CM_VALIDATE_REQ = 9;
-  uint16_t constexpr CM_VALIDATE_CNF = 10;
-  uint16_t constexpr CM_SLAC_MATCH_REQ = 11;
-  uint16_t constexpr CM_SLAC_MATCH_CNF = 12;
-  uint16_t constexpr CM_SET_KEY_REQ = 13;
-  uint16_t constexpr CM_SET_KEY_CNF = 14;
-  uint16_t constexpr CM_AMP_MAP_REQ = 15;
-  uint16_t constexpr CM_AMP_MAP_CNF = 16;
+  uint16_t constexpr CM_ATTEN_CHAR_IND = 5;
+  uint16_t constexpr CM_ATTEN_PROFILE_IND = 6;
+  uint16_t constexpr CM_ATTEN_CHAR_RSP = 7;
+  uint16_t constexpr CM_VALIDATE_REQ = 8;
+  uint16_t constexpr CM_VALIDATE_CNF = 9;
+  uint16_t constexpr CM_SLAC_MATCH_REQ = 10;
+  uint16_t constexpr CM_SLAC_MATCH_CNF = 11;
+  uint16_t constexpr CM_SET_KEY_REQ = 12;
+  uint16_t constexpr CM_SET_KEY_CNF = 13;
+  uint16_t constexpr CM_AMP_MAP_REQ = 14;
+  uint16_t constexpr CM_AMP_MAP_CNF = 15;
 }
 
 struct cm_slac_parm_req_t {
@@ -181,7 +181,7 @@ struct cm_slac_match_cnf_t{
       uint8_t rsvd [8];
       uint8_t nid[7];
       uint8_t rsvd2;
-      uint16_t nmk;
+      uint8_t nmk[16];
 };
 
 struct cm_set_key_req_t{
@@ -378,22 +378,66 @@ class Ev2sctp_plugin{
     return true;
   }
 
-  bool Ev2sctp_plugin::mme_msg_cm_slac_match_req_setup_symtbl(homeplug_mme_generic*, size_t mme_size){
+  bool Ev2sctp_plugin::mme_msg_cm_slac_match_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
+    cm_slac_match_req_t cm_slac_match_req = msg->mmdata.cm_slac_match_req;
+    ceps::interpreter::set_val("mme_type",mme::CM_SLAC_MATCH_REQ,scope);
+    ceps::interpreter::set_val("mme_application_type",cm_slac_match_req.application_type,scope);
+    ceps::interpreter::set_val("mme_security_type",cm_slac_match_req.security_type,scope);
+    ceps::interpreter::set_val("mme_run_id",cm_slac_match_req.run_id,cm_slac_match_req.run_id+sizeof(cm_slac_match_req.run_id),scope);
+    ceps::interpreter::set_val("mme_mvflength",cm_slac_match_req.mvflength,scope);
+    ceps::interpreter::set_val("mme_pev_id",cm_slac_match_req.pev_id,cm_slac_match_req.pev_id+sizeof(cm_slac_match_req.pev_id),scope);
+    ceps::interpreter::set_val("mme_pev_mac",cm_slac_match_req.pev_mac,cm_slac_match_req.pev_mac+sizeof(cm_slac_match_req.pev_mac),scope);
+    ceps::interpreter::set_val("mme_evse_id",cm_slac_match_req.evse_id,cm_slac_match_req.evse_id+sizeof(cm_slac_match_req.evse_id),scope);
+    ceps::interpreter::set_val("mme_evse_mac",cm_slac_match_req.evse_mac,cm_slac_match_req.evse_mac+sizeof(cm_slac_match_req.evse_mac),scope);
     return true;
   }
-  bool Ev2sctp_plugin::mme_msg_cm_slac_match_cnf_setup_symtbl(homeplug_mme_generic*, size_t mme_size){
+  bool Ev2sctp_plugin::mme_msg_cm_slac_match_cnf_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
+    cm_slac_match_cnf_t cm_slac_match_cnf = msg->mmdata.cm_slac_match_cnf;
+    ceps::interpreter::set_val("mme_type",mme::CM_SLAC_MATCH_CNF,scope);
+    ceps::interpreter::set_val("mme_application_type",cm_slac_match_cnf.application_type,scope);
+    ceps::interpreter::set_val("mme_security_type",cm_slac_match_cnf.security_type,scope);
+    ceps::interpreter::set_val("mme_run_id",cm_slac_match_cnf.run_id,cm_slac_match_cnf.run_id+sizeof(cm_slac_match_cnf.run_id),scope);
+    ceps::interpreter::set_val("mme_mvflength",cm_slac_match_cnf.mvflength,scope);
+    ceps::interpreter::set_val("mme_pev_id",cm_slac_match_cnf.pev_id,cm_slac_match_cnf.pev_id+sizeof(cm_slac_match_cnf.pev_id),scope);
+    ceps::interpreter::set_val("mme_pev_mac",cm_slac_match_cnf.pev_mac,cm_slac_match_cnf.pev_mac+sizeof(cm_slac_match_cnf.pev_mac),scope);
+    ceps::interpreter::set_val("mme_evse_id",cm_slac_match_cnf.evse_id,cm_slac_match_cnf.evse_id+sizeof(cm_slac_match_cnf.evse_id),scope);
+    ceps::interpreter::set_val("mme_evse_mac",cm_slac_match_cnf.evse_mac,cm_slac_match_cnf.evse_mac+sizeof(cm_slac_match_cnf.evse_mac),scope);
+    ceps::interpreter::set_val("mme_nid",cm_slac_match_cnf.nid,cm_slac_match_cnf.nid+sizeof(cm_slac_match_cnf.nid),scope);
+    ceps::interpreter::set_val("mme_nmk",cm_slac_match_cnf.nmk,cm_slac_match_cnf.nmk+sizeof(cm_slac_match_cnf.nmk),scope);
     return true;
   }
-  bool Ev2sctp_plugin::mme_msg_cm_set_key_req_setup_symtbl(homeplug_mme_generic*, size_t mme_size){
+  bool Ev2sctp_plugin::mme_msg_cm_set_key_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
+    cm_set_key_req_t cm_set_key_req = msg->mmdata.cm_set_key_req;
+    ceps::interpreter::set_val("mme_type",mme::CM_SET_KEY_REQ,scope);
+    ceps::interpreter::set_val("mme_key_type",cm_set_key_req.key_type,scope);
+    ceps::interpreter::set_val("mme_my_nonce",cm_set_key_req.my_nonce,scope);
+    ceps::interpreter::set_val("mme_your_nonce",cm_set_key_req.your_nonce,scope);
+    ceps::interpreter::set_val("mme_pid",cm_set_key_req.pid,scope);
+    ceps::interpreter::set_val("mme_prn",cm_set_key_req.prn,scope);
+    ceps::interpreter::set_val("mme_pmn",cm_set_key_req.pmn,scope);
+    ceps::interpreter::set_val("mme_cco_capability",cm_set_key_req.cco_capability,scope);
+    ceps::interpreter::set_val("mme_nid",cm_set_key_req.nid,cm_set_key_req.nid+sizeof(cm_set_key_req.nid),scope);
+    ceps::interpreter::set_val("mme_new_eks",cm_set_key_req.new_eks,scope);
+    ceps::interpreter::set_val("mme_new_key",cm_set_key_req.new_key,cm_set_key_req.new_key+sizeof(cm_set_key_req.new_key),scope);
     return true;
   }
+
   bool Ev2sctp_plugin::mme_msg_cm_set_key_cnf_setup_symtbl(homeplug_mme_generic*, size_t mme_size){
     return true;
   }
-  bool Ev2sctp_plugin::mme_msg_cm_amp_map_req_setup_symtbl(homeplug_mme_generic*, size_t mme_size){
+  bool Ev2sctp_plugin::mme_msg_cm_amp_map_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
+    cm_amp_map_req_t cm_amp_map_req = msg->mmdata.cm_amp_map_req;
+    ceps::interpreter::set_val("mme_type",mme::CM_AMP_MAP_REQ,scope);
+    ceps::interpreter::set_val("mme_amlen",cm_amp_map_req.amlen,scope);
+    ceps::interpreter::set_val("mme_amdata",cm_amp_map_req.amdata,cm_amp_map_req.amdata+std::min((size_t)cm_amp_map_req.amlen, 
+               mme_size -  sizeof(cm_amp_map_cnf_t) + 1) ,scope);
+
+
     return true;
   }
-  bool Ev2sctp_plugin::mme_msg_cm_amp_map_cnf_setup_symtbl(homeplug_mme_generic*, size_t mme_size){
+  bool Ev2sctp_plugin::mme_msg_cm_amp_map_cnf_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
+    cm_amp_map_cnf_t cm_amp_map_cnf = msg->mmdata.cm_amp_map_cnf;
+    ceps::interpreter::set_val("mme_type",mme::CM_AMP_MAP_CNF,scope);
     return true;
   }
 
