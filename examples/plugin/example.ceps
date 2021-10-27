@@ -156,11 +156,7 @@ sm{
                         on_cm_mnbc_sound_ind{};
                     }else if(CM_ATTEN_PROFILE_IND == mme_type)
                     {
-                        evCM_ATTEN_PROFILE_IND(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_atten_char_ind{};
                     }else if(CM_ATTEN_CHAR_RSP == mme_type)
                     {
                         evCM_ATTEN_CHAR_RSP(mme{
