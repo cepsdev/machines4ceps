@@ -236,6 +236,9 @@ frame{
  }
 }*/
 
+ceps::docgen::Doc_writer_html5::Doc_writer_html5(std::vector<std::string> options):Doc_writer{options}{
+
+}
 
 static void read_frame_and_build_bit_info_vectors(	
                           std::vector<std::tuple<int,int,std::vector<ceps::ast::Nodebase_ptr>,ceps::ast::Nodebase_ptr >>& frame_in,

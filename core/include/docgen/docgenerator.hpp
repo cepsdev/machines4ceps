@@ -168,18 +168,21 @@ namespace ceps{
 
         class fmt_out_ctx_stack{
             public:
+            fmt_out_ctx_stack() = delete;
+            fmt_out_ctx_stack(std::vector<std::string> options);
             std::vector<fmt_out_ctx> fmt_stack;
+            std::map<std::string, std::string> options;
             void push_ctx();
             void pop_ctx();
             fmt_out_ctx& top();
-            fmt_out_ctx_stack();
         };
 
         class Doc_writer: public fmt_out_ctx_stack{
             protected:
             std::shared_ptr<Theme> theme;
             public:
-            Doc_writer() = default;
+            Doc_writer() = delete;
+            Doc_writer(std::vector<std::string> options) : fmt_out_ctx_stack(options) {}
             void set_theme(std::shared_ptr<Theme> new_theme){theme = new_theme;}
             std::shared_ptr<Theme> get_theme() const {return theme;}
             virtual void start(std::ostream& os) = 0; 

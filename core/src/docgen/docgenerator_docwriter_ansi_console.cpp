@@ -21,6 +21,9 @@ using namespace ceps::ast;
 void ceps::docgen::Doc_writer_ansi_console::start(std::ostream& os) {}
 void ceps::docgen::Doc_writer_ansi_console::end(std::ostream& os) {}
 
+ceps::docgen::Doc_writer_ansi_console::Doc_writer_ansi_console(std::vector<std::string> options):Doc_writer{options}{
+
+}
 
 bool ceps::docgen::Doc_writer_ansi_console::handler_toplevel_struct( 
 																	std::ostream& os, 

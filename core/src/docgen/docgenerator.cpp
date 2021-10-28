@@ -637,7 +637,12 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 
 ////// fmt_out_ctx_stack
 
-ceps::docgen::fmt_out_ctx_stack::fmt_out_ctx_stack(){
+ceps::docgen::fmt_out_ctx_stack::fmt_out_ctx_stack(std::vector<std::string> options){
+	for(auto e: options)
+	{
+		if (e.substr(0,11) == "doc-option-")
+		 this->options[e.substr(11)] = "";
+	}
 	push_ctx();
 	top().comment_stmt_stack = std::make_shared<std::vector<ceps::ast::Nodebase_ptr>>(std::vector<ceps::ast::Nodebase_ptr>{});
 }

@@ -25,15 +25,17 @@ void ceps::docgen::Statemachine::print_left_margin(std::ostream& os, fmt_out_ctx
 	os << "\033[1m";
 	for(int i = 0; i < bar_width; ++i) os << "░";
 	for(int i = 0; i < ctx.indent - coverage_statistics.hits_col_width - bar_width -1;++i) os << " ";
+	
 }
 
 extern std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
 
 void ceps::docgen::Statemachine::print(	std::ostream& os,
 										Doc_writer* doc_writer){
+	
+	bool show_states_only = doc_writer->options.find("state-machines-show-only-states") != doc_writer->options.end();
+
 	auto indent_old = doc_writer->top().indent;
-	if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
-	 doc_writer->top().indent = MarginPrinter::left_margin;
 
 	
 	bool states_on_single_line = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
@@ -65,7 +67,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		doc_writer->pop_ctx();
 	}
 	++doc_writer->top().indent;
-	if (actions_vec.size()){
+	if (actions_vec.size() && !show_states_only){
 		{
 			auto eol_old = doc_writer->top().eol;
 			doc_writer->push_ctx();
@@ -87,6 +89,8 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		}
 	--doc_writer->top().indent;
 	}
+
+
 	if (states.size()){
 		{
 			auto eol_old = doc_writer->top().eol;
@@ -97,6 +101,10 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			doc_writer->out(os,"States");
 			doc_writer->pop_ctx();
 		}
+		
+		if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
+	 		doc_writer->top().indent = MarginPrinter::left_margin;
+
 		++doc_writer->top().indent;
 		{
 			if (!states_on_single_line){
@@ -154,7 +162,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		}
 		--doc_writer->top().indent;
 	}
-	if (transitions.size()){
+	if (transitions.size() && !show_states_only){
 		{
 			auto eol_old = doc_writer->top().eol;
 			doc_writer->push_ctx();

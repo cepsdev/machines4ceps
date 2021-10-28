@@ -33,7 +33,8 @@ namespace ceps{
                                         ceps::ast::Struct& tplvl_struct,
                                         std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols);
             public:
-            Doc_writer_html5() = default;
+            Doc_writer_html5() = delete;
+            Doc_writer_html5(std::vector<std::string> options);
             void out(std::ostream& os, 
                      std::string s, 
 					 MarginPrinter* mp) override;

@@ -28,6 +28,9 @@ bool ceps::docgen::Doc_writer_markdown_jira_style::handler_toplevel_struct( std:
 	return false;
 }
 
+ceps::docgen::Doc_writer_markdown_jira_style::Doc_writer_markdown_jira_style(std::vector<std::string> options):Doc_writer{options}{
+
+}
 
 void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os, 
                              std::string s, 

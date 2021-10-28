@@ -30,14 +30,14 @@ std::shared_ptr<ceps::docgen::Doc_writer> ceps::docgen::Doc_writer_factory(std::
 
     for(auto e : output_format_flags)
      if (e == "ansi") 
-        r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
+        r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{output_format_flags});
      else if (e == "markdown_jira" || e == "markdown_jira_style") 
-        r = std::make_shared<Doc_writer_markdown_jira_style>(Doc_writer_markdown_jira_style{});
+        r = std::make_shared<Doc_writer_markdown_jira_style>(Doc_writer_markdown_jira_style{output_format_flags});
      else if (e == "html" || e == "html5") 
-        r = std::make_shared<Doc_writer_html5>(Doc_writer_html5{});
+        r = std::make_shared<Doc_writer_html5>(Doc_writer_html5{output_format_flags});
      
      if (!r)  
-        r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{});
+        r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{output_format_flags});
      r -> set_theme(ceps::docgen::Theme_factory(output_format_flags));
      return r;
 }

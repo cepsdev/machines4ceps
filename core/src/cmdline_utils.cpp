@@ -257,6 +257,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
             else if (arg == "--pe") {r.print_evaluated_input_tree=true; continue;}
 			else if (arg == "--ppe") {r.print_evaluated_postprocessing_tree=true;continue;}
             else if (arg == "--format") { if (i+1 == argc) break; r.output_format_flags.push_back(argv[i+1]); ++i;continue;}
+       		else if (arg == "--doc-option") { if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
 
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {

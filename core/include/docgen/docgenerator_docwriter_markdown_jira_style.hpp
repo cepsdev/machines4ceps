@@ -26,6 +26,8 @@ namespace ceps{
 
         class Doc_writer_markdown_jira_style: public Doc_writer{
             public:
+            Doc_writer_markdown_jira_style() = delete;
+            Doc_writer_markdown_jira_style(std::vector<std::string> options);
             void out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) override;
