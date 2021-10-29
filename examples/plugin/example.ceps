@@ -158,7 +158,7 @@ macro on_cm_mnbc_sound_ind{
     );    
 };
 
-macro cm_atten_char_ind_setup{
+macro on_cm_atten_char_ind{
     evCM_ATTEN_CHAR_IND(
         payload{
             application_type{
@@ -185,7 +185,213 @@ macro cm_atten_char_ind_setup{
             atten_profile{
                 mme_atten_profile;
             };
-        };
+        }
+    );
+};
+
+
+macro on_cm_atten_char_rsp{
+    evCM_ATTEN_CHAR_RSP(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            source_address{
+                mme_source_address;
+            };                                        
+            run_id{
+                mme_run_id;
+            };                                        
+            source_id{
+                mme_source_id;
+            };                                        
+            resp_id{
+                mme_resp_id;
+            };                                        
+            result{
+                mme_result;
+            };                                        
+        }
+    );
+};
+
+
+macro on_cm_atten_profile_ind{
+    evCM_ATTEN_PROFILE_IND(
+        payload{
+            pev_mac{
+                mme_pev_mac;
+            };
+            num_groups{
+                mme_num_groups;
+            };
+            aag{
+                mme_aag;
+            };                                        
+        }
+    );
+};
+
+macro on_cm_validate_req{
+    evCM_VALIDATE_REQ(
+        payload{
+            signal_type{
+                mme_signal_type;
+            };
+            timer{
+                mme_timer;
+            };
+            result{
+                mme_result;
+            };                                        
+        }
+    );
+};
+
+macro on_cm_validate_cnf{
+    evCM_VALIDATE_CNF(
+        payload{
+            signal_type{
+                mme_signal_type;
+            };
+            toggle_num{
+                mme_toggle_num;
+            };
+            result{
+                mme_result;
+            };                                        
+        }
+    );
+};
+
+macro on_cm_slac_match_req{
+    evCM_SLAC_MATCH_REQ(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            mvflength{
+                mme_mvflength;
+            };                                        
+            pev_id{
+                mme_pev_id;
+            };                                        
+            pev_mac{
+                mme_pev_mac;
+            };                                        
+            evse_id{
+                mme_evse_id;
+            };                                        
+            evse_mac{
+                mme_evse_mac;
+            };              
+            run_id{
+                mme_run_id;
+            };
+        }
+    );
+};
+
+macro on_cm_slac_match_cnf{
+    evCM_SLAC_MATCH_CNF(
+        payload{
+            application_type{
+                mme_application_type;
+            };
+            security_type{
+                mme_security_type;
+            };
+            mvflength{
+                mme_mvflength;
+            };                                        
+            pev_id{
+                mme_pev_id;
+            };                                        
+            pev_mac{
+                mme_pev_mac;
+            };                                        
+            evse_id{
+                mme_evse_id;
+            };                                        
+            evse_mac{
+                mme_evse_mac;
+            };              
+            run_id{
+                mme_run_id;
+            };
+            nid{
+                mme_nid;
+            };
+            nmk{
+                mme_nmk;
+            };
+        }
+    );
+};
+
+macro on_cm_set_key_req{
+    evCM_SET_KEY_REQ(
+        payload{
+            key_type{
+                mme_key_type;
+            };
+            my_nonce{
+                mme_my_nonce;
+            };
+            your_nonce{
+                mme_your_nonce;
+            };                                        
+            pid{
+                mme_pid;
+            };                                        
+            prn{
+                mme_prn;
+            };                                        
+            pmn{
+                mme_pmn;
+            };                                        
+            cco_capability{
+                mme_cco_capability;
+            };              
+            nid{
+                mme_nid;
+            };
+            new_eks{
+                mme_new_eks;
+            };
+            new_key{
+                mme_new_key;
+            };
+        }
+    );
+};
+
+macro on_cm_amp_map_req{
+    evCM_AMP_MAP_REQ(
+        payload{
+            amlen{
+                mme_amlen;
+            };
+            amdata{
+                mme_amdata;
+            };
+        }
+    );
+};
+
+macro on_cm_amp_map_cnf{
+    evCM_AMP_MAP_CNF(
+        payload{
+            restype{
+                mme_restype;
+            };
+        }
     );
 };
 
@@ -212,106 +418,147 @@ sm{
                         on_cm_mnbc_sound_ind{};
                     }else if(CM_ATTEN_PROFILE_IND == mme_type)
                     {
-                        on_cm_atten_char_ind{};
+                        on_cm_atten_profile_ind{};
                     }else if(CM_ATTEN_CHAR_RSP == mme_type)
                     {
-                        evCM_ATTEN_CHAR_RSP(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_atten_char_rsp{};
                     }else if(CM_VALIDATE_REQ == mme_type)
                     {
-                        evCM_VALIDATE_REQ(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_validate_req{};
                     }else if(CM_VALIDATE_CNF == mme_type)
                     {
-                        evCM_VALIDATE_CNF(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_validate_cnf{};
                     }else if(CM_SLAC_MATCH_REQ == mme_type)
                     {
-                        evCM_SLAC_MATCH_REQ(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_slac_match_req{};
                     }else if(CM_SLAC_MATCH_CNF == mme_type)
                     {
-                        evCM_SLAC_MATCH_CNF(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_slac_match_cnf{};
                     }else if(CM_SET_KEY_REQ == mme_type)
                     {
-                        evCM_SET_KEY_REQ(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_set_key_req{};
                     }else if(CM_SET_KEY_CNF == mme_type)
                     {
-                        evCM_SET_KEY_CNF(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_set_key_cnf{};
                     }else if(CM_AMP_MAP_REQ == mme_type)
                     {
-                        evCM_AMP_MAP_REQ(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
+                        on_cm_amp_map_req{};                    
                     }else if(CM_AMP_MAP_CNF == mme_type)
                     {
-                        evCM_AMP_MAP_CNF(mme{
-                            application_type{mme_application_type;};
-                            security_type{mme_security_type;};
-                            run_id{mme_run_id;};                                        
-                        });
-                    }
-        
-                };
-            
+                        on_cm_amp_map_cnf{};
+                    } else if ( CM_ATTEN_CHAR_IND == mme_type) {
+                        on_cm_atten_char_ind{};
+                    }       
+                };            
             } 
         );
     };
 };
 
+
+
+kind Systemstate;
+Systemstate parameter;
+
 sm{
     S;
+
+    cover{
+        edges_upto_1;
+    };
     states{ Initial;
             wait_for_cm_slac_parm_req; received_cm_slac_parm_req;
-            wait_for_sm_slac_parm_cnf; received_sm_slac_parm_cnf; 
+            wait_for_cm_slac_parm_cnf; received_cm_slac_parm_cnf; 
             wait_for_cm_start_atten_char_ind; received_cm_start_atten_char_ind;
             wait_for_cm_mnbc_sound_ind; received_cm_mnbc_sound_ind;
+            wait_for_cm_atten_profile_ind;received_cm_atten_profile_ind;
+            wait_for_cm_atten_char_rsp;received_cm_atten_char_rsp;
+            wait_for_cm_validate_req;received_cm_validate_req;
+            wait_for_cm_validate_cnf;received_cm_validate_cnf;
+            wait_for_cm_slac_match_req;received_cm_slac_match_req;    
+            wait_for_cm_slac_match_cnf;received_cm_slac_match_cnf;
+            wait_for_cm_set_key_req;received_cm_set_key_req;
+            wait_for_cm_amp_map_req;received_cm_amp_map_req;
+            wait_for_cm_amp_map_cnf;received_cm_amp_map_cnf;
+            wait_for_cm_atten_char_ind;received_cm_atten_char_ind;
+    };
 
-            c;d;e;f;};
+    Actions{
+        for (e: on_cm_slac_parm_req, on_cm_slac_parm_cnf, on_cm_start_atten_char_ind, on_cm_mnbc_sound_ind, on_cm_atten_profile_ind,
+                 on_cm_atten_char_rsp, on_cm_validate_req, on_cm_validate_cnf, on_cm_slac_match_req,on_cm_slac_match_cnf,on_cm_set_key_req,
+                 on_cm_amp_map_req, on_cm_amp_map_cnf, on_cm_atten_char_ind
+            ){
+             e{
+                print ("**** Received event >>",argv(0),"<< with argument = >>",argv(1),"<<\n");
+             };
+        }
+
+        on_cm_slac_parm_req2{
+                parameter = argv(1);
+                print ("#### Details for >>",argv(0),"<< application_type = >>",parameter.application_type.content(),"<<\n");
+                print ("#### Details for >>",argv(0),"<< security_type = >>",parameter.security_type.content(),"<<\n");
+                print ("#### Details for >>",argv(0),"<< run_id = >>",parameter.run_id.content(),"<<\n");
+        };
+    };
     
 
     t{Initial;wait_for_cm_slac_parm_req;};
-    t{Initial;wait_for_sm_slac_parm_cnf;};
+    t{Initial;wait_for_cm_slac_parm_cnf;};
     t{Initial;wait_for_cm_start_atten_char_ind;};
     t{Initial;wait_for_cm_mnbc_sound_ind;};
+    t{Initial;wait_for_cm_atten_profile_ind;};
+    t{Initial;wait_for_cm_atten_char_rsp;};
+    t{Initial;wait_for_cm_validate_req;};
+    t{Initial;wait_for_cm_validate_cnf;};
+    t{Initial;wait_for_cm_slac_match_req;};    
+    t{Initial;wait_for_cm_slac_match_cnf;};
+    t{Initial;wait_for_cm_set_key_req;};
+    t{Initial;wait_for_cm_amp_map_req;};
+    t{Initial;wait_for_cm_amp_map_cnf;};
+    t{Initial;wait_for_cm_atten_char_ind;};
+
+    t{wait_for_cm_slac_parm_req;received_cm_slac_parm_req;evCM_SLAC_PARM_REQ;on_cm_slac_parm_req;on_cm_slac_parm_req2;};  
+    t{wait_for_cm_slac_parm_cnf;received_cm_slac_parm_cnf;evCM_SLAC_PARM_CNF;on_cm_atten_char_ind;};
+    t{wait_for_cm_start_atten_char_ind; received_cm_start_atten_char_ind;evCM_START_ATTEN_CHAR_IND;on_cm_start_atten_char_ind;};
+    t{wait_for_cm_mnbc_sound_ind; received_cm_mnbc_sound_ind;evCM_MNBC_SOUND_IND;on_cm_mnbc_sound_ind;};
+    t{wait_for_cm_atten_profile_ind;received_cm_atten_profile_ind;evCM_ATTEN_PROFILE_IND;on_cm_atten_profile_ind;};
+    t{wait_for_cm_atten_char_rsp;received_cm_atten_char_rsp;evCM_ATTEN_CHAR_RSP;on_cm_atten_char_rsp;};
+    t{wait_for_cm_validate_req;received_cm_validate_req;evCM_VALIDATE_REQ;on_cm_validate_req;};
+    t{wait_for_cm_validate_cnf;received_cm_validate_cnf;evCM_VALIDATE_CNF;on_cm_validate_cnf;};
+    t{wait_for_cm_slac_match_req;received_cm_slac_match_req;evCM_SLAC_MATCH_REQ;on_cm_slac_match_req;};
+    t{wait_for_cm_slac_match_cnf;received_cm_slac_match_cnf;evCM_SLAC_MATCH_CNF;on_cm_slac_match_cnf;};
+    t{wait_for_cm_set_key_req;received_cm_set_key_req;evCM_SET_KEY_REQ;on_cm_set_key_req;};
+    t{wait_for_cm_amp_map_req;received_cm_amp_map_req;evCM_AMP_MAP_REQ;on_cm_amp_map_req;};
+    t{wait_for_cm_amp_map_cnf;received_cm_amp_map_cnf;evCM_AMP_MAP_CNF;on_cm_amp_map_cnf;};
+    t{wait_for_cm_atten_char_ind;received_cm_atten_char_ind;evCM_ATTEN_CHAR_IND;on_cm_atten_char_ind;};
 
 
-    t{wait_for_cm_slac_parm_req;received_cm_slac_parm_req;evCM_SLAC_PARM_REQ;};  
-    t{wait_for_sm_slac_parm_cnf;received_sm_slac_parm_cnf;evCM_SLAC_PARM_CNF;};
-    t{wait_for_cm_start_atten_char_ind; received_cm_start_atten_char_ind;evCM_START_ATTEN_CHAR_IND;};
-    t{wait_for_cm_mnbc_sound_ind; received_cm_mnbc_sound_ind;evCM_MNBC_SOUND_IND;};
-    
+};
 
+Event evStartSender;
+sm{
+    Sender;
+
+    cover{
+        edges_upto_1;
+    };
+    states{Initial;sending;};
+    on_enter{
+        start_timer(3.0*s,evStartSender);
+    };
+    Actions {
+        doSend{
+          print("#### MME SENDING\n");
+          send_mme(
+              mme{ header{a{1;}; b{2;}; }; payload{application_type{0;};security_type{0;};}; } );
+          print("#### MME SENT\n");           
+        };     
+    };
+    t{Initial; sending; evStartSender; doSend;};
 };
 
 Simulation{
     Event TICK;
-    Start{route_mme_events;S;};
+    Start{route_mme_events;};
     start_timer(1.0*s,TICK);
 };

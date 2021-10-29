@@ -356,7 +356,7 @@ class Ev2sctp_plugin{
     ceps::interpreter::set_val("mme_type",mme::CM_ATTEN_PROFILE_IND,scope);
     ceps::interpreter::set_val("mme_pev_mac",cm_atten_profile_ind.pev_mac,cm_atten_profile_ind.pev_mac+sizeof(cm_atten_profile_ind.pev_mac),scope);  
     ceps::interpreter::set_val("mme_num_groups",cm_atten_profile_ind.num_groups,scope);
-    ceps::interpreter::set_val("mme_pev_mac",cm_atten_profile_ind.aag,cm_atten_profile_ind.aag+sizeof(cm_atten_profile_ind.aag),scope);  
+    ceps::interpreter::set_val("mme_aag",cm_atten_profile_ind.aag,cm_atten_profile_ind.aag+sizeof(cm_atten_profile_ind.aag),scope);      
     return true;
   }
 
@@ -438,12 +438,16 @@ class Ev2sctp_plugin{
   bool Ev2sctp_plugin::mme_msg_cm_amp_map_cnf_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
     cm_amp_map_cnf_t cm_amp_map_cnf = msg->mmdata.cm_amp_map_cnf;
     ceps::interpreter::set_val("mme_type",mme::CM_AMP_MAP_CNF,scope);
+    ceps::interpreter::set_val("mme_restype",cm_amp_map_cnf.restype,scope);
+
     return true;
   }
 
 
 void Ev2sctp_plugin::init(){
-  mme_msg_to_symbol_table_setup_routines = { {mme::CM_SLAC_PARM_REQ,&Ev2sctp_plugin::mme_msg_cm_slac_param_req_setup_symtbl},
+  mme_msg_to_symbol_table_setup_routines = 
+                  { 
+                      {mme::CM_SLAC_PARM_REQ,&Ev2sctp_plugin::mme_msg_cm_slac_param_req_setup_symtbl},
                       {mme::CM_SLAC_PARM_CNF,&Ev2sctp_plugin::mme_msg_cm_slac_parm_cnf_setup_symtbl},
                       {mme::CM_START_ATTEN_CHAR_IND,&Ev2sctp_plugin::mme_msg_cm_start_atten_char_ind_setup_symtbl},
                       {mme::CM_MNBC_SOUND_IND,&Ev2sctp_plugin::mme_msg_cm_mnbc_sound_ind_setup_symtbl},
@@ -457,7 +461,8 @@ void Ev2sctp_plugin::init(){
                       {mme::CM_SET_KEY_REQ,&Ev2sctp_plugin::mme_msg_cm_set_key_req_setup_symtbl},
                       {mme::CM_SET_KEY_CNF,&Ev2sctp_plugin::mme_msg_cm_set_key_cnf_setup_symtbl},
                       {mme::CM_AMP_MAP_REQ,&Ev2sctp_plugin::mme_msg_cm_amp_map_req_setup_symtbl},
-                      {mme::CM_AMP_MAP_CNF,&Ev2sctp_plugin::mme_msg_cm_amp_map_cnf_setup_symtbl} };
+                      {mme::CM_AMP_MAP_CNF,&Ev2sctp_plugin::mme_msg_cm_amp_map_cnf_setup_symtbl} 
+                    };
 }
 
 void Ev2sctp_plugin::handle_homeplug_mme(homeplug_mme_generic* msg, size_t mme_size){
@@ -495,6 +500,17 @@ namespace tests{
  void cm_slac_param_cnf();
  void cm_start_atten_char_ind();
  void cm_mnbc_sound_ind();
+ void cm_atten_char_ind();
+ void cm_atten_profile_ind();
+ void cm_atten_char_rsp();
+ void cm_validate_req();
+ void cm_validate_cnf();
+ void cm_slac_match_req();
+ void cm_slac_match_cnf();
+ void cm_set_key_req();
+ void cm_set_key_cnf();
+ void cm_amp_map_req();
+ void cm_amp_map_cnf();
 } 
 
 static ceps::ast::node_t ev2sctp_plugin(ceps::ast::node_callparameters_t params){
@@ -504,10 +520,20 @@ static ceps::ast::node_t ev2sctp_plugin(ceps::ast::node_callparameters_t params)
     return nullptr;
 }
 
+static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t params){
+    //std::cout << "******** SEND MME 1" << std::endl;
+    auto t = get_first_child(params); // static_cast<ceps::ast::Nodebase_ptr>(plugin_master->evaluate_fragment_in_global_context(params->children()[0],&plugn.scope));
+    //std::cout << *t << std::endl;
+    //std::cout << "******** SEND MME 2" << std::endl;
+    return nullptr;
+}
+
 extern "C" void init_plugin(IUserdefined_function_registry* smc)
 {
   plugn.ceps_engine = plugin_master = smc->get_plugin_interface(); 
-  (plugin_master = smc->get_plugin_interface())->reg_ceps_plugin("route_events_sctp",ev2sctp_plugin);
+  plugin_master->reg_ceps_plugin("route_events_sctp",ev2sctp_plugin);
+  plugin_master->reg_ceps_plugin("send_mme",ev2sctp_send_mme);
+
   std::cerr << "Registered ev2sctp plugin" << std::endl;
 }
 
@@ -515,11 +541,21 @@ extern "C" void init_plugin(IUserdefined_function_registry* smc)
 /////// Tests
 
  void tests::run_all(){
-   cm_slac_param_req();
-   cm_slac_param_cnf();
-   cm_start_atten_char_ind();
-   cm_mnbc_sound_ind();
-
+    cm_slac_param_req();
+    cm_slac_param_cnf();
+    cm_start_atten_char_ind();
+    cm_mnbc_sound_ind();
+    cm_atten_char_ind();
+    cm_atten_profile_ind();
+    cm_atten_char_rsp();
+    cm_validate_req();
+    cm_validate_cnf();
+    cm_slac_match_req();
+    cm_slac_match_cnf();
+    cm_set_key_req();
+    cm_set_key_cnf();
+    cm_amp_map_req();
+    cm_amp_map_cnf();
  }
 
  void tests::cm_slac_param_req(){
@@ -542,5 +578,59 @@ void tests::cm_mnbc_sound_ind(){
    plugn.handle_homeplug_mme(&msg, sizeof(msg));
 }
 
+void tests::cm_atten_char_ind(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_ATTEN_CHAR_IND};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_atten_profile_ind(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_ATTEN_PROFILE_IND};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_atten_char_rsp(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_ATTEN_CHAR_RSP};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_validate_req(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_VALIDATE_REQ};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_validate_cnf(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_VALIDATE_CNF};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_slac_match_req(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_SLAC_MATCH_REQ};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_slac_match_cnf(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_SLAC_MATCH_CNF};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_set_key_req(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_SET_KEY_REQ};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_set_key_cnf(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_SET_KEY_CNF};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_amp_map_req(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_AMP_MAP_REQ};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
+
+void tests::cm_amp_map_cnf(){
+  homeplug_mme_generic msg {.mmtype = mme::CM_AMP_MAP_CNF};
+   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+}
  
 
