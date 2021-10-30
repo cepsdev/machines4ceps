@@ -230,9 +230,388 @@ struct homeplug_mme_generic{
     cm_set_key_req_t cm_set_key_req;
     cm_amp_map_req_t cm_amp_map_req;
     cm_amp_map_cnf_t cm_amp_map_cnf;    
-    struct{} cm_set_key_cnf;
+    struct{
+
+    } cm_set_key_cnf;
   } mmdata;
 };
+
+template<typename Iter>
+size_t write_bytes(ceps::ast::Struct_ptr strct, Iter beg, Iter end){
+  using namespace ceps::ast;
+  auto sit = strct->children().begin();
+  size_t written = 0;
+  for(auto it = beg; it != end && sit != strct->children().end();++it,++sit){
+    if (is<ceps::ast::Ast_node_kind::int_literal>(*sit)){
+      *it = value(as_int_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::long_literal>(*sit)){
+      *it = value(as_int64_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::float_literal>(*sit)){
+      *it = value(as_double_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::string_literal>(*sit)){
+      auto const & v = value(as_string_ref(*sit));
+      for(size_t i = 0; i < v.length() && it != end; ++i,++it){
+        *it = v.at(i);++written;
+      }
+      if (it == end) break;
+    }
+  }
+  return written;
+}
+
+template<typename C, typename Iter>
+size_t write_bytes(C const & vec, Iter beg, Iter end){
+  using namespace ceps::ast;
+  auto sit = vec.begin();
+  size_t written = 0;
+  for(auto it = beg; it != end && sit != vec.end();++it,++sit){
+    if (is<ceps::ast::Ast_node_kind::int_literal>(*sit)){
+      *it = value(as_int_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::long_literal>(*sit)){
+      *it = value(as_int64_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::float_literal>(*sit)){
+      *it = value(as_double_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::string_literal>(*sit)){
+      auto const & v = value(as_string_ref(*sit));
+      for(size_t i = 0; i < v.length() && it != end; ++i,++it){
+        *it = v.at(i);++written;
+      }
+      if (it == end) break;
+    }
+  }
+  return written;
+}
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_slac_parm_req_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));    
+  }
+  return written;
+} 
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_slac_parm_cnf_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));
+    else if (name == "num_sounds")
+     written += write_bytes(&strct,((uint8_t*)&msg.num_sounds),((uint8_t*)&msg.num_sounds) + sizeof(msg.num_sounds));
+    else if (name == "time_out")
+     written += write_bytes(&strct,((uint8_t*)&msg.time_out),((uint8_t*)&msg.time_out) + sizeof(msg.time_out));
+    else if (name == "m_sound_target")
+     written += write_bytes(&strct,((uint8_t*)&msg.m_sound_target),((uint8_t*)&msg.m_sound_target) + sizeof(msg.m_sound_target));
+    else if (name == "forwarding_sta")
+     written += write_bytes(&strct,((uint8_t*)&msg.forwarding_sta),((uint8_t*)&msg.forwarding_sta) + sizeof(msg.forwarding_sta));
+    else if (name == "resp_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.resp_type),((uint8_t*)&msg.resp_type) + sizeof(msg.resp_type));
+  }
+  return written;
+} 
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_start_atten_char_ind_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));    
+    else if (name == "forwarding_sta")
+     written += write_bytes(&strct,((uint8_t*)&msg.forwarding_sta),((uint8_t*)&msg.forwarding_sta) + sizeof(msg.forwarding_sta));    
+    else if (name == "resp_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.resp_type),((uint8_t*)&msg.resp_type) + sizeof(msg.resp_type));    
+    else if (name == "time_out")
+     written += write_bytes(&strct,((uint8_t*)&msg.time_out),((uint8_t*)&msg.time_out) + sizeof(msg.time_out));    
+    else if (name == "num_sounds")
+     written += write_bytes(&strct,((uint8_t*)&msg.num_sounds),((uint8_t*)&msg.num_sounds) + sizeof(msg.num_sounds));   
+
+  }
+  return written;
+} 
+
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_atten_char_ind_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));    
+    else if (name == "source_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.source_id),((uint8_t*)&msg.source_id) + sizeof(msg.source_id));    
+    else if (name == "source_address")
+     written += write_bytes(&strct,((uint8_t*)&msg.source_address),((uint8_t*)&msg.source_address) + sizeof(msg.source_address));    
+    else if (name == "resp_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.resp_id),((uint8_t*)&msg.resp_id) + sizeof(msg.resp_id));    
+    else if (name == "num_sounds")
+     written += write_bytes(&strct,((uint8_t*)&msg.num_sounds),((uint8_t*)&msg.num_sounds) + sizeof(msg.num_sounds));    
+    else if (name == "atten_profile")
+     written += write_bytes(&strct,((uint8_t*)&msg.atten_profile),((uint8_t*)&msg.atten_profile) + sizeof(msg.atten_profile));    
+  }
+  return written;
+} 
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_mnbc_sound_ind_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));    
+    else if (name == "sender_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.sender_id),((uint8_t*)&msg.sender_id) + sizeof(msg.sender_id));    
+    else if (name == "cnt")
+     written += write_bytes(&strct,((uint8_t*)&msg.cnt),((uint8_t*)&msg.cnt) + sizeof(msg.cnt));    
+    else if (name == "rnd")
+     written += write_bytes(&strct,((uint8_t*)&msg.rnd),((uint8_t*)&msg.rnd) + sizeof(msg.rnd));    
+
+  }
+  return written;
+} 
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_atten_char_rsp_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));    
+    else if (name == "source_address")
+     written += write_bytes(&strct,((uint8_t*)&msg.source_address),((uint8_t*)&msg.source_address) + sizeof(msg.source_address));    
+    else if (name == "source_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.source_id),((uint8_t*)&msg.source_id) + sizeof(msg.source_id));    
+    else if (name == "resp_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.resp_id),((uint8_t*)&msg.resp_id) + sizeof(msg.resp_id));    
+    else if (name == "result")
+     written += write_bytes(&strct,((uint8_t*)&msg.result),((uint8_t*)&msg.result) + sizeof(msg.result));    
+  }
+  return written;
+} 
+
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_atten_profile_ind_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "pev_mac") 
+     written += write_bytes(&strct,((uint8_t*)&msg.pev_mac),((uint8_t*)&msg.pev_mac) + sizeof(msg.pev_mac));
+    else if (name == "num_groups")
+     written += write_bytes(&strct,((uint8_t*)&msg.num_groups),((uint8_t*)&msg.num_groups) + sizeof(msg.num_groups));
+    else if (name == "aag")
+     written += write_bytes(&strct,((uint8_t*)&msg.aag),((uint8_t*)&msg.aag) + sizeof(msg.aag));    
+  }
+  return written;
+} 
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_validate_req_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "signal_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.signal_type),((uint8_t*)&msg.signal_type) + sizeof(msg.signal_type));
+    else if (name == "timer")
+     written += write_bytes(&strct,((uint8_t*)&msg.timer),((uint8_t*)&msg.timer) + sizeof(msg.timer));
+    else if (name == "result")
+     written += write_bytes(&strct,((uint8_t*)&msg.result),((uint8_t*)&msg.result) + sizeof(msg.result));    
+  }
+  return written;
+} 
+
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_validate_cnf_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "signal_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.signal_type),((uint8_t*)&msg.signal_type) + sizeof(msg.signal_type));
+    else if (name == "toggle_num")
+     written += write_bytes(&strct,((uint8_t*)&msg.toggle_num),((uint8_t*)&msg.toggle_num) + sizeof(msg.toggle_num));
+    else if (name == "result")
+     written += write_bytes(&strct,((uint8_t*)&msg.result),((uint8_t*)&msg.result) + sizeof(msg.result));    
+  }
+  return written;
+} 
+
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_slac_match_req_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));
+    else if (name == "mvflength")
+     written += write_bytes(&strct,((uint8_t*)&msg.mvflength),((uint8_t*)&msg.mvflength) + sizeof(msg.mvflength));    
+    else if (name == "pev_id") 
+     written += write_bytes(&strct,((uint8_t*)&msg.pev_id),((uint8_t*)&msg.pev_id) + sizeof(msg.pev_id));
+    else if (name == "pev_mac")
+     written += write_bytes(&strct,((uint8_t*)&msg.pev_mac),((uint8_t*)&msg.pev_mac) + sizeof(msg.pev_mac));
+    else if (name == "evse_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.evse_id),((uint8_t*)&msg.evse_id) + sizeof(msg.evse_id));    
+    else if (name == "evse_mac") 
+     written += write_bytes(&strct,((uint8_t*)&msg.evse_mac),((uint8_t*)&msg.evse_mac) + sizeof(msg.evse_mac));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+  }
+  return written;
+} 
+
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_slac_match_cnf_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "application_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.application_type),((uint8_t*)&msg.application_type) + sizeof(msg.application_type));
+    else if (name == "security_type")
+     written += write_bytes(&strct,((uint8_t*)&msg.security_type),((uint8_t*)&msg.security_type) + sizeof(msg.security_type));
+    else if (name == "mvflength")
+     written += write_bytes(&strct,((uint8_t*)&msg.mvflength),((uint8_t*)&msg.mvflength) + sizeof(msg.mvflength));    
+    else if (name == "pev_id") 
+     written += write_bytes(&strct,((uint8_t*)&msg.pev_id),((uint8_t*)&msg.pev_id) + sizeof(msg.pev_id));
+    else if (name == "pev_mac")
+     written += write_bytes(&strct,((uint8_t*)&msg.pev_mac),((uint8_t*)&msg.pev_mac) + sizeof(msg.pev_mac));
+    else if (name == "evse_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.evse_id),((uint8_t*)&msg.evse_id) + sizeof(msg.evse_id));    
+    else if (name == "evse_mac") 
+     written += write_bytes(&strct,((uint8_t*)&msg.evse_mac),((uint8_t*)&msg.evse_mac) + sizeof(msg.evse_mac));
+    else if (name == "run_id")
+     written += write_bytes(&strct,((uint8_t*)&msg.run_id),((uint8_t*)&msg.run_id) + sizeof(msg.run_id));
+    else if (name == "nid") 
+     written += write_bytes(&strct,((uint8_t*)&msg.nid),((uint8_t*)&msg.nid) + sizeof(msg.nid));
+    else if (name == "nmk")
+     written += write_bytes(&strct,((uint8_t*)&msg.nmk),((uint8_t*)&msg.nmk) + sizeof(msg.nmk));
+  }
+  return written;
+} 
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_set_key_req_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "key_type") 
+     written += write_bytes(&strct,((uint8_t*)&msg.key_type),((uint8_t*)&msg.key_type) + sizeof(msg.key_type));
+    else if (name == "my_nonce")
+     written += write_bytes(&strct,((uint8_t*)&msg.my_nonce),((uint8_t*)&msg.my_nonce) + sizeof(msg.my_nonce));
+    else if (name == "your_nonce")
+     written += write_bytes(&strct,((uint8_t*)&msg.your_nonce),((uint8_t*)&msg.your_nonce) + sizeof(msg.your_nonce));    
+    else if (name == "pid") 
+     written += write_bytes(&strct,((uint8_t*)&msg.pid),((uint8_t*)&msg.pid) + sizeof(msg.pid));
+    else if (name == "prn")
+     written += write_bytes(&strct,((uint8_t*)&msg.prn),((uint8_t*)&msg.prn) + sizeof(msg.prn));
+    else if (name == "pmn")
+     written += write_bytes(&strct,((uint8_t*)&msg.pmn),((uint8_t*)&msg.pmn) + sizeof(msg.pmn));    
+    else if (name == "cco_capability") 
+     written += write_bytes(&strct,((uint8_t*)&msg.cco_capability),((uint8_t*)&msg.cco_capability) + sizeof(msg.cco_capability));
+    else if (name == "new_eks")
+     written += write_bytes(&strct,((uint8_t*)&msg.new_eks),((uint8_t*)&msg.new_eks) + sizeof(msg.new_eks));
+    else if (name == "nid") 
+     written += write_bytes(&strct,((uint8_t*)&msg.nid),((uint8_t*)&msg.nid) + sizeof(msg.nid));
+    else if (name == "new_key")
+     written += write_bytes(&strct,((uint8_t*)&msg.new_key),((uint8_t*)&msg.new_key) + sizeof(msg.new_key));
+  }
+  return written;
+} 
+
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_amp_map_req_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "amlen") 
+     written += write_bytes(&strct,((uint8_t*)&msg.amlen),((uint8_t*)&msg.amlen) + sizeof(msg.amlen));
+    else if (name == "amdata")
+     written += write_bytes(&strct,((uint8_t*)&msg.amdata),((uint8_t*)&msg.amdata) + std::min( size - sizeof(msg.amlen), (size_t) msg.amlen  ));
+  }
+  return written;
+} 
+
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_amp_map_cnf_t& msg, size_t size){
+  size_t written = 0;
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+    if (name == "restype") 
+     written += write_bytes(&strct,((uint8_t*)&msg.restype),((uint8_t*)&msg.restype) + sizeof(msg.restype));
+  }
+  return written;
+} 
 
 class Ev2sctp_plugin{
 
@@ -520,10 +899,114 @@ static ceps::ast::node_t ev2sctp_plugin(ceps::ast::node_callparameters_t params)
     return nullptr;
 }
 
+
+std::ostream& operator << (std::ostream & os, homeplug_mme_generic const & mme_msg){
+  os << "mme header:\n";
+  os << "\t";
+  os << "osa :";
+  for(size_t i = 0; i < sizeof(mme_msg.osa);++i){
+    os << " " << (int)mme_msg.osa[i];
+  }
+  os << "\n";
+  os << "\t";
+  os << "oda :";
+  for(size_t i = 0; i < sizeof(mme_msg.oda);++i){
+    os << " " << (int)mme_msg.oda[i];
+  }
+  os << "\n";
+  os << "\t";os << "mmtype: " <<(int) mme_msg.mmtype << "\n";
+  os << "\t";os << "mtype: " << (int) mme_msg.mtype << "\n";
+  os << "\t";os << "mmv: " << (int) mme_msg.mmv << "\n";
+  os << "\t";os << "vlan_tag: " << (int) mme_msg.vlan_tag << "\n";
+  os << "\t";os << "fmi: " << (int) mme_msg.fmi << "\n";
+  os << "\t";os << "fmsn: " << (int) mme_msg.fmsn << "\n";
+  os << "mme data:\n";
+  if (mme_msg.mmtype == mme::CM_SLAC_PARM_REQ){
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_slac_parm_req.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_slac_parm_req.security_type << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_parm_req.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_parm_req.run_id[i];
+    }
+    os << "\n";
+  }
+
+  return os;
+}
+
 static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t params){
     //std::cout << "******** SEND MME 1" << std::endl;
-    auto t = get_first_child(params); // static_cast<ceps::ast::Nodebase_ptr>(plugin_master->evaluate_fragment_in_global_context(params->children()[0],&plugn.scope));
+    auto msg = get_first_child(params); // static_cast<ceps::ast::Nodebase_ptr>(plugin_master->evaluate_fragment_in_global_context(params->children()[0],&plugn.scope));
     //std::cout << *t << std::endl;
+    auto ns = ceps::ast::Nodeset{msg}["mme"];
+    auto header = ns["header"];
+    auto mmtype = header["mmtype"];    
+    auto fmi = header["fmi"].as_int_noexcept();
+    auto fmsn = header["fmsn"].as_int_noexcept();
+    auto mmv = header["mmv"].as_int_noexcept();
+    auto mtype = header["mtype"].as_int_noexcept();
+    auto oda = header["oda"];
+    auto osa = header["osa"];
+    auto vlan_tag = header["vlan_tag"].as_int_noexcept();
+
+    auto payload = ns["payload"];
+    
+    auto mme_type = mmtype.as_int_noexcept();
+    
+    if (!mme_type.has_value()) return nullptr;
+    char mme_msg_buffer[sizeof(homeplug_mme_generic)*2] = {0};
+    homeplug_mme_generic& mme_msg = *((homeplug_mme_generic*)mme_msg_buffer);
+    homeplug_mme_generic mme_msg2;
+
+    mme_msg.mmtype = mme_type.value();
+    if(fmi.has_value()) mme_msg.fmi = fmi.value();
+    if(fmsn.has_value()) mme_msg.fmsn = fmsn.value();
+    if(mmv.has_value()) mme_msg.mmv = mmv.value();
+    if(mtype.has_value()) mme_msg.mtype = mtype.value();
+
+    if(!osa.empty()) write_bytes(osa.nodes(), ((uint8_t*) &mme_msg.osa), ((uint8_t*) &mme_msg.osa) + sizeof(mme_msg.osa));
+    if(!oda.empty()) write_bytes(oda.nodes(), ((uint8_t*) &mme_msg.oda), ((uint8_t*) &mme_msg.oda) + sizeof(mme_msg.oda));
+    if(vlan_tag.has_value()) mme_msg.vlan_tag = vlan_tag.value();
+
+
+
+
+
+    if (mme_msg.mmtype == mme::CM_SLAC_PARM_REQ)
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_parm_req, sizeof(mme_msg.mmdata.cm_slac_parm_req));
+    else if (mme_msg.mmtype == mme::CM_SLAC_PARM_CNF)
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_parm_cnf, sizeof(mme_msg.mmdata.cm_slac_parm_cnf));
+    else if (mme_msg.mmtype == mme::CM_START_ATTEN_CHAR_IND)
+     write(payload.nodes(), mme_msg.mmdata.cm_start_atten_char_ind, sizeof(mme_msg.mmdata.cm_start_atten_char_ind));
+    else if (mme_msg.mmtype == mme::CM_MNBC_SOUND_IND)
+     write(payload.nodes(), mme_msg.mmdata.cm_mnbc_sound_ind, sizeof(mme_msg.mmdata.cm_mnbc_sound_ind));
+    else if (mme_msg.mmtype == mme::CM_START_ATTEN_CHAR_IND)
+     write(payload.nodes(), mme_msg.mmdata.cm_atten_char_ind, sizeof(mme_msg.mmdata.cm_atten_char_ind));
+    else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_RSP)
+     write(payload.nodes(), mme_msg.mmdata.cm_atten_char_rsp, sizeof(mme_msg.mmdata.cm_atten_char_rsp));
+    else if (mme_msg.mmtype == mme::CM_ATTEN_PROFILE_IND)
+     write(payload.nodes(), mme_msg.mmdata.cm_atten_profile_ind, sizeof(mme_msg.mmdata.cm_atten_profile_ind));
+    else if (mme_msg.mmtype == mme::CM_VALIDATE_REQ)
+     write(payload.nodes(), mme_msg.mmdata.cm_validate_req, sizeof(mme_msg.mmdata.cm_validate_req));
+    else if (mme_msg.mmtype == mme::CM_VALIDATE_CNF)
+     write(payload.nodes(), mme_msg.mmdata.cm_validate_cnf, sizeof(mme_msg.mmdata.cm_validate_cnf));
+    else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_REQ)
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_match_req, sizeof(mme_msg.mmdata.cm_slac_match_req));
+    else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_CNF)
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_match_cnf, sizeof(mme_msg.mmdata.cm_slac_match_cnf));
+    else if (mme_msg.mmtype == mme::CM_AMP_MAP_REQ)
+     write(payload.nodes(), mme_msg.mmdata.cm_amp_map_req, sizeof(mme_msg.mmdata.cm_amp_map_req));
+    else if (mme_msg.mmtype == mme::CM_AMP_MAP_CNF)
+     write(payload.nodes(), mme_msg.mmdata.cm_amp_map_cnf, sizeof(mme_msg.mmdata.cm_amp_map_cnf));
+
+    std::cout << "!!!!!!!" << std::endl;
+    
+    std::cout << mme_msg << std::endl;
+
+    std::cout << "!!!!!!!" << std::endl;
+
+    //size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_slac_parm_req_t& msg, size_t size);
+
     //std::cout << "******** SEND MME 2" << std::endl;
     return nullptr;
 }
