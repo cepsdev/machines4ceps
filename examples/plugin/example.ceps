@@ -535,20 +535,30 @@ sm{
 
 };
 
-Event evStartSender;
+Event evSendMME;
 sm{
     Sender;
-
     cover{
         edges_upto_1;
     };
-    states{Initial;sending;};
+    states{Initial;
+           send_cm_slac_parm_req;
+           send_cm_slac_parm_cnf;
+           send_cm_start_atten_char_ind;
+           send_cm_mnbc_sound_ind;
+           send_cm_atten_char_ind;
+           send_cm_atten_char_rsp;
+           send_cm_atten_profile_ind;
+           send_cm_validate_req;
+           send_cm_validate_cnf;
+           send_cm_slac_match_req;
+           send_cm_slac_match_cnf;
+        };
     on_enter{
-        start_timer(3.0*s,evStartSender);
+        start_periodic_timer(0.25*s,evSendMME);
     };
     Actions {
-        doSend{
-          print("#### MME SENDING\n");
+        doSend_cm_slac_parm_req{
           send_mme(
               mme{ 
                     header{
@@ -565,16 +575,372 @@ sm{
                         application_type{2;};
                         security_type{1;};
                         run_id{1;2;3;4;5;6;7;8;};
+                    };
+                    debug{
+                        print_message{stdout;};
                     }; 
               } );
-          print("#### MME SENT\n");           
-        };     
+        };
+
+        doSend_send_cm_slac_parm_cnf{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_SLAC_PARM_CNF;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        m_sound_target{
+                            11;12;13;14;15;16;
+                        };
+                        num_sounds{
+                            33;
+                        };
+                        time_out{
+                            2;
+                        };
+                        resp_type{
+                            8;
+                        };
+                        forwarding_sta{
+                            17;18;19;20;21;22;
+                        };
+                        application_type{2;};
+                        security_type{1;};
+                        run_id{1;2;3;4;5;6;7;8;};
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+
+        doSend_cm_start_atten_char_ind{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_START_ATTEN_CHAR_IND;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        num_sounds{
+                            34;
+                        };
+                        time_out{
+                            3;
+                        };
+                        resp_type{
+                            9;
+                        };
+                        forwarding_sta{
+                            18;19;20;21;22;23;
+                        };
+                        application_type{3;};
+                        security_type{2;};
+                        run_id{2;3;4;5;6;7;8;9;};
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };  
+
+        doSend_cm_mnbc_sound_ind{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_MNBC_SOUND_IND;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        application_type{4;};
+                        security_type{3;};
+                        sender_id{
+                            1;43;44;45;46;47;48;49;50;51;52;
+                            35;36;37;38;39;40;41;2;
+                        };
+                        cnt{
+                            19;
+                        };
+                        run_id{3;4;5;6;7;8;9;10;};
+                        rnd{
+                            63;64;65;66;67;68;69;70;71;72;
+                            55;56;57;58;59;60;61,62;
+                        };
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+
+        doSend_cm_atten_char_ind{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_ATTEN_CHAR_IND;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        application_type{5;255;255;255;255;};
+                        security_type{6;255;255;255;255;};
+                        source_address{
+                            66;67;68;69;70;71;255;255;255;255;
+                        };
+                        run_id{4;5;6;7;8;9;10;11;255;255;255;255;};
+                        source_id{
+                            101;102;103;104;105;106;107;108;109;110;111;112;113;114;115;116;117;255;255;255;
+                        };
+                        resp_id{
+                            201;202;203;204;205;206;207;208;209;210;211;212;213;214;215;216;217;255;255;255;
+                        };
+                        num_sounds{77;255;255;};
+                        atten_profile{
+                            for(j : 197 .. 255) {j;}
+                            255;255;255;
+                        };
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+        doSend_cm_atten_char_rsp{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_ATTEN_CHAR_RSP;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        application_type{6;255;255;255;255;};
+                        security_type{7;255;255;255;255;};
+                        source_address{
+                            71;72;73;74;75;76;255;255;255;255;
+                        };
+                        run_id{5;6;7;8;9;10;11;12;255;255;255;255;};
+                        source_id{
+                            118;119;120;121;122;123;124;125;126;127;128;129;130;131;132;133;134;255;255;255;
+                        };
+                        resp_id{
+                            218;219;220;221;222;223;224;225;226;227;228;229;230;231;232;233;234;255;255;255;
+                        };
+                        result{78;255;255;};
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };  
+        doSend_cm_atten_profile_ind{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_ATTEN_PROFILE_IND;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        pev_mac{
+                            77;78;79;80;81;82;255;255;255;255;
+                        };
+                        num_groups{79;255;255;};
+                        aag{
+                            for(j : 1 .. 58) {j;}
+                            255;255;255;
+                        };
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+
+        doSend_cm_validate_req{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_VALIDATE_REQ;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        signal_type{80;255;255;};
+                        timer{81;255;255;};
+                        result{82;255;255;};
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+
+        };
+
+        doSend_cm_validate_cnf{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_VALIDATE_CNF;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        signal_type{83;255;255;};
+                        toggle_num{84;255;255;};
+                        result{85;255;255;};
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+
+        };
+
+        doSend_cm_slac_match_req{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_SLAC_MATCH_REQ;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        application_type{7;255;255;255;255;};
+                        security_type{8;255;255;255;255;};
+                        mvflength{8;255;255;255;255;};
+                        pev_id{
+                            for (j : 1 .. 17) {2*j;} 255;255;255;255;
+                        };
+                        run_id{6;7;8;9;10;11;12;13;255;255;255;255;};
+                        pev_mac{
+                            for (j : 1 .. 6) {2*j;} 255;255;
+                        };
+                        evse_id{
+                            for (j : 1 .. 17) {2*j;} 255;255;255;255;255;
+                        };
+                        evse_mac{
+                            for (j : 1 .. 6) {2*j;} 255;255;
+                        };
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+
+        doSend_cm_slac_match_cnf{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_SLAC_MATCH_CNF;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        application_type{7;255;255;255;255;};
+                        security_type{8;255;255;255;255;};
+                        mvflength{8;255;255;255;255;};
+                        pev_id{
+                            for (j : 1 .. 17) {2*j;} 255;255;255;255;
+                        };
+                        run_id{6;7;8;9;10;11;12;13;255;255;255;255;};
+                        pev_mac{
+                            for (j : 1 .. 6) {2*j;} 255;255;
+                        };
+                        evse_id{
+                            for (j : 1 .. 17) {2*j;} 255;255;255;255;255;
+                        };
+                        evse_mac{
+                            for (j : 1 .. 6) {2*j;} 255;255;
+                        };
+                        nid{
+                            for (j : 1 .. 7) {2*j;} 255;255;
+                        };
+                        nmk{
+                            for (j : 1 .. 17) {2*j;} 255;255;
+                        };
+
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+  
     };
-    t{Initial; sending; evStartSender; doSend;};
+    t{Initial; send_cm_slac_parm_req; evSendMME; doSend_cm_slac_parm_req;};
+    t{send_cm_slac_parm_req;send_cm_slac_parm_cnf;evSendMME;doSend_send_cm_slac_parm_cnf;};
+    t{send_cm_slac_parm_cnf;send_cm_start_atten_char_ind;evSendMME;doSend_cm_start_atten_char_ind;};
+    t{send_cm_start_atten_char_ind;send_cm_mnbc_sound_ind;evSendMME;doSend_cm_mnbc_sound_ind;};
+    t{send_cm_mnbc_sound_ind;send_cm_atten_char_ind;evSendMME;doSend_cm_atten_char_ind;};
+    t{send_cm_atten_char_ind;send_cm_atten_char_rsp;evSendMME;doSend_cm_atten_char_rsp;};
+    t{send_cm_atten_char_rsp;send_cm_atten_profile_ind;evSendMME;doSend_cm_atten_profile_ind;};
+    t{send_cm_atten_profile_ind;send_cm_validate_req;evSendMME;doSend_cm_validate_req;};
+    t{send_cm_validate_req;send_cm_validate_cnf;evSendMME;doSend_cm_validate_cnf;};
+    t{send_cm_validate_cnf;send_cm_slac_match_req;evSendMME;doSend_cm_slac_match_req;};
+    t{send_cm_slac_match_req;send_cm_slac_match_cnf;evSendMME;doSend_cm_slac_match_cnf;};
+
 };
 
 Simulation{
-    Event TICK;
+    Event TICK,EXIT;
     Start{route_mme_events;};
     start_timer(1.0*s,TICK);
+    start_timer(20.0*s,EXIT);
+
 };

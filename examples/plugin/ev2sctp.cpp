@@ -914,7 +914,32 @@ std::ostream& operator << (std::ostream & os, homeplug_mme_generic const & mme_m
     os << " " << (int)mme_msg.oda[i];
   }
   os << "\n";
-  os << "\t";os << "mmtype: " <<(int) mme_msg.mmtype << "\n";
+  os << "\t";os << "mmtype: " <<(int) mme_msg.mmtype;
+  if (mme_msg.mmtype == mme::CM_SLAC_PARM_REQ)
+   os << " (CM_SLAC_PARM_REQ)\n"; 
+  else if (mme_msg.mmtype == mme::CM_SLAC_PARM_CNF)
+   os << " (CM_SLAC_PARM_CNF)\n";
+  else if (mme_msg.mmtype == mme::CM_START_ATTEN_CHAR_IND)
+   os << " (CM_START_ATTEN_CHAR_IND)\n";
+  else if (mme_msg.mmtype == mme::CM_MNBC_SOUND_IND)
+   os << " (CM_MNBC_SOUND_IND)\n";
+  else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_IND)
+   os << " (CM_ATTEN_CHAR_IND)\n";
+  else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_RSP)
+   os << " (CM_ATTEN_CHAR_RSP)\n";
+  else if (mme_msg.mmtype == mme::CM_ATTEN_PROFILE_IND)
+   os << " (CM_ATTEN_PROFILE_IND)\n";
+  else if (mme_msg.mmtype == mme::CM_VALIDATE_REQ)
+   os << " (CM_VALIDATE_REQ)\n";
+  else if (mme_msg.mmtype == mme::CM_VALIDATE_CNF)
+   os << " (CM_VALIDATE_CNF)\n";
+  else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_REQ)
+   os << " (CM_SLAC_MATCH_REQ)\n";
+  else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_CNF)
+   os << " (CM_SLAC_MATCH_CNF)\n";
+  else
+   os << " (?)\n"; 
+ 
   os << "\t";os << "mtype: " << (int) mme_msg.mtype << "\n";
   os << "\t";os << "mmv: " << (int) mme_msg.mmv << "\n";
   os << "\t";os << "vlan_tag: " << (int) mme_msg.vlan_tag << "\n";
@@ -929,7 +954,221 @@ std::ostream& operator << (std::ostream & os, homeplug_mme_generic const & mme_m
       os << " " << (int)mme_msg.mmdata.cm_slac_parm_req.run_id[i];
     }
     os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_SLAC_PARM_CNF){
+    os << "\t";os << "m_sound_target: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_parm_cnf.m_sound_target);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_parm_cnf.m_sound_target[i];
+    }
+    os << "\n";
+    os << "\t";os << "num_sounds: " <<(int) mme_msg.mmdata.cm_slac_parm_cnf.num_sounds << "\n";
+    os << "\t";os << "time_out: " <<(int) mme_msg.mmdata.cm_slac_parm_cnf.time_out << "\n";
+    os << "\t";os << "resp_type: " <<(int) mme_msg.mmdata.cm_slac_parm_cnf.resp_type << "\n";
+    os << "\t";os << "forwarding_sta: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_parm_cnf.forwarding_sta);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_parm_cnf.forwarding_sta[i];
+    }
+    os << "\n";
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_slac_parm_cnf.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_slac_parm_cnf.security_type << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_parm_cnf.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_parm_cnf.run_id[i];
+    }
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_START_ATTEN_CHAR_IND) {
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_start_atten_char_ind.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_start_atten_char_ind.security_type << "\n";
+    os << "\t";os << "num_sounds: " <<(int) mme_msg.mmdata.cm_start_atten_char_ind.num_sounds << "\n";
+    os << "\t";os << "time_out: " <<(int) mme_msg.mmdata.cm_start_atten_char_ind.time_out << "\n";
+    os << "\t";os << "resp_type: " <<(int) mme_msg.mmdata.cm_start_atten_char_ind.resp_type << "\n";
+    os << "\t";os << "forwarding_sta: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_start_atten_char_ind.forwarding_sta);++i){
+      os << " " << (int)mme_msg.mmdata.cm_start_atten_char_ind.forwarding_sta[i];
+    }
+    os << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_start_atten_char_ind.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_start_atten_char_ind.run_id[i];
+    }
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_MNBC_SOUND_IND) {
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_mnbc_sound_ind.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_mnbc_sound_ind.security_type << "\n";
+    os << "\t";os << "sender_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_mnbc_sound_ind.sender_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_mnbc_sound_ind.sender_id[i];
+    }
+    os << "\n";
+
+    os << "\t";os << "cnt: " <<(int) mme_msg.mmdata.cm_mnbc_sound_ind.cnt << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_mnbc_sound_ind.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_mnbc_sound_ind.run_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "rnd: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_mnbc_sound_ind.rnd);++i){
+      os << " " << (int)mme_msg.mmdata.cm_mnbc_sound_ind.rnd[i];
+    }
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_IND) { 
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_atten_char_ind.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_atten_char_ind.security_type << "\n";
+    os << "\t";os << "source_address: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_ind.source_address);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_ind.source_address[i];
+    }
+    os << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_ind.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_ind.run_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "source_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_ind.source_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_ind.source_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "resp_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_ind.resp_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_ind.resp_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "num_sounds: " <<(int) mme_msg.mmdata.cm_atten_char_ind.num_sounds << "\n";
+    os << "\t";os << "atten_profile: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_ind.atten_profile);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_ind.atten_profile[i];
+    }
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_RSP) { 
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_atten_char_rsp.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_atten_char_rsp.security_type << "\n";
+    os << "\t";os << "source_address: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_rsp.source_address);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_rsp.source_address[i];
+    }
+    os << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_rsp.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_rsp.run_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "source_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_rsp.source_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_rsp.source_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "resp_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_char_rsp.resp_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_char_rsp.resp_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "result: " <<(int) mme_msg.mmdata.cm_atten_char_rsp.result << "\n";
+  } else if (mme_msg.mmtype == mme::CM_ATTEN_PROFILE_IND)  { 
+    os << "\t";os << "pev_mac: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_profile_ind.pev_mac);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_profile_ind.pev_mac[i];
+    }
+    os << "\n";
+    os << "\t";os << "num_groups: " <<(int) mme_msg.mmdata.cm_atten_profile_ind.num_groups << "\n";
+    os << "\t";os << "aag: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_atten_profile_ind.aag);++i){
+      os << " " << (int)mme_msg.mmdata.cm_atten_profile_ind.aag[i];
+    }
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_VALIDATE_REQ)  { 
+    os << "\t";os << "signal_type: " <<(int) mme_msg.mmdata.cm_validate_req.signal_type << "\n";
+    os << "\t";os << "timer: " <<(int) mme_msg.mmdata.cm_validate_req.timer << "\n";
+    os << "\t";os << "result: " <<(int) mme_msg.mmdata.cm_validate_req.result << "\n";
+
+  } else if (mme_msg.mmtype == mme::CM_VALIDATE_CNF)  { 
+    os << "\t";os << "signal_type: " <<(int) mme_msg.mmdata.cm_validate_cnf.signal_type << "\n";
+    os << "\t";os << "toggle_num: " <<(int) mme_msg.mmdata.cm_validate_cnf.toggle_num << "\n";
+    os << "\t";os << "result: " <<(int) mme_msg.mmdata.cm_validate_cnf.result << "\n";
+  } else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_REQ) { 
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_slac_match_req.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_slac_match_req.security_type << "\n";
+    os << "\t";os << "mvflength: " <<(int) mme_msg.mmdata.cm_slac_match_req.mvflength << "\n";
+
+    os << "\t";os << "pev_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_req.pev_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_req.pev_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "pev_mac: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_req.pev_mac);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_req.pev_mac[i];
+    }
+    os << "\n";
+    os << "\t";os << "evse_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_req.evse_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_req.evse_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "evse_mac: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_req.evse_mac);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_req.evse_mac[i];
+    }
+    os << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_req.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_req.run_id[i];
+    }
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_CNF) { 
+    os << "\t";os << "application_type: " <<(int) mme_msg.mmdata.cm_slac_match_cnf.application_type << "\n";
+    os << "\t";os << "security_type: " <<(int) mme_msg.mmdata.cm_slac_match_cnf.security_type << "\n";
+    os << "\t";os << "mvflength: " <<(int) mme_msg.mmdata.cm_slac_match_cnf.mvflength << "\n";
+
+    os << "\t";os << "pev_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_cnf.pev_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.pev_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "pev_mac: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_cnf.pev_mac);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.pev_mac[i];
+    }
+    os << "\n";
+    os << "\t";os << "evse_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_cnf.evse_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.evse_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "evse_mac: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_cnf.evse_mac);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.evse_mac[i];
+    }
+    os << "\n";
+    os << "\t";os << "run_id: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_cnf.run_id);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.run_id[i];
+    }
+    os << "\n";
+    os << "\t";os << "nid: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_cnf.nid);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.nid[i];
+    }
+    os << "\n";
+    os << "\t";os << "nmk: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_slac_match_cnf.nmk);++i){
+      os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.nmk[i];
+    }
+    os << "\n";
+
+
+  } else {
+    auto p_end = (uint8_t*)&mme_msg.mmdata + sizeof(mme_msg.mmdata);
+    auto ctr = 0;
+    os << "\t";
+    for( auto p = (uint8_t*)&mme_msg.mmdata; p != p_end; ++p){
+      os << (int) *p <<  " ";
+      ++ctr;
+      if ( (ctr % 8) == 0) os << "\n\t";
+    }
+    os << "\n";
   }
+
 
   return os;
 }
@@ -952,6 +1191,9 @@ static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t param
     auto payload = ns["payload"];
     
     auto mme_type = mmtype.as_int_noexcept();
+
+    auto print_debug = ns["debug"].size() > 0;
+    
     
     if (!mme_type.has_value()) return nullptr;
     char mme_msg_buffer[sizeof(homeplug_mme_generic)*2] = {0};
@@ -968,10 +1210,6 @@ static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t param
     if(!oda.empty()) write_bytes(oda.nodes(), ((uint8_t*) &mme_msg.oda), ((uint8_t*) &mme_msg.oda) + sizeof(mme_msg.oda));
     if(vlan_tag.has_value()) mme_msg.vlan_tag = vlan_tag.value();
 
-
-
-
-
     if (mme_msg.mmtype == mme::CM_SLAC_PARM_REQ)
      write(payload.nodes(), mme_msg.mmdata.cm_slac_parm_req, sizeof(mme_msg.mmdata.cm_slac_parm_req));
     else if (mme_msg.mmtype == mme::CM_SLAC_PARM_CNF)
@@ -980,7 +1218,7 @@ static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t param
      write(payload.nodes(), mme_msg.mmdata.cm_start_atten_char_ind, sizeof(mme_msg.mmdata.cm_start_atten_char_ind));
     else if (mme_msg.mmtype == mme::CM_MNBC_SOUND_IND)
      write(payload.nodes(), mme_msg.mmdata.cm_mnbc_sound_ind, sizeof(mme_msg.mmdata.cm_mnbc_sound_ind));
-    else if (mme_msg.mmtype == mme::CM_START_ATTEN_CHAR_IND)
+    else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_IND)
      write(payload.nodes(), mme_msg.mmdata.cm_atten_char_ind, sizeof(mme_msg.mmdata.cm_atten_char_ind));
     else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_RSP)
      write(payload.nodes(), mme_msg.mmdata.cm_atten_char_rsp, sizeof(mme_msg.mmdata.cm_atten_char_rsp));
@@ -998,16 +1236,10 @@ static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t param
      write(payload.nodes(), mme_msg.mmdata.cm_amp_map_req, sizeof(mme_msg.mmdata.cm_amp_map_req));
     else if (mme_msg.mmtype == mme::CM_AMP_MAP_CNF)
      write(payload.nodes(), mme_msg.mmdata.cm_amp_map_cnf, sizeof(mme_msg.mmdata.cm_amp_map_cnf));
-
-    std::cout << "!!!!!!!" << std::endl;
     
-    std::cout << mme_msg << std::endl;
+    if (print_debug) 
+      std::cout << mme_msg << std::endl;
 
-    std::cout << "!!!!!!!" << std::endl;
-
-    //size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_slac_parm_req_t& msg, size_t size);
-
-    //std::cout << "******** SEND MME 2" << std::endl;
     return nullptr;
 }
 
