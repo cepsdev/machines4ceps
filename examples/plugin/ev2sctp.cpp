@@ -47,10 +47,30 @@ namespace ceps{
     return payload;
   }
 
+  template <typename Iter> bool set_val_nibbles(void*& payload, Iter from, Iter to, size_t nnibbles){
+    auto container = ceps::interpreter::mk_nodeset();
+    payload = (Nodebase_ptr) container;
+    bool hnibble = false;
+    for(auto it = from; (it != to) && nnibbles;){
+     container->children().push_back( hnibble ? mk_val(*it >> 4) : mk_val(*it & 0xF) );
+     it += hnibble ? 1: 0;
+     hnibble = !hnibble;
+     --nnibbles;
+    }
+    return payload;
+  }
+
+ 
   template <typename T> bool set_val(std::string name,T* from, T* to, scope_ref_t scope){
     auto sym = scope.insert(name);
     sym->category = ceps::parser_env::Symbol::Category::VAR;
     return set_val(sym->payload, from, to);
+  }
+
+ template <typename T> bool set_val_nibbles(std::string name,T* from, T* to, size_t nnibbles, scope_ref_t scope){
+    auto sym = scope.insert(name);
+    sym->category = ceps::parser_env::Symbol::Category::VAR;
+    return set_val_nibbles(sym->payload, from, to,nnibbles);
   }
 
   template <typename T> bool set_val(std::string name,T val,scope_ref_t scope){
@@ -58,6 +78,7 @@ namespace ceps{
     sym->category = ceps::parser_env::Symbol::Category::VAR;
     return set_val(sym->payload, val);
   }
+
  }
 }
 
@@ -79,13 +100,13 @@ namespace mme{
   uint16_t constexpr CM_AMP_MAP_CNF = 15;
 }
 
-struct cm_slac_parm_req_t {
+struct __attribute__((__packed__))  cm_slac_parm_req_t {
       uint8_t application_type;
       uint8_t security_type;
       uint8_t run_id [8];
 };
 
-struct cm_slac_parm_cnf_t {
+struct __attribute__((__packed__))  cm_slac_parm_cnf_t {
       uint8_t m_sound_target[6];
       uint8_t num_sounds;
       uint8_t time_out;
@@ -96,7 +117,7 @@ struct cm_slac_parm_cnf_t {
       uint8_t run_id [8];
 };
 
-struct cm_start_atten_char_ind_t{
+struct __attribute__((__packed__))  cm_start_atten_char_ind_t{
       uint8_t application_type;
       uint8_t security_type;
       uint8_t num_sounds;
@@ -106,7 +127,7 @@ struct cm_start_atten_char_ind_t{
       uint8_t run_id [8];
 };
 
-struct cm_mnbc_sound_ind_t{
+struct __attribute__((__packed__))  cm_mnbc_sound_ind_t{
       uint8_t application_type;
       uint8_t security_type;
       uint8_t sender_id[17];
@@ -116,7 +137,7 @@ struct cm_mnbc_sound_ind_t{
       uint8_t rnd[16];
 };
 
-struct cm_atten_char_ind_t{
+struct __attribute__((__packed__))  cm_atten_char_ind_t{
       uint8_t application_type;
       uint8_t security_type;
       uint8_t source_address[6];
@@ -127,7 +148,7 @@ struct cm_atten_char_ind_t{
       uint8_t atten_profile[59];
 };
 
-struct cm_atten_char_rsp_t{
+struct __attribute__((__packed__))  cm_atten_char_rsp_t{
       uint8_t application_type;
       uint8_t security_type;
       uint8_t source_address[6];
@@ -137,27 +158,26 @@ struct cm_atten_char_rsp_t{
       uint8_t result;
 };
 
-struct cm_atten_profile_ind_t{
+struct __attribute__((__packed__))  cm_atten_profile_ind_t{
       uint8_t pev_mac[6];
       uint8_t num_groups;
       uint8_t rsvd;
       uint8_t aag[58];
 };
 
-struct cm_validate_req_t{
+struct __attribute__((__packed__))  cm_validate_req_t{
       uint8_t signal_type;
       uint8_t timer;
       uint8_t result;
 };
 
-struct cm_validate_cnf_t{
+struct __attribute__((__packed__))  cm_validate_cnf_t{
       uint8_t signal_type;
       uint8_t toggle_num;
       uint8_t result;
 };
 
-
-struct cm_slac_match_req_t{
+struct __attribute__((__packed__))  cm_slac_match_req_t{
       uint8_t application_type;
       uint8_t security_type;
       uint16_t mvflength;
@@ -169,7 +189,7 @@ struct cm_slac_match_req_t{
       uint8_t rsvd [8];
 };
 
-struct cm_slac_match_cnf_t{
+struct __attribute__((__packed__))  cm_slac_match_cnf_t{
       uint8_t application_type;
       uint8_t security_type;
       uint16_t mvflength;
@@ -184,10 +204,10 @@ struct cm_slac_match_cnf_t{
       uint8_t nmk[16];
 };
 
-struct cm_set_key_req_t{
+struct __attribute__((__packed__))  cm_set_key_req_t{
       uint8_t key_type;
-      uint32_t my_nonce;
-      uint32_t your_nonce;
+      uint8_t my_nonce[4];
+      uint8_t your_nonce[4];
       uint8_t pid;
       uint16_t prn;
       uint8_t pmn;
@@ -197,16 +217,27 @@ struct cm_set_key_req_t{
       uint8_t new_key[16];
 };
 
-struct cm_amp_map_req_t{
+struct __attribute__((__packed__))  cm_amp_map_req_t{
       uint16_t amlen;
       uint8_t amdata[1];
 };
 
-struct cm_amp_map_cnf_t{
+struct __attribute__((__packed__))  cm_amp_map_cnf_t{
       uint8_t restype;
 };    
 
-struct homeplug_mme_generic{
+struct __attribute__((__packed__))  homeplug_mme_generic_header{
+  char oda[6];
+  char osa[6];
+  std::uint32_t vlan_tag;
+  std::uint16_t mtype;
+  std::uint8_t mmv;
+  std::uint16_t mmtype;
+  std::uint8_t fmi;
+  std::uint8_t fmsn;
+};
+
+struct __attribute__((__packed__))  homeplug_mme_generic{
   char oda[6];
   char osa[6];
   std::uint32_t vlan_tag;
@@ -290,6 +321,38 @@ size_t write_bytes(C const & vec, Iter beg, Iter end){
       }
       if (it == end) break;
     }
+  }
+  return written;
+}
+
+template<typename Iter>
+size_t write_nibbles(ceps::ast::Struct_ptr strct, Iter beg, Iter end){
+  using namespace ceps::ast;
+  auto sit = strct->children().begin();
+  size_t written = 0;
+  bool hnibble = false;
+  for(auto it = beg; it != end && sit != strct->children().end();++sit){
+    if (is<ceps::ast::Ast_node_kind::int_literal>(*sit)){
+      *it = hnibble ? ( (value(as_int_ref(*sit)) << 4) | (*it & 0xF) ) : value(as_int_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::long_literal>(*sit)){
+      *it = value(as_int64_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::float_literal>(*sit)){
+      *it = value(as_double_ref(*sit));
+      ++written;
+    }
+    else if (is<ceps::ast::Ast_node_kind::string_literal>(*sit)){
+      auto const & v = value(as_string_ref(*sit));
+      for(size_t i = 0; i < v.length() && it != end; ++i,++it){
+        *it = v.at(i);++written;
+      }
+      if (it == end) break;
+    }
+    it+=(hnibble?1:0);
+    hnibble = !hnibble;
   }
   return written;
 }
@@ -554,7 +617,7 @@ size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_slac_match_cnf_t
   return written;
 } 
 
-size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_set_key_req_t& msg, size_t size){
+size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_set_key_req_t& msg, size_t ){
   size_t written = 0;
   for(auto e : v){
     if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
@@ -593,11 +656,23 @@ size_t write(std::vector<ceps::ast::Nodebase_ptr> const & v, cm_amp_map_req_t& m
     auto& strct = *ceps::ast::as_struct_ptr(e);
     auto& name = ceps::ast::name(strct);
 
-    if (name == "amlen") 
+    if (name == "amlen"){ 
      written += write_bytes(&strct,((uint8_t*)&msg.amlen),((uint8_t*)&msg.amlen) + sizeof(msg.amlen));
-    else if (name == "amdata")
-     written += write_bytes(&strct,((uint8_t*)&msg.amdata),((uint8_t*)&msg.amdata) + std::min( size - sizeof(msg.amlen), (size_t) msg.amlen  ));
+     break;     
+    }
   }
+  
+  for(auto e : v){
+    if (!ceps::ast::is<ceps::ast::Ast_node_kind::structdef>(e)) continue;
+    auto& strct = *ceps::ast::as_struct_ptr(e);
+    auto& name = ceps::ast::name(strct);
+
+    if (name == "amdata"){
+     written += write_nibbles(&strct,((uint8_t*)&msg.amdata),((uint8_t*)&msg.amdata) + std::min( size - sizeof(msg.amlen), (size_t) ((msg.amlen + 1)/2)  ));
+     break;
+    }
+  }
+
   return written;
 } 
 
@@ -656,7 +731,7 @@ class Ev2sctp_plugin{
 };
 
   bool Ev2sctp_plugin::mme_msg_cm_slac_param_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_slac_parm_req_t slac_parm_req = msg->mmdata.cm_slac_parm_req;
+    cm_slac_parm_req_t& slac_parm_req = msg->mmdata.cm_slac_parm_req;
     ceps::interpreter::set_val("mme_type",mme::CM_SLAC_PARM_REQ,scope);
     ceps::interpreter::set_val("mme_application_type",slac_parm_req.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",slac_parm_req.security_type,scope);
@@ -665,7 +740,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_slac_parm_cnf_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_slac_parm_cnf_t slac_parm_cnf = msg->mmdata.cm_slac_parm_cnf;
+    cm_slac_parm_cnf_t& slac_parm_cnf = msg->mmdata.cm_slac_parm_cnf;
     ceps::interpreter::set_val("mme_type",mme::CM_SLAC_PARM_CNF,scope);
     ceps::interpreter::set_val("mme_application_type",slac_parm_cnf.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",slac_parm_cnf.security_type,scope);
@@ -679,7 +754,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_start_atten_char_ind_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_start_atten_char_ind_t cm_start_atten_char_ind = msg->mmdata.cm_start_atten_char_ind;
+    cm_start_atten_char_ind_t& cm_start_atten_char_ind = msg->mmdata.cm_start_atten_char_ind;
     ceps::interpreter::set_val("mme_type",mme::CM_START_ATTEN_CHAR_IND,scope);
     ceps::interpreter::set_val("mme_application_type",cm_start_atten_char_ind.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",cm_start_atten_char_ind.security_type,scope);
@@ -692,7 +767,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_mnbc_sound_ind_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_mnbc_sound_ind_t cm_mnbc_sound_ind = msg->mmdata.cm_mnbc_sound_ind;
+    cm_mnbc_sound_ind_t& cm_mnbc_sound_ind = msg->mmdata.cm_mnbc_sound_ind;
     ceps::interpreter::set_val("mme_type",mme::CM_MNBC_SOUND_IND,scope);
     ceps::interpreter::set_val("mme_application_type",cm_mnbc_sound_ind.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",cm_mnbc_sound_ind.security_type,scope);
@@ -704,7 +779,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_atten_char_ind_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_atten_char_ind_t cm_atten_char_ind = msg->mmdata.cm_atten_char_ind;
+    cm_atten_char_ind_t& cm_atten_char_ind = msg->mmdata.cm_atten_char_ind;
     ceps::interpreter::set_val("mme_type",mme::CM_ATTEN_CHAR_IND,scope);
     ceps::interpreter::set_val("mme_application_type",cm_atten_char_ind.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",cm_atten_char_ind.security_type,scope);
@@ -718,7 +793,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_atten_char_rsp_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_atten_char_rsp_t cm_atten_char_rsp = msg->mmdata.cm_atten_char_rsp;
+    cm_atten_char_rsp_t& cm_atten_char_rsp = msg->mmdata.cm_atten_char_rsp;
     ceps::interpreter::set_val("mme_type",mme::CM_ATTEN_CHAR_RSP,scope);
     ceps::interpreter::set_val("mme_application_type",cm_atten_char_rsp.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",cm_atten_char_rsp.security_type,scope);
@@ -731,7 +806,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_atten_profile_ind_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_atten_profile_ind_t cm_atten_profile_ind = msg->mmdata.cm_atten_profile_ind;
+    cm_atten_profile_ind_t& cm_atten_profile_ind = msg->mmdata.cm_atten_profile_ind;
     ceps::interpreter::set_val("mme_type",mme::CM_ATTEN_PROFILE_IND,scope);
     ceps::interpreter::set_val("mme_pev_mac",cm_atten_profile_ind.pev_mac,cm_atten_profile_ind.pev_mac+sizeof(cm_atten_profile_ind.pev_mac),scope);  
     ceps::interpreter::set_val("mme_num_groups",cm_atten_profile_ind.num_groups,scope);
@@ -740,7 +815,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_validate_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_validate_req_t cm_validate_req = msg->mmdata.cm_validate_req;
+    cm_validate_req_t& cm_validate_req = msg->mmdata.cm_validate_req;
     ceps::interpreter::set_val("mme_type",mme::CM_VALIDATE_REQ,scope);
     ceps::interpreter::set_val("mme_signal_type",cm_validate_req.signal_type,scope);  
     ceps::interpreter::set_val("mme_timer",cm_validate_req.timer,scope);  
@@ -749,7 +824,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_validate_cnf_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_validate_cnf_t cm_validate_cnf = msg->mmdata.cm_validate_cnf;
+    cm_validate_cnf_t& cm_validate_cnf = msg->mmdata.cm_validate_cnf;
     ceps::interpreter::set_val("mme_type",mme::CM_VALIDATE_CNF,scope);
     ceps::interpreter::set_val("mme_signal_type",cm_validate_cnf.signal_type,scope);  
     ceps::interpreter::set_val("mme_toggle_num",cm_validate_cnf.toggle_num,scope);  
@@ -758,7 +833,7 @@ class Ev2sctp_plugin{
   }
 
   bool Ev2sctp_plugin::mme_msg_cm_slac_match_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_slac_match_req_t cm_slac_match_req = msg->mmdata.cm_slac_match_req;
+    cm_slac_match_req_t& cm_slac_match_req = msg->mmdata.cm_slac_match_req;
     ceps::interpreter::set_val("mme_type",mme::CM_SLAC_MATCH_REQ,scope);
     ceps::interpreter::set_val("mme_application_type",cm_slac_match_req.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",cm_slac_match_req.security_type,scope);
@@ -771,7 +846,7 @@ class Ev2sctp_plugin{
     return true;
   }
   bool Ev2sctp_plugin::mme_msg_cm_slac_match_cnf_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_slac_match_cnf_t cm_slac_match_cnf = msg->mmdata.cm_slac_match_cnf;
+    cm_slac_match_cnf_t& cm_slac_match_cnf = msg->mmdata.cm_slac_match_cnf;
     ceps::interpreter::set_val("mme_type",mme::CM_SLAC_MATCH_CNF,scope);
     ceps::interpreter::set_val("mme_application_type",cm_slac_match_cnf.application_type,scope);
     ceps::interpreter::set_val("mme_security_type",cm_slac_match_cnf.security_type,scope);
@@ -786,11 +861,11 @@ class Ev2sctp_plugin{
     return true;
   }
   bool Ev2sctp_plugin::mme_msg_cm_set_key_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_set_key_req_t cm_set_key_req = msg->mmdata.cm_set_key_req;
+    cm_set_key_req_t& cm_set_key_req = msg->mmdata.cm_set_key_req;
     ceps::interpreter::set_val("mme_type",mme::CM_SET_KEY_REQ,scope);
     ceps::interpreter::set_val("mme_key_type",cm_set_key_req.key_type,scope);
-    ceps::interpreter::set_val("mme_my_nonce",cm_set_key_req.my_nonce,scope);
-    ceps::interpreter::set_val("mme_your_nonce",cm_set_key_req.your_nonce,scope);
+    ceps::interpreter::set_val("mme_my_nonce",cm_set_key_req.my_nonce,cm_set_key_req.my_nonce+sizeof(cm_set_key_req.my_nonce),scope);
+    ceps::interpreter::set_val("mme_your_nonce",cm_set_key_req.your_nonce,cm_set_key_req.your_nonce+sizeof(cm_set_key_req.your_nonce),scope);
     ceps::interpreter::set_val("mme_pid",cm_set_key_req.pid,scope);
     ceps::interpreter::set_val("mme_prn",cm_set_key_req.prn,scope);
     ceps::interpreter::set_val("mme_pmn",cm_set_key_req.pmn,scope);
@@ -805,17 +880,17 @@ class Ev2sctp_plugin{
     return true;
   }
   bool Ev2sctp_plugin::mme_msg_cm_amp_map_req_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_amp_map_req_t cm_amp_map_req = msg->mmdata.cm_amp_map_req;
+    cm_amp_map_req_t& cm_amp_map_req = msg->mmdata.cm_amp_map_req;
     ceps::interpreter::set_val("mme_type",mme::CM_AMP_MAP_REQ,scope);
     ceps::interpreter::set_val("mme_amlen",cm_amp_map_req.amlen,scope);
-    ceps::interpreter::set_val("mme_amdata",cm_amp_map_req.amdata,cm_amp_map_req.amdata+std::min((size_t)cm_amp_map_req.amlen, 
-               mme_size -  sizeof(cm_amp_map_cnf_t) + 1) ,scope);
+    ceps::interpreter::set_val_nibbles("mme_amdata",cm_amp_map_req.amdata,cm_amp_map_req.amdata+std::min((size_t)( (cm_amp_map_req.amlen+1)/2), 
+               mme_size -  sizeof(cm_amp_map_cnf_t) + 1) ,cm_amp_map_req.amlen,scope);
 
 
     return true;
   }
   bool Ev2sctp_plugin::mme_msg_cm_amp_map_cnf_setup_symtbl(homeplug_mme_generic* msg, size_t mme_size){
-    cm_amp_map_cnf_t cm_amp_map_cnf = msg->mmdata.cm_amp_map_cnf;
+    cm_amp_map_cnf_t& cm_amp_map_cnf = msg->mmdata.cm_amp_map_cnf;
     ceps::interpreter::set_val("mme_type",mme::CM_AMP_MAP_CNF,scope);
     ceps::interpreter::set_val("mme_restype",cm_amp_map_cnf.restype,scope);
 
@@ -937,6 +1012,12 @@ std::ostream& operator << (std::ostream & os, homeplug_mme_generic const & mme_m
    os << " (CM_SLAC_MATCH_REQ)\n";
   else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_CNF)
    os << " (CM_SLAC_MATCH_CNF)\n";
+  else if (mme_msg.mmtype == mme::CM_SET_KEY_REQ)
+   os << " (CM_SET_KEY_REQ)\n";
+  else if (mme_msg.mmtype == mme::CM_AMP_MAP_REQ)
+   os << " (CM_AMP_MAP_REQ)\n";
+  else if (mme_msg.mmtype == mme::CM_AMP_MAP_CNF)
+   os << " (CM_AMP_MAP_CNF)\n";
   else
    os << " (?)\n"; 
  
@@ -1155,8 +1236,49 @@ std::ostream& operator << (std::ostream & os, homeplug_mme_generic const & mme_m
       os << " " << (int)mme_msg.mmdata.cm_slac_match_cnf.nmk[i];
     }
     os << "\n";
-
-
+  } else if (mme_msg.mmtype == mme::CM_SET_KEY_REQ) { 
+    os << "\t";os << "key_type: " <<(int) mme_msg.mmdata.cm_set_key_req.key_type << "\n";
+    os << "\t";os << "my_nonce: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_set_key_req.my_nonce);++i){
+      os << " " << (int)mme_msg.mmdata.cm_set_key_req.my_nonce[i];
+    }
+    os << "\n";
+    os << "\t";os << "your_nonce: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_set_key_req.your_nonce);++i){
+      os << " " << (int)mme_msg.mmdata.cm_set_key_req.your_nonce[i];
+    }
+    os << "\n";
+    os << "\t";os << "pid: " <<(int) mme_msg.mmdata.cm_set_key_req.pid << "\n";
+    os << "\t";os << "prn: " <<(int) mme_msg.mmdata.cm_set_key_req.prn << "\n";
+    os << "\t";os << "pmn: " <<(int) mme_msg.mmdata.cm_set_key_req.pmn << "\n";
+    os << "\t";os << "cco_capability: " <<(int) mme_msg.mmdata.cm_set_key_req.cco_capability << "\n";
+    os << "\t";os << "nid: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_set_key_req.nid);++i){
+      os << " " << (int)mme_msg.mmdata.cm_set_key_req.nid[i];
+    }
+    os << "\n";
+    os << "\t";os << "new_eks: " <<(int) mme_msg.mmdata.cm_set_key_req.new_eks << "\n";
+    os << "\t";os << "new_key: " ;
+    for(size_t i = 0; i < sizeof(mme_msg.mmdata.cm_set_key_req.new_key);++i){
+      os << " " << (int)mme_msg.mmdata.cm_set_key_req.new_key[i];
+    }
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_AMP_MAP_REQ) {
+    os << "\t";os << "amlen: " <<(int) mme_msg.mmdata.cm_amp_map_req.amlen << "\n";
+    auto bytes = (size_t) (mme_msg.mmdata.cm_amp_map_req.amlen / 2);
+    bool hnibble = false;
+    os << "\t";
+    os << "amdata: ";
+    for(size_t j = 0; j < bytes; ){
+      os << (int)  ( hnibble ? mme_msg.mmdata.cm_amp_map_req.amdata[j] >> 4 : mme_msg.mmdata.cm_amp_map_req.amdata[j] & 0xF)<< " ";
+      j += hnibble ? 1 : 0;
+      hnibble = !hnibble;
+    }
+    if (mme_msg.mmdata.cm_amp_map_req.amlen % 2)
+      os << (int)   (mme_msg.mmdata.cm_amp_map_req.amdata[bytes] & 0xF);
+    os << "\n";
+  } else if (mme_msg.mmtype == mme::CM_AMP_MAP_CNF) { 
+    os << "\t";os << "res_type: " <<(int) mme_msg.mmdata.cm_amp_map_cnf.restype << "\n";
   } else {
     auto p_end = (uint8_t*)&mme_msg.mmdata + sizeof(mme_msg.mmdata);
     auto ctr = 0;
@@ -1198,7 +1320,7 @@ static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t param
     if (!mme_type.has_value()) return nullptr;
     char mme_msg_buffer[sizeof(homeplug_mme_generic)*2] = {0};
     homeplug_mme_generic& mme_msg = *((homeplug_mme_generic*)mme_msg_buffer);
-    homeplug_mme_generic mme_msg2;
+    auto payload_size = sizeof(homeplug_mme_generic) - sizeof(homeplug_mme_generic_header);
 
     mme_msg.mmtype = mme_type.value();
     if(fmi.has_value()) mme_msg.fmi = fmi.value();
@@ -1211,31 +1333,33 @@ static ceps::ast::node_t ev2sctp_send_mme(ceps::ast::node_callparameters_t param
     if(vlan_tag.has_value()) mme_msg.vlan_tag = vlan_tag.value();
 
     if (mme_msg.mmtype == mme::CM_SLAC_PARM_REQ)
-     write(payload.nodes(), mme_msg.mmdata.cm_slac_parm_req, sizeof(mme_msg.mmdata.cm_slac_parm_req));
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_parm_req, payload_size);
     else if (mme_msg.mmtype == mme::CM_SLAC_PARM_CNF)
-     write(payload.nodes(), mme_msg.mmdata.cm_slac_parm_cnf, sizeof(mme_msg.mmdata.cm_slac_parm_cnf));
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_parm_cnf, payload_size);
     else if (mme_msg.mmtype == mme::CM_START_ATTEN_CHAR_IND)
-     write(payload.nodes(), mme_msg.mmdata.cm_start_atten_char_ind, sizeof(mme_msg.mmdata.cm_start_atten_char_ind));
+     write(payload.nodes(), mme_msg.mmdata.cm_start_atten_char_ind, payload_size);
     else if (mme_msg.mmtype == mme::CM_MNBC_SOUND_IND)
-     write(payload.nodes(), mme_msg.mmdata.cm_mnbc_sound_ind, sizeof(mme_msg.mmdata.cm_mnbc_sound_ind));
+     write(payload.nodes(), mme_msg.mmdata.cm_mnbc_sound_ind, payload_size);
     else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_IND)
-     write(payload.nodes(), mme_msg.mmdata.cm_atten_char_ind, sizeof(mme_msg.mmdata.cm_atten_char_ind));
+     write(payload.nodes(), mme_msg.mmdata.cm_atten_char_ind, payload_size);
     else if (mme_msg.mmtype == mme::CM_ATTEN_CHAR_RSP)
-     write(payload.nodes(), mme_msg.mmdata.cm_atten_char_rsp, sizeof(mme_msg.mmdata.cm_atten_char_rsp));
+     write(payload.nodes(), mme_msg.mmdata.cm_atten_char_rsp, payload_size);
     else if (mme_msg.mmtype == mme::CM_ATTEN_PROFILE_IND)
-     write(payload.nodes(), mme_msg.mmdata.cm_atten_profile_ind, sizeof(mme_msg.mmdata.cm_atten_profile_ind));
+     write(payload.nodes(), mme_msg.mmdata.cm_atten_profile_ind, payload_size);
     else if (mme_msg.mmtype == mme::CM_VALIDATE_REQ)
-     write(payload.nodes(), mme_msg.mmdata.cm_validate_req, sizeof(mme_msg.mmdata.cm_validate_req));
+     write(payload.nodes(), mme_msg.mmdata.cm_validate_req, payload_size);
     else if (mme_msg.mmtype == mme::CM_VALIDATE_CNF)
-     write(payload.nodes(), mme_msg.mmdata.cm_validate_cnf, sizeof(mme_msg.mmdata.cm_validate_cnf));
+     write(payload.nodes(), mme_msg.mmdata.cm_validate_cnf, payload_size);
     else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_REQ)
-     write(payload.nodes(), mme_msg.mmdata.cm_slac_match_req, sizeof(mme_msg.mmdata.cm_slac_match_req));
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_match_req, payload_size);
     else if (mme_msg.mmtype == mme::CM_SLAC_MATCH_CNF)
-     write(payload.nodes(), mme_msg.mmdata.cm_slac_match_cnf, sizeof(mme_msg.mmdata.cm_slac_match_cnf));
+     write(payload.nodes(), mme_msg.mmdata.cm_slac_match_cnf, payload_size);
+    else if (mme_msg.mmtype == mme::CM_SET_KEY_REQ)
+     write(payload.nodes(), mme_msg.mmdata.cm_set_key_req, payload_size);
     else if (mme_msg.mmtype == mme::CM_AMP_MAP_REQ)
-     write(payload.nodes(), mme_msg.mmdata.cm_amp_map_req, sizeof(mme_msg.mmdata.cm_amp_map_req));
+     write(payload.nodes(), mme_msg.mmdata.cm_amp_map_req, payload_size);
     else if (mme_msg.mmtype == mme::CM_AMP_MAP_CNF)
-     write(payload.nodes(), mme_msg.mmdata.cm_amp_map_cnf, sizeof(mme_msg.mmdata.cm_amp_map_cnf));
+     write(payload.nodes(), mme_msg.mmdata.cm_amp_map_cnf, payload_size);
     
     if (print_debug) 
       std::cout << mme_msg << std::endl;
@@ -1339,13 +1463,23 @@ void tests::cm_set_key_cnf(){
 }
 
 void tests::cm_amp_map_req(){
-  homeplug_mme_generic msg {.mmtype = mme::CM_AMP_MAP_REQ};
-   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+  //expectation: payload{amlen{9;};amdata{1;2;3;4;5;6;7;8;9;};};
+  homeplug_mme_generic msg {0};
+  msg.mmtype = mme::CM_AMP_MAP_REQ;
+  msg.mmdata.cm_amp_map_req.amlen = 9;
+  msg.mmdata.cm_amp_map_req.amdata[0] = 33;
+  msg.mmdata.cm_amp_map_req.amdata[1] = 67;
+  msg.mmdata.cm_amp_map_req.amdata[2] = 101;
+  msg.mmdata.cm_amp_map_req.amdata[3] = 135;
+  msg.mmdata.cm_amp_map_req.amdata[4] = 9;
+  plugn.handle_homeplug_mme(&msg, sizeof(msg));
 }
 
 void tests::cm_amp_map_cnf(){
+  //expectation: payload{restype{11;};};
   homeplug_mme_generic msg {.mmtype = mme::CM_AMP_MAP_CNF};
-   plugn.handle_homeplug_mme(&msg, sizeof(msg));
+  msg.mmdata.cm_amp_map_cnf.restype = 11;
+  plugn.handle_homeplug_mme(&msg, sizeof(msg));
 }
  
 

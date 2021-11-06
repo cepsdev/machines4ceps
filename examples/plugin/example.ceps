@@ -553,6 +553,9 @@ sm{
            send_cm_validate_cnf;
            send_cm_slac_match_req;
            send_cm_slac_match_cnf;
+           send_cm_set_key_req;
+           send_cm_amp_map_req;
+           send_cm_amp_map_cnf;
         };
     on_enter{
         start_periodic_timer(0.25*s,evSendMME);
@@ -921,7 +924,86 @@ sm{
                     }; 
               } );
         };
-  
+
+        doSend_cm_set_key_req{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_SET_KEY_REQ;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        key_type{8;255;255;255;255;};
+                        my_nonce{8;9;10;11;255;255;255;255;};
+                        your_nonce{8;9;10;11;255;255;255;255;};
+                        pid{10;255;255;255;255;};
+                        prn{6;1;8;9;10;11;12;13;255;255;255;255;};
+                        pmn{6;7;8;9;10;11;12;13;255;255;255;255;};
+                        cco_capability{6;7;8;9;10;11;12;13;255;255;255;255;};
+                        nid{6;7;8;9;10;11;12;13;255;255;255;255;};
+                        new_eks{8;255;255;255;255;};
+                        new_key{
+                            for (j : 1 .. 16) {4*j;} 255;255;
+                        };
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+        doSend_cm_amp_map_req{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_AMP_MAP_REQ;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        val am_len = 9;
+                        amlen{am_len;0;};
+                        amdata{
+                            for(i : 1 .. am_len) {i;}
+                        };
+                        // amdata = [33,67,101,135,9]
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
+        doSend_cm_amp_map_cnf{
+          send_mme(
+              mme{ 
+                    header{
+                        oda{1;2.5;"ABCDEF";80;90;100;110;120;130;};
+                        osa{2;4;6;8;10;12;};
+                        vlan_tag{233;};
+                        mtype{256;};
+                        mmv{257;};
+                        mmtype{CM_AMP_MAP_CNF;};
+                        fmi{2;};
+                        fmsn{3;};
+                    }; 
+                    payload{
+                        restype{8;255;255;255;255;};
+                    };
+                    debug{
+                        print_message{stdout;};
+                    }; 
+              } );
+        };
     };
     t{Initial; send_cm_slac_parm_req; evSendMME; doSend_cm_slac_parm_req;};
     t{send_cm_slac_parm_req;send_cm_slac_parm_cnf;evSendMME;doSend_send_cm_slac_parm_cnf;};
@@ -934,6 +1016,10 @@ sm{
     t{send_cm_validate_req;send_cm_validate_cnf;evSendMME;doSend_cm_validate_cnf;};
     t{send_cm_validate_cnf;send_cm_slac_match_req;evSendMME;doSend_cm_slac_match_req;};
     t{send_cm_slac_match_req;send_cm_slac_match_cnf;evSendMME;doSend_cm_slac_match_cnf;};
+    t{send_cm_slac_match_cnf;send_cm_set_key_req;evSendMME;doSend_cm_set_key_req;};
+    t{send_cm_set_key_req;send_cm_amp_map_req;evSendMME;doSend_cm_amp_map_req;};
+    t{send_cm_amp_map_req;send_cm_amp_map_cnf;evSendMME;doSend_cm_amp_map_cnf;};
+
 
 };
 
