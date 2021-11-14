@@ -1,8 +1,0 @@
-package{
- hub_directory{
- };
-};
-
-Simulation{
- print("Master Hub Online.","\n");
-};
