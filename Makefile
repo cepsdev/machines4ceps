@@ -15,7 +15,7 @@ objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_
    generic_tcp_communication.o ceps_websocket.o sm_sim_core_timer.o\
   ws_api.o virtual_can_api.o streamtransform.o docgen_formats.o docgen_sm.o docgen_macros.o docgen_docwriter_ansi_console.o docgen_docwriter_html5.o docgen_docwriter_markdown_jira_style.o docgen_docwriter_factory.o docgen_theme_factory.o  docgen.o docgen_ifelse.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
-CEPSLIB := ../ceps/core/bin$(TARGET)/libcepscore.a
+CEPSLIB := ../ceps/core/$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
 cepslibs := ../ceps/core/bin
 pugisrc = ../pugixml/src
@@ -30,19 +30,8 @@ $(TARGET)/$(SM4CEPSLIB): $(objfiles)
 	rm -f $(TARGET)/$(SM4CEPSLIB);\
 	$(AR) rcs $(TARGET)/$(SM4CEPSLIB) $(objfiles)
 
-$(TARGET)/ceps: $(objfiles) $(cepslibs)/ceps_interpreter.o
-	$(CXX)   $(cflags) $(includes) -L"../cryptopp" \
-	$(cepslibs)/ceps_ast.o \
-	$(cepslibs)/ceps.tab.o \
-	$(cepslibs)/ceps_interpreter.o \
-	$(cepslibs)/cepsparserdriver.o \
-	$(cepslibs)/cepsruntime.o \
-	$(cepslibs)/cepslexer.o \
-	$(cepslibs)/symtab.o \
-	$(cepslibs)/ceps_interpreter_loop.o \
-	$(cepslibs)/ceps_interpreter_nodeset.o \
-	$(cepslibs)/ceps_interpreter_macros.o \
-	$(cepslibs)/ceps_interpreter_functions.o \
+$(TARGET)/ceps: $(objfiles) $(CEPSLIB)
+	$(CXX)   $(cflags) $(includes) -L"../cryptopp" -L"../ceps/core/$(TARGET)" \
 	$(TARGET)/main.o \
 	$(TARGET)/state_machine_simulation_core.o \
 	$(TARGET)/state_machines.o \
@@ -98,7 +87,7 @@ $(TARGET)/ceps: $(objfiles) $(cepslibs)/ceps_interpreter.o
 	$(TARGET)/ceps_websocket.o \
 	$(TARGET)/generic_tcp_communication.o \
 	$(TARGET)/sm_sim_core_timer.o \
-	$(TARGET)/docgen_docwriter_factory.o $(TARGET)/docgen_ifelse.o $(TARGET)/docgen_docwriter_html5.o -o $(TARGET)/ceps -ldl -lpthread -lrt -lcryptopp
+	$(TARGET)/docgen_docwriter_factory.o $(TARGET)/docgen_ifelse.o $(TARGET)/docgen_docwriter_html5.o -o $(TARGET)/ceps -ldl -lpthread -lrt -lcryptopp -lcepscore
 
 $(TARGET)/main.o: src/main.cpp
 	$(CXX)   $(cflags) $(includes) src/main.cpp -c -o $(TARGET)/main.o
