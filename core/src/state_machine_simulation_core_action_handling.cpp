@@ -444,9 +444,11 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	if (scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(scope_ptr);
     if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
 	auto ppp = smc->ceps_env_current().get_global_symboltable().lookup("mme_type");
+
+	bool symbols_found{false};
 	auto r = ceps::interpreter::evaluate_generic(node,
 			smc->ceps_env_current().get_global_symboltable(),
-			smc->ceps_env_current().interpreter_env(),root_node,nullptr,nullptr	);
+			smc->ceps_env_current().interpreter_env(),root_node,nullptr,nullptr,symbols_found	);
 	if (sms_global_scope) { smc->ceps_env_current().get_global_symboltable().scopes.pop_back();}
 	if (scope) {smc->ceps_env_current().get_global_symboltable().scopes.pop_back();scope_ptr.reset();}
 
@@ -689,6 +691,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 				//if (r) std::cerr <<"===> "<< *r << std::endl;
                 //if(r) delete r;
 			}
+		} else {
+            auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
 		}
 	}
 	if (verbose_log) log() << "[EXECUTE STATEMENTS][END]\n";
