@@ -23,12 +23,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <time.h>
 #include "core/include/base_defs.hpp"
 
-extern std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
-
-static bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
-							std::string & func_name,
-							std::vector<ceps::ast::Nodebase_ptr>& args);
-
 extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
 {
 	if (r == nullptr) return;
@@ -43,7 +37,7 @@ extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_
 		using namespace ceps::ast;
 		std::string func_name;
 		std::vector<ceps::ast::Nodebase_ptr> args;
-		read_func_call_values(smc,r,func_name,args);
+		sm_action_read_func_call_values(smc,r,func_name,args);
 
 		if (func_name == "argv")
 		{
@@ -132,9 +126,10 @@ extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodeb
 	return "";
 }
 
-static bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
-							std::string & func_name,
-							std::vector<ceps::ast::Nodebase_ptr>& args)
+bool sm_action_read_func_call_values(State_machine_simulation_core* smc,	
+					ceps::ast::Nodebase_ptr root_node,
+					std::string & func_name,
+					std::vector<ceps::ast::Nodebase_ptr>& args)
 {
 	try
 	{
@@ -150,12 +145,6 @@ static bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast:
 	}
 	return true;
 }
-
-
-
-
-
-
 
 #if 0
 	struct timer_table_entry_t{
@@ -383,6 +372,13 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	 	 	 	  	  	  	  	  	  	  	  	  	  	  	  ceps::ast::Nodebase_ptr rhs,
 	 	 	 	  	  	  	  	  	  	  	  	  	  	  	  void* cxt,ceps::ast::Nodebase_ptr parent_node)
 {
+	if (ceps::ast::op(*binop) == '='){
+		return sm_action_assignment(	binop,  	  	  	  	  	  	  	  	  
+										lhs ,
+	 	 	 	  	  	  	  	  	  	rhs,
+										(State_machine_simulation_core*) cxt,
+										nullptr);
+	}
 	if (cxt == nullptr) return nullptr;
 	auto smc = (State_machine_simulation_core*)cxt;
 	if (ceps::ast::op(*binop) == '.' && node_isrw_state(lhs))
@@ -475,228 +471,6 @@ void* State_machine_simulation_core::evaluate_fragment_in_global_context(void* n
 									p,
 									nullptr,
 									static_cast<ceps::parser_env::Scope*>(scope));
-}
-
-
-extern void define_a_struct(State_machine_simulation_core*,ceps::ast::Struct_ptr sp, std::map<std::string, ceps::ast::Nodebase_ptr> & vars,std::string prefix);
-
-ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
-		State_machine* containing_smp,
-		ceps::ast::Nodebase_ptr ac_seq)
-{
-	using namespace std;
-	using namespace std::chrono;
-	DEBUG_FUNC_PROLOGUE
-	const auto verbose_log = false;
-
-	if (ac_seq == nullptr) return nullptr;
-	if (ac_seq->kind() != ceps::ast::Ast_node_kind::structdef && ac_seq->kind() != ceps::ast::Ast_node_kind::scope) return nullptr;
-	auto actions = ceps::ast::nlf_ptr(ac_seq);
-	if (verbose_log) log() << "[EXECUTE STATEMENTS][START]\n";
-	for(auto & n : actions->children())
-	{
-		if (verbose_log)log() << "[EXECUTE STATEMENT]" << *n << "\n";
-
-		if (n->kind() == ceps::ast::Ast_node_kind::ret)
-		{
-			auto & node = as_return_ref(n);
-			return eval_locked_ceps_expr(this,containing_smp,node.children()[0],n);
-
-		} else	if ( is_assignment_op(n) )
-		{
-			
-			auto & node = as_binop_ref(n);
-			std::string state_id;
-			if (is_assignment_to_guard(node))
-			{
-				eval_guard_assign(node);
-			} else if (is_assignment_to_state(node,state_id))
-			{
-				auto rhs = eval_locked_ceps_expr(this,containing_smp,node.right(),n);
-				if (rhs == nullptr) continue;
-				if (node.right()->kind() == ceps::ast::Ast_node_kind::identifier)
-				{
-					std::lock_guard<std::recursive_mutex>g(states_mutex());
-					std::string id = ceps::ast::name(ceps::ast::as_id_ref(node.right()));
-					auto sym = this->ceps_env_current().get_global_symboltable().lookup(id);
-					if (sym != nullptr) {
-					  if (sym->payload) {get_global_states()[state_id] = (ceps::ast::Nodebase_ptr)sym->payload;}
-					} else {
-					 auto it = type_definitions().find(id);
-					 if (it == type_definitions().end())
-							fatal_(-1,id+" is not a type.\n");
-					 define_a_struct(this,ceps::ast::as_struct_ptr(it->second),get_global_states(),name(as_symbol_ref(node.left())) );
-					}
-				} else 	{ 
-					ceps::ast::Nodebase_ptr old_value {nullptr};
-					{ 
-						std::lock_guard<std::recursive_mutex> g{states_mutex()};
-						old_value = get_global_states()[state_id];
-						get_global_states()[state_id] = rhs->clone();
-					}					  
-					if (old_value) delete old_value;
-					//delete rhs;
-				}
-			}
-			else {
-				std::stringstream ss;ss << *n;
-			 	fatal_(-1,"Unsupported assignment:"+ss.str()+"\n");
-			}
-		} else if (n->kind() == ceps::ast::Ast_node_kind::identifier) {
-			if (containing_smp != nullptr)
-			{
-				auto it = containing_smp->find_action(ceps::ast::name(ceps::ast::as_id_ref(n)));
-				if (it != /*containing_smp->actions().end()*/nullptr && it->body() != nullptr){
-					execute_action_seq(containing_smp,it->body());
-					continue;
-				}
-			}
-
-			auto it = global_funcs().find(name(ceps::ast::as_id_ref(n)));
-			if (it != global_funcs().end()){
-				auto body = it->second;
-				execute_action_seq(nullptr,body);continue;
-			}
-			std::stringstream ss;ss << *n;
-			fatal_(-1,"Invalid statement:"+ss.str());
-		} else if (n->kind() == ceps::ast::Ast_node_kind::ifelse) {
-			using namespace ceps::ast;
-
-			auto ifelse = as_ifelse_ptr(n);
-			Nodebase_ptr cond = eval_locked_ceps_expr(this,containing_smp,ifelse->children()[0],n);
-			bool take_left_branch{true};
-			bool erroneous_cond{false};
-
-			if (is<Ast_node_kind::nodeset>(cond)){
-				auto& set_of_nodes{as_ast_nodeset_ref(cond)};
-				if (!set_of_nodes.children().size()) take_left_branch = false;
-				else{
-					auto p = set_of_nodes.children()[0];
-					if (is<Ast_node_kind::int_literal>(p)) take_left_branch = value(as_int_ref(p)) != 0;
-					else if (is<Ast_node_kind::float_literal>(p)) take_left_branch = value(as_double_ref(p)) != 0;
-					else if (is<Ast_node_kind::string_literal>(p)) take_left_branch = value(as_string_ref(p)) != "1";
-					else erroneous_cond = true;
-				}
-			} else if (is<Ast_node_kind::int_literal>(cond) )
-				take_left_branch = value(as_int_ref(cond)) != 0;
-			else if (is<Ast_node_kind::float_literal>(cond) ) 
-			    take_left_branch = value(as_double_ref(cond)) != 0;
-			else  erroneous_cond = true;
-			
-
-			if (erroneous_cond){
-				std::stringstream ss; ss << *cond;
-				fatal_(-1,"Expression in conditional illformed: >>"+ ss.str()+"<<.");
-			}
-			
-			Nodebase_ptr branch_to_take = nullptr;
-
-			if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
-			else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
-			if (branch_to_take == nullptr) continue;
-			Nodebase_ptr result_of_branch = nullptr;
-			if (branch_to_take->kind() != Ast_node_kind::structdef && branch_to_take->kind() != Ast_node_kind::scope)
-			{
-				Scope scope(branch_to_take);scope.owns_children() = false;
-				result_of_branch=execute_action_seq(containing_smp,&scope);
-				scope.children().clear();
-			} else { result_of_branch=execute_action_seq(containing_smp,branch_to_take);}
-			if (result_of_branch != nullptr) return result_of_branch;
-		} else if (n->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "Event")
-		{
-			//log() << "[QUEUEING EVENT][" << ceps::ast::name(ceps::ast::as_symbol_ref(n)) <<"]" << "\n";
-			event_t ev(ceps::ast::name(ceps::ast::as_symbol_ref(n)));
-			ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
-			ev.already_sent_to_out_queues_ = false;
-			enqueue_event(ev,true);
-		} else if (n->kind() == ceps::ast::Ast_node_kind::func_call)
-		{
-			std::vector<ceps::ast::Nodebase_ptr> args;
-			std::string  func_name;
-			if (!read_func_call_values(this,n, func_name,args)){
-				std::stringstream ss;
-				ss << *n << "\n";
-				fatal_(-1,"Internal Error:State_machine_simulation_core::execute_action_seq:"+ss.str());
-			}
-
-			if (is_global_event(func_name))
-			{
-				//log() << "[QUEUEING EVENT WITH PAYLOAD][" << func_name <<"]" << "\n";
-				{
-					for(size_t i = 0; i != args.size(); ++i)
-					{
-						args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
-
-						//args[i]  = ceps::interpreter::evaluate(args[i],ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env(),n	);
-					}
-				}
-				event_t ev(func_name,args);
-				ev.already_sent_to_out_queues_ = false;
-				ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
-				enqueue_event(ev,true);
-			}
-
-			else if (func_name == "timer" || func_name == "start_timer" || func_name == "start_periodic_timer")
-			{
-				for(size_t i = 0; i != args.size(); ++i)
-				 {
-					args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
-				 }
-				exec_action_timer(args,func_name == "start_periodic_timer");
-			}
-            else if (func_name == "print")
-			{
-				for(auto& n : args) {
-					n = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
-				}
-                std::stringstream ss;
-                bool do_flush = false;
-				for(auto& n : args)
-				{
-                    if (n->kind() == ceps::ast::Ast_node_kind::byte_array){
-					 auto& seq = ceps::ast::bytes(ceps::ast::as_byte_array_ref(n));
-                     for(auto c: seq){
-                    	 ss << (int)c << " ";
-                     }
-                    } else if (n->kind() == ceps::ast::Ast_node_kind::symbol &&
-                               ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "IOManip" &&
-                               ceps::ast::name(ceps::ast::as_symbol_ref(n)) == "endl" ) do_flush = true;
-					else if (ceps::ast::is<ceps::ast::Ast_node_kind::nodeset>(n) && ceps::ast::as_ast_nodeset_ref(n).children().size() == 1 )
-						ss << default_text_representation(ceps::ast::as_ast_nodeset_ref(n).children()[0]);
-                    else ss << default_text_representation(n);
-                }//for
-                if(live_logger()){
-                   this->live_logger_out()->log_console(ss.str());
-                } else {std::cout << ss.str(); if (do_flush) std::cout << std::endl; }
-				//for(auto n : args) delete(n);
-
-			}
-			else if (func_name == "kill_timer" || func_name == "stop_timer")
-			{
-
-				if (args.size() == 0){
-					DEBUG << "[KILLING ALL TIMERS]\n";
-
-					this->kill_named_timer(std::string{});
-				}else{
-					std::string timer_id;
-					if (args[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-						fatal_(-1,"stop_timer: first argument (the timer id) has to be an unbound identifier.\n");
-					timer_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
-					DEBUG << "[KILLING NAMED TIMERS][TIMER_ID="<< timer_id <<"]\n";
-					this->kill_named_timer(timer_id);
-				}
-			} else{
-                auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
-				//if (r) std::cerr <<"===> "<< *r << std::endl;
-                //if(r) delete r;
-			}
-		} else {
-            auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
-		}
-	}
-	if (verbose_log) log() << "[EXECUTE STATEMENTS][END]\n";
-	return nullptr;
 }
 
 void State_machine_simulation_core::regfn(std::string name, int(*fn) ()) {

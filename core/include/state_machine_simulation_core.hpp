@@ -1008,4 +1008,34 @@ namespace sm4ceps{
 };
 }
 
+std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
+
+ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+	State_machine* containing_smp,
+	ceps::ast::Nodebase_ptr node,
+	ceps::ast::Nodebase_ptr root_node,
+	ceps::parser_env::Scope* scope);
+
+ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
+	State_machine* containing_smp,
+	ceps::ast::Nodebase_ptr node,
+	ceps::ast::Nodebase_ptr root_node);
+
+bool sm_action_read_func_call_values(State_machine_simulation_core* smc,	
+	ceps::ast::Nodebase_ptr root_node,
+	std::string & func_name,
+	std::vector<ceps::ast::Nodebase_ptr>& args);
+
+void define_a_struct(State_machine_simulation_core*,
+	ceps::ast::Struct_ptr sp, 
+	std::map<std::string, ceps::ast::Nodebase_ptr> & vars,
+	std::string prefix);
+
+ceps::ast::node_t sm_action_print(State_machine* active_smp, ceps::parser_env::Symboltable* sym_table,std::vector<ceps::ast::node_t>const & args);
+ceps::ast::node_t sm_action_assignment(	ceps::ast::Binary_operator_ptr binop,  	  	  	  	  	  	  	  	  
+										ceps::ast::Nodebase_ptr lhs ,
+	 	 	 	  	  	  	  	  	  	ceps::ast::Nodebase_ptr rhs,
+										State_machine_simulation_core* sm_core, 
+										ceps::parser_env::Symboltable* sym_table);
+
 #endif

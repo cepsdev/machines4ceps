@@ -118,6 +118,10 @@ void State_machine_simulation_core::restart_state_machines(std::vector<ceps::ast
     enqueue_event(ev);
 }
 
+
+ceps::ast::node_t sm_action_print(State_machine* active_smp, ceps::parser_env::Symboltable & sym_table,std::vector<ceps::ast::node_t>const & args);
+
+
 ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(State_machine* active_smp,
 																				std::string const & id,
 																				ceps::ast::Call_parameters* params,
@@ -269,7 +273,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
       return new ceps::ast::Int( is_error ? 1 : 0, ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
     } else if (id == "trigger_event") {
        if(args.size() != 1 || args[0]->kind() != ceps::ast::Ast_node_kind::string_literal) return nullptr;
-       std::cout << "????????????" << std::endl;
        event_t ev(ceps::ast::value(ceps::ast::as_string_ref(args[0])));
         ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
         ev.already_sent_to_out_queues_ = false;
@@ -663,18 +666,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		#else
 		if(args.size() == 0) sleep(1);
 		#endif
-	}else if (id == "print"){
-
-        /*for(auto& n : args)
-		{
-			if (n->kind() == ceps::ast::Ast_node_kind::int_literal ||
-			    n->kind() == ceps::ast::Ast_node_kind::float_literal ||
-			    n->kind() == ceps::ast::Ast_node_kind::string_literal
-			    )std::cout << to_string(this,n);
-
-        }*/
-
-	} else if (id == "size") {
+	}else if (id == "print")
+	 return sm_action_print(active_smp,&sym_table,args);
+	else if (id == "size") {
 		if (args[0]->kind() == ceps::ast::Ast_node_kind::byte_array)
 		{
 		 return new ceps::ast::Int(ceps::ast::bytes(ceps::ast::as_byte_array_ref(args[0])).size(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);

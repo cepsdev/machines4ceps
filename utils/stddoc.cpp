@@ -319,7 +319,7 @@ static void make_content( std::vector<ceps::ast::Nodebase_ptr>& content,State_ma
 }
 
 
-
+/*
 static void default_text_representation_impl(std::stringstream& ss,ceps::ast::Nodebase_ptr root_node, bool enable_check_for_html = false){
 	std::cerr <<"()())()())()(" <<std::endl;
 	if (root_node->kind() == ceps::ast::Ast_node_kind::identifier) {
@@ -339,7 +339,7 @@ static std::string default_text_representation(ceps::ast::Nodebase_ptr root_node
 	std::stringstream ss;
 	default_text_representation_impl(ss,root_node);
 	return ss.str();
-}
+}*/
 
 static void dump_html_impl(std::ostream& fout,ceps::ast::Nodebase_ptr elem){
  if (elem->kind() == ceps::ast::Ast_node_kind::structdef){

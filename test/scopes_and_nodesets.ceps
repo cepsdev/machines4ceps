@@ -1,8 +1,11 @@
 val a =  { {1;2;3;}; {4;5;6;}; {7;8;9;};};
 kind Systemstate;
-Systemstate A,B;
+Systemstate A,B,C;
+kind Event;
+Event E0,E1,E2,E3,evDispatch;
+
 A = a;
-B = 2;
+B = 4;
 
 for (e: as_nodeset(a)){
     e;
@@ -12,8 +15,70 @@ for(e : A){
     e;
 }
 
-print(">>\n");
+print(">>>>> For loop (range 1 .. B) where the interval end is defined via a symbol of kind 'Systemstate'. <<<<<\n");
 for(e : 1 .. B ){
-    print(e,"!\n");
+    print("\t",e,"\n");
 }
-print("<<\n");
+print("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>\n");
+
+print(">>>>> For loop (range is a node set) where the interval end is defined via a symbol of kind 'Systemstate'. <<<<<\n");
+for (e: as_nodeset(A)){
+    print("\t",e,"\n");
+}
+print("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>\n");
+
+C = {4;5;6;};
+
+print("C=",C,"\n");
+
+Systemstate idx;
+idx = 0;
+print("idx=",idx,"\n");
+for (e: as_nodeset(A)){
+    print("\t",e == C," ", idx, "\n");
+    idx = idx + 1;
+}
+idx = 0;
+for (e: as_nodeset(A)){
+    if (e == C){
+        print("C found at position ", idx, "\n" );
+    }
+    idx = idx + 1;
+}
+idx = 0;
+for(i : 0 .. 3){
+    sm{
+        as_identifier("S"+i);
+        states{Initial;Waiting;Working;Final;};
+        t{Initial;Waiting;};
+        t{Waiting;Working;as_symbol("E"+i,"Event");};
+    };
+}
+
+sm{
+    S;
+    states{Initial;Dispatch;};
+    Actions{
+        doDispatch{
+            print("S::doDispatch\n");
+            idx = 0;
+            for (e: as_nodeset(A)){
+                if (e == C){
+                    print("C found at position ", idx, "\n" );
+                    as_symbol("E"+idx,"Event");
+                    //E1;
+                }
+                idx = idx + 1;
+            }
+        };
+    };
+    t{Initial;Dispatch;};
+    t{Dispatch;Dispatch;evDispatch;doDispatch;};
+};
+
+Simulation{
+    Start{
+        for(i : 0 .. 3){ as_identifier("S"+i); };S;
+    };
+    start_periodic_timer(2.0*s,evDispatch);
+};
