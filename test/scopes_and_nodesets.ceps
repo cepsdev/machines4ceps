@@ -67,14 +67,11 @@ sm{
     states{Initial;Dispatch;};
     Actions{
         doDispatch{
-            gaga();
-            print("S::doDispatch\n");
             idx = 0;
+           // C = argv(1);
             for (e: as_nodeset(A)){
-                print(e,"\n");
                 if (e == C){
-                    "---------";
-                    //print("C found at position (E"+idx+") idx=", idx, "\n" );
+                    print("C found at position (E"+idx+") idx=", idx, "\n" );
                     //as_symbol("E"+idx,"Event")(1,2,3);
                     (as_symbol("E"+idx,"Event"))(1,2,3);
                     //E1;
@@ -84,13 +81,15 @@ sm{
         };
     };
     t{Initial;Dispatch;};
-    t{Dispatch;Dispatch;evDispatch;doDispatch;};
+    //t{Dispatch;Dispatch;evDispatch;doDispatch;};
 };
 
 Simulation{
     Start{
         for(i : 0 .. 3){ as_identifier("S"+i); };S;
     };
-    start_periodic_timer(2.0*s,evDispatch);
+   start_timer(2.0*s,evDispatch());
+   // start_timer(4.0*s,evDispatch(payload{4;5;6;}));
+   // start_timer(6.0*s,evDispatch(payload{4;5;6;}));
 };
 
