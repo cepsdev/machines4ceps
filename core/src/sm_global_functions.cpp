@@ -355,7 +355,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 
        if (result_vec.size() == 1) return result_vec[0];
        if (result_vec.size() == 0) return  new ceps::ast::None;
-       return nullptr;
+       return ceps::ast::mk_none();
     } else 	if(id == "shadow_state") {
 	 if(args.size() != 2) fatal_(-1,"Function '"+id+"' expects two arguments");
 	 auto shadow_state = resolve_state_or_transition_given_a_qualified_id(args[0],active_smp);
@@ -666,6 +666,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		#else
 		if(args.size() == 0) sleep(1);
 		#endif
+		return ceps::ast::mk_none();
 	}else if (id == "print")
 	 return sm_action_print(active_smp,&sym_table,args);
 	else if (id == "size") {
@@ -880,8 +881,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			}
 		}
 	}
-
-	//fatal_(-1,"Undefined function '"+id+"' called.");
 	return nullptr;
 }
 

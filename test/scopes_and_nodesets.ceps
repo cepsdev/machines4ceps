@@ -1,19 +1,23 @@
-val a =  { {1;2;3;}; {4;5;6;}; {7;8;9;};};
 kind Systemstate;
 Systemstate A,B,C;
 kind Event;
 Event E0,E1,E2,E3,evDispatch;
 
+
+
+val a =  { {1;2;3;}; {4;5;6;}; {7;8;9;};};
+
 A = a;
 B = 4;
-
+print("<<<<<< STATIC >>>>>\n");
 for (e: as_nodeset(a)){
-    e;
+    print(e,"\n");
+}
+for(e : A){
+    print(e,"\n");
 }
 
-for(e : A){
-    e;
-}
+print("<<<<<< DYNAMIC >>>>>\n");
 
 print(">>>>> For loop (range 1 .. B) where the interval end is defined via a symbol of kind 'Systemstate'. <<<<<\n");
 for(e : 1 .. B ){
@@ -22,6 +26,8 @@ for(e : 1 .. B ){
 print("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>\n");
 
 print(">>>>> For loop (range is a node set) where the interval end is defined via a symbol of kind 'Systemstate'. <<<<<\n");
+print("A=",as_nodeset(A),"\n");
+print("A=",A,"\n");
 for (e: as_nodeset(A)){
     print("\t",e,"\n");
 }
@@ -54,18 +60,23 @@ for(i : 0 .. 3){
         t{Waiting;Working;as_symbol("E"+i,"Event");};
     };
 }
+maga();
 
 sm{
     S;
     states{Initial;Dispatch;};
     Actions{
         doDispatch{
+            gaga();
             print("S::doDispatch\n");
             idx = 0;
             for (e: as_nodeset(A)){
+                print(e,"\n");
                 if (e == C){
-                    print("C found at position ", idx, "\n" );
-                    as_symbol("E"+idx,"Event");
+                    "---------";
+                    //print("C found at position (E"+idx+") idx=", idx, "\n" );
+                    //as_symbol("E"+idx,"Event")(1,2,3);
+                    (as_symbol("E"+idx,"Event"))(1,2,3);
                     //E1;
                 }
                 idx = idx + 1;
@@ -82,3 +93,4 @@ Simulation{
     };
     start_periodic_timer(2.0*s,evDispatch);
 };
+

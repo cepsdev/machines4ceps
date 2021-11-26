@@ -22,8 +22,15 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "pugixml.hpp"
 #include <time.h>
 #include "core/include/base_defs.hpp"
+#include <poll.h>
+#include <unistd.h>
 
-extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',')
+extern void 
+flatten_args(
+	State_machine_simulation_core* smc,
+	ceps::ast::Nodebase_ptr r, 
+	std::vector<ceps::ast::Nodebase_ptr>& v, 
+	char op_val = ',')
 {
 	if (r == nullptr) return;
 	if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
@@ -53,7 +60,8 @@ extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_
 	v.push_back(r);
 }
 
-extern std::string to_string(std::vector<ceps::ast::Nodebase_ptr>const& v)
+extern std::string 
+to_string(std::vector<ceps::ast::Nodebase_ptr>const& v)
 {
 	if (v.size() == 0) return "[]";
 	std::stringstream ss;
@@ -64,7 +72,9 @@ extern std::string to_string(std::vector<ceps::ast::Nodebase_ptr>const& v)
 	return ss.str();
 }
 
-extern std::string to_string(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr p)
+extern std::string 
+to_string(State_machine_simulation_core* smc,
+ ceps::ast::Nodebase_ptr p)
 {
 
 	if(p == nullptr) return "(null)";
@@ -146,100 +156,12 @@ bool sm_action_read_func_call_values(State_machine_simulation_core* smc,
 	return true;
 }
 
-#if 0
-	struct timer_table_entry_t{
-		bool in_use = false;
-		bool kill = false;
-		bool fresh = false;
-		std::string name;
-		int id;
-		long period_in_ms = 0;
-		long time_remaining_in_ms = 0;
-		bool periodic = false;
-		int fd = -1;
-		event_t event;
-	};
-
-	size_t timer_table_size = 128;
-
-	mutable std::mutex timer_table_mtx;
-	std::vector<timer_table_entry_t> timer_table;
-#endif
-
-
-#ifndef __gnu_linux__
-
-bool State_machine_simulation_core::exec_action_timer(double t,
-		                                              sm4ceps_plugin_int::ev ev_,
-													  sm4ceps_plugin_int::id id_,
-													  bool periodic_timer,
-													  sm4ceps_plugin_int::Variant (*fp)()){
-
-	if (t < 0) return true;
-	std::string ev_id = ev_.name_;
-	if (fp != nullptr){
-			ev_id = "@@queued_action";
-	}
-	std::string timer_id;
-
-	if (id_.name_.length())
-	{
-		timer_id = id_.name_;
-		kill_named_timer(timer_id);
-	}
-
-	double delta = t;
-	ceps::ast::Unit_rep u;
-
-	//log() << "[QUEUEING TIMED EVENT][Delta = "<< std::setprecision(8)<< delta << " sec.][Event = " << ev_id <<"]" << "\n";
-
-	event_t ev_to_send(ev_id);
-	ev_to_send.unique_ = this->unique_events().find(ev_id) != this->unique_events().end();
-	ev_to_send.already_sent_to_out_queues_ = false;
-	ev_to_send.glob_func_ = fp;
-	if (ev_.args_.size())
-		ev_to_send.payload_native_ = ev_.args_;
-
-	int timer_thread_id = -1;
-	{
-	 std::lock_guard<std::mutex> lk(timer_threads_m);
-	 if (timer_threads.size() == 0){
-	  timer_threads.resize(1024);
-	  for(auto& tinf : timer_threads){
-		std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(tinf) = nullptr;
-		std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = false;
-		std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)= true;
-	  }
-	  timed_events_active_ = 0;
-	 }
-	 assert(timer_threads.size()>0);
-
- 	 for(size_t i = 0; i < timer_threads.size(); ++i)
-	  if (std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i])){
-	   std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i]) = false;
-	   std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[i]) = false;
-	   std::get<TIMER_THREAD_FN_CTRL_ID>(timer_threads[i]) = timer_id;
-	   if (std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])){ std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])->join();
-	   delete std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i]);}
-	   timer_thread_id = i; break;
-	  }
-
-	  if (timer_thread_id < 0) fatal_(-1,"Out of resources: timer.");
-	  inc_timed_events();
-	  std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[timer_thread_id]) = new std::thread{timer_thread_fn,this,timer_thread_id,periodic_timer,delta,ev_to_send};
-	}
-}
-#else
-
-
-
-#include <poll.h>
-#include <unistd.h>
-
-
-ceps::ast::Nodebase_ptr  State_machine_simulation_core::ceps_fn_start_signal_gen(std::string const & id ,
-				                                                const std::vector<ceps::ast::Nodebase_ptr> & args,
-																State_machine* ){
+ceps::ast::Nodebase_ptr  
+State_machine_simulation_core::ceps_fn_start_signal_gen(
+	std::string const & id ,
+	const std::vector<ceps::ast::Nodebase_ptr> & args,
+	State_machine* )
+{
  sm4ceps::datasources::Signalgenerator* siggen = nullptr;
  auto h = find_sig_gen(ceps::ast::name(ceps::ast::as_id_ref(args[0])));
  if (h < 0) return nullptr;
@@ -249,14 +171,11 @@ ceps::ast::Nodebase_ptr  State_machine_simulation_core::ceps_fn_start_signal_gen
  return nullptr;
 }
 
-
-
-#endif
-
-
-
-
-void State_machine_simulation_core::x_path(sm4ceps_plugin_int::xml_node_set& xs,std::string path){
+void 
+State_machine_simulation_core::x_path(
+	sm4ceps_plugin_int::xml_node_set& xs,
+	std::string path)
+{
  pugi::xml_document* xml_doc = (pugi::xml_document*)xs.xml_doc;
  if (xml_doc == nullptr) fatal_(-1,"State_machine_simulation_core::x_path:: xml_doc is null.");
  std::string xpath_expr = path;
@@ -359,7 +278,12 @@ void State_machine_simulation_core::send_raw_frame(void* chunk,size_t len,size_t
  channel->push(std::make_tuple(Rawframe_generator::gen_msg_return_t{Rawframe_generator::IS_BINARY,msg_block},len,header_len,0));
 }
 
-static ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string const & id, ceps::ast::Call_parameters* params, void* context,ceps::parser_env::Symboltable & sym_table)
+static ceps::ast::Nodebase_ptr 
+ceps_interface_eval_func_callback(
+	std::string const & id, 
+	ceps::ast::Call_parameters* params, 
+	void* context,
+	ceps::parser_env::Symboltable & sym_table)
 {
 	if (context == nullptr) return nullptr;
 	ceps_interface_eval_func_callback_ctxt_t* ctxt = (ceps_interface_eval_func_callback_ctxt_t*) context;
@@ -367,10 +291,44 @@ static ceps::ast::Nodebase_ptr ceps_interface_eval_func_callback(std::string con
 	return ctxt->smc->ceps_interface_eval_func(ctxt->active_smp,id,params,sym_table);
 }
 
-ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operator_ptr binop,
-	 	 	 	  	  	  	  	  	  	  	  	  	  	  	  ceps::ast::Nodebase_ptr lhs ,
-	 	 	 	  	  	  	  	  	  	  	  	  	  	  	  ceps::ast::Nodebase_ptr rhs,
-	 	 	 	  	  	  	  	  	  	  	  	  	  	  	  void* cxt,ceps::ast::Nodebase_ptr parent_node)
+static ceps::ast::node_t 
+stmt_claimer (
+	ceps::ast::node_t node, 
+	void * ctxt, 
+	ceps::parser_env::Symboltable & sym_table)
+{
+	using namespace ceps::ast;
+	if (ctxt == nullptr) return nullptr;
+	ceps_interface_eval_func_callback_ctxt_t* context = (ceps_interface_eval_func_callback_ctxt_t*) ctxt;
+	if (is<Ast_node_kind::symbol>(node)){
+		auto& smbl = as_symbol_ref(node);
+		auto& knd = kind(smbl);
+		auto& nm = name(smbl);
+		if (knd == "Event"){
+			State_machine_simulation_core::event_t ev{nm};
+			ev.unique_ = context->smc->unique_events().find(ev.id_) != context->smc->unique_events().end();
+			ev.already_sent_to_out_queues_ = false;
+			context->smc->enqueue_event(ev,true);
+		}
+	} else if (is<Ast_node_kind::func_call>(node) && is<Ast_node_kind::symbol>(func_call_target(as_func_call_ref(node))) && "Event" == kind(as_symbol_ref(func_call_target(as_func_call_ref(node))))){
+		auto& call_parms = as_call_params_ref((children(as_func_call_ref(node))[1]));
+		std::vector<Nodebase_ptr> args = ceps::interpreter::get_args(call_parms);
+		auto func_name = name(as_symbol_ref(func_call_target(as_func_call_ref(node))));
+		State_machine_simulation_core::event_t ev(func_name,args);
+		ev.already_sent_to_out_queues_ = false;
+		ev.unique_ = context->smc->unique_events().find(ev.id_) != context->smc->unique_events().end();
+		context->smc->enqueue_event(ev,true);
+	}
+	return nullptr;	
+}
+
+ceps::ast::Nodebase_ptr 
+ceps_interface_binop_resolver( 
+	ceps::ast::Binary_operator_ptr binop,
+	ceps::ast::Nodebase_ptr lhs ,
+	ceps::ast::Nodebase_ptr rhs,
+	void* cxt,
+	ceps::ast::Nodebase_ptr parent_node)
 {
 	if (ceps::ast::op(*binop) == '='){
 		return sm_action_assignment(	binop,  	  	  	  	  	  	  	  	  
@@ -398,12 +356,13 @@ ceps::ast::Nodebase_ptr ceps_interface_binop_resolver( ceps::ast::Binary_operato
 	return nullptr;
 }
 
-
-ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
-										 State_machine* containing_smp,
-										 ceps::ast::Nodebase_ptr node,
-										 ceps::ast::Nodebase_ptr root_node,
-										 ceps::parser_env::Scope* scope)
+ceps::ast::Nodebase_ptr 
+eval_locked_ceps_expr(
+	State_machine_simulation_core* smc,
+	State_machine* containing_smp,
+	ceps::ast::Nodebase_ptr node,
+	ceps::ast::Nodebase_ptr root_node,
+	ceps::parser_env::Scope* scope)
 {
 	ceps_interface_eval_func_callback_ctxt_t ctxt;
 	ctxt.active_smp = containing_smp;
@@ -436,6 +395,7 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 
 	smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
+	smc->ceps_env_current().interpreter_env().set_func_stmt_claimer(stmt_claimer,&ctxt);
 
 	if (scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(scope_ptr);
     if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
@@ -444,26 +404,30 @@ ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc
 	bool symbols_found{false};
 	auto r = ceps::interpreter::evaluate_generic(node,
 			smc->ceps_env_current().get_global_symboltable(),
-			smc->ceps_env_current().interpreter_env(),root_node,nullptr,nullptr,symbols_found	);
+			smc->ceps_env_current().interpreter_env(),root_node,nullptr,nullptr,symbols_found);
+
 	if (sms_global_scope) { smc->ceps_env_current().get_global_symboltable().scopes.pop_back();}
 	if (scope) {smc->ceps_env_current().get_global_symboltable().scopes.pop_back();scope_ptr.reset();}
 
+	smc->ceps_env_current().interpreter_env().set_func_stmt_claimer(nullptr,nullptr);
 	smc->ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
 	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
-
 	return r;
 }
 
-ceps::ast::Nodebase_ptr eval_locked_ceps_expr(State_machine_simulation_core* smc,
-										 State_machine* containing_smp,
-										 ceps::ast::Nodebase_ptr node,
-										 ceps::ast::Nodebase_ptr root_node)
+ceps::ast::Nodebase_ptr 
+eval_locked_ceps_expr(
+	State_machine_simulation_core* smc,
+	State_machine* containing_smp,
+	ceps::ast::Nodebase_ptr node,
+	ceps::ast::Nodebase_ptr root_node)
 {
 	return eval_locked_ceps_expr(smc, containing_smp, node, root_node, nullptr);
 }
 
-void* State_machine_simulation_core::evaluate_fragment_in_global_context(void* node, void* scope){
+void* 
+State_machine_simulation_core::evaluate_fragment_in_global_context(void* node, void* scope){
 	if (node == nullptr) return node;
 	ceps::ast::Nodebase_ptr p = static_cast<ceps::ast::Nodebase_ptr>(node);
 	return eval_locked_ceps_expr(	this,

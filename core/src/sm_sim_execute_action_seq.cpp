@@ -26,24 +26,27 @@ sm_action_print(State_machine* active_smp,
 				ceps::parser_env::Symboltable* sym_table,
 				std::vector<ceps::ast::node_t>const & args)
 {
+	using namespace ceps::ast;
     bool do_flush = false;
 	for(auto n : args)
 	{
-        if (n->kind() == ceps::ast::Ast_node_kind::byte_array){
+		if (n == nullptr) continue;
+        if (n->kind() == Ast_node_kind::byte_array){
 			auto& seq = ceps::ast::bytes(ceps::ast::as_byte_array_ref(n));
             for(auto c: seq){
                 std::cout << (int)c << " ";
             }
-        } else if (n->kind() == ceps::ast::Ast_node_kind::symbol &&
-                    ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "IOManip" &&
-                    ceps::ast::name(ceps::ast::as_symbol_ref(n)) == "endl" ) 
+        } else if (n->kind() == Ast_node_kind::symbol &&
+                    kind(as_symbol_ref(n)) == "IOManip" &&
+                    name(as_symbol_ref(n)) == "endl" ) 
 				do_flush = true;
-		else if (ceps::ast::is<ceps::ast::Ast_node_kind::nodeset>(n) && ceps::ast::as_ast_nodeset_ref(n).children().size() == 1 )
-				std::cout << default_text_representation(ceps::ast::as_ast_nodeset_ref(n).children()[0]);
+		else if (is<Ast_node_kind::nodeset>(n) && as_ast_nodeset_ref(n).children().size() == 1 )
+				std::cout << default_text_representation(as_ast_nodeset_ref(n).children()[0]);
         else std::cout << default_text_representation(n);
     }//for
+
 	if (do_flush) std::cout.flush();
-	return nullptr;
+	return mk_none();
 }
 
 ceps::ast::node_t sm_action_assignment(	ceps::ast::Binary_operator_ptr binop,  	  	  	  	  	  	  	  	  
