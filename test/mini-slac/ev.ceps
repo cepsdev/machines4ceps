@@ -28,7 +28,8 @@ Event   evMatchingProcessStartTrigger,
         evTP_EV_SLAC_init_timeout,
         evTT_match_response_timeout,
         evCM_SLAC_PARM_REQ,
-        evCM_SLAC_PARM_CNF;
+        evCM_SLAC_PARM_CNF,
+        evEVParameterExchangeDone;
 
 val time_scale = 1.0;
 val TP_EV_SLAC_init = time_scale*10.0*s;
@@ -46,6 +47,8 @@ print(current_session_id,"!\n");
 Systemstate confirmation_counter;
 confirmation_counter = 0;
 Guard gNoConfirmations;
+Guard gConfirmationsArrived;
+gConfirmationsArrived = confirmation_counter > 0;
 
 gNoConfirmations = confirmation_counter == 0;
 
@@ -53,6 +56,7 @@ sm{
     EV;
     states{ Initial;
             WaitForMatchingProcessStartTrigger;
+            ParameterExchangeSucceeded;
             ParameterExchangeFailed;
         };
     
@@ -60,6 +64,7 @@ sm{
         ParameterExchange;
         states{ Initial;
                 NoConfirmationsWithinTimeWindow;
+                ConfirmationsWithinTimeWindow;
             };
         on_enter{
             current_session_id = current_session_id + 1;
@@ -68,7 +73,7 @@ sm{
 
         sm{
             WaitForConfirmations;
-            states{Initial;};
+            states{Initial;Wait;CheckValidity;};
             on_enter{
                 evCM_SLAC_PARM_REQ(
                    payload{
@@ -79,21 +84,41 @@ sm{
                 );
                 start_timer(TT_match_response,evTT_match_response_timeout,TT_match_response_timeout);
             };
-
-
+            Actions{
+                doCheckValidity{
+                    confirmation_counter = confirmation_counter +1;
+                };
+            };
+            t{Initial;Wait;};
+            t{Wait;CheckValidity;evCM_SLAC_PARM_CNF;doCheckValidity;};
+            t{CheckValidity;Wait;};
         };
+
+        Actions{
+            doParameterExchangeDone{
+                {
+                    evEVParameterExchangeDone;
+                }
+            };
+        };
+
         t{Initial;WaitForConfirmations;};
         t{WaitForConfirmations;NoConfirmationsWithinTimeWindow;evTT_match_response_timeout;gNoConfirmations;};
+        t{WaitForConfirmations;ConfirmationsWithinTimeWindow;evTT_match_response_timeout;gConfirmationsArrived;doParameterExchangeDone;};
         t{NoConfirmationsWithinTimeWindow;WaitForConfirmations;};
     };
 
     t{Initial;WaitForMatchingProcessStartTrigger;};
     t{WaitForMatchingProcessStartTrigger;ParameterExchange;evMatchingProcessStartTrigger;};
 
+    t{ParameterExchange;ParameterExchangeSucceeded;evEVParameterExchangeDone;};
     t{ParameterExchange;ParameterExchangeFailed;evTP_EV_SLAC_init_timeout;};
 };
+
+
 
 Simulation{
     Start{EV;};
     evMatchingProcessStartTrigger;
+    start_timer(3.0*s,evCM_SLAC_PARM_CNF);
 };
