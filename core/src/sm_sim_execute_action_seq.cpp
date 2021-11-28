@@ -102,14 +102,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			auto & node = as_return_ref(n);
 			return eval_locked_ceps_expr(this,containing_smp,node.children()[0],n);
 
-		} else	if ( is_assignment_op(n) )
-		{
-			auto & node = as_binop_ref(n);
-			sm_action_assignment(	&node,  	  	  	  	  	  	  	  	  
-									node.left() ,
-	 	 	 	  	  	  	  	  	eval_locked_ceps_expr(this,containing_smp,node.right(),n),
-									this,
-									nullptr);
 		} else if (n->kind() == ceps::ast::Ast_node_kind::identifier) {
 			if (containing_smp != nullptr)
 			{
@@ -128,7 +120,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			std::stringstream ss;ss << *n;
 			fatal_(-1,"Invalid statement:"+ss.str());
 		} else {
-            auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
+	        auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
 		}
 	}
 	if (verbose_log) log() << "[EXECUTE STATEMENTS][END]\n";

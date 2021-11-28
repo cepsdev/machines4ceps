@@ -25,40 +25,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <poll.h>
 #include <unistd.h>
 
-/*extern void 
-flatten_args(
-	State_machine_simulation_core* smc,
-	ceps::ast::Nodebase_ptr r, 
-	std::vector<ceps::ast::Nodebase_ptr>& v, 
-	char op_val = ',')
-{
-	if (r == nullptr) return;
-	if (r->kind() == ceps::ast::Ast_node_kind::binary_operator && op(as_binop_ref(r)) ==  op_val)
-	{
-		auto& t = as_binop_ref(r);
-		flatten_args(smc,t.left(),v,op_val);
-		flatten_args(smc,t.right(),v,op_val);
-		return;
-	} else if (r->kind() == ceps::ast::Ast_node_kind::func_call) {
-		using namespace ceps::ast;
-		std::string func_name;
-		std::vector<ceps::ast::Nodebase_ptr> args;
-		
-		sm_action_read_func_call_values(smc,r,func_name,args);
-
-		if (func_name == "argv")
-		{
-			if (args.size() > 0 && args[0]->kind() == ceps::ast::Ast_node_kind::int_literal){
-				auto idx = value(as_int_ref(args[0]));
-				if (idx == 0){ v.push_back(new ceps::ast::String(smc->current_event().id_,nullptr,nullptr,nullptr)); return;}
-				else if (idx > 0 && idx-1 < (int)smc->current_event().payload_.size() ) { v.push_back(smc->current_event().payload_[idx-1]);return;}
-                                else {smc->fatal_(-1," Access to argv: Out of bounds.");}
-
-			}
-		}
-	}
-	v.push_back(r);
-}*/
 
 extern std::string 
 to_string(std::vector<ceps::ast::Nodebase_ptr>const& v)
@@ -135,26 +101,6 @@ to_string(State_machine_simulation_core* smc,
 	}
 	return "";
 }
-
-/*bool sm_action_read_func_call_values(State_machine_simulation_core* smc,	
-					ceps::ast::Nodebase_ptr root_node,
-					std::string & func_name,
-					std::vector<ceps::ast::Nodebase_ptr>& args)
-{
-	try
-	{
-		using namespace ceps::ast;
-		ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(root_node);
-		ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
-		func_name = name(id);
-		args.clear();
-		if (nlf_ptr(func_call.children()[1])->children().size()) flatten_args(smc,nlf_ptr(func_call.children()[1])->children()[0],args);
-	} catch (...)
-	{
-		return false;
-	}
-	return true;
-}*/
 
 ceps::ast::Nodebase_ptr  
 State_machine_simulation_core::ceps_fn_start_signal_gen(
@@ -330,10 +276,13 @@ ceps_interface_binop_resolver(
 	void* cxt,
 	ceps::ast::Nodebase_ptr parent_node)
 {
+	using namespace ceps::ast;
+	
 	if (ceps::ast::op(*binop) == '='){
 		return sm_action_assignment(	binop,  	  	  	  	  	  	  	  	  
 										lhs ,
-	 	 	 	  	  	  	  	  	  	rhs,
+										// in the case of a Guard the right hand side of "G_1 = Expr" should not be evakuated
+	 	 	 	  	  	  	  	  	  	(is<Ast_node_kind::symbol>(lhs) && kind(as_symbol_ref(lhs))=="Guard") ? binop->right() : rhs,  
 										(State_machine_simulation_core*) cxt,
 										nullptr);
 	}
