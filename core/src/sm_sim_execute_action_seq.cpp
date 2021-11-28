@@ -93,6 +93,9 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 	for(auto & n : actions->children())
 	{
 		if (verbose_log)log() << "[EXECUTE STATEMENT]" << *n << "\n";
+		if (n->kind() == ceps::ast::Ast_node_kind::structdef) continue;
+		if (n->kind() == ceps::ast::Ast_node_kind::macro_definition) continue;
+
 
 		if (n->kind() == ceps::ast::Ast_node_kind::ret)
 		{
@@ -124,116 +127,6 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::execute_action_seq(
 			}
 			std::stringstream ss;ss << *n;
 			fatal_(-1,"Invalid statement:"+ss.str());
-		} else if (n->kind() == ceps::ast::Ast_node_kind::ifelse) {
-			using namespace ceps::ast;
-
-			auto ifelse = as_ifelse_ptr(n);
-			Nodebase_ptr cond = eval_locked_ceps_expr(this,containing_smp,ifelse->children()[0],n);
-			bool take_left_branch{true};
-			bool erroneous_cond{false};
-
-			if (is<Ast_node_kind::nodeset>(cond)){
-				auto& set_of_nodes{as_ast_nodeset_ref(cond)};
-				if (!set_of_nodes.children().size()) take_left_branch = false;
-				else{
-					auto p = set_of_nodes.children()[0];
-					if (is<Ast_node_kind::int_literal>(p)) take_left_branch = value(as_int_ref(p)) != 0;
-					else if (is<Ast_node_kind::float_literal>(p)) take_left_branch = value(as_double_ref(p)) != 0;
-					else if (is<Ast_node_kind::string_literal>(p)) take_left_branch = value(as_string_ref(p)) != "1";
-					else erroneous_cond = true;
-				}
-			} else if (is<Ast_node_kind::int_literal>(cond) )
-				take_left_branch = value(as_int_ref(cond)) != 0;
-			else if (is<Ast_node_kind::float_literal>(cond) ) 
-			    take_left_branch = value(as_double_ref(cond)) != 0;
-			else  erroneous_cond = true;
-			
-
-			if (erroneous_cond){
-				std::stringstream ss; ss << *cond;
-				fatal_(-1,"Expression in conditional illformed: >>"+ ss.str()+"<<.");
-			}
-			
-			Nodebase_ptr branch_to_take = nullptr;
-
-			if (take_left_branch && ifelse->children().size() > 1) branch_to_take = ifelse->children()[1];
-			else if (!take_left_branch && ifelse->children().size() > 2) branch_to_take = ifelse->children()[2];
-			if (branch_to_take == nullptr) continue;
-			Nodebase_ptr result_of_branch = nullptr;
-			if (branch_to_take->kind() != Ast_node_kind::structdef && branch_to_take->kind() != Ast_node_kind::scope)
-			{
-				Scope scope(branch_to_take);scope.owns_children() = false;
-				result_of_branch=execute_action_seq(containing_smp,&scope);
-				scope.children().clear();
-			} else { result_of_branch=execute_action_seq(containing_smp,branch_to_take);}
-			if (result_of_branch != nullptr) return result_of_branch;
-		} else if (n->kind() == ceps::ast::Ast_node_kind::symbol && ceps::ast::kind(ceps::ast::as_symbol_ref(n)) == "Event")
-		{
-			//log() << "[QUEUEING EVENT][" << ceps::ast::name(ceps::ast::as_symbol_ref(n)) <<"]" << "\n";
-			event_t ev(ceps::ast::name(ceps::ast::as_symbol_ref(n)));
-			ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
-			ev.already_sent_to_out_queues_ = false;
-			enqueue_event(ev,true);
-		} else if (n->kind() == ceps::ast::Ast_node_kind::func_call)
-		{
-			std::vector<ceps::ast::Nodebase_ptr> args;
-			std::string  func_name;
-			if (!sm_action_read_func_call_values(this,n, func_name,args)){
-				std::stringstream ss;
-				ss << *n << "\n";
-				fatal_(-1,"Internal Error:State_machine_simulation_core::execute_action_seq:"+ss.str());
-			}
-
-			if (is_global_event(func_name))
-			{
-				//log() << "[QUEUEING EVENT WITH PAYLOAD][" << func_name <<"]" << "\n";
-				{
-					for(size_t i = 0; i != args.size(); ++i)
-					{
-						args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
-
-						//args[i]  = ceps::interpreter::evaluate(args[i],ceps_env_current().get_global_symboltable(),ceps_env_current().interpreter_env(),n	);
-					}
-				}
-				event_t ev(func_name,args);
-				ev.already_sent_to_out_queues_ = false;
-				ev.unique_ = this->unique_events().find(ev.id_) != this->unique_events().end();
-				enqueue_event(ev,true);
-			}
-
-			else if (func_name == "timer" || func_name == "start_timer" || func_name == "start_periodic_timer")
-			{
-				for(size_t i = 0; i != args.size(); ++i)
-				 {
-					args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
-				 }
-				exec_action_timer(args,func_name == "start_periodic_timer");
-			}
-            else if (func_name == "print"){
-				for(size_t i = 0; i != args.size(); ++i)
-					args[i] = eval_locked_ceps_expr(this,containing_smp,args[i],n);
-			 	sm_action_print(containing_smp, nullptr, args);
-			}
-			else if (func_name == "kill_timer" || func_name == "stop_timer")
-			{
-
-				if (args.size() == 0){
-					DEBUG << "[KILLING ALL TIMERS]\n";
-
-					this->kill_named_timer(std::string{});
-				}else{
-					std::string timer_id;
-					if (args[0]->kind() != ceps::ast::Ast_node_kind::identifier)
-						fatal_(-1,"stop_timer: first argument (the timer id) has to be an unbound identifier.\n");
-					timer_id = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
-					DEBUG << "[KILLING NAMED TIMERS][TIMER_ID="<< timer_id <<"]\n";
-					this->kill_named_timer(timer_id);
-				}
-			} else{
-                auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
-				//if (r) std::cerr <<"===> "<< *r << std::endl;
-                //if(r) delete r;
-			}
 		} else {
             auto r = eval_locked_ceps_expr(this,containing_smp,n,nullptr);
 		}

@@ -19,38 +19,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include "core/include/state_machine_simulation_core.hpp"
 #include "core/include/base_defs.hpp"
-#include "pugixml.hpp"
 #include <time.h>
 #include "core/include/base_defs.hpp"
-
-#ifdef __gnu_linux__
-
 #include <poll.h>
 #include <unistd.h>
 
-#endif
-
 #define USE_TIMER_FD_API 1
 
-void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',');
-extern bool read_func_call_values(State_machine_simulation_core* smc,	ceps::ast::Nodebase_ptr root_node,
-							std::string & func_name,
-							std::vector<ceps::ast::Nodebase_ptr>& args)
-{
-	try
-	{
-		using namespace ceps::ast;
-		ceps::ast::Func_call& func_call = *dynamic_cast<ceps::ast::Func_call*>(root_node);
-		ceps::ast::Identifier& id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
-		func_name = name(id);
-		args.clear();
-		if (nlf_ptr(func_call.children()[1])->children().size()) flatten_args(smc,nlf_ptr(func_call.children()[1])->children()[0],args);
-	} catch (...)
-	{
-		return false;
-	}
-	return true;
-}
 
 static bool is_second(ceps::ast::Unit_rep unit)
 {
@@ -61,38 +36,10 @@ static bool is_second(ceps::ast::Unit_rep unit)
 std::mutex timer_threads_m;
 std::vector< decltype(timer_threads)::value_type> timer_threads;
 
-void timer_thread_fn(State_machine_simulation_core* smc, int id, bool periodic, double delta,State_machine_simulation_core::event_t event){
 
-	std::chrono::seconds seconds_to_wait{(int)delta};
-	std::chrono::milliseconds ms_to_wait{(int) ((delta - std::floor(delta))*1000.0)};
-	do{
-
-		//auto start_time = std::chrono::steady_clock::now();
-		if (delta >= 1.0) {
-			std::this_thread::sleep_for(seconds_to_wait);
-		}
-		std::this_thread::sleep_for(ms_to_wait);
-
-		//std::int64_t a = (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time)).count();
-		//if(a != 1) std::cout << a << std::endl;
-		{
-			std::lock_guard<std::mutex> lk(timer_threads_m);
-			if (!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[id]))
-				smc->enqueue_event(event,false);
-			else break;
-		}
-
-	}while (periodic);
-
-	{
-		std::lock_guard<std::mutex> lk(timer_threads_m);
-		if(!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[id])) smc->dec_timed_events();
-		std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[id]) = true;
-	}
-}
-
-
-void main_timer_thread_fn(State_machine_simulation_core* smc){
+void 
+main_timer_thread_fn(State_machine_simulation_core* smc)
+{
 	pollfd* poll_fds = new pollfd[smc->timer_table_size];
 	memset(poll_fds,0,sizeof(pollfd)*smc->timer_table_size);
 	int* tidxs = new int[smc->timer_table_size];
@@ -164,13 +111,16 @@ void main_timer_thread_fn(State_machine_simulation_core* smc){
 }
 
 
-bool State_machine_simulation_core::exec_action_timer(double t,
-		                                              sm4ceps_plugin_int::ev ev_,
-													  sm4ceps_plugin_int::id id_,
-													  bool periodic_timer,
-													  sm4ceps_plugin_int::Variant (*fp)(),
-													  sm4ceps::datasources::Signalgenerator* siggen
-													  ){
+bool 
+State_machine_simulation_core::exec_action_timer(
+	double t,
+	sm4ceps_plugin_int::ev ev_,
+	sm4ceps_plugin_int::id id_,
+	bool periodic_timer,
+	sm4ceps_plugin_int::Variant (*fp)(),
+	sm4ceps::datasources::Signalgenerator* siggen
+	)
+{
 
 	if (t < 0) return true;
 	std::string ev_id = ev_.name_;
@@ -255,12 +205,15 @@ bool State_machine_simulation_core::exec_action_timer(double t,
 
 
 
-void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nodebase_ptr> const & args,
-		                                              bool periodic_timer,
-													  sm4ceps::datasources::Signalgenerator* siggen)
+void 
+State_machine_simulation_core::exec_action_timer(
+	std::vector<ceps::ast::Nodebase_ptr> const & args,
+	bool periodic_timer,
+	sm4ceps::datasources::Signalgenerator* siggen
+	)
 {
-
-  
+	using namespace ceps::ast;
+ 
 	if (args.size() >= 2 && (       
                                 ( args[1]->kind() == ceps::ast::Ast_node_kind::symbol && kind(ceps::ast::as_symbol_ref(args[1])) == "Event")
 		                        || args[1]->kind() == ceps::ast::Ast_node_kind::func_call  
@@ -269,25 +222,27 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 	{
 		std::string ev_id;
 		std::vector<ceps::ast::Nodebase_ptr> fargs;
+		auto timed_expr = args[1];
 
-		if (args[1]->kind() == ceps::ast::Ast_node_kind::symbol) ev_id = name(ceps::ast::as_symbol_ref(args[1]));
-		else if (args[1]->kind() == ceps::ast::Ast_node_kind::identifier)
+		if (is<Ast_node_kind::symbol>(timed_expr)) 
+		 ev_id = name(ceps::ast::as_symbol_ref(timed_expr));
+		else if (is<Ast_node_kind::identifier>(timed_expr))
 		{
 			ev_id = "@@queued_action";
 			fargs.push_back(args[1]);
 		}
-		else {
-			std::string  func_name;
-			if (!read_func_call_values(this,args[1], func_name,fargs))
-				fatal_(-1,"Internal Error: State_machine_simulation_core::exec_action_timer:read_func_call_values.");
+		else if (is<Ast_node_kind::func_call>(timed_expr)) {
+			std::string  ev_name;
+			auto& timed_call = as_func_call_ref(timed_expr);
+			auto time_call_params = children(timed_call)[1]; 
+			auto timed_call_target =  func_call_target(timed_call);
 
-			if (is_global_event(func_name))
-			{
-				for(size_t i = 0; i != args.size(); ++i)
-												fargs[i]  = args[i];
-				ev_id = func_name;
+			fargs = ceps::interpreter::get_args(as_call_params_ref(time_call_params));
 
-			} else fatal_(-1,"start_timer/start_periodic_timer: second argument has to be an event.");
+
+			if (is<Ast_node_kind::symbol>(timed_call_target) && kind(as_symbol_ref(timed_call_target))=="Event")
+				ev_id = name(as_symbol_ref(timed_call_target));
+			else fatal_(-1,"start_timer/start_periodic_timer: second argument has to be an event.");
 		}
 		std::string timer_id;
 		if (args.size() > 2)
@@ -332,8 +287,6 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
 			return;
 		 }
 		}
-
-#if USE_TIMER_FD_API
 	{
 		std::lock_guard<std::mutex> lk(timer_table_mtx);
 		if (timer_table.size() == 0){
@@ -388,69 +341,18 @@ void State_machine_simulation_core::exec_action_timer(std::vector<ceps::ast::Nod
             
         }
 	}
-#else
-		int timer_thread_id = -1;
-
-
-		{
-			std::lock_guard<std::mutex> lk(timer_threads_m);
-			if (timer_threads.size() == 0){
-				timer_threads.resize(1024);
-				for(auto& tinf : timer_threads){
-					std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(tinf) = nullptr;
-					std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = false;
-					std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)= true;
-				}
-				timed_events_active_ = 0;
-			}
-			assert(timer_threads.size()>0);
-
-
-			for(size_t i = 0; i < timer_threads.size(); ++i)
-				if (std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i])){
-					std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(timer_threads[i]) = false;
-					std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(timer_threads[i]) = false;
-					std::get<TIMER_THREAD_FN_CTRL_ID>(timer_threads[i]) = timer_id;
-					if (std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])){ 
-                        std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i])->join();delete std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[i]);}
-					timer_thread_id = i; break;
-				}
-
-			if (timer_thread_id < 0) fatal_(-1,"Out of resources: timer.");
-			inc_timed_events();
-			std::get<TIMER_THREAD_FN_CTRL_THREADOBJ>(timer_threads[timer_thread_id]) = new std::thread{timer_thread_fn,this,timer_thread_id,periodic_timer,delta,ev_to_send};
-		}
-			//enqueue_event(ev_to_send,/*public_event*/false);
-#endif
-
 	}
-
 }
 
 
-bool State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
-
-#if USE_TIMER_FD_API
+bool 
+State_machine_simulation_core::kill_named_timer(std::string const & timer_id){
 	stop_timer(sm4ceps_plugin_int::id{timer_id});return true;
-#else 0
-	{
-		std::lock_guard<std::mutex> lk(timer_threads_m);
-		auto t = 0;
-		for(auto& tinf : timer_threads){
-			if (timer_id.length()  == 0 || std::get<4>(tinf) == timer_id){
-				std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) = true;
-			} else if (!std::get<TIMER_THREAD_FN_CTRL_TERMINATION_REQUESTED>(tinf) && !std::get<TIMER_THREAD_FN_CTRL_TERMINATED>(tinf)){
-				++t;
-			}
-		}
-		timed_events_active_ = t;
-	}
-	return false;
-#endif
 }
 
 
-bool State_machine_simulation_core::kill_named_timer_main_timer_table(std::string const & timer_id){
+bool 
+State_machine_simulation_core::kill_named_timer_main_timer_table(std::string const & timer_id){
 	std::lock_guard<std::mutex> lk(timer_table_mtx);
 	auto t = 0;
 	for(auto& e : timer_table){

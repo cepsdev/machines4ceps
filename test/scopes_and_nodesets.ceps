@@ -1,5 +1,5 @@
 kind Systemstate;
-Systemstate A,B,C;
+Systemstate A,B,C,D;
 kind Event;
 Event E0,E1,E2,E3,evDispatch;
 
@@ -33,7 +33,7 @@ for (e: as_nodeset(A)){
 }
 print("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>\n");
 
-C = {4;5;6;};
+C = {}; //{4;5;6;};
 
 print("C=",C,"\n");
 
@@ -55,41 +55,73 @@ idx = 0;
 for(i : 0 .. 3){
     sm{
         as_identifier("S"+i);
-        states{Initial;Waiting;Working;Final;};
+        states{Initial;Waiting;RestartWorking;Final;};
         t{Initial;Waiting;};
+        sm{
+            Working;
+            states{Initial;DoWork;};
+            on_enter{
+                print ("S"+i," entered\n");
+            };
+            t{Initial;DoWork;};
+        };
         t{Waiting;Working;as_symbol("E"+i,"Event");};
+        t{Working;RestartWorking;as_symbol("E"+i,"Event");};
+        t{RestartWorking;Working;};
     };
 }
-maga();
+D = {};
+
 
 sm{
     S;
     states{Initial;Dispatch;};
     Actions{
         doDispatch{
+            Systemstate found;
+            found = -1;
+            print("S::doDispatch(), argc=",argc(),"\n");
             idx = 0;
-           // C = argv(1);
-            for (e: as_nodeset(A)){
-                if (e == C){
-                    print("C found at position (E"+idx+") idx=", idx, "\n" );
-                    //as_symbol("E"+idx,"Event")(1,2,3);
-                    (as_symbol("E"+idx,"Event"))(1,2,3);
-                    //E1;
-                }
-                idx = idx + 1;
+            if (argc() > 0) {
+                C = argv(1).payload.content();
+                print(" C = ", C, "\n");
             }
+           
+            for (e: as_nodeset(D)){
+                print(e," = ",C,"?\n");
+                if (C == e){
+                    print(" Match found at position ", idx, "\n" );
+                    found = idx;
+                } else { idx = idx + 1; }
+            }
+            print(">>>>>>>>>>>>>>>> ", found , "\n");
+            if (C.size() > 0) {
+                D = {  for(ee: as_nodeset(D) ) { ee; }  {C;};};
+                if (found >= 0) {
+                    as_symbol("E"+found,"Event")(1,2,3);
+                }
+                else {
+                    as_symbol("E"+(D.size()-1),"Event")(1,2,3);
+                }
+            }
+            print("D=",D,"\n");
         };
     };
     t{Initial;Dispatch;};
-    //t{Dispatch;Dispatch;evDispatch;doDispatch;};
+    t{Dispatch;Dispatch;evDispatch;doDispatch;};
 };
 
 Simulation{
-    Start{
-        for(i : 0 .. 3){ as_identifier("S"+i); };S;
-    };
-   start_timer(2.0*s,evDispatch());
-   // start_timer(4.0*s,evDispatch(payload{4;5;6;}));
-   // start_timer(6.0*s,evDispatch(payload{4;5;6;}));
+   Start{
+    for(i : 0 .. 3){ as_identifier("S"+i); };S;
+   };
+   start_timer(4.0*s,evDispatch);
+   start_timer(4.0*s,evDispatch);
+   val aa = {4;5;6;};
+   start_timer(6.0*s,evDispatch(payload{4;5;6;7;}));
+   start_timer(8.0*s,evDispatch(payload{4;5;6;}));
+   start_timer(10.0*s,evDispatch(payload{7;8;9;}));
+   start_timer(12.0*s,evDispatch(payload{1;2;3;}));
+   start_timer(14.0*s,evDispatch(payload{4;5;6;}));
 };
 

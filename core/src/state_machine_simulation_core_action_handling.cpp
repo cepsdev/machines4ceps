@@ -25,7 +25,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <poll.h>
 #include <unistd.h>
 
-extern void 
+/*extern void 
 flatten_args(
 	State_machine_simulation_core* smc,
 	ceps::ast::Nodebase_ptr r, 
@@ -39,11 +39,11 @@ flatten_args(
 		flatten_args(smc,t.left(),v,op_val);
 		flatten_args(smc,t.right(),v,op_val);
 		return;
-	} else if (r->kind() == ceps::ast::Ast_node_kind::func_call)
-	{
+	} else if (r->kind() == ceps::ast::Ast_node_kind::func_call) {
 		using namespace ceps::ast;
 		std::string func_name;
 		std::vector<ceps::ast::Nodebase_ptr> args;
+		
 		sm_action_read_func_call_values(smc,r,func_name,args);
 
 		if (func_name == "argv")
@@ -58,7 +58,7 @@ flatten_args(
 		}
 	}
 	v.push_back(r);
-}
+}*/
 
 extern std::string 
 to_string(std::vector<ceps::ast::Nodebase_ptr>const& v)
@@ -136,7 +136,7 @@ to_string(State_machine_simulation_core* smc,
 	return "";
 }
 
-bool sm_action_read_func_call_values(State_machine_simulation_core* smc,	
+/*bool sm_action_read_func_call_values(State_machine_simulation_core* smc,	
 					ceps::ast::Nodebase_ptr root_node,
 					std::string & func_name,
 					std::vector<ceps::ast::Nodebase_ptr>& args)
@@ -154,7 +154,7 @@ bool sm_action_read_func_call_values(State_machine_simulation_core* smc,
 		return false;
 	}
 	return true;
-}
+}*/
 
 ceps::ast::Nodebase_ptr  
 State_machine_simulation_core::ceps_fn_start_signal_gen(

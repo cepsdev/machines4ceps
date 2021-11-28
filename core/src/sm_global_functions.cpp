@@ -128,7 +128,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 																				ceps::parser_env::Symboltable & sym_table)
 {
     std::vector<ceps::ast::Nodebase_ptr> args;
-	if (params != nullptr && params->children().size()) flatten_args(this,params->children()[0], args, ',');
+	if(params) args = ceps::interpreter::get_args(*params);
+	//if (params != nullptr && params->children().size()) flatten_args(this,params->children()[0], args, ',');
 	{
 	 auto it = ceps_fns_.find(id);
 	 if (it != ceps_fns_.end()){
@@ -206,10 +207,20 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
          ss << *args[0];
          return new ceps::ast::String(ss.str());
      }
-	}else if (id == "argv")
-	{
-        //std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-		auto const & args =  params->children();
+	} else if (id == "timer" || id == "start_timer" || id == "start_periodic_timer") {
+		exec_action_timer(args,id == "start_periodic_timer");
+	} else if (id == "kill_timer" || id == "stop_timer") {
+		using namespace ceps::ast;
+		if (args.size() == 0)
+			kill_named_timer(std::string{});
+		else{
+			std::string timer_id;
+			if (!is<Ast_node_kind::identifier>(args[0]))
+				fatal_(-1,"stop_timer: first argument (the timer id) has to be an unbound identifier.\n");
+			timer_id = name(as_id_ref(args[0]));
+			kill_named_timer(timer_id);
+		}
+	} else if (id == "argv") {
 		if (args.size() > 0 && args[0]->kind() == ceps::ast::Ast_node_kind::int_literal){
 			auto idx = value(as_int_ref(args[0]));
 			if (idx == 0)
@@ -221,7 +232,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 	} else if (id == "argc")
 	{
 		return new ceps::ast::Int( current_event().payload_.size(), ceps::ast::all_zero_unit(), nullptr, nullptr, nullptr);
-	} else if (id == "lookup"){
+	} else if (id == "lookup") {
      if (args.size() != 2 || args[0]->kind() != ceps::ast::Ast_node_kind::identifier) fatal_(-1,"lookup(): illformed argument(s).");
      auto const & tid = ceps::ast::name(ceps::ast::as_id_ref(args[0]));
      auto it = lookup_tables().find(tid);
@@ -667,9 +678,10 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		if(args.size() == 0) sleep(1);
 		#endif
 		return ceps::ast::mk_none();
-	}else if (id == "print")
-	 return sm_action_print(active_smp,&sym_table,args);
-	else if (id == "size") {
+	}else if (id == "print") {
+	 if (!quiet_mode_) return sm_action_print(active_smp,&sym_table,args);
+	 return ceps::ast::mk_none();
+	} else if (id == "size") {
 		if (args[0]->kind() == ceps::ast::Ast_node_kind::byte_array)
 		{
 		 return new ceps::ast::Int(ceps::ast::bytes(ceps::ast::as_byte_array_ref(args[0])).size(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
@@ -993,21 +1005,18 @@ static std::size_t make_byte_sequence_helper(
   auto it = type_descr_to_bitwidth_and_signedness.find(ceps::ast::name(func_id));
   if (it != type_descr_to_bitwidth_and_signedness.end()){
 	  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
-	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
-	  std::vector<ceps::ast::Nodebase_ptr> args;
-	  flatten_args(smc,params.children()[0], args);
+	  ceps::ast::Call_parameters& params = ceps::ast::as_call_params_ref(params_);
+	  std::vector<ceps::ast::Nodebase_ptr> args = ceps::interpreter::get_args(params);
 	  return make_byte_sequence_helper(smc,active_smp,args,chunk,do_write,it->second.first,it->second.second,is_real,en,pos);
   } else if (ceps::ast::name(func_id) == "real32" || ceps::ast::name(func_id) == "float" ) {
 	  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
-	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
-	  std::vector<ceps::ast::Nodebase_ptr> args;
-	  flatten_args(smc,params.children()[0], args);
+	  ceps::ast::Call_parameters& params = ceps::ast::as_call_params_ref(params_);
+	  std::vector<ceps::ast::Nodebase_ptr> args = ceps::interpreter::get_args(params);
 	  return make_byte_sequence_helper(smc,active_smp,args,chunk,do_write,32,true,true,en,pos);
   } else if (ceps::ast::name(func_id) == "make_byte_sequence") {
 	  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
-	  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
-	  std::vector<ceps::ast::Nodebase_ptr> args;
-	  flatten_args(smc,params.children()[0], args);
+	  ceps::ast::Call_parameters& params = ceps::ast::as_call_params_ref(params_);
+	  std::vector<ceps::ast::Nodebase_ptr> args = ceps::interpreter::get_args(params);
 	  return make_byte_sequence_helper(smc,active_smp,args,chunk,do_write,bw,iss,is_real,en,pos);
   } else {
 	std::stringstream ss;  ss << *node;
@@ -1186,11 +1195,10 @@ static std::size_t breakup_byte_sequence_helper(
 	  ceps::ast::Identifier& func_id = *dynamic_cast<ceps::ast::Identifier*>(func_call.children()[0]);
 	  auto it = type_descr_to_bitwidth_and_signedness.find(ceps::ast::name(func_id));
 	  if (it != type_descr_to_bitwidth_and_signedness.end()){
-		  ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
-		  ceps::ast::Call_parameters& params = *dynamic_cast<ceps::ast::Call_parameters*>(params_);
-		  std::vector<ceps::ast::Nodebase_ptr> args;
-		  flatten_args(smc,params.children()[0], args);
-		  return breakup_byte_sequence_helper(smc,
+		ceps::ast::Nodebase_ptr params_ = func_call.children()[1];
+	  	ceps::ast::Call_parameters& params = ceps::ast::as_call_params_ref(params_);
+	  	std::vector<ceps::ast::Nodebase_ptr> args = ceps::interpreter::get_args(params);
+		return breakup_byte_sequence_helper(smc,
 				                              active_smp,
 											  sym_table,
 											  args.begin(),

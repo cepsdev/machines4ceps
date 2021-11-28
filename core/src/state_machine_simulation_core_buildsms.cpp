@@ -1314,9 +1314,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 
 		if (transport["eom"].size()) {
-			//eof = transport["generic_tcp_in"]["eof"].as_str();
 			auto  v = transport["eom"].nodes();
-			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
 			for(auto  e : v)
 			{
 				if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
@@ -1327,7 +1325,6 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		}
 		if (transport["som"].size()){
 			auto  v = transport["som"].nodes();
-			//DOESN'T WORK!!!!!!: GCC BUG ??????: auto&  v = transport["generic_tcp_out"]["eof"].nodes();
 			for(auto  e : v)
 			{
 				if (e->kind() == ceps::ast::Ast_node_kind::string_literal)
@@ -1344,13 +1341,19 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 			ev_id = ceps::ast::name(ceps::ast::as_symbol_ref( emit.nodes()[0]));
 		else if (emit.size() == 1 && emit.nodes()[0]->kind() == ceps::ast::Ast_node_kind::func_call)
 		{
-			std::vector<ceps::ast::Nodebase_ptr> args;
-			read_func_call_values(this,	emit.nodes()[0],ev_id,args);
+			using namespace ceps::ast;
+			auto fexpr = emit.nodes()[0];
+			auto& call = as_func_call_ref(fexpr);
+			auto call_params = children(call)[1]; 
+			auto call_target =  func_call_target(call);
+			auto args = ceps::interpreter::get_args( as_call_params_ref(call_params));
+
+			if (is<Ast_node_kind::symbol>(call_target) && kind(as_symbol_ref(call_target))=="Event")
+				ev_id = name(as_symbol_ref(call_target));
+
 			for(auto p:args){
 				if (p->kind() == ceps::ast::Ast_node_kind::identifier)
-				{
 					ev_params.push_back(ceps::ast::name(ceps::ast::as_id_ref(p)));
-				}
 			}
 		}
 
