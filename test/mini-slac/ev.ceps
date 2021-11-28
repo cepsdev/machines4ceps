@@ -1,0 +1,99 @@
+/*
+Copyright 2021 Tomas Prerovsky (cepsdev@hotmail.com).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+/*
+  mini-slac/ev.ceps
+  A simplified model of the SLAC process in EV-EVSE matching (ISO 15118-3).
+*/
+
+
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Event   evMatchingProcessStartTrigger,
+        evTP_EV_SLAC_init_timeout,
+        evTT_match_response_timeout,
+        evCM_SLAC_PARM_REQ,
+        evCM_SLAC_PARM_CNF;
+
+val time_scale = 1.0;
+val TP_EV_SLAC_init = time_scale*10.0*s;
+val TT_match_response = time_scale*0.1*s;
+
+
+//The EV communicates with multiple EVSEs, we limit the number of communication partners.
+val max_parallel_sessions = 4;  
+
+Systemstate current_session_id;
+print("!\n");
+current_session_id = 0;
+print(current_session_id,"!\n");
+
+Systemstate confirmation_counter;
+confirmation_counter = 0;
+Guard gNoConfirmations;
+
+gNoConfirmations = confirmation_counter == 0;
+
+sm{
+    EV;
+    states{ Initial;
+            WaitForMatchingProcessStartTrigger;
+            ParameterExchangeFailed;
+        };
+    
+    sm{
+        ParameterExchange;
+        states{ Initial;
+                NoConfirmationsWithinTimeWindow;
+            };
+        on_enter{
+            current_session_id = current_session_id + 1;
+            start_timer(TP_EV_SLAC_init,evTP_EV_SLAC_init_timeout,TP_EV_SLAC_init_timeout);
+        };
+
+        sm{
+            WaitForConfirmations;
+            states{Initial;};
+            on_enter{
+                evCM_SLAC_PARM_REQ(
+                   payload{
+                    run_id{current_session_id;};
+                    application_type{0;};
+                    security_type{0;};
+                   }
+                );
+                start_timer(TT_match_response,evTT_match_response_timeout,TT_match_response_timeout);
+            };
+
+
+        };
+        t{Initial;WaitForConfirmations;};
+        t{WaitForConfirmations;NoConfirmationsWithinTimeWindow;evTT_match_response_timeout;gNoConfirmations;};
+        t{NoConfirmationsWithinTimeWindow;WaitForConfirmations;};
+    };
+
+    t{Initial;WaitForMatchingProcessStartTrigger;};
+    t{WaitForMatchingProcessStartTrigger;ParameterExchange;evMatchingProcessStartTrigger;};
+
+    t{ParameterExchange;ParameterExchangeFailed;evTP_EV_SLAC_init_timeout;};
+};
+
+Simulation{
+    Start{EV;};
+    evMatchingProcessStartTrigger;
+};
