@@ -241,10 +241,12 @@ static ceps::ast::node_t
 stmt_claimer (
 	ceps::ast::node_t node, 
 	void * ctxt, 
-	ceps::parser_env::Symboltable & sym_table)
+	ceps::parser_env::Symboltable & sym_table,
+	ceps::interpreter::Environment* env)
 {
 	using namespace ceps::ast;
 	if (ctxt == nullptr) return nullptr;
+	if (env->inside_func_call_ctr()) return nullptr;
 	ceps_interface_eval_func_callback_ctxt_t* context = (ceps_interface_eval_func_callback_ctxt_t*) ctxt;
 	if (is<Ast_node_kind::symbol>(node)){
 		auto& smbl = as_symbol_ref(node);
@@ -304,6 +306,63 @@ ceps_interface_binop_resolver(
 	}
 	return nullptr;
 }
+ceps::ast::Nodebase_ptr 
+eval_locked_ceps_expr_no_symbol_expansion(
+	State_machine_simulation_core* smc,
+	State_machine* containing_smp,
+	ceps::ast::Nodebase_ptr node,
+	ceps::ast::Nodebase_ptr root_node,
+	ceps::parser_env::Scope* scope)
+{
+	ceps_interface_eval_func_callback_ctxt_t ctxt;
+	ctxt.active_smp = containing_smp;
+	ctxt.smc  = smc;
+	std::shared_ptr<ceps::parser_env::Scope> sms_global_scope = nullptr;
+	std::shared_ptr<ceps::parser_env::Scope> scope_ptr; 
+
+	State_machine * root_sms = containing_smp;
+	if (containing_smp){
+		for(;root_sms->parent();root_sms = root_sms->parent());
+	    if (root_sms->global_scope){
+	    	sms_global_scope = root_sms->global_scope;
+	    }
+	}
+
+	if (scope){ scope_ptr = std::make_shared<ceps::parser_env::Scope>(*scope); }
+
+	std::lock_guard<std::recursive_mutex>g(smc->states_mutex());
+
+	smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemstate"] = &smc->get_global_states();
+	smc->ceps_env_current().interpreter_env().symbol_mapping()["Systemparameter"] = &smc->get_global_states();
+
+	ceps::interpreter::Environment::func_callback_t old_callback;
+	void * old_func_callback_context_data;
+	ceps::interpreter::Environment::func_binop_resolver_t old_binop_res;
+	void * old_cxt;
+
+	smc->ceps_env_current().interpreter_env().get_func_callback(old_callback,old_func_callback_context_data);
+	smc->ceps_env_current().interpreter_env().get_binop_resolver(old_binop_res,old_cxt);
+
+
+	if (scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(scope_ptr);
+    if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
+	auto ppp = smc->ceps_env_current().get_global_symboltable().lookup("mme_type");
+
+	bool symbols_found{false};
+	auto r = ceps::interpreter::evaluate_generic(node,
+			smc->ceps_env_current().get_global_symboltable(),
+			smc->ceps_env_current().interpreter_env(),root_node,nullptr,nullptr,symbols_found);
+
+	if (sms_global_scope) { smc->ceps_env_current().get_global_symboltable().scopes.pop_back();}
+	if (scope) {smc->ceps_env_current().get_global_symboltable().scopes.pop_back();scope_ptr.reset();}
+
+	smc->ceps_env_current().interpreter_env().set_func_stmt_claimer(nullptr,nullptr);
+	smc->ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
+	smc->ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
+	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
+	return r;
+}
+
 
 ceps::ast::Nodebase_ptr 
 eval_locked_ceps_expr(
@@ -386,22 +445,39 @@ State_machine_simulation_core::evaluate_fragment_in_global_context(void* node, v
 									static_cast<ceps::parser_env::Scope*>(scope));
 }
 
-void State_machine_simulation_core::regfn(std::string name, int(*fn) ()) {
+void* 
+State_machine_simulation_core::evaluate_fragment_in_global_context_no_symbol_expansion(void* node,void* scope){
+	if (node == nullptr) return node;
+	ceps::ast::Nodebase_ptr p = static_cast<ceps::ast::Nodebase_ptr>(node);
+	return eval_locked_ceps_expr_no_symbol_expansion(this,
+								 	nullptr,
+									p,
+									nullptr,
+									static_cast<ceps::parser_env::Scope*>(scope));
+}
+
+void 
+State_machine_simulation_core::regfn(std::string name, int(*fn) ()) {
 	regfntbl_i_[name] = fn;
 }
-void State_machine_simulation_core::regfn(std::string name, double(*fn) ()) {
+void 
+State_machine_simulation_core::regfn(std::string name, double(*fn) ()) {
 	regfntbl_d_[name] = fn;
 }
-void State_machine_simulation_core::regfn(std::string name, int(*fn) (int)) {
+void 
+State_machine_simulation_core::regfn(std::string name, int(*fn) (int)) {
 	regfntbl_ii_[name] = fn;
 }
-void State_machine_simulation_core::regfn(std::string name, double(*fn) (int)) {
+void 
+State_machine_simulation_core::regfn(std::string name, double(*fn) (int)) {
 	regfntbl_di_[name] = fn;
 }
-void State_machine_simulation_core::regfn(std::string name, int(*fn) (double)) {
+void 
+State_machine_simulation_core::regfn(std::string name, int(*fn) (double)) {
 	regfntbl_id_[name] = fn;
 }
-void State_machine_simulation_core::regfn(std::string name, double(*fn) (double)) {
+void 
+State_machine_simulation_core::regfn(std::string name, double(*fn) (double)) {
 	regfntbl_dd_[name] = fn;
 }
 void State_machine_simulation_core::regfn(std::string name, int(*fn) (int, int)) {

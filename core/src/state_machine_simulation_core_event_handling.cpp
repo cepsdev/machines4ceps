@@ -47,7 +47,7 @@ sm4ceps_plugin_int::Variant State_machine_simulation_core::argv(size_t j){
  }
  auto i = j - 1;
  if (std::max(current_event().payload_.size(),current_event().payload_native_.size()) <= i )
-	 fatal_(-1,"Access to argv: Out of bounds.");
+	 fatal_(-1,"Access to argv: Out of bounds. (plugin interface)");
  if (current_event().payload_native_.size()){
 	 return current_event().payload_native_[i];
  }

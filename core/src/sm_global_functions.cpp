@@ -227,7 +227,8 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 				return new ceps::ast::String(current_event().id_,nullptr,nullptr,nullptr);
 			else if (idx > 0 && idx-1 < (int)current_event().payload_.size() )
 				return current_event().payload_[idx-1];
-                        fatal_(-1,"Access to argv: Out of bounds.");
+			std::stringstream ss;
+            fatal_(-1,"Access to argv: Out of bounds. [ idx = "+std::to_string(idx)+"]");
 		}
 	} else if (id == "argc")
 	{
