@@ -174,6 +174,7 @@ public:
  virtual void* evaluate_fragment_in_global_context_no_symbol_expansion(void* node,void* scope) = 0;
  virtual State_machine_simulation_core* get_runtime_engine() = 0;
  virtual void queue_internal_event(std::string ev_name,std::vector<ceps::ast::Nodebase_ptr>) = 0;
+ virtual void run_indefinitely(bool) = 0;
 };
 
 #endif

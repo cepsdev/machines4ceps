@@ -904,6 +904,7 @@ public:
  	State_machine_simulation_core* get_runtime_engine() override;
     void queue_internal_event(std::string ev_name,std::vector<ceps::ast::Nodebase_ptr>) override;
 	void* evaluate_fragment_in_global_context_no_symbol_expansion(void* node,void* scope) override;
+  	void run_indefinitely(bool) override;
 
 	private:
 		std::map<std::string, int(*) ()> regfntbl_i_;

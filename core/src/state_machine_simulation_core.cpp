@@ -64,6 +64,9 @@ void register_plugin(State_machine_simulation_core* smc,std::string const& id,ce
     smc->register_plugin_fn(id,fn);
 }
 
+void State_machine_simulation_core::run_indefinitely(bool v) {
+	running_as_node() = v;
+}
 
 int State_machine_simulation_core::SM_COUNTER = 0;
 
