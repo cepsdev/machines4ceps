@@ -52,7 +52,7 @@ This should produce a binary called __ceps__ in the directory machines4ceps/bin.
 
 ## Writing and running state machines - Quick Start
 
-This intro follows closely the discussion in https://en.wikipedia.org/wiki/UML_state_machine.
+This intro follows closely the discussion in https://en.wikipedia.org/wiki/UML_state_machine. 
 
 ### A basic state machine
 ![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
@@ -60,7 +60,7 @@ This intro follows closely the discussion in https://en.wikipedia.org/wiki/UML_s
 
 #### __A basic state machine__: Notation
 
-Our first version of the depicted state machine is (the lacking __ANY_KEY__ transitions will be added in the following section):  
+Here comes our very first version of the depicted state machine:  
 
 ```bash
 kind Event;
@@ -77,12 +77,16 @@ sm{
  t{caps_locked;default;CAPS_LOCK;}; 
 };
 ```
-The notation is a bit clumsy but readable. Terser notations are available through the cepS framework (TODO:Add References). The code can be found in __examples/first_steps/basic_uml_state_diagram.ceps__.
+The notation is a bit clumsy but readable. The code can be found in __examples/first_steps/basic_uml_state_diagram.ceps__.
+
+Yes, *machines4ceps* is all about **coding** state machines, the drawing is - or at least should be - done by algorithms (see the section on drawing state machines). This approach has two major benefits:
+- it scales, a purely graphic approach isn't feasible if your system has thousands of states.
+- it is compatible with the established methods and tools we use to write software in general.
 
 #### __A basic state machine__: Execution (Part I)
 
-One way to execute a state machine is through *simulation*.
-The most basic simulation is to simply start a state machine:
+One way to understand what a state machine is doing is to run a *simulation*. Simulating state machines is a key feature of *machines4ceps*.
+To get our example running the only thing we need to add is a *Simulation* directive including a *Start* directive with the names of the state machines we want to run:
 ```C
 Simulation{
  Start{basic_example;};
