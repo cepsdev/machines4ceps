@@ -1,0 +1,30 @@
+kind Systemstate;
+kind Guard;
+kind Event;
+
+Event evNext;
+
+Guard G1;
+Guard G2;
+Guard G3;
+
+sm{
+ S1;
+ states{Initial;A;};
+ on_enter{
+     start_timer(1.0*s,evNext);
+ };
+ t{Initial;A;evNext;};
+};
+
+sm{
+ Observer;
+ states{Initial;ObservedA;};
+ t{Initial;ObservedA;G1;};
+};
+
+G1 = in_state(S1.A);
+
+xSimulation{
+    Start{S1;};
+};
