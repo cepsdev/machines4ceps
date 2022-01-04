@@ -1,3 +1,8 @@
+/**
+Observing state changes via guards.
+*/
+
+
 kind Systemstate;
 kind Guard;
 kind Event;
@@ -17,6 +22,7 @@ sm{
  t{Initial;A;evNext;};
 };
 
+label ObserverSM title = "Observer state machine makes a transition to ObservedA if S1 makes a transition to A.";
 sm{
  Observer;
  states{Initial;ObservedA;};
@@ -25,6 +31,6 @@ sm{
 
 G1 = in_state(S1.A);
 
-xSimulation{
-    Start{S1;};
+Simulation{
+    Start{S1;Observer;};
 };

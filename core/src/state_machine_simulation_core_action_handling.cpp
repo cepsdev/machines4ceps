@@ -270,6 +270,19 @@ stmt_claimer (
 	return nullptr;	
 }
 
+static bool
+ceps_interface_binop_resolver_pred( 
+	ceps::ast::Binary_operator_ptr binop,
+	ceps::ast::Nodebase_ptr lhs ,
+	void* cxt,
+	ceps::ast::Nodebase_ptr parent_node)
+{
+	using namespace ceps::ast;
+	if (ceps::ast::op(*binop) == '=')
+	 if (is<Ast_node_kind::symbol>(lhs) && kind(as_symbol_ref(lhs))=="Guard") return false;
+	return true;
+}
+
 ceps::ast::Nodebase_ptr 
 ceps_interface_binop_resolver( 
 	ceps::ast::Binary_operator_ptr binop,
@@ -402,6 +415,7 @@ eval_locked_ceps_expr(
 	smc->ceps_env_current().interpreter_env().get_binop_resolver(old_binop_res,old_cxt);
 
 	smc->ceps_env_current().interpreter_env().set_func_callback(ceps_interface_eval_func_callback,&ctxt);
+	smc->ceps_env_current().interpreter_env().set_binop_resolver_predicate(ceps_interface_binop_resolver_pred);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(ceps_interface_binop_resolver,smc);
 	smc->ceps_env_current().interpreter_env().set_func_stmt_claimer(stmt_claimer,&ctxt);
 
@@ -419,6 +433,7 @@ eval_locked_ceps_expr(
 
 	smc->ceps_env_current().interpreter_env().set_func_stmt_claimer(nullptr,nullptr);
 	smc->ceps_env_current().interpreter_env().set_func_callback(old_callback,old_func_callback_context_data);
+	smc->ceps_env_current().interpreter_env().set_binop_resolver_predicate(nullptr);
 	smc->ceps_env_current().interpreter_env().set_binop_resolver(old_binop_res,old_cxt);
 	smc->ceps_env_current().interpreter_env().symbol_mapping().clear();
 	return r;
