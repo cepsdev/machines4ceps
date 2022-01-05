@@ -648,18 +648,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 			}
 		}
 		return new ceps::ast::Double(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-	 } else if (id == "as_int"){
-			if (args.size() == 0) return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-			if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
-					CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
-				auto& udef = ceps::ast::as_user_defined_ref(args[0]);
-				pugi::xpath_node_set* ns = (pugi::xpath_node_set*)ceps::ast::get<1>(udef);
-				if (ns->size() == 0)
-					fatal_(-1,"as_double: node set is empty.\n");
-				return new ceps::ast::Int(ns->first().node().text().as_int(),ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-			}
-			return new ceps::ast::Int(0,ceps::ast::all_zero_unit(),nullptr,nullptr,nullptr);
-	} else if (id == "as_string"){
+	 } else if (id == "as_string"){
 	 if (args.size() == 0) return new ceps::ast::String("",nullptr,nullptr,nullptr);
 	 if (args[0]->kind() == ceps::ast::Ast_node_kind::user_defined &&
 	  CEPS_REP_PUGI_XML_NODE_SET == ceps::ast::id(ceps::ast::as_user_defined_ref(args[0]))){
