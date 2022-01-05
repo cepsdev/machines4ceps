@@ -1,5 +1,0 @@
-static_for(e:root.rollout){
- static_for(f:.steps.content().is_id()){
-
- }
-}

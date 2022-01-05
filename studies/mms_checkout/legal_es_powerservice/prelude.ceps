@@ -1,8 +1,0 @@
-kind Step;
-kind Event;
-kind Systemstate;
-kind Guard;
-
-Event ev_new_basket;
-Event ev_submit_basket;
-Event ev_add_article_to_current_basket;
