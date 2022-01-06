@@ -18,6 +18,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/docgen/docgenerator_theme_factory.hpp"
 #include "core/include/docgen/docgenerator_docwriter_ansi_console.hpp"
 #include "core/include/docgen/docgenerator_docwriter_markdown_jira_style.hpp"
+#include "core/include/docgen/docgenerator_docwriter_markdown_github_style.hpp"
 #include "core/include/docgen/docgenerator_docwriter_html5.hpp"
 #include <stdexcept>
 
@@ -33,6 +34,8 @@ std::shared_ptr<ceps::docgen::Doc_writer> ceps::docgen::Doc_writer_factory(std::
         r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{output_format_flags});
      else if (e == "markdown_jira" || e == "markdown_jira_style") 
         r = std::make_shared<Doc_writer_markdown_jira_style>(Doc_writer_markdown_jira_style{output_format_flags});
+     else if (e == "markdown_github" || e == "markdown_github_style") 
+        r = std::make_shared<Doc_writer_markdown_github_style>(Doc_writer_markdown_github_style{output_format_flags});
      else if (e == "html" || e == "html5") 
         r = std::make_shared<Doc_writer_html5>(Doc_writer_html5{output_format_flags});
      

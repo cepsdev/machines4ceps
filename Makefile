@@ -13,7 +13,8 @@ objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_
   log4ceps_events.o log4ceps_loggers.o log4ceps_records.o log4ceps_states.o log4ceps_serialization.o log4ceps_dynamic_bitset.o log4ceps_record.o log4ceps_utils.o sm_comm_naive_msg_prot.o cppgen.o dotgen.o livelogger.o rdwrn.o \
   sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o sm_sim_core_shadow_states.o sm_sim_process_sm.o concept_dependency_graph.o stddoc.o \
    generic_tcp_communication.o ceps_websocket.o sm_sim_core_timer.o sm_sim_execute_action_seq.o\
-  ws_api.o virtual_can_api.o streamtransform.o docgen_formats.o docgen_sm.o docgen_macros.o docgen_docwriter_ansi_console.o docgen_docwriter_html5.o docgen_docwriter_markdown_jira_style.o docgen_docwriter_factory.o docgen_theme_factory.o  docgen.o docgen_ifelse.o
+  ws_api.o virtual_can_api.o streamtransform.o docgen_formats.o docgen_sm.o docgen_macros.o docgen_docwriter_ansi_console.o docgen_docwriter_html5.o\
+   docgen_docwriter_markdown_jira_style.o docgen_docwriter_factory.o docgen_theme_factory.o  docgen.o docgen_ifelse.o docgen_docwriter_markdown_github_style.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
 CEPSLIB := ../ceps/core/$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
@@ -83,6 +84,7 @@ $(TARGET)/ceps: $(objfiles) $(CEPSLIB)
 	$(TARGET)/docgen_macros.o \
 	$(TARGET)/docgen_docwriter_ansi_console.o \
 	$(TARGET)/docgen_docwriter_markdown_jira_style.o \
+	$(TARGET)/docgen_docwriter_markdown_github_style.o \
 	$(TARGET)/docgen_theme_factory.o \
 	$(TARGET)/ceps_websocket.o \
 	$(TARGET)/generic_tcp_communication.o \
@@ -200,6 +202,8 @@ $(TARGET)/docgen_docwriter_ansi_console.o: core/src/docgen/docgenerator_docwrite
 	$(CXX)   $(cflags) $(includes) core/src/docgen/docgenerator_docwriter_ansi_console.cpp -c -o $(TARGET)/docgen_docwriter_ansi_console.o
 $(TARGET)/docgen_docwriter_markdown_jira_style.o: core/src/docgen/docgenerator_docwriter_markdown_jira_style.cpp core/include/docgen/docgenerator_docwriter_markdown_jira_style.hpp
 	$(CXX)   $(cflags) $(includes) core/src/docgen/docgenerator_docwriter_markdown_jira_style.cpp -c -o $(TARGET)/docgen_docwriter_markdown_jira_style.o
+$(TARGET)/docgen_docwriter_markdown_github_style.o: core/src/docgen/docgenerator_docwriter_markdown_github_style.cpp core/include/docgen/docgenerator_docwriter_markdown_github_style.hpp
+	$(CXX)   $(cflags) $(includes) core/src/docgen/docgenerator_docwriter_markdown_github_style.cpp -c -o $(TARGET)/docgen_docwriter_markdown_github_style.o
 $(TARGET)/docgen_theme_factory.o: core/src/docgen/docgenerator_theme_factory.cpp core/include/docgen/docgenerator_theme_factory.hpp
 	$(CXX)   $(cflags) $(includes) core/src/docgen/docgenerator_theme_factory.cpp -c -o $(TARGET)/docgen_theme_factory.o
 $(TARGET)/docgen_ifelse.o: core/src/docgen/docgenerator_ifelse.cpp core/include/docgen/docgenerator.hpp
