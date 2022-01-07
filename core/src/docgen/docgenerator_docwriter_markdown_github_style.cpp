@@ -18,6 +18,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 using namespace ceps::ast;
 
+ceps::docgen::Doc_writer::eol_t ceps::docgen::Doc_writer_markdown_github_style::eol() {return "<br/>"; };
+ceps::docgen::Doc_writer::symbol_t ceps::docgen::Doc_writer_markdown_github_style::right_arrow() {return "`➜`";}
+
 void ceps::docgen::Doc_writer_markdown_github_style::start(std::ostream& os) {}
 void ceps::docgen::Doc_writer_markdown_github_style::end(std::ostream& os) {}
 
@@ -47,12 +50,11 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 
 	bool print_color_closing_tag = false;
 
-	
 	if (ctx.text_foreground_color.length()){
 		auto col = theme->choose_color(ctx.text_foreground_color);
 		if (col != color{}){
 		 print_color_closing_tag = true;
-		 os << "{color:#" << col.as_rgb_str() << "}";
+		 //os << "{color:#" << col.as_rgb_str() << "}";
 		}
 	} 
 	
@@ -63,7 +65,7 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
     }
 
 	for(int i = 0; i < ctx.linebreaks_before;++i)
-		os << ctx.eol; 
+		os << eol(); 
 
 	for(size_t i = 0; i < ctx.prefix.size();++i)
 	 if (ctx.prefix[i] == '-') os << "\\-";
@@ -90,15 +92,17 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 	}
 	os << ctx.suffix;
 	if(print_color_closing_tag)
-		 os << "{color}";
+		 //os << "{color}"
+		 ;
 
-	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
-		std::string eol_temp = ctx.eol;
-		ctx.eol = "";
+	if (ctx.eol && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
+		auto eol_temp = ctx.eol;
+		ctx.eol = 0;
 		ctx.suffix = "";
 		print_comment(os,this);
 		ctx.eol = eol_temp;
 		ctx.comment_stmt_stack->clear();
 	}
-    os << ctx.eol;
+
+	for(auto i = 0; i < ctx.eol;++i) os << eol(); 
 }

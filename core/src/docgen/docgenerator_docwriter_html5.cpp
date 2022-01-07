@@ -17,6 +17,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/docgen/docgenerator_docwriter_html5.hpp"
 #include <memory>
 using namespace ceps::ast;
+ceps::docgen::Doc_writer::eol_t ceps::docgen::Doc_writer_html5::eol() {return "<br/>"; };
 
 void ceps::docgen::Doc_writer_html5::start(std::ostream& os) {
    os << R"(<!DOCTYPE html>
@@ -504,7 +505,7 @@ void ceps::docgen::Doc_writer_html5::out(std::ostream& os,
 	if (ctx.bold);// os << "\033[1m";
 	if (ctx.normal_intensity);// os << "\033[22m";
 	if (ctx.faint_intensity);// os << "\033[2m";
-	for(int i = 0; i < ctx.linebreaks_before;++i) os << ctx.eol; 
+	for(int i = 0; i < ctx.linebreaks_before;++i) os << eol(); 
 
 	os << ctx.prefix;
 	os << s;
@@ -523,18 +524,17 @@ void ceps::docgen::Doc_writer_html5::out(std::ostream& os,
 		//if (ctx.text_foreground_color.size()) os << "\033[38;5;"<< theme->choose_color(ctx.text_foreground_color).as_ansi_8bit_str() << "m";
 	}
 	os << ctx.suffix;
-	if (ctx.eol.length() && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
+	if (ctx.eol && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
 		//os << "\033[0m";
 		//os << "\033[2m";
 		//os << "\033[3m";
-		std::string eol_temp = ctx.eol;
-		ctx.eol = "";
+		auto eol_temp = ctx.eol;
+		ctx.eol = 0;
 		ctx.suffix = "";
 		print_comment(os,this);
 		ctx.eol = eol_temp;
 		ctx.comment_stmt_stack->clear();
 	}
 	//os << "\033[0m"; //reset
-	os << ctx.eol; 
-
+	for(auto i = 0; i < ctx.eol;++i) os << eol(); 
 }

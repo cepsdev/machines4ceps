@@ -155,7 +155,7 @@ namespace ceps{
             //std::string foreground_color_modifier;
             std::string suffix;
             std::string prefix;
-            std::string eol                   ="\n";
+            int eol                           = 1;
             std::vector<std::string> info;
             std::vector<std::string> modifiers; 
             std::string indent_str            = " ";
@@ -181,8 +181,12 @@ namespace ceps{
             protected:
             std::shared_ptr<Theme> theme;
             public:
+            using eol_t = std::string;
+            using symbol_t = std::string;
+
             Doc_writer() = delete;
-            Doc_writer(std::vector<std::string> options) : fmt_out_ctx_stack(options) {}
+            Doc_writer(std::vector<std::string> options) : fmt_out_ctx_stack(options) {
+            }
             void set_theme(std::shared_ptr<Theme> new_theme){theme = new_theme;}
             std::shared_ptr<Theme> get_theme() const {return theme;}
             virtual void start(std::ostream& os) = 0; 
@@ -194,6 +198,10 @@ namespace ceps{
             virtual bool handler_toplevel_struct(   std::ostream& os, 
                                                     std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols, 
                                                     ceps::ast::Struct& tplvl_struct) = 0;
+            virtual eol_t eol() = 0; 
+            virtual symbol_t right_arrow() {
+                return "-▶";
+            }
         };
 
         

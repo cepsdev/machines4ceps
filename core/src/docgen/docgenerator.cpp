@@ -113,7 +113,8 @@ static void flatten_args(ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodeb
 void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_writer* doc_writer,bool escape_strings, fmt_out_ctx ctx_base_string){
 	doc_writer->push_ctx();
 
-	doc_writer->top().suffix = doc_writer->top().prefix = doc_writer->top().eol = ""; 
+	doc_writer->top().suffix = doc_writer->top().prefix = "";
+	doc_writer->top().eol = 0; 
 	doc_writer->top().ignore_indent = true;
 	doc_writer->top().normal_intensity =true;
 	if (is<Ast_node_kind::expr>(expr))
@@ -352,7 +353,8 @@ void ceps::docgen::fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n,D
 	} else if (!is<Ast_node_kind::stmts>(n) && !is<Ast_node_kind::scope>(n)){
 		{
 			doc_writer->push_ctx(); 
-			doc_writer->top().suffix = doc_writer->top().eol = "";
+			doc_writer->top().suffix = "";
+			doc_writer->top().eol = 0;
 			doc_writer->out(os,"");
 			doc_writer->pop_ctx();
 		}
@@ -388,7 +390,7 @@ void ceps::docgen::Comment::print_section(std::ostream& os,std::vector<Nodebase_
 		if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "title" ){
 			{
 				doc_writer->push_ctx();
-				doc_writer->top().eol = "";
+				doc_writer->top().eol = 0;
 				doc_writer->top().suffix = "";
 				doc_writer->out(os,"");
 				doc_writer->top().bold = true;			
@@ -421,7 +423,7 @@ void ceps::docgen::Comment::print_block(std::ostream& os,std::vector<Nodebase_pt
 	++doc_writer->top().indent;
 	{
 		doc_writer->push_ctx();
-		doc_writer->top().eol = ""; 
+		doc_writer->top().eol = 0; 
 		doc_writer->out(os,"");
 		doc_writer->pop_ctx();
 	}
@@ -443,7 +445,7 @@ void ceps::docgen::Comment::print_content(std::ostream& os, std::vector<Nodebase
 			print_content(os,as_stmts_ref(e).children());
 		else {
 			doc_writer->push_ctx();
-			doc_writer->top().eol = "";
+			doc_writer->top().eol = 0;
 			doc_writer->top().suffix = "";
 			doc_writer->top().quote_string = false;
 			doc_writer->top().ignore_indent = true;

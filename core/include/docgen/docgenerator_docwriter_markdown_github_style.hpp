@@ -36,6 +36,8 @@ namespace ceps{
                                             ceps::ast::Struct& tplvl_struct) override;
             void start(std::ostream& os) override; 
             void end(std::ostream& os) override; 
+            eol_t eol() override;
+            symbol_t right_arrow() override;
         };
     }
 }

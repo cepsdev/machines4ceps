@@ -35,7 +35,8 @@ namespace ceps{
                                             std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
                                             ceps::ast::Struct& tplvl_struct) override;
             void start(std::ostream& os) override; 
-            void end(std::ostream& os) override; 
+            void end(std::ostream& os) override;
+            eol_t eol() override;
         };
     }
 }

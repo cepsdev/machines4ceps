@@ -46,7 +46,6 @@ void ceps::docgen::fmt_out_layout_macro_name(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.italic = true;
 	ctx.suffix = ":";
-	//ctx.eol = "\n\n";
 }
 
 void ceps::docgen::fmt_out_layout_macro_keyword(fmt_out_ctx& ctx){
@@ -55,7 +54,7 @@ void ceps::docgen::fmt_out_layout_macro_keyword(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 
 
@@ -66,7 +65,7 @@ void ceps::docgen::fmt_out_layout_loop_keyword(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 
 void ceps::docgen::fmt_out_layout_loop_in_keyword(fmt_out_ctx& ctx){
@@ -75,7 +74,7 @@ void ceps::docgen::fmt_out_layout_loop_in_keyword(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 	ctx.ignore_indent = true;
 }
 
@@ -85,7 +84,7 @@ void ceps::docgen::fmt_out_layout_loop_variable(fmt_out_ctx& ctx){
 	ctx.italic = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 	ctx.ignore_indent = true;
 }
 
@@ -118,7 +117,7 @@ void ceps::docgen::fmt_out_layout_val_var(fmt_out_ctx& ctx){
 	ctx.italic = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 	ctx.ignore_indent = true;
 }
 
@@ -128,7 +127,7 @@ void ceps::docgen::fmt_out_layout_val_keyword(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 
 void ceps::docgen::fmt_out_layout_val_arrow(fmt_out_ctx& ctx){
@@ -136,7 +135,7 @@ void ceps::docgen::fmt_out_layout_val_arrow(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 	ctx.ignore_indent = true;
 }
 
@@ -146,13 +145,13 @@ void ceps::docgen::fmt_out_layout_if_keyword(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 
 void ceps::docgen::fmt_out_layout_label(fmt_out_ctx& ctx){
 	ctx.linebreaks_before = 1;
 	ctx.suffix = "";
-	ctx.eol = "\n\n";
+	ctx.eol = 2;
 	//ctx.underline = true;
 	ctx.prefix = "📎 ";
 	ctx.normal_intensity = true;
@@ -160,7 +159,7 @@ void ceps::docgen::fmt_out_layout_label(fmt_out_ctx& ctx){
 
 void ceps::docgen::fmt_out_layout_funcname(fmt_out_ctx& ctx){
 	ctx.suffix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 	ctx.prefix = "";
 	ctx.normal_intensity = true;
 	ctx.suffix = "";
@@ -174,7 +173,7 @@ void ceps::docgen::fmt_out_layout_state_machine_keyword(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 
 void ceps::docgen::fmt_out_layout_state_machine_actions_keyword(fmt_out_ctx& ctx){
@@ -182,21 +181,21 @@ void ceps::docgen::fmt_out_layout_state_machine_actions_keyword(fmt_out_ctx& ctx
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 void ceps::docgen::fmt_out_layout_state_machine_states_keyword(fmt_out_ctx& ctx){
 	ctx.set_text_foreground_color("keyword.state_machine_states");
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 void ceps::docgen::fmt_out_layout_state_machine_transitions_keyword(fmt_out_ctx& ctx){
 	ctx.set_text_foreground_color("keyword.state_machine_transitions");
 	ctx.bold = true;
 	ctx.suffix = " ";
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }
 
 void ceps::docgen::fmt_out_layout_state_name(fmt_out_ctx& ctx){
@@ -205,5 +204,5 @@ void ceps::docgen::fmt_out_layout_state_name(fmt_out_ctx& ctx){
 	ctx.suffix = "";
 	ctx.ignore_indent = true;
 	ctx.prefix = "";
-	ctx.eol = "";
+	ctx.eol = 0;
 }

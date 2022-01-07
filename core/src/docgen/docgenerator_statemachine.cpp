@@ -50,7 +50,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 	{
 		doc_writer->push_ctx();
 		fmt_out_layout_macro_name(doc_writer->top());
-		doc_writer->top().eol = "";
+		doc_writer->top().eol = 0;
 		doc_writer->top().suffix = "";
 		doc_writer->top().ignore_indent = true;
 		doc_writer->out(os,name);
@@ -80,7 +80,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		++doc_writer->top().indent;
 		for(auto e: actions_vec)
 		{
-			{doc_writer->push_ctx();doc_writer->top().eol="";doc_writer->top().suffix="";doc_writer->out(os,"");doc_writer->pop_ctx();}
+			{doc_writer->push_ctx();doc_writer->top().eol=0;doc_writer->top().suffix="";doc_writer->out(os,"");doc_writer->pop_ctx();}
 			{doc_writer->push_ctx();fmt_out_layout_funcname(doc_writer->top());doc_writer->out(os,e);doc_writer->pop_ctx();}
 			{doc_writer->push_ctx();doc_writer->top().ignore_indent=true;doc_writer->top().suffix=":";doc_writer->out(os,"");doc_writer->pop_ctx();}
 			++doc_writer->top().indent;
@@ -109,7 +109,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		{
 			if (!states_on_single_line){
 				doc_writer->push_ctx();
-				doc_writer->top().eol="";
+				doc_writer->top().eol=0;
 				doc_writer->top().suffix="";
 				doc_writer->out(os,"");
 				doc_writer->pop_ctx();
@@ -145,7 +145,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 				}
 				else if (i + 1 != states.size()) {
 					doc_writer->push_ctx(); 
-					doc_writer->top().eol="";
+					doc_writer->top().eol=0;
 					doc_writer->top().suffix="";
 					doc_writer->top().ignore_indent = true; 
 					doc_writer->out(os,", ");
@@ -195,7 +195,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		for(auto t : transitions){
 			{
 				doc_writer->push_ctx();
-				doc_writer->top().eol="";
+				doc_writer->top().eol=0;
 				doc_writer->top().suffix="";
 				doc_writer->out(os,"");
 				doc_writer->pop_ctx();
@@ -207,7 +207,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 				doc_writer->push_ctx();
 				doc_writer->top().suffix="";
 				doc_writer->out(os,"");
-				doc_writer->top().eol = "";
+				doc_writer->top().eol = 0;
 				doc_writer->top().prefix ="";
 				doc_writer->out(os,"");
 				doc_writer->pop_ctx();				
@@ -216,7 +216,8 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			if (st != last_from_state_name) {
 				fmt_out_handle_expr(os,t.from, doc_writer);
 				doc_writer->push_ctx();
-				doc_writer->top().suffix = doc_writer->top().prefix = doc_writer->top().eol = ""; 
+				doc_writer->top().suffix = doc_writer->top().prefix = "";
+				doc_writer->top().eol = 0; 
 				doc_writer->top().ignore_indent = true;
 				doc_writer->top().normal_intensity =true;
 				doc_writer->out(os, ([&](){std::string s = ""; 
@@ -226,7 +227,8 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			}
 			else {
 				doc_writer->push_ctx();
-				doc_writer->top().suffix = doc_writer->top().prefix = doc_writer->top().eol = ""; 
+				doc_writer->top().suffix = doc_writer->top().prefix = "";
+				doc_writer->top().eol = 0; 
 				doc_writer->top().ignore_indent = true;
 				doc_writer->top().normal_intensity =true;
 				doc_writer->out(os, ([&](){std::string s = ""; 
@@ -241,21 +243,19 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			{
 				doc_writer->push_ctx();
 				doc_writer->top().ignore_indent=true;
-				doc_writer->top().eol="";
+				doc_writer->top().eol=0;
 				doc_writer->top().suffix="";
 				doc_writer->out(os," -");
 				doc_writer->pop_ctx();
 			}
 			if (t.ev){
-				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
 				fmt_out_handle_expr(os,t.ev, doc_writer);
-				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
 			}
 			if (t.guards.size()){
 				{
 					doc_writer->push_ctx();
 					doc_writer->top().ignore_indent=true;
-					doc_writer->top().eol="";
+					doc_writer->top().eol=0;
 					doc_writer->top().suffix="";
 					doc_writer->top().set_text_foreground_color("state_machine.transition.guard.parentheses");
 					doc_writer->out(os,"[");
@@ -266,17 +266,16 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 					if(i + 1 != t.guards.size()) {
 						doc_writer->push_ctx();
 						doc_writer->top().ignore_indent=true;
-						doc_writer->top().eol="";
+						doc_writer->top().eol=0;
 						doc_writer->top().suffix="";
 						doc_writer->out(os," && ");
 						doc_writer->pop_ctx();
 					}
-					//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os,";",local_ctx);}
 				}
 				{
 					doc_writer->push_ctx();
 					doc_writer->top().ignore_indent=true;
-					doc_writer->top().eol="";
+					doc_writer->top().eol=0;
 					doc_writer->top().suffix="";
 					doc_writer->top().set_text_foreground_color("state_machine.transition.guard.parentheses");
 					doc_writer->out(os,"]");
@@ -287,7 +286,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 				{
 					doc_writer->push_ctx();
 					doc_writer->top().ignore_indent=true;
-					doc_writer->top().eol="";
+					doc_writer->top().eol=0;
 					doc_writer->top().suffix="";
 					doc_writer->out(os,"/");
 					doc_writer->pop_ctx();
@@ -297,7 +296,7 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 					{
 						doc_writer->push_ctx();
 						doc_writer->top().ignore_indent=true;
-						doc_writer->top().eol="";
+						doc_writer->top().eol=0;
 						doc_writer->top().suffix="";
 						doc_writer->out(os,"()");
 						doc_writer->pop_ctx();
@@ -305,21 +304,19 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 					{
 						doc_writer->push_ctx();
 						doc_writer->top().ignore_indent=true;
-						doc_writer->top().eol="";
+						doc_writer->top().eol=0;
 						doc_writer->top().suffix="";
 						doc_writer->out(os,";");
 						doc_writer->pop_ctx();
 					}
 				}
-				//fmt_out_handle_expr(os,t.ev, ctx);
-				//{auto local_ctx{ctx};local_ctx.ignore_indent=true;local_ctx.eol="";local_ctx.suffix="";formatted_out(os," ",local_ctx);}
 			}
 			{
 				doc_writer->push_ctx();
 				doc_writer->top().ignore_indent=true;
-				doc_writer->top().eol="";
+				doc_writer->top().eol=0;
 				doc_writer->top().suffix="";
-				doc_writer->out(os,"-▶ ");
+				doc_writer->out(os, doc_writer->right_arrow() /*"-▶ " `➜` */);
 				doc_writer->pop_ctx();
 			}
 			fmt_out_handle_expr(os,t.to, doc_writer);
