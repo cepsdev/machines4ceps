@@ -614,8 +614,6 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 		if (is<Ast_node_kind::structdef>(n)){
 			if (lookuptbls.coverage_summary == n) return true;
 			auto&  current_struct{as_struct_ref(n)};
-			if (name(current_struct) == "Simulation") return true;
-
 			if (name(current_struct) == "sm"){
 				Statemachine sm{ nullptr,
 				                 as_struct_ptr(n),
@@ -623,6 +621,12 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 								 output_format_flags,
 								 symtab};
 				sm.print(os,doc_writer.get());
+			} else if (name(current_struct) == "Simulation" || name(current_struct) == "simulation"){
+				Simulation sim{ as_struct_ptr(n),
+				                lookuptbls,
+								output_format_flags,
+								symtab};
+				sim.print(os,doc_writer.get());
 			}
 			else fmt_out_handle_outer_struct(os,current_struct,doc_writer.get(),ignore_macro_definitions);
 		} else if (is<Ast_node_kind::kind_def>(n)) {
@@ -634,7 +638,36 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 	});
 }
 
+///// Simulation
 
+				
+void ceps::docgen::Simulation::build(){
+	
+	shallow_traverse(this->strct->children(), [this](node_t n) -> bool{
+		if (is<Ast_node_kind::structdef>(n) && name(as_struct_ref(n)) == "title" ){
+			this->title = as_struct_ref(n).children();
+		}
+		return true;
+	});
+}
+
+void ceps::docgen::Simulation::print(std::ostream& os, Doc_writer* doc_writer){
+	//title first
+	doc_writer->push_ctx();
+	++doc_writer->top().heading_level;
+	doc_writer->top().heading = true;
+	std::stringstream ss;
+	ss << "Simulation: '";
+	for(auto n:title){
+		if (is<Ast_node_kind::string_literal>(n)) ss << value(as_string_ref(n));
+		else if (is<Ast_node_kind::identifier>(n)) ss << name(as_id_ref(n));
+	}
+	ss <<"'";
+	doc_writer->out(os,ss.str());
+	doc_writer->top().heading = false;
+	--doc_writer->top().heading_level;
+	doc_writer->pop_ctx();
+}
 
 
 ////// fmt_out_ctx_stack

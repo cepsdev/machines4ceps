@@ -150,6 +150,8 @@ namespace ceps{
             bool faint_intensity              = false;
             bool c_style_struct               = true;
             bool quote_string                 = true;
+            int heading_level                 = 0;
+            bool heading                      = false;
             std::string inline_comment_prefix = " -- ";
 
             //std::string foreground_color_modifier;
@@ -301,6 +303,27 @@ namespace ceps{
 			}
 			void print(std::ostream& os, Doc_writer* doc_writer);
             void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) override ;
+		};
+
+		class Simulation {
+			private:
+            Struct*  strct;
+            std::vector<Nodebase_ptr> title;
+
+            void build();
+			public:
+            context& ctxt;
+            std::vector<std::string> output_format_flags;
+            ceps::parser_env::Symboltable* symtab;
+			Simulation(     Struct*  strct, 
+                            context& ctxt,
+                            std::vector<std::string> output_format_flags,
+                            ceps::parser_env::Symboltable* symtab = nullptr
+                        ):strct{strct}, ctxt{ctxt},output_format_flags{output_format_flags},symtab{symtab}{ 
+				
+                build();
+			}
+			void print(std::ostream& os, Doc_writer* doc_writer);
 		};
 
         //Entry point for Terminal output

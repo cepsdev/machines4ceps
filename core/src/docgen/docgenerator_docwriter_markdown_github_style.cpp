@@ -39,6 +39,12 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
                              std::string s, 
 							 MarginPrinter* mp) {
     auto& ctx = top(); 
+	if (ctx.heading && ctx.heading_level){
+		os << "\n";
+		for(auto i = 0; i != ctx.heading_level;++i)
+		 os << "#";
+		os << " ";
+	}
 	if(!ctx.ignore_indent) {
 		if (mp != nullptr) 
             mp->print_left_margin(os,ctx);
