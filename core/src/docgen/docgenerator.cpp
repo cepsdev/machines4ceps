@@ -627,6 +627,20 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 								output_format_flags,
 								symtab};
 				sim.print(os,doc_writer.get());
+			} else if (name(current_struct) == "docgen_parameters"){
+				for(auto p : current_struct.children() ){
+					if (is<Ast_node_kind::binary_operator>(p)){
+						auto& binop = as_binop_ref(p);
+						if (op_val(binop) != "=") continue;
+						if (is<Ast_node_kind::symbol>(children(binop)[0]) && "Docgenparam" == kind(as_symbol_ref(children(binop)[0]))) {
+							int intval = 0;
+							if (is<Ast_node_kind::int_literal>(children(binop)[1]))
+							 	intval = value(as_int_ref(children(binop)[1]));
+							if (name(as_symbol_ref(children(binop)[0])) == "heading_level")
+								doc_writer->top().heading_level = intval;
+						}
+					}					
+				}
 			}
 			else fmt_out_handle_outer_struct(os,current_struct,doc_writer.get(),ignore_macro_definitions);
 		} else if (is<Ast_node_kind::kind_def>(n)) {
@@ -640,13 +654,25 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 
 ///// Simulation
 
+std::string flatten_sms_id(ceps::ast::node_t n){
+	if (is<Ast_node_kind::binary_operator>(n))
+	 	return flatten_sms_id( children(as_binop_ref(n))[0] ) + "." + flatten_sms_id( children(as_binop_ref(n))[1] );
+	if(is<Ast_node_kind::identifier>(n))
+		return name(as_id_ref(n));
+	return "";
+}
 				
 void ceps::docgen::Simulation::build(){
 	
 	shallow_traverse(this->strct->children(), [this](node_t n) -> bool{
 		if (is<Ast_node_kind::structdef>(n) && name(as_struct_ref(n)) == "title" ){
-			this->title = as_struct_ref(n).children();
+			this->title = children(as_struct_ref(n));
 		}
+		else if (is<Ast_node_kind::structdef>(n) && name(as_struct_ref(n)) == "Start" ){
+			auto& v = children(as_struct_ref(n));
+			for (auto p : v) if (is<Ast_node_kind::identifier>(p)) sms.push_back(name(as_id_ref(p)));
+			else if (is<Ast_node_kind::binary_operator>(p)) sms.push_back(flatten_sms_id(p));
+		} else if (n) steps.push_back(n);
 		return true;
 	});
 }
@@ -656,16 +682,67 @@ void ceps::docgen::Simulation::print(std::ostream& os, Doc_writer* doc_writer){
 	doc_writer->push_ctx();
 	++doc_writer->top().heading_level;
 	doc_writer->top().heading = true;
+	doc_writer->top().eol = 1;
+
 	std::stringstream ss;
-	ss << "Simulation: '";
+	ss << "[Simulation] ";
 	for(auto n:title){
 		if (is<Ast_node_kind::string_literal>(n)) ss << value(as_string_ref(n));
 		else if (is<Ast_node_kind::identifier>(n)) ss << name(as_id_ref(n));
 	}
-	ss <<"'";
 	doc_writer->out(os,ss.str());
+	
+	++doc_writer->top().indent;
+
+	++doc_writer->top().heading_level;
+	doc_writer->out(os,"Steps");
+	--doc_writer->top().heading_level;
 	doc_writer->top().heading = false;
 	--doc_writer->top().heading_level;
+
+	if (sms.size()){
+		doc_writer->push_ctx();
+		doc_writer->top().eol=0;doc_writer->top().prefix=doc_writer->top().suffix="";
+		doc_writer->top().badge = true;
+		doc_writer->out(os,"Start");
+		doc_writer->top().ignore_indent = true;
+		doc_writer->top().badge = false;
+		if (sms.size() == 1)
+			doc_writer->out(os," state machine ");
+		else
+		 	doc_writer->out(os," state machines ");
+		doc_writer->top().italic = true;
+		for(auto i = 0; i != sms.size();++i){
+			doc_writer->out(os,sms[i]);
+			if (i + 1 < sms.size()){doc_writer->top().italic = false; doc_writer->out(os,", ");	doc_writer->top().italic = true;}					
+		}
+		doc_writer->top().italic = false;
+		doc_writer->top().eol = 1;
+		doc_writer->out(os,".");		
+		doc_writer->pop_ctx();				
+	}
+
+	if (steps.size()){
+		for(auto step : steps){
+			if (is<Ast_node_kind::symbol>(step) && "Event" == kind(as_symbol_ref(step)) ){
+				doc_writer->top().eol = 0;doc_writer->top().prefix=doc_writer->top().suffix="";
+				doc_writer->top().badge = true;
+				doc_writer->out(os,"Trigger Event");
+				doc_writer->top().ignore_indent = true;
+
+				doc_writer->top().badge = false;
+				doc_writer->out(os," ");
+				doc_writer->top().italic = true;
+				doc_writer->out(os, name(as_symbol_ref(step)));
+				doc_writer->top().italic = false;
+				doc_writer->top().eol=1;
+				doc_writer->out(os,".");
+				doc_writer->top().ignore_indent = false;
+			}
+		}
+	}
+
+	--doc_writer->top().indent;
 	doc_writer->pop_ctx();
 }
 

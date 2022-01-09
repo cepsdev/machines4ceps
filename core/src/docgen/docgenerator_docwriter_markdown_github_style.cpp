@@ -45,7 +45,7 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 		 os << "#";
 		os << " ";
 	}
-	if(!ctx.ignore_indent) {
+	if(!ctx.ignore_indent && !ctx.heading) {
 		if (mp != nullptr) 
             mp->print_left_margin(os,ctx);
 		else for(int i = 0; i < ctx.indent; ++ i) 
@@ -66,8 +66,8 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 	
     if (s.size() + ctx.prefix.size()){ 
         if (ctx.underline) os << "+";
-        if (ctx.italic) os << "_";
-        if (ctx.bold) os << "*";
+        if (ctx.italic) os << "*";
+        if (ctx.bold) os << "__";
     }
 
 	for(int i = 0; i < ctx.linebreaks_before;++i)
@@ -76,16 +76,17 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 	for(size_t i = 0; i < ctx.prefix.size();++i)
 	 if (ctx.prefix[i] == '-') os << "\\-";
 	 else os << ctx.prefix[i];
+
+	if (ctx.badge) os << "`";
 	
 	for(size_t i = 0; i < s.size();++i)
 	 if (s[i] == '-') os << "\\-";
 	 else os << s[i];
 	
-
     if (s.size() + ctx.prefix.size()){ 
-        if (ctx.bold) os << "*";
-        if (ctx.italic) os << "_";
-        if (ctx.underline) os << "+";
+        if (ctx.bold) os << "__ ";
+        if (ctx.italic) os << "* ";
+        if (ctx.underline) os << "+ ";
     }
 
 	if (ctx.info.size()){
@@ -100,6 +101,8 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 	if(print_color_closing_tag)
 		 //os << "{color}"
 		 ;
+	if (ctx.badge) os << "`";
+
 
 	if (ctx.eol && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
 		auto eol_temp = ctx.eol;
@@ -110,5 +113,6 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 		ctx.comment_stmt_stack->clear();
 	}
 
-	for(auto i = 0; i < ctx.eol;++i) os << eol(); 
+	if (!ctx.heading) {for(auto i = 0; i < ctx.eol;++i) os << eol();}
+	else if (ctx.eol) os << "\n"; 
 }

@@ -152,6 +152,7 @@ namespace ceps{
             bool quote_string                 = true;
             int heading_level                 = 0;
             bool heading                      = false;
+            bool badge                        = false;
             std::string inline_comment_prefix = " -- ";
 
             //std::string foreground_color_modifier;
@@ -309,6 +310,8 @@ namespace ceps{
 			private:
             Struct*  strct;
             std::vector<Nodebase_ptr> title;
+            std::vector<std::string> sms;
+            std::vector<Nodebase_ptr> steps;
 
             void build();
 			public:
