@@ -35,6 +35,23 @@ ceps::docgen::Doc_writer_markdown_github_style::Doc_writer_markdown_github_style
 
 }
 
+void ceps::docgen::Doc_writer_markdown_github_style::start_comment_block(std::ostream& os) {
+	os << " /*";
+}
+
+void ceps::docgen::Doc_writer_markdown_github_style::end_comment_block(std::ostream& os) {
+	os << "*/ ";
+}
+
+void ceps::docgen::Doc_writer_markdown_github_style::start_code_block(std::ostream& os){
+	os << "\n```javascript\n";
+}
+
+void ceps::docgen::Doc_writer_markdown_github_style::end_code_block(std::ostream& os){
+	os << "\n```\n";
+}
+
+
 void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) {
@@ -48,10 +65,10 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 	if(!ctx.ignore_indent && !ctx.heading) {
 		if (mp != nullptr) 
             mp->print_left_margin(os,ctx);
-		else for(int i = 0; i < ctx.indent; ++ i) 
+		/*else for(int i = 0; i < ctx.indent; ++ i) 
                 for(size_t j = 0; j < ctx.indent_str.size();++j) 
                  if (ctx.indent_str[j] == ' ') os << "&nbsp;";
-                 else os << ctx.indent_str[j];
+                 else os << ctx.indent_str[j];*/
 	}
 
 	bool print_color_closing_tag = false;
@@ -73,15 +90,11 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 	for(int i = 0; i < ctx.linebreaks_before;++i)
 		os << eol(); 
 
-	for(size_t i = 0; i < ctx.prefix.size();++i)
-	 if (ctx.prefix[i] == '-') os << "\\-";
-	 else os << ctx.prefix[i];
+	 os << ctx.prefix;
 
 	if (ctx.badge) os << "`";
 	
-	for(size_t i = 0; i < s.size();++i)
-	 if (s[i] == '-') os << "\\-";
-	 else os << s[i];
+	os << s;
 	
     if (s.size() + ctx.prefix.size()){ 
         if (ctx.bold) os << "__ ";
@@ -113,6 +126,6 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 		ctx.comment_stmt_stack->clear();
 	}
 
-	if (!ctx.heading) {for(auto i = 0; i < ctx.eol;++i) os << eol();}
-	else if (ctx.eol) os << "\n"; 
+	if (!ctx.heading) {for(auto i = 0; i < ctx.eol;++i) os << "\n\n";}
+	else if (ctx.eol) os << "\n\n"; 
 }

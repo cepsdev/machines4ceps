@@ -205,6 +205,11 @@ namespace ceps{
             virtual symbol_t right_arrow() {
                 return "-▶";
             }
+            virtual void start_code_block(std::ostream& os){}
+            virtual void end_code_block(std::ostream& os){}
+            virtual void start_comment_block(std::ostream& os){}
+            virtual void end_comment_block(std::ostream& os){}
+
         };
 
         
@@ -311,6 +316,7 @@ namespace ceps{
             Struct*  strct;
             std::vector<Nodebase_ptr> title;
             std::vector<std::string> sms;
+            std::vector<Nodebase_ptr> steps_before_start_directive;
             std::vector<Nodebase_ptr> steps;
 
             void build();

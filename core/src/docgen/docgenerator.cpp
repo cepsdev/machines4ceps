@@ -123,6 +123,9 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 	else if (is<Ast_node_kind::binary_operator>(expr))
 	{
 		auto& bop{as_binop_ref(expr)};
+		bool par{};
+		if (op_val(bop) != "=") { par=true;doc_writer->out(os,"(");}
+
 		if (op_val(bop) != "#") //comment operator
 		{
 			fmt_out_handle_expr(os,bop.left(), doc_writer, escape_strings, ctx_base_string);
@@ -136,6 +139,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 			}
 		}
 		fmt_out_handle_expr(os,bop.right(), doc_writer,escape_strings,ctx_base_string);
+		if (par) doc_writer->out(os,")");
 	} 
 	else if (is<Ast_node_kind::unary_operator>(expr))
 	{
@@ -663,29 +667,65 @@ std::string flatten_sms_id(ceps::ast::node_t n){
 }
 				
 void ceps::docgen::Simulation::build(){
-	
-	shallow_traverse(this->strct->children(), [this](node_t n) -> bool{
+	bool start_directive_seen{};
+	shallow_traverse(this->strct->children(), [&,this](node_t n) -> bool{
+		if(!n) return true;
 		if (is<Ast_node_kind::structdef>(n) && name(as_struct_ref(n)) == "title" ){
 			this->title = children(as_struct_ref(n));
 		}
 		else if (is<Ast_node_kind::structdef>(n) && name(as_struct_ref(n)) == "Start" ){
+			start_directive_seen = true;
 			auto& v = children(as_struct_ref(n));
 			for (auto p : v) if (is<Ast_node_kind::identifier>(p)) sms.push_back(name(as_id_ref(p)));
 			else if (is<Ast_node_kind::binary_operator>(p)) sms.push_back(flatten_sms_id(p));
-		} else if (n) steps.push_back(n);
+		} else if (start_directive_seen) steps.push_back(n);
+		else steps_before_start_directive.push_back(n);
 		return true;
 	});
 }
 
 void ceps::docgen::Simulation::print(std::ostream& os, Doc_writer* doc_writer){
 	//title first
+	auto handle_step = [&](node_t step, node_t next_step){
+		doc_writer->push_ctx();
+		doc_writer->top().eol = 0;doc_writer->top().prefix=doc_writer->top().suffix="";
+		doc_writer->start_code_block(os);
+		if (is<Ast_node_kind::symbol>(step) && "Event" == kind(as_symbol_ref(step)) ){
+			doc_writer->out(os,"Trigger Event");
+			doc_writer->top().ignore_indent = true;
+
+			doc_writer->out(os," ");
+			doc_writer->out(os, name(as_symbol_ref(step)));
+			doc_writer->out(os,".");
+			doc_writer->top().ignore_indent = false;			
+		} else {
+			doc_writer->top().eol = 0;doc_writer->top().prefix=doc_writer->top().suffix="";
+			fmt_handle_node(os,step,doc_writer,true);
+		}
+		if (next_step && is<Ast_node_kind::structdef>(next_step) && name(as_struct_ref(next_step)) == "comment"){
+			auto& v = children(as_struct_ref(next_step));
+			if (v.size()){
+				doc_writer->start_comment_block(os);				
+				for (auto n:v){
+					if (is<Ast_node_kind::string_literal>(n)) os << value(as_string_ref(n));
+					else if (is<Ast_node_kind::identifier>(n)) os << name(as_id_ref(n));
+					else fmt_handle_node(os,n,doc_writer,true);
+				}
+				doc_writer->end_comment_block(os);
+			}
+		}
+		doc_writer->end_code_block(os);
+		doc_writer->pop_ctx();
+	};
+
+
 	doc_writer->push_ctx();
 	++doc_writer->top().heading_level;
 	doc_writer->top().heading = true;
 	doc_writer->top().eol = 1;
 
 	std::stringstream ss;
-	ss << "[Simulation] ";
+	if (!title.size()) ss << "[Simulation] ";
 	for(auto n:title){
 		if (is<Ast_node_kind::string_literal>(n)) ss << value(as_string_ref(n));
 		else if (is<Ast_node_kind::identifier>(n)) ss << name(as_id_ref(n));
@@ -700,48 +740,38 @@ void ceps::docgen::Simulation::print(std::ostream& os, Doc_writer* doc_writer){
 	doc_writer->top().heading = false;
 	--doc_writer->top().heading_level;
 
+	auto foreach_step = [&](std::vector<node_t> v){
+		for(size_t i = 0; i < v.size();++i){
+			node_t step = v[i];
+			node_t next_step = i + 1 < v.size() ? v[i+1] : nullptr; 
+			handle_step( step, next_step );
+			if (next_step && is<Ast_node_kind::structdef>(next_step) && name(as_struct_ref(next_step)) == "comment" ){
+				++i;		
+			}
+		}
+	};
+	foreach_step(steps_before_start_directive);
+
 	if (sms.size()){
 		doc_writer->push_ctx();
 		doc_writer->top().eol=0;doc_writer->top().prefix=doc_writer->top().suffix="";
-		doc_writer->top().badge = true;
+		doc_writer->start_code_block(os);
 		doc_writer->out(os,"Start");
 		doc_writer->top().ignore_indent = true;
-		doc_writer->top().badge = false;
 		if (sms.size() == 1)
 			doc_writer->out(os," state machine ");
 		else
 		 	doc_writer->out(os," state machines ");
-		doc_writer->top().italic = true;
-		for(auto i = 0; i != sms.size();++i){
+		for(size_t i = 0; i < sms.size();++i){
 			doc_writer->out(os,sms[i]);
 			if (i + 1 < sms.size()){doc_writer->top().italic = false; doc_writer->out(os,", ");	doc_writer->top().italic = true;}					
 		}
-		doc_writer->top().italic = false;
-		doc_writer->top().eol = 1;
 		doc_writer->out(os,".");		
+		doc_writer->end_code_block(os);
 		doc_writer->pop_ctx();				
 	}
 
-	if (steps.size()){
-		for(auto step : steps){
-			if (is<Ast_node_kind::symbol>(step) && "Event" == kind(as_symbol_ref(step)) ){
-				doc_writer->top().eol = 0;doc_writer->top().prefix=doc_writer->top().suffix="";
-				doc_writer->top().badge = true;
-				doc_writer->out(os,"Trigger Event");
-				doc_writer->top().ignore_indent = true;
-
-				doc_writer->top().badge = false;
-				doc_writer->out(os," ");
-				doc_writer->top().italic = true;
-				doc_writer->out(os, name(as_symbol_ref(step)));
-				doc_writer->top().italic = false;
-				doc_writer->top().eol=1;
-				doc_writer->out(os,".");
-				doc_writer->top().ignore_indent = false;
-			}
-		}
-	}
-
+	foreach_step(steps);
 	--doc_writer->top().indent;
 	doc_writer->pop_ctx();
 }

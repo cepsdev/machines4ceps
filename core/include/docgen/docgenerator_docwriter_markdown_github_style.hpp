@@ -38,6 +38,11 @@ namespace ceps{
             void end(std::ostream& os) override; 
             eol_t eol() override;
             symbol_t right_arrow() override;
+            void start_code_block(std::ostream& os) override;
+            void end_code_block(std::ostream& os) override;
+            void start_comment_block(std::ostream& os) override;
+            void end_comment_block(std::ostream& os) override;
+
         };
     }
 }
