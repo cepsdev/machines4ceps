@@ -764,7 +764,8 @@ void ceps::docgen::Simulation::print(std::ostream& os, Doc_writer* doc_writer){
 		 	doc_writer->out(os," state machines ");
 		for(size_t i = 0; i < sms.size();++i){
 			doc_writer->out(os,sms[i]);
-			if (i + 1 < sms.size()){doc_writer->top().italic = false; doc_writer->out(os,", ");	doc_writer->top().italic = true;}					
+			if (i + 1 < sms.size())
+				doc_writer->out(os,", ");					
 		}
 		doc_writer->out(os,".");		
 		doc_writer->end_code_block(os);
