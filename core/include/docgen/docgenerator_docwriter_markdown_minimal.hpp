@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Tomas Prerovsky (cepsdev@hotmail.com).
+Copyright 2022 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 
-#ifndef INCMACHINES4CEPSCORE_DOCGENDOCWRITERMARKDOWNJIRASTYLEHPP
-#define INCMACHINES4CEPSCORE_DOCGENDOCWRITERMARKDOWNJIRASTYLEHPP
+#pragma once
 
 #include "core/include/docgen/docgenerator.hpp"
 
@@ -24,10 +23,10 @@ namespace ceps{
 	namespace docgen{
         using namespace ceps::ast;
 
-        class Doc_writer_markdown_jira_style: public Doc_writer{
+        class Doc_writer_markdown_minimal: public Doc_writer{
             public:
-            Doc_writer_markdown_jira_style() = delete;
-            Doc_writer_markdown_jira_style(std::vector<std::string> options);
+            Doc_writer_markdown_minimal() = delete;
+            Doc_writer_markdown_minimal(std::vector<std::string> options);
             void out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) override;
@@ -35,9 +34,10 @@ namespace ceps{
                                             std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
                                             ceps::ast::Struct& tplvl_struct) override;
             void start(std::ostream& os) override; 
-            void end(std::ostream& os) override;
+            void end(std::ostream& os) override; 
             eol_t eol() override;
+            bool supports_tables() override { return true; };
+            Doc_table_writer* get_table_writer() override;
         };
     }
 }
-#endif

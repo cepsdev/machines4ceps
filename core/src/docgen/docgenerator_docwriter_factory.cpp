@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Tomas Prerovsky (cepsdev@hotmail.com).
+Copyright 2021,22 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/docgen/docgenerator_docwriter_markdown_jira_style.hpp"
 #include "core/include/docgen/docgenerator_docwriter_markdown_github_style.hpp"
 #include "core/include/docgen/docgenerator_docwriter_html5.hpp"
+#include "core/include/docgen/docgenerator_docwriter_markdown_minimal.hpp"
 #include <stdexcept>
 
-
 using namespace ceps::ast;
-
 
 std::shared_ptr<ceps::docgen::Doc_writer> ceps::docgen::Doc_writer_factory(std::vector<std::string> output_format_flags){
     std::shared_ptr<ceps::docgen::Doc_writer> r;
@@ -36,9 +35,10 @@ std::shared_ptr<ceps::docgen::Doc_writer> ceps::docgen::Doc_writer_factory(std::
         r = std::make_shared<Doc_writer_markdown_jira_style>(Doc_writer_markdown_jira_style{output_format_flags});
      else if (e == "markdown_github" || e == "markdown_github_style") 
         r = std::make_shared<Doc_writer_markdown_github_style>(Doc_writer_markdown_github_style{output_format_flags});
+      else if (e == "markdown" || e == "markdown_minimal") 
+        r = std::make_shared<Doc_writer_markdown_minimal>(Doc_writer_markdown_minimal{output_format_flags});        
      else if (e == "html" || e == "html5") 
-        r = std::make_shared<Doc_writer_html5>(Doc_writer_html5{output_format_flags});
-     
+        r = std::make_shared<Doc_writer_html5>(Doc_writer_html5{output_format_flags});     
      if (!r)  
         r = std::make_shared<Doc_writer_ansi_console>(Doc_writer_ansi_console{output_format_flags});
      r -> set_theme(ceps::docgen::Theme_factory(output_format_flags));

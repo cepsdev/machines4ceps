@@ -14,7 +14,7 @@ objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_
   sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o sm_sim_core_shadow_states.o sm_sim_process_sm.o concept_dependency_graph.o stddoc.o \
    generic_tcp_communication.o ceps_websocket.o sm_sim_core_timer.o sm_sim_execute_action_seq.o\
   ws_api.o virtual_can_api.o streamtransform.o docgen_formats.o docgen_sm.o docgen_macros.o docgen_docwriter_ansi_console.o docgen_docwriter_html5.o\
-   docgen_docwriter_markdown_jira_style.o docgen_docwriter_factory.o docgen_theme_factory.o  docgen.o docgen_ifelse.o docgen_docwriter_markdown_github_style.o
+   docgen_docwriter_markdown_jira_style.o docgen_docwriter_factory.o docgen_theme_factory.o  docgen.o docgen_ifelse.o docgen_docwriter_markdown_github_style.o  docgen_docwriter_markdown_minimal.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
 CEPSLIB := ../ceps/core/$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
@@ -90,7 +90,7 @@ $(TARGET)/ceps: $(objfiles) $(CEPSLIB)
 	$(TARGET)/generic_tcp_communication.o \
 	$(TARGET)/sm_sim_core_timer.o \
 	$(TARGET)/sm_sim_execute_action_seq.o \
-	$(TARGET)/docgen_docwriter_factory.o $(TARGET)/docgen_ifelse.o $(TARGET)/docgen_docwriter_html5.o -o $(TARGET)/ceps -ldl -lpthread -lrt -lcryptopp -lcepscore
+	$(TARGET)/docgen_docwriter_factory.o $(TARGET)/docgen_ifelse.o $(TARGET)/docgen_docwriter_html5.o $(TARGET)/docgen_docwriter_markdown_minimal.o -o $(TARGET)/ceps -ldl -lpthread -lrt -lcryptopp -lcepscore
 
 $(TARGET)/main.o: src/main.cpp
 	$(CXX)   $(cflags) $(includes) src/main.cpp -c -o $(TARGET)/main.o
@@ -218,6 +218,8 @@ $(TARGET)/sm_sim_core_timer.o: core/src/sm_sim_core_timer.cpp
 	$(CXX)   $(cflags) $(includes) core/src/sm_sim_core_timer.cpp -c -o $(TARGET)/sm_sim_core_timer.o
 $(TARGET)/sm_sim_execute_action_seq.o:  core/src/sm_sim_execute_action_seq.cpp core/include/state_machine_simulation_core.hpp
 	$(CXX)   $(cflags) $(includes) core/src/sm_sim_execute_action_seq.cpp -c -o $(TARGET)/sm_sim_execute_action_seq.o
+$(TARGET)/docgen_docwriter_markdown_minimal.o: core/src/docgen/docgenerator_docwriter_markdown_minimal.cpp core/include/docgen/docgenerator_docwriter_markdown_minimal.hpp
+	$(CXX)   $(cflags) $(includes) core/src/docgen/docgenerator_docwriter_markdown_minimal.cpp -c -o $(TARGET)/docgen_docwriter_markdown_minimal.o
 	
 
 clean:

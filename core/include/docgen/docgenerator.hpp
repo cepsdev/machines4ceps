@@ -180,6 +180,16 @@ namespace ceps{
             fmt_out_ctx& top();
         };
 
+        class Doc_table_writer {
+            public:
+                virtual void open_table();
+                virtual void close_table();
+                virtual void open_row();
+                virtual void close_row();
+                virtual void open_cell( bool header = false, unsigned int vert_span = 0, unsigned int horz_span = 0);
+                virtual void close_cell();
+        };
+
         class Doc_writer: public fmt_out_ctx_stack{
             protected:
             std::shared_ptr<Theme> theme;
@@ -209,10 +219,9 @@ namespace ceps{
             virtual void end_code_block(std::ostream& os){}
             virtual void start_comment_block(std::ostream& os){}
             virtual void end_comment_block(std::ostream& os){}
-
-        };
-
-        
+            virtual bool supports_tables() {return false;}
+            virtual Doc_table_writer* get_table_writer() {return nullptr;}
+        };        
 
         struct symbol_info{
             std::vector<std::map<std::string,std::string>> id2kind_maps;
