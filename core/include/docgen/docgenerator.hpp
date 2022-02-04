@@ -15,8 +15,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 
-#ifndef INCSM4CEPSCORE_DOCGENHPP
-#define INCSM4CEPSCORE_DOCGENHPP
+#pragma once
 
 #include <string> 
 #include <vector>
@@ -30,6 +29,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <mutex>
 #include <optional>
 #include <condition_variable>
+#include <memory>
 #include "ceps_all.hh"
 
 
@@ -182,12 +182,13 @@ namespace ceps{
 
         class Doc_table_writer {
             public:
-                virtual void open_table();
-                virtual void close_table();
-                virtual void open_row();
-                virtual void close_row();
-                virtual void open_cell( bool header = false, unsigned int vert_span = 0, unsigned int horz_span = 0);
-                virtual void close_cell();
+                virtual void open_table() = 0;
+                virtual void close_table() = 0;
+                virtual void open_row() = 0;
+                virtual void close_row() = 0;
+                virtual void open_cell( bool header = false, unsigned int vert_span = 0, unsigned int horz_span = 0) = 0;
+                virtual void write_cell(std::string title) = 0;
+                virtual void close_cell() = 0;
         };
 
         class Doc_writer: public fmt_out_ctx_stack{
@@ -220,7 +221,7 @@ namespace ceps{
             virtual void start_comment_block(std::ostream& os){}
             virtual void end_comment_block(std::ostream& os){}
             virtual bool supports_tables() {return false;}
-            virtual Doc_table_writer* get_table_writer() {return nullptr;}
+            virtual std::shared_ptr<Doc_table_writer> get_table_writer() {return nullptr;}
         };        
 
         struct symbol_info{
@@ -317,6 +318,8 @@ namespace ceps{
                 build();
 			}
 			void print(std::ostream& os, Doc_writer* doc_writer);
+			void print_transitions(std::ostream& os, Doc_writer* doc_writer);
+			void print_transitions_tabularized(std::ostream& os, Doc_writer* doc_writer);
             void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) override ;
 		};
 
@@ -396,6 +399,3 @@ namespace ceps{
 
 	}
 }
-
-
-#endif

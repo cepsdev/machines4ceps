@@ -18,10 +18,54 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 using namespace ceps::ast;
 
-ceps::docgen::Doc_table_writer* ceps::docgen::Doc_writer_markdown_minimal::get_table_writer() {
-	
-	return nullptr;
+/////////
+// Table writer
+/////////
 
+class Table_writer_markdown_minimal: public ceps::docgen::Doc_table_writer {
+	std::shared_ptr<ceps::docgen::Doc_writer> parent;
+    public:
+		Table_writer_markdown_minimal(std::shared_ptr<ceps::docgen::Doc_writer> parent) : parent{parent} {}
+    	void open_table() override;
+        void close_table() override;
+        void open_row() override;
+        void close_row() override;
+        void open_cell( bool header = false, unsigned int vert_span = 0, unsigned int horz_span = 0) override;
+		void write_cell(std::string title) override;
+        void close_cell() override;
+		virtual ~Table_writer_markdown_minimal() {}
+};
+
+void Table_writer_markdown_minimal::write_cell(std::string title){
+	
+}
+
+void Table_writer_markdown_minimal::open_table(){
+
+}
+
+void Table_writer_markdown_minimal::close_table(){
+
+}
+void Table_writer_markdown_minimal::open_row(){
+
+}
+void Table_writer_markdown_minimal::close_row() {
+
+}
+void Table_writer_markdown_minimal::open_cell( bool header, unsigned int vert_span, unsigned int horz_span){
+
+}
+void Table_writer_markdown_minimal::close_cell(){
+
+}
+
+////////
+/// Doc_writer_markdown_minimal
+///////
+
+std::shared_ptr<ceps::docgen::Doc_table_writer> ceps::docgen::Doc_writer_markdown_minimal::get_table_writer() {
+	return std::make_shared<Table_writer_markdown_minimal>( std::shared_ptr<ceps::docgen::Doc_writer>{this});
 }
 
 ceps::docgen::Doc_writer::eol_t ceps::docgen::Doc_writer_markdown_minimal::eol() {return "\n"; };
@@ -30,8 +74,8 @@ void ceps::docgen::Doc_writer_markdown_minimal::start(std::ostream& os) {}
 void ceps::docgen::Doc_writer_markdown_minimal::end(std::ostream& os) {}
 
 bool ceps::docgen::Doc_writer_markdown_minimal::handler_toplevel_struct( std::ostream& os,
-																			std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
-                                          									ceps::ast::Struct& tplvl_struct) 
+																		 std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
+                                          								 ceps::ast::Struct& tplvl_struct) 
 {
 	return false;
 }
@@ -40,52 +84,55 @@ ceps::docgen::Doc_writer_markdown_minimal::Doc_writer_markdown_minimal(std::vect
 
 }
 
+
 void ceps::docgen::Doc_writer_markdown_minimal::out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) {
     auto& ctx = top(); 
-	if(!ctx.ignore_indent) {
+	if (ctx.heading && ctx.heading_level){
+		os << "\n";
+		for(auto i = 0; i != ctx.heading_level;++i)
+		 os << "#";
+		os << " ";
+	}
+	if(!ctx.ignore_indent && !ctx.heading) {
 		if (mp != nullptr) 
             mp->print_left_margin(os,ctx);
-		else for(int i = 0; i < ctx.indent; ++ i) 
+		/*else for(int i = 0; i < ctx.indent; ++ i) 
                 for(size_t j = 0; j < ctx.indent_str.size();++j) 
                  if (ctx.indent_str[j] == ' ') os << "&nbsp;";
-                 else os << ctx.indent_str[j];
+                 else os << ctx.indent_str[j];*/
 	}
 
 	bool print_color_closing_tag = false;
 
-	
 	if (ctx.text_foreground_color.length()){
 		auto col = theme->choose_color(ctx.text_foreground_color);
 		if (col != color{}){
 		 print_color_closing_tag = true;
-		 os << "{color:#" << col.as_rgb_str() << "}";
+		 //os << "{color:#" << col.as_rgb_str() << "}";
 		}
 	} 
 	
     if (s.size() + ctx.prefix.size()){ 
         if (ctx.underline) os << "+";
-        if (ctx.italic) os << "_";
-        if (ctx.bold) os << "*";
+        if (ctx.italic) os << "*";
+        if (ctx.bold) os << "__";
     }
 
 	for(int i = 0; i < ctx.linebreaks_before;++i)
 		os << eol(); 
 
-	for(size_t i = 0; i < ctx.prefix.size();++i)
-	 if (ctx.prefix[i] == '-') os << "\\-";
-	 else os << ctx.prefix[i];
-	
-	for(size_t i = 0; i < s.size();++i)
-	 if (s[i] == '-') os << "\\-";
-	 else os << s[i];
-	
+	 os << ctx.prefix;
 
+	if (ctx.badge) os << "`";
+	
+	os << s;
+	
     if (s.size() + ctx.prefix.size()){ 
-        if (ctx.bold) os << "*";
-        if (ctx.italic) os << "_";
-        if (ctx.underline) os << "+";
+        if (ctx.bold) os << "__ ";
+        if (ctx.italic) os << "* ";
+        if (ctx.underline) os << "+ ";
     }
 
 	if (ctx.info.size()){
@@ -98,7 +145,10 @@ void ceps::docgen::Doc_writer_markdown_minimal::out(std::ostream& os,
 	}
 	os << ctx.suffix;
 	if(print_color_closing_tag)
-		 os << "{color}";
+		 //os << "{color}"
+		 ;
+	if (ctx.badge) os << "`";
+
 
 	if (ctx.eol && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
 		auto eol_temp = ctx.eol;
@@ -108,5 +158,7 @@ void ceps::docgen::Doc_writer_markdown_minimal::out(std::ostream& os,
 		ctx.eol = eol_temp;
 		ctx.comment_stmt_stack->clear();
 	}
-	for(auto i = 0; i < ctx.eol; ++i) os << eol();
+
+	if (!ctx.heading) {for(auto i = 0; i < ctx.eol;++i) os << "\n\n";}
+	else if (ctx.eol) os << "\n\n"; 
 }

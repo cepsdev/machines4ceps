@@ -25,144 +25,55 @@ void ceps::docgen::Statemachine::print_left_margin(std::ostream& os, fmt_out_ctx
 	os << "\033[1m";
 	for(int i = 0; i < bar_width; ++i) os << "░";
 	for(int i = 0; i < ctx.indent - coverage_statistics.hits_col_width - bar_width -1;++i) os << " ";
-	
 }
 
 extern std::string default_text_representation(ceps::ast::Nodebase_ptr root_node);
 
-void ceps::docgen::Statemachine::print(	std::ostream& os,
-										Doc_writer* doc_writer){
+void ceps::docgen::Statemachine::print_transitions_tabularized(std::ostream& os, Doc_writer* doc_writer){
+	//Compute format
+	bool event_column 	{};
+	bool guard_column 	{};
+	bool action_column 	{};
+	bool visited_column {};
+
+	for (auto t: transitions){
+		action_column = action_column || t.actions.size() > 0;
+		guard_column = guard_column || t.guards.size() > 0;
+		event_column = event_column || t.ev != nullptr;
+		if (action_column && guard_column && event_column) break;
+	}
+
+	auto write_from = [](ceps::docgen::Statemachine::transition& t){};
+	auto write_to = [](ceps::docgen::Statemachine::transition& t){};
+	auto write_events = [](ceps::docgen::Statemachine::transition& t){};
+	auto write_guards = [](ceps::docgen::Statemachine::transition& t){};
+	auto write_actions = [](ceps::docgen::Statemachine::transition& t){};
+	auto write_visited = [](ceps::docgen::Statemachine::transition& t){};
+
+	auto tbl_writer = doc_writer->get_table_writer(); 
+
+	std::vector< void (*) (ceps::docgen::Statemachine::transition&) > tblf;
+	if (visited_column) tblf.push_back(write_visited);
+
+	tblf.push_back(write_from);
+	tblf.push_back(write_to);
+	if (event_column) tblf.push_back(write_events);
+	if (guard_column) tblf.push_back(write_guards);
+	if (action_column) tblf.push_back(write_actions);
+	tbl_writer->open_table();
+
+	tbl_writer->open_row();
+	tbl_writer->close_row();
+
 	
-	bool show_states_only = doc_writer->options.find("state-machines-show-only-states") != doc_writer->options.end();
+	for(auto t : transitions){
 
-	auto indent_old = doc_writer->top().indent;
-
-	
-	bool states_on_single_line = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
-	bool print_coverage_statistics = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
-
-	{
-		doc_writer->push_ctx();
-		fmt_out_layout_state_machine_keyword(doc_writer->top());
-		doc_writer->out(os,"State Machine");
-		doc_writer->pop_ctx();
 	}
-	{
-		doc_writer->push_ctx();
-		fmt_out_layout_macro_name(doc_writer->top());
-		doc_writer->top().eol = 0;
-		doc_writer->top().suffix = "";
-		doc_writer->top().ignore_indent = true;
-		doc_writer->out(os,name);
-		doc_writer->pop_ctx();
-	}
-	{
-		auto eol_old = doc_writer->top().eol;
-		doc_writer->push_ctx();
-		fmt_out_layout_macro_keyword(doc_writer->top());
-		doc_writer->top().eol = eol_old;
-		doc_writer->top().suffix = ":";
-		doc_writer->top().ignore_indent = true;
-		doc_writer->out(os,"");
-		doc_writer->pop_ctx();
-	}
-	++doc_writer->top().indent;
-	if (actions_vec.size() && !show_states_only){
-		{
-			auto eol_old = doc_writer->top().eol;
-			doc_writer->push_ctx();
-			fmt_out_layout_state_machine_actions_keyword(doc_writer->top());
-			doc_writer->top().eol = eol_old;
-			doc_writer->top().suffix = ":";
-			doc_writer->out(os,"Actions");
-			doc_writer->pop_ctx();
-		}
-		++doc_writer->top().indent;
-		for(auto e: actions_vec)
-		{
-			{doc_writer->push_ctx();doc_writer->top().eol=0;doc_writer->top().suffix="";doc_writer->out(os,"");doc_writer->pop_ctx();}
-			{doc_writer->push_ctx();fmt_out_layout_funcname(doc_writer->top());doc_writer->out(os,e);doc_writer->pop_ctx();}
-			{doc_writer->push_ctx();doc_writer->top().ignore_indent=true;doc_writer->top().suffix=":";doc_writer->out(os,"");doc_writer->pop_ctx();}
-			++doc_writer->top().indent;
-			fmt_out_handle_children(os,action2body[e]->children(),doc_writer,true);
-			--doc_writer->top().indent;
-		}
-	--doc_writer->top().indent;
-	}
+	tbl_writer->close_table();
+}
 
 
-	if (states.size()){
-		{
-			auto eol_old = doc_writer->top().eol;
-			doc_writer->push_ctx();
-			fmt_out_layout_state_machine_states_keyword(doc_writer->top());
-			doc_writer->top().eol = eol_old;
-			doc_writer->top().suffix = ":";
-			doc_writer->out(os,"States");
-			doc_writer->pop_ctx();
-		}
-		
-		if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
-	 		doc_writer->top().indent = MarginPrinter::left_margin;
-
-		++doc_writer->top().indent;
-		{
-			if (!states_on_single_line){
-				doc_writer->push_ctx();
-				doc_writer->top().eol=0;
-				doc_writer->top().suffix="";
-				doc_writer->out(os,"");
-				doc_writer->pop_ctx();
-			}			
-			for(size_t i = 0; i!=states.size();++i){
-				bool margin_annotation = false;
-				if (print_coverage_statistics){
-					for(auto idx: active_pointers_to_composite_ids_with_coverage_info){
-						if (ctxt.composite_ids_with_coverage_info.size() <= idx) break;
-						if(ctxt.composite_ids_with_coverage_info[idx+1] == nullptr) continue;
-						if(!is<Ast_node_kind::identifier>(ctxt.composite_ids_with_coverage_info[idx+1])) continue;
-						if (ceps::ast::name(as_id_ref(ctxt.composite_ids_with_coverage_info[idx+1]))!=states[i]) continue;
-						if (ctxt.composite_ids_with_coverage_info[idx+2] != nullptr || ctxt.composite_ids_with_coverage_info[idx+3] == nullptr 
-						                                                            || !is<Ast_node_kind::int_literal>(ctxt.composite_ids_with_coverage_info[idx+3])) continue;
-						margin_annotation = true;
-						coverage_statistics.hits = value(as_int_ref(ctxt.composite_ids_with_coverage_info[idx+3]));
-												
-						break;
-					}										
-				}
-				{
-					doc_writer->push_ctx();
-					fmt_out_layout_state_name(doc_writer->top());
-					if (states_on_single_line) doc_writer->top().ignore_indent = false; 
-					doc_writer->out(os,states[i], (margin_annotation?this:nullptr));
-					doc_writer->pop_ctx();
-				}
-				if (states_on_single_line){
-					doc_writer->push_ctx();
-					doc_writer->top().ignore_indent =true; 
-					doc_writer->out(os,"");
-					doc_writer->pop_ctx();
-				}
-				else if (i + 1 != states.size()) {
-					doc_writer->push_ctx(); 
-					doc_writer->top().eol=0;
-					doc_writer->top().suffix="";
-					doc_writer->top().ignore_indent = true; 
-					doc_writer->out(os,", ");
-					doc_writer->pop_ctx();
-				}
-			}
-			{
-				doc_writer->push_ctx();
-				doc_writer->top().ignore_indent=true;
-				doc_writer->top().suffix="";
-				doc_writer->out(os,"");
-				doc_writer->pop_ctx();
-			}
-		}
-		--doc_writer->top().indent;
-	}
-	if (transitions.size() && !show_states_only){
+void ceps::docgen::Statemachine::print_transitions(std::ostream& os, Doc_writer* doc_writer){
 		{
 			auto eol_old = doc_writer->top().eol;
 			doc_writer->push_ctx();
@@ -192,7 +103,9 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 		 if (s.length() > max_from_len) max_from_len = s.length();
 		}
 
-		for(auto t : transitions){
+		if (doc_writer->supports_tables())
+		 print_transitions_tabularized(os, doc_writer);
+		else for(auto t : transitions){
 			{
 				doc_writer->push_ctx();
 				doc_writer->top().eol=0;
@@ -330,7 +243,143 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 			}
 		}
 		--doc_writer->top().indent;
+}
+
+
+void ceps::docgen::Statemachine::print(	std::ostream& os,
+										Doc_writer* doc_writer){
+	
+	bool show_states_only = doc_writer->options.find("state-machines-show-only-states") != doc_writer->options.end();
+
+	auto indent_old = doc_writer->top().indent;
+
+	
+	bool states_on_single_line = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
+	bool print_coverage_statistics = active_pointers_to_composite_ids_with_coverage_info.size() != 0;
+
+	{
+		doc_writer->push_ctx();
+		fmt_out_layout_state_machine_keyword(doc_writer->top());
+		doc_writer->out(os,"State Machine");
+		doc_writer->pop_ctx();
 	}
+	{
+		doc_writer->push_ctx();
+		fmt_out_layout_macro_name(doc_writer->top());
+		doc_writer->top().eol = 0;
+		doc_writer->top().suffix = "";
+		doc_writer->top().ignore_indent = true;
+		doc_writer->out(os,name);
+		doc_writer->pop_ctx();
+	}
+	{
+		auto eol_old = doc_writer->top().eol;
+		doc_writer->push_ctx();
+		fmt_out_layout_macro_keyword(doc_writer->top());
+		doc_writer->top().eol = eol_old;
+		doc_writer->top().suffix = ":";
+		doc_writer->top().ignore_indent = true;
+		doc_writer->out(os,"");
+		doc_writer->pop_ctx();
+	}
+	++doc_writer->top().indent;
+	if (actions_vec.size() && !show_states_only){
+		{
+			auto eol_old = doc_writer->top().eol;
+			doc_writer->push_ctx();
+			fmt_out_layout_state_machine_actions_keyword(doc_writer->top());
+			doc_writer->top().eol = eol_old;
+			doc_writer->top().suffix = ":";
+			doc_writer->out(os,"Actions");
+			doc_writer->pop_ctx();
+		}
+		++doc_writer->top().indent;
+		for(auto e: actions_vec)
+		{
+			{doc_writer->push_ctx();doc_writer->top().eol=0;doc_writer->top().suffix="";doc_writer->out(os,"");doc_writer->pop_ctx();}
+			{doc_writer->push_ctx();fmt_out_layout_funcname(doc_writer->top());doc_writer->out(os,e);doc_writer->pop_ctx();}
+			{doc_writer->push_ctx();doc_writer->top().ignore_indent=true;doc_writer->top().suffix=":";doc_writer->out(os,"");doc_writer->pop_ctx();}
+			++doc_writer->top().indent;
+			fmt_out_handle_children(os,action2body[e]->children(),doc_writer,true);
+			--doc_writer->top().indent;
+		}
+	--doc_writer->top().indent;
+	}
+
+
+	if (states.size()){
+		{
+			auto eol_old = doc_writer->top().eol;
+			doc_writer->push_ctx();
+			fmt_out_layout_state_machine_states_keyword(doc_writer->top());
+			doc_writer->top().eol = eol_old;
+			doc_writer->top().suffix = ":";
+			doc_writer->out(os,"States");
+			doc_writer->pop_ctx();
+		}
+		
+		if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
+	 		doc_writer->top().indent = MarginPrinter::left_margin;
+
+		++doc_writer->top().indent;
+		{
+			if (!states_on_single_line){
+				doc_writer->push_ctx();
+				doc_writer->top().eol=0;
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();
+			}			
+			for(size_t i = 0; i!=states.size();++i){
+				bool margin_annotation = false;
+				if (print_coverage_statistics){
+					for(auto idx: active_pointers_to_composite_ids_with_coverage_info){
+						if (ctxt.composite_ids_with_coverage_info.size() <= idx) break;
+						if(ctxt.composite_ids_with_coverage_info[idx+1] == nullptr) continue;
+						if(!is<Ast_node_kind::identifier>(ctxt.composite_ids_with_coverage_info[idx+1])) continue;
+						if (ceps::ast::name(as_id_ref(ctxt.composite_ids_with_coverage_info[idx+1]))!=states[i]) continue;
+						if (ctxt.composite_ids_with_coverage_info[idx+2] != nullptr || ctxt.composite_ids_with_coverage_info[idx+3] == nullptr 
+						                                                            || !is<Ast_node_kind::int_literal>(ctxt.composite_ids_with_coverage_info[idx+3])) continue;
+						margin_annotation = true;
+						coverage_statistics.hits = value(as_int_ref(ctxt.composite_ids_with_coverage_info[idx+3]));
+												
+						break;
+					}										
+				}
+				{
+					doc_writer->push_ctx();
+					fmt_out_layout_state_name(doc_writer->top());
+					if (states_on_single_line) doc_writer->top().ignore_indent = false; 
+					doc_writer->out(os,states[i], (margin_annotation?this:nullptr));
+					doc_writer->pop_ctx();
+				}
+				if (states_on_single_line){
+					doc_writer->push_ctx();
+					doc_writer->top().ignore_indent =true; 
+					doc_writer->out(os,"");
+					doc_writer->pop_ctx();
+				}
+				else if (i + 1 != states.size()) {
+					doc_writer->push_ctx(); 
+					doc_writer->top().eol=0;
+					doc_writer->top().suffix="";
+					doc_writer->top().ignore_indent = true; 
+					doc_writer->out(os,", ");
+					doc_writer->pop_ctx();
+				}
+			}
+			{
+				doc_writer->push_ctx();
+				doc_writer->top().ignore_indent=true;
+				doc_writer->top().suffix="";
+				doc_writer->out(os,"");
+				doc_writer->pop_ctx();
+			}
+		}
+		--doc_writer->top().indent;
+	}
+	if (transitions.size() && !show_states_only)
+		print_transitions(os, doc_writer);
 	if (sub_machines.size()){	
 		for(auto sm:sub_machines){
 			{

@@ -36,8 +36,8 @@ namespace ceps{
             void start(std::ostream& os) override; 
             void end(std::ostream& os) override; 
             eol_t eol() override;
-            bool supports_tables() override { return true; };
-            Doc_table_writer* get_table_writer() override;
+            bool supports_tables() override {return true;}
+            std::shared_ptr<Doc_table_writer> get_table_writer() override;
         };
     }
 }

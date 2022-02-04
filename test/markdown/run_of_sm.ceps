@@ -1,0 +1,19 @@
+
+sm{ 
+ Test;
+ cover{edges_upto_1;};
+ states{Initial;Prepare;};
+ sm{
+     TestSteps;
+     cover{edges_upto_1;};
+     states{Initial; Step1; Step2; Step3; Step4;};
+     t{Initial; Step1;};
+     t{Step1; Step2;};
+     t{Step2; Step3;};
+ }; 
+ t{Initial; Prepare;};
+ t{Prepare;TestSteps;};
+};
+Simulation{
+    Start{Test;};
+};
