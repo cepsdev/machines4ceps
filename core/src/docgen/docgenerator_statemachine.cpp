@@ -43,33 +43,49 @@ void ceps::docgen::Statemachine::print_transitions_tabularized(std::ostream& os,
 		if (action_column && guard_column && event_column) break;
 	}
 
-	auto write_from = [](ceps::docgen::Statemachine::transition& t){};
-	auto write_to = [](ceps::docgen::Statemachine::transition& t){};
-	auto write_events = [](ceps::docgen::Statemachine::transition& t){};
-	auto write_guards = [](ceps::docgen::Statemachine::transition& t){};
-	auto write_actions = [](ceps::docgen::Statemachine::transition& t){};
-	auto write_visited = [](ceps::docgen::Statemachine::transition& t){};
+	auto write_from = [](ceps::docgen::Statemachine::transition& t, std::ostream& os, Doc_writer* doc_writer){doc_writer->out(os,default_text_representation(t.from));};
+	auto write_to = [](ceps::docgen::Statemachine::transition& t, std::ostream& os, Doc_writer* doc_writer){doc_writer->out(os,default_text_representation(t.to));};
+	auto write_events = [](ceps::docgen::Statemachine::transition& t, std::ostream& os, Doc_writer* doc_writer){};
+	auto write_guards = [](ceps::docgen::Statemachine::transition& t, std::ostream& os, Doc_writer* doc_writer){};
+	auto write_actions = [](ceps::docgen::Statemachine::transition& t, std::ostream& os, Doc_writer* doc_writer){};
+	auto write_visited = [](ceps::docgen::Statemachine::transition& t, std::ostream& os, Doc_writer* doc_writer){};
 
-	auto tbl_writer = doc_writer->get_table_writer(); 
+	std::vector<std::string> header_info {"From","To"};
 
-	std::vector< void (*) (ceps::docgen::Statemachine::transition&) > tblf;
+	auto tbl_writer = doc_writer->get_table_writer(&os); 
+
+	std::vector< void (*) (ceps::docgen::Statemachine::transition&, std::ostream& , Doc_writer* ) > tblf;
 	if (visited_column) tblf.push_back(write_visited);
 
 	tblf.push_back(write_from);
 	tblf.push_back(write_to);
-	if (event_column) tblf.push_back(write_events);
-	if (guard_column) tblf.push_back(write_guards);
-	if (action_column) tblf.push_back(write_actions);
+	if (event_column) 
+		{tblf.push_back(write_events); header_info.push_back("Event");}
+	if (guard_column) 
+		{tblf.push_back(write_guards);header_info.push_back("Guard");}
+	if (action_column) 
+		{tblf.push_back(write_actions);header_info.push_back("Action");}
+	doc_writer->push_ctx();
+	doc_writer->top().eol = 0;
+	doc_writer->top().suffix = "";
+
 	tbl_writer->open_table();
-
 	tbl_writer->open_row();
+	for (auto hi : header_info){
+		tbl_writer->open_cell(true);	
+		doc_writer->out(os,hi);
+		tbl_writer->close_cell();
+	}
 	tbl_writer->close_row();
-
-	
 	for(auto t : transitions){
-
+		tbl_writer->open_row();
+		for(auto f : tblf) {
+			tbl_writer->open_cell(); f(t,os,doc_writer); tbl_writer->close_cell();
+		}
+		tbl_writer->close_row();
 	}
 	tbl_writer->close_table();
+	doc_writer->pop_ctx();
 }
 
 

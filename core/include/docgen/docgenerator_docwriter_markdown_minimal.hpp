@@ -22,8 +22,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace ceps{
 	namespace docgen{
         using namespace ceps::ast;
-
         class Doc_writer_markdown_minimal: public Doc_writer{
+            private:
+                std::shared_ptr<Doc_table_writer> tblwriter;
             public:
             Doc_writer_markdown_minimal() = delete;
             Doc_writer_markdown_minimal(std::vector<std::string> options);
@@ -37,7 +38,7 @@ namespace ceps{
             void end(std::ostream& os) override; 
             eol_t eol() override;
             bool supports_tables() override {return true;}
-            std::shared_ptr<Doc_table_writer> get_table_writer() override;
+            std::shared_ptr<Doc_table_writer> get_table_writer(std::ostream* os) override;
         };
     }
 }

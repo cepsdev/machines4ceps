@@ -221,7 +221,7 @@ namespace ceps{
             virtual void start_comment_block(std::ostream& os){}
             virtual void end_comment_block(std::ostream& os){}
             virtual bool supports_tables() {return false;}
-            virtual std::shared_ptr<Doc_table_writer> get_table_writer() {return nullptr;}
+            virtual std::shared_ptr<Doc_table_writer> get_table_writer(std::ostream* os) {return nullptr;}
         };        
 
         struct symbol_info{

@@ -23,9 +23,13 @@ using namespace ceps::ast;
 /////////
 
 class Table_writer_markdown_minimal: public ceps::docgen::Doc_table_writer {
-	std::shared_ptr<ceps::docgen::Doc_writer> parent;
+	ceps::docgen::Doc_writer* parent;
+	std::ostream* os;
+	int rows_written {};
+	int cells_written {};
+
     public:
-		Table_writer_markdown_minimal(std::shared_ptr<ceps::docgen::Doc_writer> parent) : parent{parent} {}
+		Table_writer_markdown_minimal(ceps::docgen::Doc_writer* parent, std::ostream* os) : parent{parent}, os{os} {}
     	void open_table() override;
         void close_table() override;
         void open_row() override;
@@ -41,31 +45,44 @@ void Table_writer_markdown_minimal::write_cell(std::string title){
 }
 
 void Table_writer_markdown_minimal::open_table(){
-
+	rows_written = 0;
 }
 
 void Table_writer_markdown_minimal::close_table(){
-
+	rows_written = 0;
 }
-void Table_writer_markdown_minimal::open_row(){
 
+void Table_writer_markdown_minimal::open_row(){
+	cells_written = 0;
+	*os << " | ";
 }
 void Table_writer_markdown_minimal::close_row() {
-
+	*os << "\n";
+	if (rows_written == 0)
+	 if (cells_written)
+	 	{
+			 for(int i = 0; i < cells_written; ++i) *os << "|---";
+			 *os << "|\n";
+		} 
+	++rows_written;
 }
+
 void Table_writer_markdown_minimal::open_cell( bool header, unsigned int vert_span, unsigned int horz_span){
-
+	++cells_written;
 }
-void Table_writer_markdown_minimal::close_cell(){
 
+void Table_writer_markdown_minimal::close_cell(){
+	*os << "|";	
 }
 
 ////////
 /// Doc_writer_markdown_minimal
 ///////
 
-std::shared_ptr<ceps::docgen::Doc_table_writer> ceps::docgen::Doc_writer_markdown_minimal::get_table_writer() {
-	return std::make_shared<Table_writer_markdown_minimal>( std::shared_ptr<ceps::docgen::Doc_writer>{this});
+std::shared_ptr<ceps::docgen::Doc_table_writer> ceps::docgen::Doc_writer_markdown_minimal::get_table_writer(std::ostream* os) {
+	if (!tblwriter)
+		tblwriter = std::make_shared<Table_writer_markdown_minimal>(this,os);
+	return tblwriter;
 }
 
 ceps::docgen::Doc_writer::eol_t ceps::docgen::Doc_writer_markdown_minimal::eol() {return "\n"; };
