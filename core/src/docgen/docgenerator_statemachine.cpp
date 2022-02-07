@@ -499,7 +499,6 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 	--doc_writer->top().indent;
 	}
 
-
 	if (states.size())
 	 print_states(os,doc_writer,states_on_single_line, print_coverage_statistics);
 	if (transitions.size() && !show_states_only)
