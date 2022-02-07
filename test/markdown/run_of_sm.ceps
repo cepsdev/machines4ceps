@@ -1,3 +1,15 @@
+kind Systemstate;
+kind Event;
+kind Guard;
+
+Guard Guard1, AnotherGuard, NiceGuard, BadGuard;
+
+Guard1 = 1;
+AnotherGuard = 2;
+NiceGuard = 3;
+BadGuard = 4;
+
+Event ev1,ev2,evYetAnother;
 
 sm{ 
  Test;
@@ -7,13 +19,23 @@ sm{
      TestSteps;
      cover{edges_upto_1;};
      states{Initial; Step1; Step2; Step3; Step4;};
-     t{Initial; Step1;};
-     t{Step1; Step2;};
-     t{Step2; Step3;};
+     Actions{
+         OneAction {
+             print("Action 1!\n");
+         };
+         ThatsAnotherAction{
+             print("Action 2!\n");
+         };         
+     };
+     t{Initial; Step1; ev2; OneAction;};
+     t{Step1; Step2;evYetAnother; Guard1; AnotherGuard;};
+     t{Step1; Step3;ev1;NiceGuard; BadGuard; ThatsAnotherAction;};
  }; 
  t{Initial; Prepare;};
  t{Prepare;TestSteps;};
 };
 Simulation{
     Start{Test;};
+    start_timer(1.0*s,ev2);
+    start_timer(2.0*s,ev1);
 };

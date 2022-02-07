@@ -90,6 +90,16 @@ ceps::docgen::Doc_writer::eol_t ceps::docgen::Doc_writer_markdown_minimal::eol()
 void ceps::docgen::Doc_writer_markdown_minimal::start(std::ostream& os) {}
 void ceps::docgen::Doc_writer_markdown_minimal::end(std::ostream& os) {}
 
+void ceps::docgen::Doc_writer_markdown_minimal::start_code_block(std::ostream& os){
+	os << "\n```\n";
+}
+
+void ceps::docgen::Doc_writer_markdown_minimal::end_code_block(std::ostream& os){
+	os << "\n```\n";
+}
+
+
+
 bool ceps::docgen::Doc_writer_markdown_minimal::handler_toplevel_struct( std::ostream& os,
 																		 std::vector<ceps::ast::Symbol*> toplevel_isolated_symbols,
                                           								 ceps::ast::Struct& tplvl_struct) 
@@ -147,9 +157,10 @@ void ceps::docgen::Doc_writer_markdown_minimal::out(std::ostream& os,
 	os << s;
 	
     if (s.size() + ctx.prefix.size()){ 
-        if (ctx.bold) os << "__ ";
-        if (ctx.italic) os << "* ";
-        if (ctx.underline) os << "+ ";
+        if (ctx.bold) os << "__";
+        if (ctx.italic) os << "*";
+        if (ctx.underline) os << "+";
+		os << " ";
     }
 
 	if (ctx.info.size()){
@@ -165,7 +176,6 @@ void ceps::docgen::Doc_writer_markdown_minimal::out(std::ostream& os,
 		 //os << "{color}"
 		 ;
 	if (ctx.badge) os << "`";
-
 
 	if (ctx.eol && ctx.comment_stmt_stack->size() && !ctx.ignore_comment_stmt_stack){
 		auto eol_temp = ctx.eol;

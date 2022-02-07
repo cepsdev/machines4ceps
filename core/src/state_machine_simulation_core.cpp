@@ -1731,6 +1731,7 @@ static std::vector<ceps::ast::Nodebase_ptr>  mk_sm_state_transition_exprs(State_
 }
 
 static void print_report_coverage(std::ostream& os, ceps::ast::Nodeset coverage, std::string indent,Result_process_cmd_line const& result_cmd_line){
+	if(result_cmd_line.quiet) return;
     if (coverage["state_coverage"].empty()) return;
 
     double v1 = coverage["state_coverage"]["ratio"].as_double();

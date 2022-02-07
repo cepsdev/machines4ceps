@@ -221,6 +221,9 @@ namespace ceps{
             virtual void start_comment_block(std::ostream& os){}
             virtual void end_comment_block(std::ostream& os){}
             virtual bool supports_tables() {return false;}
+            virtual void start_header(int level,std::ostream& os) {auto i = 0; for(; i < level; ++i) os << "#"; if (i > 0) os << " ";}
+            virtual void end_header(std::ostream& os) {os << "\n";};
+
             virtual std::shared_ptr<Doc_table_writer> get_table_writer(std::ostream* os) {return nullptr;}
         };        
 
@@ -298,12 +301,15 @@ namespace ceps{
             Struct* strct; // The first state machine defining struct (sm-struct), there can be more
             std::string name; // name of the state machine, this is the very first identifier in the sm-struct
             std::vector<int> active_pointers_to_composite_ids_with_coverage_info;// p1|p2|...|p_n where p_i is an index into lookuptbls.composite_ids_with_coverage_info
-            Statemachine* parent;
+            Statemachine* parent = nullptr;
             struct {
                 int hits = 0;
                 int hits_col_width = 0;
                 int max_hits = 0;
             } coverage_statistics;
+            
+            std::string compute_full_name();
+            int compute_nesting_level();
 			public:
             context& ctxt;
             std::vector<std::string> output_format_flags;
@@ -318,6 +324,8 @@ namespace ceps{
                 build();
 			}
 			void print(std::ostream& os, Doc_writer* doc_writer);
+            void print_states(std::ostream& os, Doc_writer* doc_writer, bool states_on_single_line, bool print_coverage_statistics);
+            void print_states_tabularized(std::ostream& os, Doc_writer* doc_writer, bool states_on_single_line, bool print_coverage_statistics);
 			void print_transitions(std::ostream& os, Doc_writer* doc_writer);
 			void print_transitions_tabularized(std::ostream& os, Doc_writer* doc_writer);
             void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) override ;
