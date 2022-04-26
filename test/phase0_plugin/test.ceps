@@ -1,0 +1,69 @@
+
+
+
+Test{ConcatenationOfGrammarsBasicCases;};
+
+kind GrammarTerminal;
+kind GrammarNonterminal;
+kind GrammarAnnotation;
+kind GrammarAction;
+
+
+expectation{
+    Grammar{
+        lhs{G_L_0;};
+            rhs{T_0;G_L_0_RHS_0;};
+            rhs{T_1;G_L_0_RHS_1;};
+            rhs{T_2;G_L_0_RHS_2;};
+        lhs{G_L_1;};
+            rhs{T_0;G_L_1_RHS_0;};
+            rhs{T_1;G_L_1_RHS_1;};
+            rhs{T_2;G_L_1_RHS_2;};
+            rhs{G_R_0;}; 
+    };
+};   
+
+
+val g = exi_processor_operation(
+    concatenate_grammars{
+        GrammarNonterminal G_L_0,G_L_0_RHS_0,G_L_0_RHS_1,G_L_0_RHS_2;
+        GrammarNonterminal G_L_1,G_L_1_RHS_0,G_L_1_RHS_1,G_L_1_RHS_2;
+
+        GrammarNonterminal G_R_0,G_R_0_RHS_0,G_R_0_RHS_1,G_R_0_RHS_2;
+        GrammarNonterminal G_R_1,G_R_1_RHS_0,G_R_1_RHS_1,G_R_1_RHS_2;
+        GrammarNonterminal G_R_2,G_R_2_RHS_0,G_R_2_RHS_1,G_R_2_RHS_2;
+        
+        GrammarTerminal T_0,T_1,T_2,T_3,EE;
+
+        Grammar{
+            lhs{G_L_0;};
+                rhs{ T_0; G_L_0_RHS_0; };
+                rhs{ T_1; G_L_0_RHS_1; };
+                rhs{ T_2; G_L_0_RHS_2; };
+            lhs{G_L_1;};
+                rhs{ T_0; G_L_1_RHS_0; };
+                rhs{ T_1; G_L_1_RHS_1; };
+                rhs{ T_2; G_L_1_RHS_2; };
+                rhs{ EE; };
+        };
+        Grammar{
+            lhs{G_R_0;};
+                rhs{ T_0; G_R_0_RHS_0; };
+                rhs{ T_1; G_R_0_RHS_1; };
+                rhs{ T_2; G_R_0_RHS_2; };
+            lhs{G_R_1;};
+                rhs{ T_0; G_R_1_RHS_0; };
+                rhs{ T_1; G_R_1_RHS_1; };
+                rhs{ T_2; G_R_1_RHS_2; };
+                rhs{ EE; };
+            lhs{G_R_2;};
+                rhs{ T_0; G_R_2_RHS_0; };
+                rhs{ T_1; G_R_2_RHS_1; };
+                rhs{ T_2; G_R_2_RHS_2; };
+                rhs{ EE; };
+
+        };    
+    }
+);
+
+print("TEST\n");

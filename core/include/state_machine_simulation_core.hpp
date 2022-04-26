@@ -403,8 +403,9 @@ public:
 	global_event_call_back_fn global_event_call_back_fn_ = nullptr;
 	void set_global_event_call_back(global_event_call_back_fn fn){global_event_call_back_fn_ = fn;}
         using id_to_out_chan_t = std::map<std::string,std::tuple<frame_queue_t*,std::string>>;
-private:
 	std::map<std::string,smcore_plugin_fn_t> name_to_smcore_plugin_fn;
+	std::map<std::string,smcore_plugin_fn_t> name_to_smcore_phase0plugin_fn;
+private:
 	using main_event_queue_t = threadsafe_queue<event_t, sm4ceps::Eventqueue<event_t> /*std::queue<event_t>*/ >;
 	using out_event_queue_t  = threadsafe_queue<event_t, std::queue<event_t> >;
 	using out_event_queues_t = std::vector<out_event_queue_t*>;
@@ -900,6 +901,7 @@ public:
 	void sm_set_join_state(void* sm, std::string id, bool is_sm, void* smp, void* parent,bool unresolved,bool idx );
 	void sm_add_ref_to_sm_at_least_one_transition_was_moved_to(void* sm, void* sm_to);
     void reg_ceps_plugin(std::string name,smcore_plugin_fn_t);
+    void reg_ceps_phase0plugin(std::string name,smcore_plugin_fn_t);
  	void* evaluate_fragment_in_global_context(void* node,void* scope) override;
  	State_machine_simulation_core* get_runtime_engine() override;
     void queue_internal_event(std::string ev_name,std::vector<ceps::ast::Nodebase_ptr>) override;

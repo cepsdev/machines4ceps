@@ -135,13 +135,34 @@ State_machine_simulation_core* State_machine_simulation_core::get_runtime_engine
 	return this;
 }
 
+static State_machine_simulation_core* phase_0_callback_smc = nullptr;
+
+/* DEBUG
+static ceps::ast::node_t plugin_entrypoint_add_generic_grammar(ceps::ast::node_callparameters_t params){
+	std::cerr << "CALL!! plugin_entrypoint_add_generic_grammar " <<  *params << "\n";
+	return nullptr;
+}
+*/
+static ceps::ast::node_t phase_0_callback(	std::string const & ftarget, 
+											ceps::ast::Call_parameters* params, 
+											void *, ceps::parser_env::Symboltable & symbols)
+{
+	auto it = phase_0_callback_smc->name_to_smcore_phase0plugin_fn.find(ftarget);
+	if (it == phase_0_callback_smc->name_to_smcore_phase0plugin_fn.end()) return {};
+	return it->second(params);
+}
+
 std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_files(
         std::vector<std::string> const & file_names,
         std::string& last_file_processed,
 		Result_process_cmd_line result_cmd_line)
 {
-	ceps::docgen::context docgen_context; // Information which needs to be preserved between docgen calls
 
+	phase_0_callback_smc = this;
+	ceps_env_current().interpreter_env().set_func_callback(phase_0_callback, nullptr);
+	//DEBUG reg_ceps_phase0plugin("exi_processor_operation", plugin_entrypoint_add_generic_grammar);
+
+	ceps::docgen::context docgen_context; // Information which needs to be preserved between docgen calls
 	std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
     bool next_is_expression = false;
     for(auto const & file_name : file_names)
@@ -262,6 +283,8 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 									&generated_nodes
 									);
 	}//for
+	
+	ceps_env_current().interpreter_env().set_func_callback(nullptr, nullptr);
 	return generated_nodes;
 }//process_files
 
@@ -1241,7 +1264,6 @@ void init_state_machine_simulation(	int argc,
     smc->ceps_env_current().interpreter_env().reg_sym_undefined_clbk(sym_undefined_clbk,smc);
 
 
-
     if (result_cmd_line.push_dir.length()){
         auto r = opendir(result_cmd_line.push_dir.c_str());
         if (r == NULL){
@@ -1665,6 +1687,10 @@ void State_machine_simulation_core::sm_add_ref_to_sm_at_least_one_transition_was
 
 void State_machine_simulation_core::reg_ceps_plugin(std::string name, smcore_plugin_fn_t fn){
     register_plugin_fn(name,fn);
+}
+
+void State_machine_simulation_core::reg_ceps_phase0plugin(std::string name, smcore_plugin_fn_t fn){
+    name_to_smcore_phase0plugin_fn[name] = fn;
 }
 
 void* State_machine_simulation_core::get_sm(std::string name){
