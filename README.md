@@ -9,7 +9,7 @@ Details can be found [here](./INSTALL.md)
 This intro follows closely the discussion in https://en.wikipedia.org/wiki/UML_state_machine. 
 
 ### A basic state machine
-![Basic state machine](https://upload.wikimedia.org/wikipedia/en/thumb/4/45/UML_state_machine_Fig1.png/660px-UML_state_machine_Fig1.png)
+![Basic state machine](https://en.wikipedia.org/wiki/File:UML_state_machine_Fig1.png)
 *Source:Wikipedia*
 
 #### __A basic state machine__: Notation
