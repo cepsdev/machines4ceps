@@ -72,9 +72,9 @@ function.call.name -> 184*/
                 { "state_machine.transition.guard.parentheses", color{220,255,215,0}}, //#ffd700
                 { "expr.id", color{6,0,128,128}}, //#008080
                 { "expr.symbol", color{39,0,175,255}}, //#00afff
+                { "warn.sign", color{196,255,40,40}},
+                { "warn.text", color{214,255,40,40}},
             }
-
-
 
          });
 }

@@ -47,8 +47,11 @@ void ceps::docgen::fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, Doc_w
 	}
 
 	if (if_branch) {
-        ++doc_writer->top().indent;	
+        ++doc_writer->top().indent;
+		//std::cerr << "---------";
+		doc_writer->start_line();
 		fmt_handle_node(os,if_branch,doc_writer,false);
+		doc_writer->out(os,"");
         --doc_writer->top().indent;
 	}
 	while (else_branch && is<Ast_node_kind::ifelse>(else_branch)){
@@ -92,7 +95,7 @@ void ceps::docgen::fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, Doc_w
 			doc_writer->pop_ctx();
 		}
         ++doc_writer->top().indent;
-    fmt_handle_node(os,else_branch,doc_writer,false);	
+    	fmt_handle_node(os,else_branch,doc_writer,false);	
         --doc_writer->top().indent;	
     }
 	//--doc_writer->top().indent;

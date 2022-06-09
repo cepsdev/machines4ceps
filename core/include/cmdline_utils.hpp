@@ -87,6 +87,7 @@ struct Result_process_cmd_line
    bool no_file_output = false;
    bool start_paused = false;
    bool sleep_before_ws_api_on = false;
+   bool print_help = false;
    std::string sleep_before_ws_delta_ms;
    std::string push_dir;
    Result_process_cmd_line() = default;

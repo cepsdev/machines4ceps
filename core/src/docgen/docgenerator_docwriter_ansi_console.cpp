@@ -41,7 +41,8 @@ void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os,
 
     auto& ctx = top(); 
     os << "\033[0m"; //reset
-	if(!ctx.ignore_indent) {
+	if(!ctx.ignore_indent || start_of_line) {
+		start_of_line = false;
 		if (mp != nullptr) mp->print_left_margin(os,ctx);
 		else for(int i = 0; i < ctx.indent; ++ i) os << ctx.indent_str;
 	}
@@ -85,6 +86,5 @@ void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os,
 		ctx.comment_stmt_stack->clear();
 	}
 	os << "\033[0m"; //reset
-	for(auto i = 0; i < ctx.eol; ++i) os << "\n"; 
-
+	for(auto i = 0; i < ctx.eol; ++i) os << "\n";
 }

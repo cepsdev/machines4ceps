@@ -1189,16 +1189,16 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::eval_found_sym_undefined(
 	return nullptr;
 }
 
-
-
 void init_state_machine_simulation(	int argc,
 									char ** argv,
 									State_machine_simulation_core* smc,
 									Result_process_cmd_line& result_cmd_line)
 {
 	using namespace std;
+
 	if (smc == nullptr) return;
 	result_cmd_line = process_cmd_line(argc,argv,result_cmd_line);
+	if (result_cmd_line.print_help) return;
 	smc->print_debug_info(result_cmd_line.debug_mode);
 	smc->quiet_mode() = result_cmd_line.quiet;
 	smc->conf_ignore_unresolved_state_id_in_directives() = result_cmd_line.ignore_unresolved_state_id_in_directives;

@@ -194,6 +194,7 @@ namespace ceps{
         class Doc_writer: public fmt_out_ctx_stack{
             protected:
             std::shared_ptr<Theme> theme;
+            bool start_of_line {};
             public:
             using eol_t = std::string;
             using symbol_t = std::string;
@@ -223,6 +224,7 @@ namespace ceps{
             virtual bool supports_tables() {return false;}
             virtual void start_header(int level,std::ostream& os) {auto i = 0; for(; i < level; ++i) os << "#"; if (i > 0) os << " ";}
             virtual void end_header(std::ostream& os) {os << "\n";};
+            virtual void start_line() {start_of_line = true;};
 
             virtual std::shared_ptr<Doc_table_writer> get_table_writer(std::ostream* os) {return nullptr;}
         };        
@@ -365,14 +367,15 @@ namespace ceps{
 
         //Helper routines
 
-        void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, Doc_writer* doc_writer,bool ignore_macro_definitions);
+        void fmt_out_handle_children(std::ostream& os, std::vector<ceps::ast::Nodebase_ptr>& children, Doc_writer* doc_writer,
+                                     bool ignore_macro_definitions, int default_eol = 1);
         void fmt_out_handle_inner_struct(std::ostream& os, ceps::ast::Struct& strct, Doc_writer* doc_writer, bool ignore_macro_definitions);
         void fmt_out_handle_outer_struct(std::ostream& os, ceps::ast::Struct& strct, Doc_writer* doc_writer, bool ignore_macro_definitions);
         void fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, Doc_writer* doc_writer);
         void fmt_out_handle_valdef(std::ostream& os, ceps::ast::Valdef& valdef, Doc_writer* doc_writer);
         
         void fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_writer* doc_writer,bool escape_strings= true, fmt_out_ctx ctx_base_string = {});
-        void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, Doc_writer* doc_writer,bool ignore_macro_definitions);
+        void fmt_handle_node(std::ostream& os, ceps::ast::Nodebase_ptr n, Doc_writer* doc_writer,bool ignore_macro_definitions, int default_eol = 1);
         void fmt_out_handle_loop(std::ostream& os, ceps::ast::Loop& loop, Doc_writer* doc_writer);
         void fmt_out_handle_let(std::ostream& os, Let& let, Doc_writer* doc_writer);
         void fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, Doc_writer* doc_writer);

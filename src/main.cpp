@@ -271,23 +271,40 @@ int main(int argc,char ** argv)
 	sm_core.set_fatal_error_handler(fatal);
 	sm_core.set_non_fatal_error_handler(warn);
 	sm_core.set_log_stream(&std::cout);
-
-
-
 	string last_file_processed;
-
 	try{
 		Result_process_cmd_line result_cmd_line;
 		init_state_machine_simulation(argc,argv,&sm_core,result_cmd_line);
-		if (result_cmd_line.no_warn) sm_core.set_non_fatal_error_handler(dummy);
-		PRINT_DEBUG_INFO = sm_core.print_debug_info_;
+		if (result_cmd_line.print_help){
+			using namespace std;
+			cout << "Usage: ceps [options] file...\n";
+			cout << "Options:\n";
+			vector<pair<string,string>> options = {
+				{"--pr                    ","Print unevaluated spec."},
+				{"--pe                    ","Print evaluated spec."},
+				{"--format FORMAT         ","Set output format (applies to options --pr, --pe). Default is 'ansi'."},
+				{"  Supported values are :",""},
+				{"    raw                 ", ""},
+				{"    ansi                ", ""},
+				{"    markdown            ", ""},
+				{"    markdown_github     ", ""},
+				{"    markdown_jira       ", ""},
+				{"    html5               ", ""}
 
-		if (result_cmd_line.run_as_monitor) {
-			std::cout << "Running as monitor." << std::endl;
-			run_as_monitor(result_cmd_line);
-			return 0;
+			};
+			for(auto e: options)
+				cout << "   " << e.first <<  e.second << "\n";			
+		} else {
+			if (result_cmd_line.no_warn) sm_core.set_non_fatal_error_handler(dummy);
+			PRINT_DEBUG_INFO = sm_core.print_debug_info_;
+
+			if (result_cmd_line.run_as_monitor) {
+				std::cout << "Running as monitor." << std::endl;
+				run_as_monitor(result_cmd_line);
+				return 0;
+			}
+			run_state_machine_simulation(&sm_core,result_cmd_line);
 		}
-		run_state_machine_simulation(&sm_core,result_cmd_line);
 	}
 	catch (ceps::interpreter::semantic_exception & se)
 	{
