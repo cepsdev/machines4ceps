@@ -217,7 +217,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 			else if (arg.substr(0,8) == "--rmport") {r.monitored_node_port = arg.substr(8); continue;}
 			else if (arg.substr(0,9) == "--monitor") {r.monitor = arg.substr(9); continue;}
 			else if (arg.substr(0,8) == "--plugin") {r.plugins.push_back(arg.substr(8)); continue;}
-			else if (arg.substr(0,9) == "--timeout") {r.timeout = arg.substr(9); continue;}
+			else if (arg.substr(0,9) == "--timeout") {if (i+1 == argc) break; r.timeout = argv[i+1]; ++i; continue;}
 			else if (arg == "--print_transition_tables" || arg == "--ptt") {r.print_transition_tables=true; continue;}
 			else if (arg == "--cppgen") {r.cppgen = true; continue;}
             else if (arg == "--enforce_native"){r.enforce_native = true; continue;}
@@ -259,6 +259,7 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
             else if (arg == "--format") { if (i+1 == argc) break; r.output_format_flags.push_back(argv[i+1]); ++i;continue;}
        		else if (arg == "--doc-option") { if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
 			else if (arg == "--help") {r.print_help = true;continue;}
+			else if (arg == "--create_plugin_project") {r.create_plugin_project = true;continue;}
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {
 					r.server_port = r.port = arg.substr(6);

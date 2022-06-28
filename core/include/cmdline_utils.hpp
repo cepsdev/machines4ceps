@@ -90,6 +90,7 @@ struct Result_process_cmd_line
    bool print_help = false;
    std::string sleep_before_ws_delta_ms;
    std::string push_dir;
+   bool create_plugin_project = false;
    Result_process_cmd_line() = default;
    Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,

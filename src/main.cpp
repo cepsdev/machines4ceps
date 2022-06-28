@@ -238,9 +238,10 @@ int main(int argc,char ** argv)
 	if (argc <= 1)
 	{
         cout <<  "ceps is a tool for writing executable specifications and supports the cepS Ansatz.\n";
-        cout << "Usage: " << argv[0] << " FILE [FILE...] [option...]\n";
+        cout << "Usage: " << argv[0] << " [FILE...] [option...]\n";
 		cout << "\n";
-        cout << "Example:\n " << argv[0] <<" a.ceps b.ceps\n";
+        cout << "Example:\n " << argv[0] <<" a.ceps b.ceps\n\n";
+        cout << "Option --help lists detailed information about available options.\n";
 		return EXIT_FAILURE;
 	}
 	auto result_cmd_line = process_cmd_line(argc,argv);
@@ -280,8 +281,8 @@ int main(int argc,char ** argv)
 			cout << "Usage: ceps [options] file...\n";
 			cout << "Options:\n";
 			vector<pair<string,string>> options = {
-				{"--pr                    ","Print unevaluated spec."},
-				{"--pe                    ","Print evaluated spec."},
+				{"--create_plugin_project ","Generate cmake build files for a plugin project."},
+				{"--dot_gen               ","Generate DOT file for each top level state machine."},
 				{"--format FORMAT         ","Set output format (applies to options --pr, --pe). Default is 'ansi'."},
 				{"  Supported values are :",""},
 				{"    raw                 ", ""},
@@ -289,12 +290,161 @@ int main(int argc,char ** argv)
 				{"    markdown            ", ""},
 				{"    markdown_github     ", ""},
 				{"    markdown_jira       ", ""},
-				{"    html5               ", ""}
+				{"    html5               ", ""},
+				{"--pr                    ","Print unevaluated spec."},
+				{"--pe                    ","Print evaluated spec."},
+				{"--quiet                 ","Suppress any output on stdout (applies to tool's messages only)."},
+				{"--rip a.b.c.d           ","IP address of remote ceps server."},
+				{"--rport SHORT           ","IP port of remote ceps server."},
+				{"--server                ","Start in server mode."},
+				{"--timeout T             ","ceps runs for at most T seconds."},
 
 			};
 			for(auto e: options)
 				cout << "   " << e.first <<  e.second << "\n";			
 		} else {
+			if (result_cmd_line.create_plugin_project){
+			{
+				ofstream os{"CMakeLists.ceps-plugin.txt"};
+				os << 
+R"~~(
+cmake_minimum_required(VERSION 3.10)
+project(INSERT_PROJECT_NAME_HERE)
+
+add_compile_options(-O  -Wall -MD  -std=c++2a  -fPIC -static -Wno-undef )
+
+IF(NOT( DEFINED ENV{CEPSCORE}))
+    MESSAGE(FATAL_ERROR "Could not find ceps core (Environment variable CEPSCORE not set).")
+ENDIF()
+
+IF(NOT( DEFINED ENV{MACHINES4CEPS}))
+    MESSAGE(FATAL_ERROR "Could not find machines4ceps (Environment variable MACHINES4CEPS not set).")
+ENDIF()
+
+IF(NOT( DEFINED ENV{LOG4CEPS}))
+    MESSAGE(FATAL_ERROR "Could not find log4ceps (Environment variable LOG4CEPS not set).")
+ENDIF()
+
+include_directories($ENV{CEPSCORE}/include)
+include_directories($ENV{LOG4CEPS}/include)
+include_directories($ENV{MACHINES4CEPS})
+include_directories($ENV{MACHINES4CEPS}/core/src_gen/logging)
+include_directories(include)
+include_directories(../include)
+#include_directories(include/tests)
+
+link_directories($ENV{CEPSCORE}/bin)
+
+add_library(INSERT_PLUGIN_NAME_HERE SHARED 
+           plugin-entrypoint.cpp 
+           )
+
+target_link_libraries(INSERT_PLUGIN_NAME_HERE cepscore)					
+)~~";
+			}
+
+			{
+				ofstream os{"rebuild.ceps-plugin.sh"};
+				os << R"(
+#!/bin/bash
+
+mkdir bin 2>/dev/null
+
+cd bin 
+rm CMakeFiles -rf 2>/dev/null  
+rm cmake_install.cmake -f 2>/dev/null
+rm CMakeCache.txt -f 2>/dev/null
+rm Makefile -f 2>/dev/null
+rm lib* -f 2>/dev/null
+
+CEPSCORE=../ceps/core MACHINES4CEPS=../machines4ceps LOG4CEPS=../log4ceps cmake .. && make -B
+cd ..					
+				)";
+			}
+			{
+				ofstream os{"plugin-entrypoint.cpp"};
+				os << R"~~(
+#include <stdlib.h>
+#include <iostream>
+#include <ctype.h>
+#include <chrono>
+#include <sstream>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+#include <queue>
+#include <unordered_map>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <stdlib.h>
+#include <map>
+#include <algorithm>
+#include <future>
+#include <netinet/sctp.h> 
+
+#include "ceps_ast.hh"
+#include "core/include/state_machine_simulation_core.hpp"
+
+namespace cepsplugin{
+    static Ism4ceps_plugin_interface* plugin_master = nullptr;
+    static const std::string version_info = "INSERT_NAME_HERE v0.1";
+    static constexpr bool print_debug_info{true};
+    ceps::ast::node_t plugin_entrypoint(ceps::ast::node_callparameters_t params);
+}
+
+ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t params){
+    using namespace std;
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+
+    auto data = get_first_child(params);    
+    if (!is<Ast_node_kind::structdef>(data)) return nullptr;
+    auto& ceps_struct = *as_struct_ptr(data);
+    cout << "cepsplugin::plugin_entrypoint:\n";
+    for(auto e : children(ceps_struct)){
+        cout <<"\t"<< * e << "\n";
+    }
+    cout <<"\n\n";
+    auto result = mk_struct("result");
+    children(*result).push_back(mk_int_node(42));
+    return result;
+}
+
+extern "C" void init_plugin(IUserdefined_function_registry* smc)
+{
+  cepsplugin::plugin_master = smc->get_plugin_interface();
+  cepsplugin::plugin_master->reg_ceps_phase0plugin("INSERT_NAME_FOR_FUNCTION_HERE", cepsplugin::plugin_entrypoint);
+}					
+				)~~";
+				{
+					ofstream os{"run.ceps-plugin.sh"};
+					os << R"(
+#!/bin/bash
+
+LD_LIBRARY_PATH=$(pwd)/bin:$LD_LIBRARY_PATH ceps \
+ $1 \
+ --pluginlibINSERT_PLUGIN_NAME_HERE.so						
+					)";
+				}
+			}
+
+				{
+					ofstream os{"ceps-plugin.test.ceps"};
+					os << R"~~(INSERT_NAME_FOR_FUNCTION_HERE(
+	input{
+		123;
+		"abc";
+		uint32{
+			ThisIsAnIdentifier;
+		};
+		1+1;
+	}
+);
+
+print ("result = ",root.result.content(),"\n\n");)~~";
+				}
+			}
 			if (result_cmd_line.no_warn) sm_core.set_non_fatal_error_handler(dummy);
 			PRINT_DEBUG_INFO = sm_core.print_debug_info_;
 
