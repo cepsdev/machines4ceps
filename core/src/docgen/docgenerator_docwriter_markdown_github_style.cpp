@@ -51,6 +51,8 @@ void ceps::docgen::Doc_writer_markdown_github_style::end_code_block(std::ostream
 	os << "\n```\n";
 }
 
+bool ceps::docgen::Doc_writer_markdown_github_style::no_nesting() {return true;}
+
 
 void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os, 
                              std::string s, 
@@ -97,9 +99,10 @@ void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os,
 	os << s;
 	
     if (s.size() + ctx.prefix.size()){ 
-        if (ctx.bold) os << "__ ";
-        if (ctx.italic) os << "* ";
-        if (ctx.underline) os << "+ ";
+        if (ctx.bold) os << "__";
+        if (ctx.italic) os << "*";
+        if (ctx.underline) os << "+";
+		if (ctx.underline || ctx.italic || ctx.bold) os << " ";
     }
 
 	if (ctx.info.size()){

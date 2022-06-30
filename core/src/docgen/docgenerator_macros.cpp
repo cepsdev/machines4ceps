@@ -23,12 +23,10 @@ using namespace ceps::ast;
 
 using ceps::docgen::fmt_out_ctx;
 
-void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::Macrodef& macro, Doc_writer* doc_writer){
+void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, 
+	ceps::ast::Macrodef& macro, Doc_writer* doc_writer){
 	if (doc_writer->top().symtab == nullptr) 
-		return;
-	auto symbol = doc_writer->top().symtab->lookup(name(macro),false,false,false);
-	if (symbol == nullptr || symbol->category != ceps::parser_env::Symbol::MACRO)
-		return;
+		return;	
 
 	auto const & attrs = attributes(macro);
 	std::stringstream title;
@@ -36,11 +34,12 @@ void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::
 
 	std::string stitle;
 	std::string sinitial;
+	bool attr_initial_set = false;
 	
 	for(size_t i = 0; i != attrs.size(); i+=2){
 		std::string what = value(ceps::ast::as_string_ref(attrs[i]));
 		auto where = &title;
-		if (what == "initial") where = &initial;
+		if (what == "initial" || what == "type" ) {attr_initial_set = true; where = &initial;}
 		
 		if (ceps::ast::is_a_string(attrs[i+1]))
 			*where << ceps::ast::value(ceps::ast::as_string_ref(attrs[i+1]));
@@ -54,16 +53,33 @@ void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, ceps::ast::
 
 	{
 		doc_writer->push_ctx();
+		doc_writer->top().eol= 1;
+		doc_writer->out(os,"");	
+		doc_writer->top().eol= 0;
+		doc_writer->start_line();		
 		fmt_out_layout_macro_keyword(doc_writer->top());
-		doc_writer->out(os,sinitial.length() > 0 ? sinitial : "Macro");
+		auto output = attr_initial_set ? sinitial : "Macro";
+		if (output.length()) doc_writer->out(os,output);
 		doc_writer->pop_ctx();
 	}
 	{
 		doc_writer->push_ctx();
 		fmt_out_layout_macro_name(doc_writer->top());
+		doc_writer->top().eol= 1;
 		doc_writer->out(os,stitle.length() > 0 ? stitle : name(macro));
 		doc_writer->pop_ctx();
 	}
 	++doc_writer->top().indent;
-	fmt_out_handle_children(os,as_stmts_ptr(static_cast<Nodebase_ptr>(symbol->payload))->children(),doc_writer,true);
+
+	for(auto n: as_stmts_ptr(body(macro))->children()){
+		doc_writer->start_line();
+		if (is_a_struct(n)){
+			auto& strct{ceps::ast::as_struct_ref(n)};
+			fmt_out_handle_inner_struct(os,strct,doc_writer,false);
+		} else if (is<Ast_node_kind::stmts>(n)){
+			auto inner = nlf_ptr(n);
+			for(auto n: inner->children())
+				fmt_handle_node(os, n, doc_writer,false,1);
+		}  else fmt_handle_node(os, n, doc_writer,false,1);
+	}
 }

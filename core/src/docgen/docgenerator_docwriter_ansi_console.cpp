@@ -35,6 +35,13 @@ bool ceps::docgen::Doc_writer_ansi_console::handler_toplevel_struct(
 	return false;
 }
 
+ceps::docgen::Doc_writer::emoji_t 
+ ceps::docgen::Doc_writer_ansi_console::emoji(std::string s) {
+                if (s == ":heavy_check_mark:") return "✔️ ";
+				else if ( s == ":heavy_exclamation_mark:") return "❗";
+				return "";
+}
+
 void ceps::docgen::Doc_writer_ansi_console::out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) {

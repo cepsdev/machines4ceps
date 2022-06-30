@@ -198,6 +198,8 @@ namespace ceps{
             public:
             using eol_t = std::string;
             using symbol_t = std::string;
+            using emoji_t = std::string;
+            int level = 0;
 
             Doc_writer() = delete;
             Doc_writer(std::vector<std::string> options) : fmt_out_ctx_stack(options) {
@@ -217,12 +219,21 @@ namespace ceps{
             virtual symbol_t right_arrow() {
                 return "-▶";
             }
+            virtual emoji_t emoji(std::string s) {
+                return s;
+            }
+
+            virtual bool no_nesting() { return false;}
+
             virtual void start_code_block(std::ostream& os){}
             virtual void end_code_block(std::ostream& os){}
             virtual void start_comment_block(std::ostream& os){}
             virtual void end_comment_block(std::ostream& os){}
             virtual bool supports_tables() {return false;}
-            virtual void start_header(int level,std::ostream& os) {auto i = 0; for(; i < level; ++i) os << "#"; if (i > 0) os << " ";}
+            virtual void start_header(int lvl, std::ostream& os) 
+                {auto i = 0; for(; i < lvl; ++i) os << "#"; if (i > 0) os << " ";}
+            virtual void start_header( std::ostream& os) 
+                {start_header(level, os);}                
             virtual void end_header(std::ostream& os) {os << "\n";};
             virtual void start_line() {start_of_line = true;};
 
@@ -402,6 +413,8 @@ namespace ceps{
         void fmt_out_layout_val_arrow(fmt_out_ctx& ctx);
         void fmt_out_layout_if_keyword(fmt_out_ctx& ctx);
         void fmt_out_layout_label(fmt_out_ctx& ctx);
+ 
+
         void fmt_out_layout_funcname(fmt_out_ctx& ctx);
         void print_comment(std::ostream& os, Doc_writer* doc_writer);
 

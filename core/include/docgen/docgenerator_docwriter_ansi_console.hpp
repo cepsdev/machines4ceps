@@ -37,6 +37,7 @@ namespace ceps{
             void start(std::ostream& os) override; 
             void end(std::ostream& os) override;
             eol_t eol() override;
+            emoji_t emoji(std::string s) override;
         };
     }
 }

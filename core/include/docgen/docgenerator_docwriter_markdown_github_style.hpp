@@ -42,6 +42,7 @@ namespace ceps{
             void end_code_block(std::ostream& os) override;
             void start_comment_block(std::ostream& os) override;
             void end_comment_block(std::ostream& os) override;
+            bool no_nesting() override;
 
         };
     }

@@ -101,6 +101,7 @@ void ceps::docgen::fmt_out_layout_valdef_complete_line(fmt_out_ctx& ctx){
 	else ctx.set_text_foreground_color("value_definition.eol");
 	ctx.ignore_indent = true;
 	ctx.bold = true;
+	ctx.eol = 1;
 }
 
 void ceps::docgen::fmt_out_layout_if_complete_line(fmt_out_ctx& ctx){
@@ -109,6 +110,7 @@ void ceps::docgen::fmt_out_layout_if_complete_line(fmt_out_ctx& ctx){
 	ctx.bold = true;
 	ctx.suffix = ":";
 	ctx.ignore_indent = true;
+	ctx.eol = 1;
 }
 
 void ceps::docgen::fmt_out_layout_val_var(fmt_out_ctx& ctx){

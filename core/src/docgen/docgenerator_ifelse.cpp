@@ -84,6 +84,9 @@ void ceps::docgen::fmt_out_handle_ifelse(std::ostream& os, Ifelse& ifelse, Doc_w
     if (else_branch){
 		{
 			doc_writer->push_ctx();
+			doc_writer->top().eol = 1;
+			doc_writer->start_line();
+			doc_writer->out(os,"");
 			fmt_out_layout_if_keyword(doc_writer->top());
 			doc_writer->out(os,"else");
 			doc_writer->pop_ctx();
