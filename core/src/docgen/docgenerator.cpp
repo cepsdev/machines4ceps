@@ -678,7 +678,7 @@ template <typename F> struct cleanup{
 };
 
 //
-// Enry point for formatted console output of:
+// Entry point for formatted console output of:
 //  - unevaluated (raw) ceps trees
 //  - evaluated ceps trees which includes evaluated ceps trees in different stages (e.g. post processing)
 //
@@ -686,11 +686,15 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 							std::vector<ceps::ast::Nodebase_ptr> const & ns,
 							context& lookuptbls,
 							std::vector<std::string> output_format_flags,
+							std::vector<std::pair<std::string, std::vector<std::string>>> attributes,							
 							bool ignore_macro_definitions,
 							ceps::parser_env::Symboltable* symtab)
 {
 	using namespace ceps::ast;
-
+	bool print_sms_only {};
+	for (auto a : attributes){
+		if (a.first == "report_state_machines_only") print_sms_only = true;
+	}
 	// Setup respective docwriter (determined by the format flags)
 	std::shared_ptr<ceps::docgen::Doc_writer> doc_writer = Doc_writer_factory(output_format_flags);
 	doc_writer->start(os);
@@ -746,33 +750,38 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 								 output_format_flags,
 								 symtab};
 				sm.print(os,doc_writer.get());
-			} else if (name(current_struct) == "Simulation" || name(current_struct) == "simulation"){
-				Simulation sim{ as_struct_ptr(n),
-				                lookuptbls,
-								output_format_flags,
-								symtab};
-				sim.print(os,doc_writer.get());
-			} else if (name(current_struct) == "docgen_parameters"){
-				for(auto p : current_struct.children() ){
-					if (is<Ast_node_kind::binary_operator>(p)){
-						auto& binop = as_binop_ref(p);
-						if (op_val(binop) != "=") continue;
-						if (is<Ast_node_kind::symbol>(children(binop)[0]) && "Docgenparam" == kind(as_symbol_ref(children(binop)[0]))) {
-							int intval = 0;
-							if (is<Ast_node_kind::int_literal>(children(binop)[1]))
-							 	intval = value(as_int_ref(children(binop)[1]));
-							if (name(as_symbol_ref(children(binop)[0])) == "heading_level")
-								doc_writer->top().heading_level = intval;
-						}
-					}					
+			} 
+			else if (!print_sms_only) {
+				if (name(current_struct) == "Simulation" || name(current_struct) == "simulation"){
+					Simulation sim{ as_struct_ptr(n),
+									lookuptbls,
+									output_format_flags,
+									symtab};
+					sim.print(os,doc_writer.get());
+				} else if (name(current_struct) == "docgen_parameters"){
+					for(auto p : current_struct.children() ){
+						if (is<Ast_node_kind::binary_operator>(p)){
+							auto& binop = as_binop_ref(p);
+							if (op_val(binop) != "=") continue;
+							if (is<Ast_node_kind::symbol>(children(binop)[0]) && "Docgenparam" == kind(as_symbol_ref(children(binop)[0]))) {
+								int intval = 0;
+								if (is<Ast_node_kind::int_literal>(children(binop)[1]))
+									intval = value(as_int_ref(children(binop)[1]));
+								if (name(as_symbol_ref(children(binop)[0])) == "heading_level")
+									doc_writer->top().heading_level = intval;
+							}
+						}					
+					}
 				}
+				else fmt_out_handle_outer_struct(os,current_struct,doc_writer.get(),ignore_macro_definitions);
 			}
-			else fmt_out_handle_outer_struct(os,current_struct,doc_writer.get(),ignore_macro_definitions);
-		} else if (is<Ast_node_kind::kind_def>(n)) {
-			auto& kd{as_kinddef_ref(n)};
-			auto k = kind(kd);
-			for(auto id: kd.children()) lookuptbls.global_symbols.reg_id_as(name(as_id_ref(id)),k);
-		} else fmt_handle_node(os,n,doc_writer.get(),ignore_macro_definitions);
+		} else if (!print_sms_only) {
+			if (is<Ast_node_kind::kind_def>(n)) {
+				auto& kd{as_kinddef_ref(n)};
+				auto k = kind(kd);
+				for(auto id: kd.children()) lookuptbls.global_symbols.reg_id_as(name(as_id_ref(id)),k);
+			} else fmt_handle_node(os,n,doc_writer.get(),ignore_macro_definitions);
+		}
 		return true;
 	});
 	doc_writer->out(os,"");

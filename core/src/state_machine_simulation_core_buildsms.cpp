@@ -850,6 +850,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		         current_universe().nodes(),
 				 cntxt,
 				 result_cmd_line.output_format_flags,
+				 result_cmd_line.attributes,
 				 true,
 				 &ceps_env_current().get_global_symboltable());
 		}
@@ -1810,6 +1811,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 		         current_universe().nodes(),
 				 cntxt,
 				 result_cmd_line.output_format_flags,
+				 result_cmd_line.attributes,
 				 true,
 				 &ceps_env_current().get_global_symboltable());
 		}

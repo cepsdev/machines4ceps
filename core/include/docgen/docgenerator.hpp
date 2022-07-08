@@ -373,6 +373,7 @@ namespace ceps{
                         std::vector<ceps::ast::Nodebase_ptr> const & ns, 
                         context& ctxt,
                         std::vector<std::string> output_format_flags,
+                        std::vector<std::pair<std::string, std::vector<std::string>>> attributes,
                         bool ignore_macro_definitions,
                         ceps::parser_env::Symboltable* symtab = nullptr);
 

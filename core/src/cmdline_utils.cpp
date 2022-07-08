@@ -194,6 +194,8 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 	Result_process_cmd_line r = r_init;
 	r.valid = true;
 
+	
+
 	for(int i = 1; i < argc;++i)
 	{
 			string arg{argv[i]};
@@ -257,7 +259,13 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
             else if (arg == "--pe") {r.print_evaluated_input_tree=true; continue;}
 			else if (arg == "--ppe") {r.print_evaluated_postprocessing_tree=true;continue;}
             else if (arg == "--format") { if (i+1 == argc) break; r.output_format_flags.push_back(argv[i+1]); ++i;continue;}
-       		else if (arg == "--doc-option") { if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
+            else if (arg == "--report_state_machines_only") { 
+				r.attributes.push_back(
+					Result_process_cmd_line::attribute_t{"report_state_machines_only",{}}
+				); 
+				continue;
+			}
+			else if (arg == "--doc-option") { if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
 			else if (arg == "--help") {r.print_help = true;continue;}
 			else if (arg == "--create_plugin_project") {r.create_plugin_project = true;continue;}
 			else if (arg.substr(0, 6) == "--port") { 

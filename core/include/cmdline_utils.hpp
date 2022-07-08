@@ -22,8 +22,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <string>
 #include <vector>
 
+
 struct Result_process_cmd_line
 {
+   using attribute_t = std::pair<std::string, std::vector<std::string>>;
+   using attributes_t = std::vector<attribute_t>;
+   attributes_t attributes;
+
    bool valid = false;
    bool version_flag_set = false;
    bool debug_mode = false;
