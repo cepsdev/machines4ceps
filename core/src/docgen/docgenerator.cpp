@@ -691,9 +691,14 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 							ceps::parser_env::Symboltable* symtab)
 {
 	using namespace ceps::ast;
+	using namespace std;
 	bool print_sms_only {};
+	optional<set<string>> set_of_sms_to_print;
+
 	for (auto a : attributes){
 		if (a.first == "report_state_machines_only") print_sms_only = true;
+		else if(a.first == "report_state_machines") 
+			set_of_sms_to_print = set<string>{a.second.begin(),a.second.end()}; 
 	}
 	// Setup respective docwriter (determined by the format flags)
 	std::shared_ptr<ceps::docgen::Doc_writer> doc_writer = Doc_writer_factory(output_format_flags);
@@ -749,7 +754,7 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 				                 lookuptbls,
 								 output_format_flags,
 								 symtab};
-				sm.print(os,doc_writer.get());
+				sm.print(os,doc_writer.get(),set_of_sms_to_print);
 			} 
 			else if (!print_sms_only) {
 				if (name(current_struct) == "Simulation" || name(current_struct) == "simulation"){

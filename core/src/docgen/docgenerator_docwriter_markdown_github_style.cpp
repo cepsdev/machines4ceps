@@ -53,6 +53,10 @@ void ceps::docgen::Doc_writer_markdown_github_style::end_code_block(std::ostream
 
 bool ceps::docgen::Doc_writer_markdown_github_style::no_nesting() {return true;}
 
+void ceps::docgen::Doc_writer_markdown_github_style::start_header(int lvl, std::ostream& os) 
+{
+	auto i = 0; for(; i < lvl; ++i) os << "#"; if (i > 0) os << " ";
+}
 
 void ceps::docgen::Doc_writer_markdown_github_style::out(std::ostream& os, 
                              std::string s, 

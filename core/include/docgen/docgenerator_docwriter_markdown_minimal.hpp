@@ -41,6 +41,7 @@ namespace ceps{
             std::shared_ptr<Doc_table_writer> get_table_writer(std::ostream* os) override;
             void start_code_block(std::ostream& os) override;
             void end_code_block(std::ostream& os) override;
+            void start_header(int lvl, std::ostream& os) override;
         };
     }
 }

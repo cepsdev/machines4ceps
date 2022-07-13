@@ -265,6 +265,18 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 				); 
 				continue;
 			}
+            else if (arg == "--report_state_machines") { 
+				Result_process_cmd_line::attribute_t attr{"report_state_machines",{}};
+				auto j = i + 1;
+				for( ;j < argc;++j){
+					string cur_arg{argv[j]};
+					if (cur_arg.length() && cur_arg[0] =='-') break;
+					attr.second.push_back(cur_arg);
+				}
+				r.attributes.push_back(attr);
+				i = j - 1;
+				continue;
+			}
 			else if (arg == "--doc-option") { if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
 			else if (arg == "--help") {r.print_help = true;continue;}
 			else if (arg == "--create_plugin_project") {r.create_plugin_project = true;continue;}

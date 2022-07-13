@@ -231,7 +231,7 @@ namespace ceps{
             virtual void end_comment_block(std::ostream& os){}
             virtual bool supports_tables() {return false;}
             virtual void start_header(int lvl, std::ostream& os) 
-                {auto i = 0; for(; i < lvl; ++i) os << "#"; if (i > 0) os << " ";}
+                {}
             virtual void start_header( std::ostream& os) 
                 {start_header(level, os);}                
             virtual void end_header(std::ostream& os) {os << "\n";};
@@ -336,7 +336,9 @@ namespace ceps{
 				
                 build();
 			}
-			void print(std::ostream& os, Doc_writer* doc_writer);
+			void print( std::ostream& os, 
+                        Doc_writer* doc_writer, 
+                        std::optional<std::set<std::string>> set_of_sms_to_print = {});
             void print_states(std::ostream& os, Doc_writer* doc_writer, bool states_on_single_line, bool print_coverage_statistics);
             void print_states_tabularized(std::ostream& os, Doc_writer* doc_writer, bool states_on_single_line, bool print_coverage_statistics);
 			void print_transitions(std::ostream& os, Doc_writer* doc_writer);

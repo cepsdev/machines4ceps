@@ -37,6 +37,8 @@ namespace ceps{
             void start(std::ostream& os) override; 
             void end(std::ostream& os) override;
             eol_t eol() override;
+            void start_header(int lvl, std::ostream& os) override; 
+
         };
     }
 }

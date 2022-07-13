@@ -34,6 +34,11 @@ ceps::docgen::Doc_writer_markdown_jira_style::Doc_writer_markdown_jira_style(std
 
 }
 
+void ceps::docgen::Doc_writer_markdown_jira_style::start_header(int lvl, std::ostream& os) 
+{
+	auto i = 0; for(; i < lvl; ++i) os << "#"; if (i > 0) os << " ";
+}
+
 void ceps::docgen::Doc_writer_markdown_jira_style::out(std::ostream& os, 
                              std::string s, 
 							 MarginPrinter* mp) {

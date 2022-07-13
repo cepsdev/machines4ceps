@@ -444,8 +444,14 @@ int ceps::docgen::Statemachine::compute_nesting_level(){
 }
 
 void ceps::docgen::Statemachine::print(	std::ostream& os,
-										Doc_writer* doc_writer){
+										Doc_writer* doc_writer,
+										std::optional<std::set<std::string>> set_of_sms_to_print){
 	
+	if (set_of_sms_to_print){
+		auto it = set_of_sms_to_print->find(compute_full_name());
+		if (it == set_of_sms_to_print->end()) return;
+	} 
+
 	bool show_states_only = doc_writer->options.find("state-machines-show-only-states") != doc_writer->options.end();
 
 	auto indent_old = doc_writer->top().indent;

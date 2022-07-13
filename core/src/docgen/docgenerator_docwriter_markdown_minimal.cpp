@@ -111,6 +111,11 @@ ceps::docgen::Doc_writer_markdown_minimal::Doc_writer_markdown_minimal(std::vect
 
 }
 
+void ceps::docgen::Doc_writer_markdown_minimal::start_header(int lvl, std::ostream& os) 
+{
+	auto i = 0; for(; i < lvl; ++i) os << "#"; if (i > 0) os << " ";
+}
+
 
 void ceps::docgen::Doc_writer_markdown_minimal::out(std::ostream& os, 
                              std::string s, 

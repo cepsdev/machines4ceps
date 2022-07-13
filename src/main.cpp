@@ -281,24 +281,25 @@ int main(int argc,char ** argv)
 			cout << "Usage: ceps [options] file...\n";
 			cout << "Options:\n";
 			vector<pair<string,string>> options = {
-				{"--create_plugin_project         ","Generate cmake build files for a plugin project."},
-				{"--dot_gen                       ","Generate DOT file for each top level state machine."},
-				{"--format FORMAT                 ","Set output format (applies to options --pr, --pe). Default is 'ansi'."},
-				{"  Supported values are :        ",""},
+				{"--create_plugin_project            ","Generate cmake build files for a plugin project."},
+				{"--dot_gen                          ","Generate DOT file for each top level state machine."},
+				{"--format FORMAT                    ","Set output format (applies to options --pr, --pe). Default is 'ansi'."},
+				{"  Supported values are :           ",""},
 				{"    raw                 ", ""},
 				{"    ansi                ", ""},
 				{"    markdown            ", ""},
 				{"    markdown_github     ", ""},
 				{"    markdown_jira       ", ""},
 				{"    html5               ", ""},
-				{"--pr                            ","Print unevaluated spec."},
-				{"--pe                            ","Print evaluated spec."},
-				{"--quiet                         ","Suppress any output on stdout (applies to tool's messages only)."},
-				{"--report_state_machines_only    ","Report includes state machines only."},
-				{"--rip a.b.c.d                   ","IP address of remote ceps server."},
-				{"--rport SHORT                   ","IP port of remote ceps server."},
-				{"--server                        ","Start in server mode."},
-				{"--timeout T                     ","ceps runs for at most T seconds."},
+				{"--pr                               ","Print unevaluated spec."},
+				{"--pe                               ","Print evaluated spec."},
+				{"--quiet                            ","Suppress any output on stdout (applies to tool's messages only)."},
+				{"--report_state_machines ID1 .. IDn ","Report includes the state machines with ids ID1 .. IDn only."},
+				{"--report_state_machines_only       ","Report includes state machines only."},
+				{"--rip a.b.c.d                      ","IP address of remote ceps server."},
+				{"--rport SHORT                      ","IP port of remote ceps server."},
+				{"--server                           ","Start in server mode."},
+				{"--timeout T                        ","ceps runs for at most T seconds."},
 
 			};
 			for(auto e: options)
