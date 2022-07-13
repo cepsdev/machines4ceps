@@ -420,6 +420,7 @@ void ceps::docgen::Statemachine::print_transitions(std::ostream& os, Doc_writer*
 				doc_writer->push_ctx();
 				doc_writer->top().ignore_indent=true;
 				doc_writer->top().suffix="";
+				doc_writer->top().eol=0;
 				doc_writer->out(os,"");
 				doc_writer->pop_ctx();
 			}
