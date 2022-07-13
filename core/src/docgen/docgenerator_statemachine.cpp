@@ -140,8 +140,6 @@ void ceps::docgen::Statemachine::print_states(std::ostream& os, Doc_writer* doc_
 		doc_writer->pop_ctx();
 	}
 		
-	if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
-	 	doc_writer->top().indent = MarginPrinter::left_margin;
 
 	++doc_writer->top().indent;
 	{
@@ -478,7 +476,12 @@ void ceps::docgen::Statemachine::print(	std::ostream& os,
 	}
 	doc_writer->end_header(os);
 
+
+	if (!parent && active_pointers_to_composite_ids_with_coverage_info.size())
+	 	doc_writer->top().indent = MarginPrinter::left_margin;
+
 	++doc_writer->top().indent;
+
 	if (actions_vec.size() && !show_states_only){
 		{
 			auto eol_old = doc_writer->top().eol;
