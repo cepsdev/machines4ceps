@@ -1,0 +1,41 @@
+kind Event;
+kind Systemstate;
+
+
+Event E1,E2;
+
+sm{
+ S;
+
+ states{Initial; };
+ 
+    sm{
+        A;
+        Actions{
+            fireE2{
+                print(argv(1),"\n");
+                {E2;};
+            };
+        };
+        states{Initial;Wait;Do;};
+        t{Initial;Wait;};
+        t{Wait;Do;E1;fireE2;};
+        t{Do;Wait;};
+    };
+    sm{
+        B;
+        states{Initial;W;D;};
+        t{Initial;W;};
+        t{W;D;E2;};
+        t{D;W;};
+    };
+
+    t{Initial; A; };
+    t{Initial; B; };
+ };
+
+ Simulation{
+    Start{S;};
+    E1(123);//E1;E1;E1;E1;
+    E1(456);
+ };

@@ -605,7 +605,6 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 
  auto & execution_ctxt = executionloop_context();
  //std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;
-
  int ev_id;
  event_t dummy_ev;
  event_t dummy_ev2;

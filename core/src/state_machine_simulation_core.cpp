@@ -638,6 +638,20 @@ event_rep_t State_machine_simulation_core::resolve_event_qualified_id(ceps::ast:
 			std::string name = ceps::ast::name(as_symbol_ref(p));
 			if (kind != "Event") return event_rep_t{};
 			return event_rep_t(true,nullptr,name);
+		} else if (p->kind() == ceps::ast::Ast_node_kind::func_call){
+			auto& fc = as_func_call_ref(p);
+			auto ft = func_call_target(fc);
+			if (ft->kind() == ceps::ast::Ast_node_kind::symbol){
+				std::string kind = ceps::ast::kind(as_symbol_ref(ft));
+				std::string name = ceps::ast::name(as_symbol_ref(ft));
+				if (kind != "Event") return event_rep_t{};
+				auto ev = event_rep_t(true,nullptr,name);
+				ev.payload_ = 
+				 extract_functioncall_arguments_from_param_block(
+					as_call_params_ref(fc.children()[1])
+				 );
+				return ev;
+			}
 		}
 
 		if (p->kind() == ceps::ast::Ast_node_kind::identifier){
