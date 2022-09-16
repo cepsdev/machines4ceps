@@ -216,7 +216,11 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 				doc_writer->out(os,"⚠  ");
 				doc_writer->top().set_text_foreground_color("warn.text");
 			}
-
+			else if (kind(as_symbol_ref(fcall_target)) == "DocgenStringPrintNoEscape")
+				escape_strings = false;
+			else if (kind(as_symbol_ref(fcall_target)) == "DocgenStringPrintEscape")
+				escape_strings = false;
+				
 		 	if (args.size()){
 		 		for(size_t i = 0; i != args.size();++i){
 			 		fmt_out_handle_expr(os,args[i],doc_writer,false,ctx_base_string);
@@ -785,7 +789,10 @@ void ceps::docgen::fmt_out(	std::ostream& os,
 				auto& kd{as_kinddef_ref(n)};
 				auto k = kind(kd);
 				for(auto id: kd.children()) lookuptbls.global_symbols.reg_id_as(name(as_id_ref(id)),k);
-			} else fmt_handle_node(os,n,doc_writer.get(),ignore_macro_definitions);
+			} else {
+				fmt_handle_node(os,n,doc_writer.get(),ignore_macro_definitions);
+				doc_writer->out(os,"");
+			}
 		}
 		return true;
 	});
