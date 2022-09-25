@@ -229,8 +229,12 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
             this->lexers.push_back(lex);
             continue;
         } else if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) != ".ceps"){
-            auto ext = file_name.substr(file_name.length()-3,3);
-            auto l = find_lexer_by_file_ext(ext);
+            std::string ext;
+			auto ext_pos = file_name.find_last_of(".");
+			if (ext_pos != std::string::npos && ext_pos + 1 <  file_name.length()) 
+			 ext = file_name.substr(ext_pos+1);
+            
+			auto l = find_lexer_by_file_ext(ext);
             if(l){
                 Memory<char> * data = new Memory<char>{};
                 if(!readfile_to_memory(*data , file_name.c_str() )) {delete data; fatal_(ERR_FILE_OPEN_FAILED,file_name);}
