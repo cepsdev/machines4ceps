@@ -297,6 +297,7 @@ int main(int argc,char ** argv)
 				{"--report_state_machines ID1 .. IDn ","Report includes the state machines with ids ID1 .. IDn only."},
 				{"--report_state_machines_only       ","Report includes state machines only."},
 				{"--rip a.b.c.d                      ","IP address of remote ceps server."},
+				{"--root_struct ID                   ","Content of file which comes next in the argument list will be enclosed in a struct with id ID."},
 				{"--rport SHORT                      ","IP port of remote ceps server."},
 				{"--server                           ","Start in server mode."},
 				{"--timeout T                        ","ceps runs for at most T seconds."},

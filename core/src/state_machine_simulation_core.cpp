@@ -157,16 +157,27 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
         std::string& last_file_processed,
 		Result_process_cmd_line result_cmd_line)
 {
-
+	using namespace std;
 	phase_0_callback_smc = this;
 	ceps_env_current().interpreter_env().set_func_callback(phase_0_callback, nullptr);
-	//DEBUG reg_ceps_phase0plugin("exi_processor_operation", plugin_entrypoint_add_generic_grammar);
 
 	ceps::docgen::context docgen_context; // Information which needs to be preserved between docgen calls
 	std::vector<ceps::ast::Nodebase_ptr> generated_nodes;
     bool next_is_expression = false;
-    for(auto const & file_name : file_names)
+
+	vector< pair<string, string> > fnames;
+	for( ssize_t i = 0; i < file_names.size(); ++i ){
+		string root_elem{};
+		if (result_cmd_line.root_struct.size() > i ) root_elem = result_cmd_line.root_struct[i];
+		fnames.push_back({file_names[i],root_elem});
+	}
+
+    for(auto file_info : fnames)
 	{
+		auto file_name = file_info.first;
+		auto root_elem = file_info.second;
+		
+
         if (next_is_expression){
             next_is_expression = false;
             std::stringstream def_file{ last_file_processed = file_name};
@@ -190,10 +201,17 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
           continue;
         }
         else if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) == ".xml"){
-
 			auto root_node = ceps::ast::read_xml_file(file_name);
 			if (root_node == nullptr) fatal_(ERR_FILE_OPEN_FAILED, file_name);
 			auto v = ceps::ast::nlf_ptr(root_node);
+
+			vector<ceps::ast::node_t>* destination_set{&current_universe().nodes()};
+			if (root_elem.size()){
+				auto root = ceps::ast::mk_struct(root_elem);
+				destination_set = &children(root);
+				current_universe().nodes().push_back(root);
+			}
+
 			for(auto p:v->children()){
 				if (p->kind() != ceps::ast::Ast_node_kind::structdef) continue;
 				if (ceps::ast::name(as_struct_ref(p)) == "fx:FIBEX" ){
@@ -201,7 +219,7 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 					if (rr.size())
 						current_universe().nodes().insert(current_universe().nodes().end(),rr.nodes().begin(), rr.nodes().end());
 				} else {
-				 current_universe().nodes().push_back(p);
+				 destination_set->push_back(p);
 				}
 			}
 			continue;
@@ -281,12 +299,22 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 				 false,
 				 &ceps_env_current().get_global_symboltable());
 
+		auto root_node {driver.parsetree().get_root()};
+		if (root_elem.size()){
+			auto root = ceps::ast::mk_struct(root_elem);
+			children(root) = children(ceps::ast::nlf_ptr(root_node));
+			children(ceps::ast::nlf_ptr(root_node)).clear();
+			children(ceps::ast::nlf_ptr(root_node)).push_back(root);
+		}
+
+
 		ceps::interpreter::evaluate(current_universe(),
-									driver.parsetree().get_root(),
+									root_node,
 									ceps_env_current().get_global_symboltable(),
 									ceps_env_current().interpreter_env(),
 									&generated_nodes
 									);
+		 
 	}//for
 	
 	ceps_env_current().interpreter_env().set_func_callback(nullptr, nullptr);

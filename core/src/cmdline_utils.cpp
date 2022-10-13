@@ -97,7 +97,9 @@ void mk_directories(std::string const & path)
 #endif
 }
 
-void traverse_directories(std::string const & current_path,std::vector<std::string>& definition_files,std::string const & rel_out_path)
+void traverse_directories(std::string const & current_path,
+						  std::vector<std::string>& definition_files,
+						  std::string const & rel_out_path)
 {
 #ifndef _WIN32
 	DIR* dir_stream = opendir(current_path.c_str());
@@ -123,7 +125,8 @@ void traverse_directories(std::string const & current_path,std::vector<std::stri
 		if (is_dir)
 		{
 
-			 traverse_directories(dir_entry_full+"/",definition_files,rel_out_path+ ( rel_out_path.length() == 0 ? "" : "/" ) +dir_entry);
+			traverse_directories(dir_entry_full+"/",definition_files,rel_out_path+ ( rel_out_path.length() == 0 ? "" : "/" ) +dir_entry);
+		
 		} else if (dir_entry.length() > 4 && dir_entry.substr(dir_entry.length()-4,4 ) == ".def")
 		{
 
@@ -193,6 +196,8 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 
 	Result_process_cmd_line r = r_init;
 	r.valid = true;
+
+	string current_root_struct_name{};
 
 	
 
@@ -277,7 +282,14 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 				i = j - 1;
 				continue;
 			}
-			else if (arg == "--doc-option") { if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
+			else if (arg == "--root_struct"){
+				if (i+1 == argc) break;
+				current_root_struct_name = argv[i+1];
+				++i;
+				continue;
+			}
+			else if (arg == "--doc-option") { 
+				if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
 			else if (arg == "--help") {r.print_help = true;continue;}
 			else if (arg == "--create_plugin_project") {r.create_plugin_project = true;continue;}
 			else if (arg.substr(0, 6) == "--port") { 
@@ -306,7 +318,6 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 					exit(1);
 				}
 				is_dir = (FILE_ATTRIBUTE_DIRECTORY & api_call_result) == FILE_ATTRIBUTE_DIRECTORY;
-
 #endif
 				if(is_dir)
 				{
@@ -317,12 +328,22 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 					if (arg.size() > 0 && arg[arg.size() - 1] != '/' && arg[arg.size() - 1] != '\\')
 						arg += "/";
 #endif
+					auto size_before = definition_file_rel_paths.size();
 					traverse_directories(arg,definition_file_rel_paths,"");
-
+					for (auto i = size_before; i < definition_file_rel_paths.size(); ++i)
+					 r.root_struct.push_back(current_root_struct_name);
+					current_root_struct_name = {};
 				}
 				else {
-					if (post_processing) post_processing_rel_paths.push_back(arg);
-					else definition_file_rel_paths.push_back(arg);
+					if (post_processing) {
+						post_processing_rel_paths.push_back(arg);
+						r.root_struct_post.push_back(current_root_struct_name);
+					}
+					else {
+						definition_file_rel_paths.push_back(arg);
+						r.root_struct.push_back(current_root_struct_name);
+					}
+					current_root_struct_name = {};
 				}
 
 			}
