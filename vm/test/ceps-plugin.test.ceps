@@ -1,0 +1,12 @@
+INSERT_NAME_FOR_FUNCTION_HERE(
+	input{
+		123;
+		"abc";
+		uint32{
+			ThisIsAnIdentifier;
+		};
+		1+1;
+	}
+);
+
+print ("result = ",root.result.content(),"\n\n");
