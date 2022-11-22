@@ -32,16 +32,22 @@ namespace cepsplugin{
 }
 
 
-void compile(){
-    ceps::vm::oblectamenta::VMEnv vm;
-    vm.store(42);
+void compile_and_run(){
+    using namespace ceps::vm::oblectamenta;
+    VMEnv vm;
+    for (auto i : {1,2,3,4,5,6,7,8,9,10}) vm.store(i);
+    for (auto i : {1,2}) vm.push(i);
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::halt>(vm.text());
+    vm.run();
+    vm.dump(std::cout);
 }
 
 ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t params){
     using namespace std;
     using namespace ceps::ast;
     using namespace ceps::interpreter;
-    compile();
+    compile_and_run();
 
     auto data = get_first_child(params);    
     if (!is<Ast_node_kind::structdef>(data)) return nullptr;

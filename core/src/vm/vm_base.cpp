@@ -1,0 +1,111 @@
+/*
+Copyright 2022 Tomas Prerovsky (cepsdev@hotmail.com).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+#include "core/include/vm/vm_base.hpp"
+
+namespace ceps::vm::oblectamenta{
+
+    size_t VMEnv::run(size_t start){
+        for(; Opcode(text_seg[start] & 0xFF) != Opcode::halt; ++start) 
+         (this ->*op_dispatch[text_seg[start] & 0xFF])(start);
+        return start;
+    }
+
+    void VMEnv::addi32(size_t){
+        push(pop<int>()+pop<int>());        
+    }
+
+    void VMEnv::ldi32(size_t){}
+    void VMEnv::ldi64(size_t){}
+    void VMEnv::lddbl(size_t){}
+    void VMEnv::sti32(size_t){}
+    void VMEnv::sti64(size_t){}
+    void VMEnv::stdbl(size_t){}
+    void VMEnv::ldptr(size_t){}
+    void VMEnv::stptr(size_t){}
+    void VMEnv::addi64(size_t){}
+    void VMEnv::adddbl(size_t){}
+
+    VMEnv::VMEnv(){
+        stack.resize(1024);
+        stack_top = 0;
+        op_dispatch.push_back(&VMEnv::noop);
+        op_dispatch.push_back(&VMEnv::noop); 
+        op_dispatch.push_back(&VMEnv::ldi32);
+        op_dispatch.push_back(&VMEnv::ldi64);
+        op_dispatch.push_back(&VMEnv::lddbl);
+        op_dispatch.push_back(&VMEnv::sti32);
+        op_dispatch.push_back(&VMEnv::sti64);
+        op_dispatch.push_back(&VMEnv::stdbl);
+        op_dispatch.push_back(&VMEnv::ldptr);
+        op_dispatch.push_back(&VMEnv::stptr);
+        op_dispatch.push_back(&VMEnv::addi32);
+        op_dispatch.push_back(&VMEnv::addi64);
+        op_dispatch.push_back(&VMEnv::adddbl);
+
+
+
+                /*ldi32,
+                ldi64,
+                lddbl,
+                sti32,
+                sri64,
+                stdbl,
+                ldptr,
+                stptr,
+                addi32,
+                addi64,
+                adddbl,
+                muli32,
+                muli64,
+                muldbl,
+                divi32,
+                divi64,
+                divdbl,
+                remi32,
+                remi64,
+                lti32,
+                lti64,
+                ltdbl,
+                lteqi32,
+                lteqi64,
+                lteqdbl,
+                gti32,
+                gti64,
+                gtdbl,
+                gteqi32,
+                gteqi64,
+                gteqdbl,
+                eqi32,
+                eqi64,
+                eqdbl,
+                andi32,
+                andi64,
+                ori32,
+                ori64,
+                noti32,
+                noti64,
+                xori32,
+                xori64*/
+
+        
+    }
+     
+    void VMEnv::dump(ostream& os){
+        for(ssize_t i = (ssize_t)stack_top - 1; i >= 0; --i )
+         os << "| "<< stack[i] << "\t|\n";
+    }
+}
