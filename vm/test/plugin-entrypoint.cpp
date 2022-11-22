@@ -37,10 +37,32 @@ void compile_and_run(){
     VMEnv vm;
     for (auto i : {1,2,3,4,5,6,7,8,9,10}) vm.store(i);
     for (auto i : {1,2}) vm.push(i);
+    auto prog1 = emit<Opcode::addi32>(vm.text());
+    emit<Opcode::halt>(vm.text());
+    vm.run(prog1);
+    vm.dump(std::cout);
+    std::cout << "============================\n";
+    
+    for (auto i : {1,2,3,4,5,6,7,8,9,10}) vm.push(i);vm.dump(std::cout);
+    auto prog2 = emit<Opcode::addi32>(vm.text());
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::addi32>(vm.text());
     emit<Opcode::addi32>(vm.text());
     emit<Opcode::halt>(vm.text());
-    vm.run();
+    vm.run(prog2);
+    std::cout << "============================\n";
     vm.dump(std::cout);
+    auto prog3 = emit<Opcode::addi32>(vm.text());
+    emit<Opcode::halt>(vm.text());
+    vm.run(prog3);
+    std::cout << "============================\n";
+    vm.dump(std::cout);
+
 }
 
 ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t params){
