@@ -86,6 +86,12 @@ namespace ceps{
                                     (data_t::value_type*) &data + sizeof(data) );
                         return t;
                     }
+  
+                    template<typename T> T read_store(size_t ofs){
+                        T t = *(T*) &data_seg[ofs];
+                        return t;
+                    }
+
                     template<typename T> size_t push(T data){
                         auto t = stack_top;
                         for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)

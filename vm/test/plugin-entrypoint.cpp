@@ -73,8 +73,14 @@ void compile_and_run(){
         emit<Opcode::ldi32>(vm.text(),vars[i]);
         emit<Opcode::addi32>(vm.text());
     }
+    int result_prog4 = vm.store(55);
+    emit<Opcode::sti32>(vm.text(),result_prog4);
     emit<Opcode::halt>(vm.text());
-    for(size_t i = 0; i < 100000000L; ++i) {vm.run(prog4);vm.reset();}
+
+    for(size_t i = 0; i < 100L; ++i) {
+        vm.run(prog4); 
+        assert(vm.read_store<int>(result_prog4) == 55);
+    }
     vm.dump(std::cout);
 
 }
