@@ -109,27 +109,29 @@ namespace ceps{
                     VMEnv();
 
                     void dump(ostream& os);
-
+                    void reset();
                 private:
-                    void noop(size_t) {}
-                    void ldi32(size_t);
-                    void ldi64(size_t);
-                    void lddbl(size_t);
-                    void sti32(size_t);
-                    void sti64(size_t);
-                    void stdbl(size_t);
-                    void ldptr(size_t);
-                    void stptr(size_t);
-                    void addi32(size_t);
-                    void addi64(size_t);
-                    void adddbl(size_t);
+                    size_t noop(size_t);
+                    size_t ldi32(size_t);
+                    size_t ldi64(size_t);
+                    size_t lddbl(size_t);
+                    size_t sti32(size_t);
+                    size_t sti64(size_t);
+                    size_t stdbl(size_t);
+                    size_t ldptr(size_t);
+                    size_t stptr(size_t);
+                    size_t addi32(size_t);
+                    size_t addi64(size_t);
+                    size_t adddbl(size_t);
 
                     data_t data_seg;
                     stack_t stack;
                     text_t text_seg;
                     size_t stack_top;
-                    using fn = void (VMEnv::*) (size_t) ;
+                    using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
+
+                    static constexpr size_t base_opcode_width = 1;
             };
 
 
@@ -138,6 +140,13 @@ namespace ceps{
                     text.push_back((VMEnv::text_t::value_type) opcode);
                     return t;
             }
+            template<Opcode opcode> size_t emit(VMEnv::text_t& text, int v){
+                    auto t {text.size()};
+                    text.push_back((VMEnv::text_t::value_type) opcode);
+                    text.push_back(v);
+                    return t;
+            }
+
         }
     }
 }

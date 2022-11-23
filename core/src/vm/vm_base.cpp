@@ -19,25 +19,38 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace ceps::vm::oblectamenta{
 
     size_t VMEnv::run(size_t start){
-        for(; Opcode(text_seg[start] & 0xFF) != Opcode::halt; ++start) 
-         (this ->*op_dispatch[text_seg[start] & 0xFF])(start);
+        for(; Opcode(text_seg[start] & 0xFF) != Opcode::halt;){ 
+         start += (this ->*op_dispatch[text_seg[start] & 0xFF])(start);
+        }
         return start;
     }
-
-    void VMEnv::addi32(size_t){
-        push(pop<int>()+pop<int>());        
+    
+    size_t VMEnv::noop(size_t) {
+        return base_opcode_width;
     }
 
-    void VMEnv::ldi32(size_t){}
-    void VMEnv::ldi64(size_t){}
-    void VMEnv::lddbl(size_t){}
-    void VMEnv::sti32(size_t){}
-    void VMEnv::sti64(size_t){}
-    void VMEnv::stdbl(size_t){}
-    void VMEnv::ldptr(size_t){}
-    void VMEnv::stptr(size_t){}
-    void VMEnv::addi64(size_t){}
-    void VMEnv::adddbl(size_t){}
+    size_t VMEnv::addi32(size_t){
+        push(pop<int>()+pop<int>());
+        return base_opcode_width;    
+    }
+    void VMEnv::reset(){
+        stack_top = 0;
+    }
+
+
+    size_t VMEnv::ldi32(size_t pos){
+        push(*((int*) &data_seg[text_seg[pos+1]]));
+        return base_opcode_width + 1;
+    }
+    size_t VMEnv::ldi64(size_t){return base_opcode_width;}
+    size_t VMEnv::lddbl(size_t){return base_opcode_width;}
+    size_t VMEnv::sti32(size_t){return base_opcode_width;}
+    size_t VMEnv::sti64(size_t){return base_opcode_width;}
+    size_t VMEnv::stdbl(size_t){return base_opcode_width;}
+    size_t VMEnv::ldptr(size_t){return base_opcode_width;}
+    size_t VMEnv::stptr(size_t){return base_opcode_width;}
+    size_t VMEnv::addi64(size_t){return base_opcode_width;}
+    size_t VMEnv::adddbl(size_t){return base_opcode_width;}
 
     VMEnv::VMEnv(){
         stack.resize(1024);

@@ -35,7 +35,8 @@ namespace cepsplugin{
 void compile_and_run(){
     using namespace ceps::vm::oblectamenta;
     VMEnv vm;
-    for (auto i : {1,2,3,4,5,6,7,8,9,10}) vm.store(i);
+    std::vector<int> vars;
+    for (auto i : {1,2,3,4,5,6,7,8,9,10}) vars.push_back(vm.store(i));
     for (auto i : {1,2}) vm.push(i);
     auto prog1 = emit<Opcode::addi32>(vm.text());
     emit<Opcode::halt>(vm.text());
@@ -61,6 +62,19 @@ void compile_and_run(){
     emit<Opcode::halt>(vm.text());
     vm.run(prog3);
     std::cout << "============================\n";
+    vm.dump(std::cout);
+    std::cout << "============================\n";
+    vm.reset();
+    vm.dump(std::cout);
+    auto prog4 = emit<Opcode::noop>(vm.text());
+
+    emit<Opcode::ldi32>(vm.text(),vars[0]);
+    for(size_t i = 1; i < vars.size();++i ){
+        emit<Opcode::ldi32>(vm.text(),vars[i]);
+        emit<Opcode::addi32>(vm.text());
+    }
+    emit<Opcode::halt>(vm.text());
+    for(size_t i = 0; i < 100000000L; ++i) {vm.run(prog4);vm.reset();}
     vm.dump(std::cout);
 
 }
