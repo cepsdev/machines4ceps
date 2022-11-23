@@ -39,6 +39,9 @@ namespace ceps{
                 addi32,
                 addi64,
                 adddbl,
+                subi32,
+                subi64,
+                subdbl,
                 muli32,
                 muli64,
                 muldbl,
@@ -129,6 +132,9 @@ namespace ceps{
                     size_t addi32(size_t);
                     size_t addi64(size_t);
                     size_t adddbl(size_t);
+                    size_t subi32(size_t);
+                    size_t subi64(size_t);
+                    size_t subdbl(size_t);
 
                     data_t data_seg;
                     stack_t stack;

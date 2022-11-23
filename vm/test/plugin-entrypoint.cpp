@@ -82,6 +82,34 @@ void compile_and_run(){
         assert(vm.read_store<int>(result_prog4) == 55);
     }
     vm.dump(std::cout);
+    auto prog5 = emit<Opcode::noop>(vm.text());
+    int prog5_a = vm.store(550);
+    int prog5_b = vm.store(55);
+    int prog5_res = vm.store(0);
+
+    emit<Opcode::ldi32>(vm.text(),prog5_b);
+    emit<Opcode::ldi32>(vm.text(),prog5_a);
+    emit<Opcode::subi32>(vm.text());
+    emit<Opcode::sti32>(vm.text(),prog5_res);
+    emit<Opcode::halt>(vm.text());
+    vm.run(prog5);
+    assert(vm.read_store<int>(prog5_res) == 495);
+
+    auto prog6 = emit<Opcode::noop>(vm.text());
+    int prog6_a = vm.store(550.1);
+    int prog6_b = vm.store(55.0);
+    int prog6_res = vm.store(495.1);
+
+    emit<Opcode::lddbl>(vm.text(),prog6_b);
+    emit<Opcode::lddbl>(vm.text(),prog6_a);
+    emit<Opcode::subdbl>(vm.text());
+    emit<Opcode::stdbl>(vm.text(),prog6_res);
+    
+    emit<Opcode::halt>(vm.text());
+    vm.run(prog6);
+     vm.dump(std::cout);
+   
+    assert(vm.read_store<double>(prog6_res) == 495.1);
 
 }
 

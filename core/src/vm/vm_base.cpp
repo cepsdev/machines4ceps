@@ -33,6 +33,21 @@ namespace ceps::vm::oblectamenta{
         push(pop<int>()+pop<int>());
         return base_opcode_width;    
     }
+
+    size_t VMEnv::subi32(size_t){
+        push(pop<int>()-pop<int>());
+        return base_opcode_width;    
+    }
+    size_t VMEnv::subi64(size_t){
+        push(pop<int64_t>()-pop<int64_t>());
+        return base_opcode_width;    
+    }
+
+    size_t VMEnv::subdbl(size_t){
+        push(pop<double>()-pop<double>());
+        return base_opcode_width;    
+    }
+
     void VMEnv::reset(){
         stack_top = 0;
     }
@@ -43,13 +58,19 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + 1;
     }
     size_t VMEnv::ldi64(size_t){return base_opcode_width;}
-    size_t VMEnv::lddbl(size_t){return base_opcode_width;}
+    size_t VMEnv::lddbl(size_t pos){
+        push(*((double*) &data_seg[text_seg[pos+1]]));
+        return base_opcode_width + 1;
+    }
     size_t VMEnv::sti32(size_t pos){
         *(int*)&data_seg[text_seg[pos+1]]  = pop<int>();
         return base_opcode_width + 1;
     }
     size_t VMEnv::sti64(size_t){return base_opcode_width;}
-    size_t VMEnv::stdbl(size_t){return base_opcode_width;}
+    size_t VMEnv::stdbl(size_t pos){
+        *(double*)&data_seg[text_seg[pos+1]]  = pop<double>();
+        return base_opcode_width + 1;
+    }
     size_t VMEnv::ldptr(size_t){return base_opcode_width;}
     size_t VMEnv::stptr(size_t){return base_opcode_width;}
     size_t VMEnv::addi64(size_t){return base_opcode_width;}
@@ -71,6 +92,9 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::addi32);
         op_dispatch.push_back(&VMEnv::addi64);
         op_dispatch.push_back(&VMEnv::adddbl);
+        op_dispatch.push_back(&VMEnv::subi32);
+        op_dispatch.push_back(&VMEnv::subi64);
+        op_dispatch.push_back(&VMEnv::subdbl);
 
 
 
