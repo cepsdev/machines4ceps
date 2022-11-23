@@ -33,6 +33,14 @@ namespace ceps::vm::oblectamenta{
         push(pop<int>()+pop<int>());
         return base_opcode_width;    
     }
+    size_t VMEnv::addi64(size_t){
+        push(pop<int64_t>()+pop<int64_t>());
+        return base_opcode_width;    
+    }
+    size_t VMEnv::adddbl(size_t){
+        push(pop<double>()+pop<double>());
+        return base_opcode_width;    
+    }
 
     size_t VMEnv::subi32(size_t){
         push(pop<int>()-pop<int>());
@@ -73,8 +81,6 @@ namespace ceps::vm::oblectamenta{
     }
     size_t VMEnv::ldptr(size_t){return base_opcode_width;}
     size_t VMEnv::stptr(size_t){return base_opcode_width;}
-    size_t VMEnv::addi64(size_t){return base_opcode_width;}
-    size_t VMEnv::adddbl(size_t){return base_opcode_width;}
 
     VMEnv::VMEnv(){
         stack.resize(1024);
