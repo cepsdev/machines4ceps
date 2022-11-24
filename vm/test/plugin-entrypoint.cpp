@@ -107,10 +107,34 @@ void compile_and_run(){
     
     emit<Opcode::halt>(vm.text());
     vm.run(prog6);
-     vm.dump(std::cout);
+    vm.dump(std::cout);
    
     assert(vm.read_store<double>(prog6_res) == 495.1);
 
+
+    /*
+    
+    for(;prog7_counter < prog7_limit; prog7_counter += prog7_step);
+    
+    */
+    auto prog7 = emit<Opcode::noop>(vm.text());
+    int prog7_counter = vm.store(0);
+    int prog7_limit = 10;
+    int prog7_step = 1;
+    int prog7_limit_loc = vm.store(prog7_limit);
+    int prog7_step_loc = vm.store(prog7_step);
+    emit<Opcode::ldi32>(vm.text(),prog7_counter);
+    emit<Opcode::ldi32>(vm.text(),prog7_limit_loc);
+    auto backpatch = emit<Opcode::blteq>(vm.text(),0);
+    emit<Opcode::ldi32>(vm.text(),prog7_counter);
+    emit<Opcode::ldi32>(vm.text(),prog7_step_loc);
+    emit<Opcode::addi32>(vm.text());
+    emit<Opcode::sti32>(vm.text(),prog7_counter);
+    emit<Opcode::buc>(vm.text(),prog7);
+    auto last = emit<Opcode::halt>(vm.text());
+    patch(vm.text(), backpatch + 1, last );
+    vm.run(prog7);
+    assert(vm.read_store<int>(prog7_counter) == prog7_limit - (prog7_limit % prog7_step) + (prog7_limit % prog7_step != 0 ? prog7_step : 0)  );
 }
 
 ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t params){

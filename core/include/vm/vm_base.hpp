@@ -36,12 +36,24 @@ namespace ceps{
                 stdbl,
                 ldptr,
                 stptr,
+
+                //Arithmetic
                 addi32,
                 addi64,
                 adddbl,
                 subi32,
                 subi64,
                 subdbl,
+                //Control Flow
+
+                buc,
+                beq,
+                bneq,
+                blt,
+                blteq,
+                bgt,
+                bgteq,
+
                 muli32,
                 muli64,
                 muldbl,
@@ -135,6 +147,13 @@ namespace ceps{
                     size_t subi32(size_t);
                     size_t subi64(size_t);
                     size_t subdbl(size_t);
+                    size_t buc(size_t);
+                    size_t beq(size_t);
+                    size_t bneq(size_t);
+                    size_t blt(size_t);
+                    size_t blteq(size_t);
+                    size_t bgt(size_t);
+                    size_t bgteq(size_t);
 
                     data_t data_seg;
                     stack_t stack;
@@ -158,7 +177,10 @@ namespace ceps{
                     text.push_back(v);
                     return t;
             }
-
+           template<typename T> void patch(VMEnv::text_t& text, size_t ofs, T t ){
+                    text[ofs] = t;
+            }
+ 
         }
     }
 }
