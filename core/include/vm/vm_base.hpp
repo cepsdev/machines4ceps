@@ -181,6 +181,11 @@ namespace ceps{
                     size_t ori32(size_t);
                     size_t ori64(size_t);
 
+                    size_t noti32(size_t);
+                    size_t noti64(size_t);
+                    size_t xori32(size_t);
+                    size_t xori64(size_t);
+
                     data_t data_seg;
                     stack_t stack;
                     text_t text_seg;
