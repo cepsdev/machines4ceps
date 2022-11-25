@@ -178,6 +178,8 @@ namespace ceps{
                     size_t andni64(size_t);
                     size_t andi32(size_t);
                     size_t andi64(size_t);
+                    size_t ori32(size_t);
+                    size_t ori64(size_t);
 
                     data_t data_seg;
                     stack_t stack;

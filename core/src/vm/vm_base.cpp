@@ -150,6 +150,14 @@ namespace ceps::vm::oblectamenta{
         push<uint64_t>(pop<uint64_t>() & !pop<uint64_t>());
         return base_opcode_width;
     }
+    size_t VMEnv::ori32(size_t pos){
+        push<unsigned int>(pop<unsigned int>() | pop<unsigned int>());
+        return base_opcode_width;
+    }
+    size_t VMEnv::ori64(size_t pos){
+        push<uint64_t>(pop<uint64_t>() | pop<uint64_t>());
+        return base_opcode_width;
+    }
 
 
     VMEnv::VMEnv(){
@@ -189,7 +197,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::andni64);
         op_dispatch.push_back(&VMEnv::andi32);
         op_dispatch.push_back(&VMEnv::andi64);
-
+        op_dispatch.push_back(&VMEnv::ori32);
+        op_dispatch.push_back(&VMEnv::ori64);
                 /*ldi32,
                 ldi64,
                 lddbl,
