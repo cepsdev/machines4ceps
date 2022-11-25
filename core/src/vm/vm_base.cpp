@@ -109,6 +109,48 @@ namespace ceps::vm::oblectamenta{
         if (pop<int>() >= pop<int>()) return text_seg[pos+1];
         return base_opcode_width + 1 + pos;
     }
+    size_t VMEnv::bzeroi32(size_t pos){
+        if (pop<int>() == 0) return text_seg[pos+1];
+        return base_opcode_width + 1 + pos;
+    }
+    size_t VMEnv::bzeroi64(size_t pos){
+        if (pop<int64_t>() == 0) return text_seg[pos+1];
+        return base_opcode_width + 1 + pos;
+    }
+    size_t VMEnv::bzerodbl(size_t pos){
+        if (pop<double>() == 0.0) return text_seg[pos+1];
+        return base_opcode_width + 1 + pos;
+    }
+    size_t VMEnv::bnzeroi32(size_t pos){
+        if (pop<int>() != 0) return text_seg[pos+1];
+        return base_opcode_width + 1 + pos;
+    }
+    size_t VMEnv::bnzeroi64(size_t pos){
+        if (pop<int64_t>() != 0) return text_seg[pos+1];
+        return base_opcode_width + 1 + pos;
+    }
+    size_t VMEnv::bnzerodbl(size_t pos){
+        if (pop<double>() != 0.0) return text_seg[pos+1];
+        return base_opcode_width + 1 + pos;
+    }
+
+    size_t VMEnv::andni32(size_t pos){
+        push<unsigned int>(pop<unsigned int>() & !pop<unsigned int>());
+        return base_opcode_width;
+    }
+    size_t VMEnv::andni64(size_t pos){
+        push<uint64_t>(pop<uint64_t>() & !pop<uint64_t>());
+        return base_opcode_width;
+    }
+    size_t VMEnv::andi32(size_t pos){
+        push<unsigned int>(pop<unsigned int>() & pop<unsigned int>());
+        return base_opcode_width;
+    }
+    size_t VMEnv::andi64(size_t pos){
+        push<uint64_t>(pop<uint64_t>() & !pop<uint64_t>());
+        return base_opcode_width;
+    }
+
 
     VMEnv::VMEnv(){
         stack.resize(1024);
@@ -136,6 +178,17 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::blteq);
         op_dispatch.push_back(&VMEnv::bgt);
         op_dispatch.push_back(&VMEnv::bgteq);
+        op_dispatch.push_back(&VMEnv::bzeroi32);
+        op_dispatch.push_back(&VMEnv::bnzeroi32);
+        op_dispatch.push_back(&VMEnv::bzeroi64);
+        op_dispatch.push_back(&VMEnv::bnzeroi64);
+        op_dispatch.push_back(&VMEnv::bzerodbl);
+        op_dispatch.push_back(&VMEnv::bnzerodbl);
+
+        op_dispatch.push_back(&VMEnv::andni32);
+        op_dispatch.push_back(&VMEnv::andni64);
+        op_dispatch.push_back(&VMEnv::andi32);
+        op_dispatch.push_back(&VMEnv::andi64);
 
                 /*ldi32,
                 ldi64,

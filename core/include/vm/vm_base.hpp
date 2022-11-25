@@ -53,6 +53,26 @@ namespace ceps{
                 blteq,
                 bgt,
                 bgteq,
+                bzeroi32,
+                bnzeroi32,
+                bzeroi64,
+                bnzeroi64,
+                bzerodbl,
+                bnzerodbl,
+
+                //Bitoperators
+
+                andni32,
+                andni64,
+                andi32,
+                andi64,
+                ori32,
+                ori64,
+                noti32,
+                noti64,
+                xori32,
+                xori64,
+
 
                 muli32,
                 muli64,
@@ -76,15 +96,7 @@ namespace ceps{
                 gteqdbl,
                 eqi32,
                 eqi64,
-                eqdbl,
-                andi32,
-                andi64,
-                ori32,
-                ori64,
-                noti32,
-                noti64,
-                xori32,
-                xori64
+                eqdbl
             };
 
 
@@ -147,6 +159,7 @@ namespace ceps{
                     size_t subi32(size_t);
                     size_t subi64(size_t);
                     size_t subdbl(size_t);
+
                     size_t buc(size_t);
                     size_t beq(size_t);
                     size_t bneq(size_t);
@@ -154,6 +167,17 @@ namespace ceps{
                     size_t blteq(size_t);
                     size_t bgt(size_t);
                     size_t bgteq(size_t);
+                    size_t bzeroi32(size_t);
+                    size_t bzeroi64(size_t);
+                    size_t bzerodbl(size_t);
+                    size_t bnzeroi32(size_t);
+                    size_t bnzeroi64(size_t);
+                    size_t bnzerodbl(size_t);
+
+                    size_t andni32(size_t);
+                    size_t andni64(size_t);
+                    size_t andi32(size_t);
+                    size_t andi64(size_t);
 
                     data_t data_seg;
                     stack_t stack;
