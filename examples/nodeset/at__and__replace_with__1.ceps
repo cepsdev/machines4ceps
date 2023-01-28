@@ -1,0 +1,35 @@
+//
+// Demonstration of .at(idx) and .replace_with(idx,value)
+//
+
+val init_data = {1;2;3;};
+
+kind Systemstate;
+kind Event;
+
+Systemstate v;
+Event evIncrement;
+
+sm{
+    S;
+    on_enter{
+        v = init_data;
+    };
+    states {Initial;Wait;Increment;};
+    Actions{
+        doIncrement{
+            v = v.replace_with(1,v.at(1) + 1);
+        };
+        doPrint{
+            print ("v = ", v, "\n");
+        };
+    };
+    t{Initial;Wait;};
+    t{Wait;Increment;evIncrement;doIncrement;doPrint;};
+    t{Increment;Wait;};
+};
+
+Simulation{
+    Start{S;};
+    for(i : 1 .. 10) {evIncrement;}
+};
