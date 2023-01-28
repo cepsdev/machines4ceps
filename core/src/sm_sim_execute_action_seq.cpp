@@ -61,18 +61,28 @@ ceps::ast::node_t sm_action_assignment(	ceps::ast::Binary_operator_ptr binop,
 		std::lock_guard<std::recursive_mutex> g{sm_core->states_mutex()};			
 		sm_core->guards()[name(as_symbol_ref(lhs))] = rhs;
 	} else if (is<Ast_node_kind::symbol>(lhs) && kind(as_symbol_ref(lhs)) == "Systemstate") {
+	    
+
 		node_t old_value {nullptr};
 		auto& state_id = name(as_symbol_ref(lhs));
-		{ 
+		{
+			 
 			std::lock_guard<std::recursive_mutex> g{sm_core->states_mutex()};
 			old_value = sm_core->get_global_states()[state_id];
+			
+			//std::cerr << "*******" << std::endl;
+			//std::cerr << rhs << std::endl;
 			sm_core->get_global_states()[state_id] = rhs->clone();
+			//std::cerr << "???????" << std::endl;
 		}					  
 		if (old_value) delete old_value;
+				    
+
 	} else {
 		std::stringstream ss;ss << *binop;
 		sm_core->fatal_(-1,"Unsupported assignment:"+ss.str()+"\n");
 	}
+
 	return rhs;
 }
 

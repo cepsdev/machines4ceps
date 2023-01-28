@@ -294,12 +294,13 @@ ceps_interface_binop_resolver(
 	using namespace ceps::ast;
 	
 	if (ceps::ast::op(*binop) == '='){
-		return sm_action_assignment(	binop,  	  	  	  	  	  	  	  	  
+		auto r = sm_action_assignment(	binop,  	  	  	  	  	  	  	  	  
 										lhs ,
 										// in the case of a Guard the right hand side of "G_1 = Expr" should not be evakuated
 	 	 	 	  	  	  	  	  	  	(is<Ast_node_kind::symbol>(lhs) && kind(as_symbol_ref(lhs))=="Guard") ? binop->right() : rhs,  
 										(State_machine_simulation_core*) cxt,
 										nullptr);
+		return r;
 	}
 	if (cxt == nullptr) return nullptr;
 	auto smc = (State_machine_simulation_core*)cxt;

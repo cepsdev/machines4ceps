@@ -16,18 +16,76 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include "core/include/state_machine_simulation_core.hpp"
 #include "core/include/base_defs.hpp"
+#include <optional>
 
 extern void flatten_args(State_machine_simulation_core* smc,ceps::ast::Nodebase_ptr r, std::vector<ceps::ast::Nodebase_ptr>& v, char op_val = ',');
 
+struct guard_reduce_result_t{
+	bool value;
+	bool is_symbol;
+	std::string name,kind;
+};
+
+static std::optional<guard_reduce_result_t> reduce_expr_tree(ceps::ast::Nodebase_ptr root){
+	using namespace ceps::ast;
+
+	if(is<Ast_node_kind::int_literal>(root)) 
+	 return { {0 != value(as_int_ref(root)), false} };
+	else if(is<Ast_node_kind::float_literal>(root)) 
+	 return { {std::abs(value(as_double_ref(root))) != 0.0, false } } ;
+	else if(is<Ast_node_kind::string_literal>(root)) 
+	 return { {value(as_string_ref(root)).length() > 0, false}};
+	else if (is<Ast_node_kind::symbol>(root))
+	 return {{false,true,name(as_symbol_ref(root)),kind(as_symbol_ref(root))}};
+	else if (is_binop(root)) {
+		auto lhs = reduce_expr_tree(as_binop_ref(root).left());
+		auto rhs = reduce_expr_tree(as_binop_ref(root).right());
+		if(!lhs || !rhs) return {};
+		auto oper = op_val(as_binop_ref(root));
+		if (oper == "==" || oper == "=" || oper == "&&" ){
+			if (lhs->is_symbol && rhs->is_symbol){
+				return{{ (lhs->name == rhs->name) && (lhs->kind == rhs->kind),false}};
+			}
+			else if (!lhs->is_symbol && !rhs->is_symbol){
+				return {{lhs->value && rhs->value,false}};
+			}
+			else return {};			
+		} else if (oper == "!="  ){
+			if (lhs->is_symbol && rhs->is_symbol){
+				return{{ !((lhs->name == rhs->name) && (lhs->kind == rhs->kind)),false}};
+			}
+			else if (!lhs->is_symbol && !rhs->is_symbol){
+				return {{!(lhs->value && rhs->value),false}};
+			}
+			else return {};			
+		} else if (oper == "||" ){
+			if (!lhs->is_symbol && !rhs->is_symbol){
+				return {{lhs->value || rhs->value,false}};
+			}
+			else return {};			
+		}
+	} 
+	return {};
+}
+
 bool State_machine_simulation_core::eval_to_bool(ceps::ast::Nodebase_ptr p)
 {
+	using namespace ceps::ast;
+
 	if(p == nullptr)
 	{
 		fatal_(-1,"Expression (null) has no interpretation as a boolean value.");
 	}
-	if(p->kind() == ceps::ast::Ast_node_kind::int_literal) return 0 != ceps::ast::value(ceps::ast::as_int_ref(p));
-	else if(p->kind() == ceps::ast::Ast_node_kind::float_literal) return std::abs(ceps::ast::value(ceps::ast::as_double_ref(p))) > 0.5;
-	else if(p->kind() == ceps::ast::Ast_node_kind::string_literal) return ceps::ast::value(ceps::ast::as_string_ref(p)).length() > 0;
+	if(p->kind() == Ast_node_kind::int_literal) return 0 != ceps::ast::value(ceps::ast::as_int_ref(p));
+	else if(p->kind() == Ast_node_kind::float_literal) return std::abs(ceps::ast::value(ceps::ast::as_double_ref(p))) != 0.0;
+	else if(p->kind() == Ast_node_kind::string_literal) return ceps::ast::value(ceps::ast::as_string_ref(p)).length() > 0;
+	else if (is_binop(p)) {
+		auto r = reduce_expr_tree(p);
+		if (r){
+			auto rr = *r;
+			if (!rr.is_symbol) return rr.value;
+		} 
+	} 
 
 	std::stringstream ss;
 	ss << *p;
