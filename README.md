@@ -1,5 +1,12 @@
 # machines4ceps
 __Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams). 
+
+## ceps
+
+Machines4ceps is part of the ceps tool. The name ceps is derived from the word 'spec' - the abbreviation of specification - spelled backwards. 
+Ceps is pronounced like the word 'caps' which is (almost) the phonetical reverse of spec. The idea behind ceps is that a correct real world specifcation 
+can only be derived by following a bottom up approach. Ceps is part of a bigger methodology called 'corpus based software engineering' which is a manifestation of a version of Nietzschean philosophy geared towards a world ruled by software. Stated in a few words: ceps is about freedom and how to keep it.
+
 ## Installation
 
 Details can be found [here](./INSTALL.md)  
