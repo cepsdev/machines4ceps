@@ -548,8 +548,17 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 		doc_writer->push_ctx();
 		fmt_out_layout_inner_strct(doc_writer->top());
 		if (doc_writer->no_nesting() && !data_section) doc_writer->start_header(std::cout);
-
-		if (nm == "comment_stmt"){
+		
+		if (nm == "sm"){
+				context lookuptbls;
+				Statemachine sm{ nullptr,
+				                 &strct,
+				                 lookuptbls,
+								 {},
+								 doc_writer->top().symtab };
+				sm.print(os,doc_writer);
+				return;
+		} else if (nm == "comment_stmt"){
 			doc_writer->top().comment_stmt_stack->insert(std::end(*doc_writer->top().comment_stmt_stack), std::begin(strct.children()), std::end(strct.children()) );	
 			return;		
 		} else if (nm == "one_of"){
@@ -654,7 +663,16 @@ void ceps::docgen::fmt_out_handle_outer_struct(	std::ostream& os,
 	++doc_writer->top().indent;
 	for(auto n: strct.children()){
 		if (is<Ast_node_kind::structdef>(n)){
-			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),doc_writer, ignore_macro_definitions);
+		    if (name(ceps::ast::as_struct_ref(n)) == "sm"){
+				context lookuptbls;
+				Statemachine sm{ nullptr,
+				                 as_struct_ptr(n),
+				                 lookuptbls,
+								 {},
+								 doc_writer->top().symtab };
+				sm.print(os,doc_writer);
+			} else;
+			 	fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),doc_writer, ignore_macro_definitions); 		
 		}
 	}
 }
