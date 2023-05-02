@@ -382,9 +382,10 @@ void ceps::docgen::fmt_handle_node(
 		else stitle = title.str();
 		{
 			doc_writer->push_ctx();
-			if (type == "" || type == "info") 
+			if (type == "" || type == "info") { 
 			 fmt_out_layout_label(doc_writer->top());
-			else{
+			 doc_writer->top().eol = default_eol;
+			} else{
 				auto t = doc_writer->top().eol;
 				doc_writer->top().eol = 0;
 				doc_writer->top().prefix = "";
@@ -607,13 +608,15 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 				if (default_eol == 0) doc_writer->out(os," ");
 			}
 		}  else {
-			fmt_handle_node(os, n, doc_writer,ignore_macro_definitions,default_eol);
+			fmt_handle_node(os, n, doc_writer,ignore_macro_definitions,/*default_eol*/0);
 			if (default_eol == 0 && i + 1 < children(strct).size()) 
 				doc_writer->out(os," ");
 			else if (default_eol){
 				doc_writer->top().eol = default_eol;
 				doc_writer->top().ignore_indent = true;
-			 	doc_writer->out(os,"");
+			 	
+				doc_writer->out(os,"");
+				
 				doc_writer->top().eol = 0;
 				doc_writer->top().ignore_indent = false;
 				eol_printed = true;
