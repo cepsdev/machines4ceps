@@ -625,12 +625,13 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 	}
 	doc_writer->pop_ctx();
 		
-	if (print_eol && !eol_printed) {doc_writer->out(os,"");}
+	//if (print_eol && !eol_printed) {doc_writer->out(os,"");}
 	doc_writer->top().indent = old_indent;
 	if (lbrace){
 		doc_writer->push_ctx();
 		fmt_out_layout_inner_strct(doc_writer->top());
-		if (!print_eol) doc_writer->top().ignore_indent = true;
+		//if (!print_eol)
+		// doc_writer->top().ignore_indent = true;
 
 		if (doc_writer->no_nesting() && !data_section) doc_writer->top().suffix = "";
 		else doc_writer->top().suffix = "}";
