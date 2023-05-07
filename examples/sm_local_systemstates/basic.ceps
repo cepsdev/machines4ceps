@@ -1,0 +1,49 @@
+kind Systemstate;
+kind Event;
+Event Tick;
+
+sm{
+ S1;
+ Systemstate a_state;
+ local{a_state;};
+
+ on_enter{
+  a_state = 0;
+ };
+ Actions{
+    Increment{
+        a_state = a_state + 1;
+        print("S1.a_state = ", a_state,"\n");
+    };
+ };
+ states{Initial;A;B;Final;};
+ t{Initial; A;};
+ t{A; B; Tick; Increment;};
+ t{B; A; };
+
+};
+
+sm{
+ S2;
+ Systemstate a_state;
+ local{a_state;};
+
+ on_enter{
+  a_state = 0;
+ };
+ Actions{
+    Decrement{
+        a_state = a_state - 1;
+        print("S2.a_state = ", a_state,"\n");
+    };
+ };
+ states{Initial;A;B;Final;};
+ t{Initial; A;};
+ t{A; B; Tick; Decrement;};
+ t{B; A; };
+};
+
+Simulation{
+ Start{S1;S2;};
+ for(i : 1 .. 10) {Tick;}
+};

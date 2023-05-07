@@ -382,9 +382,10 @@ void ceps::docgen::fmt_handle_node(
 		else stitle = title.str();
 		{
 			doc_writer->push_ctx();
-			if (type == "" || type == "info") 
+			if (type == "" || type == "info") { 
 			 fmt_out_layout_label(doc_writer->top());
-			else{
+			 doc_writer->top().eol = default_eol;
+			} else{
 				auto t = doc_writer->top().eol;
 				doc_writer->top().eol = 0;
 				doc_writer->top().prefix = "";
@@ -548,8 +549,17 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 		doc_writer->push_ctx();
 		fmt_out_layout_inner_strct(doc_writer->top());
 		if (doc_writer->no_nesting() && !data_section) doc_writer->start_header(std::cout);
-
-		if (nm == "comment_stmt"){
+		
+		if (nm == "sm"){
+				context lookuptbls;
+				Statemachine sm{ nullptr,
+				                 &strct,
+				                 lookuptbls,
+								 {},
+								 doc_writer->top().symtab };
+				sm.print(os,doc_writer);
+				return;
+		} else if (nm == "comment_stmt"){
 			doc_writer->top().comment_stmt_stack->insert(std::end(*doc_writer->top().comment_stmt_stack), std::begin(strct.children()), std::end(strct.children()) );	
 			return;		
 		} else if (nm == "one_of"){
@@ -598,13 +608,15 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 				if (default_eol == 0) doc_writer->out(os," ");
 			}
 		}  else {
-			fmt_handle_node(os, n, doc_writer,ignore_macro_definitions,default_eol);
+			fmt_handle_node(os, n, doc_writer,ignore_macro_definitions,/*default_eol*/0);
 			if (default_eol == 0 && i + 1 < children(strct).size()) 
 				doc_writer->out(os," ");
 			else if (default_eol){
 				doc_writer->top().eol = default_eol;
 				doc_writer->top().ignore_indent = true;
-			 	doc_writer->out(os,"");
+			 	
+				doc_writer->out(os,"");
+				
 				doc_writer->top().eol = 0;
 				doc_writer->top().ignore_indent = false;
 				eol_printed = true;
@@ -613,12 +625,13 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 	}
 	doc_writer->pop_ctx();
 		
-	if (print_eol && !eol_printed) {doc_writer->out(os,"");}
+	//if (print_eol && !eol_printed) {doc_writer->out(os,"");}
 	doc_writer->top().indent = old_indent;
 	if (lbrace){
 		doc_writer->push_ctx();
 		fmt_out_layout_inner_strct(doc_writer->top());
-		if (!print_eol) doc_writer->top().ignore_indent = true;
+		//if (!print_eol)
+		// doc_writer->top().ignore_indent = true;
 
 		if (doc_writer->no_nesting() && !data_section) doc_writer->top().suffix = "";
 		else doc_writer->top().suffix = "}";
@@ -654,7 +667,16 @@ void ceps::docgen::fmt_out_handle_outer_struct(	std::ostream& os,
 	++doc_writer->top().indent;
 	for(auto n: strct.children()){
 		if (is<Ast_node_kind::structdef>(n)){
-			fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),doc_writer, ignore_macro_definitions);
+		    if (name(ceps::ast::as_struct_ref(n)) == "sm"){
+				context lookuptbls;
+				Statemachine sm{ nullptr,
+				                 as_struct_ptr(n),
+				                 lookuptbls,
+								 {},
+								 doc_writer->top().symtab };
+				sm.print(os,doc_writer);
+			} else;
+			 	fmt_out_handle_inner_struct(os,ceps::ast::as_struct_ref(n),doc_writer, ignore_macro_definitions); 		
 		}
 	}
 }

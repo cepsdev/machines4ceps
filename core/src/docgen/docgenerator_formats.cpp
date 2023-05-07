@@ -151,9 +151,9 @@ void ceps::docgen::fmt_out_layout_if_keyword(fmt_out_ctx& ctx){
 }
 
 void ceps::docgen::fmt_out_layout_label(fmt_out_ctx& ctx){
-	ctx.linebreaks_before = 1;
+	ctx.linebreaks_before = 0;
 	ctx.suffix = "";
-	ctx.eol = 2;
+	ctx.eol = 1;
 	//ctx.underline = true;
 	ctx.prefix = "📎 ";
 	ctx.normal_intensity = true;
