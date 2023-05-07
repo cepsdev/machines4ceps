@@ -1,0 +1,36 @@
+kind Service;
+
+Component{
+ name {C1;};
+ main {};
+ export{ Service S1, S2, S3; S1;S2;S3;};
+ import{ Service S3, S4, S5; S4; S5; S3;};
+ version{1;};
+};
+
+Component{
+ name {C2;};
+ main {};
+ export{ };
+ import{ Service S4, S5; S4; S5; };
+ version{1;};
+};
+
+val comp_to_check = root.Component.first().content();
+val imports_exports_disjoint = 1;
+imports_exports_disjoint;
+rule{
+    Import_Export_Are_Disjoint_Sets;
+    for ( lhs: comp_to_check.export.content()){
+        for ( rhs: comp_to_check.import.content()){
+            if (as_int(symbolic_equality(lhs,rhs).diff.equal.content())) {let imports_exports_disjoint = 0;}            
+        }   
+    }
+};
+imports_exports_disjoint;
+if(!imports_exports_disjoint){
+    Component{
+        label __ title = "Violating rule 'Import_Export_Are_Disjoint_Sets'";
+        comp_to_check.name;
+    };        
+}

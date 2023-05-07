@@ -1,0 +1,20 @@
+kind Event;
+kind Systemstate;
+
+Systemstate counter;
+counter  = 0;
+
+sm{
+ S;
+ states{Initial;};
+ t{Initial;Initial;counter < 100000000;doIncrementCounter;};
+ Actions{
+  doIncrementCounter{
+   counter = counter + 1;
+ };
+ };
+};
+
+Simulation{
+ Start{S;};
+};
