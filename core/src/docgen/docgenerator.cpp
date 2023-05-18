@@ -203,6 +203,9 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 	} else if (is<Ast_node_kind::symbol>(expr)){
 		doc_writer->top().set_text_foreground_color("expr.symbol");
 		doc_writer->out(os,name(as_symbol_ref(expr)));
+	} else if (is<Ast_node_kind::undef>(expr)){
+		doc_writer->top().set_text_foreground_color("expr.symbol");
+		doc_writer->out(os,"(undef)");
 	} else if (is<Ast_node_kind::func_call>(expr)){
 		auto func_call = as_func_call_ref(expr);
 	 	auto fcall_target = func_call_target(func_call);
@@ -411,7 +414,12 @@ void ceps::docgen::fmt_handle_node(
 		fmt_out_handle_inner_struct(os, ceps::ast::as_struct_ref(n), doc_writer,ignore_macro_definitions);
 	} else if (!is<Ast_node_kind::stmts>(n) && !is<Ast_node_kind::scope>(n)){
 		fmt_out_handle_expr(os, n, doc_writer); 
-	} else if (auto inner = nlf_ptr(n)){
+	} else if (is<Ast_node_kind::undef>(n)){
+		doc_writer->push_ctx();
+		doc_writer->top().set_text_foreground_color("expr.symbol");
+		doc_writer->out(os,"(undef)");
+		doc_writer->pop_ctx();
+	}else if (auto inner = nlf_ptr(n)){
 		fmt_out_handle_children(os, inner->children(), doc_writer,true);
 	}
 }
