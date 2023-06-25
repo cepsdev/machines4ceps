@@ -1,0 +1,23 @@
+
+
+
+macro transform_scxml{
+ for (e : arglist.state) {
+   sm{
+    as_identifier(e.@id.content());
+    states{Initial;};
+    transform_scxml{e.content();};
+   };
+   /*for (trans : e.transition){
+   
+   }*/
+ }
+};
+
+sm{
+    S;
+    states{Initial;};
+    transform_scxml{root.scxml.content();};
+};
+
+

@@ -627,7 +627,8 @@ void ceps::docgen::Statemachine::build(){
 			 auto sname = ceps::ast::name(s);
 			 if (sname == "sm")
 			  sub_machines.push_back(
-				  std::make_shared<Statemachine>(Statemachine{this,as_struct_ptr(n),ctxt,output_format_flags,symtab})
+				  //std::make_shared<Statemachine>(Statemachine{this,as_struct_ptr(n),ctxt,output_format_flags,symtab})
+				  new Statemachine{this,as_struct_ptr(n),ctxt,output_format_flags,symtab}
 				);
 			return true;
 		}
