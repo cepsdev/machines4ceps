@@ -1,0 +1,13 @@
+
+
+
+macro transform_scxml{
+ for (e : arglist.state) {
+   e;
+ }
+};
+
+
+transform_scxml{root.scxml.content();};
+
+
