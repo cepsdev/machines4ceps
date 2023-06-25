@@ -3,7 +3,11 @@
 
 macro transform_scxml{
  for (e : arglist.state) {
-   e;
+   sm{
+    as_identifier(e.@id.content());
+    states{Initial;};
+    transform_scxml{e.content();};
+   };
  }
 };
 
