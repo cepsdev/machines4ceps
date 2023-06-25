@@ -1,5 +1,12 @@
 # machines4ceps
 __Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams). 
+
+## ceps
+
+Machines4ceps is part of the ceps tool. The name ceps is derived from the word 'spec' - the abbreviation of specification - spelled backwards. 
+Ceps is pronounced like the word 'caps' which is (almost) the phonetical reverse of spec. The idea behind ceps is that a correct real world specifcation 
+can only be derived by following a bottom up approach. Ceps is part of a bigger methodology called 'corpus based software engineering' which is a manifestation of a version of Nietzschean philosophy geared towards a world ruled by software. Stated in a few words: ceps is about freedom and how to keep it.
+
 ## Installation
 
 Details can be found [here](./INSTALL.md)  
@@ -85,7 +92,7 @@ basic_example.default+ basic_example.caps_locked-
 basic_example.default- basic_example.caps_locked+
 ```
 
-The default behaviour of __ceps__ is approximately as follows: fetch an event, process all transitions triggered by that event, report the set of affected states, and repeat. If we run our simulation inside a terminal window, __ceps__ will report the set of changed states by simply printing the name of each state followed by a __+__ or __-__, indicating whether the state is active or not. Each iteration produces one line of output.  We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has no associated event and is therefore triggered simply by starting the state machine (epsilon transition).
+The default behaviour of __ceps__ is approximately as follows: fetch an event, process all transitions triggered by that event, report the set of affected states, and repeat. If we run our simulation inside a terminal window, __ceps__ will report the set of changed states by simply printing the name of each state followed by a __+__ or __-__, indicating whether the state is active or not (this notation was introduced by Arne Kirchhoff). Each iteration produces one line of output.  We have three events in our last simulation, but four lines of output.That's because of the transition __t{Initial;default;};__ which has no associated event and is therefore triggered simply by starting the state machine (epsilon transition).
 
 ### Visualization (The *--dot_gen* option)
 
