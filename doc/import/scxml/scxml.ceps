@@ -8,14 +8,17 @@ macro transform_scxml{
     states{Initial;};
     transform_scxml{e.content();};
    };
+   /*for (trans : e.transition){
+   
+   }*/
  }
 };
 
-
-
-
 sm{
-  S;
-  transform_scxml{root.scxml.content();};
+    S;
+    states{Initial;};
+    transform_scxml{root.scxml.content();};
 };
+
+
 
