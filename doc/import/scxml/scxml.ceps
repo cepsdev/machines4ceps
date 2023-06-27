@@ -12,6 +12,10 @@ macro transform_scxml{
 };
 
 
-transform_scxml{root.scxml.content();};
 
+
+sm{
+  S;
+  transform_scxml{root.scxml.content();};
+};
 
