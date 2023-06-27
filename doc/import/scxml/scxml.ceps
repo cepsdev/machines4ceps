@@ -3,16 +3,25 @@
 
 macro transform_scxml{
  for (e : arglist.state) {
+
+   val sm_id = as_identifier(e.@id.content()); 
    sm{
-    as_identifier(e.@id.content());
+    sm_id;
     states{Initial;};
     transform_scxml{e.content();};
    };
-   /*for (trans : e.transition){
-   
-   }*/
+
+   for (trans : e.transition){
+     if (trans.@target.size()){
+      t{sm_id;as_identifier(trans.@target.content());};
+    }
+   }
+
+ } // for all states
+ if (arglist.state.at(0).content().@id.size()) {
+   t{Initial;as_identifier( arglist.state.at(0).content().@id.content()  );};
  }
-};
+};//macro
 
 sm{
     S;
@@ -21,4 +30,6 @@ sm{
 };
 
 
-
+Simulation{
+ //Start{S;};
+};
