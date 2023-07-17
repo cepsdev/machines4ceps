@@ -301,7 +301,8 @@ namespace ceps{
             std::set<std::string> actions;
             std::vector<std::string> actions_vec;
             std::map<std::string,Struct_ptr> action2body;
-            std::vector<std::shared_ptr<Statemachine>> sub_machines;
+            //std::vector<std::shared_ptr<Statemachine>> sub_machines;
+            std::vector<Statemachine*> sub_machines;
             struct transition{
                 Nodebase_ptr from = nullptr;
                 Nodebase_ptr to = nullptr;
@@ -344,6 +345,7 @@ namespace ceps{
 			void print_transitions(std::ostream& os, Doc_writer* doc_writer);
 			void print_transitions_tabularized(std::ostream& os, Doc_writer* doc_writer);
             void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) override ;
+            ~Statemachine () { for (auto e:sub_machines) delete e;}
 		};
 
 		class Simulation {

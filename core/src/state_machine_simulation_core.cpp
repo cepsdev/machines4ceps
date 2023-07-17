@@ -200,7 +200,8 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
           next_is_expression = true;
           continue;
         }
-        else if (file_name.length() > 3 && file_name.substr(file_name.length()-4,4) == ".xml"){
+        else if (file_name.length() > 3 && ( file_name.substr(file_name.length()-4,4) == ".xml" ||
+		                                    file_name.substr(file_name.length()-6,6) == ".scxml") ){
 			auto root_node = ceps::ast::read_xml_file(file_name);
 			if (root_node == nullptr) fatal_(ERR_FILE_OPEN_FAILED, file_name);
 			auto v = ceps::ast::nlf_ptr(root_node);

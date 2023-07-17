@@ -41,7 +41,7 @@ sm{
 The notation is a bit clumsy but readable. The code can be found in __examples/first_steps/basic_uml_state_diagram.ceps__.
 
 Yes, *machines4ceps* is all about **coding** state machines, the drawing is - or at least should be - done by algorithms (see the section on drawing state machines). This approach has two major benefits:
-- it scales, a purely graphic approach isn't feasible if your system has thousands of states.
+- it scales, a purely graphical approach isn't feasible if your system has thousands of states.
 - it is compatible with the established methods and tools we use to write software in general.
 
 #### __A basic state machine__: Execution (Part I)
