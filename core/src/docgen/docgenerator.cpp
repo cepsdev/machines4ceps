@@ -204,8 +204,19 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 		doc_writer->top().set_text_foreground_color("expr.symbol");
 		doc_writer->out(os,name(as_symbol_ref(expr)));
 	} else if (is<Ast_node_kind::undef>(expr)){
+		auto undef{static_cast<Undefined&>(*expr) };
+		auto reason {get<0>(undef)};
 		doc_writer->top().set_text_foreground_color("expr.symbol");
-		doc_writer->out(os,"(undef)");
+		if (reason == std::string{}) doc_writer->out(os,"(undef)");
+		else {
+			doc_writer->out(os,"(undef");
+			doc_writer->push_ctx(); 
+		    doc_writer->top().set_text_foreground_color("warn.text");
+			doc_writer->top().italic = true;
+			doc_writer->out(os,"["+reason+"]");
+			doc_writer->pop_ctx(); 
+			doc_writer->out(os,")");
+		}
 	} else if (is<Ast_node_kind::func_call>(expr)){
 		auto func_call = as_func_call_ref(expr);
 	 	auto fcall_target = func_call_target(func_call);
