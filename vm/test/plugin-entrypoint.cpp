@@ -166,6 +166,39 @@ template<typename T>
         return fetch<T>(s);
     }
 
+
+////////
+
+
+template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "vm";
+}
+
+template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& s)
+{
+    using namespace ceps::ast;
+    using namespace ceps::vm::oblectamenta;
+    VMEnv r;
+
+    for (auto e : children(s)){
+     if (!is<Ast_node_kind::structdef>(e)) continue;
+     if (name(*as_struct_ptr(e)) == "text" && children(*as_struct_ptr(e)).size() ){
+        //auto p{read_value<rt::color_t>(0,*as_struct_ptr(e))};
+        //if (p)
+        // r.color = *p;
+     }
+     else if (name(*as_struct_ptr(e)) == "data" && children(*as_struct_ptr(e)).size() ){
+     }
+     else if (name(*as_struct_ptr(e)) == "stack" && children(*as_struct_ptr(e)).size() ){
+     }
+    }
+    return r;
+}
+
+////////
+
 ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params){
     using namespace std;
     using namespace ceps::ast;
@@ -177,12 +210,15 @@ ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callpara
     auto data = get_first_child(params);    
     if (!is<Ast_node_kind::structdef>(data)) return nullptr;
     auto& ceps_struct = *as_struct_ptr(data);
+    cout << mnemonics[0].first << ' ';
+    cout << mnemonics[0].second << '\n';
+
     if (name(ceps_struct) == "vm"){
         auto vm {read_value<VMEnv>(ceps_struct)};
         if (vm){
 
         } else {
-            
+
         }
     }
     auto result = mk_struct("result");

@@ -1,7 +1,11 @@
 run_oblectamenta_bytecode(
 	vm{
 		kind OblectamentaOpcode;
+		kind OblectamentaLabel;
+
 		OblectamentaOpcode addi32;
+		OblectamentaLabel L1;
+
 		stack{
 			1;2;
 		};
@@ -9,7 +13,8 @@ run_oblectamenta_bytecode(
 			1;2;3;4;5;6;7;8;9;10;
 		};
 		text{
-			addi32;	
+			L1;
+				addi32;	
 		};
 	}
 );
