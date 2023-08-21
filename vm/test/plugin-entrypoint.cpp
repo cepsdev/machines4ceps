@@ -28,7 +28,7 @@ namespace cepsplugin{
     static Ism4ceps_plugin_interface* plugin_master = nullptr;
     static const std::string version_info = "INSERT_NAME_HERE v0.1";
     static constexpr bool print_debug_info{true};
-    ceps::ast::node_t plugin_entrypoint(ceps::ast::node_callparameters_t params);
+    ceps::ast::node_t run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params);
 }
 
 
@@ -137,20 +137,54 @@ void compile_and_run(){
     assert(vm.read_store<int>(prog7_counter) == prog7_limit - (prog7_limit % prog7_step) + (prog7_limit % prog7_step != 0 ? prog7_step : 0)  );
 }
 
-ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t params){
+
+
+template<typename T> T 
+    fetch(ceps::ast::Struct&);
+template<typename T> T 
+    fetch(ceps::ast::node_t);
+
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s);
+template<typename T> 
+    std::optional<T> read_value(size_t idx, ceps::ast::Struct& s);
+template<typename T> 
+    bool check(ceps::ast::Struct&);
+template<typename T> 
+    bool check(ceps::ast::node_t);
+
+template<typename T> 
+    std::optional<T> read_value(size_t idx, ceps::ast::Struct& s){
+        auto & v{children(s)};
+        if(v.size() <= idx || !check<T>(v[idx])) return {};
+        return fetch<T>(v[idx]);
+    }
+
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s){
+        if(!check<T>(s)) return {};
+        return fetch<T>(s);
+    }
+
+ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params){
     using namespace std;
     using namespace ceps::ast;
     using namespace ceps::interpreter;
-    compile_and_run();
+    using namespace ceps::vm::oblectamenta;
+    
+    //compile_and_run();
 
     auto data = get_first_child(params);    
     if (!is<Ast_node_kind::structdef>(data)) return nullptr;
     auto& ceps_struct = *as_struct_ptr(data);
-    cout << "cepsplugin::plugin_entrypoint:\n";
-    for(auto e : children(ceps_struct)){
-        cout <<"\t"<< * e << "\n";
+    if (name(ceps_struct) == "vm"){
+        auto vm {read_value<VMEnv>(ceps_struct)};
+        if (vm){
+
+        } else {
+            
+        }
     }
-    cout <<"\n\n";
     auto result = mk_struct("result");
     children(*result).push_back(mk_int_node(42));
     return result;
@@ -159,6 +193,6 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
 extern "C" void init_plugin(IUserdefined_function_registry* smc)
 {
   cepsplugin::plugin_master = smc->get_plugin_interface();
-  cepsplugin::plugin_master->reg_ceps_phase0plugin("INSERT_NAME_FOR_FUNCTION_HERE", cepsplugin::plugin_entrypoint);
+  cepsplugin::plugin_master->reg_ceps_phase0plugin("run_oblectamenta_bytecode", cepsplugin::run_oblectamenta_bytecode);
 }					
 				

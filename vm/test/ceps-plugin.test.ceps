@@ -1,12 +1,15 @@
-INSERT_NAME_FOR_FUNCTION_HERE(
-	input{
-		123;
-		"abc";
-		uint32{
-			ThisIsAnIdentifier;
+run_oblectamenta_bytecode(
+	vm{
+		kind OblectamentaOpcode;
+		OblectamentaOpcode addi32;
+		stack{
+			1;2;
 		};
-		1+1;
+		data{
+			1;2;3;4;5;6;7;8;9;10;
+		};
+		text{
+			addi32;	
+		};
 	}
 );
-
-print ("result = ",root.result.content(),"\n\n");
