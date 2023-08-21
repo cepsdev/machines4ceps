@@ -98,6 +98,7 @@ namespace ceps{
                 eqi64,
                 eqdbl
             };
+            static vector<string> mnemonics = {};
 
 
             class VMEnv{
