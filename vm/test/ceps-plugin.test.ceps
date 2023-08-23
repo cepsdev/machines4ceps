@@ -7,13 +7,12 @@ run_oblectamenta_bytecode(
 		OblectamentaLabel L1;
 
 		stack{
-			1;2;
+			1;10;
 		};
 		data{
 			1;2;3;4;5;6;7;8;9;10;"hallo";1.2;
 		};
 		text{
-			L1;
 				addi32;	
 		};
 	}

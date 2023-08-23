@@ -144,6 +144,9 @@ template<typename T> T
 template<typename T> T 
     fetch(ceps::ast::node_t);
 
+template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& );
+
+
 template<typename T> 
     std::optional<T> read_value(ceps::ast::Struct& s);
 template<typename T> 
@@ -177,18 +180,42 @@ template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
     return name(s) == "vm";
 }
 
+void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
+{
+ using namespace ceps::ast;
+ 
+ for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
+    auto e{mnemonics[stmt_pos]};
+
+    if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaOpcode" ){
+        auto& mnemonic{name(as_symbol_ref(e))};
+        auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
+        if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+         throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+        auto v{it->second};
+        if (get<2>(v)) get<2>(v)(vm.text());
+        //ceps::vm::oblectamenta::emit<ceps::vm::oblectamenta::Opcode::addi32>(vm.text());
+        
+    }
+ }
+}
+
 template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& s)
 {
     using namespace ceps::ast;
     using namespace ceps::vm::oblectamenta;
-    VMEnv r;
+    VMEnv r{};
+
+    //r.text().push_back( (VMEnv::text_t::value_type) ceps::vm::oblectamenta::Opcode::halt);std::cerr << "/////\n";
 
     for (auto e : children(s)){
      if (!is<Ast_node_kind::structdef>(e)) continue;
      if (name(*as_struct_ptr(e)) == "text" && children(*as_struct_ptr(e)).size() ){
-        //auto p{read_value<rt::color_t>(0,*as_struct_ptr(e))};
-        //if (p)
-        // r.color = *p;
+        try{
+            oblectamenta_assembler(r,children(*as_struct_ptr(e)));
+        } catch (std::string const& msg){
+            std::cerr << msg << '\n';
+        }
      }
      else if (name(*as_struct_ptr(e)) == "data" && children(*as_struct_ptr(e)).size() ){
         auto& data_rep{*as_struct_ptr(e)};
@@ -271,14 +298,23 @@ template<> ceps::ast::node_t ast_rep (ceps::vm::oblectamenta::VMEnv vm){
 
 ////////
 
+/*template<int n> void h() {
+    std::cout << "no partam: "<< n << '\n';
+}
+template<int n> void h(int i){
+    std::cout << "param: " << n << '\n';
+}*/
+
+
 ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params){
     using namespace std;
     using namespace ceps::ast;
     using namespace ceps::interpreter;
     using namespace ceps::vm::oblectamenta;
-    
-    //compile_and_run();
 
+
+
+    
     auto data = get_first_child(params);    
     
 
@@ -289,9 +325,11 @@ ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callpara
     //compile_and_run();
     if (name(ceps_struct) == "vm"){
         auto maybe_vm {read_value<VMEnv>(ceps_struct)};
+        
         if (maybe_vm){
             auto& vm{*maybe_vm};
-            if (vm.text().size()) vm.run(0);
+            emit<Opcode::halt>(vm.text());
+            vm.run(0);
             return ast_rep(vm);
         } else {
 

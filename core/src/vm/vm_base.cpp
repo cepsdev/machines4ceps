@@ -270,4 +270,10 @@ namespace ceps::vm::oblectamenta{
         for(ssize_t i = (ssize_t)stack_top - 1; i >= 0; --i )
          os << "| "<< stack_seg[i] << "\t|\n";
     }
+                size_t emitX(VMEnv::text_t& text){
+               
+                    text.push_back(2);
+                    return 0;
+            }
+
 }
