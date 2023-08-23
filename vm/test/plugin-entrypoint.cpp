@@ -166,6 +166,7 @@ template<typename T>
         return fetch<T>(s);
     }
 
+template<typename T> ceps::ast::node_t ast_rep (T entity);
 
 ////////
 
@@ -190,12 +191,83 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
         // r.color = *p;
      }
      else if (name(*as_struct_ptr(e)) == "data" && children(*as_struct_ptr(e)).size() ){
+        auto& data_rep{*as_struct_ptr(e)};
+        for(auto e: children(data_rep)){
+            if (is<Ast_node_kind::int_literal>(e)) r.store(value(as_int_ref(e)));
+            else if (is<Ast_node_kind::float_literal>(e)) r.store(value(as_double_ref(e)));
+            else if (is<Ast_node_kind::string_literal>(e)) r.store(value(as_string_ref(e)));
+        }        
      }
      else if (name(*as_struct_ptr(e)) == "stack" && children(*as_struct_ptr(e)).size() ){
+        auto& stack_rep{*as_struct_ptr(e)};
+        for(auto e: children(stack_rep)){
+            if (is<Ast_node_kind::int_literal>(e)) r.push(value(as_int_ref(e)));
+            else if (is<Ast_node_kind::float_literal>(e)) r.push(value(as_double_ref(e)));
+            else if (is<Ast_node_kind::string_literal>(e)) r.push(value(as_string_ref(e)));
+        }
      }
     }
-    return r;
+   return r;
 }
+
+struct ser_wrapper_stack{
+    ceps::vm::oblectamenta::VMEnv::stack_t value;
+};
+
+struct ser_wrapper_data{
+    ceps::vm::oblectamenta::VMEnv::data_t value;
+};
+
+struct ser_wrapper_text{
+    ceps::vm::oblectamenta::VMEnv::text_t value;
+};
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack){
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+    
+    auto result = mk_struct("stack");
+    auto& ch {children(*result)};
+    for (auto e:stack.value)
+     ch.push_back(mk_int_node(e));
+    return result;
+}
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_data data){
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+    
+    auto result = mk_struct("data");
+
+    auto& ch {children(*result)};
+    for (auto e:data.value)
+     ch.push_back(mk_int_node(e));
+    
+    return result;
+}
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_text text){
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+    
+    auto result = mk_struct("text");
+    //children(*result).push_back(ast_rep(ser_wrapper_stack{vm.stack()}));
+    return result;
+}
+
+
+template<> ceps::ast::node_t ast_rep (ceps::vm::oblectamenta::VMEnv vm){
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+    
+    auto result = mk_struct("vm");
+    children(*result).push_back(ast_rep(ser_wrapper_stack{vm.stack()}));
+    children(*result).push_back(ast_rep(ser_wrapper_data{vm.data()}));
+    children(*result).push_back(ast_rep(ser_wrapper_text{vm.text()}));
+ 
+    return result;
+}
+
 
 ////////
 
@@ -208,22 +280,24 @@ ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callpara
     //compile_and_run();
 
     auto data = get_first_child(params);    
-    if (!is<Ast_node_kind::structdef>(data)) return nullptr;
+    
+
+    if (!is<Ast_node_kind::structdef>(data)) {
+        return mk_undef();
+    }
     auto& ceps_struct = *as_struct_ptr(data);
-    cout << mnemonics[0].first << ' ';
-    cout << mnemonics[0].second << '\n';
-
+    //compile_and_run();
     if (name(ceps_struct) == "vm"){
-        auto vm {read_value<VMEnv>(ceps_struct)};
-        if (vm){
-
+        auto maybe_vm {read_value<VMEnv>(ceps_struct)};
+        if (maybe_vm){
+            auto& vm{*maybe_vm};
+            if (vm.text().size()) vm.run(0);
+            return ast_rep(vm);
         } else {
 
         }
     }
-    auto result = mk_struct("result");
-    children(*result).push_back(mk_int_node(42));
-    return result;
+    return mk_undef();
 }
 
 extern "C" void init_plugin(IUserdefined_function_registry* smc)

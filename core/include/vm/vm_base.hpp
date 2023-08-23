@@ -178,6 +178,12 @@ namespace ceps{
                     using data_t = vector<uint8_t>;
                     using stack_t = vector<int>;
                     using text_t = vector<uint32_t>;
+
+                    size_t store (string  data){
+                        size_t t{};
+                        for(auto e: data) t = store(e);
+                        return t;
+                    }
   
                     template<typename T> size_t store(T data){
                         auto t = data_seg.size();
@@ -194,21 +200,30 @@ namespace ceps{
 
                     template<typename T> size_t push(T data){
                         auto t = stack_top;
-                        for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
-                         stack[stack_top+i] = *((stack_t::value_type*) &data + i);
-                        stack_top += sizeof(T) / sizeof(stack_t::value_type);
+                        constexpr auto r{sizeof(T) % sizeof(stack_t::value_type)};
+                        auto space_needed {sizeof(T) / sizeof(stack_t::value_type) + (r ? 1 : 0) };
+                        if (stack_top + space_needed >= stack_seg.size() ) stack_seg.insert(stack_seg.end(), space_needed, {});
+                        for (size_t i = 0; i < space_needed; ++i)
+                         stack_seg[stack_top+i] = *((stack_t::value_type*) &data + i);
+                        stack_top += space_needed;
+                        if(sizeof(T) < sizeof(stack_t::value_type)){
+                            for(auto i = 1; i < sizeof(T) - sizeof(stack_t::value_type);++i)
+                             ((char*)&stack_seg[stack_top-1])[i] = 0;
+                        }
                         return t;
                     }
                     template<typename T> T pop(){
                         T r;
                         size_t start = stack_top - sizeof(T) / sizeof(stack_t::value_type);
                         for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
-                         *((stack_t::value_type*) &r + i) = stack[start+i];
+                         *((stack_t::value_type*) &r + i) = stack_seg[start+i];
                         stack_top = start;
                         return r;
                     }
 
                     text_t& text() {return text_seg;}
+                    data_t& data() {return data_seg;}
+                    stack_t& stack() {return stack_seg;}
 
                     size_t run(size_t start = 0);
 
@@ -260,7 +275,7 @@ namespace ceps{
                     size_t xori64(size_t);
 
                     data_t data_seg;
-                    stack_t stack;
+                    stack_t stack_seg;
                     text_t text_seg;
                     size_t stack_top;
                     using fn = size_t (VMEnv::*) (size_t) ;

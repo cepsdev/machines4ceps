@@ -177,7 +177,6 @@ namespace ceps::vm::oblectamenta{
 
 
     VMEnv::VMEnv(){
-        stack.resize(1024);
         stack_top = 0;
         op_dispatch.push_back(&VMEnv::noop);
         op_dispatch.push_back(&VMEnv::noop); 
@@ -269,6 +268,6 @@ namespace ceps::vm::oblectamenta{
      
     void VMEnv::dump(ostream& os){
         for(ssize_t i = (ssize_t)stack_top - 1; i >= 0; --i )
-         os << "| "<< stack[i] << "\t|\n";
+         os << "| "<< stack_seg[i] << "\t|\n";
     }
 }
