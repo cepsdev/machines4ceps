@@ -28,6 +28,7 @@ run_oblectamenta_bytecode(
 	}
 );
 
+/*
 run_oblectamenta_bytecode(
 	vm{
 		kind OblectamentaOpcode;
@@ -37,7 +38,7 @@ run_oblectamenta_bytecode(
 			
 		};
 		data{
-			1;2;
+			0;0;
 		};
 		text{
 			ldi32(0);
@@ -45,9 +46,56 @@ run_oblectamenta_bytecode(
 			addi32;
 		};
 	}
+);*/
+
+run_oblectamenta_bytecode(
+	vm{
+		kind OblectamentaOpcode;
+		kind OblectamentaModifier;
+		OblectamentaOpcode addi32,ldi32;
+        OblectamentaModifier addr;
+
+		stack{
+			
+		};
+		data{
+			1;
+			2;
+		};
+		text{
+			ldi32(addr(0));
+			ldi32(addr(4));
+			addi32;
+		};
+	}
 );
 
 run_oblectamenta_bytecode(
+	vm{
+		kind OblectamentaOpcode;
+		kind OblectamentaModifier;
+		kind OblectamentaLabel;
+	
+		OblectamentaOpcode addi32,ldi32;
+        OblectamentaModifier addr;
+		OblectamentaLabel arg1, arg2;
+
+		stack{
+			
+		};
+		data{
+			arg1; 1;
+			arg2; 2;
+		};
+		text{
+			ldi32(addr(0));
+			ldi32(addr(4));
+			addi32;
+		};
+	}
+);
+
+/* run_oblectamenta_bytecodeX(
 	vm{
 		kind OblectamentaOpcode;
 		kind OblectamentaLabel;
@@ -102,7 +150,7 @@ run_oblectamenta_bytecodeX(
 			addi32;
 		};
 	}
-);
+);*/
 
 
 

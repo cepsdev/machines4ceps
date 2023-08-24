@@ -202,14 +202,26 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
     } else if (is_a_symbol_with_arguments( e,sym_name,sym_kind,args)) {
         if (sym_kind == "OblectamentaOpcode"){
             auto& mnemonic{sym_name};
+            std::string sym_name2;
+	        std::string sym_kind2;
+	        std::vector<node_t> args2;
+            
+            auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
+            if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+               throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+            auto v{it->second};
+            
             if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
-                auto arg{value(as_int_ref(args[0]))};
-                auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
-                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
-                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
-                auto v{it->second};
+                auto arg{value(as_int_ref(args[0]))};    
                 if (get<3>(v)) get<3>(v)(vm.text(),arg); else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+            } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
+                if (sym_kind2 == "OblectamentaModifier" && sym_name2 == "addr" && args2.size() == 1 && is<Ast_node_kind::int_literal>(args2[0]) ) {
+                    if (get<3>(v)) 
+                     get<3>(v)(vm.text(),value(as_int_ref(args2[0]))); 
+                    else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+                }
             }
+
         }
     } 
  } //for
