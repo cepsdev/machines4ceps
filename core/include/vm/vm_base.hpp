@@ -165,7 +165,8 @@ namespace ceps{
                     void dump(ostream& os);
                     void reset();
                     size_t stack_top_pos() const { return stack_top;}
-
+                    map<string, size_t>& data_labels(){return label2loc;}
+                    size_t data_size() const {return data_seg.size();}
                 private:
                     size_t noop(size_t);
                     size_t ldi32(size_t);
@@ -216,6 +217,7 @@ namespace ceps{
                     size_t stack_top;
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
+                    map<string, size_t> label2loc;
 
                     static constexpr size_t base_opcode_width = 1;
             };

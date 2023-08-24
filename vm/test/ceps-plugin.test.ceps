@@ -88,8 +88,8 @@ run_oblectamenta_bytecode(
 			arg2; 2;
 		};
 		text{
-			ldi32(addr(0));
-			ldi32(addr(4));
+			ldi32(arg1);
+			ldi32(arg2);
 			addi32;
 		};
 	}

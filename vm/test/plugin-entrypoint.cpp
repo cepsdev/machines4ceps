@@ -214,6 +214,13 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
             if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
                 auto arg{value(as_int_ref(args[0]))};    
                 if (get<3>(v)) get<3>(v)(vm.text(),arg); else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+            } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaLabel") {
+                auto data_label_it{vm.data_labels().find(name(as_symbol_ref(args[0])))};
+                if (data_label_it == vm.data_labels().end()) 
+                    throw std::string{"oblectamenta_assembler: unknown label: '"+ name(as_symbol_ref(args[0])) +"'" };
+                if (get<3>(v)) 
+                     get<3>(v)(vm.text(),data_label_it->second); 
+                else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
             } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
                 if (sym_kind2 == "OblectamentaModifier" && sym_name2 == "addr" && args2.size() == 1 && is<Ast_node_kind::int_literal>(args2[0]) ) {
                     if (get<3>(v)) 
@@ -250,6 +257,9 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
             if (is<Ast_node_kind::int_literal>(e)) r.store(value(as_int_ref(e)));
             else if (is<Ast_node_kind::float_literal>(e)) r.store(value(as_double_ref(e)));
             else if (is<Ast_node_kind::string_literal>(e)) r.store(value(as_string_ref(e)));
+            else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaLabel"){
+                r.data_labels()[name(as_symbol_ref(e))] = r.data_size();
+            }
         }        
      }
      else if (name(*as_struct_ptr(e)) == "stack" && children(*as_struct_ptr(e)).size() ){
