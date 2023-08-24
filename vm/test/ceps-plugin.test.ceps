@@ -1,3 +1,5 @@
+
+
 run_oblectamenta_bytecode(
 	vm{
 		kind OblectamentaOpcode;
@@ -7,13 +9,119 @@ run_oblectamenta_bytecode(
 		OblectamentaLabel L1;
 
 		stack{
-			1;10;
+			1;2;3;4;5;6;7;8;9;10;
 		};
 		data{
 			1;2;3;4;5;6;7;8;9;10;"hallo";1.2;
 		};
 		text{
 				addi32;	
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
 		};
 	}
 );
+
+run_oblectamenta_bytecode(
+	vm{
+		kind OblectamentaOpcode;
+		OblectamentaOpcode addi32,ldi32;
+
+		stack{
+			
+		};
+		data{
+			1;2;
+		};
+		text{
+			ldi32(0);
+			ldi32(4);
+			addi32;
+		};
+	}
+);
+
+run_oblectamenta_bytecode(
+	vm{
+		kind OblectamentaOpcode;
+		kind OblectamentaLabel;
+		OblectamentaOpcode addi32,ldi32;
+
+		stack{
+			
+		};
+		data{
+			1;2;3;4;5;6;7;8;9;10;
+		};
+		text{
+			ldi32(0);
+			ldi32(4);
+			addi32;
+			ldi32(8);
+			addi32;
+			ldi32(12);
+			addi32;
+			ldi32(16);
+			addi32;
+			ldi32(20);
+			addi32;
+			ldi32(24);
+			addi32;
+			ldi32(28);
+			addi32;
+			ldi32(32);
+			addi32;
+			ldi32(36);
+			addi32;
+		};
+	}
+);
+
+
+run_oblectamenta_bytecodeX(
+	vm{
+		kind OblectamentaOpcode;
+
+		OblectamentaOpcode pushi32, addi32,ldi32;
+
+		stack{
+			
+		};
+		data{
+
+		};
+		text{
+			pushi32();
+			ldi32(4);
+			addi32;
+		};
+	}
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -98,7 +98,10 @@ namespace ceps{
                 gteqdbl,
                 eqi32,
                 eqi64,
-                eqdbl
+                eqdbl,
+
+                pushi32,
+                popi32
             };
 
 
@@ -161,6 +164,8 @@ namespace ceps{
 
                     void dump(ostream& os);
                     void reset();
+                    size_t stack_top_pos() const { return stack_top;}
+
                 private:
                     size_t noop(size_t);
                     size_t ldi32(size_t);
