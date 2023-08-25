@@ -1,4 +1,5 @@
 
+
 /*
 run_oblectamenta_bytecode(
 	vm{
@@ -38,7 +39,7 @@ run_oblectamenta_bytecode(
 		stack{
 			
 		};
-		data{0;0;
+		data{
 			
 		};
 		text{

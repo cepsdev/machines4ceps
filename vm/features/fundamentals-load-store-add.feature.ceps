@@ -1,0 +1,378 @@
+kind DocgenStringPrintNoEscape;
+DocgenStringPrintNoEscape docinfo_se;
+
+docinfo_se(
+
+"
+"
+
+);
+
+
+macro equality_test{
+   symbolic_equality(as_nodeset(arglist.at(0)),as_nodeset(arglist.at(1))).diff.equal.content();
+};
+
+
+val the_stack = undef;
+val the_data = undef;
+val the_code = undef;
+val the_vm = undef;
+
+kind OblectamentaOpcode;
+kind OblectamentaLabel;
+kind OblectamentaModifier;
+kind OblectamentaLabel;
+
+
+OblectamentaOpcode addi32;
+OblectamentaOpcode ldi32;
+OblectamentaOpcode sti32;
+
+OblectamentaModifier addr;
+
+macro verdict{
+  if(force_int(arglist.at(0))){
+        label Passed title = "" type="check";
+  } else {
+         label Failed title = "" type="error";
+  }
+};
+
+Scenario{
+     title{label __1 title = "Adding integers stored in the data section.";};
+     Given{
+		let the_stack = obj(stack{1;2;3;4;5;6;7;8;9;10;});
+        the_stack;
+     };
+     And{
+		let the_data = obj(data{"hello";1.1;42;});
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                addi32;	
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+           });
+        the_code;
+     };
+
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        stack{55;};
+        verdict{equality_test{ 
+            the_vm.vm.stack;
+            stack{55;};
+        };};
+     };
+};
+
+
+Scenario{
+     title{label __2 title = "Adding integers using loadi32(immediate) .";};
+     Given{
+		let the_stack = obj(stack{});
+        the_stack;
+     };
+     And{
+		let the_data = obj(data{});
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                ldi32(10);
+                ldi32(9);
+                ldi32(8);
+                ldi32(7);
+                ldi32(6);
+                ldi32(5);
+                ldi32(4);
+                ldi32(3);
+                ldi32(2);
+                ldi32(1);
+                addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+           });
+        the_code;
+     };
+
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        stack{55;};
+
+        verdict{equality_test{ 
+            the_vm.vm.stack;
+            stack{55;};
+        };};
+     };
+};
+
+Scenario{
+     title{label __3 title = "Adding integers using loadi32(address) .";};
+     Given{
+		let the_stack = obj(stack{});
+        the_stack;
+     };
+     And{
+		let the_data = obj(data{1;2;3;4;5;6;7;8;9;10;});
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                ldi32(addr(36));
+                ldi32(addr(32));
+                ldi32(addr(28));
+                ldi32(addr(24));
+                ldi32(addr(20));
+                ldi32(addr(16));
+                ldi32(addr(12));
+                ldi32(addr(8));
+                ldi32(addr(4));
+                ldi32(addr(0));
+                addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        stack{55;};
+
+        verdict{equality_test{ 
+            the_vm.vm.stack;
+            stack{55;};
+        };};
+     };
+};
+
+Scenario{
+     title{label __4 title = "Adding integers using loadi32 + labels.";};
+     Given{
+		let the_stack = obj(stack{});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+                OblectamentaLabel a1,a2,a3,a4,a5,a6,a7,a8,a9,a10;
+                a1; 1;
+                a2; 2;
+                a3; 3;
+                a4; 4;
+                a5; 5;
+                a6; 6;
+                a7; 7;
+                a8; 8;
+                a9; 9;
+                a10; 10;
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                OblectamentaLabel a1,a2,a3,a4,a5,a6,a7,a8,a9,a10;
+                ldi32(a10);
+                ldi32(a9);
+                ldi32(a8);
+                ldi32(a7);
+                ldi32(a6);
+                ldi32(a5);
+                ldi32(a4);
+                ldi32(a3);
+                ldi32(a2);
+                ldi32(a1);
+                addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        stack{55;};
+
+        verdict{equality_test{ 
+            the_vm.vm.stack;
+            stack{55;};
+        };};
+     };
+};
+
+
+
+
+Scenario{
+     title{label __5 title = "Adding integers using sti32 + loadi32.";};
+     Given{
+		let the_stack = obj(stack{10;9;8;7;6;5;4;3;2;1;});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+                0; 0; 0; 0; 0;
+                0; 0; 0; 0; 0; 
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+
+                sti32(addr(0));
+                sti32(addr(4));
+                sti32(addr(8));
+                sti32(addr(12));
+                sti32(addr(16));
+                sti32(addr(20));
+                sti32(addr(24));
+                sti32(addr(28));
+                sti32(addr(32));
+                sti32(addr(36));
+                ldi32(addr(36));
+                ldi32(addr(32));
+                ldi32(addr(28));
+                ldi32(addr(24));
+                ldi32(addr(20));
+                ldi32(addr(16));
+                ldi32(addr(12));
+                ldi32(addr(8));
+                ldi32(addr(4));
+                ldi32(addr(0));
+                addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+				addi32;
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        stack{55;};
+        the_vm.vm.stack;
+        the_vm.vm.data;
+
+        verdict{equality_test{ 
+            the_vm.vm.stack;
+            stack{55;};
+        };};
+     };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

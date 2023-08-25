@@ -29,6 +29,7 @@ namespace cepsplugin{
     static const std::string version_info = "INSERT_NAME_HERE v0.1";
     static constexpr bool print_debug_info{true};
     ceps::ast::node_t run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params);
+    ceps::ast::node_t obj(ceps::ast::node_callparameters_t params);
 }
 
 
@@ -354,6 +355,9 @@ template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv&> (ceps::vm::
 template<int n> void h(int i){
     std::cout << "param: " << n << '\n';
 }*/
+ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
+    return get_first_child(params);
+}
 
 
 ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params){
@@ -392,5 +396,7 @@ extern "C" void init_plugin(IUserdefined_function_registry* smc)
 {
   cepsplugin::plugin_master = smc->get_plugin_interface();
   cepsplugin::plugin_master->reg_ceps_phase0plugin("run_oblectamenta_bytecode", cepsplugin::run_oblectamenta_bytecode);
+  cepsplugin::plugin_master->reg_ceps_phase0plugin("obj", cepsplugin::obj);
+
 }					
 				
