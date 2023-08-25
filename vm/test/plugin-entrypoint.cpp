@@ -228,7 +228,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                 if (get<3>(v)) 
                  get<3>(v)(vm.text(),addr); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
-            } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaLabel") {
+            } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaDataLabel") {
                 auto data_label_it{vm.data_labels().find(name(as_symbol_ref(args[0])))};
                 if (data_label_it == vm.data_labels().end()) 
                     throw std::string{"oblectamenta_assembler: unknown label: '"+ name(as_symbol_ref(args[0])) +"'" };
@@ -262,7 +262,7 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
         try{
             oblectamenta_assembler(r,children(*as_struct_ptr(e)));
         } catch (std::string const& msg){
-            std::cerr << msg << '\n';
+            std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << *as_struct_ptr(e) << '\n' << '\n';
         }
      }
      else if (name(*as_struct_ptr(e)) == "data" && children(*as_struct_ptr(e)).size() ){
@@ -271,7 +271,7 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
             if (is<Ast_node_kind::int_literal>(e)) r.store(value(as_int_ref(e)));
             else if (is<Ast_node_kind::float_literal>(e)) r.store(value(as_double_ref(e)));
             else if (is<Ast_node_kind::string_literal>(e)) r.store(value(as_string_ref(e)));
-            else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaLabel"){
+            else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
                 r.data_labels()[name(as_symbol_ref(e))] = r.data_size();
             }
         }        

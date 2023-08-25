@@ -20,14 +20,16 @@ val the_code = undef;
 val the_vm = undef;
 
 kind OblectamentaOpcode;
-kind OblectamentaLabel;
+kind OblectamentaDataLabel;
 kind OblectamentaModifier;
-kind OblectamentaLabel;
+kind OblectamentaCodeLabel;
 
 
 OblectamentaOpcode addi32;
 OblectamentaOpcode ldi32;
 OblectamentaOpcode sti32;
+OblectamentaOpcode beq;
+OblectamentaOpcode buc;
 
 OblectamentaModifier addr;
 
@@ -38,7 +40,7 @@ macro verdict{
          label Failed title = "" type="error";
   }
 };
-
+/*
 Scenario{
      title{label __1 title = "Adding integers stored in the data section.";};
      Given{
@@ -208,7 +210,7 @@ Scenario{
      And{
 		let the_data = obj(
             data{
-                OblectamentaLabel a1,a2,a3,a4,a5,a6,a7,a8,a9,a10;
+                OblectamentaDataLabel a1,a2,a3,a4,a5,a6,a7,a8,a9,a10;
                 a1; 1;
                 a2; 2;
                 a3; 3;
@@ -226,7 +228,7 @@ Scenario{
      And{
 		let the_code = obj(
             text{
-                OblectamentaLabel a1,a2,a3,a4,a5,a6,a7,a8,a9,a10;
+                OblectamentaDataLabel a1,a2,a3,a4,a5,a6,a7,a8,a9,a10;
                 ldi32(a10);
                 ldi32(a9);
                 ldi32(a8);
@@ -261,8 +263,8 @@ Scenario{
      };
      Then
      {
-        stack{55;};
-
+        should{stack{55;};};
+        is{the_vm.vm.stack;};
         verdict{equality_test{ 
             the_vm.vm.stack;
             stack{55;};
@@ -343,6 +345,55 @@ Scenario{
         verdict{equality_test{ 
             the_vm.vm.stack;
             stack{55;};
+        };};
+     };
+};
+*/
+
+Scenario{
+     title{label __6 title = "Backward labels and beq, buc.";};
+     Given{
+		let the_stack = obj(stack{1;2;3;4;});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                 OblectamentaCodeLabel l1;
+                 addi32;
+                l1; 
+                 addi32;
+                ldi32(9);
+                beq(l1);
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        stack{10;};
+        the_vm.vm.stack;
+        the_vm.vm.data;
+
+        verdict{equality_test{ 
+            the_vm.vm.stack;
+            stack{10;};
         };};
      };
 };
