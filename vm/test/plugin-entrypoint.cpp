@@ -183,7 +183,10 @@ template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
 
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
 {
- using namespace ceps::ast;
+ using namespace ceps::ast; using namespace std;
+
+ map<int32_t,size_t> immediate2loc; // immediate values => location in storage 
+                       
  
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
     
@@ -212,8 +215,18 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
             auto v{it->second};
             
             if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
-                auto arg{value(as_int_ref(args[0]))};    
-                if (get<3>(v)) get<3>(v)(vm.text(),arg); else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+                auto arg{value(as_int_ref(args[0]))};
+                auto loc_it{immediate2loc.find(arg)};
+                size_t addr {};
+                if (loc_it != immediate2loc.end()) addr = loc_it->second;
+                else {
+                    addr = vm.store(arg);
+                    immediate2loc[arg] = addr;
+                }
+                    
+                if (get<3>(v)) 
+                 get<3>(v)(vm.text(),addr); 
+                else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
             } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaLabel") {
                 auto data_label_it{vm.data_labels().find(name(as_symbol_ref(args[0])))};
                 if (data_label_it == vm.data_labels().end()) 

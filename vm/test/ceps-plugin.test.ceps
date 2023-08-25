@@ -1,5 +1,5 @@
 
-
+/*
 run_oblectamenta_bytecode(
 	vm{
 		kind OblectamentaOpcode;
@@ -27,8 +27,9 @@ run_oblectamenta_bytecode(
 		};
 	}
 );
+*/
 
-/*
+
 run_oblectamenta_bytecode(
 	vm{
 		kind OblectamentaOpcode;
@@ -37,17 +38,19 @@ run_oblectamenta_bytecode(
 		stack{
 			
 		};
-		data{
-			0;0;
+		data{0;0;
+			
 		};
 		text{
-			ldi32(0);
-			ldi32(4);
-			addi32;
+			ldi32(1); // push immediate value 1 onto stack
+			ldi32(2); // push immediate value 2 onto stack
+			addi32;   // push 1 + 2 onto stack
 		};
 	}
-);*/
+);
 
+
+/*
 run_oblectamenta_bytecode(
 	vm{
 		kind OblectamentaOpcode;
@@ -94,7 +97,7 @@ run_oblectamenta_bytecode(
 		};
 	}
 );
-
+*/
 /* run_oblectamenta_bytecodeX(
 	vm{
 		kind OblectamentaOpcode;
