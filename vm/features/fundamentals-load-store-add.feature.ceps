@@ -40,7 +40,7 @@ macro verdict{
          label Failed title = "" type="error";
   }
 };
-/*
+
 Scenario{
      title{label __1 title = "Adding integers stored in the data section.";};
      Given{
@@ -348,7 +348,7 @@ Scenario{
         };};
      };
 };
-*/
+
 
 Scenario{
      title{label __6 title = "Backward labels and beq, buc.";};
