@@ -61,6 +61,12 @@ namespace ceps::vm::oblectamenta{
     }
 
 
+    size_t VMEnv::duptopi32(size_t pos){
+        auto t{pop<int>()};
+        push(t);push(t);
+        return base_opcode_width +  pos;
+    }
+
     size_t VMEnv::ldi32(size_t pos){
         push(*((int*) &data_seg[text_seg[pos+1]]));
         return base_opcode_width + 1 + pos;
@@ -218,6 +224,9 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::noti64);
         op_dispatch.push_back(&VMEnv::xori32);
         op_dispatch.push_back(&VMEnv::xori64);
+        op_dispatch.push_back(&VMEnv::duptopi32);
+
+        
 
 
                 /*ldi32,

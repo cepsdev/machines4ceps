@@ -30,6 +30,7 @@ OblectamentaOpcode ldi32;
 OblectamentaOpcode sti32;
 OblectamentaOpcode beq;
 OblectamentaOpcode buc;
+OblectamentaOpcode duptopi32;
 
 OblectamentaModifier addr;
 
@@ -370,8 +371,9 @@ Scenario{
                  addi32;
                 l1; 
                  addi32;
-                ldi32(9);
-                beq(l1);
+                 duptopi32;
+                 ldi32(9);
+                 beq(l1);
            });
         the_code;
      };

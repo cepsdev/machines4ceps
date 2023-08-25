@@ -74,6 +74,7 @@ namespace ceps{
                 noti64,
                 xori32,
                 xori64,
+                duptopi32,
 
 
                 muli32,
@@ -99,7 +100,7 @@ namespace ceps{
                 eqi32,
                 eqi64,
                 eqdbl,
-
+                
                 pushi32,
                 popi32
             };
@@ -209,6 +210,8 @@ namespace ceps{
                     size_t noti64(size_t);
                     size_t xori32(size_t);
                     size_t xori64(size_t);
+                    size_t duptopi32(size_t pos);
+
 
                     text_t text_seg;
                     data_t data_seg;
@@ -252,6 +255,7 @@ namespace ceps{
                 {"stdbl",{Opcode::stdbl, "",nullptr,emit<Opcode::stdbl>}},
                 {"ldptr",{Opcode::ldptr, "",nullptr,emit<Opcode::ldptr>}},
                 {"stptr",{Opcode::stptr, "",nullptr,emit<Opcode::stptr>}},
+                {"duptopi32",{Opcode::duptopi32, "",emit<Opcode::duptopi32>,nullptr}},
 
                 //Arithmetic
                 

@@ -186,7 +186,8 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
 {
  using namespace ceps::ast; using namespace std;
 
- map<int32_t,size_t> immediate2loc; // immediate values => location in storage 
+ map<int32_t,size_t> immediate2loc; // immediate values => location in storage
+ map<string,size_t> codelabel2loc; // code label => location in storage
                        
  
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
@@ -196,7 +197,10 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
 	std::string sym_kind;
 	std::vector<node_t> args;
     
-    if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaOpcode" ){
+    if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaCodeLabel" ){
+        auto lbl{name(as_symbol_ref(e))};
+        codelabel2loc[lbl] = vm.text().size();
+    }else if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaOpcode" ){
         auto& mnemonic{name(as_symbol_ref(e))};
         auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
         if (it == ceps::vm::oblectamenta::mnemonics.end()) 
@@ -234,6 +238,13 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     throw std::string{"oblectamenta_assembler: unknown label: '"+ name(as_symbol_ref(args[0])) +"'" };
                 if (get<3>(v)) 
                      get<3>(v)(vm.text(),data_label_it->second); 
+                else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+            } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaCodeLabel") {
+                auto code_label_it{codelabel2loc.find(name(as_symbol_ref(args[0])))};
+                if (code_label_it == codelabel2loc.end()) 
+                    throw std::string{"oblectamenta_assembler: unknown label: '"+ name(as_symbol_ref(args[0])) +"'" };
+                if (get<3>(v)) 
+                     get<3>(v)(vm.text(),code_label_it->second); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
             } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
                 if (sym_kind2 == "OblectamentaModifier" && sym_name2 == "addr" && args2.size() == 1 && is<Ast_node_kind::int_literal>(args2[0]) ) {
