@@ -182,6 +182,13 @@ template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
     return name(s) == "vm";
 }
 
+struct patch_entry{
+ char id[64] = {0};
+ size_t text_loc{};
+};
+
+std::vector<patch_entry> patch_entries;
+
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
 {
  using namespace ceps::ast; using namespace std;
@@ -200,6 +207,13 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
     if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaCodeLabel" ){
         auto lbl{name(as_symbol_ref(e))};
         codelabel2loc[lbl] = vm.text().size();
+        if (patch_entries.size())
+            for(size_t pe{}; pe < patch_entries.size(); ++pe)
+              if ( 0 == strcmp(patch_entries[pe].id, lbl.c_str())){
+                patch_entries[pe].id[0] = char{}; //mark entry as free
+                ceps::vm::oblectamenta::patch(vm.text(),patch_entries[pe].text_loc, vm.text().size());
+              }
+
     }else if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaOpcode" ){
         auto& mnemonic{name(as_symbol_ref(e))};
         auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
@@ -235,17 +249,33 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
             } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaDataLabel") {
                 auto data_label_it{vm.data_labels().find(name(as_symbol_ref(args[0])))};
                 if (data_label_it == vm.data_labels().end()) 
-                    throw std::string{"oblectamenta_assembler: unknown label: '"+ name(as_symbol_ref(args[0])) +"'" };
+                    throw std::string{"oblectamenta_assembler: unknown data label: '"+ name(as_symbol_ref(args[0])) +"'" };
                 if (get<3>(v)) 
                      get<3>(v)(vm.text(),data_label_it->second); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
             } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaCodeLabel") {
                 auto code_label_it{codelabel2loc.find(name(as_symbol_ref(args[0])))};
-                if (code_label_it == codelabel2loc.end()) 
-                    throw std::string{"oblectamenta_assembler: unknown label: '"+ name(as_symbol_ref(args[0])) +"'" };
+
+                size_t loc{};
+                size_t backpatch_loc{};
+                bool backpatch{};
+
+                if (code_label_it == codelabel2loc.end()){ 
+                    //throw std::string{"oblectamenta_assembler: unknown code label: '"+ name(as_symbol_ref(args[0])) +"'" };
+                    backpatch = true;
+                } else loc = code_label_it->second; 
+
                 if (get<3>(v)) 
-                     get<3>(v)(vm.text(),code_label_it->second); 
+                     backpatch_loc = get<3>(v)(vm.text(),loc); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+                if (backpatch){
+                    size_t pe{};
+                    for(;pe < patch_entries.size() && patch_entries[pe].id[0] != 0; ++pe);
+                    if (pe == patch_entries.size()) patch_entries.push_back({});
+                    patch_entries[pe].text_loc = loc;
+                    strncpy(patch_entries[pe].id, name(as_symbol_ref(args[0])).c_str(), sizeof(patch_entry::id)); 
+                    //std::cerr << pe << " " << patch_entries.size() << " loc= " << loc << " "<< patch_entries[pe].id <<'\n';
+                }
             } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
                 if (sym_kind2 == "OblectamentaModifier" && sym_name2 == "addr" && args2.size() == 1 && is<Ast_node_kind::int_literal>(args2[0]) ) {
                     if (get<3>(v)) 
@@ -253,7 +283,6 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
                 }
             }
-
         }
     } 
  } //for

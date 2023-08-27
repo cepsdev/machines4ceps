@@ -111,7 +111,7 @@ namespace ceps{
                 public:
                     using data_t = vector<uint8_t>;
                     using stack_t = vector<int>;
-                    using text_t = vector<uint32_t>;
+                    using text_t = vector<int32_t>;
 
                     size_t store (string  data){
                         size_t t{};
@@ -238,7 +238,7 @@ namespace ceps{
                     return t;
             }
            template<typename T> void patch(VMEnv::text_t& text, size_t ofs, T t ){
-                    text[ofs] = t;
+                    text[ofs + 1] = t;
             }
 
             static map< string, 

@@ -352,7 +352,7 @@ Scenario{
 
 
 Scenario{
-     title{label __6 title = "Backward labels and beq, buc.";};
+     title{label __6 title = "Backward labels and beq.";};
      Given{
 		let the_stack = obj(stack{1;2;3;4;});
         the_stack;
@@ -400,6 +400,52 @@ Scenario{
      };
 };
 
+Scenario{
+     title{label __6 title = "Forward labels and buc.";};
+     Given{
+		let the_stack = obj(stack{1;2;3;4;});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                 OblectamentaCodeLabel l1;
+                    buc(l1);
+                    addi32;
+                    addi32;
+                 l1;
+                    addi32;
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        the_vm.vm.stack;
+        the_vm.vm.data;
+
+        verdict{equality_test{ 
+            the_vm.vm.stack;
+            stack{1;2;7;};
+        };};
+     };
+};
 
 
 
