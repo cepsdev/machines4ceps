@@ -41,7 +41,7 @@ macro verdict{
          label Failed title = "" type="error";
   }
 };
-
+/*
 Scenario{
      title{label __1 title = "Adding integers stored in the data section.";};
      Given{
@@ -446,7 +446,84 @@ Scenario{
         };};
      };
 };
+*/
+Scenario{
+     title{label __7 title = "Insertion Sort.";};
+     Given{
+		let the_stack = obj(stack{});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+                4;1;7;9;2;5;8;10;3;6;
+                OblectamentaDataLabel i;
+                OblectamentaDataLabel n;
+                i; 1;
+                n; 10;
 
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                 OblectamentaCodeLabel l1, done;
+                OblectamentaDataLabel i;
+                OblectamentaDataLabel n;
+
+                 l1;
+                  ldi32(i);
+                  ldi32(n);
+                  //beq(done);
+
+                  ldi32(i);
+                  ldi32(1);
+                  addi32;
+                  sti32(i);
+            
+                  ldi32(i);
+                  ldi32(1);
+                  addi32;
+                  sti32(i);
+
+                  ldi32(3);
+                  ldi32(3);
+                  beq(done);
+
+                  ldi32(i);
+                  ldi32(1);
+                  addi32;
+                  sti32(i);
+
+
+                 done; 
+                  halt;
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        the_vm.vm.stack;
+        the_vm.vm.data;
+
+        verdict{equality_test{ 
+            the_vm.vm.data;
+            data{1;2;3;4;5;6;7;8;9;10;};
+        };};
+     };
+};
 
 
 

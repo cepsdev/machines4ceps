@@ -206,11 +206,13 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
     
     if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaCodeLabel" ){
         auto lbl{name(as_symbol_ref(e))};
+        //cerr << lbl << " patch_entries.size(): " << patch_entries.size() << '\n';  
         codelabel2loc[lbl] = vm.text().size();
         if (patch_entries.size())
             for(size_t pe{}; pe < patch_entries.size(); ++pe)
               if ( 0 == strcmp(patch_entries[pe].id, lbl.c_str())){
                 patch_entries[pe].id[0] = char{}; //mark entry as free
+                //cerr << "patch! patch_entries[pe].text_loc:" << patch_entries[pe].text_loc <<" vm.text().size()" << vm.text().size() << '\n' ;
                 ceps::vm::oblectamenta::patch(vm.text(),patch_entries[pe].text_loc, vm.text().size());
               }
 
@@ -272,7 +274,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     size_t pe{};
                     for(;pe < patch_entries.size() && patch_entries[pe].id[0] != 0; ++pe);
                     if (pe == patch_entries.size()) patch_entries.push_back({});
-                    patch_entries[pe].text_loc = loc;
+                    patch_entries[pe].text_loc = backpatch_loc;
                     strncpy(patch_entries[pe].id, name(as_symbol_ref(args[0])).c_str(), sizeof(patch_entry::id)); 
                     //std::cerr << pe << " " << patch_entries.size() << " loc= " << loc << " "<< patch_entries[pe].id <<'\n';
                 }
