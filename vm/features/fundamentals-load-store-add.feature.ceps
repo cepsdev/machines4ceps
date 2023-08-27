@@ -31,6 +31,7 @@ OblectamentaOpcode sti32;
 OblectamentaOpcode beq;
 OblectamentaOpcode buc;
 OblectamentaOpcode duptopi32;
+OblectamentaOpcode muli32, lea;
 
 OblectamentaModifier addr;
 
@@ -456,11 +457,13 @@ Scenario{
      And{
 		let the_data = obj(
             data{
-                4;1;7;9;2;5;8;10;3;6;
+                OblectamentaDataLabel array;
+                array; 4;1;7;9;2;5;8;10;3;6;
                 OblectamentaDataLabel i;
                 OblectamentaDataLabel n;
                 i; 1;
                 n; 10;
+                x; 0;
 
             }
         );
@@ -469,33 +472,29 @@ Scenario{
      And{
 		let the_code = obj(
             text{
+                 OblectamentaDataLabel array;
                  OblectamentaCodeLabel l1, done;
-                OblectamentaDataLabel i;
-                OblectamentaDataLabel n;
+                 OblectamentaDataLabel i;
+                 OblectamentaDataLabel n;
 
                  l1;
                   ldi32(i);
                   ldi32(n);
-                  //beq(done);
-
-                  ldi32(i);
-                  ldi32(1);
-                  addi32;
-                  sti32(i);
-            
-                  ldi32(i);
-                  ldi32(1);
-                  addi32;
-                  sti32(i);
-
-                  ldi32(3);
-                  ldi32(3);
                   beq(done);
 
+                  lea(array);
+                  ldi32(i);
+                  ldi32(4);
+                  muli32;
+                  addi32;
+                  ldi32; //stack[top] == array[i*4]
+
+
                   ldi32(i);
                   ldi32(1);
                   addi32;
                   sti32(i);
+                  buc(l1);
 
 
                  done; 
