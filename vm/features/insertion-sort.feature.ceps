@@ -1,0 +1,243 @@
+kind DocgenStringPrintNoEscape;
+DocgenStringPrintNoEscape docinfo_se;
+
+docinfo_se(
+
+"
+"
+
+);
+
+
+macro equality_test{
+   symbolic_equality(as_nodeset(arglist.at(0)),as_nodeset(arglist.at(1))).diff.equal.content();
+};
+
+
+val the_stack = undef;
+val the_data  = undef;
+val the_code  = undef;
+val the_vm    = undef;
+
+kind OblectamentaOpcode;
+kind OblectamentaDataLabel;
+kind OblectamentaModifier;
+kind OblectamentaCodeLabel;
+
+OblectamentaOpcode
+  halt,   addi32,     ldi32,   sti32,  beq, 
+  buc,    duptopi32,  ldsi32,  muli32, lea,
+  subi32, bnzeroi32,  bgteq,  stsi32,  bgteqzeroi32;
+
+OblectamentaModifier addr;
+
+macro verdict{
+  if(force_int(arglist.at(0))){
+        label Passed title = "" type="check";
+  } else {
+         label Failed title = "" type="error";
+  }
+};
+
+
+Scenario{
+     title{label __7 title = "Insertion Sort.";};
+     Given{
+		let the_stack = obj(stack{});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+                OblectamentaDataLabel array;
+                OblectamentaDataLabel i;
+                OblectamentaDataLabel n;
+                OblectamentaDataLabel x;
+                OblectamentaDataLabel j;
+                array; 4;1;7;9;2;5;8;10;3;6;
+                x; 11;
+                i; 1;
+                j; 0;
+                n; 10;
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                 OblectamentaDataLabel array;
+                 OblectamentaCodeLabel l1,inner_loop, done, inner_loop_done;
+                 OblectamentaDataLabel i;
+                 OblectamentaDataLabel j;
+                 OblectamentaDataLabel n;
+                 OblectamentaDataLabel x;
+                
+
+                 l1;
+                  ldi32(i);
+                  ldi32(n);
+                  beq(done); // while i < n
+
+                  lea(array);
+                  ldi32(i);
+                  ldi32(4);
+                  muli32;
+                  addi32;
+                  ldsi32; //stack[top] == array[i*4]
+                  sti32(x);
+
+
+                  ldi32(1);
+                  ldi32(i);
+                  subi32;
+                  sti32(j);
+                  
+                  
+                inner_loop;
+                  ldi32(j);
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+                  ldsi32;
+                  ldi32(x);
+
+                  bgteq(inner_loop_done);
+
+                  ldi32(j);
+                  ldi32(1);
+                  addi32;
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+
+                  ldi32(j);
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+                  ldsi32;
+                  stsi32; // array[j+1] = array[j]
+
+
+                
+                  ldi32(1);
+                  ldi32(j);
+                  subi32;
+                  sti32(j);
+                  ldi32(j);
+                  bgteqzeroi32(inner_loop);
+                
+                inner_loop_done;
+                  ldi32(j);
+                  ldi32(1);
+                  
+                  addi32;
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+                  ldi32(x);
+                  stsi32; // array[j + 1] = x;
+                  
+
+                  ldi32(i);
+                  ldi32(1);
+                  addi32;
+                  sti32(i);
+                  buc(l1);
+                 done; 
+                  halt;
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        docinfo_se("Run");
+     };
+     Then
+     {
+        input{
+            the_stack;
+            the_data;
+        };
+        output{
+            the_vm.vm.stack;
+            the_vm.vm.data;
+        };
+
+        verdict{equality_test{ 
+            v{
+                the_vm.vm.data.content().at(0);
+                the_vm.vm.data.content().at(1);
+                the_vm.vm.data.content().at(2);
+                the_vm.vm.data.content().at(3);
+
+                the_vm.vm.data.content().at(4);
+                the_vm.vm.data.content().at(5);
+                the_vm.vm.data.content().at(6);
+                the_vm.vm.data.content().at(7);
+
+                the_vm.vm.data.content().at(8);
+                the_vm.vm.data.content().at(9);
+                the_vm.vm.data.content().at(10);
+                the_vm.vm.data.content().at(11);
+
+                the_vm.vm.data.content().at(12);
+                the_vm.vm.data.content().at(13);
+                the_vm.vm.data.content().at(14);
+                the_vm.vm.data.content().at(15);
+
+                the_vm.vm.data.content().at(16);
+                the_vm.vm.data.content().at(17);
+                the_vm.vm.data.content().at(18);
+                the_vm.vm.data.content().at(19);
+
+                the_vm.vm.data.content().at(20);
+                the_vm.vm.data.content().at(21);
+                the_vm.vm.data.content().at(22);
+                the_vm.vm.data.content().at(23);
+
+                the_vm.vm.data.content().at(24);
+                the_vm.vm.data.content().at(25);
+                the_vm.vm.data.content().at(26);
+                the_vm.vm.data.content().at(27);
+
+                the_vm.vm.data.content().at(28);
+                the_vm.vm.data.content().at(29);
+                the_vm.vm.data.content().at(30);
+                the_vm.vm.data.content().at(31);
+
+                the_vm.vm.data.content().at(32);
+                the_vm.vm.data.content().at(33);
+                the_vm.vm.data.content().at(34);
+                the_vm.vm.data.content().at(35);
+
+                the_vm.vm.data.content().at(36);
+                the_vm.vm.data.content().at(37);
+                the_vm.vm.data.content().at(38);
+                the_vm.vm.data.content().at(39);
+            };
+            v{
+                1;0;0;0;
+                2;0;0;0;
+                3;0;0;0;
+                4;0;0;0;
+                5;0;0;0;
+                6;0;0;0;
+                7;0;0;0;
+                8;0;0;0;
+                9;0;0;0;
+                10;0;0;0;
+            };
+        };};
+     };
+};

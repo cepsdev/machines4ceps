@@ -31,13 +31,16 @@ namespace ceps{
                 halt,
                 noop,
                 ldi32,
+                ldsi32,
                 ldi64,
                 lddbl,
                 sti32,
+                stsi32,
                 sri64,
                 stdbl,
                 ldptr,
                 stptr,
+                lea,
 
                 //Arithmetic
                 addi32,
@@ -55,6 +58,7 @@ namespace ceps{
                 blteq,
                 bgt,
                 bgteq,
+                bgteqzeroi32,
                 bzeroi32,
                 bnzeroi32,
                 bzeroi64,
@@ -75,7 +79,7 @@ namespace ceps{
                 xori32,
                 xori64,
                 duptopi32,
-
+                
 
                 muli32,
                 muli64,
@@ -99,10 +103,7 @@ namespace ceps{
                 gteqdbl,
                 eqi32,
                 eqi64,
-                eqdbl,
-                
-                pushi32,
-                popi32
+                eqdbl
             };
 
 
@@ -171,13 +172,17 @@ namespace ceps{
                 private:
                     size_t noop(size_t);
                     size_t ldi32(size_t);
+                    size_t ldsi32(size_t);
                     size_t ldi64(size_t);
                     size_t lddbl(size_t);
                     size_t sti32(size_t);
+                    size_t stsi32(size_t);
                     size_t sti64(size_t);
                     size_t stdbl(size_t);
                     size_t ldptr(size_t);
                     size_t stptr(size_t);
+                    size_t lea(size_t);
+
                     size_t addi32(size_t);
                     size_t addi64(size_t);
                     size_t adddbl(size_t);
@@ -192,6 +197,7 @@ namespace ceps{
                     size_t blteq(size_t);
                     size_t bgt(size_t);
                     size_t bgteq(size_t);
+                    size_t bgteqzeroi32(size_t);
                     size_t bzeroi32(size_t);
                     size_t bzeroi64(size_t);
                     size_t bzerodbl(size_t);
@@ -210,7 +216,8 @@ namespace ceps{
                     size_t noti64(size_t);
                     size_t xori32(size_t);
                     size_t xori64(size_t);
-                    size_t duptopi32(size_t pos);
+                    size_t duptopi32(size_t);
+                    size_t muli32(size_t);
 
 
                     text_t text_seg;
@@ -248,13 +255,16 @@ namespace ceps{
                 {"halt", {Opcode::halt,"Yields the processor.",emit<Opcode::halt>,nullptr} },
                 {"noop", {Opcode::noop,"No operation.",emit<Opcode::noop>,nullptr}},
                 {"ldi32",{Opcode::ldi32, "Push 32 bit signed integer.",nullptr,emit<Opcode::ldi32>} },
+                {"ldsi32",{Opcode::ldsi32, "Push 32 bit signed integer.",emit<Opcode::ldsi32>,nullptr} },
                 {"ldi64",{Opcode::ldi64, "",nullptr,emit<Opcode::ldi64>}},
                 {"lddbl",{Opcode::lddbl, "",nullptr,emit<Opcode::lddbl>}},
                 {"sti32",{Opcode::sti32, "",nullptr,emit<Opcode::sti32>}},
+                {"stsi32",{Opcode::stsi32, "",emit<Opcode::stsi32>,nullptr}},
                 {"sri64",{Opcode::sri64, "",nullptr,emit<Opcode::sri64>}},
                 {"stdbl",{Opcode::stdbl, "",nullptr,emit<Opcode::stdbl>}},
                 {"ldptr",{Opcode::ldptr, "",nullptr,emit<Opcode::ldptr>}},
                 {"stptr",{Opcode::stptr, "",nullptr,emit<Opcode::stptr>}},
+                {"lea",{Opcode::lea, "",nullptr,emit<Opcode::lea>}},
                 {"duptopi32",{Opcode::duptopi32, "",emit<Opcode::duptopi32>,nullptr}},
 
                 //Arithmetic
@@ -298,6 +308,7 @@ namespace ceps{
                 {"blteq",{Opcode::blteq, "",nullptr,emit<Opcode::blteq>}},
                 {"bgt",{Opcode::bgt, "",nullptr,emit<Opcode::bgt>}},
                 {"bgteq",{Opcode::bgteq, "",nullptr,emit<Opcode::bgteq>}},
+                {"bgteqzeroi32",{Opcode::bgteqzeroi32, "",nullptr,emit<Opcode::bgteqzeroi32>}},
                 {"bzeroi32",{Opcode::bzeroi32, "",nullptr,emit<Opcode::bzeroi32>}},
                 {"bnzeroi32",{Opcode::bnzeroi32, "",nullptr,emit<Opcode::bnzeroi32>}},
                 {"bzeroi64",{Opcode::bzeroi64, "",nullptr,emit<Opcode::bzeroi64>}},
@@ -314,7 +325,10 @@ namespace ceps{
                 {"noti32",{Opcode::noti32, "",emit<Opcode::noti32>,nullptr}},
                 {"noti64",{Opcode::noti64, "",emit<Opcode::noti64>,nullptr}},
                 {"xori32",{Opcode::xori32, "",emit<Opcode::xori32>,nullptr}},
-                {"xori64",{Opcode::xori64, "",emit<Opcode::xori64>,nullptr}}
+                {"xori64",{Opcode::xori64, "",emit<Opcode::xori64>,nullptr}},
+                {"muli32",{Opcode::muli32, "",emit<Opcode::muli32>,nullptr}},
+                {"muli32",{Opcode::muldbl, "",emit<Opcode::muldbl>,nullptr}}
+
             };
 
  
