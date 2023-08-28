@@ -72,6 +72,7 @@ Scenario{
                  OblectamentaDataLabel j;
                  OblectamentaDataLabel n;
                  OblectamentaDataLabel x;
+                 // 57 instructions
                 
 
                  l1;
