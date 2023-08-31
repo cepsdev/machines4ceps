@@ -27,7 +27,7 @@ kind OblectamentaCodeLabel;
 OblectamentaOpcode
   halt,   addi32,     ldi32,   sti32,  beq, 
   buc,    duptopi32,  ldsi32,  muli32, lea,
-  subi32, bnzeroi32,bltzeroi32,  bgteq,  stsi32,  bgteqzeroi32, blteqzeroi32 ;
+  subi32, bnzeroi32,bltzeroi32,  bgteq,  stsi32,  bgteqzeroi32, blteqzeroi32,blteq ;
 
 OblectamentaModifier addr;
 
@@ -54,6 +54,7 @@ Scenario{
                 OblectamentaDataLabel n;
                 OblectamentaDataLabel x;
                 OblectamentaDataLabel j;
+                OblectamentaDataLabel cur_m;
                 cur_m; -1;
                 i; 0;
                 array; 4;1;7;9;2;5;8;10;3;6;
@@ -67,15 +68,33 @@ Scenario{
             text{
                  OblectamentaDataLabel array;
                  OblectamentaDataLabel i;
-                 OblectamentaDataLabel cur_m;
-                 OblectamentaCodeLabel done,loop;
+                 OblectamentaDataLabel cur_m, n;
+                 OblectamentaCodeLabel done,loop,loop_tail;
                  loop;
                   ldi32(i);
                   ldi32(n);
                   subi32;
                   blteqzeroi32(done); // if (i >= n) goto done;
 
-                 
+                  ldi32(i);
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+                  ldsi32; // array[i] on top of stack
+                  ldi32(cur_m); 
+                  bgteq(loop_tail);
+
+                  ldi32(i);
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+                  ldsi32; // array[i] on top of stack
+                  sti32(cur_m); // cur_m = array[i] 
+
+
+                 loop_tail;
                   ldi32(1);
                   ldi32(i);
                   addi32;
@@ -107,6 +126,6 @@ Scenario{
             the_vm.vm.stack;
             the_vm.vm.data;
         };
-        verdict{equality_test{the_vm.vm.data.content().at(3); 10; };};
+        verdict{equality_test{the_vm.vm.data.content().at(0); 10; };};
      };
 };
