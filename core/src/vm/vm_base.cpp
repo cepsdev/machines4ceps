@@ -132,7 +132,11 @@ namespace ceps::vm::oblectamenta{
     size_t VMEnv::bgteqzeroi32(size_t pos){
         if (pop<int>() >= 0) return text_seg[pos+1];
         return base_opcode_width + 1 + pos;
-    }    
+    }
+    size_t VMEnv::bltzeroi32(size_t pos){
+        if (pop<int>() < 0) return text_seg[pos+1];
+        return base_opcode_width + 1 + pos;
+    }
     size_t VMEnv::bzeroi32(size_t pos){
         if (pop<int>() == 0) return text_seg[pos+1];
         return base_opcode_width + 1 + pos;
@@ -238,6 +242,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::bgt);
         op_dispatch.push_back(&VMEnv::bgteq);
         op_dispatch.push_back(&VMEnv::bgteqzeroi32);
+        op_dispatch.push_back(&VMEnv::bltzeroi32);
         op_dispatch.push_back(&VMEnv::bzeroi32);
         op_dispatch.push_back(&VMEnv::bnzeroi32);
         op_dispatch.push_back(&VMEnv::bzeroi64);

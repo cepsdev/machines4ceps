@@ -59,6 +59,7 @@ namespace ceps{
                 bgt,
                 bgteq,
                 bgteqzeroi32,
+                bltzeroi32,
                 bzeroi32,
                 bnzeroi32,
                 bzeroi64,
@@ -198,6 +199,7 @@ namespace ceps{
                     size_t bgt(size_t);
                     size_t bgteq(size_t);
                     size_t bgteqzeroi32(size_t);
+                    size_t bltzeroi32(size_t);
                     size_t bzeroi32(size_t);
                     size_t bzeroi64(size_t);
                     size_t bzerodbl(size_t);
@@ -309,6 +311,7 @@ namespace ceps{
                 {"bgt",{Opcode::bgt, "",nullptr,emit<Opcode::bgt>}},
                 {"bgteq",{Opcode::bgteq, "",nullptr,emit<Opcode::bgteq>}},
                 {"bgteqzeroi32",{Opcode::bgteqzeroi32, "",nullptr,emit<Opcode::bgteqzeroi32>}},
+                {"bltzeroi32",{Opcode::bltzeroi32, "",nullptr,emit<Opcode::bltzeroi32>}},
                 {"bzeroi32",{Opcode::bzeroi32, "",nullptr,emit<Opcode::bzeroi32>}},
                 {"bnzeroi32",{Opcode::bnzeroi32, "",nullptr,emit<Opcode::bnzeroi32>}},
                 {"bzeroi64",{Opcode::bzeroi64, "",nullptr,emit<Opcode::bzeroi64>}},
