@@ -27,7 +27,7 @@ kind OblectamentaCodeLabel;
 OblectamentaOpcode
   halt,   addi32,     ldi32,   sti32,  beq, 
   buc,    duptopi32,  ldsi32,  muli32, lea,
-  subi32, bnzeroi32,bltzeroi32,  bgteq,  stsi32,  bgteqzeroi32;
+  subi32, bnzeroi32,bltzeroi32,  bgteq,  stsi32,  bgteqzeroi32, blteqzeroi32 ;
 
 OblectamentaModifier addr;
 
@@ -55,8 +55,9 @@ Scenario{
                 OblectamentaDataLabel x;
                 OblectamentaDataLabel j;
                 cur_m; -1;
-                array; 4;1;7;9;2;5;8;10;3;6;
                 i; 0;
+                array; 4;1;7;9;2;5;8;10;3;6;
+                n; 10;
             }
         );
         the_data;
@@ -67,9 +68,20 @@ Scenario{
                  OblectamentaDataLabel array;
                  OblectamentaDataLabel i;
                  OblectamentaDataLabel cur_m;
-                 OblectamentaCodeLabel done;
-                 ldi32(i);
-                 bltzeroi32(done);
+                 OblectamentaCodeLabel done,loop;
+                 loop;
+                  ldi32(i);
+                  ldi32(n);
+                  subi32;
+                  blteqzeroi32(done); // if (i >= n) goto done;
+
+                 
+                  ldi32(1);
+                  ldi32(i);
+                  addi32;
+                  sti32(i); // i = i +1 ;
+                  buc(loop);
+
                  done; 
                   halt;
            });
