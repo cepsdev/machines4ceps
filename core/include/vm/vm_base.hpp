@@ -67,6 +67,8 @@ namespace ceps{
                 bnzeroi64,
                 bzerodbl,
                 bnzerodbl,
+                call,
+                ret,
 
                 //Bitoperators
 
@@ -184,14 +186,12 @@ namespace ceps{
                     size_t ldptr(size_t);
                     size_t stptr(size_t);
                     size_t lea(size_t);
-
                     size_t addi32(size_t);
                     size_t addi64(size_t);
                     size_t adddbl(size_t);
                     size_t subi32(size_t);
                     size_t subi64(size_t);
                     size_t subdbl(size_t);
-
                     size_t buc(size_t);
                     size_t beq(size_t);
                     size_t bneq(size_t);
@@ -208,7 +208,8 @@ namespace ceps{
                     size_t bnzeroi32(size_t);
                     size_t bnzeroi64(size_t);
                     size_t bnzerodbl(size_t);
-
+                    size_t call(size_t);
+                    size_t ret(size_t);
                     size_t andni32(size_t);
                     size_t andni64(size_t);
                     size_t andi32(size_t);
@@ -321,6 +322,8 @@ namespace ceps{
                 {"bnzeroi64",{Opcode::bnzeroi64, "",nullptr,emit<Opcode::bnzeroi64>}},
                 {"bzerodbl",{Opcode::bzerodbl, "",nullptr,emit<Opcode::bzerodbl>}},
                 {"bnzerodbl",{Opcode::bnzerodbl, "",nullptr,emit<Opcode::bnzerodbl>}},
+                {"call",{Opcode::call, "",nullptr,emit<Opcode::call>}},
+                {"ret",{Opcode::ret, "",emit<Opcode::ret>,nullptr}},
                 //Bitoperators
                 {"andni32",{Opcode::andni32, "",emit<Opcode::andni32>,nullptr}},
                 {"andni64",{Opcode::andni64, "",emit<Opcode::andni64>,nullptr}},

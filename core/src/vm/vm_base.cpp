@@ -166,6 +166,14 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + 1 + pos;
     }
 
+    size_t VMEnv::call(size_t pos){
+        push<int>(base_opcode_width + 1 + pos);
+        return text_seg[pos+1];
+    }
+    size_t VMEnv::ret(size_t pos){
+        return pop<int>();
+    }
+
     size_t VMEnv::andni32(size_t pos){
         push<unsigned int>(pop<unsigned int>() & !pop<unsigned int>());
         return base_opcode_width + pos;
@@ -254,6 +262,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::bnzeroi64);
         op_dispatch.push_back(&VMEnv::bzerodbl);
         op_dispatch.push_back(&VMEnv::bnzerodbl);
+        op_dispatch.push_back(&VMEnv::call);
+        op_dispatch.push_back(&VMEnv::ret);
         op_dispatch.push_back(&VMEnv::andni32);
         op_dispatch.push_back(&VMEnv::andni64);
         op_dispatch.push_back(&VMEnv::andi32);
