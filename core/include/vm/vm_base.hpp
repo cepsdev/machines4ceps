@@ -69,6 +69,7 @@ namespace ceps{
                 bnzerodbl,
                 call,
                 ret,
+                swp,
 
                 //Bitoperators
 
@@ -210,6 +211,7 @@ namespace ceps{
                     size_t bnzerodbl(size_t);
                     size_t call(size_t);
                     size_t ret(size_t);
+                    size_t swp(size_t);
                     size_t andni32(size_t);
                     size_t andni64(size_t);
                     size_t andi32(size_t);
@@ -324,6 +326,8 @@ namespace ceps{
                 {"bnzerodbl",{Opcode::bnzerodbl, "",nullptr,emit<Opcode::bnzerodbl>}},
                 {"call",{Opcode::call, "",nullptr,emit<Opcode::call>}},
                 {"ret",{Opcode::ret, "",emit<Opcode::ret>,nullptr}},
+                {"swp",{Opcode::swp, "",emit<Opcode::swp>,nullptr}},
+
                 //Bitoperators
                 {"andni32",{Opcode::andni32, "",emit<Opcode::andni32>,nullptr}},
                 {"andni64",{Opcode::andni64, "",emit<Opcode::andni64>,nullptr}},
