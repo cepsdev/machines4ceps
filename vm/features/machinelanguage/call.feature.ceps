@@ -1,48 +1,7 @@
-kind DocgenStringPrintNoEscape;
-DocgenStringPrintNoEscape docinfo_se;
-
-docinfo_se(
-"
-"
-);
-
-
-macro equality_test{
-   symbolic_equality(as_nodeset(arglist.at(0)),as_nodeset(arglist.at(1))).diff.equal.content();
-};
-
-
-val the_stack = undef;
-val the_data  = undef;
-val the_code  = undef;
-val the_vm    = undef;
-
-kind OblectamentaOpcode;
-kind OblectamentaDataLabel;
-kind OblectamentaModifier;
-kind OblectamentaCodeLabel;
-
-OblectamentaOpcode
-  halt,   addi32,     ldi32,   sti32,  beq, 
-  buc,    duptopi32,  ldsi32,  muli32, lea,
-  subi32, bnzeroi32,  bgteq,  stsi32,  bgteqzeroi32,
-  noop, call, ret;
-
-OblectamentaModifier addr;
-
-macro verdict{
-  if(force_int(arglist.at(0))){
-        label Passed title = "" type="check";
-  } else {
-         label Failed title = "" type="error";
-  }
-};
-
-
 Scenario{
-     title{label __ title = "call instruction.";};
+     title{label _oblectamenta_instrucion_call_definition title = "The call instruction.";};
      Given{
-		let the_stack = obj(stack{});
+		  let the_stack = obj(stack{});
         the_stack;
      };
      And{
@@ -56,11 +15,9 @@ Scenario{
 		let the_code = obj(
             text{
                 OblectamentaCodeLabel proc;
-                call(proc);
-                noop;
-                noop;
-                proc;
-                halt;
+                  call(proc);
+                 proc;
+                  halt;  comment{ "Address of halt is &text + size_opcode_call == 0 + 2";};
            });
         the_code;
      };
@@ -72,12 +29,19 @@ Scenario{
                 the_code;
             }
         );
+        run{
+         vm{
+          stack;
+          data;
+          text;
+         };
+        };
      };
      Then
      {
-        stack{2;};
+        vm{ data{}; stack{2;}; text; };
         verdict{equality_test{ 
-            stack{2;};
+            stack{size_opcode_call;};
             the_vm.vm.stack;
         };};
      };
