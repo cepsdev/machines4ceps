@@ -1,0 +1,57 @@
+Scenario{
+     title{label _oblectamenta_instruction_call_definition title = "The ret instruction.";};
+     Given{
+		  let the_stack = obj(
+            stack{
+                size_opcode_ret+size_opcode_buc;
+            }
+          );
+          the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+                OblectamentaDataLabel x;
+                x; 0;
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                OblectamentaCodeLabel loop;
+                OblectamentaDataLabel x;
+                 loop;
+                   ret;
+                   buc(loop);
+                   ldi32(42);
+                   sti32(x);                   
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        run{
+         vm{
+          stack;
+          data;
+          text;
+         };
+        };
+     };
+     Then
+     {
+        vm{stack{};data{42;0;0;0; 42;0;0;0;};};
+        verdict{equality_test{ 
+            vm{stack{};data{42;0;0;0; 42;0;0;0;};};
+            vm{the_vm.vm.stack;the_vm.vm.data;};
+        };};
+     };
+};

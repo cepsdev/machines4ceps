@@ -1,5 +1,5 @@
 Scenario{
-     title{label _oblectamenta_instrucion_call_definition title = "The call instruction.";};
+     title{label _oblectamenta_instruction_call_definition title = "The call instruction.";};
      Given{
 		  let the_stack = obj(stack{});
         the_stack;

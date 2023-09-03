@@ -105,5 +105,7 @@ macro verdict{
   }
 };
 
+val size_opcode_buc = 2;
 val size_opcode_call = 2;
+val size_opcode_ret = 1;
 
