@@ -108,7 +108,11 @@ namespace ceps{
                 gteqdbl,
                 eqi32,
                 eqi64,
-                eqdbl
+                eqdbl,
+                cpysi32,
+                wrsi32,
+                setframe,
+                popi32
             };
 
 
@@ -158,6 +162,15 @@ namespace ceps{
                         for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
                          *((stack_t::value_type*) &r + i) = stack_seg[start+i];
                         stack_top = start;
+                        return r;
+                    }
+
+                    template<typename T> T top(int i){
+                        T r;
+                        auto st{stack_top - i*sizeof(stack_t::value_type)};
+                        size_t start = st - sizeof(T) / sizeof(stack_t::value_type);
+                        for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
+                         *((stack_t::value_type*) &r + i) = stack_seg[start+i];
                         return r;
                     }
 
@@ -218,14 +231,38 @@ namespace ceps{
                     size_t andi64(size_t);
                     size_t ori32(size_t);
                     size_t ori64(size_t);
-
                     size_t noti32(size_t);
                     size_t noti64(size_t);
                     size_t xori32(size_t);
                     size_t xori64(size_t);
                     size_t duptopi32(size_t);
                     size_t muli32(size_t);
-
+                    size_t muli64(size_t);
+                    size_t muldbl(size_t);
+                    size_t divi32(size_t);
+                    size_t divi64(size_t);
+                    size_t divdbl(size_t);
+                    size_t remi32(size_t);
+                    size_t remi64(size_t);
+                    size_t lti32(size_t);
+                    size_t lti64(size_t);
+                    size_t ltdbl(size_t);
+                    size_t lteqi32(size_t);
+                    size_t lteqi64(size_t);
+                    size_t lteqdbl(size_t);
+                    size_t gti32(size_t);
+                    size_t gti64(size_t);
+                    size_t gtdbl(size_t);
+                    size_t gteqi32(size_t);
+                    size_t gteqi64(size_t);
+                    size_t gteqdbl(size_t);
+                    size_t eqi32(size_t);
+                    size_t eqi64(size_t);
+                    size_t eqdbl(size_t);
+                    size_t cpysi32(size_t);
+                    size_t wrsi32(size_t);
+                    size_t setframe(size_t);
+                    size_t popi32(size_t);
 
                     text_t text_seg;
                     data_t data_seg;
@@ -235,6 +272,7 @@ namespace ceps{
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
+                    int32_t frame_reg{};
 
                     static constexpr size_t base_opcode_width = 1;
             };
@@ -340,8 +378,11 @@ namespace ceps{
                 {"xori32",{Opcode::xori32, "",emit<Opcode::xori32>,nullptr}},
                 {"xori64",{Opcode::xori64, "",emit<Opcode::xori64>,nullptr}},
                 {"muli32",{Opcode::muli32, "",emit<Opcode::muli32>,nullptr}},
-                {"muli32",{Opcode::muldbl, "",emit<Opcode::muldbl>,nullptr}}
-
+                {"muli32",{Opcode::muldbl, "",emit<Opcode::muldbl>,nullptr}},
+                {"setframe",{Opcode::setframe, "",emit<Opcode::setframe>,nullptr}},
+                {"cpysi32",{Opcode::cpysi32, "",nullptr,emit<Opcode::cpysi32>}},
+                {"wrsi32",{Opcode::wrsi32, "",nullptr,emit<Opcode::wrsi32>}},
+                {"popi32",{Opcode::popi32, "",emit<Opcode::popi32>,nullptr}}
             };
 
  

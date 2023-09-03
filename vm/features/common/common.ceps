@@ -92,7 +92,11 @@ OblectamentaOpcode
     gteqdbl,
     eqi32,
     eqi64,
-    eqdbl;
+    eqdbl,
+    cpysi32,
+    wrsi32,
+    setframe, 
+    popi32;
 
 
 OblectamentaModifier addr;

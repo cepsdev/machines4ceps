@@ -226,6 +226,92 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
 
+    size_t VMEnv::muli64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    
+    size_t VMEnv::muldbl(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::divi32(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::divi64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::divdbl(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::remi32(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::remi64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::lti32(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::lti64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::ltdbl(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::lteqi32(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::lteqi64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::lteqdbl(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::gti32(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::gti64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::gtdbl(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::gteqi32(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::gteqi64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::gteqdbl(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::eqi32(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::eqi64(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::eqdbl(size_t pos){
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::cpysi32(size_t pos){
+        push<int32_t>(stack_seg[ frame_reg - *((int*) &data_seg[text_seg[pos+1]])]);
+        return base_opcode_width + pos + 1;
+    }
+    size_t VMEnv::wrsi32(size_t pos){
+        auto v{pop<int32_t>()};
+        stack_seg[ frame_reg - *((int*) &data_seg[text_seg[pos+1]])] = v;
+        return base_opcode_width + pos + 1;
+    }
+    size_t VMEnv::setframe(size_t pos){
+        frame_reg = stack_top - 2;
+        return base_opcode_width + pos;
+    }
+
+    size_t VMEnv::popi32(size_t pos){
+        pop<int32_t>();
+        return base_opcode_width + pos;
+    }
+
     void VMEnv::reset(){
         stack_top = 0;
     }
@@ -283,6 +369,34 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::xori64);
         op_dispatch.push_back(&VMEnv::duptopi32);
         op_dispatch.push_back(&VMEnv::muli32);
+
+        op_dispatch.push_back(&VMEnv::muli64);
+        op_dispatch.push_back(&VMEnv::muldbl);
+        op_dispatch.push_back(&VMEnv::divi32);
+        op_dispatch.push_back(&VMEnv::divi64);
+        op_dispatch.push_back(&VMEnv::divdbl);
+        op_dispatch.push_back(&VMEnv::remi32);
+        op_dispatch.push_back(&VMEnv::remi64);
+        op_dispatch.push_back(&VMEnv::lti32);
+        op_dispatch.push_back(&VMEnv::lti64);
+        op_dispatch.push_back(&VMEnv::ltdbl);
+        op_dispatch.push_back(&VMEnv::lteqi32);
+        op_dispatch.push_back(&VMEnv::lteqi64);
+        op_dispatch.push_back(&VMEnv::lteqdbl);
+        op_dispatch.push_back(&VMEnv::gti32);
+        op_dispatch.push_back(&VMEnv::gti64);
+        op_dispatch.push_back(&VMEnv::gtdbl);
+        op_dispatch.push_back(&VMEnv::gteqi32);
+        op_dispatch.push_back(&VMEnv::gteqi64);
+        op_dispatch.push_back(&VMEnv::gteqdbl);
+        op_dispatch.push_back(&VMEnv::eqi32);
+        op_dispatch.push_back(&VMEnv::eqi64);
+        op_dispatch.push_back(&VMEnv::eqdbl);
+        op_dispatch.push_back(&VMEnv::cpysi32);
+        op_dispatch.push_back(&VMEnv::wrsi32);
+        op_dispatch.push_back(&VMEnv::setframe);
+        op_dispatch.push_back(&VMEnv::popi32);
+
     }
      
     void VMEnv::dump(ostream& os){
