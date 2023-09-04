@@ -29,7 +29,6 @@ link_directories($ENV{CEPSCORE}/bin)
 add_library(INSERT_PLUGIN_NAME_HERE SHARED 
            plugin-entrypoint.cpp
            $ENV{MACHINES4CEPS}/core/src/vm/vm_base.cpp
-
+           $ENV{MACHINES4CEPS}/core/src/vm/oblectamenta-assembler.cpp
            )
-
 target_link_libraries(INSERT_PLUGIN_NAME_HERE cepscore)					

@@ -115,8 +115,6 @@ namespace ceps{
                 popi32
             };
 
-
-
             class VMEnv{
                 public:
                     using data_t = vector<uint8_t>;
@@ -384,8 +382,7 @@ namespace ceps{
                 {"wrsi32",{Opcode::wrsi32, "",nullptr,emit<Opcode::wrsi32>}},
                 {"popi32",{Opcode::popi32, "",emit<Opcode::popi32>,nullptr}}
             };
-
- 
+           
         }
     }
 }

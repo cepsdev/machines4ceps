@@ -1,0 +1,90 @@
+
+Algorithm{
+  docinfo_se("QuickSort");
+  repeat{
+    b = TRUE;
+    for (i : range(1 ,N-1)) {
+        if (a[i] > a[i+1]){
+            b = FALSE;
+            swap(a[i],a[i+1]);
+        }
+    }
+    until{ b;};
+  };
+};
+
+Scenario{
+     title{label _ title = "QuickSort.";};
+     Given{
+		let the_stack = obj(stack{});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+                OblectamentaDataLabel array;
+                OblectamentaDataLabel n;
+                OblectamentaDataLabel r;
+                OblectamentaDataLabel l;
+                array; 4;1;7;9;2;5;8;10;3;6;
+                i; 0;
+                b; 0;
+                n; 10;
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                OblectamentaDataLabel array;
+                OblectamentaDataLabel b;
+                OblectamentaDataLabel n;
+                OblectamentaDataLabel i;
+                OblectamentaCodeLabel qsort, done;
+
+                 ldi32(0);  // left boundary
+                 ldi32(n);  // right boundary
+                 ldi32(0);  // pivot's index
+
+                 call(qsort); //r = qsort(0,n);
+                 popi32;     // remove the constant 0 from stack
+                 popi32;     // remove n from stack
+                 popi32;     // remove r from stack
+                 buc(done);   // branch unconditionally to done
+                qsort;
+                 setframe;
+                 ret;        // return 
+
+                done; 
+                 halt;       // halt execution
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+     };
+     Then
+     {
+        input{
+            the_stack;
+            the_data;
+        };
+        output{
+            the_vm.vm.stack;
+            the_vm.vm.data;
+        };
+        verdict{
+            equality_test{
+                v{for( i : 1 .. 10){i; 0 ; 0; 0;}};
+                v{for( i : 0 .. 9){the_vm.vm.data.content().at(i*4); 0 ; 0; 0;}};
+            };
+        };
+     };
+};
