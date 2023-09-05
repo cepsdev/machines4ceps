@@ -55,3 +55,9 @@ Scenario{
         };};
      };
 };
+
+Summary{
+ for( e : root.Scenario.Then.result){
+  e;
+ }
+};

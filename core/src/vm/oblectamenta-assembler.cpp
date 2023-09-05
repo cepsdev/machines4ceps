@@ -131,6 +131,23 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     if (get<3>(v)) 
                      get<3>(v)(vm.text(),value(as_int_ref(args2[0]))); 
                     else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+                } else  if (sym_kind2 == "OblectamentaModifier" && 
+                            sym_name2 == "reg" &&
+                            args2.size() == 1 && 
+                            is<Ast_node_kind::symbol>(args2[0]) &&
+                            kind(as_symbol_ref(args2[0])) == "OblectamentaReg" ) {
+                    string reg_name{name(as_symbol_ref(args2[0]))};
+                    auto query_reg_it{vm.registers.reg_mnemonic2idx.find(reg_name)};
+                    if (query_reg_it == vm.registers.reg_mnemonic2idx.end()) 
+                     throw std::string{"oblectamenta_assembler: unknown register: '"+reg_name +"'" };
+                    //INVARIANT: query_reg_it is valid, i.e. register name known
+                    auto query_opcode_reg_version_it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"reg")};
+                    if (query_opcode_reg_version_it == ceps::vm::oblectamenta::mnemonics.end()) 
+                        throw std::string{"oblectamenta_assembler: Opcode doesn't support register access: '"+ mnemonic+"'" };
+                    //INVARIANT: reg, opcode valid
+                    auto op_code_entry{query_opcode_reg_version_it->second};
+                    if (get<3>(op_code_entry)) get<3>(op_code_entry)(vm.text(),query_reg_it->second); 
+                    else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
                 }
             }
         }

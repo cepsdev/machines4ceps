@@ -294,16 +294,16 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
     size_t VMEnv::cpysi32(size_t pos){
-        push<int32_t>(stack_seg[ frame_reg - *((int*) &data_seg[text_seg[pos+1]])]);
+        push<int32_t>(stack_seg[ registers.file[registers_t::FP] - *((int*) &data_seg[text_seg[pos+1]])]);
         return base_opcode_width + pos + 1;
     }
     size_t VMEnv::wrsi32(size_t pos){
         auto v{pop<int32_t>()};
-        stack_seg[ frame_reg - *((int*) &data_seg[text_seg[pos+1]])] = v;
+        stack_seg[ registers.file[registers_t::FP] - *((int*) &data_seg[text_seg[pos+1]])] = v;
         return base_opcode_width + pos + 1;
     }
     size_t VMEnv::setframe(size_t pos){
-        frame_reg = stack_top - 2;
+        registers.file[registers_t::FP] = registers.file[registers_t::SP] - 2;
         return base_opcode_width + pos;
     }
 
@@ -312,13 +312,33 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
 
+    size_t VMEnv::popi32reg(size_t pos){
+        auto v{pop<int32_t>()};
+        auto reg{*((int*) &text_seg[pos+1])};
+        registers.file[reg] = v;
+        return base_opcode_width + pos + 1;
+    }
+
+    size_t VMEnv::pushi32reg(size_t pos){
+        auto reg{*((int*) &text_seg[pos+1])};
+        push<int32_t>(registers.file[reg]);
+        return base_opcode_width + pos +1;
+    }
+
+    size_t VMEnv::pushi32(size_t pos){
+        auto v{*((int*) &data_seg[text_seg[pos+1]])};
+        push<int32_t>(v);
+        return base_opcode_width + pos +1;
+    }
+
     void VMEnv::reset(){
-        stack_top = 0;
+        registers.file[registers_t::SP] = 0;
     }
 
 
     VMEnv::VMEnv(){
-        stack_top = 0;
+        registers.file[registers_t::SP] = 0;
+        registers.file[registers_t::FP] = 0;
         op_dispatch.push_back(&VMEnv::noop);
         op_dispatch.push_back(&VMEnv::noop); 
         op_dispatch.push_back(&VMEnv::ldi32);
@@ -396,11 +416,14 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::wrsi32);
         op_dispatch.push_back(&VMEnv::setframe);
         op_dispatch.push_back(&VMEnv::popi32);
+        op_dispatch.push_back(&VMEnv::pushi32reg);
+        op_dispatch.push_back(&VMEnv::popi32reg);
+        op_dispatch.push_back(&VMEnv::pushi32);
 
     }
      
     void VMEnv::dump(ostream& os){
-        for(ssize_t i = (ssize_t)stack_top - 1; i >= 0; --i )
+        for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )
          os << "| "<< stack_seg[i] << "\t|\n";
     }
     size_t emitX(VMEnv::text_t& text){

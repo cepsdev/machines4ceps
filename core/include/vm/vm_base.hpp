@@ -112,7 +112,10 @@ namespace ceps{
                 cpysi32,
                 wrsi32,
                 setframe,
-                popi32
+                popi32,
+                pushi32reg,
+                popi32reg,
+                pushi32
             };
 
             class VMEnv{
@@ -120,6 +123,14 @@ namespace ceps{
                     using data_t = vector<uint8_t>;
                     using stack_t = vector<int>;
                     using text_t = vector<int32_t>;
+
+                    struct registers_t{
+                        static constexpr uint32_t SP = 0;
+                        static constexpr uint32_t FP = 1;
+                        int64_t file[2];
+                        map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP} };
+                    } registers;
+
 
                     size_t store (string  data){
                         size_t t{};
@@ -141,31 +152,31 @@ namespace ceps{
                     }
 
                     template<typename T> size_t push(T data){
-                        auto t = stack_top;
+                        auto t = registers.file[registers_t::SP];
                         constexpr auto r{sizeof(T) % sizeof(stack_t::value_type)};
                         auto space_needed {sizeof(T) / sizeof(stack_t::value_type) + (r ? 1 : 0) };
-                        if (stack_top + space_needed >= stack_seg.size() ) stack_seg.insert(stack_seg.end(), space_needed, {});
+                        if (registers.file[registers_t::SP] + space_needed >= stack_seg.size() ) stack_seg.insert(stack_seg.end(), space_needed, {});
                         for (size_t i = 0; i < space_needed; ++i)
-                         stack_seg[stack_top+i] = *((stack_t::value_type*) &data + i);
-                        stack_top += space_needed;
+                         stack_seg[registers.file[registers_t::SP]+i] = *((stack_t::value_type*) &data + i);
+                        registers.file[registers_t::SP] += space_needed;
                         if(sizeof(T) < sizeof(stack_t::value_type)){
                             for(auto i = 1; i < sizeof(T) - sizeof(stack_t::value_type);++i)
-                             ((char*)&stack_seg[stack_top-1])[i] = 0;
+                             ((char*)&stack_seg[registers.file[registers_t::SP]-1])[i] = 0;
                         }
                         return t;
                     }
                     template<typename T> T pop(){
                         T r;
-                        size_t start = stack_top - sizeof(T) / sizeof(stack_t::value_type);
+                        size_t start = registers.file[registers_t::SP] - sizeof(T) / sizeof(stack_t::value_type);
                         for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
                          *((stack_t::value_type*) &r + i) = stack_seg[start+i];
-                        stack_top = start;
+                        registers.file[registers_t::SP] = start;
                         return r;
                     }
 
                     template<typename T> T top(int i){
                         T r;
-                        auto st{stack_top - i*sizeof(stack_t::value_type)};
+                        auto st{registers.file[registers_t::SP] - i*sizeof(stack_t::value_type)};
                         size_t start = st - sizeof(T) / sizeof(stack_t::value_type);
                         for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
                          *((stack_t::value_type*) &r + i) = stack_seg[start+i];
@@ -182,7 +193,7 @@ namespace ceps{
 
                     void dump(ostream& os);
                     void reset();
-                    size_t stack_top_pos() const { return stack_top;}
+                    size_t stack_top_pos() const { return registers.file[registers_t::SP];}
                     map<string, size_t>& data_labels(){return label2loc;}
                     size_t data_size() const {return data_seg.size();}
                 private:
@@ -261,17 +272,18 @@ namespace ceps{
                     size_t wrsi32(size_t);
                     size_t setframe(size_t);
                     size_t popi32(size_t);
+                    size_t pushi32reg(size_t);
+                    size_t popi32reg(size_t);
+                    size_t pushi32(size_t);
 
                     text_t text_seg;
                     data_t data_seg;
                     stack_t stack_seg;
 
-                    size_t stack_top;
+                    //size_t stack_top;
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
-                    int32_t frame_reg{};
-
                     static constexpr size_t base_opcode_width = 1;
             };
 
@@ -380,7 +392,10 @@ namespace ceps{
                 {"setframe",{Opcode::setframe, "",emit<Opcode::setframe>,nullptr}},
                 {"cpysi32",{Opcode::cpysi32, "",nullptr,emit<Opcode::cpysi32>}},
                 {"wrsi32",{Opcode::wrsi32, "",nullptr,emit<Opcode::wrsi32>}},
-                {"popi32",{Opcode::popi32, "",emit<Opcode::popi32>,nullptr}}
+                {"popi32",{Opcode::popi32, "",emit<Opcode::popi32>,nullptr}},
+                {"pushi32reg",{Opcode::pushi32reg, "",nullptr,emit<Opcode::pushi32reg>}},
+                {"popi32reg",{Opcode::popi32reg, "",nullptr,emit<Opcode::popi32reg>}},
+                {"pushi32",{Opcode::pushi32, "",emit<Opcode::pushi32>,nullptr}}
             };
            
         }

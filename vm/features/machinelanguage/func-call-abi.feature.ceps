@@ -1,5 +1,5 @@
 Scenario{
-     title{label _oblectamenta_abi_func_call title = "The function call ABI.";};
+     title{label _oblectamenta_abi_func_call_I itle = "The function call ABI (I).";};
      Given{
 		  let the_stack = obj(stack{});
         the_stack;
@@ -61,4 +61,81 @@ Scenario{
             the_vm.vm.data;
         };};
      };
+};
+
+
+Scenario{
+     title{label _oblectamenta_abi_func_call_II title = "The function call ABI (II).";};
+     Given{
+		  let the_stack = obj(stack{});
+        the_stack;
+     };
+     And{
+		let the_data = obj(
+            data{
+                OblectamentaDataLabel result;
+                result; 0;
+            }
+        );
+        the_data;
+     };
+     And{
+		let the_code = obj(
+            text{
+                OblectamentaCodeLabel func_add;
+                OblectamentaDataLabel result;
+                  ldi32(3);
+                  ldi32(4);
+                  ldi32(0); //result;
+                                    
+                  call(func_add);
+                  sti32(result);
+                  popi32;
+                  popi32;
+                  halt;
+                 func_add;
+                  ldi32(3);
+                  pushi32(reg(SP));
+                  subi32;
+                  popi32(reg(FP));
+                  cpysi32(2);
+                  cpysi32(1);
+                  addi32;          
+                  wrsi32(0);
+                  ret;
+           });
+        the_code;
+     };
+     When{
+        let the_vm = run_oblectamenta_bytecode(
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+            }
+        );
+        run{
+         vm{
+          stack;
+          data;
+          text;
+         };
+        };
+     };
+     Then
+     {
+        the_vm.vm.data;
+        vm{ data{}; stack{}; text; };
+        verdict{equality_test{ 
+            data{7;0;0;0;3;0;0;0;4;0;0;0;0;0;0;0;2;0;0;0;1;0;0;0;};
+            the_vm.vm.data;
+        };};
+     };
+};
+
+
+Summary{
+ for( e : root.Scenario.Then.result){
+  e;
+ }
 };

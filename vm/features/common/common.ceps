@@ -19,6 +19,7 @@ kind OblectamentaOpcode;
 kind OblectamentaDataLabel;
 kind OblectamentaModifier;
 kind OblectamentaCodeLabel;
+kind OblectamentaReg;
 
 OblectamentaOpcode
     halt,
@@ -96,17 +97,22 @@ OblectamentaOpcode
     cpysi32,
     wrsi32,
     setframe, 
-    popi32;
+    popi32,
+    pushi32;
 
 
 OblectamentaModifier addr;
+OblectamentaModifier reg;
+OblectamentaReg SP, FP; 
 
 macro verdict{
+result{
   if(force_int(arglist.at(0))){
         label Passed title = "" type="check";
   } else {
          label Failed title = "" type="error";
   }
+};
 };
 
 val size_opcode_buc = 2;

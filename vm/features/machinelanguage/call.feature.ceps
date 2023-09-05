@@ -28,7 +28,7 @@ Scenario{
                 the_data;
                 the_code;
             }
-        );
+        );**
         run{
          vm{
           stack;
@@ -45,4 +45,10 @@ Scenario{
             the_vm.vm.stack;
         };};
      };
+};
+
+Summary{
+ for( e : root.Scenario.Then.result){
+  e;
+ }
 };
