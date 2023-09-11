@@ -27,7 +27,8 @@ namespace ceps{
     namespace vm{
         namespace oblectamenta{
             using namespace std;
-            enum class Opcode:uint32_t{
+            using base_opcode_width = uint32_t; 
+            enum class Opcode:base_opcode_width{
                 halt,
                 noop,
                 ldi32,
@@ -120,17 +121,31 @@ namespace ceps{
 
             class VMEnv{
                 public:
-                    using data_t = vector<uint8_t>;
-                    using stack_t = vector<int>;
-                    using text_t = vector<int32_t>;
+                    using stack_t = uint8_t*;
+                    using data_t = uint8_t*;
+                    using text_t = uint8_t*;
+                    using compute_stack_t = vector<uint8_t>;
 
                     struct registers_t{
-                        static constexpr uint32_t SP = 0;
-                        static constexpr uint32_t FP = 1;
-                        int64_t file[2];
-                        map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP} };
+                        static constexpr uint32_t SP = 0;  // stack pointer
+                        static constexpr uint32_t FP = 1;  // frame pointer
+                        static constexpr uint32_t CSP = 2; // compute stack
+                        static constexpr uint32_t PC = 3; // program counter 
+                        int64_t file[4];
+                        map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP}, {"CSP",CSP}, {"PC",PC} };
                     } registers;
 
+                    struct mem_t{
+                        data_t base{};
+                        data_t heap{};
+                        stack_t end{};
+                    } mem;
+
+                    compute_stack_t compute_stack;
+                    text_t text{};
+
+                    static constexpr size_t default_mem_size {4096};
+                    static constexpr size_t default_text_size {4096};
 
                     size_t store (string  data){
                         size_t t{};
@@ -139,53 +154,48 @@ namespace ceps{
                     }
   
                     template<typename T> size_t store(T data){
-                        auto t = data_seg.size();
-                        data_seg.insert(data_seg.end(), 
-                                    (data_t::value_type*) &data, 
-                                    (data_t::value_type*) &data + sizeof(data) );
+                        auto t{mem.heap - mem.base};
+                        new (mem.heap) T{data};
+                        mem.heap += sizeof(data);                        
                         return t;
                     }
   
                     template<typename T> T read_store(size_t ofs){
-                        T t = *(T*) &data_seg[ofs];
+                        T t = *(T*) (mem.base + ofs);
                         return t;
                     }
 
-                    template<typename T> size_t push(T data){
-                        auto t = registers.file[registers_t::SP];
-                        constexpr auto r{sizeof(T) % sizeof(stack_t::value_type)};
-                        auto space_needed {sizeof(T) / sizeof(stack_t::value_type) + (r ? 1 : 0) };
-                        if (registers.file[registers_t::SP] + space_needed >= stack_seg.size() ) stack_seg.insert(stack_seg.end(), space_needed, {});
+                    template<typename T> size_t push_cs(T data){
+                        auto t = registers.file[registers_t::CSP];
+                        constexpr auto r{sizeof(T) % sizeof(compute_stack_t::value_type)};
+                        auto space_needed {sizeof(T) / sizeof(compute_stack_t::value_type) + (r ? 1 : 0) };
+                        if (registers.file[registers_t::CSP] + space_needed >= compute_stack.size() ) compute_stack.insert(compute_stack.end(), space_needed, {});
                         for (size_t i = 0; i < space_needed; ++i)
-                         stack_seg[registers.file[registers_t::SP]+i] = *((stack_t::value_type*) &data + i);
-                        registers.file[registers_t::SP] += space_needed;
-                        if(sizeof(T) < sizeof(stack_t::value_type)){
-                            for(auto i = 1; i < sizeof(T) - sizeof(stack_t::value_type);++i)
-                             ((char*)&stack_seg[registers.file[registers_t::SP]-1])[i] = 0;
+                         compute_stack[registers.file[registers_t::CSP] + i] = *((compute_stack_t::value_type*) &data + i);
+                        registers.file[registers_t::CSP] += space_needed;
+                        if(sizeof(T) < sizeof(compute_stack_t::value_type)){
+                            for(auto i = 1; i < sizeof(T) - sizeof(compute_stack_t::value_type);++i)
+                             ((char*)&compute_stack[registers.file[registers_t::CSP]-1])[i] = 0;
                         }
                         return t;
                     }
-                    template<typename T> T pop(){
+                    template<typename T> T pop_cs(){
                         T r;
-                        size_t start = registers.file[registers_t::SP] - sizeof(T) / sizeof(stack_t::value_type);
-                        for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
-                         *((stack_t::value_type*) &r + i) = stack_seg[start+i];
-                        registers.file[registers_t::SP] = start;
+                        size_t start = registers.file[registers_t::CSP] - sizeof(T) / sizeof(compute_stack_t::value_type);
+                        for (size_t i = 0; i < sizeof(T) / sizeof(compute_stack_t::value_type); ++i)
+                         *((compute_stack_t::value_type*) &r + i) = compute_stack[start+i];
+                        registers.file[registers_t::CSP] = start;
                         return r;
                     }
 
                     template<typename T> T top(int i){
                         T r;
-                        auto st{registers.file[registers_t::SP] - i*sizeof(stack_t::value_type)};
-                        size_t start = st - sizeof(T) / sizeof(stack_t::value_type);
-                        for (size_t i = 0; i < sizeof(T) / sizeof(stack_t::value_type); ++i)
-                         *((stack_t::value_type*) &r + i) = stack_seg[start+i];
+                        auto st{registers.file[registers_t::CSP] - i*sizeof(compute_stack_t::value_type)};
+                        size_t start = st - sizeof(T) / sizeof(compute_stack_t::value_type);
+                        for (size_t i = 0; i < sizeof(T) / sizeof(compute_stack_t::value_type); ++i)
+                         *((compute_stack_t::value_type*) &r + i) = compute_stack[start+i];
                         return r;
                     }
-
-                    text_t& text() {return text_seg;}
-                    data_t& data() {return data_seg;}
-                    stack_t& stack() {return stack_seg;}
 
                     size_t run(size_t start = 0);
 
@@ -193,9 +203,7 @@ namespace ceps{
 
                     void dump(ostream& os);
                     void reset();
-                    size_t stack_top_pos() const { return registers.file[registers_t::SP];}
                     map<string, size_t>& data_labels(){return label2loc;}
-                    size_t data_size() const {return data_seg.size();}
                 private:
                     size_t noop(size_t);
                     size_t ldi32(size_t);
@@ -276,36 +284,32 @@ namespace ceps{
                     size_t popi32reg(size_t);
                     size_t pushi32(size_t);
 
-                    text_t text_seg;
-                    data_t data_seg;
-                    stack_t stack_seg;
-
-                    //size_t stack_top;
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
                     static constexpr size_t base_opcode_width = 1;
             };
 
-            size_t emitX(VMEnv::text_t& text);
-            template<Opcode opcode> size_t emit(VMEnv::text_t& text){
-                    auto t {text.size()};
-                    text.push_back((VMEnv::text_t::value_type) opcode);
-                    return t;
+            template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos){
+                    *(base_opcode_width*)(vm.text + pos) = (base_opcode_width) opcode; 
+                    return pos + sizeof(base_opcode_width);
             }
-            template<Opcode opcode> size_t emit(VMEnv::text_t& text, int v){
-                    auto t {text.size()};
-                    text.push_back((VMEnv::text_t::value_type) opcode);
-                    text.push_back(v);
-                    return t;
+            template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos, int v){
+                    *(base_opcode_width*)(vm.text + pos) = (base_opcode_width) opcode; 
+                    *(int*)(vm.text + pos + sizeof(base_opcode_width)) = v; 
+                    return pos + sizeof(base_opcode_width) + sizeof(v);
             }
-           template<typename T> void patch(VMEnv::text_t& text, size_t ofs, T t ){
-                    text[ofs + 1] = t;
+            template<typename T> void patch(VMEnv& vm,size_t ofs, T t ){
+                    *(T*)(vm.text + ofs) = t; 
             }
 
             static map< string, 
-                        tuple<Opcode,string, size_t (*)(VMEnv::text_t&), size_t (*)(VMEnv::text_t&, int) > > 
-             mnemonics = {
+                        tuple<
+                         Opcode,
+                         string, 
+                         size_t (*)(VMEnv& ,size_t), 
+                         size_t (*)(VMEnv& ,size_t, int)> 
+                      > mnemonics = {
              
                 {"halt", {Opcode::halt,"Yields the processor.",emit<Opcode::halt>,nullptr} },
                 {"noop", {Opcode::noop,"No operation.",emit<Opcode::noop>,nullptr}},

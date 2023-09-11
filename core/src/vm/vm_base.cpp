@@ -337,8 +337,15 @@ namespace ceps::vm::oblectamenta{
 
 
     VMEnv::VMEnv(){
-        registers.file[registers_t::SP] = 0;
+        mem.heap = mem.base = new remove_pointer_t<data_t>[default_mem_size];
+        mem.end = mem.base + default_mem_size;
+        text = new remove_pointer_t<text_t>[default_text_size];
+
+        registers.file[registers_t::SP] = mem.end;
+        registers.file[registers_t::CSP] = 0;
         registers.file[registers_t::FP] = 0;
+        registers.file[registers_t::PC] = 0;
+
         op_dispatch.push_back(&VMEnv::noop);
         op_dispatch.push_back(&VMEnv::noop); 
         op_dispatch.push_back(&VMEnv::ldi32);
@@ -389,7 +396,6 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::xori64);
         op_dispatch.push_back(&VMEnv::duptopi32);
         op_dispatch.push_back(&VMEnv::muli32);
-
         op_dispatch.push_back(&VMEnv::muli64);
         op_dispatch.push_back(&VMEnv::muldbl);
         op_dispatch.push_back(&VMEnv::divi32);

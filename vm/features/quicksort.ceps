@@ -41,20 +41,58 @@ Scenario{
                 OblectamentaDataLabel b;
                 OblectamentaDataLabel n;
                 OblectamentaDataLabel i;
-                OblectamentaCodeLabel qsort, done;
+                OblectamentaCodeLabel partition, qsort, qsort_exit, done;
 
-                 ldi32(0);  // left boundary
-                 ldi32(n);  // right boundary
-                 ldi32(0);  // pivot's index
+                  ldi32(0);  // pivot's index
+                  ldi32(0);  // left boundary
+                  ldi32(n);  // right boundary
 
-                 call(qsort); //r = qsort(0,n);
-                 popi32;     // remove the constant 0 from stack
-                 popi32;     // remove n from stack
-                 popi32;     // remove r from stack
-                 buc(done);   // branch unconditionally to done
+                  call(qsort); //r = qsort(0,n);
+                  
+                  popi32;     // remove the constant 0 from stack
+                  popi32;     // remove n from stack
+                  popi32;     // remove r from stack
+                  buc(done);   // branch unconditionally to done
                 qsort;
-                 setframe;
-                 ret;        // return 
+                  ldi32(3);
+                  pushi32(reg(SP));
+                  subi32;
+                  popi32(reg(FP)); // prolog for call frame
+                  pushi32(reg(FP));
+
+                  cpysi32(1);      // left 
+                  cpysi32(0);      // right
+                  subi32;
+                  ldi32(1);
+                  bgteq(qsort_exit);
+
+
+
+
+                  ldi32(0);        // pivot
+                  cpysi32(1);      // left 
+                  cpysi32(0);      // right
+                  
+
+                  call(partition);
+                  popi32;
+                  popi32;
+                                 //pivot on top of the stack
+                  halt;
+                  
+                  
+                  popi32;
+                qsort_exit;
+                  popi32;
+                  ret; 
+                partition;
+                  ldi32(3);
+                  pushi32(reg(SP));
+                  subi32;
+                  popi32(reg(FP)); // prolog for call frame
+                  ldi32(0);
+                  wrsi32(2); // write return value
+                 ret;
 
                 done; 
                  halt;       // halt execution
