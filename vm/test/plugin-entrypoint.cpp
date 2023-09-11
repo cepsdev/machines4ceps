@@ -81,8 +81,6 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
     using namespace ceps::vm::oblectamenta;
     VMEnv r{};
 
-    //r.text().push_back( (VMEnv::text_t::value_type) ceps::vm::oblectamenta::Opcode::halt);std::cerr << "/////\n";
-
     for (auto e : children(s)){
      if (!is<Ast_node_kind::structdef>(e)) continue;
      if (name(*as_struct_ptr(e)) == "text" && children(*as_struct_ptr(e)).size() ){
@@ -99,7 +97,7 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
             else if (is<Ast_node_kind::float_literal>(e)) r.store(value(as_double_ref(e)));
             else if (is<Ast_node_kind::string_literal>(e)) r.store(value(as_string_ref(e)));
             else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
-                r.data_labels()[name(as_symbol_ref(e))] = r.data_size();
+                r.data_labels()[name(as_symbol_ref(e))] = r.mem.heap - r.mem.base;
             }
         }        
      }
