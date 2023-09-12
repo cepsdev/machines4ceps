@@ -75,11 +75,16 @@ template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
     return name(s) == "vm";
 }
 
+
+
 template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& s)
 {
     using namespace ceps::ast;
     using namespace ceps::vm::oblectamenta;
+    using namespace std;
+
     VMEnv r{};
+    optional<Struct*> st;
 
     for (auto e : children(s)){
      if (!is<Ast_node_kind::structdef>(e)) continue;
@@ -101,12 +106,12 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
             }
         }        
      }
-     else if (name(*as_struct_ptr(e)) == "stack" && children(*as_struct_ptr(e)).size() ){
-        auto& stack_rep{*as_struct_ptr(e)};
+     else if ( (st = is_non_empty_struct_with_name(e,"compute_stack")) ){
+        auto& stack_rep{**st};
         for(auto e: children(stack_rep)){
-            if (is<Ast_node_kind::int_literal>(e)) r.push(value(as_int_ref(e)));
-            else if (is<Ast_node_kind::float_literal>(e)) r.push(value(as_double_ref(e)));
-            else if (is<Ast_node_kind::string_literal>(e)) r.push(value(as_string_ref(e)));
+            if (is<Ast_node_kind::int_literal>(e)) r.push_cs(value(as_int_ref(e)));
+            else if (is<Ast_node_kind::float_literal>(e)) r.push_cs(value(as_double_ref(e)));
+            else if (is<Ast_node_kind::string_literal>(e)) r.push_cs(value(as_string_ref(e)));
         }
      }
     }
@@ -128,11 +133,13 @@ struct ser_wrapper_text{
 template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblectamenta::VMEnv& vm ){
     using namespace ceps::ast;
     using namespace ceps::interpreter;
+    using namespace ceps::vm::oblectamenta;
     
     auto result = mk_struct("stack");
     auto& ch {children(*result)};
-    for (size_t i = 0; i < stack.value.size() && i < vm.stack_top_pos(); ++i )
-        ch.push_back(mk_int_node(stack.value[i]));
+    auto mem_size{vm.mem.end -vm.mem.base};
+    for (ssize_t i = 0; i < mem_size  - vm.registers.file[VMEnv::registers_t::SP]; ++i )
+        ch.push_back(mk_int_node( vm.mem.base[vm.registers.file[VMEnv::registers_t::SP] + i] ));
     return result;
 }
 
