@@ -22,13 +22,9 @@ Scenario{
     };
 
     When{
-        let the_vm = run(
-            operation{
-                create_vm;
-                parameters{};
-            }
-        );
+        let the_vm = obj(vm{});
      };
+     "!!"; the_vm;"!!!";
      Then
      {
         verdict{equality_test{ 

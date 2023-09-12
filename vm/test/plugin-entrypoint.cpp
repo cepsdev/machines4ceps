@@ -119,15 +119,15 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
 }
 
 struct ser_wrapper_stack{
-    ceps::vm::oblectamenta::VMEnv::stack_t value;
+    
 };
 
 struct ser_wrapper_data{
-    ceps::vm::oblectamenta::VMEnv::data_t value;
+    
 };
 
 struct ser_wrapper_text{
-    ceps::vm::oblectamenta::VMEnv::text_t value;
+    
 };
 
 template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblectamenta::VMEnv& vm ){
@@ -143,16 +143,16 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblecta
     return result;
 }
 
-template<> ceps::ast::node_t ast_rep (ser_wrapper_data data){
+template<> ceps::ast::node_t ast_rep (ser_wrapper_data data, ceps::vm::oblectamenta::VMEnv& vm){
     using namespace ceps::ast;
     using namespace ceps::interpreter;
-    
+    using namespace ceps::vm::oblectamenta;
+   
     auto result = mk_struct("data");
-
     auto& ch {children(*result)};
-    for (auto e:data.value)
-     ch.push_back(mk_int_node(e));
-    
+    auto static_mem_size{vm.mem.heap -vm.mem.base};
+    for (ssize_t i = 0; i < static_mem_size; ++i )
+        ch.push_back(mk_int_node( vm.mem.base[i] ));
     return result;
 }
 
@@ -171,22 +171,13 @@ template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv&> (ceps::vm::
     using namespace ceps::interpreter;
     
     auto result = mk_struct("vm");
-    children(*result).push_back(ast_rep(ser_wrapper_stack{vm.stack()},vm));
-    children(*result).push_back(ast_rep(ser_wrapper_data{vm.data()}));
-    children(*result).push_back(ast_rep(ser_wrapper_text{vm.text()}));
+    children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
+    children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
+    children(*result).push_back(ast_rep(ser_wrapper_text{}));
  
     return result;
 }
 
-
-////////
-
-/*template<int n> void h() {
-    std::cout << "no partam: "<< n << '\n';
-}
-template<int n> void h(int i){
-    std::cout << "param: " << n << '\n';
-}*/
 ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
     return get_first_child(params);
 }
@@ -214,7 +205,6 @@ ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callpara
         
         if (maybe_vm){
             auto& vm{*maybe_vm};
-            emit<Opcode::halt>(vm.text());
             vm.run(0);
             return ast_rep<ceps::vm::oblectamenta::VMEnv&> (vm);
         } else {
@@ -229,6 +219,5 @@ extern "C" void init_plugin(IUserdefined_function_registry* smc)
   cepsplugin::plugin_master = smc->get_plugin_interface();
   cepsplugin::plugin_master->reg_ceps_phase0plugin("run_oblectamenta_bytecode", cepsplugin::run_oblectamenta_bytecode);
   cepsplugin::plugin_master->reg_ceps_phase0plugin("obj", cepsplugin::obj);
-
 }					
 				
