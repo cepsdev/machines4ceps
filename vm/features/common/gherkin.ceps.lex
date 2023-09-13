@@ -47,8 +47,9 @@ lexer read_scenario{
  And => And {call read_given_and}; .
  When =>  When {call read_when}; .
  Then =>  Then {call read_then}; .
+ any => .;
 
- any => rewind exit .
+ Scenario \: => rewind exit .
 }
 
 
@@ -58,7 +59,6 @@ BEGIN{
                  title{ label blank __ blank title = double_quote call read_descr double_quote ;};
                  call read_scenario 
                 }; .
- eof => "!!!!";.
  any => .
 }
 
