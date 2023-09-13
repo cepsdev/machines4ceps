@@ -1,7 +1,7 @@
-Feature : A bytecode VM for the efficient execution of actions, guards etc.
+# Feature : A bytecode VM for the efficient execution of actions, guards etc.
 
 
-Scenario: A VM contains code, data, stack and a compute stack. 
+## Scenario: A VM contains code, data, stack and a compute stack. 
 
 
 Given an empty stack the_stack.
