@@ -24,8 +24,7 @@ Scenario{
     When{
         let the_vm = obj(vm{});
      };
-     "!!"; the_vm;"!!!";
-     Then
+    Then
      {
         verdict{equality_test{ 
             the_vm;

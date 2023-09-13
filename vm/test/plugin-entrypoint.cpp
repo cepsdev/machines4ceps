@@ -16,6 +16,7 @@
 #include <map>
 #include <algorithm>
 #include <future>
+#include <memory>
 #include <netinet/sctp.h> 
 
 #include "ceps_ast.hh"
@@ -68,6 +69,21 @@ template<typename T> ceps::ast::node_t ast_rep (T entity, ceps::vm::oblectamenta
 
 ////////
 
+struct ser_wrapper_stack{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;
+};
+
+struct ser_wrapper_data{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;
+};
+
+struct ser_wrapper_text{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;    
+};
+
+struct ser_wrapper_cstack{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;
+};
 
 template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
 {
@@ -75,7 +91,107 @@ template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
     return name(s) == "vm";
 }
 
+template<> bool check<ser_wrapper_stack>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "stack";
+}
 
+template<> ser_wrapper_stack fetch<ser_wrapper_stack>(ceps::ast::Struct& s)
+{
+    using namespace ceps::ast;
+    using namespace ceps::vm::oblectamenta;
+    using namespace std;
+    
+    ser_wrapper_stack r{make_shared<VMEnv>()};
+
+    optional<Struct*> st;
+
+    for(auto e: children(s)){
+     if (is<Ast_node_kind::int_literal>(e)){ 
+        auto v{value(as_int_ref(e))};
+        r.vm->registers.file[VMEnv::registers_t::SP] -= sizeof(int32_t);
+        *(int*)&(r.vm->mem.base[r.vm->registers.file[VMEnv::registers_t::SP]]) = v;
+     }
+    }        
+    return r;
+}
+
+template<> bool check<ser_wrapper_text>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "text";
+}
+
+template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s)
+{
+    using namespace ceps::ast;
+    using namespace ceps::vm::oblectamenta;
+    using namespace std;
+    
+    ser_wrapper_text r{make_shared<VMEnv>()};
+
+    optional<Struct*> st;
+    try{
+        oblectamenta_assembler(*r.vm,children(s));
+    } catch (std::string const& msg){
+        std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << s << '\n' << '\n';
+    }
+    return r;
+}
+
+template<> bool check<ser_wrapper_data>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "data";
+}
+
+template<> ser_wrapper_data fetch<ser_wrapper_data>(ceps::ast::Struct& s)
+{
+    using namespace ceps::ast;
+    using namespace ceps::vm::oblectamenta;
+    using namespace std;
+    
+    ser_wrapper_data r{make_shared<VMEnv>()};
+
+    optional<Struct*> st;
+
+    for(auto e: children(s)){
+     if (is<Ast_node_kind::int_literal>(e)){ 
+        if (is<Ast_node_kind::int_literal>(e)) r.vm->store(value(as_int_ref(e)));
+        else if (is<Ast_node_kind::float_literal>(e)) r.vm->store(value(as_double_ref(e)));
+        else if (is<Ast_node_kind::string_literal>(e)) r.vm->store(value(as_string_ref(e)));
+        else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
+                r.vm->data_labels()[name(as_symbol_ref(e))] = r.vm->mem.heap - r.vm->mem.base;
+        }
+     }
+    }        
+    return r;
+}
+
+template<> bool check<ser_wrapper_cstack>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "compute_stack";
+}
+
+template<> ser_wrapper_cstack fetch<ser_wrapper_cstack>(ceps::ast::Struct& s)
+{
+    using namespace ceps::ast;
+    using namespace ceps::vm::oblectamenta;
+    using namespace std;
+    
+    ser_wrapper_cstack r{make_shared<VMEnv>()};
+
+    optional<Struct*> st;
+
+    for(auto e: children(s)){
+        if (is<Ast_node_kind::int_literal>(e)) r.vm->push_cs(value(as_int_ref(e)));
+        else if (is<Ast_node_kind::float_literal>(e)) r.vm->push_cs(value(as_double_ref(e)));
+        else if (is<Ast_node_kind::string_literal>(e)) r.vm->push_cs(value(as_string_ref(e)));
+    }
+    return r;
+}
 
 template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& s)
 {
@@ -118,18 +234,6 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
    return r;
 }
 
-struct ser_wrapper_stack{
-    
-};
-
-struct ser_wrapper_data{
-    
-};
-
-struct ser_wrapper_text{
-    
-};
-
 template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblectamenta::VMEnv& vm ){
     using namespace ceps::ast;
     using namespace ceps::interpreter;
@@ -165,6 +269,26 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_text text){
     return result;
 }
 
+template<> ceps::ast::node_t ast_rep (ser_wrapper_cstack cstack, ceps::vm::oblectamenta::VMEnv& vm ){
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+    using namespace ceps::vm::oblectamenta;
+    
+    auto result = mk_struct("compute_stack");
+    auto& ch {children(*result)};
+    for(size_t i{ (size_t)vm.registers.file[VMEnv::registers_t::CSP]} ; i < vm.compute_stack.size(); ++i)
+     ch.push_back(mk_int_node(vm.compute_stack[i]));
+    return result;
+}
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_text text, ceps::vm::oblectamenta::VMEnv& vm ){
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+    using namespace ceps::vm::oblectamenta;
+    
+    auto result = mk_struct("text");
+    return result;
+}
 
 template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv&> (ceps::vm::oblectamenta::VMEnv& vm){
     using namespace ceps::ast;
@@ -174,12 +298,47 @@ template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv&> (ceps::vm::
     children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
     children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
     children(*result).push_back(ast_rep(ser_wrapper_text{}));
+    children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
  
     return result;
 }
 
+template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv> (ceps::vm::oblectamenta::VMEnv vm){
+    using namespace ceps::ast;
+    using namespace ceps::interpreter;
+    
+    auto result = mk_struct("vm");
+    children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
+    children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
+    children(*result).push_back(ast_rep(ser_wrapper_text{}));
+    children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
+ 
+    return result;
+}
+
+
 ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
-    return get_first_child(params);
+    using namespace std;
+    using namespace ceps::ast;
+    using namespace ceps::vm::oblectamenta;
+
+    static auto fns{ map<string, node_t (*)(Struct&)>{
+        {"vm", [] (Struct& s) -> node_t { if(!children(s).size()) return ast_rep(VMEnv{}); return mk_undef(); } },
+        {"stack", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_stack>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
+        {"data", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_data>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
+        {"text", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_text>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
+        {"compute_stack", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_cstack>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } }
+    }};
+    
+    auto data{get_first_child(params)};
+    if (!is<Ast_node_kind::structdef>(data))
+     return mk_undef();
+
+    auto& ceps_struct = *as_struct_ptr(data);
+    auto obj_name{name(ceps_struct)};
+    auto factory_it{fns.find(obj_name)};
+    if (factory_it == fns.end()) return mk_undef();
+    return factory_it->second(ceps_struct);
 }
 
 
