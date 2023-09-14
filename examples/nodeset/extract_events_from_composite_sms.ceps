@@ -1,0 +1,85 @@
+kind Event;
+Event E1,E2,E3,E4,E5;
+
+sm{
+    S1;
+    states{Initial;a;b;c;};
+    t{Initial;a;E1;};
+    t{a;b;E2;};
+};
+
+sm{
+    S2;
+    states{Initial;a;b;c;};
+    t{Initial;a;E3;};
+    sm{
+      S3;
+      states{Initial;a;b;c;};
+      t{Initial;a;E4;};
+        sm{
+            S4;
+            states{Initial;a;b;c;};
+            t{Initial;a;E5;};
+        };
+
+    };
+
+};
+
+"---------------";
+demo
+{
+ for (a_machine:root.sm){
+    component{
+        name{a_machine.content().at(0);};
+        for (a_transition:a_machine.t){
+            for(an_event : a_transition.content().symbol("Event")){
+                an_event;
+            }
+        }
+    };
+ }
+};
+"---------------";"---------------";
+macro extract_events{
+ for (a_machine:arglist.sm){
+    component{
+        name{a_machine.content().at(0);};
+        for (a_transition:a_machine.t){
+            for(an_event : a_transition.content().symbol("Event")){
+                an_event;
+            }
+        }
+        extract_events{a_machine.sm;};
+    };
+ }
+};
+
+macro extract_events_inner{
+ for (a_machine:arglist.sm){
+        for (a_transition:a_machine.t){
+            for(an_event : a_transition.content().symbol("Event")){
+                an_event;
+            }
+        }
+        extract_events_inner{a_machine.sm;};
+ }
+};
+
+macro extract_events2{
+ for (a_machine:arglist.sm){
+    component{
+        name{a_machine.content().at(0);};
+        for (a_transition:a_machine.t){
+            for(an_event : a_transition.content().symbol("Event")){
+                an_event;
+            }
+        }
+        extract_events_inner{a_machine.sm;};
+    };
+ }
+};
+"---------------";"---------------";"---------------";"---------------";
+extract_events{root.sm;};
+"---------------";"---------------";"---------------";"---------------";
+extract_events2{root.sm;};
