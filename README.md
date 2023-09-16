@@ -1,5 +1,5 @@
 # machines4ceps
-__Write, run__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams). 
+__Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams). 
 
 ## ceps
 
@@ -11,7 +11,7 @@ can only be derived by following a bottom up approach. Ceps is part of a bigger 
 
 Details can be found [here](./INSTALL.md)  
 
-## Writing and running state machines - Quick Start
+## Writing, running, and rendering state machines - Quick Start
 
 This intro follows closely the discussion in https://en.wikipedia.org/wiki/UML_state_machine. 
 
