@@ -1,5 +1,7 @@
 # Installation
-
+## Download binary from sourceforge
+### x86-64
+- [Ubuntu 20.04](https://sourceforge.net/projects/ceps-tool/files/x86-64/ubuntu-20.04)
 ## How to build the thing
 
 ### Prerequisites:
