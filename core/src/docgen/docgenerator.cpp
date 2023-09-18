@@ -185,7 +185,7 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 		}
 	} else if (is<Ast_node_kind::uint8>(expr)){
 		std::stringstream ss;
-		ss << value(as_uint8_ref(expr));
+		ss << (unsigned int) value(as_uint8_ref(expr));
 		{ 
 			doc_writer->push_ctx();
 			doc_writer->top().set_text_foreground_color("expr.int_literal");
@@ -548,7 +548,8 @@ static bool only_primitives (std::vector<ceps::ast::node_t> v, size_t& count){
 					is<Ast_node_kind::long_literal>(e) || 
 					is<Ast_node_kind::unsigned_long_literal>(e) || 
 					is<Ast_node_kind::symbol>(e) || 
-					is<Ast_node_kind::identifier>(e) ) ) {
+					is<Ast_node_kind::identifier>(e) ||
+					is<Ast_node_kind::uint8>(e)) ) {
 						return false;
 		} else ++count;		
 	}
