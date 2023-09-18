@@ -15,8 +15,19 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 #include "core/include/vm/vm_base.hpp"
+#include <cstring>
 
 namespace ceps::vm::oblectamenta{
+
+   void copy_stack(VMEnv& from, VMEnv& to){
+        auto from_stack_size{from.mem.end - from.mem.base - from.registers.file[VMEnv::registers_t::SP] };
+        if (to.mem.end - to.mem.base < from.mem.end - from.mem.base - from.registers.file[VMEnv::registers_t::SP] ) return;
+        memcpy( to.mem.base + (to.mem.end - to.mem.base - from_stack_size),
+                from.mem.base + from.registers.file[VMEnv::registers_t::SP],
+                from_stack_size
+                );
+        to.registers.file[VMEnv::registers_t::SP] = to.mem.end - to.mem.base - from_stack_size;
+   }
 
    size_t VMEnv::run(size_t start){
         registers.file[registers_t::PC] = start;

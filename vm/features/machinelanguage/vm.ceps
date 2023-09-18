@@ -38,6 +38,47 @@ Scenario{
      };
 };
 
+Scenario{
+    title{label __ title = "The data, stack and compute stack of a VM can be initialized with data.";};
+    
+    let the_stack = obj(stack{3; 2; 1;}); 
+	let the_data = obj(data{}); 
+	let the_code = obj(text{});
+	let the_compute_stack = obj(compute_stack{});
+
+
+    Given{
+        the_stack; 
+    };
+    And{
+        the_data;
+    };
+    And{
+        the_code;
+    };
+    And{
+        the_compute_stack;
+    };
+
+    When{
+        let the_vm = obj(vm{the_stack;});
+     };
+    Then
+     {
+        "?????"; vm{the_stack;};
+        "!!!!!"; the_vm;
+        verdict{equality_test{ 
+            the_vm;
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+                the_compute_stack;
+            };
+        };};
+     };
+};
+
 Summary{
  for( e : root.Scenario.Then.result){
   e;

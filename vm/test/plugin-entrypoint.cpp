@@ -107,7 +107,9 @@ template<> ser_wrapper_stack fetch<ser_wrapper_stack>(ceps::ast::Struct& s)
 
     optional<Struct*> st;
 
-    for(auto e: children(s)){
+    if(children(s).size()) 
+    for(size_t i{children(s).size()}; i > 0; --i){
+     auto e {children(s)[i-1]};
      if (is<Ast_node_kind::int_literal>(e)){ 
         auto v{value(as_int_ref(e))};
         r.vm->registers.file[VMEnv::registers_t::SP] -= sizeof(int32_t);
@@ -204,7 +206,11 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
 
     for (auto e : children(s)){
      if (!is<Ast_node_kind::structdef>(e)) continue;
-     if (name(*as_struct_ptr(e)) == "text" && children(*as_struct_ptr(e)).size() ){
+     if (name(*as_struct_ptr(e)) == "stack") {
+        auto stack_opt{read_value<ser_wrapper_stack>(*as_struct_ptr(e))};
+        if (!stack_opt) continue;
+        copy_stack( *(*stack_opt).vm, r );
+     } else if (name(*as_struct_ptr(e)) == "text" && children(*as_struct_ptr(e)).size() ){
         try{
             oblectamenta_assembler(r,children(*as_struct_ptr(e)));
         } catch (std::string const& msg){
@@ -243,7 +249,7 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblecta
     auto& ch {children(*result)};
     auto mem_size{vm.mem.end -vm.mem.base};
     for (ssize_t i = 0; i < mem_size  - vm.registers.file[VMEnv::registers_t::SP]; ++i )
-        ch.push_back(mk_int_node( vm.mem.base[vm.registers.file[VMEnv::registers_t::SP] + i] ));
+        ch.push_back(mk_uint8( vm.mem.base[vm.registers.file[VMEnv::registers_t::SP] + i] ));
     return result;
 }
 
@@ -323,8 +329,22 @@ ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
     using namespace ceps::vm::oblectamenta;
 
     static auto fns{ map<string, node_t (*)(Struct&)>{
-        {"vm", [] (Struct& s) -> node_t { if(!children(s).size()) return ast_rep(VMEnv{}); return mk_undef(); } },
-        {"stack", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_stack>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
+        {"vm", [] (Struct& s) -> node_t { 
+                if(!children(s).size()) return ast_rep(VMEnv{}); 
+                auto vm_opt{read_value<VMEnv>(s)};
+                if (vm_opt) return ast_rep(*vm_opt);
+                return mk_undef();
+               } 
+        },
+        {   "stack", 
+            [] (Struct& s) -> node_t 
+                    { 
+                        VMEnv vm;
+                        auto v{read_value<ser_wrapper_stack>(s)}; 
+                        if (!v) return mk_undef(); 
+                        return ast_rep(*v,*(*v).vm); 
+                    } 
+        },
         {"data", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_data>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
         {"text", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_text>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
         {"compute_stack", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_cstack>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } }
