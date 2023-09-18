@@ -1,9 +1,9 @@
 Scenario{
-     title{label _oblectamenta_instruction_call_definition title = "The ret instruction.";};
+     title{label __ title = "A VM contains code, data, stack and a compute stack.";};
      Given{
 		  let the_stack = obj(
             stack{
-                size_opcode_ret+size_opcode_buc;
+                
             }
           );
           the_stack;
@@ -11,8 +11,6 @@ Scenario{
      And{
 		let the_data = obj(
             data{
-                OblectamentaDataLabel x;
-                x; 0;
             }
         );
         the_data;
@@ -20,16 +18,16 @@ Scenario{
      And{
 		let the_code = obj(
             text{
-                OblectamentaCodeLabel loop;
-                OblectamentaDataLabel x;
-                 loop;
-                   ret;
-                   buc(loop);
-                   ldi32(42);
-                   sti32(x);                   
            });
         the_code;
      };
+     And{
+		let the_compute_stack= obj(
+           compute_stack{
+           });
+        the_compute_stack;
+     };
+
      When{
         let the_vm = run_oblectamenta_bytecode(
             vm{
