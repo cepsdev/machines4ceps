@@ -10,7 +10,7 @@ __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ sta
 - Computation of State/Transition Coverage.
 - Wide variety of input formats supported, e.g.mermaid.js.  
 - Wide variety of output formats supported, e.g. render state charts with mermaid.js
-- Supports WebSockets, Bosch-CAN.
+- Supports WebSocket, Bosch-CAN.
 - Runs on any Unixish device.
 
 ## ceps
