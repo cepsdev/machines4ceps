@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define VERSION_SM4CEPS_MAJOR "0"
-#define VERSION_SM4CEPS_MINOR "8.0"
+#define VERSION_SM4CEPS_MINOR "8.1"
 
 vector < string > generated_sql_file_names;
 bool DUMP_PLANTUML_REP_TO_COUT = false;
@@ -293,6 +293,7 @@ int main(int argc,char ** argv)
 				{"    html5               ", ""},
 				{"--pr                               ","Print unevaluated spec."},
 				{"--pe                               ","Print evaluated spec."},
+				{"--ppe                              ","Print Post Execution. Dumps the spec after evaluation and execution."},
 				{"--quiet                            ","Suppress any output on stdout (applies to tool's messages only)."},
 				{"--report_state_machines ID1 .. IDn ","Report includes the state machines with ids ID1 .. IDn only."},
 				{"--report_state_machines_only       ","Report includes state machines only."},

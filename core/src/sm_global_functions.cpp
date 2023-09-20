@@ -669,8 +669,7 @@ ceps::ast::Nodebase_ptr State_machine_simulation_core::ceps_interface_eval_func(
 		#endif
 		return ceps::ast::mk_none();
 	}else if (id == "print") {
-	 if (!quiet_mode_) return sm_action_print(active_smp,&sym_table,args);
-	 return ceps::ast::mk_none();
+	 return sm_action_print(active_smp,&sym_table,args);
 	} else if (id == "size") {
 		if (args[0]->kind() == ceps::ast::Ast_node_kind::byte_array)
 		{
