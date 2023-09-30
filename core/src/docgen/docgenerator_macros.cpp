@@ -25,6 +25,7 @@ using ceps::docgen::fmt_out_ctx;
 
 void ceps::docgen::fmt_out_handle_macro_definition(std::ostream& os, 
 	ceps::ast::Macrodef& macro, Doc_writer* doc_writer){
+	if(doc_writer->options.find("no-macros") != doc_writer->options.end() ) return;
 	if (doc_writer->top().symtab == nullptr) 
 		return;	
 
