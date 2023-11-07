@@ -65,8 +65,13 @@ Scenario{
      };
     Then
      {
-        "?????"; vm{the_stack;};
-        "!!!!!"; the_vm;
+            "!!!!";the_vm;
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+                the_compute_stack;
+            };"!!!!";
         verdict{equality_test{ 
             the_vm;
             vm{
