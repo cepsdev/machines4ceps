@@ -104,9 +104,6 @@ template<> ser_wrapper_stack fetch<ser_wrapper_stack>(ceps::ast::Struct& s)
     using namespace std;
     
     ser_wrapper_stack r{make_shared<VMEnv>()};
-
-    optional<Struct*> st;
-
     if(children(s).size()) 
     for(size_t i{children(s).size()}; i > 0; --i){
      auto e {children(s)[i-1]};
@@ -114,6 +111,10 @@ template<> ser_wrapper_stack fetch<ser_wrapper_stack>(ceps::ast::Struct& s)
         auto v{value(as_int_ref(e))};
         r.vm->registers.file[VMEnv::registers_t::SP] -= sizeof(int32_t);
         *(int*)&(r.vm->mem.base[r.vm->registers.file[VMEnv::registers_t::SP]]) = v;
+     } else if (is<Ast_node_kind::uint8>(e)){
+        auto v{value(as_uint8_ref(e))};
+        r.vm->registers.file[VMEnv::registers_t::SP] -= sizeof(v);
+        *(decltype(v)*)&(r.vm->mem.base[r.vm->registers.file[VMEnv::registers_t::SP]]) = v;
      }
     }        
     return r;
@@ -209,7 +210,16 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
      if (name(*as_struct_ptr(e)) == "stack") {
         auto stack_opt{read_value<ser_wrapper_stack>(*as_struct_ptr(e))};
         if (!stack_opt) continue;
+        //cerr << "Successfully read stack!\n";
         copy_stack( *(*stack_opt).vm, r );
+        //if (rr) cerr << "Successfully copied stack!\n";
+        //else  cerr << "Unsuccessfully copied stack!\n";
+        //cerr << *as_struct_ptr(e) << '\n';
+        //cerr << " target VMEnv::registers_t::SP = " << r.registers.file[VMEnv::registers_t::SP] << '\n';
+        //cerr << " source VMEnv::registers_t::SP = " << (*stack_opt).vm->registers.file[VMEnv::registers_t::SP] << '\n';
+        //cerr << " source stack size: " << (r.mem.end - r.mem.base - r.registers.file[VMEnv::registers_t::SP])<< '\n';
+        //cerr << " target stack size: " << ((*stack_opt).vm->mem.end - (*stack_opt).vm->mem.base - (*stack_opt).vm->registers.file[VMEnv::registers_t::SP])<< '\n';
+
      } else if (name(*as_struct_ptr(e)) == "text" && children(*as_struct_ptr(e)).size() ){
         try{
             oblectamenta_assembler(r,children(*as_struct_ptr(e)));

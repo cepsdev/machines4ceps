@@ -288,9 +288,9 @@ namespace ceps{
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
                     static constexpr size_t base_opcode_width = 1;
-                    friend void copy_stack(VMEnv& from, VMEnv& to);;
+                    friend bool copy_stack(VMEnv& from, VMEnv& to);;
             };
-            void copy_stack(VMEnv& from, VMEnv& to);
+            bool copy_stack(VMEnv& from, VMEnv& to);
 
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos){
                     *(base_opcode_width*)(vm.text + pos) = (base_opcode_width) opcode; 
