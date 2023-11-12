@@ -156,18 +156,16 @@ template<> ser_wrapper_data fetch<ser_wrapper_data>(ceps::ast::Struct& s)
     using namespace std;
     
     ser_wrapper_data r{make_shared<VMEnv>()};
-
-    optional<Struct*> st;
-
     for(auto e: children(s)){
-     if (is<Ast_node_kind::int_literal>(e)){ 
         if (is<Ast_node_kind::int_literal>(e)) r.vm->store(value(as_int_ref(e)));
         else if (is<Ast_node_kind::float_literal>(e)) r.vm->store(value(as_double_ref(e)));
         else if (is<Ast_node_kind::string_literal>(e)) r.vm->store(value(as_string_ref(e)));
         else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
                 r.vm->data_labels()[name(as_symbol_ref(e))] = r.vm->mem.heap - r.vm->mem.base;
+        } else if (is<Ast_node_kind::uint8>(e)){
+            auto v{value(as_uint8_ref(e))};
+            r.vm->store(v);
         }
-     }
     }        
     return r;
 }
@@ -210,33 +208,12 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
      if (name(*as_struct_ptr(e)) == "stack") {
         auto stack_opt{read_value<ser_wrapper_stack>(*as_struct_ptr(e))};
         if (!stack_opt) continue;
-        //cerr << "Successfully read stack!\n";
         copy_stack( *(*stack_opt).vm, r );
-        //if (rr) cerr << "Successfully copied stack!\n";
-        //else  cerr << "Unsuccessfully copied stack!\n";
-        //cerr << *as_struct_ptr(e) << '\n';
-        //cerr << " target VMEnv::registers_t::SP = " << r.registers.file[VMEnv::registers_t::SP] << '\n';
-        //cerr << " source VMEnv::registers_t::SP = " << (*stack_opt).vm->registers.file[VMEnv::registers_t::SP] << '\n';
-        //cerr << " source stack size: " << (r.mem.end - r.mem.base - r.registers.file[VMEnv::registers_t::SP])<< '\n';
-        //cerr << " target stack size: " << ((*stack_opt).vm->mem.end - (*stack_opt).vm->mem.base - (*stack_opt).vm->registers.file[VMEnv::registers_t::SP])<< '\n';
-
-     } else if (name(*as_struct_ptr(e)) == "text" && children(*as_struct_ptr(e)).size() ){
-        try{
-            oblectamenta_assembler(r,children(*as_struct_ptr(e)));
-        } catch (std::string const& msg){
-            std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << *as_struct_ptr(e) << '\n' << '\n';
-        }
-     }
-     else if (name(*as_struct_ptr(e)) == "data" && children(*as_struct_ptr(e)).size() ){
-        auto& data_rep{*as_struct_ptr(e)};
-        for(auto e: children(data_rep)){
-            if (is<Ast_node_kind::int_literal>(e)) r.store(value(as_int_ref(e)));
-            else if (is<Ast_node_kind::float_literal>(e)) r.store(value(as_double_ref(e)));
-            else if (is<Ast_node_kind::string_literal>(e)) r.store(value(as_string_ref(e)));
-            else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
-                r.data_labels()[name(as_symbol_ref(e))] = r.mem.heap - r.mem.base;
-            }
-        }        
+     } 
+     else if (name(*as_struct_ptr(e)) == "data" ){
+        auto data_opt{read_value<ser_wrapper_data>(*as_struct_ptr(e))};
+        if (!data_opt) continue;
+        copy_data( *(*data_opt).vm, r );             
      }
      else if ( (st = is_non_empty_struct_with_name(e,"compute_stack")) ){
         auto& stack_rep{**st};
@@ -245,7 +222,7 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
             else if (is<Ast_node_kind::float_literal>(e)) r.push_cs(value(as_double_ref(e)));
             else if (is<Ast_node_kind::string_literal>(e)) r.push_cs(value(as_string_ref(e)));
         }
-     }
+     } 
     }
    return r;
 }
@@ -272,7 +249,7 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_data data, ceps::vm::oblectame
     auto& ch {children(*result)};
     auto static_mem_size{vm.mem.heap -vm.mem.base};
     for (ssize_t i = 0; i < static_mem_size; ++i )
-        ch.push_back(mk_int_node( vm.mem.base[i] ));
+        ch.push_back(mk_uint8( vm.mem.base[i] ));
     return result;
 }
 

@@ -135,6 +135,14 @@ namespace ceps{
                         map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP}, {"CSP",CSP}, {"PC",PC} };
                     } registers;
 
+                    /*
+
+                    /----- static data ---\/--- dynamic data ----\/--- stack- --\
+                    | ---------------------|----------------------|------------- |
+                    |
+                   base                    heap                   SP            end 
+
+                    */
                     struct mem_t{
                         data_t base{};
                         data_t heap{};
@@ -291,6 +299,7 @@ namespace ceps{
                     friend bool copy_stack(VMEnv& from, VMEnv& to);;
             };
             bool copy_stack(VMEnv& from, VMEnv& to);
+            bool copy_data(VMEnv& from, VMEnv& to);
 
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos){
                     *(base_opcode_width*)(vm.text + pos) = (base_opcode_width) opcode; 
