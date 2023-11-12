@@ -82,7 +82,7 @@ Scenario{
     let the_stack = obj(stack{3; 2; 1;}); 
 	let the_data = obj(data{9;4;1;}); 
 	let the_code = obj(text{});
-	let the_compute_stack = obj(compute_stack{});
+	let the_compute_stack = obj(compute_stack{81;16;1;});
 
 
     Given{
@@ -103,18 +103,12 @@ Scenario{
             vm{
                 the_stack;
                 the_data;
+                the_compute_stack;
             }
         );
      };
     Then
      {
-            "!!!!";the_vm;
-            vm{
-                the_stack;
-                the_data;
-                the_code;
-                the_compute_stack;
-            };"!!!!";
         verdict{equality_test{ 
             the_vm;
             vm{

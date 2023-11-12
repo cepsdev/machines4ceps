@@ -40,6 +40,12 @@ namespace ceps::vm::oblectamenta{
         to.mem.heap = to.mem.base + from_data_size;
         return true;
    }
+    
+   bool copy_compute_stack(VMEnv& from, VMEnv& to){
+        to.registers.file[VMEnv::registers_t::CSP] = from.registers.file[VMEnv::registers_t::CSP];
+        to.compute_stack = from.compute_stack;
+        return true;
+   }
 
    size_t VMEnv::run(size_t start){
         registers.file[registers_t::PC] = start;

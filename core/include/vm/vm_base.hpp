@@ -300,6 +300,7 @@ namespace ceps{
             };
             bool copy_stack(VMEnv& from, VMEnv& to);
             bool copy_data(VMEnv& from, VMEnv& to);
+            bool copy_compute_stack(VMEnv& from, VMEnv& to);
 
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos){
                     *(base_opcode_width*)(vm.text + pos) = (base_opcode_width) opcode; 

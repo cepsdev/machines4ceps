@@ -183,13 +183,11 @@ template<> ser_wrapper_cstack fetch<ser_wrapper_cstack>(ceps::ast::Struct& s)
     using namespace std;
     
     ser_wrapper_cstack r{make_shared<VMEnv>()};
-
-    optional<Struct*> st;
-
     for(auto e: children(s)){
         if (is<Ast_node_kind::int_literal>(e)) r.vm->push_cs(value(as_int_ref(e)));
         else if (is<Ast_node_kind::float_literal>(e)) r.vm->push_cs(value(as_double_ref(e)));
         else if (is<Ast_node_kind::string_literal>(e)) r.vm->push_cs(value(as_string_ref(e)));
+        else if (is<Ast_node_kind::uint8>(e)) r.vm->push_cs(value(as_uint8_ref(e)));
     }
     return r;
 }
@@ -215,13 +213,10 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
         if (!data_opt) continue;
         copy_data( *(*data_opt).vm, r );             
      }
-     else if ( (st = is_non_empty_struct_with_name(e,"compute_stack")) ){
-        auto& stack_rep{**st};
-        for(auto e: children(stack_rep)){
-            if (is<Ast_node_kind::int_literal>(e)) r.push_cs(value(as_int_ref(e)));
-            else if (is<Ast_node_kind::float_literal>(e)) r.push_cs(value(as_double_ref(e)));
-            else if (is<Ast_node_kind::string_literal>(e)) r.push_cs(value(as_string_ref(e)));
-        }
+     else if ( name(*as_struct_ptr(e)) == "compute_stack") {
+        auto cs_opt{read_value<ser_wrapper_cstack>(*as_struct_ptr(e))};
+        if (!cs_opt) continue;
+        copy_compute_stack( *(*cs_opt).vm, r );
      } 
     }
    return r;
@@ -269,8 +264,8 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_cstack cstack, ceps::vm::oblec
     
     auto result = mk_struct("compute_stack");
     auto& ch {children(*result)};
-    for(size_t i{ (size_t)vm.registers.file[VMEnv::registers_t::CSP]} ; i < vm.compute_stack.size(); ++i)
-     ch.push_back(mk_int_node(vm.compute_stack[i]));
+    for(size_t i = 0; i < (size_t)vm.registers.file[VMEnv::registers_t::CSP] ; ++i)
+     ch.push_back(mk_uint8(vm.compute_stack[i]));
     return result;
 }
 
