@@ -1,5 +1,43 @@
 
 Scenario{
+    title{label __ title = "Objects controlled by the Oblectamenta-VM must be instantiated via an obj() call.";};
+    
+    Given{
+        let the_stack = obj(stack{}); 
+    };
+    And{
+	    let the_data = obj(data{}); 
+    };
+    And{
+	    let the_code = obj(text{});
+    };
+    And{
+	    let the_compute_stack = obj(compute_stack{});
+    };
+
+    When{
+	    let the_code = obj(text{});
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            objs{
+                stack{};
+                data{};
+                text{};
+                compute_stack{};
+            };
+            objs{
+                the_stack;
+                the_data;
+                the_code;
+                the_compute_stack;
+            };
+        };};
+     };
+};
+
+Scenario{
     title{label __ title = "A VM contains code, data, stack and a compute stack.";};
     
     let the_stack = obj(stack{}); 
@@ -42,7 +80,7 @@ Scenario{
     title{label __ title = "The data, stack and compute stack of a VM can be initialized with data.";};
     
     let the_stack = obj(stack{3; 2; 1;}); 
-	let the_data = obj(data{}); 
+	let the_data = obj(data{9;4;1;}); 
 	let the_code = obj(text{});
 	let the_compute_stack = obj(compute_stack{});
 
@@ -61,7 +99,12 @@ Scenario{
     };
 
     When{
-        let the_vm = obj(vm{the_stack;});
+        let the_vm = obj(
+            vm{
+                the_stack;
+                the_data;
+            }
+        );
      };
     Then
      {
