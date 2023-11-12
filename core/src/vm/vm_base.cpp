@@ -30,6 +30,23 @@ namespace ceps::vm::oblectamenta{
         return true;
    }
 
+   bool copy_data(VMEnv& from, VMEnv& to){
+        auto from_data_size{from.mem.heap - from.mem.base  };
+        if (to.mem.end - to.mem.base < from_data_size ) return false;
+        memcpy( to.mem.base  ,
+                from.mem.base ,
+                from_data_size
+                );
+        to.mem.heap = to.mem.base + from_data_size;
+        return true;
+   }
+    
+   bool copy_compute_stack(VMEnv& from, VMEnv& to){
+        to.registers.file[VMEnv::registers_t::CSP] = from.registers.file[VMEnv::registers_t::CSP];
+        to.compute_stack = from.compute_stack;
+        return true;
+   }
+
    size_t VMEnv::run(size_t start){
         registers.file[registers_t::PC] = start;
         for(; (Opcode)text[registers.file[registers_t::PC]] != Opcode::halt;){ 
