@@ -240,6 +240,65 @@ Scenario{
      };
 };
 
+
+Scenario{
+    title{label __ title = "Running code changes the PC register.";};
+    
+	let the_code = obj(
+        text{
+            asm{
+             noop;
+             noop;
+             noop;
+             noop;
+             noop;
+            };
+        }
+    );
+
+
+    Given{
+        docinfo_se("code (text segment) with 5 noops");
+        the_code;
+    };
+
+    When{
+        docinfo_se(" Creating and running a VM");
+        let the_vm = obj(
+            vm{
+                the_code;
+            }
+        );
+     };
+    ";;;;;;;;;;;;;;;;;;";the_code;
+    "§§§§§§§§§§§§§§§";the_vm;
+    Then
+     {
+        docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
+
+        verdict{equality_test{ 
+            the_vm;
+            vm{
+                the_stack;
+                the_data;
+                the_code;
+                the_compute_stack;
+                registers{     
+                    CSP{as_int64(12);     };
+                    FP{as_int64(0);};
+                    PC{as_int64(0);};     
+                    SP{as_int64(4084);};     
+                };          
+            };
+        };};
+     };
+};
+
+
+
+
+
+
 Summary{
  for( e : root.Scenario.Then.result){
   e;

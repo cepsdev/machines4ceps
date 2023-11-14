@@ -151,6 +151,7 @@ namespace ceps{
 
                     compute_stack_t compute_stack;
                     text_t text{};
+                    size_t text_loc{};
 
                     static constexpr size_t default_mem_size {4096};
                     static constexpr size_t default_text_size {4096};

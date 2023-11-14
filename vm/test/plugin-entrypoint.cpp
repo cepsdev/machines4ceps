@@ -134,10 +134,13 @@ template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s)
 {
     ast_proc_prolog    
     ser_wrapper_text r{make_shared<VMEnv>()};
-
-    optional<Struct*> st;
     try{
-        oblectamenta_assembler(*r.vm,children(s));
+        for(auto e : children(s))
+         if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
+          oblectamenta_assembler(*r.vm,children(as_struct_ref(e)));
+          //cerr << as_struct_ref(e) << '\n';
+          //cerr << r.vm->text_loc << '\n';
+         }
     } catch (std::string const& msg){
         std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << s << '\n' << '\n';
     }
@@ -283,6 +286,9 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_cstack cstack, ceps::vm::oblec
 template<> ceps::ast::node_t ast_rep (ser_wrapper_text text, ceps::vm::oblectamenta::VMEnv& vm ){
     ast_proc_prolog    
     auto result = mk_struct("text");
+    auto& ch {children(*result)};
+    for (size_t loc = 0; loc < vm.text_loc; ++loc)
+     ch.push_back(mk_uint8(vm.text[loc]));
     return result;
 }
 

@@ -44,7 +44,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
  map<int32_t,size_t> immediate2loc; // immediate values => location in storage
  map<string,size_t> codelabel2loc; // code label => location in storage
 
- size_t text_loc{};
+ size_t& text_loc = vm.text_loc;
                        
  
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
