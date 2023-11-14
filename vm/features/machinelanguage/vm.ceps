@@ -52,23 +52,29 @@ Scenario{
 
 
     Given{
+        docinfo_se("An empty stack");
         the_stack; 
     };
     And{
+        docinfo_se("statically allocated data with no entries");
         the_data;
     };
     And{
+        docinfo_se("code (text segment) with no code");
         the_code;
     };
     And{
+        docinfo_se(" the stack where computations are performed without any data");
         the_compute_stack;
     };
 
     When{
+        docinfo_se(" A default constructed VM");
         let the_vm = obj(vm{});
      };
     Then
      {
+        docinfo_se(" The constructed VM contains stack,data, code, and the compute stack which are all empty.");
         verdict{equality_test{ 
             the_vm;
             vm{
@@ -91,19 +97,24 @@ Scenario{
 
 
     Given{
+        docinfo_se("A stack initialized with data");
         the_stack; 
     };
     And{
+        docinfo_se("non empty statically allocated data");
         the_data;
     };
     And{
+        docinfo_se("code (text segment) with no code");
         the_code;
     };
     And{
+        docinfo_se("compute stack with data");
         the_compute_stack;
     };
 
     When{
+        docinfo_se(" Creating a VM with initialized stack, data and compute stack");
         let the_vm = obj(
             vm{
                 the_stack;
@@ -114,6 +125,8 @@ Scenario{
      };
     Then
      {
+        docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
+
         verdict{equality_test{ 
             the_vm;
             vm{
