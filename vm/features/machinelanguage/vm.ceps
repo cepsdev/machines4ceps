@@ -160,7 +160,6 @@ Scenario{
             }
         ); 
     };
-    "!!!!"; the_data;
 
     When{
         docinfo_se(" Creating a VM with initialized data ");
@@ -169,8 +168,7 @@ Scenario{
                 the_data;
             }
         );
-     };
-    
+     };    
     Then
      {
         docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
@@ -181,28 +179,28 @@ Scenario{
                 stack{};
                 data{
                    l1;
-                   uint8(9); 
-                   uint8(0); 
-                   uint8(0); 
-                   uint8(0); 
-                   uint8(4); 
-                   uint8(0); 
-                   uint8(0); 
-                   uint8(0);
+                   as_uint8(9); 
+                   as_uint8(0); 
+                   as_uint8(0); 
+                   as_uint8(0); 
+                   as_uint8(4); 
+                   as_uint8(0); 
+                   as_uint8(0); 
+                   as_uint8(0);
                    l2; 
-                   uint8(1); 
-                   uint8(0); 
-                   uint8(0); 
-                   uint8(0); 
+                   as_uint8(1); 
+                   as_uint8(0); 
+                   as_uint8(0); 
+                   as_uint8(0); 
                    l3;
-                   uint8(103); 
-                   uint8(97); 
-                   uint8(114); 
-                   uint8(103); 
-                   uint8(97); 
-                   uint8(109); 
-                   uint8(101); 
-                   uint8(108); 
+                   as_uint8(103); 
+                   as_uint8(97); 
+                   as_uint8(114); 
+                   as_uint8(103); 
+                   as_uint8(97); 
+                   as_uint8(109); 
+                   as_uint8(101); 
+                   as_uint8(108); 
                 };
                 text{};
                 compute_stack{};

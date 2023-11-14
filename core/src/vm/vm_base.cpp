@@ -38,6 +38,7 @@ namespace ceps::vm::oblectamenta{
                 from_data_size
                 );
         to.mem.heap = to.mem.base + from_data_size;
+        to.data_labels() = from.data_labels();
         return true;
    }
     
