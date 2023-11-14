@@ -139,10 +139,10 @@ Scenario{
      };
 };
 
-kind OblectamentaDataLabel;
 
 Scenario{
     title{label __ title = "Data entries can contain labels.";};
+    kind OblectamentaDataLabel;
     OblectamentaDataLabel l1,l2,l3;
     
 
@@ -158,7 +158,8 @@ Scenario{
                 l3;
                 "gargamel";
             }
-        ); 
+        );
+        the_data;
     };
 
     When{
@@ -168,12 +169,13 @@ Scenario{
                 the_data;
             }
         );
-     };    
+     };
+
     Then
      {
         docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
-
-        verdict{equality_test{ 
+        verdict{
+          equality_test{ 
             the_vm;
             vm{
                 stack{};
@@ -205,7 +207,8 @@ Scenario{
                 text{};
                 compute_stack{};
             };
-        };};
+        };
+      };
      };
 };
 
