@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define VERSION_SM4CEPS_MAJOR "0"
-#define VERSION_SM4CEPS_MINOR "8.1.1"
+#define VERSION_SM4CEPS_MINOR "8.1.2"
 
 vector < string > generated_sql_file_names;
 bool DUMP_PLANTUML_REP_TO_COUT = false;
