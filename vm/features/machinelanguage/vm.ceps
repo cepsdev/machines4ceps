@@ -139,6 +139,79 @@ Scenario{
      };
 };
 
+kind OblectamentaDataLabel;
+
+Scenario{
+    title{label __ title = "Data entries can contain labels.";};
+    OblectamentaDataLabel l1,l2,l3;
+    
+
+    Given{
+        docinfo_se("non empty statically allocated data with labels");
+	    let the_data = obj(
+            data{
+                l1;
+                9;
+                4;
+                l2;
+                1;
+                l3;
+                "gargamel";
+            }
+        ); 
+    };
+    "!!!!"; the_data;
+
+    When{
+        docinfo_se(" Creating a VM with initialized data ");
+        let the_vm = obj(
+            vm{
+                the_data;
+            }
+        );
+     };
+    
+    Then
+     {
+        docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
+
+        verdict{equality_test{ 
+            the_vm;
+            vm{
+                stack{};
+                data{
+                   l1;
+                   uint8(9); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(4); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(0);
+                   l2; 
+                   uint8(1); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(0); 
+                   l3;
+                   uint8(103); 
+                   uint8(97); 
+                   uint8(114); 
+                   uint8(103); 
+                   uint8(97); 
+                   uint8(109); 
+                   uint8(101); 
+                   uint8(108); 
+                };
+                text{};
+                compute_stack{};
+            };
+        };};
+     };
+};
+
+
 Summary{
  for( e : root.Scenario.Then.result){
   e;
