@@ -19,6 +19,7 @@ val the_data          = undef;
 val the_code          = undef;
 val the_vm            = undef;
 val the_compute_stack = undef;
+val the_register_file = undef;
 
 kind OblectamentaOpcode;
 kind OblectamentaDataLabel;

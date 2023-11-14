@@ -27,6 +27,11 @@
 #include "core/include/vm/vm_base.hpp"
 #include "core/include/vm/oblectamenta-assembler.hpp"
 
+#define ast_proc_prolog  using namespace ceps::ast;\
+    using namespace ceps::vm::oblectamenta;\
+    using namespace ceps::interpreter;\
+    using namespace std;
+
 namespace cepsplugin{
     static Ism4ceps_plugin_interface* plugin_master = nullptr;
     static const std::string version_info = "INSERT_NAME_HERE v0.1";
@@ -101,10 +106,7 @@ template<> bool check<ser_wrapper_stack>(ceps::ast::Struct & s)
 
 template<> ser_wrapper_stack fetch<ser_wrapper_stack>(ceps::ast::Struct& s)
 {
-    using namespace ceps::ast;
-    using namespace ceps::vm::oblectamenta;
-    using namespace std;
-    
+    ast_proc_prolog    
     ser_wrapper_stack r{make_shared<VMEnv>()};
     if(children(s).size()) 
     for(size_t i{children(s).size()}; i > 0; --i){
@@ -130,10 +132,7 @@ template<> bool check<ser_wrapper_text>(ceps::ast::Struct & s)
 
 template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s)
 {
-    using namespace ceps::ast;
-    using namespace ceps::vm::oblectamenta;
-    using namespace std;
-    
+    ast_proc_prolog    
     ser_wrapper_text r{make_shared<VMEnv>()};
 
     optional<Struct*> st;
@@ -153,10 +152,7 @@ template<> bool check<ser_wrapper_data>(ceps::ast::Struct & s)
 
 template<> ser_wrapper_data fetch<ser_wrapper_data>(ceps::ast::Struct& s)
 {
-    using namespace ceps::ast;
-    using namespace ceps::vm::oblectamenta;
-    using namespace std;
-    
+    ast_proc_prolog    
     ser_wrapper_data r{make_shared<VMEnv>()};
     for(auto e: children(s)){
         if (is<Ast_node_kind::int_literal>(e)) r.vm->store(value(as_int_ref(e)));
@@ -180,10 +176,7 @@ template<> bool check<ser_wrapper_cstack>(ceps::ast::Struct & s)
 
 template<> ser_wrapper_cstack fetch<ser_wrapper_cstack>(ceps::ast::Struct& s)
 {
-    using namespace ceps::ast;
-    using namespace ceps::vm::oblectamenta;
-    using namespace std;
-    
+    ast_proc_prolog    
     ser_wrapper_cstack r{make_shared<VMEnv>()};
     for(auto e: children(s)){
         if (is<Ast_node_kind::int_literal>(e)) r.vm->push_cs(value(as_int_ref(e)));
@@ -194,12 +187,34 @@ template<> ser_wrapper_cstack fetch<ser_wrapper_cstack>(ceps::ast::Struct& s)
     return r;
 }
 
-template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& s)
+template<> bool check<ceps::vm::oblectamenta::VMEnv::registers_t>(ceps::ast::Struct & s)
 {
     using namespace ceps::ast;
-    using namespace ceps::vm::oblectamenta;
-    using namespace std;
+    return name(s) == "registers";
+}
 
+template<> ceps::vm::oblectamenta::VMEnv::registers_t fetch<ceps::vm::oblectamenta::VMEnv::registers_t>(ceps::ast::Struct& s)
+{
+    ast_proc_prolog
+    VMEnv r{};
+    auto regs{r.registers};
+
+    for (auto e : children(s)){
+     if (!is<Ast_node_kind::structdef>(e)) continue;
+     auto it{regs.reg_mnemonic2idx.find(name(*as_struct_ptr(e)))};
+     if (it == regs.reg_mnemonic2idx.end()) continue;
+     if (!children(*as_struct_ptr(e)).size()) continue;
+     if (is<Ast_node_kind::int_literal>(children(*as_struct_ptr(e))[0]) )
+      regs.file[it->second] = value(as_int_ref(children(*as_struct_ptr(e))[0]));
+     else if (is<Ast_node_kind::long_literal>(children(*as_struct_ptr(e))[0]))
+      regs.file[it->second] = value(as_int64_ref(children(*as_struct_ptr(e))[0]));     
+    }
+   return regs;
+}
+
+template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& s)
+{
+    ast_proc_prolog
     VMEnv r{};
     optional<Struct*> st;
 
@@ -225,10 +240,7 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
 }
 
 template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblectamenta::VMEnv& vm ){
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
-    using namespace ceps::vm::oblectamenta;
-    
+    ast_proc_prolog    
     auto result = mk_struct("stack");
     auto& ch {children(*result)};
     auto mem_size{vm.mem.end -vm.mem.base};
@@ -238,10 +250,7 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblecta
 }
 
 template<> ceps::ast::node_t ast_rep (ser_wrapper_data data, ceps::vm::oblectamenta::VMEnv& vm){
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
-    using namespace ceps::vm::oblectamenta;
-
+    ast_proc_prolog
     vector< pair<string, size_t> > lbls{vm.data_labels().rbegin(), vm.data_labels().rend()};
     sort(lbls.begin(), lbls.end(), [](pair<string, size_t> const & lhs, pair<string, size_t> const & rhs ){return lhs.second < rhs.second;});
   
@@ -259,20 +268,9 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_data data, ceps::vm::oblectame
     return result;
 }
 
-template<> ceps::ast::node_t ast_rep (ser_wrapper_text text){
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
-    
-    auto result = mk_struct("text");
-    //children(*result).push_back(ast_rep(ser_wrapper_stack{vm.stack()}));
-    return result;
-}
 
 template<> ceps::ast::node_t ast_rep (ser_wrapper_cstack cstack, ceps::vm::oblectamenta::VMEnv& vm ){
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
-    using namespace ceps::vm::oblectamenta;
-    
+    ast_proc_prolog    
     auto result = mk_struct("compute_stack");
     auto& ch {children(*result)};
     for(size_t i = 0; i < (size_t)vm.registers.file[VMEnv::registers_t::CSP] ; ++i)
@@ -280,47 +278,67 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_cstack cstack, ceps::vm::oblec
     return result;
 }
 
+// AST representation ser_wrapper_text
+
 template<> ceps::ast::node_t ast_rep (ser_wrapper_text text, ceps::vm::oblectamenta::VMEnv& vm ){
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
-    using namespace ceps::vm::oblectamenta;
-    
+    ast_proc_prolog    
     auto result = mk_struct("text");
     return result;
 }
 
+template<> ceps::ast::node_t ast_rep (ser_wrapper_text text){
+    ast_proc_prolog    
+    auto result = mk_struct("text");
+    return result;
+}
+
+// AST representation ceps::vm::oblectamenta::VMEnv::registers_t
+template<> ceps::ast::node_t ast_rep (ceps::vm::oblectamenta::VMEnv::registers_t regs){
+    ast_proc_prolog    
+    auto result = mk_struct("registers");
+    auto& ch {children(*result)};
+    for (auto reg : regs.reg_mnemonic2idx)
+    {
+        auto t{mk_struct(reg.first)}; ch.push_back(t);
+        children(*t).push_back(mk_int64_node(regs.file[reg.second]));
+    }
+    return result;
+}
+
+// AST representation ceps::vm::oblectamenta::VMEnv
 template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv&> (ceps::vm::oblectamenta::VMEnv& vm){
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
+    ast_proc_prolog
     
     auto result = mk_struct("vm");
     children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
     children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
     children(*result).push_back(ast_rep(ser_wrapper_text{}));
     children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
- 
+    children(*result).push_back(ast_rep(vm.registers)); 
     return result;
 }
 
 template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv> (ceps::vm::oblectamenta::VMEnv vm){
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
+    ast_proc_prolog
     
     auto result = mk_struct("vm");
     children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
     children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
     children(*result).push_back(ast_rep(ser_wrapper_text{}));
     children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
- 
+    children(*result).push_back(ast_rep(vm.registers));
     return result;
 }
 
-
+/**
+ * @brief ceps entry point for the creation of Oblectamenta VM's objects.
+ * 
+ * @param params 
+ * @return ceps::ast::node_t 
+ */
 ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
-    using namespace std;
-    using namespace ceps::ast;
-    using namespace ceps::vm::oblectamenta;
-
+    ast_proc_prolog
+    
     static auto fns{ map<string, node_t (*)(Struct&)>{
         {"vm", [] (Struct& s) -> node_t { 
                 if(!children(s).size()) return ast_rep(VMEnv{}); 
@@ -340,7 +358,8 @@ ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
         },
         {"data", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_data>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
         {"text", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_text>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
-        {"compute_stack", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_cstack>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } }
+        {"compute_stack", [] (Struct& s) -> node_t { VMEnv vm; auto v{read_value<ser_wrapper_cstack>(s)}; if (!v) return mk_undef(); return ast_rep(*v,*(*v).vm); } },
+        {"registers", [] (Struct& s) -> node_t { auto v{read_value<VMEnv::registers_t>(s)}; if (!v) return mk_undef(); return ast_rep(*v); } }
     }};
     
     auto data{get_first_child(params)};
@@ -356,13 +375,7 @@ ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
 
 
 ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params){
-    using namespace std;
-    using namespace ceps::ast;
-    using namespace ceps::interpreter;
-    using namespace ceps::vm::oblectamenta;
-
-
-
+    ast_proc_prolog    
     
     auto data = get_first_child(params);    
     
