@@ -18,6 +18,8 @@
 #include <future>
 #include <memory>
 #include <netinet/sctp.h> 
+#include <vector>
+#include <string>
 
 #include "ceps_ast.hh"
 #include "core/include/state_machine_simulation_core.hpp"
@@ -239,12 +241,21 @@ template<> ceps::ast::node_t ast_rep (ser_wrapper_data data, ceps::vm::oblectame
     using namespace ceps::ast;
     using namespace ceps::interpreter;
     using namespace ceps::vm::oblectamenta;
-   
+
+    vector< pair<string, size_t> > lbls{vm.data_labels().rbegin(), vm.data_labels().rend()};
+    sort(lbls.begin(), lbls.end(), [](pair<string, size_t> const & lhs, pair<string, size_t> const & rhs ){return lhs.second < rhs.second;});
+  
     auto result = mk_struct("data");
     auto& ch {children(*result)};
-    auto static_mem_size{vm.mem.heap -vm.mem.base};
-    for (ssize_t i = 0; i < static_mem_size; ++i )
+    size_t static_mem_size{ (size_t)(vm.mem.heap -vm.mem.base)};
+    size_t cur_lbl = 0;
+    for (size_t i = 0; i < static_mem_size; ++i ){
+         while(cur_lbl < lbls.size() && lbls[cur_lbl].second == i){
+            ch.push_back(ceps::ast::mk_symbol(lbls[cur_lbl].first,"OblectamentaDataLabel"));
+            ++cur_lbl;
+        } 
         ch.push_back(mk_uint8( vm.mem.base[i] ));
+    }
     return result;
 }
 

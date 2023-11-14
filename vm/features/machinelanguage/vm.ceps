@@ -1,33 +1,38 @@
 
+kind DocgenStringPrintNoEscape;
+DocgenStringPrintNoEscape docinfo_se;
+
 Scenario{
-    title{label __ title = "Objects controlled by the Oblectamenta-VM must be instantiated via an obj() call.";};
+    title{label __ title = "Basic objects controlled by the Oblectamenta-VM.";};
     
     Given{
+        docinfo_se("A stack");
         let the_stack = obj(stack{}); 
     };
     And{
+        docinfo_se("statically allocated data ");
 	    let the_data = obj(data{}); 
     };
     And{
+        docinfo_se("code (text segment) ");
 	    let the_code = obj(text{});
     };
     And{
+        docinfo_se(" the stack where computations are performed");
 	    let the_compute_stack = obj(compute_stack{});
     };
 
-    When{
-	    let the_code = obj(text{});
-     };
     Then
      {
+        docinfo_se("These pieces form a complete environment for running Oblectamenta machine code");
         verdict{equality_test{ 
-            objs{
+            run_environment{
                 stack{};
                 data{};
                 text{};
                 compute_stack{};
             };
-            objs{
+            run_environment{
                 the_stack;
                 the_data;
                 the_code;
@@ -47,23 +52,29 @@ Scenario{
 
 
     Given{
+        docinfo_se("An empty stack");
         the_stack; 
     };
     And{
+        docinfo_se("statically allocated data with no entries");
         the_data;
     };
     And{
+        docinfo_se("code (text segment) with no code");
         the_code;
     };
     And{
+        docinfo_se(" the stack where computations are performed without any data");
         the_compute_stack;
     };
 
     When{
+        docinfo_se(" A default constructed VM");
         let the_vm = obj(vm{});
      };
     Then
      {
+        docinfo_se(" The constructed VM contains stack,data, code, and the compute stack which are all empty.");
         verdict{equality_test{ 
             the_vm;
             vm{
@@ -86,19 +97,24 @@ Scenario{
 
 
     Given{
+        docinfo_se("A stack initialized with data");
         the_stack; 
     };
     And{
+        docinfo_se("non empty statically allocated data");
         the_data;
     };
     And{
+        docinfo_se("code (text segment) with no code");
         the_code;
     };
     And{
+        docinfo_se("compute stack with data");
         the_compute_stack;
     };
 
     When{
+        docinfo_se(" Creating a VM with initialized stack, data and compute stack");
         let the_vm = obj(
             vm{
                 the_stack;
@@ -109,6 +125,8 @@ Scenario{
      };
     Then
      {
+        docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
+
         verdict{equality_test{ 
             the_vm;
             vm{
@@ -120,6 +138,79 @@ Scenario{
         };};
      };
 };
+
+kind OblectamentaDataLabel;
+
+Scenario{
+    title{label __ title = "Data entries can contain labels.";};
+    OblectamentaDataLabel l1,l2,l3;
+    
+
+    Given{
+        docinfo_se("non empty statically allocated data with labels");
+	    let the_data = obj(
+            data{
+                l1;
+                9;
+                4;
+                l2;
+                1;
+                l3;
+                "gargamel";
+            }
+        ); 
+    };
+    "!!!!"; the_data;
+
+    When{
+        docinfo_se(" Creating a VM with initialized data ");
+        let the_vm = obj(
+            vm{
+                the_data;
+            }
+        );
+     };
+    
+    Then
+     {
+        docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
+
+        verdict{equality_test{ 
+            the_vm;
+            vm{
+                stack{};
+                data{
+                   l1;
+                   uint8(9); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(4); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(0);
+                   l2; 
+                   uint8(1); 
+                   uint8(0); 
+                   uint8(0); 
+                   uint8(0); 
+                   l3;
+                   uint8(103); 
+                   uint8(97); 
+                   uint8(114); 
+                   uint8(103); 
+                   uint8(97); 
+                   uint8(109); 
+                   uint8(101); 
+                   uint8(108); 
+                };
+                text{};
+                compute_stack{};
+            };
+        };};
+     };
+};
+
 
 Summary{
  for( e : root.Scenario.Then.result){
