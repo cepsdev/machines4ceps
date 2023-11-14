@@ -21,6 +21,10 @@ Scenario{
         docinfo_se(" the stack where computations are performed");
 	    let the_compute_stack = obj(compute_stack{});
     };
+    And{
+        docinfo_se(" the register file");
+        let the_register_file = obj(registers{});
+    };
 
     Then
      {
@@ -31,25 +35,32 @@ Scenario{
                 data{};
                 text{};
                 compute_stack{};
+                registers{
+                    CSP{as_int64(0);};
+                    FP{as_int64(0);};
+                    PC{as_int64(0);};
+                    SP{as_int64(4096);};
+                };
             };
             run_environment{
                 the_stack;
                 the_data;
                 the_code;
                 the_compute_stack;
+                the_register_file;
             };
         };};
      };
 };
 
 Scenario{
-    title{label __ title = "A VM contains code, data, stack and a compute stack.";};
+    title{label __ title = "A VM contains code, data, stack, a compute stack and a registers file.";};
     
     let the_stack = obj(stack{}); 
 	let the_data = obj(data{}); 
 	let the_code = obj(text{});
 	let the_compute_stack = obj(compute_stack{});
-
+    let the_register_file = obj(registers{});
 
     Given{
         docinfo_se("An empty stack");
@@ -67,6 +78,10 @@ Scenario{
         docinfo_se(" the stack where computations are performed without any data");
         the_compute_stack;
     };
+    And{
+        docinfo_se(" the register file");
+        the_register_file;
+    };
 
     When{
         docinfo_se(" A default constructed VM");
@@ -82,6 +97,7 @@ Scenario{
                 the_data;
                 the_code;
                 the_compute_stack;
+                the_register_file;
             };
         };};
      };
@@ -134,11 +150,16 @@ Scenario{
                 the_data;
                 the_code;
                 the_compute_stack;
+                registers{     
+                    CSP{as_int64(12);     };
+                    FP{as_int64(0);};
+                    PC{as_int64(0);};     
+                    SP{as_int64(4084);};     
+                };          
             };
         };};
      };
 };
-
 
 Scenario{
     title{label __ title = "Data entries can contain labels.";};
@@ -206,12 +227,18 @@ Scenario{
                 };
                 text{};
                 compute_stack{};
+                registers{     
+                    CSP{as_int64(0);};
+                    FP{as_int64(0);};
+                    PC{as_int64(0);};     
+                    SP{as_int64(4096);};     
+                };          
+
             };
         };
       };
      };
 };
-
 
 Summary{
  for( e : root.Scenario.Then.result){

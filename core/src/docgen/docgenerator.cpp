@@ -183,7 +183,16 @@ void ceps::docgen::fmt_out_handle_expr(std::ostream& os,Nodebase_ptr expr, Doc_w
 			doc_writer->out(os,ss.str());
 			doc_writer->pop_ctx();
 		}
-	} else if (is<Ast_node_kind::uint8>(expr)){
+	} else if (is<Ast_node_kind::long_literal>(expr)){
+		std::stringstream ss;
+		ss << value(as_int64_ref(expr));
+		{ 
+			doc_writer->push_ctx();
+			doc_writer->top().set_text_foreground_color("expr.int_literal");
+			doc_writer->out(os,ss.str());
+			doc_writer->pop_ctx();
+		}
+	}else if (is<Ast_node_kind::uint8>(expr)){
 		std::stringstream ss;
 		ss << (unsigned int) value(as_uint8_ref(expr));
 		{ 
