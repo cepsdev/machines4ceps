@@ -138,8 +138,9 @@ template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s)
         for(auto e : children(s))
          if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
           oblectamenta_assembler(*r.vm,children(as_struct_ref(e)));
-          //cerr << as_struct_ref(e) << '\n';
-          //cerr << r.vm->text_loc << '\n';
+         } else if (is<Ast_node_kind::uint8>(e)){
+            auto v{value(as_uint8_ref(e))};
+            r.vm->text[r.vm->text_loc++] = v;
          }
     } catch (std::string const& msg){
         std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << s << '\n' << '\n';
@@ -237,7 +238,14 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
         auto cs_opt{read_value<ser_wrapper_cstack>(*as_struct_ptr(e))};
         if (!cs_opt) continue;
         copy_compute_stack( *(*cs_opt).vm, r );
+     } else if ( name(*as_struct_ptr(e)) == "text") {
+        auto text_opt{read_value<ser_wrapper_text>(*as_struct_ptr(e))};
+        if (!text_opt) continue;
+        r.text = (*text_opt).vm->text;
+        r.text_loc = (*text_opt).vm->text_loc;
+        (*text_opt).vm->text = nullptr;
      } 
+ 
     }
    return r;
 }
@@ -330,7 +338,7 @@ template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv> (ceps::vm::o
     auto result = mk_struct("vm");
     children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
     children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
-    children(*result).push_back(ast_rep(ser_wrapper_text{}));
+    children(*result).push_back(ast_rep(ser_wrapper_text{}, vm));
     children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
     children(*result).push_back(ast_rep(vm.registers));
     return result;

@@ -258,8 +258,6 @@ Assembler code has to be placed within an asm-struct.";};
             };
         }
     );
-
-
     Given{
         docinfo_se("code (text segment) with 5 noops");
         the_code;
@@ -273,8 +271,6 @@ Assembler code has to be placed within an asm-struct.";};
             }
         );
      };
-    "!!!!!!!!!!!!";the_vm;
-    "?????????????";the_code;
     Then
      {
         docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
@@ -284,13 +280,17 @@ Assembler code has to be placed within an asm-struct.";};
             vm{
                 stack{};
                 data{};
-                text{as_uint8(1);as_uint8(1);as_uint8(1);as_uint8(1);as_uint8(1);};
-                ompute_stack{};
+                text{as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0); 
+                     as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);
+                     as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);
+                     as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);
+                     as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);};
+                compute_stack{};
                 registers{     
                     CSP{as_int64(0);};
                     FP{as_int64(0);};
                     PC{as_int64(0);};     
-                    SP{as_int64(4084);};     
+                    SP{as_int64(4096);};     
                 };          
             };
         };};
