@@ -260,11 +260,23 @@ Assembler code has to be placed within an asm-struct.";};
     );
     Given{
         docinfo_se("code (text segment) with 5 noops");
-        the_code;
+         text{
+            asm{
+             noop; // noop stands for 'no operation'
+             noop;
+             noop;
+             noop;
+             noop;
+            };
+         };
     };
 
     When{
-        docinfo_se(" Creating and running a VM");
+        docinfo_se(" Creating a VM with the code.");
+        vm{
+            the_code;
+        };
+
         let the_vm = obj(
             vm{
                 the_code;
@@ -273,7 +285,7 @@ Assembler code has to be placed within an asm-struct.";};
      };
     Then
      {
-        docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
+        docinfo_se(" The created VM's text segment contains the machine code version of the code.");
 
         verdict{equality_test{ 
             the_vm;

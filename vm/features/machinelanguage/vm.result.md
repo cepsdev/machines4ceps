@@ -221,7 +221,10 @@ Assembler code has to be placed within an asm-struct.
 ## Given
 code (text segment) with 5 noops
 
-text{1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0}
+### text
+asm{noop noop noop noop noop}
+
+
 
 
 
