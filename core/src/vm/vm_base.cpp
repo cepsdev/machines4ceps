@@ -50,7 +50,7 @@ namespace ceps::vm::oblectamenta{
 
    size_t VMEnv::run(size_t start){
         registers.file[registers_t::PC] = start;
-        for(; (Opcode)text[registers.file[registers_t::PC]] != Opcode::halt;){ 
+        for(; (Opcode) (*(base_opcode*)(text + registers.file[registers_t::PC] )) != Opcode::halt;){ 
          registers.file[registers_t::PC]  = 
           (this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
         }

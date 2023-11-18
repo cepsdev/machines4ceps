@@ -309,6 +309,65 @@ Assembler code has to be placed within an asm-struct.";};
      };
 };
 
+Scenario{
+    title{label __ title = "Running the program stored in a VM changes the registers.";};
+    
+	let the_code = obj(
+        text{
+            asm{
+             noop; // noop stands for 'no operation'
+             noop;
+             noop;
+             noop;
+             noop;
+             halt;
+            };
+        }
+    );
+    Given{
+        docinfo_se("code (text segment) with 5 noops");
+         text{
+            asm{
+             noop; // noop stands for 'no operation'
+             noop;
+             noop;
+             noop;
+             noop;
+             halt;
+            };
+         };
+    };
+
+    And{
+        docinfo_se(" Creating a VM with the code.");
+        vm{
+            the_code;
+        };
+        let the_vm = obj(
+            vm{
+                the_code;
+            }
+        );
+     };
+     When{
+        docinfo_se(" Running the VM.");
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+ 
+    Then
+     {
+        docinfo_se(" The PC register points to the halt instruction which terminated the execution.");
+
+        verdict{equality_test{ 
+            the_vm.vm.registers.PC;
+            PC{as_int64(20);};
+        };};
+     };
+};
 
 
 

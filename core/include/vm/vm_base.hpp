@@ -27,8 +27,8 @@ namespace ceps{
     namespace vm{
         namespace oblectamenta{
             using namespace std;
-            using base_opcode_width = uint32_t; 
-            enum class Opcode:base_opcode_width{
+            using base_opcode = uint32_t; 
+            enum class Opcode:base_opcode{
                 halt,
                 noop,
                 ldi32,
@@ -296,7 +296,7 @@ namespace ceps{
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
-                    static constexpr size_t base_opcode_width = 1;
+                    static constexpr size_t base_opcode_width = sizeof(base_opcode);
                     friend bool copy_stack(VMEnv& from, VMEnv& to);;
             };
             bool copy_stack(VMEnv& from, VMEnv& to);
@@ -304,13 +304,13 @@ namespace ceps{
             bool copy_compute_stack(VMEnv& from, VMEnv& to);
 
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos){
-                    *(base_opcode_width*)(vm.text + pos) = (base_opcode_width) opcode; 
-                    return pos + sizeof(base_opcode_width);
+                    *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
+                    return pos + sizeof(base_opcode);
             }
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos, int v){
-                    *(base_opcode_width*)(vm.text + pos) = (base_opcode_width) opcode; 
-                    *(int*)(vm.text + pos + sizeof(base_opcode_width)) = v; 
-                    return pos + sizeof(base_opcode_width) + sizeof(v);
+                    *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
+                    *(int*)(vm.text + pos + sizeof(base_opcode)) = v; 
+                    return pos + sizeof(base_opcode) + sizeof(v);
             }
             template<typename T> void patch(VMEnv& vm,size_t ofs, T t ){
                     *(T*)(vm.text + ofs) = t; 

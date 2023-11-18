@@ -250,7 +250,57 @@ text{1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0}
 
 
 
+# Scenario
+
+
+## title
+📎 Running the program stored in a VM changes the registers.
+
+
+
+## Given
+code (text segment) with 5 noops
+
+### text
+asm{noop noop noop noop noop halt}
+
+
+
+
+
+## And
+ Creating a VM with the code.
+
+### vm
+text{1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0}
+
+
+
+
+
+## When
+ Running the VM.
+
+
+
+## Then
+ The PC register points to the halt instruction which terminated the execution.
+
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
 # Summary
+
+
+## result
+:heavy_check_mark: Passed
+
 
 
 ## result

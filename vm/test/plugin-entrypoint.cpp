@@ -36,7 +36,7 @@ namespace cepsplugin{
     static Ism4ceps_plugin_interface* plugin_master = nullptr;
     static const std::string version_info = "INSERT_NAME_HERE v0.1";
     static constexpr bool print_debug_info{true};
-    ceps::ast::node_t run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params);
+    ceps::ast::node_t operation(ceps::ast::node_callparameters_t params);
     ceps::ast::node_t obj(ceps::ast::node_callparameters_t params);
 }
 
@@ -326,7 +326,7 @@ template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv&> (ceps::vm::
     auto result = mk_struct("vm");
     children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
     children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
-    children(*result).push_back(ast_rep(ser_wrapper_text{}));
+    children(*result).push_back(ast_rep(ser_wrapper_text{},vm));
     children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
     children(*result).push_back(ast_rep(vm.registers)); 
     return result;
@@ -388,27 +388,25 @@ ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
 }
 
 
-ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callparameters_t params){
+ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params){
     ast_proc_prolog    
-    
     auto data = get_first_child(params);    
-    
-
     if (!is<Ast_node_kind::structdef>(data)) {
         return mk_undef();
     }
     auto& ceps_struct = *as_struct_ptr(data);
-    //compile_and_run();
-    if (name(ceps_struct) == "vm"){
-        auto maybe_vm {read_value<VMEnv>(ceps_struct)};
-        
-        if (maybe_vm){
-            auto& vm{*maybe_vm};
-            vm.run(0);
-            return ast_rep<ceps::vm::oblectamenta::VMEnv&> (vm);
-        } else {
-
-        }
+    if (name(ceps_struct) == "run" && children(ceps_struct).size()){
+        for(auto e : children(ceps_struct))
+         if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "vm" ){
+            auto maybe_vm {read_value<VMEnv>(as_struct_ref(e))};
+            if (maybe_vm){
+                auto& vm{*maybe_vm};
+                vm.run(0);
+                return ast_rep<ceps::vm::oblectamenta::VMEnv&> (vm);
+            } else {
+                return mk_undef();
+            }
+         }
     }
     return mk_undef();
 }
@@ -416,7 +414,7 @@ ceps::ast::node_t cepsplugin::run_oblectamenta_bytecode(ceps::ast::node_callpara
 extern "C" void init_plugin(IUserdefined_function_registry* smc)
 {
   cepsplugin::plugin_master = smc->get_plugin_interface();
-  cepsplugin::plugin_master->reg_ceps_phase0plugin("run_oblectamenta_bytecode", cepsplugin::run_oblectamenta_bytecode);
+  cepsplugin::plugin_master->reg_ceps_phase0plugin("operation", cepsplugin::operation);
   cepsplugin::plugin_master->reg_ceps_phase0plugin("obj", cepsplugin::obj);
 }					
 				
