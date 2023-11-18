@@ -1,0 +1,2 @@
+./build.ceps-plugin.sh && ./runfeature_markdown.sh  ../features/machinelanguage/$1.ceps > ../features/machinelanguage/$1.result.md
+./build.ceps-plugin.sh && ./runfeature.sh  ../features/machinelanguage/$1.ceps
