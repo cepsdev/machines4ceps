@@ -229,12 +229,17 @@ asm{noop noop noop noop noop}
 
 
 ## When
- Creating and running a VM
+ Creating a VM with the code.
+
+### vm
+text{1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0}
+
+
 
 
 
 ## Then
- The created VM's stack, data, and compute stack are initialized with the given data.
+ The created VM's text segment contains the machine code version of the code.
 
 ### result
 :heavy_check_mark: Passed
