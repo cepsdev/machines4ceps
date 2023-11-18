@@ -242,12 +242,15 @@ Scenario{
 
 
 Scenario{
-    title{label __ title = "Running code changes the PC register.";};
+    title{label __ title = "The text segment contains a sequence of opcodes (machine language).
+Oblectamenta's assembler translates assembler code, i.e. symbols
+representing opcodes, into machine language.
+Assembler code has to be placed within an asm-struct.";};
     
 	let the_code = obj(
         text{
             asm{
-             noop;
+             noop; // noop stands for 'no operation'
              noop;
              noop;
              noop;
@@ -270,8 +273,8 @@ Scenario{
             }
         );
      };
-    ";;;;;;;;;;;;;;;;;;";the_code;
-    "§§§§§§§§§§§§§§§";the_vm;
+    "!!!!!!!!!!!!";the_vm;
+    "?????????????";the_code;
     Then
      {
         docinfo_se(" The created VM's stack, data, and compute stack are initialized with the given data.");
@@ -279,12 +282,12 @@ Scenario{
         verdict{equality_test{ 
             the_vm;
             vm{
-                the_stack;
-                the_data;
-                the_code;
-                the_compute_stack;
+                stack{};
+                data{};
+                text{as_uint8(1);as_uint8(1);as_uint8(1);as_uint8(1);as_uint8(1);};
+                ompute_stack{};
                 registers{     
-                    CSP{as_int64(12);     };
+                    CSP{as_int64(0);};
                     FP{as_int64(0);};
                     PC{as_int64(0);};     
                     SP{as_int64(4084);};     
