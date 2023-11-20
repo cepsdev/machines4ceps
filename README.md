@@ -1,7 +1,63 @@
 # machines4ceps
 __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams).
 
-## Features
+## ceps - making software the reverse way
+
+Machines4ceps is part of the ceps tool. The name ceps is derived from the word 'spec' - the abbreviation of specification - spelled backwards. 
+Ceps is pronounced like the word 'caps' which is (almost) the phonetical reverse of spec.
+
+### Software is about computational processes.
+
+*Computational processes* 'live' in machines and are therefore physical by their very nature.
+Source code shapes computational processes but inhabits a differnt place: our minds.
+Computational processes are truely infinite, source code is a finite thing.
+
+We choose the word 'shape' to express the fact of an unbridgeable semantic gap between the
+description of a computation and its materialization in the physical world.
+
+With the advent of differentiable programs, quantum computing and others, software will become
+even more shaped and less 'programmed'.
+
+Obviously the degree to which source code shapes a computational process varies.
+
+A program written in x86 Assembler targeted for an 8088 with 256KB RAM and 512KB disk storage
+gives a pretty good idea of the actual process' behaviour resulting from
+executing the program's instructions, i.e. the x86 assembler program describes the
+corresponding computational process with a relatively high degree of accuracy.
+
+The very same program executed on an i14900K with 8 Performance and 16 Efficiency cores,
+hyperthreading, out of order execution, branch prediction and a cache architecture
+more complicated than anything a processor designer in the 90s could ever dream of,
+gives rise to a completely different beast.
+
+And yet we think of both as being the 'same' thing. The degree of 'semantical overlap',
+or the error margin introduced by ignoring the complexities of the different machines
+executing the same code could be indeed acceptable in this case.
+Traditional methods of 'thinking about programs' assume that there is a simple and linear
+relation between code and computation.
+
+Way more dramatic is the situation if we look at software like a mobile app for
+stock trading. This is a highly distributed program relying on cloud based services and
+running on a mind bending variety of interconnected hardware giving rise to an universe of
+computational processes. This thing is hardly to be understood by looking at a couple of
+JavaScript statements alone.
+
+And yet the stock trading mobile app is treated by software engineers, at least conceptually,
+very much like the easy to grasp x86 code from before.
+
+Looking at code, analyzing code, feeding code to whatever fancy method imaginable cannot
+and will not provide the insight necessary to make the computational process bend
+to our will.
+
+We need to look at the computational process itself.
+
+That's what ceps is about: Shifting the focus of attention from the code to the actual computation.
+
+Machines4ceps is, like the very word suggests, the part of ceps which is concerned with **machines**, the
+other (built-in) part of ceps is **language**.
+
+
+## Features (machines4ceps as found in the standard distribution of the ceps tool)
 
 - UML 2.5 state charts (and more).
 - Concise notation.
@@ -12,12 +68,6 @@ __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ sta
 - Wide variety of output formats supported, e.g. render state charts with mermaid.js
 - Supports WebSocket, Bosch-CAN.
 - Runs on any Unixish device.
-
-## ceps
-
-Machines4ceps is part of the ceps tool. The name ceps is derived from the word 'spec' - the abbreviation of specification - spelled backwards. 
-Ceps is pronounced like the word 'caps' which is (almost) the phonetical reverse of spec. The idea behind ceps is that a correct real world specifcation 
-can only be derived by following a bottom up approach. Ceps is part of a bigger methodology called 'corpus based software engineering' which is a manifestation of a version of Nietzschean philosophy geared towards a world ruled by software. Stated in a few words: ceps is about freedom and how to keep it.
 
 ## Installation
 
