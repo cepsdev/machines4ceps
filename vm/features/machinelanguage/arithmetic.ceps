@@ -1,0 +1,63 @@
+
+kind DocgenStringPrintNoEscape;
+DocgenStringPrintNoEscape docinfo_se;
+
+Scenario{
+    title{label __ title = "Running the program stored in a VM changes the registers.";};
+    
+	let the_code = obj(
+        text{
+            asm{
+             addi32;
+             halt;
+            };
+        }
+    );
+    Given{
+        docinfo_se("code (text segment) with an add instruction");
+        text{
+            asm{
+             addi32;
+             halt;
+            };
+        };
+    };
+
+    And{
+        docinfo_se(" Creating a VM with the code.");
+        vm{
+            the_code;
+            compute_stack{
+                1;
+                1;
+            };
+        };
+        let the_vm = obj(
+            vm{
+                the_code;
+                compute_stack{
+                    1;
+                    1;
+                };
+            }
+        );
+     };
+     When{
+        docinfo_se(" Running the VM.");
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+ 
+    Then
+     {
+        docinfo_se(" The PC register points to the halt instruction which terminated the execution.");
+
+        verdict{equality_test{ 
+            {the_vm.vm.registers.PC;the_vm.vm.compute_stack.content().at(0);}
+            {PC{as_int64(4);};as_uint8(2);}
+        };};
+     };
+};
