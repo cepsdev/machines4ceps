@@ -6,5 +6,5 @@ echo
 LD_LIBRARY_PATH=$(pwd)/bin:$LD_LIBRARY_PATH ceps \
  ../features/common/common.ceps \
  $1 \
- --pluginlibINSERT_PLUGIN_NAME_HERE.so	--pe --format ansi				
+ --pluginlibINSERT_PLUGIN_NAME_HERE.so	--pe --format ansi 	--doc-option no-macros 	
 					

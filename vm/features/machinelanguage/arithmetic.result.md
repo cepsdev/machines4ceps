@@ -8,16 +8,173 @@
 
 
 
+# opcodes
+
+
+halt
+
+noop
+
+ldi32
+
+ldsi32
+
+ldi64
+
+lddbl
+
+sti32
+
+stsi32
+
+sri64
+
+stdbl
+
+ldptr
+
+stptr
+
+lea
+
+addi32
+
+addi64
+
+adddbl
+
+subi32
+
+subi64
+
+subdbl
+
+buc
+
+beq
+
+bneq
+
+blt
+
+blteq
+
+bgt
+
+bgteq
+
+bgteqzeroi32
+
+blteqzeroi32
+
+bltzeroi32
+
+bzeroi32
+
+bnzeroi32
+
+bzeroi64
+
+bnzeroi64
+
+bzerodbl
+
+bnzerodbl
+
+call
+
+ret
+
+swp
+
+andni32
+
+andni64
+
+andi32
+
+andi64
+
+ori32
+
+ori64
+
+noti32
+
+noti64
+
+xori32
+
+xori64
+
+duptopi32
+
+muli32
+
+muli64
+
+muldbl
+
+divi32
+
+divi64
+
+divdbl
+
+remi32
+
+remi64
+
+lti32
+
+lti64
+
+ltdbl
+
+lteqi32
+
+lteqi64
+
+lteqdbl
+
+gti32
+
+gti64
+
+gtdbl
+
+gteqi32
+
+gteqi64
+
+gteqdbl
+
+(eqi32:eqi64)
+
+eqdbl
+
+cpysi32
+
+wrsi32
+
+setframe
+
+popi32
+
+pushi32
+
+
+
 # Scenario
 
 
 ## title
-📎 Running the program stored in a VM changes the registers.
+📎 Arithmetic: addi32
 
 
 
 ## Given
-code (text segment) with an add instruction
+code (text segment) with an addi32 instruction
 
 ### text
 asm{addi32 halt}
@@ -27,7 +184,7 @@ asm{addi32 halt}
 
 
 ## And
- Creating a VM with the code.
+ Creating a VM
 
 ### vm
 text{13 0 0 0 0 0 0 0}
@@ -44,7 +201,101 @@ compute_stack{1 1}
 
 
 ## Then
- The PC register points to the halt instruction which terminated the execution.
+ .
+
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: addi64
+
+
+
+## Given
+code (text segment) with an addi64 instruction
+
+### text
+asm{addi64 halt}
+
+
+
+
+
+## And
+ Creating a VM
+
+### vm
+text{14 0 0 0 0 0 0 0}
+
+compute_stack{1 0 1 0}
+
+
+
+
+
+## When
+ Running the VM.
+
+
+
+## Then
+ .
+
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: adddbl
+
+
+
+## Given
+code (text segment) with an addi64 instruction
+
+### text
+asm{adddbl halt}
+
+
+
+
+
+## And
+ Creating a VM
+
+### vm
+text{15 0 0 0 0 0 0 0}
+
+compute_stack{1 1}
+
+
+
+
+
+## When
+ Running the VM.
+
+
+
+## Then
+ .
 
 ### result
 :heavy_check_mark: Passed
