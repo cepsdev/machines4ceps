@@ -195,7 +195,7 @@ opcodes{
     gteqi32;
     gteqi64;
     gteqdbl;
-    eqi32:
+    eqi32;
     eqi64;
     eqdbl;
     cpysi32;

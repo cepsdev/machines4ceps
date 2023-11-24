@@ -10,10 +10,13 @@ macro arith_scenario{
     );
     Given{
         text{
-            arglist.at(0);
+            asm{
+                arglist.at(0).content();
+                halt;
+            };
         };
     };
-    And{
+  And{
         vm{
             the_code;
             arglist.at(1);
@@ -32,10 +35,10 @@ macro arith_scenario{
           }
         );
      };
-     Then
+    Then
      {
         verdict{equality_test{ 
-            {the_vm.vm.registers.PC;the_vm.vm.compute_stack;}
+            {the_vm.vm.compute_stack;}
             arglist.at(2);
         };};
      };
@@ -47,13 +50,12 @@ Scenario{
     arith_scenario{
             asm{
              addi32;
-             halt;
             };
             compute_stack{
                 1;
                 1; //top of compute stack at the bottom of the initializing structure
             };
-            {PC{as_int64(4);};compute_stack{as_uint8(2);as_uint8(0);as_uint8(0);as_uint8(0);};}
+            {obj(compute_stack{2;});}
     };
 };
 
@@ -62,13 +64,12 @@ Scenario{
     arith_scenario{
             asm{
              addi64;
-             halt;
             };
             compute_stack{
                 1;0;
                 1;0; //top of compute stack at the bottom of the initializing structure
             };
-            {PC{as_int64(4);};compute_stack{as_uint8(2);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);};}
+            {obj(compute_stack{2;0;});}
     };
 };
 
@@ -77,14 +78,12 @@ Scenario{
     arith_scenario{ 
         asm{
             adddbl;
-            halt;
         };
         compute_stack{
             1.0;
             1.0; //top of compute stack at the bottom of the initializing structure
         };
         {
-            PC{as_int64(4);};
             obj(compute_stack{2.0;});
         }
    };    
@@ -95,15 +94,13 @@ Scenario{
     arith_scenario{ 
         asm{
             subi32;
-            halt;
         };
         compute_stack{
             2;
             3; //top of compute stack at the bottom of the initializing structure
         };
         {
-            PC{as_int64(4);};
-            compute_stack{as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);};
+            obj(compute_stack{1;});
         }
    };    
 };
@@ -113,15 +110,13 @@ Scenario{
     arith_scenario{ 
         asm{
             subi32;
-            halt;
         };
         compute_stack{
             3;
             2; //top of compute stack at the bottom of the initializing structure
         };
         {
-            PC{as_int64(4);};
-            compute_stack{as_uint8(255);as_uint8(255);as_uint8(255);as_uint8(255);};
+            obj(compute_stack{-1;});
         }
    };    
 };
@@ -131,15 +126,13 @@ Scenario{
     arith_scenario{ 
         asm{
             subi64;
-            halt;
         };
         compute_stack{
             2;0;
             3;0;
         };
         {
-            PC{as_int64(4);};
-            compute_stack{as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);};
+            obj(compute_stack{1;0;});
         }
    };    
 };
@@ -149,14 +142,12 @@ Scenario{
     arith_scenario{ 
         asm{
             subdbl;
-            halt;
         };
         compute_stack{
             2.0;
             3.0;
         };
         {
-            PC{as_int64(4);};
             obj(compute_stack{1.0;});
         }
    };    
@@ -166,16 +157,63 @@ Scenario{
     title{label __ title = "Arithmetic: subi64";};
     arith_scenario{ 
         asm{
-            subdbl;
-            halt;
+            subdbl;  
         };
         compute_stack{
             3.0;
             2.0;
         };
         {
-            PC{as_int64(4);};
             obj(compute_stack{-1.0;});
         }
    };    
 };
+
+Scenario{
+    title{label __ title = "Arithmetic: muli32";};
+    arith_scenario{ 
+        asm{
+            muli32;
+        };
+        compute_stack{
+            2;
+            3; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{6;});
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: muli64";};
+    arith_scenario{ 
+        asm{
+            muli64;
+        };
+        compute_stack{
+            2;0;
+            3;0; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{6;0;});
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: muldbl";};
+    arith_scenario{ 
+        asm{
+            muldbl;
+        };
+        compute_stack{
+            2.0;
+            3.0; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{6.0;});
+        }
+   };    
+};
+
