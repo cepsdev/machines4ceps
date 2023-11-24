@@ -165,6 +165,8 @@ pushi32
 
 
 
+
+
 # Scenario
 
 
@@ -174,8 +176,6 @@ pushi32
 
 
 ## Given
-code (text segment) with an addi32 instruction
-
 ### text
 asm{addi32 halt}
 
@@ -184,8 +184,6 @@ asm{addi32 halt}
 
 
 ## And
- Creating a VM
-
 ### vm
 text{13 0 0 0 0 0 0 0}
 
@@ -195,14 +193,9 @@ compute_stack{1 1}
 
 
 
-## When
- Running the VM.
-
-
+When{}
 
 ## Then
- .
-
 ### result
 :heavy_check_mark: Passed
 
@@ -221,8 +214,6 @@ compute_stack{1 1}
 
 
 ## Given
-code (text segment) with an addi64 instruction
-
 ### text
 asm{addi64 halt}
 
@@ -231,8 +222,6 @@ asm{addi64 halt}
 
 
 ## And
- Creating a VM
-
 ### vm
 text{14 0 0 0 0 0 0 0}
 
@@ -242,14 +231,9 @@ compute_stack{1 0 1 0}
 
 
 
-## When
- Running the VM.
-
-
+When{}
 
 ## Then
- .
-
 ### result
 :heavy_check_mark: Passed
 
@@ -268,8 +252,6 @@ compute_stack{1 0 1 0}
 
 
 ## Given
-code (text segment) with an addi64 instruction
-
 ### text
 asm{adddbl halt}
 
@@ -278,8 +260,6 @@ asm{adddbl halt}
 
 
 ## And
- Creating a VM
-
 ### vm
 text{15 0 0 0 0 0 0 0}
 
@@ -289,14 +269,199 @@ compute_stack{1 1}
 
 
 
-## When
- Running the VM.
-
-
+When{}
 
 ## Then
- .
+### result
+:heavy_check_mark: Passed
 
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: subi32
+
+
+
+## Given
+### text
+asm{subi32 halt}
+
+
+
+
+
+## And
+### vm
+text{16 0 0 0 0 0 0 0}
+
+compute_stack{2 3}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: subi32
+
+
+
+## Given
+### text
+asm{subi32 halt}
+
+
+
+
+
+## And
+### vm
+text{16 0 0 0 0 0 0 0}
+
+compute_stack{3 2}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: subi64
+
+
+
+## Given
+### text
+asm{subi64 halt}
+
+
+
+
+
+## And
+### vm
+text{17 0 0 0 0 0 0 0}
+
+compute_stack{2 0 3 0}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: subi64
+
+
+
+## Given
+### text
+asm{subdbl halt}
+
+
+
+
+
+## And
+### vm
+text{18 0 0 0 0 0 0 0}
+
+compute_stack{2 3}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: subi64
+
+
+
+## Given
+### text
+asm{subdbl halt}
+
+
+
+
+
+## And
+### vm
+text{18 0 0 0 0 0 0 0}
+
+compute_stack{3 2}
+
+
+
+
+
+When{}
+
+## Then
 ### result
 :heavy_check_mark: Passed
 

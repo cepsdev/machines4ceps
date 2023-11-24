@@ -2,183 +2,180 @@
 kind DocgenStringPrintNoEscape;
 DocgenStringPrintNoEscape docinfo_se;
 
-Scenario{
-    title{label __ title = "Arithmetic: addi32";};
-    
+macro arith_scenario{
 	let the_code = obj(
         text{
-            asm{
-             addi32;
-             halt;
-            };
+            arglist.at(0);
         }
     );
     Given{
-        docinfo_se("code (text segment) with an addi32 instruction");
         text{
-            asm{
-             addi32;
-             halt;
-            };
+            arglist.at(0);
         };
     };
-
     And{
-        docinfo_se(" Creating a VM");
         vm{
             the_code;
-            compute_stack{
-                1;
-                1;
-            };
+            arglist.at(1);
         };
         let the_vm = obj(
             vm{
                 the_code;
-                compute_stack{
-                    1;
-                    1;
-                };
+                arglist.at(1);
             }
         );
      };
      When{
-        docinfo_se(" Running the VM.");
         let the_vm = operation(
          run{
             the_vm;    
           }
         );
      };
-
      Then
      {
-        docinfo_se(" .");
         verdict{equality_test{ 
             {the_vm.vm.registers.PC;the_vm.vm.compute_stack;}
-            {PC{as_int64(4);};compute_stack{as_uint8(2);as_uint8(0);as_uint8(0);as_uint8(0);};}
+            arglist.at(2);
         };};
      };
 };
 
+
+Scenario{
+    title{label __ title = "Arithmetic: addi32";};
+    arith_scenario{
+            asm{
+             addi32;
+             halt;
+            };
+            compute_stack{
+                1;
+                1; //top of compute stack at the bottom of the initializing structure
+            };
+            {PC{as_int64(4);};compute_stack{as_uint8(2);as_uint8(0);as_uint8(0);as_uint8(0);};}
+    };
+};
 
 Scenario{
     title{label __ title = "Arithmetic: addi64";};
-    
-	let the_code = obj(
-        text{
+    arith_scenario{
             asm{
              addi64;
              halt;
             };
-        }
-    );
-    Given{
-        docinfo_se("code (text segment) with an addi64 instruction");
-        text{
-            asm{
-             addi64;
-             halt;
-            };
-        };
-    };
-
-    And{
-        docinfo_se(" Creating a VM");
-        vm{
-            the_code;
             compute_stack{
                 1;0;
-                1;0;
+                1;0; //top of compute stack at the bottom of the initializing structure
             };
-        };
-        let the_vm = obj(
-            vm{
-                the_code;
-                compute_stack{
-                    1;0;
-                    1;0;
-                };
-            }
-        );
-     };
-     When{
-        docinfo_se(" Running the VM.");
-        let the_vm = operation(
-         run{
-            the_vm;    
-          }
-        );
-     };
-
-     Then
-     {
-        docinfo_se(" .");
-        verdict{equality_test{ 
-            {the_vm.vm.registers.PC;the_vm.vm.compute_stack;}
             {PC{as_int64(4);};compute_stack{as_uint8(2);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);};}
-        };};
-     };
+    };
 };
-
-
 
 Scenario{
     title{label __ title = "Arithmetic: adddbl";};
-    
-	let the_code = obj(
-        text{
-            asm{
-             adddbl;
-             halt;
-            };
+    arith_scenario{ 
+        asm{
+            adddbl;
+            halt;
+        };
+        compute_stack{
+            1.0;
+            1.0; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            PC{as_int64(4);};
+            obj(compute_stack{2.0;});
         }
-    );
-    Given{
-        docinfo_se("code (text segment) with an addi64 instruction");
-        text{
-            asm{
-             adddbl;
-             halt;
-            };
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: subi32";};
+    arith_scenario{ 
+        asm{
+            subi32;
+            halt;
         };
-    };
-    And{
-        docinfo_se(" Creating a VM");
-        vm{
-            the_code;
-            compute_stack{
-                1.0;
-                1.0;
-            };
+        compute_stack{
+            2;
+            3; //top of compute stack at the bottom of the initializing structure
         };
-        let the_vm = obj(
-            vm{
-                the_code;
-                compute_stack{
-                    1.0;
-                    1.0;
-                };
-            }
-        );
-     };
-     When{
-        docinfo_se(" Running the VM.");
-        let the_vm = operation(
-         run{
-            the_vm;    
-          }
-        );
-     };
-     Then
-     {
-        docinfo_se(" .");
-        verdict{equality_test{ 
-            {the_vm.vm.registers.PC;the_vm.vm.compute_stack;}
-            {
-                PC{as_int64(4);};
-                obj(compute_stack{2.0;});
-            }
-        };};
-     };
+        {
+            PC{as_int64(4);};
+            compute_stack{as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);};
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: subi32";};
+    arith_scenario{ 
+        asm{
+            subi32;
+            halt;
+        };
+        compute_stack{
+            3;
+            2; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            PC{as_int64(4);};
+            compute_stack{as_uint8(255);as_uint8(255);as_uint8(255);as_uint8(255);};
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: subi64";};
+    arith_scenario{ 
+        asm{
+            subi64;
+            halt;
+        };
+        compute_stack{
+            2;0;
+            3;0;
+        };
+        {
+            PC{as_int64(4);};
+            compute_stack{as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);};
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: subi64";};
+    arith_scenario{ 
+        asm{
+            subdbl;
+            halt;
+        };
+        compute_stack{
+            2.0;
+            3.0;
+        };
+        {
+            PC{as_int64(4);};
+            obj(compute_stack{1.0;});
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: subi64";};
+    arith_scenario{ 
+        asm{
+            subdbl;
+            halt;
+        };
+        compute_stack{
+            3.0;
+            2.0;
+        };
+        {
+            PC{as_int64(4);};
+            obj(compute_stack{-1.0;});
+        }
+   };    
 };
