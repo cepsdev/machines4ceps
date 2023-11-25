@@ -49,10 +49,13 @@ namespace ceps::vm::oblectamenta{
    }
 
    size_t VMEnv::run(size_t start){
+        //cerr << "RUN\n";
         registers.file[registers_t::PC] = start;
-        for(; (Opcode) (*(base_opcode*)(text + registers.file[registers_t::PC] )) != Opcode::halt;){ 
-         registers.file[registers_t::PC]  = 
-          (this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
+        for(; (Opcode) (*(base_opcode*)(text + registers.file[registers_t::PC] )) != Opcode::halt;){
+            //cerr << registers.file[registers_t::PC] << '\n';
+            //cerr << "opcode = " << (int)text[registers.file[registers_t::PC]] << '\n';             
+            registers.file[registers_t::PC]  = 
+            (this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
         }
         return start;
     }
@@ -95,8 +98,8 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::ldi32(size_t pos){
-        push_cs(*((int*) &mem.base[text[pos+1]]));
-        return base_opcode_width + 1 + pos;
+        push_cs(*((int*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]));
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
 
     size_t VMEnv::ldsi32(size_t pos){

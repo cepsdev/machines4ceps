@@ -296,3 +296,13 @@ Scenario{
         }
    };    
 };
+
+docinfo_se("==================================== SUMMARY ======================================
+");
+
+
+Summary{
+ for( e : root.Scenario.Then.result){
+  e;
+ }
+};

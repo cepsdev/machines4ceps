@@ -45,12 +45,16 @@ template<typename T> T
     fetch(ceps::ast::Struct&);
 template<typename T> T 
     fetch(ceps::ast::node_t);
+template<typename T> T 
+    fetch(ceps::ast::Struct&, ceps::vm::oblectamenta::VMEnv&);
 
 template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& );
 
 
 template<typename T> 
     std::optional<T> read_value(ceps::ast::Struct& s);
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s, ceps::vm::oblectamenta::VMEnv& vm);
 template<typename T> 
     std::optional<T> read_value(size_t idx, ceps::ast::Struct& s);
 template<typename T> 
@@ -69,6 +73,12 @@ template<typename T>
     std::optional<T> read_value(ceps::ast::Struct& s){
         if(!check<T>(s)) return {};
         return fetch<T>(s);
+    }
+
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s, ceps::vm::oblectamenta::VMEnv& vm){
+        if(!check<T>(s)) return {};
+        return fetch<T>(s,vm);
     }
 
 template<typename T> ceps::ast::node_t ast_rep (T entity);
@@ -141,6 +151,24 @@ template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s)
          } else if (is<Ast_node_kind::uint8>(e)){
             auto v{value(as_uint8_ref(e))};
             r.vm->text[r.vm->text_loc++] = v;
+         }
+    } catch (std::string const& msg){
+        std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << s << '\n' << '\n';
+    }
+    return r;
+}
+
+template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s, ceps::vm::oblectamenta::VMEnv& vm)
+{
+    ast_proc_prolog    
+    ser_wrapper_text r{};
+    try{
+        for(auto e : children(s))
+         if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
+          oblectamenta_assembler(vm,children(as_struct_ref(e)));
+         } else if (is<Ast_node_kind::uint8>(e)){
+            auto v{value(as_uint8_ref(e))};
+            vm.text[vm.text_loc++] = v;
          }
     } catch (std::string const& msg){
         std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << s << '\n' << '\n';
@@ -239,11 +267,11 @@ template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ce
         if (!cs_opt) continue;
         copy_compute_stack( *(*cs_opt).vm, r );
      } else if ( name(*as_struct_ptr(e)) == "text") {
-        auto text_opt{read_value<ser_wrapper_text>(*as_struct_ptr(e))};
+        auto text_opt{read_value<ser_wrapper_text>(*as_struct_ptr(e),r)};
         if (!text_opt) continue;
-        r.text = (*text_opt).vm->text;
+        /*r.text = (*text_opt).vm->text;
         r.text_loc = (*text_opt).vm->text_loc;
-        (*text_opt).vm->text = nullptr;
+        (*text_opt).vm->text = nullptr;*/
      } 
  
     }

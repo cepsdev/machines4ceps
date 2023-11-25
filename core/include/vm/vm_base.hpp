@@ -27,6 +27,7 @@ namespace ceps{
     namespace vm{
         namespace oblectamenta{
             using namespace std;
+            using addr_t = size_t;
             using base_opcode = uint32_t; 
             enum class Opcode:base_opcode{
                 halt,
@@ -307,6 +308,13 @@ namespace ceps{
                     *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
                     return pos + sizeof(base_opcode);
             }
+
+            template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos, size_t v){
+                    *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
+                    *(size_t*)(vm.text + pos + sizeof(base_opcode)) = v; 
+                    return pos + sizeof(base_opcode) + sizeof(v);
+            }
+
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos, int v){
                     *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
                     *(int*)(vm.text + pos + sizeof(base_opcode)) = v; 
@@ -321,7 +329,7 @@ namespace ceps{
                          Opcode,
                          string, 
                          size_t (*)(VMEnv& ,size_t), 
-                         size_t (*)(VMEnv& ,size_t, int)> 
+                         size_t (*)(VMEnv& ,size_t, addr_t)> 
                       > mnemonics = {
              
                 {"halt", {Opcode::halt,"Yields the processor.",emit<Opcode::halt>,nullptr} },

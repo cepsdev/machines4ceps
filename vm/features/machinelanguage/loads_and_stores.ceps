@@ -1,0 +1,54 @@
+
+kind DocgenStringPrintNoEscape;
+DocgenStringPrintNoEscape docinfo_se;
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                    operand2;
+                     20;
+                };
+                text{
+                    asm{
+                        ldi32(operand2);
+                        ldi32(operand1);
+                        ldi32(operand2);
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{20;10;20;});
+            }
+        };};
+
+     };
+};
+
+
+docinfo_se("==================================== SUMMARY ======================================
+");
+
+Summary{
+ for( e : root.Scenario.Then.result){
+  e;
+ }
+};
