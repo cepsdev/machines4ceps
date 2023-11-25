@@ -117,7 +117,8 @@ namespace ceps{
                 popi32,
                 pushi32reg,
                 popi32reg,
-                pushi32
+                pushi32,
+                sti64
             };
 
             class VMEnv{
@@ -420,7 +421,8 @@ namespace ceps{
                 {"popi32",{Opcode::popi32, "",emit<Opcode::popi32>,nullptr}},
                 {"pushi32reg",{Opcode::pushi32reg, "",nullptr,emit<Opcode::pushi32reg>}},
                 {"popi32reg",{Opcode::popi32reg, "",nullptr,emit<Opcode::popi32reg>}},
-                {"pushi32",{Opcode::pushi32, "",emit<Opcode::pushi32>,nullptr}}
+                {"pushi32",{Opcode::pushi32, "",emit<Opcode::pushi32>,nullptr}},
+                {"sti64",{Opcode::sti64, "",nullptr,emit<Opcode::sti64>}}
             };
            
         }

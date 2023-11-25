@@ -35,6 +35,7 @@ OblectamentaOpcode
     ldi64,
     lddbl,
     sti32,
+    sti64,
     stsi32,
     sri64,
     stdbl,

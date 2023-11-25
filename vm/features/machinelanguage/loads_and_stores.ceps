@@ -173,6 +173,51 @@ Scenario{
      };
 };
 
+Scenario{
+    OblectamentaDataLabel operand1, operand2;
+    Given{
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;0;
+                    operand2;
+                     20;0;
+                };
+                text{
+                    asm{
+                        ldi64(operand2);
+                        ldi64(operand1);
+                        sti64(operand2);
+                        sti64(operand1);
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+     Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.data;}
+            {
+                data{
+                    operand1;as_uint8(20);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                    operand2;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                };
+            }
+        };};
+
+     };
+};
+
 docinfo_se("==================================== SUMMARY ======================================
 ");
 
