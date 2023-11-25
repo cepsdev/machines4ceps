@@ -266,18 +266,23 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
     size_t VMEnv::divi32(size_t pos){
+        push_cs<int32_t>(pop_cs<int32_t>() / pop_cs<int32_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::divi64(size_t pos){
+        push_cs<int64_t>(pop_cs<int64_t>() / pop_cs<int64_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::divdbl(size_t pos){
+        push_cs<double>(pop_cs<double>() / pop_cs<double>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::remi32(size_t pos){
+        push_cs<int32_t>(pop_cs<int32_t>() % pop_cs<int32_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::remi64(size_t pos){
+        push_cs<int64_t>(pop_cs<int64_t>() % pop_cs<int64_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::lti32(size_t pos){

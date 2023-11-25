@@ -217,3 +217,82 @@ Scenario{
    };    
 };
 
+Scenario{
+    title{label __ title = "Arithmetic: divi32";};
+    arith_scenario{ 
+        asm{
+            divi32;
+        };
+        compute_stack{
+            3;
+            9; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{3;});
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: divi64";};
+    arith_scenario{ 
+        asm{
+            divi64;
+        };
+        compute_stack{
+            2;0;
+            8;0; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{4;0;});
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: divdbl";};
+    arith_scenario{ 
+        asm{
+            divdbl;
+        };
+        compute_stack{
+            2.0;
+            8.0; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{4.0;});
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: remi32";};
+    arith_scenario{ 
+        asm{
+            remi32;
+        };
+        compute_stack{
+            3;
+            10; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{1;});
+        }
+   };    
+};
+
+Scenario{
+    title{label __ title = "Arithmetic: remi64";};
+    arith_scenario{ 
+        asm{
+            remi64;
+        };
+        compute_stack{
+            3;0;
+            10;0; //top of compute stack at the bottom of the initializing structure
+        };
+        {
+            obj(compute_stack{1;0;});
+        }
+   };    
+};

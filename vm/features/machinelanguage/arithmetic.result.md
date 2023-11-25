@@ -432,5 +432,195 @@ When{}
 
 
 
+# Scenario
+
+
+## title
+📎 Arithmetic: divi32
+
+
+
+## Given
+### text
+asm{divi32 halt}
+
+
+
+
+
+## And
+### vm
+text{52 0 0 0}
+
+compute_stack{3 9}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: divi64
+
+
+
+## Given
+### text
+asm{divi64 halt}
+
+
+
+
+
+## And
+### vm
+text{53 0 0 0}
+
+compute_stack{2 0 8 0}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: divdbl
+
+
+
+## Given
+### text
+asm{divdbl halt}
+
+
+
+
+
+## And
+### vm
+text{54 0 0 0}
+
+compute_stack{2 8}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: remi32
+
+
+
+## Given
+### text
+asm{remi32 halt}
+
+
+
+
+
+## And
+### vm
+text{55 0 0 0}
+
+compute_stack{3 10}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Arithmetic: remi64
+
+
+
+## Given
+### text
+asm{remi64 halt}
+
+
+
+
+
+## And
+### vm
+text{56 0 0 0}
+
+compute_stack{3 0 10 0}
+
+
+
+
+
+When{}
+
+## Then
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
 
 
