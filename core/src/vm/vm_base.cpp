@@ -316,13 +316,22 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width  + pos;
     }
     size_t VMEnv::lteqi32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a <= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::lteqi64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a <= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::lteqdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a <= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gti32(size_t pos){
         auto a{pop_cs<int32_t>()};
@@ -343,22 +352,40 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width  + pos;
     }
     size_t VMEnv::gteqi32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a >= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gteqi64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a >= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gteqdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a > b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::eqi32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a == b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::eqi64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a == b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::eqdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a == b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::cpysi32(size_t pos){
         throw std::string{"Deprecated"};

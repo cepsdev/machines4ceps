@@ -248,6 +248,376 @@ Scenario{
      };
 };
 
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                    operand2;
+                     20;
+                };
+                text{
+                    asm{
+                        ldi32(operand1);
+                        ldi32(operand2);
+                        lteqi32;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{0;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     20; 0;
+                    operand2;
+                     10; 0;
+                };
+                text{
+                    asm{
+                        ldi64(operand1);
+                        ldi64(operand2);
+                        lteqi64;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{1;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     20.0;
+                    operand2;
+                     10.0;
+                };
+                text{
+                    asm{
+                        lddbl(operand1);
+                        lddbl(operand2);
+                        lteqdbl;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{1;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                    operand2;
+                     20;
+                };
+                text{
+                    asm{
+                        ldi32(operand1);
+                        ldi32(operand2);
+                        gteqi32;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{1;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     20; 0;
+                    operand2;
+                     10; 0;
+                };
+                text{
+                    asm{
+                        ldi64(operand1);
+                        ldi64(operand2);
+                        gteqi64;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{0;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     20.0;
+                    operand2;
+                     10.0;
+                };
+                text{
+                    asm{
+                        lddbl(operand1);
+                        lddbl(operand2);
+                        gteqdbl;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{0;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                    operand2;
+                     20;
+                };
+                text{
+                    asm{
+                        ldi32(operand1);
+                        ldi32(operand2);
+                        eqi32;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{0;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     20; 0;
+                    operand2;
+                     20; 0;
+                };
+                text{
+                    asm{
+                        ldi64(operand1);
+                        ldi64(operand2);
+                        eqi64;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{1;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     20.0;
+                    operand2;
+                     20.0;
+                };
+                text{
+                    asm{
+                        lddbl(operand1);
+                        lddbl(operand2);
+                        eqdbl;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{1;});
+            }
+        };};
+
+     };
+};
+
 docinfo_se("==================================== SUMMARY ======================================
 ");
 
