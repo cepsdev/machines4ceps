@@ -197,8 +197,8 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + 1 + pos;
     }
     size_t VMEnv::bnzeroi32(size_t pos){
-        if (pop_cs<int>() != 0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() != 0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bnzeroi64(size_t pos){
         if (pop_cs<int64_t>() != 0) return text[pos+1];
