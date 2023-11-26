@@ -8,7 +8,7 @@ __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ sta
 - Guards, Events, Actions etc.
 - Simulation.
 - Computation of State/Transition Coverage.
-- Any input format supported, i.e. write your state machine as you see fit and use ceps' built-in language engine to map it into machines4ceps representation.  
+- Any input format supported, i.e. write your state machine as you see fit and use the built-in language engine to map it into machines4ceps-representation.  
 - Any output format supported, the very same language engine allows you to export your state machine into any imaginable format by adding simple transformation rules.
 - Supports WebSocket, Bosch-CAN.
 - Runs on any Unixish device.
