@@ -146,7 +146,7 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::buc(size_t pos){
-        return text[pos+1];
+        return *(size_t*)(text + pos  + base_opcode_width) ;
     }
     size_t VMEnv::beq(size_t pos){
         if (pop_cs<int>() == pop_cs<int>()) return text[pos+1];
