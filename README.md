@@ -1,7 +1,23 @@
 # machines4ceps
 __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams).
 
-## ceps - making software the reverse way
+## Features (machines4ceps as found in the standard distribution of the ceps tool)
+
+- UML 2.5 state charts (and more).
+- Concise notation.
+- Guards, Events, Actions etc.
+- Simulation.
+- Computation of State/Transition Coverage.
+- Any input format supported, i.e. write your state machine as you see fit and use ceps' built-in language engine to map it into machines4ceps representation.  
+- Any output format supported, the very same language engine allows you to export your state machine into any imaginable format by adding simple transformation rules.
+- Supports WebSocket, Bosch-CAN.
+- Runs on any Unixish device.
+
+## Installation
+
+Details can be found [here](./INSTALL.md)  
+
+## Background: ceps - making software the reverse way (Gives a broader perspective - skip if you couldn't care less)
 
 Machines4ceps is part of the ceps tool. The name ceps is derived from the word 'spec' - the abbreviation of specification - spelled backwards. 
 Ceps is pronounced like the word 'caps' which is (almost) the phonetical reverse of spec.
@@ -55,23 +71,6 @@ That's what ceps is about: Shifting the focus of attention from the code to the 
 
 Machines4ceps is, like the very word suggests, the part of ceps which is concerned with **machines**, the
 other (built-in) part of ceps is **language**.
-
-
-## Features (machines4ceps as found in the standard distribution of the ceps tool)
-
-- UML 2.5 state charts (and more).
-- Concise notation.
-- Guards, Events, Actions etc.
-- Simulation.
-- Computation of State/Transition Coverage.
-- Wide variety of input formats supported, e.g.mermaid.js.  
-- Wide variety of output formats supported, e.g. render state charts with mermaid.js
-- Supports WebSocket, Bosch-CAN.
-- Runs on any Unixish device.
-
-## Installation
-
-Details can be found [here](./INSTALL.md)  
 
 ## Writing, running, and rendering state machines - Quick Start
 
