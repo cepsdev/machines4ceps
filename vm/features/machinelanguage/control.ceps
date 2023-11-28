@@ -179,6 +179,94 @@ Scenario{
      };
 };
 
+Scenario{
+    OblectamentaCodeLabel start,stop,inc_i;
+    OblectamentaDataLabel four,one,array, result, i, n;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    result; 0;
+                    one;1;
+                    four;4;0;
+                    n;10;
+                    array; 1;2;3;4;55;6;7;8;9;10;
+                    i;0;
+                };
+                text{
+                    asm{
+                        ldi32(n);         // |
+                        ldi32(i);         // |
+                        lti32;            // |
+                        bzeroi32(stop);   // | i >= n then stop
+
+                        ldi32(array);     // | 
+                        sti32(result);    // |
+                        buc(inc_i);       // | result = array[0], goto end of loop
+
+                    start;
+                        ldi32(n);
+                        ldi32(i);
+                        lti32;
+                        bzeroi32(stop);
+
+                        lea(array);      // |
+                        ldi32(i);        // |
+                        ui32toui64;      // |                 
+                        ldi64(four);     // |
+                        muli64;          // |
+                        addi64;          // |
+                        ldsi32;          // | top compute stack = array[i]
+                        
+                        ldi32(result);  
+                        gteqi32;
+                        bnzeroi32(inc_i);
+
+                        lea(array);      // |
+                        ldi32(i);        // |
+                        ui32toui64;      // |                 
+                        ldi64(four);     // |
+                        muli64;          // |
+                        addi64;          // |
+                        ldsi32;          // | top compute stack = array[i]
+
+                        sti32(result);
+                    inc_i;
+                        ldi32(one);       // |
+                        ldi32(i);         // |
+                        addi32;           // |
+                        sti32(i);         // | i <- i + 1
+
+                        buc(start);
+                    stop;                        
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+    {
+        verdict{equality_test{ 
+            {the_vm.vm.data.content().at(1);the_vm.vm.data.content().at(2);the_vm.vm.data.content().at(3);the_vm.vm.data.content().at(4);}
+            {
+                as_uint8(55);as_uint8(0);as_uint8(0);as_uint8(0);
+            }
+        };};
+    };
+};
+
 
 docinfo_se("==================================== SUMMARY ======================================
 ");

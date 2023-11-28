@@ -99,7 +99,8 @@ OblectamentaOpcode
     wrsi32,
     setframe, 
     popi32,
-    pushi32;
+    pushi32,
+    ui32toui64;
 
 
 OblectamentaModifier addr;

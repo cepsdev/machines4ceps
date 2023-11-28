@@ -118,7 +118,9 @@ namespace ceps{
                 pushi32reg,
                 popi32reg,
                 pushi32,
-                sti64
+                sti64,
+
+                ui32toui64 // cast i32 to i64 without sign extension
             };
 
             class VMEnv{
@@ -294,6 +296,7 @@ namespace ceps{
                     size_t pushi32reg(size_t);
                     size_t popi32reg(size_t);
                     size_t pushi32(size_t);
+                    size_t ui32toui64(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -422,7 +425,10 @@ namespace ceps{
                 {"pushi32reg",{Opcode::pushi32reg, "",nullptr,emit<Opcode::pushi32reg>}},
                 {"popi32reg",{Opcode::popi32reg, "",nullptr,emit<Opcode::popi32reg>}},
                 {"pushi32",{Opcode::pushi32, "",emit<Opcode::pushi32>,nullptr}},
-                {"sti64",{Opcode::sti64, "",nullptr,emit<Opcode::sti64>}}
+                {"sti64",{Opcode::sti64, "",nullptr,emit<Opcode::sti64>}},
+                {"ui32toui64",{Opcode::ui32toui64, "",emit<Opcode::ui32toui64>,nullptr}}
+
+                
             };
            
         }
