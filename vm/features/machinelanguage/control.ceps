@@ -180,6 +180,8 @@ Scenario{
 };
 
 Scenario{
+    title{label __ title = "Algorithm max-element.";};
+
     OblectamentaCodeLabel start,stop,inc_i;
     OblectamentaDataLabel four,one,array, result, i, n;
 
