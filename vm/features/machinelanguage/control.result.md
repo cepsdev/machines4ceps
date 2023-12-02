@@ -83,6 +83,11 @@ When{}
 # Scenario
 
 
+## title
+📎 Algorithm MAX-ELEMENT.
+
+
+
 Given{}
 
 When{}
@@ -90,6 +95,50 @@ When{}
 ## Then
 ### result
 :heavy_check_mark: Passed
+
+
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 Algorithm MAX-HEAPIFY.
+
+
+
+Given{}
+
+When{}
+
+## Then
+### vm
+stack{}
+
+data{result 0 0 0 0 one 1 0 0 0 two 2 0 0 0 four 4 0 0 0 0 0 0 0 n 10 0 0 0 i 0 0 0 0 heap_size 10 0 0 0 A 4 0 0 0 16 0 0 0 10 0 0 0 14 0 0 0 7 0 0 0 9 0 0 0 3 0 0 0 2 0 0 0 8 0 0 0 1 0 0 0 l 1 0 0 0 r 2 0 0 0 largest 1 0 0 0}
+
+text{2 0 0 0 24 0 0 0 0 0 0 0 2 0 0 0 8 0 0 0 0 0 0 0 49 0 0 0 2 0 0 0 4 0 0 0 0 0 0 0 13 0 0 0 6 0 0 0 72 0 0 0 0 0 0 0 2 0 0 0 24 0 0 0 0 0 0 0 2 0 0 0 8 0 0 0 0 0 0 0 49 0 0 0 2 0 0 0 8 0 0 0 0 0 0 0 13 0 0 0 6 0 0 0 76 0 0 0 0 0 0 0 2 0 0 0 72 0 0 0 0 0 0 0 2 0 0 0 28 0 0 0 0 0 0 0 60 0 0 0 30 0 0 0 68 1 0 0 0 0 0 0 2 0 0 0 24 0 0 0 0 0 0 0 2 0 0 0 12 0 0 0 0 0 0 0 49 0 0 0 80 0 0 0 12 0 0 0 32 0 0 0 0 0 0 0 14 0 0 0 3 0 0 0 2 0 0 0 72 0 0 0 0 0 0 0 2 0 0 0 12 0 0 0 0 0 0 0 49 0 0 0 80 0 0 0 12 0 0 0 32 0 0 0 0 0 0 0 14 0 0 0 3 0 0 0 60 0 0 0 30 0 0 0 68 1 0 0 0 0 0 0 2 0 0 0 72 0 0 0 0 0 0 0 12 0 0 0 80 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0 19 0 0 0 68 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0}
+
+compute_stack{}
+
+#### registers
+CSP{0}
+
+FP{0}
+
+PC{300}
+
+SP{4096}
+
+
+
+
+
+### result
+:heavy_exclamation_mark: Failed
 
 
 
@@ -125,6 +174,11 @@ When{}
 
 ## result
 :heavy_check_mark: Passed
+
+
+
+## result
+:heavy_exclamation_mark: Failed
 
 
 

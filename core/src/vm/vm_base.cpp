@@ -122,8 +122,8 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::stsi32(size_t pos){
+        auto addr{pop_cs<addr_t>()};
         auto value{pop_cs<int>()};
-        auto addr{pop_cs<int>()};
         *(int*)&mem.base[addr]  = value;
         return base_opcode_width + pos;
     }

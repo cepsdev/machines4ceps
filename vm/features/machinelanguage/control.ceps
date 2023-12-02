@@ -180,7 +180,7 @@ Scenario{
 };
 
 Scenario{
-    title{label __ title = "Algorithm max-element.";};
+    title{label __ title = "Algorithm MAX-ELEMENT.";};
 
     OblectamentaCodeLabel start,stop,inc_i;
     OblectamentaDataLabel four,one,array, result, i, n;
@@ -269,6 +269,121 @@ Scenario{
     };
 };
 
+
+
+Scenario{
+    title{label __ title = "Algorithm MAX-HEAPIFY.";};
+
+    OblectamentaCodeLabel l1,l2,l3,start,stop,inc_i;
+    OblectamentaDataLabel A,largest,four,one,two,array, result, i, n, l, r, heap_size;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    result; 0;
+                    one;1;
+                    two;2;
+                    four;4;0;
+                    n;10;
+                    // MAX-HEAPIFY(A,i), see p.165 in Cormen et.al. 'Algorithms' 4th ed.
+                    i;0;
+                    heap_size;10;
+                    A; 4;16;10;14;7;9;3;2;8;1;
+                    //local variables
+                    l; 0;
+                    r; 0;
+                    largest; 0;
+                };
+                text{
+                    asm{
+                    start;
+                      
+                      ldi32(i);
+                      ldi32(two);
+                      muli32;                                           
+                      ldi32(one);
+                      addi32; 
+                      sti32(l); // left = 2*i + 1
+                      ldi32(i);
+                      ldi32(two);
+                      muli32;
+                      ldi32(two);
+                      addi32;
+                      sti32(r); //right = 2*i + 2
+                      //if l <= A.heap-size and A[l] > A[i]
+                      //largest = l
+                      //else largest = i
+                      ldi32(l);
+                      ldi32(heap_size);
+                      lteqi32;
+                      bnzeroi32(l1);
+                      ldi32(i);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;
+                      lea(A);
+                      addi64;
+                      ldsi32; // top(cstack) = A[i]
+                      ldi32(l);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;                      
+                      lea(A);
+                      addi64;
+                      ldsi32; //cstack = {A[i]; A[l];}
+                      lteqi32;
+                      bnzeroi32(l1);
+                      ldi32(l);
+                      lea(largest);
+                      
+                      stsi32; // mem[popi64(cstack)] = popi32(cstack)
+                      halt;
+
+
+
+                      halt;
+                      
+                      ldsi32;
+                      
+
+                      buc(l3);
+                      l1;
+
+                      l3;
+
+                      halt;
+
+
+
+                    stop;                        
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+    {
+        the_vm;
+        verdict{equality_test{ 
+            {the_vm.vm.data.content().at(1);the_vm.vm.data.content().at(2);the_vm.vm.data.content().at(3);the_vm.vm.data.content().at(4);}
+            {
+                as_uint8(55);as_uint8(0);as_uint8(0);as_uint8(0);
+            }
+        };};
+    };
+};
 
 docinfo_se("==================================== SUMMARY ======================================
 ");
