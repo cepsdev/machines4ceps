@@ -274,7 +274,7 @@ Scenario{
 Scenario{
     title{label __ title = "Algorithm MAX-HEAPIFY.";};
 
-    OblectamentaCodeLabel l1,l2,l3,start,stop,inc_i;
+    OblectamentaCodeLabel l1,l2,l3,l4,start,stop,inc_i;
     OblectamentaDataLabel A,largest,four,one,two,array, result, i, n, l, r, heap_size;
 
     Given{
@@ -284,19 +284,20 @@ Scenario{
                 compute_stack{
                 };
                 data{
+                    A; 16;4;10;14;7;9;3;2;8;1;
                     result; 0;
                     one;1;
                     two;2;
                     four;4;0;
                     n;10;
                     // MAX-HEAPIFY(A,i), see p.165 in Cormen et.al. 'Algorithms' 4th ed.
-                    i;0;
+                    // indices start at zero in contrast to Cormen et. al.
+                    i;1;
                     heap_size;10;
-                    A; 4;16;10;14;7;9;3;2;8;1;
                     //local variables
                     l; 0;
                     r; 0;
-                    largest; 0;
+                    largest; -1;
                 };
                 text{
                     asm{
@@ -314,9 +315,10 @@ Scenario{
                       ldi32(two);
                       addi32;
                       sti32(r); //right = 2*i + 2
-                      //if l <= A.heap-size and A[l] > A[i]
+                      
+                      //if l < A.heap-size and A[l] > A[i]
                       //largest = l
-                      //else largest = i
+                      
                       ldi32(l);
                       ldi32(heap_size);
                       lteqi32;
@@ -339,24 +341,79 @@ Scenario{
                       bnzeroi32(l1);
                       ldi32(l);
                       lea(largest);
-                      
                       stsi32; // mem[popi64(cstack)] = popi32(cstack)
-                      halt;
+                      buc(l3);
+                    l1; //else largest = i
+                      ldi32(i);
+                      lea(largest);
+                      stsi32;
+                    l3;
+                      //if r < A.heap-size and A[r] > A[largest]
+                      ldi32(r);
+                      ldi32(heap_size);
+                      gteqi32;
+                      bzeroi32(l4);
+                      lea(A);
+                      ldi32(r);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;
+                      addi64;
+                      ldsi32; // cstack={A[r]}
 
-
-
-                      halt;
-                      
+                      lea(A);
+                      ldi32(largest);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;
+                      addi64;
+                      ldsi32; // cstack={A[r],A[largest]}
+                      gteqi32;
+                      bnzeroi32(l4);
+                      ldi32(r);
+                      lea(largest);
+                      stsi32;
+                    l4;
+                      ldi32(i);
+                      ldi32(largest);
+                      eqi32;
+                      bnzeroi32(stop); //if A[i] == A[largest] then goto stop
+                      lea(A);
+                      ldi32(i);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;
+                      addi64;
                       ldsi32;
                       
+                      
+                      lea(A);
+                      ldi32(largest);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;
+                      addi64;
+                      ldsi32;
 
-                      buc(l3);
-                      l1;
+                      lea(A);
+                      ldi32(i);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;
+                      addi64;
+                      stsi32;
 
-                      l3;
-
-                      halt;
-
+                      lea(A);
+                      ldi32(largest);
+                      ldi32(four);
+                      muli32;
+                      ui32toui64;
+                      addi64;
+                      stsi32;
+                      ldi32(largest);
+                      lea(i);
+                      stsi32;
+                      buc(start);
 
 
                     stop;                        
@@ -377,9 +434,30 @@ Scenario{
     {
         the_vm;
         verdict{equality_test{ 
-            {the_vm.vm.data.content().at(1);the_vm.vm.data.content().at(2);the_vm.vm.data.content().at(3);the_vm.vm.data.content().at(4);}
             {
-                as_uint8(55);as_uint8(0);as_uint8(0);as_uint8(0);
+                the_vm.vm.data.content().at(1);the_vm.vm.data.content().at(2);the_vm.vm.data.content().at(3);the_vm.vm.data.content().at(4);
+                the_vm.vm.data.content().at(5);the_vm.vm.data.content().at(6);the_vm.vm.data.content().at(7);the_vm.vm.data.content().at(8);
+                the_vm.vm.data.content().at(9);the_vm.vm.data.content().at(10);the_vm.vm.data.content().at(11);the_vm.vm.data.content().at(12);
+                the_vm.vm.data.content().at(13);the_vm.vm.data.content().at(14);the_vm.vm.data.content().at(15);the_vm.vm.data.content().at(16);
+                the_vm.vm.data.content().at(17);the_vm.vm.data.content().at(18);the_vm.vm.data.content().at(19);the_vm.vm.data.content().at(20);
+                the_vm.vm.data.content().at(21);the_vm.vm.data.content().at(22);the_vm.vm.data.content().at(23);the_vm.vm.data.content().at(24);
+                the_vm.vm.data.content().at(25);the_vm.vm.data.content().at(26);the_vm.vm.data.content().at(27);the_vm.vm.data.content().at(28);
+                the_vm.vm.data.content().at(29);the_vm.vm.data.content().at(30);the_vm.vm.data.content().at(31);the_vm.vm.data.content().at(32);
+                the_vm.vm.data.content().at(33);the_vm.vm.data.content().at(34);the_vm.vm.data.content().at(35);the_vm.vm.data.content().at(36);
+                the_vm.vm.data.content().at(37);the_vm.vm.data.content().at(38);the_vm.vm.data.content().at(39);the_vm.vm.data.content().at(40);
+            }
+            {
+                as_uint8(16);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(14);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(8);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(7);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(9);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(3);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(2);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(4);as_uint8(0);as_uint8(0);as_uint8(0);
+                as_uint8(1);as_uint8(0);as_uint8(0);as_uint8(0);
+
             }
         };};
     };
