@@ -2,8 +2,105 @@
 kind DocgenStringPrintNoEscape;
 DocgenStringPrintNoEscape docinfo_se;
 
+macro insertion_sort_text{
+    val ascending = hd(arglist);
+    OblectamentaCodeLabel inner_loop_start, inner_loop_exit,outer_loop_start,outer_loop_exit,start,stop,inc_i;
+    OblectamentaDataLabel zero,key,k,length,int_width,four,one,array, result, i, n;
+    asm{
+            ldi32(one);
+            sti32(i); // i <- 1;
+                        
+        outer_loop_start;
+            ldi32(length);
+            ldi32(i);
+            lti32;
+                        
+            bzeroi32(outer_loop_exit); // for (int i = 1; i < length; ++i)
+
+            lea(array);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            sti32(key); // key <- array[i]
+
+            ldi32(one);
+            ldi32(i);
+            subi32;
+            sti32(k);
+
+        inner_loop_start;
+            ldi32(zero);
+            ldi32(k);
+            gteqi32;
+            bzeroi32(inner_loop_exit);
+                    
+            lea(array);
+            ldi32(k);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            ldi32(key);
+            gteqi32;  // array[k] <= key
+            if (ascending){
+             bnzeroi32(inner_loop_exit);
+            } else {
+             bzeroi32(inner_loop_exit);
+            }
+
+            lea(array);
+            ldi32(k);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+
+            lea(array);
+            ldi32(k);
+            ldi32(one);
+            addi32;
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32; // array[k+1] = array[k]
+                    
+            ldi32(one);
+            ldi32(k);
+            subi32;
+            sti32(k);
+            buc(inner_loop_start);
+        inner_loop_exit;
+
+            ldi32(key);
+            lea(array);
+            ldi32(k);
+            ldi32(one);
+            addi32;
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32; //array[k+1] = key
+
+            ldi32(one);
+            ldi32(i);
+            addi32;
+            sti32(i); // i <- i + 1
+            buc(outer_loop_start);
+        outer_loop_exit;                
+        stop;                        
+            halt;
+                    };
+};
+
 Scenario{
-    title{label __ title = "INSERTION-SORT";};
+    title{label __ title = "INSERTION-SORT (ASCENDING)";};
 
     OblectamentaCodeLabel inner_loop_start, inner_loop_exit,outer_loop_start,outer_loop_exit,start,stop,inc_i;
     OblectamentaDataLabel zero,key,k,length,int_width,four,one,array, result, i, n;
@@ -32,94 +129,7 @@ Scenario{
                      length; 10;
                     };
                 text{
-                    asm{
-                        ldi32(one);
-                        sti32(i); // i <- 1;
-                        
-                    outer_loop_start;
-                        ldi32(length);
-                        ldi32(i);
-                        lti32;
-                        
-                        bzeroi32(outer_loop_exit); // for (int i = 1; i < length; ++i)
-
-                        lea(array);
-                        ldi32(i);
-                        ldi32(int_width);
-                        muli32;
-                        ui32toui64;
-                        addi64;
-                        ldsi32;
-                        sti32(key); // key <- array[i]
-
-                        ldi32(one);
-                        ldi32(i);
-                        subi32;
-                        sti32(k);
-
-                    inner_loop_start;
-                        ldi32(zero);
-                        ldi32(k);
-                        gteqi32;
-                        bzeroi32(inner_loop_exit);
-
-                        lea(array);
-                        ldi32(k);
-                        ldi32(int_width);
-                        muli32;
-                        ui32toui64;
-                        addi64;
-                        ldsi32;
-                        ldi32(key);
-                        gteqi32;
-                        bnzeroi32(inner_loop_exit);
-
-                        lea(array);
-                        ldi32(k);
-                        ldi32(int_width);
-                        muli32;
-                        ui32toui64;
-                        addi64;
-                        ldsi32;
-
-                        lea(array);
-                        ldi32(k);
-                        ldi32(one);
-                        addi32;
-                        ldi32(int_width);
-                        muli32;
-                        ui32toui64;
-                        addi64;
-                        stsi32; // array[k+1] = array[k]
-                    
-                        ldi32(one);
-                        ldi32(k);
-                        subi32;
-                        sti32(k);
-                        buc(inner_loop_start);
-                        inner_loop_exit;
-
-                        ldi32(key);
-                        lea(array);
-                        ldi32(k);
-                        ldi32(one);
-                        addi32;
-                        ldi32(int_width);
-                        muli32;
-                        ui32toui64;
-                        addi64;
-                        stsi32; //array[k+1] = key
-
-                        ldi32(one);
-                        ldi32(i);
-                        addi32;
-                        sti32(i); // i <- i + 1
-                        buc(outer_loop_start);
-                    outer_loop_exit;                                               
-                        
-                    stop;                        
-                        halt;
-                    };
+                    insertion_sort_text{1;};
                 };
             }
         );
@@ -148,6 +158,64 @@ Scenario{
     };
 };
 
+Scenario{
+    title{label __ title = "INSERTION-SORT (DESCENDING)";};
+
+    OblectamentaCodeLabel inner_loop_start, inner_loop_exit,outer_loop_start,outer_loop_exit,start,stop,inc_i;
+    OblectamentaDataLabel zero,key,k,length,int_width,four,one,array, result, i, n;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    array;
+                     10;9;8;7;6;5;4;3;2;1;
+                    zero;
+                     0;
+                    one; 
+                     1;
+                    int_width;
+                     4;
+                    i; 
+                     0;
+                    k;
+                     0;
+                    key;
+                     0;
+                     length; 10;
+                    };
+                text{
+                    insertion_sort_text{0;};
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+    {
+        verdict{equality_test{ 
+            {
+                for(k : 0 .. 9){
+                    the_vm.vm.data.content().at((k*4)+1 );the_vm.vm.data.content().at((k*4)+2);the_vm.vm.data.content().at((k*4)+3);the_vm.vm.data.content().at((k*4)+4);
+                }           
+            }
+            {
+                for(k:1 .. 10){
+                    as_uint8(10 - k + 1);as_uint8(0);as_uint8(0);as_uint8(0);
+                }
+            }
+        };};
+    };
+};
 
 Scenario{
     title{label __ title = "SUM-ARRAY";};
@@ -223,6 +291,9 @@ Scenario{
         };};
     };
 };
+
+
+
 
 Scenario{
     title{label __ title = "MAX-ELEMENT";};
