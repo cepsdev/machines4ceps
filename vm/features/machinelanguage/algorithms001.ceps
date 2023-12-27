@@ -3,7 +3,7 @@ kind DocgenStringPrintNoEscape;
 DocgenStringPrintNoEscape docinfo_se;
 
 Scenario{
-    title{label __ title = "INSERTIONSORT";};
+    title{label __ title = "INSERTION-SORT";};
 
     OblectamentaCodeLabel inner_loop_start, inner_loop_exit,outer_loop_start,outer_loop_exit,start,stop,inc_i;
     OblectamentaDataLabel zero,key,k,length,int_width,four,one,array, result, i, n;
@@ -131,7 +131,6 @@ Scenario{
           }
         );
      };
-     the_vm;
     Then
     {
         verdict{equality_test{ 
@@ -144,6 +143,82 @@ Scenario{
                 for(k:1 .. 10){
                     as_uint8(k);as_uint8(0);as_uint8(0);as_uint8(0);
                 }
+            }
+        };};
+    };
+};
+
+
+Scenario{
+    title{label __ title = "SUM-ARRAY";};
+
+    OblectamentaCodeLabel start,loop,stop,inc_i;
+    OblectamentaDataLabel zero,int_width,one,array, result, i, n;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    result; -1;
+                    zero;0;
+                    one;1;
+                    int_width;4;
+                    n;10;
+                    array; 1;2;3;4;5;6;7;8;9;10;
+                    i;0;
+                };
+                text{
+                    asm{
+                        ldi32(zero);
+                        sti32(i);
+                        ldi32(zero);
+                        sti32(result);
+                    loop;
+                        ldi32(i);
+                        ldi32(n);
+                        gti32;
+                        bzeroi32(stop);
+
+                        lea(array);
+                        ldi32(i);
+                        ldi32(int_width);
+                        muli32;
+                        ui32toui64;
+                        addi64;
+                        ldsi32;
+                        ldi32(result);
+                        addi32;
+                        sti32(result);
+                        ldi32(i);
+                        ldi32(one);
+                        addi32;
+                        sti32(i);
+                        buc(loop);
+
+                    stop;                        
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+     the_vm ;
+    Then
+    {
+        verdict{equality_test{ 
+            {the_vm.vm.data.content().at(1);}
+            {
+                as_uint8(55);
             }
         };};
     };
