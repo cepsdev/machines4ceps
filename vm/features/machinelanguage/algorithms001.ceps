@@ -96,8 +96,43 @@ macro insertion_sort_text{
         outer_loop_exit;                
         stop;                        
             halt;
-                    };
+    };
 };
+
+macro linear_search_text{
+    OblectamentaCodeLabel start,loop,found,stop;
+    OblectamentaDataLabel x,zero,int_width,one,array, result, i, n;
+    asm{
+            ldi32(zero);
+            sti32(i);
+        loop;
+            ldi32(i);
+            ldi32(n);
+            gti32;
+            bzeroi32(stop);
+            lea(array);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            ldi32(x);
+            eqi32;
+            bnzeroi32(found);
+            ldi32(one);
+            ldi32(i);
+            addi32;
+            sti32(i);
+            buc(loop);
+        found;
+            ldi32(i);
+            sti32(result);
+        stop;                        
+            halt;
+    };
+};
+
 
 Scenario{
     title{label __ title = "INSERTION-SORT (ASCENDING)";};
@@ -280,7 +315,6 @@ Scenario{
           }
         );
      };
-     the_vm ;
     Then
     {
         verdict{equality_test{ 
@@ -292,7 +326,51 @@ Scenario{
     };
 };
 
+Scenario{
+    title{label __ title = "LNEAR-SEARCH";};
 
+    OblectamentaDataLabel x,zero,int_width,one,array, result, i, n;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    result; -1;
+                    x; 10;
+                    zero;0;
+                    one;1;
+                    int_width;4;
+                    n;10;
+                    array; 1;2;3;4;5;6;7;8;9;10;
+                    i;-1;
+                };
+                text{
+                    linear_search_text{};
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    the_vm;
+    Then
+    {
+        verdict{equality_test{ 
+            {the_vm.vm.data.content().at(1);}
+            {
+                as_uint8(9);
+            }
+        };};
+    };
+};
 
 
 Scenario{
@@ -548,7 +626,6 @@ Scenario{
      };
     Then
     {
-        the_vm;
         verdict{equality_test{ 
             {
                 the_vm.vm.data.content().at(1);the_vm.vm.data.content().at(2);the_vm.vm.data.content().at(3);the_vm.vm.data.content().at(4);
