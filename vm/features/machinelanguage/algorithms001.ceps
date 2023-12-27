@@ -360,7 +360,6 @@ Scenario{
           }
         );
      };
-    the_vm;
     Then
     {
         verdict{equality_test{ 
@@ -372,6 +371,169 @@ Scenario{
     };
 };
 
+Scenario{
+    title{label __ title = "BINARY-ADD";};
+
+    OblectamentaDataLabel t, carry,c,a,b,x,zero,int_width,one,two,three,array, result, i, n;
+    OblectamentaCodeLabel loop_next,loop,loop_exit, sum_zero, sum_one, sum_two, sum_three; 
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    c; 0;0;0;0;0; 
+                    zero;0;
+                    one;1;
+                    two;2;
+                    three;3;
+                    int_width;4;
+                    n;4;
+                    a; 1;0;0;0;
+                    b; 1;1;0;0;
+                    i;-1;
+                    carry;0;
+                    t;-1;
+                };
+                text{
+    asm{
+            ldi32(zero);
+            sti32(i);
+            ldi32(zero);
+            sti32(carry);
+        loop;
+            ldi32(i);
+            ldi32(n);
+            gti32;
+            bzeroi32(loop_exit);
+            
+            lea(a);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+
+            lea(b);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+
+            ldsi32;
+
+            addi32;
+            ldi32(carry);
+            addi32;
+            sti32(t);
+            ldi32(t);
+            bnzeroi32(sum_one);            
+        sum_zero;
+            ldi32(zero);
+            lea(c);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32;
+            ldi32(zero);
+            sti32(carry);
+
+            buc(loop_next);
+        sum_one;
+
+            ldi32(t);
+            ldi32(one);
+            eqi32;
+            bzeroi32(sum_two);
+
+            ldi32(one);
+            lea(c);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32;
+            ldi32(zero);
+            sti32(carry);
+            buc(loop_next);
+        sum_two;
+
+            ldi32(t);
+            ldi32(two);
+            eqi32;
+            bzeroi32(sum_three);
+
+            ldi32(zero);
+            lea(c);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32;
+
+            ldi32(one);
+            sti32(carry);
+            buc(loop_next);
+        sum_three;
+            ldi32(one);
+            lea(c);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32;
+
+            ldi32(one);
+            sti32(carry);
+        loop_next;   
+
+            ldi32(one);
+            ldi32(i);
+            addi32;
+            sti32(i);
+            buc(loop);
+        loop_exit;
+            ldi32(carry);
+            lea(c);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32;
+
+            halt;
+    };
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+    {
+        verdict{equality_test{ 
+            {for(i: 1 .. 9) { the_vm.vm.data.content().at(i);} }
+            {
+                as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(1);
+            }
+        };};
+    };
+};
 
 Scenario{
     title{label __ title = "MAX-ELEMENT";};
