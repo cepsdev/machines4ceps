@@ -210,6 +210,22 @@ namespace ceps{
                         return r;
                     }
 
+                    template<typename T> size_t push_data_stack(T data){
+                        auto t{registers.file[registers_t::SP]};
+                        registers.file[registers_t::SP] -= sizeof(T);
+                        for (size_t i = 0; i < sizeof(T); ++i)
+                            *(mem.base + registers.file[registers_t::SP] + i ) = *((char*) &data + i);
+                        return t;
+                    }
+
+                    template<typename T> T pop_data_stack(){
+                        T r;
+                        for (size_t i = 0; i < sizeof(T); ++i)
+                            *((uint8_t*) &r + i) = *(mem.base + registers.file[registers_t::SP] + i );
+                        registers.file[registers_t::SP] += sizeof(T);
+                        return r;
+                    }
+
                     size_t run(size_t start = 0);
 
                     VMEnv();

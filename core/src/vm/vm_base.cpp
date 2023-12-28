@@ -210,11 +210,12 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::call(size_t pos){
-        push_cs<int>(base_opcode_width + 1 + pos);
-        return text[pos+1];
+        push_data_stack<size_t>(base_opcode_width + sizeof(addr_t) + pos);
+        return *(size_t*)(text + pos  + base_opcode_width);
     }
     size_t VMEnv::ret(size_t pos){
-        return pop_cs<int>();
+        auto target_addr{pop_data_stack<size_t>()};
+        return target_addr;
     }
     size_t VMEnv::swp(size_t pos){
         auto t1{pop_cs<int>()};
