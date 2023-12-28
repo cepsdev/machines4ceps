@@ -536,6 +536,175 @@ Scenario{
 };
 
 Scenario{
+    title{label __ title = "SELECTION-SORT";};
+
+    OblectamentaDataLabel r,int_width,k, a, n, i, current_min,current_min_idx, j, zero, one, two, three;
+    OblectamentaCodeLabel loop_find_min_index_next,find_min_index_exit,loop_next,loop,loop_exit, find_min_index, stop, loop_find_min_index; 
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data
+                {
+                    a; 10;9;8;7;6;5;4;3;2;1;
+                    c; 0;0;0;0;0; 
+                    zero;0;
+                    one;1;
+                    two;2;
+                    three;3;
+                    int_width;4;
+                    n;10;
+                    i;-1;
+                    k;-1;
+                    carry;0;
+                    t;-1;
+                    j; -1;
+                    current_min; -1;
+                    current_min_idx; -1;
+                    r; -1;
+                };
+                text{
+    asm{
+            ldi32(zero);
+            sti32(i);
+        loop;
+            ldi32(i);
+            //ldi32(one);
+            ldi32(n);
+            //subi32;
+            gti32;
+            bzeroi32(stop);
+            ldi32(i);
+            call(find_min_index);
+            sti32(r);
+
+            lea(a);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            sti32(t);
+
+            lea(a);
+            ldi32(r);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            lea(a);
+            ldi32(i);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32;
+
+            ldi32(t);
+            lea(a);
+            ldi32(r);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            stsi32; // swap a[i] and a[r]
+          
+
+
+            ldi32(i);
+            ldi32(one);
+            addi32;
+            sti32(i);
+            buc(loop);
+        find_min_index;
+            sti32(j);
+            lea(a);
+            ldi32(j);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            sti32(current_min);
+            ldi32(j);
+            sti32(current_min_idx);
+            buc(loop_find_min_index_next);
+        loop_find_min_index;
+            ldi32(j);
+            ldi32(n);
+            gti32;
+            bzeroi32(find_min_index_exit);
+
+            lea(a);
+            ldi32(j);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            ldi32(current_min);
+            gti32;
+            bzeroi32(loop_find_min_index_next);
+            ldi32(j);
+            sti32(current_min_idx);
+
+            lea(a);
+            ldi32(j);
+            ldi32(int_width);
+            muli32;
+            ui32toui64;
+            addi64;
+            ldsi32;
+            sti32(current_min);
+
+        loop_find_min_index_next;
+            ldi32(j);
+            ldi32(one);
+            addi32;
+            sti32(j);
+            buc(loop_find_min_index);
+        find_min_index_exit;
+           
+            ldi32(current_min_idx);
+            ret;
+        stop;
+            halt;
+    };
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    the_vm;
+    Then
+    {
+        verdict{equality_test{ 
+            {
+                for(k : 0 .. 9){
+                    the_vm.vm.data.content().at((k*4)+1 );the_vm.vm.data.content().at((k*4)+2);the_vm.vm.data.content().at((k*4)+3);the_vm.vm.data.content().at((k*4)+4);
+                }           
+            }
+            {
+                for(k:1 .. 10){
+                    as_uint8(k);as_uint8(0);as_uint8(0);as_uint8(0);
+                }
+            }
+        };};
+    };
+};
+
+Scenario{
     title{label __ title = "MAX-ELEMENT";};
 
     OblectamentaCodeLabel start,stop,inc_i;
