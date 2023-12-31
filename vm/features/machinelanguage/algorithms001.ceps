@@ -704,6 +704,69 @@ Scenario{
     };
 };
 
+
+
+Scenario{
+    title{label __ title = "MERGE";};
+
+    OblectamentaCodeLabel inner_loop_start, inner_loop_exit,outer_loop_start,outer_loop_exit,start,stop,inc_i;
+    OblectamentaDataLabel zero,key,k,length,int_width,four,one,array, result, i, n;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    array;
+                     10;9;8;7;6;5;4;3;2;1;
+                    zero;
+                     0;
+                    one; 
+                     1;
+                    int_width;
+                     4;
+                    i; 
+                     0;
+                    k;
+                     0;
+                    key;
+                     0;
+                     length; 10;
+                    };
+                text{
+                    insertion_sort_text{0;};
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+    {
+        verdict{equality_test{ 
+            {
+                for(k : 0 .. 9){
+                    the_vm.vm.data.content().at((k*4)+1 );the_vm.vm.data.content().at((k*4)+2);the_vm.vm.data.content().at((k*4)+3);the_vm.vm.data.content().at((k*4)+4);
+                }           
+            }
+            {
+                for(k:1 .. 10){
+                    as_uint8(10 - k + 1);as_uint8(0);as_uint8(0);as_uint8(0);
+                }
+            }
+        };};
+    };
+};
+
+
+
 Scenario{
     title{label __ title = "MAX-ELEMENT";};
 

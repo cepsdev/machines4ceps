@@ -1,3 +1,4 @@
+
 Scenario{
      title{label _oblectamenta_instruction_call_definition title = "The call instruction.";};
      Given{
@@ -15,34 +16,28 @@ Scenario{
 		let the_code = obj(
             text{
                 OblectamentaCodeLabel proc; // declare the label proc
+                asm{                  
                   call(proc);               // call the procedure proc
                  proc;                      // here starts the procedure proc (just a label)
                   halt;                     comment{ "Address of halt is &text + size_opcode_call == 0 + 2";};
+                };
            });
         the_code;
      };
      When{
-        let the_vm = run_oblectamenta_bytecode(
-            vm{
+        let the_vm = operation(
+            run{vm{
                 the_stack;
                 the_data;
                 the_code;
-            }
-        );**
-        run{
-         vm{
-          stack;
-          data;
-          text;
-         };
-        };
+            };}
+        );
      };
      Then
      {
-        vm{ data{}; stack{2;}; text; };
         verdict{equality_test{ 
-            stack{size_opcode_call;};
-            the_vm.vm.stack;
+            as_uint8(size_opcode_call);
+            the_vm.vm.stack.content().at(0);
         };};
      };
 };
