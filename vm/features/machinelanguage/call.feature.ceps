@@ -1,6 +1,6 @@
 
 Scenario{
-     title{label _oblectamenta_instruction_call_definition title = "The call instruction.";};
+     title{label _oblectamenta_instruction_call title = "The call instruction.";};
      Given{
 		let the_stack = obj(stack{}); //stack{} should be enough, but make use of the assembler's obj function to arrive at a normalized version of "empty".
         the_stack; // The line above is invisible in evaluated mode. This way the content is visible in any docgen view without introducing side effects.
@@ -19,7 +19,7 @@ Scenario{
                 asm{                  
                   call(proc);               // call the procedure proc
                  proc;                      // here starts the procedure proc (just a label)
-                  halt;                     comment{ "Address of halt is &text + size_opcode_call == 0 + 2";};
+                  halt;                     
                 };
            });
         the_code;
@@ -38,6 +38,40 @@ Scenario{
         verdict{equality_test{ 
             as_uint8(size_opcode_call);
             the_vm.vm.stack.content().at(0);
+        };};
+     };
+};
+
+Scenario{
+     title{label _oblectamenta_instruction_ret title = "The ret instruction.";};
+     OblectamentaDataLabel seven;
+     When{
+        let the_vm = operation(
+            run{vm{
+                        data{
+                            seven; 7;
+                        };        
+                        text{
+                            OblectamentaCodeLabel exit,proc; // declare the label proc
+                            asm{                  
+                                    call(proc);               // call the procedure proc
+                                    ldi32(seven);
+                                    buc(exit);
+                                proc;                      // here starts the procedure proc (just a label)
+                                    ret;                      // return to caller                  
+                                exit;
+                                    halt;                     
+                            };
+                    };
+                };
+            }
+        );
+     };
+     Then
+     {
+        verdict{equality_test{ 
+            {as_uint8(7);as_uint8(0);as_uint8(0);as_uint8(0);}
+            {the_vm.vm.compute_stack.content();}
         };};
      };
 };
