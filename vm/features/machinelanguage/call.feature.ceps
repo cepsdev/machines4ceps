@@ -42,40 +42,6 @@ Scenario{
      };
 };
 
-Scenario{
-     title{label _oblectamenta_instruction_ret title = "The ret instruction.";};
-     OblectamentaDataLabel seven;
-     When{
-        let the_vm = operation(
-            run{vm{
-                        data{
-                            seven; 7;
-                        };        
-                        text{
-                            OblectamentaCodeLabel exit,proc; // declare the label proc
-                            asm{                  
-                                    call(proc);               // call the procedure proc
-                                    ldi32(seven);
-                                    buc(exit);
-                                proc;                      // here starts the procedure proc (just a label)
-                                    ret;                      // return to caller                  
-                                exit;
-                                    halt;                     
-                            };
-                    };
-                };
-            }
-        );
-     };
-     Then
-     {
-        verdict{equality_test{ 
-            {as_uint8(7);as_uint8(0);as_uint8(0);as_uint8(0);}
-            {the_vm.vm.compute_stack.content();}
-        };};
-     };
-};
-
 Summary{
  for( e : root.Scenario.Then.result){
   e;

@@ -37,6 +37,26 @@ struct patch_entry{
 
 static std::vector<patch_entry> patch_entries;
 
+
+static std::optional<std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>> is_register_offset_expression(std::vector<ceps::ast::node_t> args){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaReg"){
+        return std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>{VMEnv::reg_t{VMEnv::registers_t{}.reg_mnemonic2idx[name(as_symbol_ref(args[0]))] }, VMEnv::reg_offs_t{}};
+    } else if (args.size() == 1 
+               && is<Ast_node_kind::binary_operator>(args[0]) 
+               && is<Ast_node_kind::symbol>((as_binop_ref(args[0]).left()) )
+               && kind(as_symbol_ref(as_binop_ref(args[0]).left()))=="OblectamentaReg"
+               && is<Ast_node_kind::int_literal>((as_binop_ref(args[0]).right()) )
+              )
+    {
+        VMEnv::reg_t reg{VMEnv::registers_t{}.reg_mnemonic2idx[name(as_symbol_ref(as_binop_ref(args[0]).left()))]};
+        VMEnv::reg_offs_t reg_offs{value(as_int_ref(as_binop_ref(args[0]).right()))};
+        if (op_val(as_binop_ref(args[0])) == "-") reg_offs= -reg_offs;
+        return std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>{reg, reg_offs};        
+    }
+    return {};
+}
+
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
 {
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
@@ -87,8 +107,19 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
             if (it == ceps::vm::oblectamenta::mnemonics.end()) 
                throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
             auto v{it->second};
-            
-            if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
+
+            if (auto r = is_register_offset_expression(args)){
+                auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"reg")};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"reg'" };
+                auto v{it->second};
+
+                //std::cerr << "register_offset_expression (A) reg: "<<get<0>(*r)<< " offs:"<< get<1>(*r) << "\n";
+                if (get<4>(v)) {
+                 text_loc = get<4>(v)(vm,text_loc,get<0>(*r),get<1>(*r) );
+                 //std::cerr << "register_offset_expression(B) reg: "<<get<0>(*r)<< " offs:"<< get<1>(*r) << "\n";
+                }
+            } else if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
                 auto arg{value(as_int_ref(args[0]))};
                 auto loc_it{immediate2loc.find(arg)};
                 size_t addr {};
