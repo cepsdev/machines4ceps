@@ -1,48 +1,47 @@
+
+kind DocgenStringPrintNoEscape;
+DocgenStringPrintNoEscape docinfo_se;
+
+macro scen1_part_1 {
+    OblectamentaDataLabel  four;
+    ldi32(four);
+    ldi64(SP-4);
+    stsi32;       // MEM[SP-4] = 4
+    ldi64(SP-4);
+    sti64(SP);   // SP = SP - 4
+};
+
 Scenario{
-     title{label _oblectamenta_instruction_ret title = "The ret instruction.";};
-     OblectamentaDataLabel r, one, two, four;
+     title{label _oblectamenta_instruction_ret title = "The ldi64, sti64 instructions: Move values in and out of the register SP and basic manipulations of the stack.";};
+     OblectamentaDataLabel  four;
      When{
+        docinfo_se("The value 4 is on the compute stack, and the operations "); 
+        asm{scen1_part_1{};};
+        docinfo_se ("are executed"); 
+    };
+    And{
         let the_vm = operation(
             run{
                 vm{
                     data{
-                        one; 1;
-                        two; 2;
                         four; 4;
-                        r; -1;
                     };        
                     text{
-                        OblectamentaCodeLabel exit,proc; // declare the label proc
                         asm{    
-                                ldi32(one);
-                                ldi64(SP-4);
-                                stsi32;       // MEM[SP-4] = 1
-                                ldi64(SP-4);
-                                ldsi32;
-                                sti32(r);    // r = MEM[SP-4]
-                                halt;        
-            
-                                subi32;
-                                //sti32(SP);
+                                scen1_part_1{};
                                 halt;
-                                call(proc);
-                                buc(exit);
-                            proc;
-                                ret;                  
-                            exit;
-                                halt;                     
                             };
                     };
                 };
             }
         );
      };
-     "!!!!";the_vm;
      Then
      {
+        docinfo_se("The very first four bytes of the stack are 4;0;0;0."); 
         verdict{equality_test{ 
-            {as_uint8(7);as_uint8(0);as_uint8(0);as_uint8(0);}
-            {the_vm.vm.compute_stack.content();}
+            {as_uint8(4);as_uint8(0);as_uint8(0);as_uint8(0);}
+            {the_vm.vm.stack.content();}
         };};
      };
 };
