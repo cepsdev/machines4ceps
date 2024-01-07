@@ -166,6 +166,8 @@ SP{4096}
 
 
 
+
+
 # Scenario
 
 
@@ -178,13 +180,31 @@ Given{}
 
 When{}
 
-## Then
-### result
-:heavy_check_mark: Passed
+"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+
+## vm
+stack{9 0 0 0}
+
+data{array 1 0 0 0 4 0 0 0 8 0 0 0 9 0 0 0 2 0 0 0 3 0 0 0 5 0 0 0 6 0 0 0 7 0 0 0 10 0 0 0 arg_p 0 0 0 0 arg_q 3 0 0 0 arg_r 9 0 0 0 zero 0 0 0 0 one 1 0 0 0 int_width 4 0 0 0}
+
+text{2 0 0 0 48 0 0 0 0 0 0 0 81 0 0 0 252 255 255 255 255 255 255 255 0 0 0 0 7 0 0 0 81 0 0 0 252 255 255 255 255 255 255 255 0 0 0 0 82 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 35 0 0 0 84 0 0 0 0 0 0 0 0 0 0 0 36 0 0 0}
+
+compute_stack{}
+
+### registers
+CSP{0}
+
+FP{0}
+
+PC{64}
+
+SP{4092}
 
 
 
 
+
+Then{}
 
 
 
@@ -236,11 +256,6 @@ When{}
 
 
 # Summary
-
-
-## result
-:heavy_check_mark: Passed
-
 
 
 ## result

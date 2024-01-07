@@ -706,11 +706,20 @@ Scenario{
 
 
 
+macro pushi32{
+    val what = hd(arglist);
+    ldi32(what);
+    ldi64(SP-4);
+    stsi32;
+    ldi64(SP-4);
+    sti64(SP);
+};
+
 Scenario{
     title{label __ title = "MERGE";};
 
-    OblectamentaCodeLabel inner_loop_start, inner_loop_exit,outer_loop_start,outer_loop_exit,start,stop,inc_i;
-    OblectamentaDataLabel zero,key,k,length,int_width,four,one,array, result, i, n;
+    OblectamentaCodeLabel Merge;
+    OblectamentaDataLabel arg_p, arg_q,arg_r,zero,key,k,length,int_width,four,one,array, result, i, n;
 
     Given{
         
@@ -720,23 +729,28 @@ Scenario{
                 };
                 data{
                     array;
-                     10;9;8;7;6;5;4;3;2;1;
+                     1;4;8;9;2;3;5;6;7;10;
+                    arg_p;0;
+                    arg_q;3;
+                    arg_r;9;
                     zero;
                      0;
                     one; 
                      1;
                     int_width;
                      4;
-                    i; 
-                     0;
-                    k;
-                     0;
-                    key;
-                     0;
-                     length; 10;
                     };
                 text{
-                    insertion_sort_text{0;};
+                    asm{
+                        pushi32{arg_r;};
+                        halt;
+
+                        call(Merge);
+
+                        halt;                        
+                        Merge;
+                            ret;
+                    };
                 };
             }
         );
@@ -748,20 +762,10 @@ Scenario{
           }
         );
      };
+     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";the_vm;
+
     Then
     {
-        verdict{equality_test{ 
-            {
-                for(k : 0 .. 9){
-                    the_vm.vm.data.content().at((k*4)+1 );the_vm.vm.data.content().at((k*4)+2);the_vm.vm.data.content().at((k*4)+3);the_vm.vm.data.content().at((k*4)+4);
-                }           
-            }
-            {
-                for(k:1 .. 10){
-                    as_uint8(10 - k + 1);as_uint8(0);as_uint8(0);as_uint8(0);
-                }
-            }
-        };};
     };
 };
 
