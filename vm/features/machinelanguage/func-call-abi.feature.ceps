@@ -12,7 +12,7 @@ macro scen1_part_1 {
 };
 
 Scenario{
-     title{label _oblectamenta_instruction_ret title = "The ldi64, sti64 instructions: Move values in and out of the register SP and basic manipulations of the stack.";};
+     title{label _oblectamenta_abi_A title = "The ldi64, sti64 instructions: Move values in and out of the register SP and basic manipulations of the stack.";};
      OblectamentaDataLabel  four;
      When{
         docinfo_se("The value 4 is on the compute stack, and the operations "); 
@@ -42,6 +42,73 @@ Scenario{
         verdict{equality_test{ 
             {as_uint8(4);as_uint8(0);as_uint8(0);as_uint8(0);}
             {the_vm.vm.stack.content();}
+        };};
+     };
+};
+
+Scenario{
+     title{label _oblectamenta_abi_B title = "Building a stack frame.";};
+     OblectamentaDataLabel  four;
+     When{
+        docinfo_se("The caller pushes B=20 and A=29 onto the stack and reserves spece for the result and makes a call to AddTwoNumbers.");
+        let the_vm = operation(
+            run{
+                vm{
+                    OblectamentaDataLabel  A,B;
+                    OblectamentaCodeLabel  AddTwoNumbers;
+                    data{
+                        A; 13;
+                        B; 29;
+
+                    };        
+                    text{
+                        asm{    
+                                ldi32(B);       //|
+                                ldi64(SP - 4);  //|
+                                stsi32;         //|
+                                ldi64(SP - 4);  //|
+                                sti64(SP);      //|====> push(B)
+
+                                ldi32(A);       //|
+                                ldi64(SP - 4);  //|
+                                stsi32;         //|
+                                ldi64(SP - 4);  //|
+                                sti64(SP);      //|====> push(A)
+
+                                ldi64(SP - 4);  //|
+                                sti64(SP);      //|====> reserve(int32)
+
+                                call(AddTwoNumbers);
+                                ldi64(SP);
+                                ldsi32;
+                                ldi64(SP+12);
+                                sti64(SP);                             
+                                halt;
+                            AddTwoNumbers;
+                                val ReturnAddress  = 0;
+                                val Result         = ReturnAddress + 8;
+                                val ParameterA     = Result + 4;
+                                val ParameterB     = ParameterA + 4;
+                                ldi64(SP+ParameterA);
+                                ldsi32;
+                                ldi64(SP+ParameterB);
+                                ldsi32;
+                                addi32;
+                                ldi64(SP+Result);
+                                stsi32;
+                                ret;
+                        };
+                    };
+                };
+            }
+        );
+     };
+     Then
+     {
+        docinfo_se("After moving the result onto the computation stack, the computation stack contains exactly four bytes, the values of which are 42;0;0;0.The stack is empty."); 
+        verdict{equality_test{ 
+            {as_uint8(42);as_uint8(0);as_uint8(0);as_uint8(0);stack{};}
+            {the_vm.vm.compute_stack.content();the_vm.vm.stack;}
         };};
      };
 };

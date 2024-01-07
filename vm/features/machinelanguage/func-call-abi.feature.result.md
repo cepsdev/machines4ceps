@@ -52,7 +52,37 @@ The very first four bytes of the stack are 4;0;0;0.
 
 
 
+# Scenario
+
+
+## title
+📎 Building a stack frame.
+
+
+
+## When
+The caller pushes B=20 and A=29 onto the stack and reserves spece for the result and makes a call to AddTwoNumbers.
+
+
+
+## Then
+After moving the result onto the computation stack, the computation stack contains exactly four bytes, the values of which are 42;0;0;0.The stack is empty.
+
+### result
+:heavy_check_mark: Passed
+
+
+
+
+
+
+
 # Summary
+
+
+## result
+:heavy_check_mark: Passed
+
 
 
 ## result
