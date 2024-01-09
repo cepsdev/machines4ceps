@@ -706,12 +706,21 @@ Scenario{
 
 
 
-macro pushi32{
+macro pushi32Var{
     val what = hd(arglist);
     ldi32(what);
     ldi64(SP-4);
     stsi32;
     ldi64(SP-4);
+    sti64(SP);
+};
+
+macro pushAddr{
+    val what = hd(arglist);
+    lea(what);
+    ldi64(SP-8);
+    stsi64;
+    ldi64(SP-8);
     sti64(SP);
 };
 
@@ -728,6 +737,7 @@ Scenario{
                 compute_stack{
                 };
                 data{
+                    1;2;3;
                     array;
                      1;4;8;9;2;3;5;6;7;10;
                     arg_p;0;
@@ -742,13 +752,17 @@ Scenario{
                     };
                 text{
                     asm{
-                        pushi32{arg_r;};
-                        halt;
+                        pushi32Var{arg_r;};
+                        pushi32Var{arg_q;};
+                        pushi32Var{arg_p;};
+                        pushAddr{array;};
+                        
 
                         call(Merge);
 
                         halt;                        
-                        Merge;
+                        Merge; //MERGE(A,p,q,r)
+                            
                             ret;
                     };
                 };

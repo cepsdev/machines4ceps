@@ -142,7 +142,12 @@ namespace ceps::vm::oblectamenta{
         *(int*)&mem.base[addr]  = value;
         return base_opcode_width + pos;
     }
-
+    size_t VMEnv::stsi64(size_t pos){
+        auto addr{pop_cs<addr_t>()};
+        auto value{pop_cs<int64_t>()};
+        *(decltype(value)*)&mem.base[addr]  = value;
+        return base_opcode_width + pos;
+    }
     size_t VMEnv::sti64(size_t pos){
         auto t{pop_cs<int64_t>()};
         *((int64_t*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]) = t;
@@ -546,7 +551,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::sti64);       
         op_dispatch.push_back(&VMEnv::ui32toui64);       
         op_dispatch.push_back(&VMEnv::ldi64reg);
-        op_dispatch.push_back(&VMEnv::sti64reg);  
+        op_dispatch.push_back(&VMEnv::sti64reg);
+        op_dispatch.push_back(&VMEnv::stsi64);   
     }
      
     void VMEnv::dump(ostream& os){

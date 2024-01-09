@@ -218,6 +218,126 @@ Scenario{
      };
 };
 
+Scenario{
+    OblectamentaDataLabel value, target;
+
+    Given{
+        let the_vm = obj(
+            vm{
+                data{
+                    value;
+                     10;
+                    target;
+                     0;
+                };
+                text{
+                    asm{
+                        ldi32(value);
+                        lea(target);
+                        stsi32;
+                    };
+                };
+            }
+        );
+        the_vm.vm.data; 
+     };
+     And{
+         text{
+                    asm{
+                        ldi32(value);
+                        lea(target);
+                        stsi32;
+                    };
+                };
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+        run;
+     };    
+    Then
+     {
+             data{            
+                 value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+
+        verdict{equality_test{ 
+            {the_vm.vm.data;}
+            {
+             data{            
+                 value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    OblectamentaDataLabel value, target;
+
+    Given{
+        let the_vm = obj(
+            vm{
+                data{
+                    value;
+                     10;0;
+                    target;
+                     0;0;
+                };
+                text{
+                    asm{
+                        ldi64(value);
+                        lea(target);
+                        stsi64;
+                    };
+                };
+            }
+        );
+        the_vm.vm.data; 
+     };
+     And{
+         text{
+                    asm{
+                        ldi64(value);
+                        lea(target);
+                        stsi64;
+                    };
+                };
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+        run;
+     };    
+    Then
+     {
+             data{            
+                 value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(00);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+
+        verdict{equality_test{ 
+            {the_vm.vm.data;}
+            {
+             data{            
+               value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(00);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+            }
+        };};
+
+     };
+};
+
 
 
 docinfo_se("==================================== SUMMARY ======================================
