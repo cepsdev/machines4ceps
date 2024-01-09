@@ -758,8 +758,12 @@ macro func_epilogue{
 
 Scenario{
     title{label __ title = "MERGE";};
+    // MERGE(A,p,q,r), see p.36 in Cormen et.al. 'Algorithms' 4th ed.
+    // Indices start at zero which differs from Cormen et. al. where indices start at 1.
+    // The temporary arrays L,R are allocated on the stack, Cormen et. al. make no assumptions about the origins of L and R.
+    // Because we make 
 
-    OblectamentaCodeLabel Merge;
+    OblectamentaCodeLabel Merge, MergeLoop1, MergeLoop1Exit, MergeLoop2, MergeLoop2Exit;
     OblectamentaDataLabel arg_p, arg_q,arg_r,zero,key,k,length,int_width,four,one,array, result, i, n;
 
     Given{
@@ -793,9 +797,22 @@ Scenario{
                         
                         Merge; //MERGE(A,p,q,r)                            
                             func_prologue{};
-
+                            
+                            val A =  8;
                             val p =  16;
                             val q = 20;
+                            val r = 24;
+                            // reserve space for local variables i,j,k,l,nL,nR
+                            val i = -20;
+                            val j = i - 4;
+                            val k = j - 4;
+                            val l = k - 4;
+                            val nL = l -4;
+                            val nR = nL - 4;
+                            ldi64(SP-24);
+                            sti64(SP);                            
+
+
                             ldi64(FP + p);
                             ldsi32;
                             ldi64(FP + q);
@@ -803,6 +820,121 @@ Scenario{
                             subi32;
                             ldi32(one);
                             addi32;
+                            ldi64(FP + nL);
+                            stsi32; // nL = q - p + 1
+
+                            ldi64(FP+q);
+                            ldsi32;
+                            ldi64(FP+r);
+                            ldsi32;
+                            subi32;
+
+                            ldi64(FP + nR);
+                            stsi32; // nR = r - q
+
+                            //let L[0:nL-1] and R[0:nR-1] be new arrays
+                            val L = nR - 8; // L holds the address of L on the stack
+                            val R = L - 8;
+
+                            ldi64(SP-16);
+                            sti64(SP);  //reserve space for L,R
+
+                            ldi32(int_width);
+                            ldi64(FP + nL);
+                            ldsi32;
+                            muli32;
+                            ui32toui64;
+                            ldi64(SP);
+                            subi64;
+                            sti64(SP); //Reserve space for L array on stack
+                            ldi64(SP);
+                            ldi64(FP + L);
+                            stsi64;  // L = address of new array with nL elements
+                            
+                            ldi32(int_width);
+                            ldi64(FP + nR);
+                            ldsi32;
+                            muli32;
+                            ui32toui64;
+                            ldi64(SP);
+                            subi64;
+                            sti64(SP); //Reserve space for L array on stack
+                            ldi64(SP);
+                            ldi64(FP + R);
+                            stsi64;  // R = address of new array with nR elements
+
+                            ldi32(zero);
+                            ldi64(FP + i);
+                            stsi32;
+
+                        MergeLoop1;
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi64(FP + nL);
+                            ldsi32;
+                            lteqi32;
+                            bnzeroi32(MergeLoop1Exit); //for i = 0 to nL - 1
+
+                            //L[i] = A[p+i]
+                            
+                            ldi64(FP + A);
+                            ldsi64;
+                            halt;
+
+
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + i);
+                            stsi32;
+                            buc(MergeLoop1);
+                        MergeLoop1Exit;
+
+                        MergeLoop2;
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi64(FP + nR);
+                            ldsi32;
+                            lteqi32;
+                            bnzeroi32(MergeLoop2Exit); //for j = 0 to nR - 1
+
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + j);
+                            stsi32;
+                            buc(MergeLoop2);
+                        MergeLoop2Exit;
+                            
+
+                            
+                            // cleanup stack allocated arrays
+                            ldi32(int_width);
+                            ldi64(FP + nL);
+                            ldsi32;
+                            muli32;
+                            ui32toui64;
+                            ldi64(SP);
+                            addi64;
+                            sti64(SP);
+
+                            ldi32(int_width);
+                            ldi64(FP + nR);
+                            ldsi32;
+                            muli32;
+                            ui32toui64;
+                            ldi64(SP);
+                            addi64;
+                            sti64(SP);
+
+                            ldi64(SP+16);
+                            sti64(SP);
+
+
+                            ldi64(SP+24);
+                            sti64(SP);
 
                             func_epilogue{};
                     };
@@ -817,7 +949,10 @@ Scenario{
           }
         );
      };
-     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";the_vm;
+     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+     the_vm.vm.stack;
+     the_vm.vm.compute_stack;
+     the_vm.vm.registers;
 
     Then
     {
