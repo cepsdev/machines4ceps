@@ -705,7 +705,6 @@ Scenario{
 };
 
 
-
 macro pushi32Var{
     val what = hd(arglist);
     ldi32(what);
@@ -724,6 +723,39 @@ macro pushAddr{
     sti64(SP);
 };
 
+macro func_prologue{
+
+    ldi64(SP);
+    ldi64(SP-8);
+    stsi64;                            
+    ldi64(SP-8);
+    sti64(SP);         // push SP
+
+    ldi64(FP);
+    ldi64(SP-8);
+    stsi64;                            
+    ldi64(SP-8);
+    sti64(SP);         // push FP
+
+    ldi64(SP+16);
+    sti64(FP);  // FP <- Original SP    
+
+};
+
+macro func_epilogue{
+    ldi64(SP);        
+    ldsi64;
+    sti64(FP); // Restore FP
+    ldi64(SP+8);
+    sti64(SP);
+
+    ldi64(SP);        
+    ldsi64;
+    sti64(SP); // restore SP
+
+    ret;
+};
+
 Scenario{
     title{label __ title = "MERGE";};
 
@@ -737,7 +769,7 @@ Scenario{
                 compute_stack{
                 };
                 data{
-                    1;2;3;
+                    one;1;
                     array;
                      1;4;8;9;2;3;5;6;7;10;
                     arg_p;0;
@@ -752,18 +784,27 @@ Scenario{
                     };
                 text{
                     asm{
-                        pushi32Var{arg_r;};
-                        pushi32Var{arg_q;};
-                        pushi32Var{arg_p;};
-                        pushAddr{array;};
+                            pushi32Var{arg_r;};  //|
+                            pushi32Var{arg_q;};  //|
+                            pushi32Var{arg_p;};  //|
+                            pushAddr{array;};    //|
+                            call(Merge);         //| ==> Merge(array, arg_p, arg_q, arg_r);
+                            halt;                // stop execution        
                         
+                        Merge; //MERGE(A,p,q,r)                            
+                            func_prologue{};
 
-                        call(Merge);
+                            val p =  16;
+                            val q = 20;
+                            ldi64(FP + p);
+                            ldsi32;
+                            ldi64(FP + q);
+                            ldsi32;
+                            subi32;
+                            ldi32(one);
+                            addi32;
 
-                        halt;                        
-                        Merge; //MERGE(A,p,q,r)
-                            
-                            ret;
+                            func_epilogue{};
                     };
                 };
             }

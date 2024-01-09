@@ -123,7 +123,8 @@ namespace ceps{
                 ui32toui64, // cast i32 to i64 without sign extension
                 ldi64reg,
                 sti64reg,
-                stsi64
+                stsi64,
+                ldsi64
             };
 
             class VMEnv{
@@ -322,6 +323,7 @@ namespace ceps{
                     size_t ldi64reg(size_t);
                     size_t sti64reg(size_t);
                     size_t stsi64(size_t);
+                    size_t ldsi64(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -464,7 +466,8 @@ namespace ceps{
                 {"ui32toui64",{Opcode::ui32toui64, "",emit<Opcode::ui32toui64>,nullptr,nullptr}},
                 {"ldi64reg",{Opcode::ldi64reg, "",nullptr,nullptr,emit<Opcode::ldi64reg> }},
                 {"sti64reg",{Opcode::sti64reg, "",nullptr,nullptr,emit<Opcode::sti64reg> }},
-                {"stsi64",{Opcode::stsi64, "",emit<Opcode::stsi64>, nullptr,nullptr }}
+                {"stsi64",{Opcode::stsi64, "",emit<Opcode::stsi64>, nullptr,nullptr }},
+                {"ldsi64",{Opcode::ldsi64, "",emit<Opcode::ldsi64>, nullptr,nullptr }}
             };
            
         }

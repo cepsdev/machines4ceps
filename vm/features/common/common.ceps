@@ -32,6 +32,7 @@ OblectamentaOpcode
     noop,
     ldi32,
     ldsi32,
+    ldsi64,
     ldi64,
     lddbl,
     sti32,
