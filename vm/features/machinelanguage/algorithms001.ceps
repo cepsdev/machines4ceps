@@ -763,7 +763,9 @@ Scenario{
     // The temporary arrays L,R are allocated on the stack, Cormen et. al. make no assumptions about the origins of L and R.
     // Because we make 
 
-    OblectamentaCodeLabel Merge, MergeLoop1, MergeLoop1Exit, MergeLoop2, MergeLoop2Exit;
+    OblectamentaCodeLabel Merge, MergeLoop1, MergeLoop1Exit, MergeLoop2, MergeLoop2Exit,MergeWhileLoop1, MergeWhileLoop1Exit,
+                          MergeWhileLoop1Case1, MergeWhileLoop1Case2, MergeWhileLoop1IfElseEnd, MergeWhileLoop2, MergeWhileLoop2Exit,
+                          MergeWhileLoop3, MergeWhileLoop3Exit;
     OblectamentaDataLabel arg_p, arg_q,arg_r,zero,key,k,length,int_width,four,one,array, result, i, n;
 
     Given{
@@ -775,9 +777,9 @@ Scenario{
                 data{
                     one;1;
                     array;
-                     1;4;8;9;2;3;5;6;7;10;
+                     1;4;5;6;7;8;9;10;2;3;
                     arg_p;0;
-                    arg_q;3;
+                    arg_q;7;
                     arg_r;9;
                     zero;
                      0;
@@ -879,8 +881,25 @@ Scenario{
                             
                             ldi64(FP + A);
                             ldsi64;
-                            halt;
-
+                            ldi64(FP + p);
+                            ldsi32;
+                            ldi64(FP + i);
+                            ldsi32;
+                            addi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32; //compute_stack.top == A[p+i]
+                            ldi64(FP + L);
+                            ldsi64;
+                            ldi64(FP+i);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            stsi32;
 
                             ldi64(FP + i);
                             ldsi32;
@@ -898,6 +917,30 @@ Scenario{
                             ldsi32;
                             lteqi32;
                             bnzeroi32(MergeLoop2Exit); //for j = 0 to nR - 1
+                            // R[j] = A[q + j + 1]
+                            ldi64(FP + A);
+                            ldsi64;
+                            ldi64(FP + q);
+                            ldsi32;
+                            ldi64(FP + j);
+                            ldsi32;
+                            addi32;
+                            ldi32(one);
+                            addi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32;
+                            ldi64(FP + R);
+                            ldsi64;
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            stsi32;
 
                             ldi64(FP + j);
                             ldsi32;
@@ -907,8 +950,229 @@ Scenario{
                             stsi32;
                             buc(MergeLoop2);
                         MergeLoop2Exit;
-                            
 
+                            // i indexes the smallest remaining element in L
+                            ldi32(zero);
+                            ldi64(FP + i);
+                            stsi32; // i <- 0
+                            // j indexes the smalles remaining element in R
+                            ldi32(zero);
+                            ldi64(FP + j);
+                            stsi32; // j <- 0
+                            ldi64(FP + p);
+                            ldsi32;
+                            ldi64(FP + k);
+                            stsi32; // k <- p
+
+                            // As long as each of the arrays L and R contains an unmerged element,
+                            // copy the smalles umerged element back into A[p:r]
+
+                        MergeWhileLoop1; // while i < nL and j < nR
+
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi64(FP + nL);
+                            ldsi32;
+                            gti32;
+                            bzeroi32(MergeWhileLoop1Exit);
+
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi64(FP + nR);
+                            ldsi32;
+                            gti32;
+                            bzeroi32(MergeWhileLoop1Exit);
+                            
+                                                     
+                            ldi64(FP + L);
+                            ldsi64;
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32; // L[i]
+                            
+                            ldi64(FP + R);
+                            ldsi64;
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32; // R[j]
+                            gteqi32;
+                            bzeroi32(MergeWhileLoop1Case2);
+                        MergeWhileLoop1Case1; //if L[i] <= R[j]
+                            ldi64(FP + L);
+                            ldsi64;
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32; // L[i]
+                            ldi64(FP + A);
+                            ldsi64;
+                            ldi64(FP + k);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            stsi32; // A[k] = L[i]                            
+
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + i);
+                            stsi32; // i <- i + 1
+
+                            buc(MergeWhileLoop1IfElseEnd);
+                        MergeWhileLoop1Case2; //else
+
+                            ldi64(FP + R);
+                            ldsi64;
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32; // R[j]
+                            ldi64(FP + A);
+                            ldsi64;
+                            ldi64(FP + k);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            stsi32; // A[k] = R[j]                            
+
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + j);
+                            stsi32;// j <- j + 1
+
+                        MergeWhileLoop1IfElseEnd;
+                            ldi64(FP + k);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + k);
+                            stsi32; //k <- k + 1                     
+                            buc(MergeWhileLoop1);
+                        MergeWhileLoop1Exit;
+
+
+                        // Having gone through one of L and R entirely, copy the
+                        // remainder of the other to the end of A[p:r]
+                        
+                        MergeWhileLoop2; 
+                        //while i < nL 
+                        // A[k] = L[i]
+                        // i = i + 1
+                        // k = k + 1
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi64(FP + nL);
+                            ldsi32;
+                            lti32;
+                            bnzeroi32(MergeWhileLoop2Exit);
+
+                            ldi64(FP + L);
+                            ldsi64;
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32; // L[i]
+
+                            ldi64(FP + A);
+                            ldsi64;
+                            ldi64(FP + k);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            stsi32; // A[k] = L[i]
+
+                            ldi64(FP + i);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + i);
+                            stsi32; // i = i + 1;
+
+                            ldi64(FP + k);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + k);
+                            stsi32; // k = k + 1;
+
+                            buc(MergeWhileLoop2);
+                        MergeWhileLoop2Exit;
+
+                        MergeWhileLoop3;
+                        //while j < nR 
+                        // A[k] = R[j]
+                        // j = j + 1
+                        // k = k + 1
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi64(FP + nR);
+                            ldsi32;
+                            lti32;
+                            bnzeroi32(MergeWhileLoop3Exit);
+
+                            ldi64(FP + R);
+                            ldsi64;
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            ldsi32; // R[j]
+
+                            ldi64(FP + A);
+                            ldsi64;
+                            ldi64(FP + k);
+                            ldsi32;
+                            ldi32(int_width);
+                            muli32;
+                            ui32toui64;
+                            addi64;
+                            stsi32; // A[k] = R[j]
+
+                            ldi64(FP + j);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + j);
+                            stsi32; // j = j + 1;
+
+                            ldi64(FP + k);
+                            ldsi32;
+                            ldi32(one);
+                            addi32;
+                            ldi64(FP + k);
+                            stsi32; // k = k + 1;
+
+                            buc(MergeWhileLoop2);
+
+                        MergeWhileLoop3Exit;
                             
                             // cleanup stack allocated arrays
                             ldi32(int_width);
@@ -953,6 +1217,7 @@ Scenario{
      the_vm.vm.stack;
      the_vm.vm.compute_stack;
      the_vm.vm.registers;
+     the_vm.vm.data;
 
     Then
     {
