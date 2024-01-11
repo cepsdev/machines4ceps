@@ -72,6 +72,15 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
 
  
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
+
+    if ( text_loc + max_opcode_width >= vm.text_size){
+        auto t{vm.text};
+        auto old_size{vm.text_size};
+        vm.text = new remove_pointer_t<VMEnv::text_t>[vm.text_size = vm.text_size + VMEnv::default_text_size];
+        if(!vm.text) throw std::runtime_error{"oblectamenta_assembler: out of text space"};
+        memcpy(vm.text,t,old_size);
+        delete[] t;
+    }
       
     auto e{mnemonics[stmt_pos]};
     //cerr << " text_loc=" << text_loc << '\n';

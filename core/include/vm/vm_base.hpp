@@ -28,7 +28,8 @@ namespace ceps{
         namespace oblectamenta{
             using namespace std;
             using addr_t = size_t;
-            using base_opcode = uint32_t; 
+            using base_opcode = uint32_t;
+            static constexpr unsigned int max_opcode_width {16}; 
             enum class Opcode:base_opcode{
                 halt,
                 noop,
@@ -162,6 +163,7 @@ namespace ceps{
 
                     compute_stack_t compute_stack;
                     text_t text{};
+                    size_t text_size{};
                     size_t text_loc{};
 
                     static constexpr size_t default_mem_size {4096};
