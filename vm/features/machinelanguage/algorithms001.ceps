@@ -740,19 +740,19 @@ macro func_prologue{
 };
 
 macro func_epilogue{
-    ldi64(SP);        
+    
+    ldi64(SP);            
     ldsi64;
     sti64(FP); // Restore FP
     ldi64(SP+8);
     sti64(SP);
 
+    
     ldi64(SP);        
     ldsi64;
     sti64(SP); // restore SP
-
     ret;
 };
-
 
 macro merge_text{
 
@@ -763,7 +763,7 @@ macro merge_text{
 
     OblectamentaCodeLabel Merge, MergeLoop1, MergeLoop1Exit, MergeLoop2, MergeLoop2Exit,MergeWhileLoop1, MergeWhileLoop1Exit,
                           MergeWhileLoop1Case1, MergeWhileLoop1Case2, MergeWhileLoop1IfElseEnd, MergeWhileLoop2, MergeWhileLoop2Exit,
-                          MergeWhileLoop3, MergeWhileLoop3Exit;
+                          MergeWhileLoop3, MergeWhileLoop3Exit,resume_prog;
     OblectamentaDataLabel zero,key,int_width,four,one;
                         
                         Merge; //MERGE(A,p,q,r)                            
@@ -879,6 +879,10 @@ macro merge_text{
                             buc(MergeLoop1);
                         MergeLoop1Exit;
 
+                            ldi32(zero);
+                            ldi64(FP + j);
+                            stsi32;
+
                         MergeLoop2;
                             ldi64(FP + j);
                             ldsi32;
@@ -919,6 +923,7 @@ macro merge_text{
                             stsi32;
                             buc(MergeLoop2);
                         MergeLoop2Exit;
+
                         
                             // i indexes the smallest remaining element in L
                             ldi32(zero);
@@ -1039,6 +1044,7 @@ macro merge_text{
                             stsi32; //k <- k + 1                     
                             buc(MergeWhileLoop1);
                         MergeWhileLoop1Exit;
+
 
                         // Having gone through one of L and R entirely, copy the
                         // remainder of the other to the end of A[p:r]
@@ -1169,6 +1175,7 @@ macro merge_text{
 
                             func_epilogue{};
 };
+
 
 
 Scenario{
@@ -1635,7 +1642,78 @@ Scenario{
 };
 
 Scenario{
-    title{label __ title = "MERGE-SORT";};
+    title{label __ title = "MERGE ( <3 5 6 8> <1 2 4 7> ) ";};
+    // MERGE(A,p,q,r), see p.36 in Cormen et.al. 'Algorithms' 4th ed.
+    // Indices start at zero which differs from Cormen et. al. where indices start at 1.
+    // The temporary arrays L,R are allocated on the stack, Cormen et. al. make no assumptions about the origins of L and R.
+    // Because we make 
+
+    OblectamentaDataLabel arg_p, arg_q,arg_r,zero,int_width,four,one,array;
+    OblectamentaCodeLabel Merge;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    array;
+                     3;5;6;8;1;2;4;7;
+                    arg_p;0;
+                    arg_q;3;
+                    arg_r;7;
+                    zero;
+                     0;
+                    one; 
+                     1;
+                    int_width;
+                     4;
+                    };
+                text{
+                    asm{
+                            pushi32Var{arg_r;};  //|
+                            pushi32Var{arg_q;};  //|
+                            pushi32Var{arg_p;};  //|
+                            pushAddr{array;};    //|
+                            call(Merge);         //| ==> Merge(array, arg_p, arg_q, arg_r);
+                            halt;                // stop execution
+                            merge_text{};       
+                    };
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+    {
+      verdict{equality_test{ 
+            {   
+                the_vm.vm.data.content().slice(0,33);
+            }
+            {
+                array;
+                as_uint8(1);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(2);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(3);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(4);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(5);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(6);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(7);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(8);for(i: 1 .. 3){as_uint8(0);}
+            }
+        };};        
+    };
+};
+
+Scenario{
+    title{label __ title = "MERGE-SORT <8 7 1 5 4 3 2 6>";};
     // MERGE-SORT(A,p,r), see p.39 in Cormen et.al. 'Algorithms' 4th ed.
     // Indices start at zero which differs from Cormen et. al. where indices start at 1.
     // The temporary arrays L,R are allocated on the stack, Cormen et. al. make no assumptions about the origins of L and R.
@@ -1653,9 +1731,9 @@ Scenario{
                 data{
                     array;
                      //12;3;7;9;14;6;11;2;
-                     1;2;3;4;5;6;7;8;
+                     8;7;1;5;4;3;2;6;
                     arg_p;0;
-                    arg_r;3;
+                    arg_r;7;
                     zero;
                      0;
                     one; 
@@ -1749,8 +1827,7 @@ Scenario{
                             ldi64(SP - 8);
                             sti64(SP);
                             
-                            call(MergeSort);//MergeSort(A, q + 1, r)
-                            
+                            call(MergeSort);//MergeSort(A, q + 1, r)                            
 
                             ldi64(SP + 16);
                             sti64(SP);
@@ -1790,7 +1867,6 @@ Scenario{
 
                         MergeSortExit;
 
-
                             ldi64(SP+4);
                             sti64(SP); // deallocate space for local variables
 
@@ -1807,16 +1883,24 @@ Scenario{
           }
         );
      };
-     "!!!!";the_vm.vm.data;the_vm.vm.compute_stack;the_vm.vm.stack;the_vm.vm.registers;
-
     Then
     {
-      verdict{equality_test{ 
-            {   1;
+          verdict{equality_test{ 
+            {   
+                the_vm.vm.data.content().slice(0,33);
             }
             {
+                array;
+                as_uint8(1);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(2);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(3);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(4);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(5);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(6);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(7);for(i: 1 .. 3){as_uint8(0);}
+                as_uint8(8);for(i: 1 .. 3){as_uint8(0);}
             }
-        };};        
+        };};                
     };
 };
 
@@ -1927,7 +2011,7 @@ Scenario{
                 compute_stack{
                 };
                 data{
-                    A; 16;4;10;14;7;9;3;2;8;1;
+                     A; 16;4;10;14;7;9;3;2;8;1;
                     result; 0;
                     one;1;
                     two;2;
@@ -2095,6 +2179,63 @@ Scenario{
         };};
     };
 };
+
+
+/*
+Scenario{
+    title{label __ title = "MAX-HEAPIFY";};
+
+    OblectamentaCodeLabel l1,l2,l3,l4,start,stop,inc_i;
+    OblectamentaDataLabel zero,A,largest,four,one,two,array, result, i, n, l, r, heap_size;
+
+    Given{
+        
+        let the_vm = obj(
+            vm{
+                compute_stack{
+                };
+                data{
+                    A; 16;4;10;14;7;9;3;2;8;1;
+                    result; 0;
+                    one;1;
+                    two;2;
+                    zero;0;
+                    four;4;0;
+                    n;10;
+                    // MAX-HEAPIFY(A,i), see p.165 in Cormen et.al. 'Algorithms' 4th ed.
+                    // indices start at zero in contrast to Cormen et. al.
+                    i;1;
+                    heap_size;10;
+                    //local variables
+                    l; 0;
+                    r; 0;
+                    largest; -1;
+                };
+                text{
+                    asm{
+                    for(i : 1 .. 1500) {ldi32(one);}
+
+  
+                    stop;                        
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+    When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+     //the_vm;
+    Then
+    {
+    };
+};
+*/
 
 docinfo_se("==================================== SUMMARY ======================================
 ");

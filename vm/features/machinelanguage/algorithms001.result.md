@@ -312,7 +312,7 @@ When{}
 
 
 ## title
-📎 MERGE-SORT
+📎 MERGE ( <3 5 6 8> <1 2 4 7> ) 
 
 
 
@@ -320,28 +320,31 @@ Given{}
 
 When{}
 
-"!!!!"
-
-data{array 1 0 0 0 2 0 0 0 4 0 0 0 1 0 0 0 5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 arg_p 0 0 0 0 arg_r 3 0 0 0 zero 0 0 0 0 one 1 0 0 0 int_width 4 0 0 0 two 2 0 0 0}
-
-compute_stack{}
-
-stack{0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0}
-
-## registers
-CSP{0}
-
-FP{0}
-
-PC{204}
-
-SP{4080}
+## Then
+### result
+:heavy_check_mark: Passed
 
 
+
+
+
+
+
+# Scenario
+
+
+## title
+📎 MERGE-SORT <8 7 1 5 4 3 2 6>
+
+
+
+Given{}
+
+When{}
 
 ## Then
 ### result
-:heavy_exclamation_mark: Failed
+:heavy_check_mark: Passed
 
 
 
@@ -451,9 +454,13 @@ When{}
 
 :heavy_check_mark: Passed
 
-📎 MERGE-SORT
+📎 MERGE ( <3 5 6 8> <1 2 4 7> ) 
 
-:heavy_exclamation_mark: Failed
+:heavy_check_mark: Passed
+
+📎 MERGE-SORT <8 7 1 5 4 3 2 6>
+
+:heavy_check_mark: Passed
 
 📎 MAX-ELEMENT
 
