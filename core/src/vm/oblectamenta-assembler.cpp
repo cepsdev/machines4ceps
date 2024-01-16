@@ -30,6 +30,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 namespace ceps::vm::oblectamenta{
 
+ 
 struct patch_entry{
  char id[64] = {0};
  size_t text_loc{};
@@ -59,32 +60,20 @@ static std::optional<std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>> is_register_of
 
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
 {
+
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
 
  map<int32_t,size_t> immediate2loc; // immediate values => location in storage
  map<string,size_t> codelabel2loc; // code label => location in storage
  size_t& text_loc = vm.text_loc;
 
- /*cerr << "ASSEMBLER\n";
- for(auto& e: vm.data_labels()){
-    cerr << e.first << " " << e.second << "\n";
- }*/
-
- 
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
 
     if ( text_loc + max_opcode_width >= vm.text_size){
-        auto t{vm.text};
-        auto old_size{vm.text_size};
-        vm.text = new remove_pointer_t<VMEnv::text_t>[vm.text_size = vm.text_size + VMEnv::default_text_size];
-        if(!vm.text) throw std::runtime_error{"oblectamenta_assembler: out of text space"};
-        memcpy(vm.text,t,old_size);
-        delete[] t;
+        vm.resize_text( assembler::text_growth_factor * (double)vm.text_size );
     }
       
     auto e{mnemonics[stmt_pos]};
-    //cerr << " text_loc=" << text_loc << '\n';
-	//cerr << " command:" << *e << '\n';
     std::string sym_name;
 	std::string sym_kind;
 	std::vector<node_t> args;
@@ -197,6 +186,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
         }
     } 
  } //for
+ 
 }//function
 
 

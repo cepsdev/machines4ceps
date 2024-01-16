@@ -167,7 +167,9 @@ namespace ceps{
                     size_t text_loc{};
 
                     static constexpr size_t default_mem_size {4096};
-                    static constexpr size_t default_text_size {4096};
+                    static constexpr size_t default_text_size {16};
+
+                    text_t resize_text(size_t new_size);
 
                     size_t store (string  data){
                         size_t t{};
@@ -191,7 +193,8 @@ namespace ceps{
                         auto t = registers.file[registers_t::CSP];
                         constexpr auto r{sizeof(T) % sizeof(compute_stack_t::value_type)};
                         auto space_needed {sizeof(T) / sizeof(compute_stack_t::value_type) + (r ? 1 : 0) };
-                        if (registers.file[registers_t::CSP] + space_needed >= compute_stack.size() ) compute_stack.insert(compute_stack.end(), space_needed, {});
+                        if (registers.file[registers_t::CSP] + space_needed >= compute_stack.size() ) 
+                         compute_stack.insert(compute_stack.end(), space_needed, {});
                         for (size_t i = 0; i < space_needed; ++i)
                          compute_stack[registers.file[registers_t::CSP] + i] = *((compute_stack_t::value_type*) &data + i);
                         registers.file[registers_t::CSP] += space_needed;

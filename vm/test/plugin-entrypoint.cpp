@@ -162,6 +162,14 @@ template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s, ceps::
 {
     ast_proc_prolog    
     ser_wrapper_text r{};
+
+    size_t tot_size{};
+    // compute total size
+    for(auto e : children(s))
+        if (is<Ast_node_kind::uint8>(e))
+            ++tot_size;
+    if (tot_size > vm.text_size) vm.resize_text(tot_size);
+
     try{
         for(auto e : children(s))
          if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){

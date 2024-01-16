@@ -49,11 +49,8 @@ namespace ceps::vm::oblectamenta{
    }
 
    size_t VMEnv::run(size_t start){
-        //cerr << "RUN\n";
         registers.file[registers_t::PC] = start;
         for(; (Opcode) (*(base_opcode*)(text + registers.file[registers_t::PC] )) != Opcode::halt;){
-            //cerr << registers.file[registers_t::PC] << '\n';
-            //cerr << "opcode = " << (int)text[registers.file[registers_t::PC]] << '\n';             
             registers.file[registers_t::PC]  = 
             (this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
         }
@@ -98,7 +95,7 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::ldi32(size_t pos){
-        push_cs(*((int*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]));
+        push_cs(*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   ));
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
@@ -123,7 +120,7 @@ namespace ceps::vm::oblectamenta{
     size_t VMEnv::ldi64reg(size_t pos){
         reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
         reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
-        push_cs(registers.file[reg] + reg_offs);
+        push_cs<int64_t>(registers.file[reg] + reg_offs);
         return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
     }
 
@@ -464,6 +461,16 @@ namespace ceps::vm::oblectamenta{
 
     void VMEnv::reset(){
         registers.file[registers_t::SP] = 0;
+    }
+
+    VMEnv::text_t VMEnv::resize_text(size_t new_size){
+        auto t{text};
+        auto old_size{text_size};
+        text = new remove_pointer_t<VMEnv::text_t>[text_size = new_size];
+        if(!text) throw std::runtime_error{"oblectamenta_assembler: out of text space"};
+        memcpy(text,t,std::min(old_size,new_size));
+        delete[] t;
+        return text;
     }
 
     VMEnv::VMEnv(){
