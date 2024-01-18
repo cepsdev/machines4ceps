@@ -233,7 +233,7 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
             for(;default_ops[ttt++];);
             lex->scanner.tokentable().clear_and_read_table(default_ops,--ttt);
             lex->scanner.activate_toplevel_onexit_trigger(false);
-            lex->scanner.set_input(*rules_data);
+            lex->scanner.set_input(*rules_data,true);
             Statefulscanner<Memory<char>,char>::Token t;
             try{
              for(;lex->scanner.gettoken(t););

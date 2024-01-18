@@ -1,0 +1,350 @@
+
+kind DocgenStringPrintNoEscape;
+DocgenStringPrintNoEscape docinfo_se;
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                    operand2;
+                     20;
+                };
+                text{
+                    asm{
+                        ldi32(operand2);
+                        ldi32(operand1);
+                        ldi32(operand2);
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{20;10;20;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                    operand2;
+                     20;
+                };
+                text{
+                    asm{
+                        ldi32(operand2);
+                        ldi32(operand1);
+                        ldi32(operand2);
+                        addi32;
+                        addi32;
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{50;});
+            }
+        };};
+     };
+};
+
+Scenario{
+    Given{
+        OblectamentaDataLabel operand1, operand2;
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                     0;
+                    operand2;
+                     20;
+                     0;
+                };
+                text{
+                    asm{
+                        ldi64(operand2);
+                        ldi64(operand1);
+                        ldi64(operand2);
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+    Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.compute_stack;}
+            {
+                obj(compute_stack{20;0;10;0;20;0;});
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    OblectamentaDataLabel operand1, operand2;
+    Given{
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;
+                    operand2;
+                     20;
+                };
+                text{
+                    asm{
+                        ldi32(operand2);
+                        ldi32(operand1);
+                        sti32(operand2);
+                        sti32(operand1);
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+     Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.data;}
+            {
+                data{
+                    operand1;as_uint8(20);as_uint8(0);as_uint8(0);as_uint8(0);
+                    operand2;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+                };
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    OblectamentaDataLabel operand1, operand2;
+    Given{
+        let the_vm = obj(
+            vm{
+                data{
+                    operand1;
+                     10;0;
+                    operand2;
+                     20;0;
+                };
+                text{
+                    asm{
+                        ldi64(operand2);
+                        ldi64(operand1);
+                        sti64(operand2);
+                        sti64(operand1);
+                        halt;
+                    };
+                };
+            }
+        );
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+     };
+     Then
+     {
+        verdict{equality_test{ 
+            {the_vm.vm.data;}
+            {
+                data{
+                    operand1;as_uint8(20);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                    operand2;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                };
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    OblectamentaDataLabel value, target;
+
+    Given{
+        let the_vm = obj(
+            vm{
+                data{
+                    value;
+                     10;
+                    target;
+                     0;
+                };
+                text{
+                    asm{
+                        ldi32(value);
+                        lea(target);
+                        stsi32;
+                    };
+                };
+            }
+        );
+        the_vm.vm.data; 
+     };
+     And{
+         text{
+                    asm{
+                        ldi32(value);
+                        lea(target);
+                        stsi32;
+                    };
+                };
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+        run;
+     };    
+    Then
+     {
+             data{            
+                 value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+
+        verdict{equality_test{ 
+            {the_vm.vm.data;}
+            {
+             data{            
+                 value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+            }
+        };};
+
+     };
+};
+
+Scenario{
+    OblectamentaDataLabel value, target;
+
+    Given{
+        let the_vm = obj(
+            vm{
+                data{
+                    value;
+                     10;0;
+                    target;
+                     0;0;
+                };
+                text{
+                    asm{
+                        ldi64(value);
+                        lea(target);
+                        stsi64;
+                    };
+                };
+            }
+        );
+        the_vm.vm.data; 
+     };
+     And{
+         text{
+                    asm{
+                        ldi64(value);
+                        lea(target);
+                        stsi64;
+                    };
+                };
+     };
+     When{
+        let the_vm = operation(
+         run{
+            the_vm;    
+          }
+        );
+        run;
+     };    
+    Then
+     {
+             data{            
+                 value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(00);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+
+        verdict{equality_test{ 
+            {the_vm.vm.data;}
+            {
+             data{            
+               value;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(0);
+                 target;as_uint8(10);as_uint8(0);as_uint8(0);as_uint8(0);as_uint8(00);as_uint8(0);as_uint8(0);as_uint8(0);
+             };
+            }
+        };};
+
+     };
+};
+
+
+
+docinfo_se("==================================== SUMMARY ======================================
+");
+
+Summary{
+ for( e : root.Scenario.Then.result){
+  e;
+ }
+};

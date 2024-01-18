@@ -50,9 +50,9 @@ namespace ceps::vm::oblectamenta{
 
    size_t VMEnv::run(size_t start){
         registers.file[registers_t::PC] = start;
-        for(; (Opcode) (*(base_opcode*)(text + registers.file[registers_t::PC] )) != Opcode::halt;){ 
-         registers.file[registers_t::PC]  = 
-          (this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
+        for(; (Opcode) (*(base_opcode*)(text + registers.file[registers_t::PC] )) != Opcode::halt;){
+            registers.file[registers_t::PC]  = 
+            (this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
         }
         return start;
     }
@@ -95,33 +95,68 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::ldi32(size_t pos){
-        push_cs(*((int*) &mem.base[text[pos+1]]));
-        return base_opcode_width + 1 + pos;
+        push_cs(*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   ));
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
 
     size_t VMEnv::ldsi32(size_t pos){
-        auto t{pop_cs<int32_t>()};
-        push_cs(*((int*) &mem.base[t]));
+        auto addr{pop_cs<addr_t>()};
+        push_cs(*((int*) &mem.base[  addr ]));
         return base_opcode_width + pos;
     }
 
-    size_t VMEnv::ldi64(size_t){return base_opcode_width;}
+    size_t VMEnv::ldsi64(size_t pos){
+        auto addr{pop_cs<addr_t>()};
+        push_cs(*((int64_t*) &mem.base[  addr ]));
+        return base_opcode_width + pos;
+    }
+
+
+    size_t VMEnv::ldi64(size_t pos){
+        push_cs(*((int64_t*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]));
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
+    size_t VMEnv::ldi64reg(size_t pos){
+        reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
+        reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
+        push_cs<int64_t>(registers.file[reg] + reg_offs);
+        return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
+    }
+
+    size_t VMEnv::sti64reg(size_t pos){
+        reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
+        reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
+        registers.file[reg] =  pop_cs<int64_t>() + reg_offs;
+        return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
+    }
+
     size_t VMEnv::lddbl(size_t pos){
-        push_cs(*((double*) &mem.base[text[pos+1]]));
-        return base_opcode_width + 1 + pos;
+        push_cs(*((double*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]));
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::sti32(size_t pos){
-        *(int*)&mem.base[text[pos+1]]  = pop_cs<int>();
-        return base_opcode_width + 1 + pos;
+        auto t{pop_cs<int32_t>()};
+        *((int*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]) = t;
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::stsi32(size_t pos){
+        auto addr{pop_cs<addr_t>()};
         auto value{pop_cs<int>()};
-        auto addr{pop_cs<int>()};
         *(int*)&mem.base[addr]  = value;
         return base_opcode_width + pos;
     }
-
-    size_t VMEnv::sti64(size_t pos){return base_opcode_width;}
+    size_t VMEnv::stsi64(size_t pos){
+        auto addr{pop_cs<addr_t>()};
+        auto value{pop_cs<int64_t>()};
+        *(decltype(value)*)&mem.base[addr]  = value;
+        return base_opcode_width + pos;
+    }
+    size_t VMEnv::sti64(size_t pos){
+        auto t{pop_cs<int64_t>()};
+        *((int64_t*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]) = t;
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
     size_t VMEnv::stdbl(size_t pos){
         *(double*)&mem.base[text[pos+1]]  = pop_cs<double>();
         return base_opcode_width + 1 + pos;
@@ -130,12 +165,12 @@ namespace ceps::vm::oblectamenta{
     size_t VMEnv::stptr(size_t pos){return base_opcode_width + pos;}
 
     size_t VMEnv::lea(size_t pos){
-        push_cs(*((int*) &text[pos+1]));
-        return base_opcode_width + 1 + pos;
+        push_cs( *((addr_t*)(text+pos+base_opcode_width)) );
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
 
     size_t VMEnv::buc(size_t pos){
-        return text[pos+1];
+        return *(size_t*)(text + pos  + base_opcode_width) ;
     }
     size_t VMEnv::beq(size_t pos){
         if (pop_cs<int>() == pop_cs<int>()) return text[pos+1];
@@ -174,8 +209,8 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + 1 + pos;
     }
     size_t VMEnv::bzeroi32(size_t pos){
-        if (pop_cs<int>() == 0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() == 0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bzeroi64(size_t pos){
         if (pop_cs<int64_t>() == 0) return text[pos+1];
@@ -186,8 +221,8 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + 1 + pos;
     }
     size_t VMEnv::bnzeroi32(size_t pos){
-        if (pop_cs<int>() != 0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() != 0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bnzeroi64(size_t pos){
         if (pop_cs<int64_t>() != 0) return text[pos+1];
@@ -199,11 +234,12 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::call(size_t pos){
-        push_cs<int>(base_opcode_width + 1 + pos);
-        return text[pos+1];
+        push_data_stack<size_t>(base_opcode_width + sizeof(addr_t) + pos);
+        return *(size_t*)(text + pos  + base_opcode_width);
     }
     size_t VMEnv::ret(size_t pos){
-        return pop_cs<int>();
+        auto target_addr{pop_data_stack<size_t>()};
+        return target_addr;
     }
     size_t VMEnv::swp(size_t pos){
         auto t1{pop_cs<int>()};
@@ -257,73 +293,124 @@ namespace ceps::vm::oblectamenta{
         push_cs<int32_t>(pop_cs<int32_t>() * pop_cs<int32_t>());
         return base_opcode_width + pos;
     }
-
     size_t VMEnv::muli64(size_t pos){
+        push_cs<int64_t>(pop_cs<int64_t>() * pop_cs<int64_t>());
         return base_opcode_width + pos;
     }
-    
     size_t VMEnv::muldbl(size_t pos){
+        push_cs<double>(pop_cs<double>() * pop_cs<double>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::divi32(size_t pos){
+        push_cs<int32_t>(pop_cs<int32_t>() / pop_cs<int32_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::divi64(size_t pos){
+        push_cs<int64_t>(pop_cs<int64_t>() / pop_cs<int64_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::divdbl(size_t pos){
+        push_cs<double>(pop_cs<double>() / pop_cs<double>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::remi32(size_t pos){
+        push_cs<int32_t>(pop_cs<int32_t>() % pop_cs<int32_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::remi64(size_t pos){
+        push_cs<int64_t>(pop_cs<int64_t>() % pop_cs<int64_t>());
         return base_opcode_width + pos;
     }
+    // relational operators
     size_t VMEnv::lti32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a < b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::lti64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a < b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::ltdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a < b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::lteqi32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a <= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::lteqi64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a <= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::lteqdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a <= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gti32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a > b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gti64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a > b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gtdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a > b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gteqi32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a >= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gteqi64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a >= b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::gteqdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a > b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::eqi32(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int32_t>()};
+        auto b{pop_cs<int32_t>()};
+        push_cs( a == b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::eqi64(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<int64_t>()};
+        auto b{pop_cs<int64_t>()};
+        push_cs<int32_t>( a == b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::eqdbl(size_t pos){
-        return base_opcode_width + pos;
+        auto a{pop_cs<double>()};
+        auto b{pop_cs<double>()};
+        push_cs<int32_t>( a == b ? 1 : 0  );
+        return base_opcode_width  + pos;
     }
     size_t VMEnv::cpysi32(size_t pos){
         throw std::string{"Deprecated"};
@@ -365,14 +452,32 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos +1;
     }
 
+    size_t VMEnv::ui32toui64(size_t pos){
+        auto v{pop_cs<uint32_t>()};
+        uint64_t to{v};
+        push_cs<uint64_t> (to);
+        return base_opcode_width  + pos;
+    }
+
     void VMEnv::reset(){
         registers.file[registers_t::SP] = 0;
     }
 
+    VMEnv::text_t VMEnv::resize_text(size_t new_size){
+        auto t{text};
+        auto old_size{text_size};
+        text = new remove_pointer_t<VMEnv::text_t>[text_size = new_size];
+        if(!text) throw std::runtime_error{"oblectamenta_assembler: out of text space"};
+        memcpy(text,t,std::min(old_size,new_size));
+        delete[] t;
+        return text;
+    }
+
     VMEnv::VMEnv(){
         mem.heap = mem.base = new remove_pointer_t<data_t>[default_mem_size];
+        for(auto p{mem.heap}; p - mem.heap < default_mem_size;) *p++ = 0;
         mem.end = mem.base + default_mem_size;
-        text = new remove_pointer_t<text_t>[default_text_size];
+        text = new remove_pointer_t<text_t>[text_size = default_text_size];
 
         registers.file[registers_t::SP] = mem.end - mem.base;
         registers.file[registers_t::CSP] = 0;
@@ -458,7 +563,12 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::pushi32reg);
         op_dispatch.push_back(&VMEnv::popi32reg);
         op_dispatch.push_back(&VMEnv::pushi32);
-
+        op_dispatch.push_back(&VMEnv::sti64);       
+        op_dispatch.push_back(&VMEnv::ui32toui64);       
+        op_dispatch.push_back(&VMEnv::ldi64reg);
+        op_dispatch.push_back(&VMEnv::sti64reg);
+        op_dispatch.push_back(&VMEnv::stsi64);  
+        op_dispatch.push_back(&VMEnv::ldsi64);   
     }
      
     void VMEnv::dump(ostream& os){

@@ -30,6 +30,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 namespace ceps::vm::oblectamenta{
 
+ 
 struct patch_entry{
  char id[64] = {0};
  size_t text_loc{};
@@ -37,20 +38,43 @@ struct patch_entry{
 
 static std::vector<patch_entry> patch_entries;
 
+
+static std::optional<std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>> is_register_offset_expression(std::vector<ceps::ast::node_t> args){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaReg"){
+        return std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>{VMEnv::reg_t{VMEnv::registers_t{}.reg_mnemonic2idx[name(as_symbol_ref(args[0]))] }, VMEnv::reg_offs_t{}};
+    } else if (args.size() == 1 
+               && is<Ast_node_kind::binary_operator>(args[0]) 
+               && is<Ast_node_kind::symbol>((as_binop_ref(args[0]).left()) )
+               && kind(as_symbol_ref(as_binop_ref(args[0]).left()))=="OblectamentaReg"
+               && is<Ast_node_kind::int_literal>((as_binop_ref(args[0]).right()) )
+              )
+    {
+        VMEnv::reg_t reg{VMEnv::registers_t{}.reg_mnemonic2idx[name(as_symbol_ref(as_binop_ref(args[0]).left()))]};
+        VMEnv::reg_offs_t reg_offs{value(as_int_ref(as_binop_ref(args[0]).right()))};
+        if (op_val(as_binop_ref(args[0])) == "-") reg_offs= -reg_offs;
+        return std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>{reg, reg_offs};        
+    }
+    return {};
+}
+
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
 {
+
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
 
  map<int32_t,size_t> immediate2loc; // immediate values => location in storage
  map<string,size_t> codelabel2loc; // code label => location in storage
-
  size_t& text_loc = vm.text_loc;
-                       
- 
+
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
-    
+
+    if ( text_loc + max_opcode_width >= vm.text_size){
+        vm.resize_text( assembler::text_growth_factor * (double)vm.text_size );
+    }
+      
     auto e{mnemonics[stmt_pos]};
-	std::string sym_name;
+    std::string sym_name;
 	std::string sym_kind;
 	std::vector<node_t> args;
     
@@ -61,7 +85,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
             for(size_t pe{}; pe < patch_entries.size(); ++pe)
               if ( 0 == strcmp(patch_entries[pe].id, lbl.c_str())){
                 patch_entries[pe].id[0] = char{}; //mark entry as free
-                patch(vm,patch_entries[pe].text_loc, text_loc);
+                patch(vm,patch_entries[pe].text_loc - sizeof(addr_t), text_loc);
               }
     } else if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaOpcode" ){
         auto& mnemonic{name(as_symbol_ref(e))};
@@ -81,8 +105,19 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
             if (it == ceps::vm::oblectamenta::mnemonics.end()) 
                throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
             auto v{it->second};
-            
-            if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
+
+            if (auto r = is_register_offset_expression(args)){
+                auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"reg")};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"reg'" };
+                auto v{it->second};
+
+                //std::cerr << "register_offset_expression (A) reg: "<<get<0>(*r)<< " offs:"<< get<1>(*r) << "\n";
+                if (get<4>(v)) {
+                 text_loc = get<4>(v)(vm,text_loc,get<0>(*r),get<1>(*r) );
+                 //std::cerr << "register_offset_expression(B) reg: "<<get<0>(*r)<< " offs:"<< get<1>(*r) << "\n";
+                }
+            } else if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
                 auto arg{value(as_int_ref(args[0]))};
                 auto loc_it{immediate2loc.find(arg)};
                 size_t addr {};
@@ -103,14 +138,14 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                      text_loc = get<3>(v)(vm,text_loc,data_label_it->second); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
             } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaCodeLabel") {
-                auto code_label_it{codelabel2loc.find(name(as_symbol_ref(args[0])))};
+                auto label_name{name(as_symbol_ref(args[0]))};
+                auto code_label_it{codelabel2loc.find(label_name)};
 
                 size_t loc{};
                 size_t backpatch_loc{};
                 bool backpatch{};
 
                 if (code_label_it == codelabel2loc.end()){ 
-                    //throw std::string{"oblectamenta_assembler: unknown code label: '"+ name(as_symbol_ref(args[0])) +"'" };
                     backpatch = true;
                 } else loc = code_label_it->second; 
 
@@ -123,7 +158,6 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     if (pe == patch_entries.size()) patch_entries.push_back({});
                     patch_entries[pe].text_loc = backpatch_loc;
                     strncpy(patch_entries[pe].id, name(as_symbol_ref(args[0])).c_str(), sizeof(patch_entry::id)); 
-                    //std::cerr << pe << " " << patch_entries.size() << " loc= " << loc << " "<< patch_entries[pe].id <<'\n';
                 }
             } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
                 if (sym_kind2 == "OblectamentaModifier" && sym_name2 == "addr" && args2.size() == 1 && is<Ast_node_kind::int_literal>(args2[0]) ) {
@@ -152,6 +186,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
         }
     } 
  } //for
+ 
 }//function
 
 

@@ -21,6 +21,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace ceps{
     namespace vm{
         namespace oblectamenta{
+            namespace assembler {
+                static double constexpr text_growth_factor{1.4};
+            }
             void oblectamenta_assembler(VMEnv& vm, vector<ceps::ast::node_t> mnemonics);
         }
     }
