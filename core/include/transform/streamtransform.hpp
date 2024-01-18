@@ -29,6 +29,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <vector>
 #include <climits>
 #include <map>
+#include <sstream>
 
 constexpr bool print_debug_info = false;
 
@@ -232,69 +233,74 @@ template<typename T>struct Memory
 template<typename P, typename C> class Statefulscanner
 {
  P p_;
+ bool input_is_rules_part{};
+ bool ignore_space_ = true;
+ bool skip_unmatched_tokens_ = false;
+ bool encode_line_feed_as_endl = false;
+
 public:
  std::vector<std::string> pragmas;
 
- struct Tokentable
- {
-   std::vector<nonmutable_string<C>> toks_;
-   std::vector<std::int64_t> toks_descr_tbl_;
+  struct Tokentable
+  {
+    std::vector<nonmutable_string<C>> toks_;
+    std::vector<std::int64_t> toks_descr_tbl_;
 
 
-   void clear_and_read_table(const char * tbl [], size_t size)
-   {
-    toks_.resize(size);
-    toks_descr_tbl_.resize(size);
-    for(size_t i = 0; i < size;++i)
+    void clear_and_read_table(const char * tbl [], size_t size)
     {
-     toks_[i] = nonmutable_string<C>(tbl[i],strlen(tbl[i]));
-     toks_descr_tbl_[i] = 0;
-    }
-   }
-
-   std::int64_t& tok_descr(int tok_id)
-   {
-    return toks_descr_tbl_[tok_id];
-   }
-
-   int match(P& in, char ch)
-   {
-    if (toks_.size() == 0) return -1;
-    bool state_table[1024];
-    int states_active = 0;
-    int max_state = -1;
-    auto nn = toks_.size();
-    for(size_t h = 0; h < nn;++h){
-      auto & e = toks_[h];
-      if (e.length()>0 && e[0] == ch) { state_table[h] = true; max_state = h ;++states_active; }
+      toks_.resize(size);
+      toks_descr_tbl_.resize(size);
+      for(size_t i = 0; i < size;++i)
+      {
+      toks_[i] = nonmutable_string<C>(tbl[i],strlen(tbl[i]));
+      toks_descr_tbl_[i] = 0;
+      }
     }
 
-    if(max_state == -1) return -1;
-    int current_pos = 1;
-    bool ch_dangling= false;
-
-
-    do
+    std::int64_t& tok_descr(int tok_id)
     {
-     if(!(ch_dangling = in.get(ch))) break;
+      return toks_descr_tbl_[tok_id];
+    }
 
-     states_active = 0;
-     auto n = max_state;
-     for(int i = 0; i <= n;++i)
-     {
-      if (!state_table[i]) continue;
-      auto & e = toks_[i];
-      if (e.length() <= current_pos) { state_table[i] = false;continue;}
-      if (e[current_pos] == ch) {ch_dangling=false;max_state = i;++states_active;}
-      else state_table[i] = false;
-     }
-     ++current_pos;
-    } while (states_active > 0);
-    if (ch_dangling) in.unget();
-    return max_state;
-   }
+    int match(P& in, char ch)
+    {
+      if (toks_.size() == 0) return -1;
+      bool state_table[1024];
+      int states_active = 0;
+      int max_state = -1;
+      auto nn = toks_.size();
+      for(size_t h = 0; h < nn;++h){
+        auto & e = toks_[h];
+        if (e.length()>0 && e[0] == ch) { state_table[h] = true; max_state = h ;++states_active; }
+      }
 
- };
+      if(max_state == -1) return -1;
+      int current_pos = 1;
+      bool ch_dangling= false;
+
+
+      do
+      {
+      if(!(ch_dangling = in.get(ch))) break;
+
+      states_active = 0;
+      auto n = max_state;
+      for(int i = 0; i <= n;++i)
+      {
+        if (!state_table[i]) continue;
+        auto & e = toks_[i];
+        if (e.length() <= current_pos) { state_table[i] = false;continue;}
+        if (e[current_pos] == ch) {ch_dangling=false;max_state = i;++states_active;}
+        else state_table[i] = false;
+      }
+      ++current_pos;
+      } while (states_active > 0);
+      if (ch_dangling) in.unget();
+      return max_state;
+    }
+
+  };
 
  Tokentable tokentable_;
  Tokentable& tokentable() {return tokentable_;}
@@ -376,9 +382,7 @@ public:
    }
  };
 
- bool ignore_space_ = false;
- bool skip_unmatched_tokens_ = false;
-
+ 
  bool gettoken_local(Token& t)
  {
     t.kind() = Token::TOK_UNKNOWN;
@@ -474,7 +478,11 @@ public:
           p_.skip_line();
           start = p_.pos_;
           if (keyword == "ignore_ws") ignore_space_ = true;
+          else if (keyword == "encode_line_feed_as_endl") encode_line_feed_as_endl = true;
           else if (keyword == "skip_unmatched_tokens") skip_unmatched_tokens_ = true;
+          else if (keyword == "dont_ignore_ws") ignore_space_ = false;
+          else if (keyword == "dont_encode_line_feed_as_endl") encode_line_feed_as_endl = false;
+          else if (keyword == "dont_skip_unmatched_tokens") skip_unmatched_tokens_ = false;
           else pragmas.push_back(keyword.as_str());
           continue;
         }
@@ -483,17 +491,18 @@ public:
           p_.skip_line();
           t.kind() =  Token::TOK_LEXCMDS;
           return true;
-        }
-        else if (ignore_space_ && std::isspace(ch))
-        {
-          start = p_.pos_;continue;
-        }
-        else if (!ignore_space_ && std::isspace(ch))
-        {
-          t.kind() = Token::TOK_BLANK;t.sval_ = nonmutable_string<C>(p_.ptr_+start,0);
-        }
-        else if (ch == '\n') {t.kind() = Token::TOK_ENDL;t.sval_ = nonmutable_string<C>(p_.ptr_+start,0);}
-        else
+        } else if (std::isspace(ch)){
+           if (input_is_rules_part) { start = p_.pos_; continue;}
+           if (encode_line_feed_as_endl && (ch == '\n')) 
+           {
+            t.kind() =Token::TOK_ENDL;t.sval_ = nonmutable_string<C>(p_.ptr_+start,0);
+           } else if (ignore_space_ ){
+            start = p_.pos_;continue;
+           } else {
+            t.kind() = Token::TOK_BLANK;t.sval_ = nonmutable_string<C>(p_.ptr_+start,0);
+           }
+           return true;
+        }  else
         {
          //operators
 
@@ -598,9 +607,9 @@ public:
    matching_rules_.resize(DEFAULT_RW_PROG_BUFFER);
  }
 
- void set_input(P & p) {p_ = p;}
+ void set_input(P & p, bool rules_part = false) {p_ = p; input_is_rules_part = rules_part;}
 
- struct match_ex{ std::string what_;};
+ struct match_ex{match_ex() = default; match_ex(std::string s):what_{s}{} std::string what_;};
  struct eval_ex{};
 
  Token expr_parser_lookahead_;
@@ -831,7 +840,7 @@ Token evaluate_sideeffect(std::int64_t root)
   } else if (t.kind() == Token::TOK_TOK && t.sval_ == "$")  {
    expr_parser_gettoken();
    if (expr_parser_cur_tok().kind() != Token::TOK_INT64)
-    throw match_ex(/*"Expected positive integer after $."*/);
+    throw match_ex("Expected positive integer after $.");
 
    Sideeffects_node s;
    s.kind_ = Sideeffects_node::MATCH_REF;
@@ -864,7 +873,7 @@ Token evaluate_sideeffect(std::int64_t root)
 
    return push_sideeffects_op(s);
   }
-  else throw match_ex();
+  else throw match_ex("?");
  }
 
 int parse_sideeffect_eq_neq()
@@ -1134,10 +1143,17 @@ int parse_sideeffect_ASSIGN()
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
       ++pat_len;
    }
+   else if (t.kind() == Token::TOK_ENDL)
+   {
+    //ignore   
+   }
    else {
+    std::stringstream ss;
+    ss << (int) t.kind();
+    auto reason{ss.str()};
 
-     throw match_ex();
-     }
+     throw match_ex("read_rewrite_rule: Unknown Token "+reason);
+   }
   }//for
 
 
@@ -1179,7 +1195,7 @@ int parse_sideeffect_ASSIGN()
    {
       int script_ast = parse_sideeffect();
 
-      if (! (t.kind() == Token::TOK_TOK && t.sval_ == "/") ) throw match_ex();
+      if (! (t.kind() == Token::TOK_TOK && t.sval_ == "/") ) throw match_ex("???");
       t.kind() = Token::TOK_SIDEEFFECT_STMTS;
       t.v.ival64_ = script_ast;
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
@@ -1205,11 +1221,11 @@ int parse_sideeffect_ASSIGN()
        ++body_len;
    } else if (t.kind() == Token::TOK_TOK && t.sval_ == "$")
    {
-    if (!gettoken_local(t)) throw match_ex();
+    if (!gettoken_local(t)) throw match_ex("????");
     bool neg = false;
     if (t.kind() == Token::TOK_TOK && t.sval_ == "-") {
       neg = true;
-      if (!gettoken_local(t)) throw match_ex();
+      if (!gettoken_local(t)) throw match_ex("?????");
     }
     if (t.kind() == Token::TOK_INT64)
     {
@@ -1217,7 +1233,7 @@ int parse_sideeffect_ASSIGN()
       if (neg) t.v.ival64_ *= -1;
       prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
       ++body_len;
-    }else throw match_ex();
+    }else throw match_ex("??????");
 
    }else if (t.kind() == Token::TOK_ID && t.sval_ == "exit") {
       t.kind_ = Token::TOK_EXIT;
@@ -1263,16 +1279,11 @@ int parse_sideeffect_ASSIGN()
 
  void read_lex_cmds(int lexer_id)
  {
-  //std::cout << "****read_lex_cmds()\n";
-
-  //std::cout << "'" << expr_parser_cur_tok().sval_ << "'\n";
-  //std::cout << (expr_parser_cur_tok().kind() ==  Token::TOK_TOK) << "\n";
   expr_parser_match(Token::TOK_TOK,"{",true,false);
-  //std::cout << expr_parser_cur_tok().sval_ << "\n";
   for(;;)
   {
     expr_parser_gettoken();
-    if (expr_parser_cur_tok().kind() == Token::TOK_TOK && expr_parser_cur_tok().sval_ == "}") return;
+    if (expr_parser_cur_tok().kind() == Token::TOK_TOK && expr_parser_cur_tok().sval_ == "}") break;
     else read_rewrite_rule(lexer_id);
   }
  }
