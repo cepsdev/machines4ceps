@@ -6,9 +6,41 @@ Scenario{
     title{label __ title = "Compile Computation Graph";};
 
     Given{
-        
+        dnn{
+         OblectamentaDataLabel x_1, x_2;
+         computation_graph{
+            v_1 = x_1;
+            v_2 = x_2;
+            v_3 = v_1 * v_2;
+            v_4 = sin(v_2);
+            v_5 = exp(v_3);
+            v_6 = v_3 - v_4;
+            v_7 = v_5 + v_6;
+         };
+        };
      };
     When{
+         let the_vm = operation(
+         run{
+            vm{
+                OblectamentaDataLabel x_1, x_2;
+                computation_graph{
+                    v_1 = x_1;
+                    v_2 = x_2;
+                    v_3 = v_1 * v_2;
+                    v_4 = sin(v_2);
+                    v_5 = exp(v_3);
+                    v_6 = v_3 - v_4;
+                    v_7 = v_5 + v_6;
+                };
+                data{
+                    x_1;1.0;
+                    x_2;2.0;                    
+                };
+            }; 
+          }
+        );
+        the_vm;
      };
     Then
     {
