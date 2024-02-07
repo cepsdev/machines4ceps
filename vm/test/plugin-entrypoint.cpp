@@ -20,12 +20,14 @@
 #include <netinet/sctp.h> 
 #include <vector>
 #include <string>
+#include <optional>
 
 #include "ceps_ast.hh"
 #include "core/include/state_machine_simulation_core.hpp"
 
 #include "core/include/vm/vm_base.hpp"
 #include "core/include/vm/oblectamenta-assembler.hpp"
+#include "core/include/vm/oblectamenta-comp-graph.hpp"
 
 #define ast_proc_prolog  using namespace ceps::ast;\
     using namespace ceps::vm::oblectamenta;\
@@ -423,6 +425,136 @@ ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
     return factory_it->second(ceps_struct);
 }
 
+class CepsComputeGraphNotationTraverser{
+    
+        std::vector<ceps::ast::node_t> v; 
+    public:
+        struct array_ref{
+            std::string id;
+            size_t idx;
+        };
+
+        struct expr{
+            ceps::ast::node_t root;
+            std::optional<array_ref> as_array_ref () {
+                using namespace std;
+                using namespace ceps::ast;
+
+                string sym_name;
+	            string sym_kind;
+	            vector<node_t> args;
+                if (is_a_symbol_with_arguments(root, sym_name, sym_kind, args)){
+                    if (sym_kind == "OblectamentaDataLabel" && args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
+                        return array_ref{sym_name,(size_t)value(as_int_ref(args[0])) };                        
+                    }                 
+                }
+                return {};
+            }
+            bool is_leaf() const{
+                using namespace std;
+                using namespace ceps::ast;
+                return is<Ast_node_kind::int_literal>(root) || is<Ast_node_kind::float_literal>(root) || is<Ast_node_kind::string_literal>(root)
+                       || is<Ast_node_kind::identifier>(root) || is<Ast_node_kind::uint8>(root) || is<Ast_node_kind::long_literal>(root);
+            }
+            size_t size() const{
+                if (is_leaf()) return 0;
+                return children(*nlf_ptr(root)).size();
+            }
+            expr operator[](size_t i){
+                return expr{children(*nlf_ptr(root))[i]};
+            } 
+        };
+        struct op_expr{
+            ceps::ast::node_t root;
+            expr lhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[0]} ;}
+            expr rhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[1]} ;}
+        };
+        struct stmt{
+            ceps::ast::node_t node;
+            std::optional<op_expr> is_assign_op() const {
+                using namespace ceps::ast; 
+                if (!is<Ast_node_kind::binary_operator>(node)) return {};
+                if("=" == op_val(as_binop_ref(node))) 
+                 return op_expr{node};
+                return {};
+            }
+
+        };
+        CepsComputeGraphNotationTraverser(std::vector<ceps::ast::node_t> v):v{v} {}
+        stmt operator[](size_t i){
+            return {v[i]};            
+        }
+        size_t size() const {return v.size();}
+};
+
+template <typename F, typename E> 
+ void traverse(F f, E e){
+    if (f(e)){
+        if (e.is_leaf()) return;
+        for(size_t i{}; i < e.size(); ++i)
+         traverse(f, e[i]);
+    }
+}
+
+class CepsOblectamentaMnemonicsEmitter{
+        std::vector<ceps::ast::node_t> v; 
+    public:
+
+};
+
+template<>
+    void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter>::compile 
+    (CepsComputeGraphNotationTraverser& graph_def,CepsOblectamentaMnemonicsEmitter& ){
+        using namespace std;
+        
+
+        auto get_addr = [&] (CepsComputeGraphNotationTraverser::expr e) {
+            auto array_ref{e.as_array_ref()};
+            if (!array_ref) return size_t{}; 
+            cout << array_ref->id << " " << array_ref->idx << '\n';
+            return size_t{};
+        };
+        //First step compute array sizes and addresses
+        map<string,pair<size_t,size_t>> addrs;
+
+        for(size_t i{0}; i < graph_def.size(); ++i){
+            auto stmt{graph_def[i]};
+            auto assign_expr{stmt.is_assign_op()};
+            if (!assign_expr) continue;
+            auto left_side{assign_expr->lhs()};
+            auto right_side{assign_expr->rhs()};
+            auto array_ref{left_side.as_array_ref()};
+            const auto width = 8;// assume doubles
+            if (array_ref){
+                auto ar{*array_ref};
+                if ( addrs[ar.id].second < width * (ar.idx + 1)) 
+                 addrs[ar.id].second = width * (ar.idx + 1);
+            }
+            traverse(
+                [&](decltype(right_side) e){ 
+                    auto array_ref{e.as_array_ref()}; 
+                    if (array_ref){
+                        auto ar{*array_ref};
+                        if ( addrs[ar.id].second < width * (ar.idx + 1)) 
+                            addrs[ar.id].second = width * (ar.idx + 1);
+                        return false;
+                    } 
+                    return true;
+                }, right_side);
+        }
+        for (auto& e: addrs){
+            cout << e.first <<' '<< e.second.first <<' '<< e.second.second << '\n';
+        }
+
+        /*for(size_t i{0}; i < graph_def.size(); ++i){
+            auto stmt{graph_def[i]};
+            auto assign_expr{stmt.is_assign_op()};
+            if (!assign_expr) continue;
+            auto left_side{assign_expr->lhs()};
+            auto right_side{assign_expr->rhs()};
+            size_t addr  = get_addr(left_side);
+        } */       
+    }
 
 ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params){
     ast_proc_prolog    
@@ -443,6 +575,19 @@ ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params)
                 return mk_undef();
             }
          }
+    } else if (name(ceps_struct) == "compile_diffprog" && children(ceps_struct).size()){
+        for(auto e : children(ceps_struct))
+            if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "differentiable_program" ){
+                auto& diff_struct = as_struct_ref(e);
+            for(auto e : children(diff_struct))
+                if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "computation_graph" ){
+                    auto& computation_graph = as_struct_ref(e);
+                    CepsComputeGraphNotationTraverser traverser{children(computation_graph)};
+                    CepsOblectamentaMnemonicsEmitter emitter;
+                    ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
+                    comp_graph.compile(traverser,emitter);                    
+                }
+            }
     }
     return mk_undef();
 }

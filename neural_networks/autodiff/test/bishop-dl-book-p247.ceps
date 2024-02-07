@@ -1,43 +1,36 @@
 kind DocgenStringPrintNoEscape;
 DocgenStringPrintNoEscape docinfo_se;
 
+differentiable_program{
+    OblectamentaDataLabel x, v;
+    computation_graph{
+            v(1) = x(1);
+            v(2) = x(2);
+            v(3) = v(1) * v(2);
+            v(4) = sin(v(2));
+            v(5) = exp(v(3));
+            v(6) = v(3) - v(4);
+            v(7) = v(5) + v(6);
+    };
+};
 
 Scenario{
     title{label __ title = "Compile Computation Graph";};
-
     Given{
-        dnn{
-         OblectamentaDataLabel x_1, x_2;
-         computation_graph{
-            v_1 = x_1;
-            v_2 = x_2;
-            v_3 = v_1 * v_2;
-            v_4 = sin(v_2);
-            v_5 = exp(v_3);
-            v_6 = v_3 - v_4;
-            v_7 = v_5 + v_6;
-         };
-        };
+        root.differentiable_program.computation_graph;
      };
     When{
          let the_vm = operation(
-         run{
-            vm{
-                OblectamentaDataLabel x_1, x_2;
-                computation_graph{
-                    v_1 = x_1;
-                    v_2 = x_2;
-                    v_3 = v_1 * v_2;
-                    v_4 = sin(v_2);
-                    v_5 = exp(v_3);
-                    v_6 = v_3 - v_4;
-                    v_7 = v_5 + v_6;
-                };
-                data{
-                    x_1;1.0;
-                    x_2;2.0;                    
-                };
-            }; 
+         compile_diffprog{
+            kind OblectamentaOption;
+            OblectamentaOption listing, debug_info;
+            options{
+                listing;debug_info;
+            };
+            differentiable_program{
+                OblectamentaDataLabel x;
+                root.differentiable_program.computation_graph;
+            };
           }
         );
         the_vm;

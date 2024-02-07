@@ -475,6 +475,6 @@ namespace ceps{
                 {"ldsi64",{Opcode::ldsi64, "",emit<Opcode::ldsi64>, nullptr,nullptr }}
             };
            
-        }
+        }//namespace oblectamenta
     }
 }
