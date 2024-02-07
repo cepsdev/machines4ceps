@@ -432,6 +432,7 @@ class CepsComputeGraphNotationTraverser{
         struct array_ref{
             std::string id;
             size_t idx;
+            uint8_t width{8};
         };
 
         struct expr{
@@ -506,16 +507,17 @@ template<>
     void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter>::compile 
     (CepsComputeGraphNotationTraverser& graph_def,CepsOblectamentaMnemonicsEmitter& ){
         using namespace std;
+        map<string,pair<size_t,size_t>> addrs;
         
 
         auto get_addr = [&] (CepsComputeGraphNotationTraverser::expr e) {
             auto array_ref{e.as_array_ref()};
-            if (!array_ref) return size_t{}; 
-            cout << array_ref->id << " " << array_ref->idx << '\n';
-            return size_t{};
+            if (!array_ref) return size_t{};
+            auto addr_info{addrs[array_ref->id]}; 
+            size_t addr{addr_info.first + array_ref->idx * array_ref->width};
+            return addr;
         };
         //First step compute array sizes and addresses
-        map<string,pair<size_t,size_t>> addrs;
 
         for(size_t i{0}; i < graph_def.size(); ++i){
             auto stmt{graph_def[i]};
@@ -542,18 +544,24 @@ template<>
                     return true;
                 }, right_side);
         }
-        for (auto& e: addrs){
-            cout << e.first <<' '<< e.second.first <<' '<< e.second.second << '\n';
+        size_t cur_mem_addr{};
+        for (auto& e: addrs)
+        {
+            e.second.first = cur_mem_addr;
+            cur_mem_addr += e.second.second;             
         }
 
-        /*for(size_t i{0}; i < graph_def.size(); ++i){
+        //second step: generate code
+
+        for(size_t i{0}; i < graph_def.size(); ++i){
             auto stmt{graph_def[i]};
             auto assign_expr{stmt.is_assign_op()};
             if (!assign_expr) continue;
             auto left_side{assign_expr->lhs()};
             auto right_side{assign_expr->rhs()};
             size_t addr  = get_addr(left_side);
-        } */       
+            
+        }       
     }
 
 ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params){
