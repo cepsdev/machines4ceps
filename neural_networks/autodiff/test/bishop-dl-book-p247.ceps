@@ -35,8 +35,8 @@ Scenario{
             };
           }
         );
-        the_vm;
      };
+    the_asm_code;
     Then
     {
     

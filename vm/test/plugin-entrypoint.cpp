@@ -435,6 +435,15 @@ class CepsComputeGraphNotationTraverser{
             uint8_t width{8};
         };
 
+        struct expr;
+
+        struct op_expr{
+            ceps::ast::node_t root;
+            std::string op;
+            expr lhs();
+            expr rhs();
+        };
+
         struct expr{
             ceps::ast::node_t root;
             std::optional<array_ref> as_array_ref () {
@@ -451,6 +460,14 @@ class CepsComputeGraphNotationTraverser{
                 }
                 return {};
             }
+            std::optional<op_expr> as_binary_operation() const{
+                using namespace ceps::ast;
+                if(is<Ast_node_kind::binary_operator>(root)){
+                    return op_expr{root, op_val(as_binop_ref(root)) };
+                }
+                return {};
+            }
+
             bool is_leaf() const{
                 using namespace std;
                 using namespace ceps::ast;
@@ -464,11 +481,6 @@ class CepsComputeGraphNotationTraverser{
             expr operator[](size_t i){
                 return expr{children(*nlf_ptr(root))[i]};
             } 
-        };
-        struct op_expr{
-            ceps::ast::node_t root;
-            expr lhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[0]} ;}
-            expr rhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[1]} ;}
         };
         struct stmt{
             ceps::ast::node_t node;
@@ -487,6 +499,9 @@ class CepsComputeGraphNotationTraverser{
         }
         size_t size() const {return v.size();}
 };
+
+CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::lhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[0]} ;}
+CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::rhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[1]} ;}
 
 template <typename F, typename E> 
  void traverse(F f, E e){
@@ -575,9 +590,18 @@ template<>
             auto stmt{graph_def[i]};
             auto assign_expr{stmt.is_assign_op()};
             if (!assign_expr) continue;
-            auto left_side{assign_expr->lhs()};
-            //Emit store
             auto right_side{assign_expr->rhs()};
+            //Emit code for right hand side
+            traverse(
+                [](CepsComputeGraphNotationTraverser::expr e){
+
+                    return true;
+                },
+                right_side
+            );
+
+            //Emit store
+            auto left_side{assign_expr->lhs()};
             size_t addr  = get_addr(left_side);                        
             emitter.emitStoreDouble(addr);
         }       
