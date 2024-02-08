@@ -497,15 +497,33 @@ template <typename F, typename E>
     }
 }
 
+ceps::ast::node_t mk_func_call(ceps::ast::node_t func_id, ceps::ast::node_t arg){
+    using namespace ceps::ast;
+    Func_call* f = new Func_call();
+	f->children_.push_back(func_id);
+    Call_parameters* params = new Call_parameters();
+	f->children_.push_back(params);
+    params->children_.push_back(arg);
+    return f;
+}
+
 class CepsOblectamentaMnemonicsEmitter{
         std::vector<ceps::ast::node_t> v; 
     public:
-
+        void emitStoreDouble(size_t location){
+            v.push_back(
+                mk_func_call(
+                    ceps::interpreter::mk_symbol("stdbl","OblectamentaOpcode"), 
+                    ceps::interpreter::mk_int_node((int)location)
+                )            
+            );                        
+        }
+        std::vector<ceps::ast::node_t> listing() const { return v;}
 };
 
 template<>
     void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter>::compile 
-    (CepsComputeGraphNotationTraverser& graph_def,CepsOblectamentaMnemonicsEmitter& ){
+    (CepsComputeGraphNotationTraverser& graph_def,CepsOblectamentaMnemonicsEmitter& emitter){
         using namespace std;
         map<string,pair<size_t,size_t>> addrs;
         
@@ -558,9 +576,10 @@ template<>
             auto assign_expr{stmt.is_assign_op()};
             if (!assign_expr) continue;
             auto left_side{assign_expr->lhs()};
+            //Emit store
             auto right_side{assign_expr->rhs()};
-            size_t addr  = get_addr(left_side);
-            
+            size_t addr  = get_addr(left_side);                        
+            emitter.emitStoreDouble(addr);
         }       
     }
 
@@ -593,7 +612,10 @@ ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params)
                     CepsComputeGraphNotationTraverser traverser{children(computation_graph)};
                     CepsOblectamentaMnemonicsEmitter emitter;
                     ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
-                    comp_graph.compile(traverser,emitter);                    
+                    comp_graph.compile(traverser,emitter); 
+                    auto result = mk_struct("asm");
+                    ceps::ast::children(*result) = emitter.listing();
+                    return result;
                 }
             }
     }

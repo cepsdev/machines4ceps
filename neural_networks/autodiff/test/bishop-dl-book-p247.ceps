@@ -13,6 +13,7 @@ differentiable_program{
             v(7) = v(5) + v(6);
     };
 };
+val the_asm_code = undef;
 
 Scenario{
     title{label __ title = "Compile Computation Graph";};
@@ -20,8 +21,9 @@ Scenario{
         root.differentiable_program.computation_graph;
      };
     When{
-         let the_vm = operation(
-         compile_diffprog{
+         let the_asm_code = 
+         operation(
+          compile_diffprog{
             kind OblectamentaOption;
             OblectamentaOption listing, debug_info;
             options{
