@@ -533,6 +533,24 @@ class CepsOblectamentaMnemonicsEmitter{
                 )            
             );                        
         }
+        void emitLoadDouble(size_t location){
+            v.push_back(
+                mk_func_call(
+                    ceps::interpreter::mk_symbol("lddbl","OblectamentaOpcode"), 
+                    ceps::interpreter::mk_int_node((int)location)
+                )            
+            );                        
+        }
+        void emitMulDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("muldbl","OblectamentaOpcode"));
+        }
+        void emitSubDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("subdbl","OblectamentaOpcode"));
+        }
+        void emitAddDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("adddbl","OblectamentaOpcode"));
+        }
+
         std::vector<ceps::ast::node_t> listing() const { return v;}
 };
 
@@ -592,11 +610,29 @@ template<>
             if (!assign_expr) continue;
             auto right_side{assign_expr->rhs()};
             //Emit code for right hand side
-            traverse(
-                [](CepsComputeGraphNotationTraverser::expr e){
-
+            //function<bool(CepsComputeGraphNotationTraverser::expr)> parse_fn;
+            parse_fn = [&](CepsComputeGraphNotationTraverser::expr e){
+                    auto aref{e.as_array_ref()};
+                    auto bop{e.as_binary_operation()};
+                    if (aref){
+                        size_t addr  = get_addr(e);
+                        emitter.emitLoadDouble(addr);
+                        return false;
+                    } else if (bop){
+                        traverse(parse_fn, bop->lhs());
+                        if (bop->op == "*"){
+                            emitter.emitMulDouble();
+                        } else  if (bop->op == "-"){
+                            emitter.emitSubDouble();
+                        } else  if (bop->op == "+"){
+                            emitter.emitAddDouble();
+                        }
+                        return false;
+                    }
                     return true;
-                },
+                };
+            traverse(
+                parse_fn,
                 right_side
             );
 
