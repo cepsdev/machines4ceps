@@ -60,7 +60,6 @@ static std::optional<std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>> is_register_of
 
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
 {
-
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
 
  map<int32_t,size_t> immediate2loc; // immediate values => location in storage
@@ -69,8 +68,9 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
 
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
 
-    if ( text_loc + max_opcode_width >= vm.text_size){
-        vm.resize_text( assembler::text_growth_factor * (double)vm.text_size );
+    if ( text_loc + 2*max_opcode_width >= vm.text_size){
+        //vm.resize_text(8192);
+        vm.resize_text(  2*max_opcode_width + assembler::text_growth_factor * (double)vm.text_size );
     }
       
     auto e{mnemonics[stmt_pos]};

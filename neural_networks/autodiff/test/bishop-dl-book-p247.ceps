@@ -6,8 +6,8 @@ differentiable_program{
     computation_graph{
             array(x,f32,base(0));                
             v(1) = x(1);
-           /* v(2) = x(2);
-            v(3) = v(1) * v(2);
+            v(2) = x(2);
+            /*v(3) = v(1) * v(2);
             v(4) = sin(v(2));
             v(5) = exp(v(3));
             v(6) = v(3) - v(4);
@@ -23,14 +23,14 @@ Scenario{
      };
     When{
          let the_asm_code = 
-         operation(
+         xoperation(
           compile_diffprog{
             kind OblectamentaOption;
             OblectamentaOption listing, debug_info;
             options{
                 listing;debug_info;
             };
-            differentiable_program{
+            xdifferentiable_program{
                 OblectamentaDataLabel x;
                 root.differentiable_program.computation_graph;
             };
@@ -42,13 +42,17 @@ Scenario{
          run{
             vm{
                 data{
-                0.0;1.2;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;
+                0.0;1.0;2.0;
+                /*v*/0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;
 
                 };
                 text{
-                    asm{lddbl(8);stdbl(24);};
-
-                    //the_asm_code;
+                 // the_asm_code;
+                 asm{lddbl(0);lddbl(0);lddbl(0);
+//stdbl(32);
+//lddbl(16);
+//stdbl(40);
+};
                 };
             }; 
           }

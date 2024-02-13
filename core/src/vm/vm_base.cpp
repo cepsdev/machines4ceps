@@ -133,6 +133,7 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::lddbl(size_t pos){
+        auto addr{*((addr_t*)(text+pos+base_opcode_width))};
         push_cs(*((double*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]));
         return base_opcode_width + sizeof(addr_t) + pos;
     }
@@ -159,8 +160,9 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::stdbl(size_t pos){
-        *(double*)&mem.base[text[pos+1]]  = pop_cs<double>();
-        return base_opcode_width + 1 + pos;
+        auto t{pop_cs<double>()};
+        *((double*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]) = t;
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::ldptr(size_t pos){return base_opcode_width + pos;}
     size_t VMEnv::stptr(size_t pos){return base_opcode_width + pos;}
@@ -492,10 +494,12 @@ namespace ceps::vm::oblectamenta{
     }
 
     VMEnv::text_t VMEnv::resize_text(size_t new_size){
-        auto t{text};
+        auto t{this->text};
         auto old_size{text_size};
-        text = new remove_pointer_t<VMEnv::text_t>[text_size = new_size];
-        if(!text) throw std::runtime_error{"oblectamenta_assembler: out of text space"};
+        text_size = new_size;
+        text = (uint8_t*) new char[text_size];
+        memset(text,(int)Opcode::halt, text_size );
+        if(!text) { throw std::runtime_error{"oblectamenta_assembler: out of text space"}; }
         memcpy(text,t,std::min(old_size,new_size));
         delete[] t;
         return text;

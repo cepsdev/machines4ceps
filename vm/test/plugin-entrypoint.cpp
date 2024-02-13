@@ -459,9 +459,39 @@ class CepsComputeGraphNotationTraverser{
             expr argument();
         };
 
+        struct funccall_expr{
+            ceps::ast::node_t root;
+            func_id fid;
+            std::vector<ceps::ast::node_t>  args;
+            funccall_expr() = default;
+            funccall_expr(ceps::ast::node_t root, func_id fid, std::vector<ceps::ast::node_t>  args)
+            : root{root}, fid{fid}, args{args}{}
+            std::vector<expr> arguments();
+        };
 
         struct expr{
             ceps::ast::node_t root;
+
+            std::optional<int> as_int(){
+                using namespace std;
+                using namespace ceps::ast;
+                if(!is<ceps::ast::Ast_node_kind::int_literal>(root)) return {};
+                return value(as_int_ref(root));
+            }
+
+            std::optional<std::string> as_id(){
+                using namespace std;
+                using namespace ceps::ast;
+                if(!is<ceps::ast::Ast_node_kind::identifier>(root)) return {};
+                return name(as_id_ref(root));
+            }
+
+            std::optional<std::pair<std::string,std::string>> as_symbol(){
+                using namespace std;
+                using namespace ceps::ast;
+                if(!is<ceps::ast::Ast_node_kind::symbol>(root)) return {};
+                return { make_pair(name(as_symbol_ref(root)), kind(as_symbol_ref(root))) };
+            }
 
             std::optional<noary_or_unary_funccall_expr> as_noary_or_unary_funccall(){
                 using namespace std;
@@ -481,6 +511,25 @@ class CepsComputeGraphNotationTraverser{
                                                args.size() == 0 ? nullptr : args[0]);
 
             }
+            
+            std::optional<funccall_expr> as_funccall(){
+                using namespace std;
+                using namespace ceps::ast;
+                if(!is<ceps::ast::Ast_node_kind::func_call>(root)) return {};
+				
+                string func_id;
+				string fkind; 
+				string sym_name;
+				node_t ftarget; 
+				vector<node_t> args;
+
+                is_a_funccall(	root, func_id, fkind, sym_name, ftarget, args);
+                return funccall_expr( root, 
+                                               { (fkind == "" ? func_id : sym_name), fkind == "" ? optional<string>{} : optional<string>{fkind}  },
+                                               args);
+
+            }
+
             std::optional<array_ref> as_array_ref () {
                 using namespace std;
                 using namespace ceps::ast;
@@ -526,6 +575,7 @@ class CepsComputeGraphNotationTraverser{
                  return op_expr{node};
                 return {};
             }
+            expr as_expr(){return expr{node};}
 
         };
         CepsComputeGraphNotationTraverser(std::vector<ceps::ast::node_t> v):v{v} {}
@@ -538,6 +588,13 @@ class CepsComputeGraphNotationTraverser{
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::noary_or_unary_funccall_expr::argument(){
     return expr{arg};
 }
+
+std::vector<CepsComputeGraphNotationTraverser::expr> CepsComputeGraphNotationTraverser::funccall_expr::arguments(){
+    std::vector<CepsComputeGraphNotationTraverser::expr> r;
+    for(auto e: args) r.push_back(expr{e});
+    return r;
+}
+
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::lhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[0]} ;}
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::rhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[1]} ;}
 
@@ -616,6 +673,7 @@ template<>
     (CepsComputeGraphNotationTraverser& graph_def,CepsOblectamentaMnemonicsEmitter& emitter){
         using namespace std;
         map<string,pair<size_t,size_t>> addrs;
+        map<string,size_t> predef_array_offs;
         
 
         auto get_addr = [&] (CepsComputeGraphNotationTraverser::expr e) {
@@ -630,7 +688,25 @@ template<>
         for(size_t i{0}; i < graph_def.size(); ++i){
             auto stmt{graph_def[i]};
             auto assign_expr{stmt.is_assign_op()};
-            if (!assign_expr) continue;
+            if (!assign_expr){
+                auto fcall {stmt.as_expr().as_funccall()};
+                if("array" == fcall->fid.name){
+                    //handle declarations
+                    auto args{fcall->arguments()};
+                    if (args.size() == 3){
+                        auto sym{args[0].as_symbol()};
+                        auto id{args[1].as_id()};
+                        auto mod{args[2].as_funccall()};
+                        if (sym && id  && mod && mod->fid.name == "base" && mod->arguments().size() == 1){
+                            auto base_addr{mod->arguments()[0].as_int()};
+                            if (base_addr) {
+                                predef_array_offs[ sym->first ] = *base_addr;
+                            }                    
+                        }
+                    }                    
+                }
+                continue;
+            }
             auto left_side{assign_expr->lhs()};
             auto right_side{assign_expr->rhs()};
             auto array_ref{left_side.as_array_ref()};
@@ -653,11 +729,30 @@ template<>
                 }, right_side);
         }
         size_t cur_mem_addr{};
+
         for (auto& e: addrs)
         {
+            auto it{predef_array_offs.find(e.first)};
+            if (it == predef_array_offs.end()) continue;
+            e.second.first = it->second;
+            auto t{e.second.first + e.second.second};
+            if (t > cur_mem_addr) cur_mem_addr = t;
+        }
+
+        for (auto& e: addrs)
+        {
+            auto it{predef_array_offs.find(e.first)};
+            if (it != predef_array_offs.end()) continue;
+
             e.second.first = cur_mem_addr;
             cur_mem_addr += e.second.second;             
         }
+
+        /*for (auto& e: addrs)
+        {
+
+            cout << e.first << " " << e.second.first << " " << e.second.second << '\n';
+        }*/
 
         //second step: generate code
 

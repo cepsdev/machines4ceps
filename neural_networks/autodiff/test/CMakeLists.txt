@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(INSERT_PROJECT_NAME_HERE)
 
-add_compile_options(-O  -Wall -MD  -std=c++2a  -fPIC -static -Wno-undef )
+add_compile_options(  -Wall -MD  -std=c++2a  -fPIC -static -Wno-undef )
 
 IF(NOT( DEFINED ENV{CEPSCORE}))
     MESSAGE(FATAL_ERROR "Could not find ceps core (Environment variable CEPSCORE not set).")
