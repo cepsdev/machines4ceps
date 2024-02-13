@@ -4,14 +4,14 @@ DocgenStringPrintNoEscape docinfo_se;
 differentiable_program{
     OblectamentaDataLabel x, v;
     computation_graph{
-            array(x,f32,base(0));                
+            array(x,f32,base(0));//declares x as an array of f32 starting at address 0, the array size is deduced from the computation graph.       
             v(1) = x(1);
             v(2) = x(2);
-            /*v(3) = v(1) * v(2);
+            v(3) = v(1) * v(2);
             v(4) = sin(v(2));
             v(5) = exp(v(3));
             v(6) = v(3) - v(4);
-            v(7) = v(5) + v(6);*/
+            v(7) = v(5) + v(6);
     };
 };
 val the_asm_code = undef;
@@ -23,14 +23,14 @@ Scenario{
      };
     When{
          let the_asm_code = 
-         xoperation(
+         operation(
           compile_diffprog{
             kind OblectamentaOption;
             OblectamentaOption listing, debug_info;
             options{
                 listing;debug_info;
             };
-            xdifferentiable_program{
+            differentiable_program{
                 OblectamentaDataLabel x;
                 root.differentiable_program.computation_graph;
             };
@@ -42,17 +42,12 @@ Scenario{
          run{
             vm{
                 data{
-                0.0;1.0;2.0;
-                /*v*/0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;
+                0.0;1.1;1.1;
+                /*v*/0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;
 
                 };
                 text{
-                 // the_asm_code;
-                 asm{lddbl(0);lddbl(0);lddbl(0);
-//stdbl(32);
-//lddbl(16);
-//stdbl(40);
-};
+                 the_asm_code;
                 };
             }; 
           }
