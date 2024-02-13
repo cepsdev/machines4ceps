@@ -4,6 +4,7 @@ DocgenStringPrintNoEscape docinfo_se;
 differentiable_program{
     OblectamentaDataLabel x, v;
     computation_graph{
+            array(x,f32,base(0));                
             v(1) = x(1);
            /* v(2) = x(2);
             v(3) = v(1) * v(2);
@@ -41,11 +42,13 @@ Scenario{
          run{
             vm{
                 data{
-                0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;
+                0.0;1.2;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;
 
                 };
                 text{
-                    the_asm_code;
+                    asm{lddbl(8);stdbl(24);};
+
+                    //the_asm_code;
                 };
             }; 
           }
