@@ -125,7 +125,12 @@ namespace ceps{
                 ldi64reg,
                 sti64reg,
                 stsi64,
-                ldsi64
+                ldsi64,
+                sindbl,
+                cosdbl,
+                tandbl,
+                atandbl,
+                expdbl
             };
 
             class VMEnv{
@@ -330,6 +335,13 @@ namespace ceps{
                     size_t stsi64(size_t);
                     size_t ldsi64(size_t);
 
+                    size_t sindbl(size_t);
+                    size_t cosdbl(size_t);
+                    size_t tandbl(size_t);
+                    size_t atandbl(size_t);
+                    size_t expdbl(size_t);
+
+
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
@@ -472,7 +484,13 @@ namespace ceps{
                 {"ldi64reg",{Opcode::ldi64reg, "",nullptr,nullptr,emit<Opcode::ldi64reg> }},
                 {"sti64reg",{Opcode::sti64reg, "",nullptr,nullptr,emit<Opcode::sti64reg> }},
                 {"stsi64",{Opcode::stsi64, "",emit<Opcode::stsi64>, nullptr,nullptr }},
-                {"ldsi64",{Opcode::ldsi64, "",emit<Opcode::ldsi64>, nullptr,nullptr }}
+                {"ldsi64",{Opcode::ldsi64, "",emit<Opcode::ldsi64>, nullptr,nullptr }},
+
+                {"sindbl",{Opcode::sindbl, "",emit<Opcode::sindbl>,nullptr,nullptr}},
+                {"cosdbl",{Opcode::cosdbl, "",emit<Opcode::cosdbl>,nullptr,nullptr}},
+                {"tandbl",{Opcode::tandbl, "",emit<Opcode::tandbl>,nullptr,nullptr}},
+                {"atandbl",{Opcode::atandbl, "",emit<Opcode::atandbl>,nullptr,nullptr}},
+                {"expdbl",{Opcode::expdbl, "",emit<Opcode::expdbl>,nullptr,nullptr}}
             };
            
         }//namespace oblectamenta

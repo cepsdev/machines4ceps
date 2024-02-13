@@ -444,8 +444,27 @@ class CepsComputeGraphNotationTraverser{
             expr rhs();
         };
 
+        struct func_id{
+            std::string name;
+            std::optional<std::string> sym_kind;
+        };
+        
+        struct noary_or_unary_funccall_expr{
+            ceps::ast::node_t root;
+            func_id fid;
+            std::optional< ceps::ast::node_t > arg;
+        };
+
+
         struct expr{
             ceps::ast::node_t root;
+
+            std::optional<noary_or_unary_funccall_expr> as_noary_or_unary_funccall(){
+                using namespace std;
+                using namespace ceps::ast;
+                if(!is<ceps::ast::Ast_node_kind::func_call>(root)) return {};
+
+            }
             std::optional<array_ref> as_array_ref () {
                 using namespace std;
                 using namespace ceps::ast;
@@ -550,6 +569,9 @@ class CepsOblectamentaMnemonicsEmitter{
         void emitAddDouble(){
             v.push_back(ceps::interpreter::mk_symbol("adddbl","OblectamentaOpcode"));
         }
+        void emitDivDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("divdbl","OblectamentaOpcode"));
+        }
 
         std::vector<ceps::ast::node_t> listing() const { return v;}
 };
@@ -610,7 +632,7 @@ template<>
             if (!assign_expr) continue;
             auto right_side{assign_expr->rhs()};
             //Emit code for right hand side
-            //function<bool(CepsComputeGraphNotationTraverser::expr)> parse_fn;
+            function<bool(CepsComputeGraphNotationTraverser::expr)> parse_fn;
             parse_fn = [&](CepsComputeGraphNotationTraverser::expr e){
                     auto aref{e.as_array_ref()};
                     auto bop{e.as_binary_operation()};
@@ -619,6 +641,7 @@ template<>
                         emitter.emitLoadDouble(addr);
                         return false;
                     } else if (bop){
+                        traverse(parse_fn, bop->rhs());
                         traverse(parse_fn, bop->lhs());
                         if (bop->op == "*"){
                             emitter.emitMulDouble();
@@ -626,7 +649,9 @@ template<>
                             emitter.emitSubDouble();
                         } else  if (bop->op == "+"){
                             emitter.emitAddDouble();
-                        }
+                        } else if (bop->op == "/"){
+                            emitter.emitDivDouble();
+                        } 
                         return false;
                     }
                     return true;

@@ -16,6 +16,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include "core/include/vm/vm_base.hpp"
 #include <cstring>
+#include <cmath>
 
 namespace ceps::vm::oblectamenta{
 
@@ -459,6 +460,33 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width  + pos;
     }
 
+    size_t VMEnv::sindbl(size_t pos){
+        push_cs<double>(sin(pop_cs<double>()));
+        return base_opcode_width + pos;
+    }
+
+    size_t VMEnv::cosdbl(size_t pos){
+        push_cs<double>(cos(pop_cs<double>()));
+        return base_opcode_width + pos;
+    }
+
+    size_t VMEnv::tandbl(size_t pos){
+        push_cs<double>(tan(pop_cs<double>()));
+        return base_opcode_width + pos;
+    }
+    
+    size_t VMEnv::atandbl(size_t pos){
+        push_cs<double>(atan(pop_cs<double>()));
+        return base_opcode_width + pos;
+    }
+
+    size_t VMEnv::expdbl(size_t pos){
+        push_cs<double>(sin(pop_cs<double>()));
+        return base_opcode_width + pos;
+    }
+
+
+
     void VMEnv::reset(){
         registers.file[registers_t::SP] = 0;
     }
@@ -568,7 +596,14 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::ldi64reg);
         op_dispatch.push_back(&VMEnv::sti64reg);
         op_dispatch.push_back(&VMEnv::stsi64);  
-        op_dispatch.push_back(&VMEnv::ldsi64);   
+        op_dispatch.push_back(&VMEnv::ldsi64);
+
+        op_dispatch.push_back(&VMEnv::sindbl);
+        op_dispatch.push_back(&VMEnv::cosdbl);
+        op_dispatch.push_back(&VMEnv::tandbl);
+        op_dispatch.push_back(&VMEnv::atandbl);
+        op_dispatch.push_back(&VMEnv::expdbl);
+
     }
      
     void VMEnv::dump(ostream& os){
