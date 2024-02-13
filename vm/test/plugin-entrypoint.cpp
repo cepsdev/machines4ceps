@@ -452,7 +452,11 @@ class CepsComputeGraphNotationTraverser{
         struct noary_or_unary_funccall_expr{
             ceps::ast::node_t root;
             func_id fid;
-            std::optional< ceps::ast::node_t > arg;
+            ceps::ast::node_t  arg;
+            noary_or_unary_funccall_expr() = default;
+            noary_or_unary_funccall_expr(ceps::ast::node_t root, func_id fid, ceps::ast::node_t  arg)
+            : root{root}, fid{fid}, arg{arg}{}
+            expr argument();
         };
 
 
@@ -463,6 +467,18 @@ class CepsComputeGraphNotationTraverser{
                 using namespace std;
                 using namespace ceps::ast;
                 if(!is<ceps::ast::Ast_node_kind::func_call>(root)) return {};
+				
+                string func_id;
+				string fkind; 
+				string sym_name;
+				node_t ftarget; 
+				vector<node_t> args;
+                if (args.size() > 1) return {};
+
+                is_a_funccall(	root, func_id, fkind, sym_name, ftarget, args);
+                return noary_or_unary_funccall_expr( root, 
+                                               { (fkind == "" ? func_id : sym_name), fkind == "" ? optional<string>{} : optional<string>{fkind}  },
+                                               args.size() == 0 ? nullptr : args[0]);
 
             }
             std::optional<array_ref> as_array_ref () {
@@ -519,6 +535,9 @@ class CepsComputeGraphNotationTraverser{
         size_t size() const {return v.size();}
 };
 
+CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::noary_or_unary_funccall_expr::argument(){
+    return expr{arg};
+}
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::lhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[0]} ;}
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::rhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[1]} ;}
 
@@ -572,6 +591,22 @@ class CepsOblectamentaMnemonicsEmitter{
         void emitDivDouble(){
             v.push_back(ceps::interpreter::mk_symbol("divdbl","OblectamentaOpcode"));
         }
+        void emitSinDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("sindbl","OblectamentaOpcode"));
+        }
+        void emitCosDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("cosdbl","OblectamentaOpcode"));
+        }
+        void emitTanDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("tandbl","OblectamentaOpcode"));
+        }
+        void emitAtanDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("atandbl","OblectamentaOpcode"));
+        }
+        void emitExpDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("expdbl","OblectamentaOpcode"));
+        }
+
 
         std::vector<ceps::ast::node_t> listing() const { return v;}
 };
@@ -653,6 +688,21 @@ template<>
                             emitter.emitDivDouble();
                         } 
                         return false;
+                    }
+                    auto simple_funccall{e.as_noary_or_unary_funccall()};
+                    if (simple_funccall && simple_funccall->arg ){
+                        traverse(parse_fn,simple_funccall->argument());
+                        if (simple_funccall->fid.name == "sin")
+                         emitter.emitSinDouble();
+                        else if (simple_funccall->fid.name == "cos")
+                         emitter.emitCosDouble();
+                        else if (simple_funccall->fid.name == "tan")
+                         emitter.emitTanDouble();
+                        else if (simple_funccall->fid.name == "atan")
+                         emitter.emitAtanDouble();
+                        else if (simple_funccall->fid.name == "exp")
+                         emitter.emitExpDouble();
+
                     }
                     return true;
                 };
