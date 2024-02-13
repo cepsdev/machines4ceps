@@ -5,18 +5,18 @@ differentiable_program{
     OblectamentaDataLabel x, v;
     computation_graph{
             v(1) = x(1);
-            v(2) = x(2);
+           /* v(2) = x(2);
             v(3) = v(1) * v(2);
             v(4) = sin(v(2));
             v(5) = exp(v(3));
             v(6) = v(3) - v(4);
-            v(7) = v(5) + v(6);
+            v(7) = v(5) + v(6);*/
     };
 };
 val the_asm_code = undef;
 
 Scenario{
-    title{label __ title = "Compile Computation Graph";};
+    title{label __ title = "Compile and Run Computation Graph";};
     Given{
         root.differentiable_program.computation_graph;
      };
@@ -37,6 +37,21 @@ Scenario{
         );
      };
     the_asm_code;
+     let the_vm = operation(
+         run{
+            vm{
+                data{
+                0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;
+
+                };
+                text{
+                    the_asm_code;
+                };
+            }; 
+          }
+        );
+    the_vm;
+
     Then
     {
     

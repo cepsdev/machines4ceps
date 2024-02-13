@@ -102,7 +102,12 @@ OblectamentaOpcode
     setframe, 
     popi32,
     pushi32,
-    ui32toui64;
+    ui32toui64,
+    sindbl,
+    cosdbl,
+    tandbl,
+    atandbl,
+    expdbl;
 
 
 OblectamentaModifier addr;

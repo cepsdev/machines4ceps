@@ -119,13 +119,13 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                 }
             } else if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
                 auto arg{value(as_int_ref(args[0]))};
-                auto loc_it{immediate2loc.find(arg)};
-                size_t addr {};
-                if (loc_it != immediate2loc.end()) addr = loc_it->second;
-                else {
-                    addr = vm.store(arg);
-                    immediate2loc[arg] = addr;
-                }
+                //auto loc_it{immediate2loc.find(arg)};
+                size_t addr {arg};
+                //if (loc_it != immediate2loc.end()) addr = loc_it->second;
+                //else {
+                //   addr = vm.store(arg);
+                //    immediate2loc[arg] = addr;
+               // }
                     
                 if (get<3>(v)) 
                  text_loc = get<3>(v)(vm,text_loc,addr); 
