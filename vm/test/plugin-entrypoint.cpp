@@ -797,6 +797,7 @@ template<>
                          emitter.emitAtanDouble();
                         else if (simple_funccall->fid.name == "exp")
                          emitter.emitExpDouble();
+                        return false;
 
                     }
                     return true;

@@ -483,7 +483,7 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::expdbl(size_t pos){
-        push_cs<double>(sin(pop_cs<double>()));
+        push_cs<double>(exp(pop_cs<double>()));
         return base_opcode_width + pos;
     }
 
