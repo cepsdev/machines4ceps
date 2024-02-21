@@ -1,23 +1,83 @@
 kind DocgenStringPrintNoEscape;
 DocgenStringPrintNoEscape docinfo_se;
 
-val I = 10;
+val I = 1;
+
+val data_width = 8;
+
+OblectamentaDataLabel y,f,h,b,omega,x,l, v;
+
+input{
+ for(i : 1 .. I){
+   entry{
+    i + 0.0 ; //convert to double
+    sin(i + 0.0);
+   };
+ }
+};
+
+weights{
+ for(i : 1 .. 4) {1.0 + 0.1 * i;}
+};
+
+biases{
+ for(i : 1 .. 4) {0.5;}    
+};
+
+data_section{
+    x;
+    val lbls = root.input.content(); 
+    for (i : 0 .. I-1){
+        lbls.at(i).entry.content().at(0);                
+    }
+    y;
+    for (i : 0 .. I-1){
+        lbls.at(i).entry.content().at(1);                
+    }
+    omega;
+    for (w : root.weights.content()){
+        w;                
+    }
+    b;
+    for (b : root.biases.content()){
+        b;                
+    }
+    l; //losses
+    for (i : 0 .. I-1){
+        0.0;                
+    }
+    f; // activation functions
+    for (i : 0 .. 3){
+        0.0;                
+    }
+    h; // hs
+    for (i : 0 .. 3){
+        0.0;                
+    }
+
+};
+
 differentiable_program{ 
-    OblectamentaDataLabel y,f,h,b,omega,x, v;
-    
+        
         computation_graph{
+                val cur_addr = 0;
+                array(x,f64,base(cur_addr));
+                let cur_addr = cur_addr + data_width * I ;
+                array(y,f64,base(cur_addr));
+                let cur_addr = cur_addr + data_width * I ;
+                array(omega,f64,base(cur_addr));
+                let cur_addr = cur_addr + root.weights.content().size() * data_width ;
+                array(b,f64,base(cur_addr));
+                let cur_addr = cur_addr + root.biases.content().size() * data_width ;
+                array(l,f64,base(cur_addr));
+                let cur_addr = cur_addr + data_width * I ;
+                array(f,f64,base(cur_addr));
+                let cur_addr = cur_addr + data_width * 4 ;
+                array(h,f64,base(cur_addr));
 
-                array(x,f64,base(0));//declares x as an array of f32 starting at address 0, the array size is deduced from the computation graph.
-                array(b,f64,base(8*I));
-                array(omega,f64,base(8*I + 4*8));
-                array(l,f64,base(8*I + 4*8 + 4*8));
-                array(y,f64,base(8*I + 4*8 + 4*8 + 4*8));
-
-            for (i : 1 .. I ){
-   
-
+            for (i : 0 .. I-1 ){
                 f(0)= b(0) + omega(0) * x(i);
-                h(1) = f(0) + sin(f(0));
+                h(1) = sin(f(0));
                 f(1) = b(1) + omega(1) * h(1); 
                 h(2) = exp(f(1));
                 f(2) = b(2) + omega(2)*h(2);
@@ -48,19 +108,17 @@ Scenario{
                 listing;debug_info;
             };
             differentiable_program{
-                OblectamentaDataLabel x;
                 root.differentiable_program.computation_graph;
             };
           }
         );
      };
-     "!!!!";the_asm_code;
+     //"!!!!";the_asm_code;
      let the_vm = operation(
          run{
             vm{
-                data{                    
-                for(i : 1 .. 100) { 0.0; }
-
+                data{
+                    root.data_section.content();
                 };
                 text{
                  the_asm_code;
