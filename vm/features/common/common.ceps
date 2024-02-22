@@ -107,7 +107,12 @@ OblectamentaOpcode
     cosdbl,
     tandbl,
     atandbl,
-    expdbl;
+    expdbl,
+    ldsdbl,
+    negdbl,
+    negi32,
+    negi64,
+    stsdbl;
 
 
 OblectamentaModifier addr;

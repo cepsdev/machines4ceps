@@ -5,7 +5,7 @@ val I = 1;
 
 val data_width = 8;
 
-OblectamentaDataLabel y,f,h,b,omega,x,l, v;
+OblectamentaDataLabel y,f,h,b,omega,x,l, v, i32zero, i32one, sizeof_weight, diff_params, orig_weight_value, f_plus_h, f_minus_h, partial_derivatives,tot_num_params;
 
 input{
  for(i : 1 .. I){
@@ -34,6 +34,7 @@ data_section{
     for (i : 0 .. I-1){
         lbls.at(i).entry.content().at(1);                
     }
+    diff_params;
     omega;
     for (w : root.weights.content()){
         w;                
@@ -54,7 +55,16 @@ data_section{
     for (i : 0 .. 3){
         0.0;                
     }
-
+    partial_derivatives;
+    for (w : root.weights.content()){0.0;}
+    for (b : root.biases.content()){0.0;}
+    i32zero; 0;
+    i32one; 1;
+    sizeof_weight; 8;
+    orig_weight_value; 0.0;
+    f_plus_h;0.0; 
+    f_minus_h;0.0;
+    tot_num_params; root.weights.content().size() + root.biases.content().size();
 };
 
 differentiable_program{ 
@@ -90,7 +100,149 @@ differentiable_program{
 
 val the_asm_code = undef;
 
-Scenario{
+let the_asm_code = 
+    operation(
+        compile_diffprog{
+            differentiable_program{
+                root.differentiable_program.computation_graph;
+            };
+        }
+);
+
+val forward_pass = the_asm_code.content();
+
+val one_step = operation(
+ run{
+        vm{
+            data{
+                root.data_section.content();
+            };
+        text{
+                asm{
+                    forward_pass;halt;
+                };
+            };
+        }; 
+    }
+);
+
+loss = as_double(one_step.vm.data.content().slice(l,8));
+
+
+macro numerical_computation_of_gradient{
+    OblectamentaDataLabel dw,dh;    
+    OblectamentaCodeLabel computation_graph, part_diffs_computation_exit,part_diffs_computation;
+
+    part_diffs_computation;
+        ldi32(dw);
+        ldi32(tot_num_params);
+        subi32;
+        blteqzeroi32(part_diffs_computation_exit);
+                            
+        lea(diff_params);
+        ldi32(dw);
+        ldi32(sizeof_weight);
+        muli32;
+        ui32toui64;
+        addi64;
+        ldsdbl;
+        stdbl(orig_weight_value); // orig_weight_value <- diff_params[dw] 
+                    
+        lea(diff_params);
+        ldi32(dw);
+        ldi32(sizeof_weight);
+        muli32;
+        ui32toui64;
+        addi64;
+        ldsdbl;
+        lddbl(dh);
+        adddbl; // x + h
+
+        lea(diff_params);
+        ldi32(dw);
+        ldi32(sizeof_weight);
+        muli32;
+        ui32toui64;
+        addi64;
+        stsdbl;
+        call(computation_graph); // compute f(x+h)
+
+        lddbl(l);
+        stdbl(f_plus_h); //f_plus_h  = f(x+h)
+
+        lddbl(orig_weight_value);
+        lddbl(dh);
+        negdbl;
+        adddbl;
+        lea(diff_params);
+        ldi32(dw);
+        ldi32(sizeof_weight);
+        muli32;
+        ui32toui64;
+        addi64;
+        stsdbl;
+        call(computation_graph); // compute f(x-h)
+                    
+        lddbl(l);
+        stdbl(f_minus_h); //f_plus_h  = f(x+h)
+                    
+        lddbl(dh);
+        lddbl(dh);
+        adddbl;
+
+        lddbl(f_minus_h);
+        negdbl;
+        lddbl(f_plus_h);
+        adddbl;
+        divdbl;
+
+        lea(partial_derivatives);
+        ldi32(dw);
+        ldi32(sizeof_weight);
+        muli32;
+        ui32toui64;
+        addi64;
+        stsdbl;
+
+        ldi32(dw);
+        ldi32(i32one);
+        addi32;
+        sti32(dw);
+        buc(part_diffs_computation);
+
+        part_diffs_computation_exit;
+}; 
+
+val  d_l_d_omega_0 = operation(
+ run{
+        vm{
+            OblectamentaDataLabel dw,dh;
+
+            data{
+                root.data_section.content();
+                dw; 0;
+                dh; 0.00001; // naive (see Numerical Recipes 3ed. pp.229 for better choices)
+
+            };
+        text{
+                OblectamentaCodeLabel computation_graph, part_diffs_computation_exit,part_diffs_computation;
+
+                asm{
+                    numerical_computation_of_gradient{};
+                    halt; 
+                    computation_graph;
+                        forward_pass;
+                        ret;
+                    halt;
+                };
+            };
+        }; 
+    }
+);
+
+d_l_d_omega_0.vm;
+
+/*Scenario{
     OblectamentaDataLabel y,f,h,b,omega,x, v;
     
 
@@ -143,4 +295,4 @@ Summary{
  for( e : root.Scenario){
   e.title.content();e.Then.result.content();
  }
-};
+};*/

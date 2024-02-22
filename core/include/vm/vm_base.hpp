@@ -130,7 +130,13 @@ namespace ceps{
                 cosdbl,
                 tandbl,
                 atandbl,
-                expdbl
+                expdbl,
+                ldsdbl,
+                negdbl,
+                negi32,
+                negi64,
+                stsdbl
+
             };
 
             class VMEnv{
@@ -340,6 +346,11 @@ namespace ceps{
                     size_t tandbl(size_t);
                     size_t atandbl(size_t);
                     size_t expdbl(size_t);
+                    size_t ldsdbl(size_t);
+                    size_t negdbl(size_t);
+                    size_t negi32(size_t);
+                    size_t negi64(size_t);
+                    size_t stsdbl(size_t);
 
 
                     using fn = size_t (VMEnv::*) (size_t) ;
@@ -490,7 +501,12 @@ namespace ceps{
                 {"cosdbl",{Opcode::cosdbl, "",emit<Opcode::cosdbl>,nullptr,nullptr}},
                 {"tandbl",{Opcode::tandbl, "",emit<Opcode::tandbl>,nullptr,nullptr}},
                 {"atandbl",{Opcode::atandbl, "",emit<Opcode::atandbl>,nullptr,nullptr}},
-                {"expdbl",{Opcode::expdbl, "",emit<Opcode::expdbl>,nullptr,nullptr}}
+                {"expdbl",{Opcode::expdbl, "",emit<Opcode::expdbl>,nullptr,nullptr}},
+                {"ldsdbl",{Opcode::ldsdbl, "",emit<Opcode::ldsdbl>, nullptr,nullptr }},
+                {"negdbl",{Opcode::negdbl, "",emit<Opcode::negdbl>,nullptr,nullptr}},
+                {"negi32",{Opcode::negi32, "",emit<Opcode::negi32>,nullptr,nullptr}},
+                {"negi64",{Opcode::negi64, "",emit<Opcode::negi64>,nullptr,nullptr}},
+                {"stsdbl",{Opcode::stsdbl, "",emit<Opcode::stsdbl>, nullptr,nullptr }}
             };
            
         }//namespace oblectamenta
