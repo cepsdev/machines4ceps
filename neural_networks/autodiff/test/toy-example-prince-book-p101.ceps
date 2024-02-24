@@ -1,20 +1,28 @@
 kind DocgenStringPrintNoEscape;
 DocgenStringPrintNoEscape docinfo_se;
 
-val I = 1;
+val I = 10;
 
 val data_width = 8;
 
 OblectamentaDataLabel y,f,h,b,omega,x,l, v, i32zero, i32one, sizeof_weight, diff_params, orig_weight_value, f_plus_h, f_minus_h, partial_derivatives,tot_num_params;
 
-input{
+training_set{
  for(i : 1 .. I){
    entry{
-    i + 0.0 ; //convert to double
-    sin(i + 0.0);
+    (i + 0.0 ) * 0.1; //convert to double
+    sin((i + 0.0 ) * 0.1);
    };
  }
 };
+
+dump(
+    params{
+        file_path{"test.dat";}; 
+        data{ for (e : root.training_set.entry){ e.content().at(0);"\t";e.content().at(1);"\n"; }  }; 
+    }
+);
+
 
 weights{
  for(i : 1 .. 4) {1.0 + 0.1 * i;}
@@ -26,7 +34,7 @@ biases{
 
 data_section{
     x;
-    val lbls = root.input.content(); 
+    val lbls = root.training_set.content(); 
     for (i : 0 .. I-1){
         lbls.at(i).entry.content().at(0);                
     }
@@ -132,7 +140,8 @@ loss = as_double(one_step.vm.data.content().slice(l,8));
 macro numerical_computation_of_gradient{
     OblectamentaDataLabel dw,dh;    
     OblectamentaCodeLabel computation_graph, part_diffs_computation_exit,part_diffs_computation;
-
+        ldi32(i32zero);
+        sti32(dw);
     part_diffs_computation;
         ldi32(dw);
         ldi32(tot_num_params);
