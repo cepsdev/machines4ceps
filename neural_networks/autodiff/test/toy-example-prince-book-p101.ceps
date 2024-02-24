@@ -43,14 +43,8 @@ data_section{
         lbls.at(i).entry.content().at(1);                
     }
     diff_params;
-    omega;
-    for (w : root.weights.content()){
-        w;                
-    }
-    b;
-    for (b : root.biases.content()){
-        b;                
-    }
+    omega;root.weights.content();
+    b;root.biases.content();
     l; //losses
     for (i : 0 .. I-1){
         0.0;                
@@ -249,7 +243,7 @@ val  d_l_d_omega_0 = operation(
     }
 );
 
-d_l_d_omega_0.vm;
+d_l_d_omega_0.vm.data;
 
 /*Scenario{
     OblectamentaDataLabel y,f,h,b,omega,x, v;
@@ -287,7 +281,7 @@ d_l_d_omega_0.vm;
             }; 
           }
         );
-    "!!!!!";the_vm;
+    "!!!!!";the_vm.vm.data;
     Then
     {
     verdict{
