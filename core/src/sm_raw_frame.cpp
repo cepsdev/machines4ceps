@@ -22,11 +22,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <limits>
 #include <cstring>
 
-
-#include "../cryptopp/sha.h"
-#include "../cryptopp/filters.h"
-#include "../cryptopp/hex.h"
-
 #include "core/include/base_defs.hpp"
 #include "core/include/websocket.hpp"
 
