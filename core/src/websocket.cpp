@@ -20,11 +20,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <limits>
 #include <cstring>
 
-
-#include "../cryptopp/sha.h"
-#include "../cryptopp/filters.h"
-#include "../cryptopp/hex.h"
-
 #include "core/include/base_defs.hpp"
 #include "core/include/websocket.hpp"
 
@@ -143,16 +138,6 @@ std::tuple<bool,std::string,ceps::http::http_header_t> ceps::http::read_http_req
  }
 
  return std::make_tuple(false,std::string{},header_t{});
-}
-
-std::string sha1(std::string s){
- CryptoPP::SHA1 sha1;
- std::string hash;
- auto a = new CryptoPP::StringSink(hash);
- auto b = new CryptoPP::HexEncoder(a);
- auto c = new CryptoPP::HashFilter(sha1, b);
- CryptoPP::StringSource(s, true, c);
- return hash;
 }
 
 

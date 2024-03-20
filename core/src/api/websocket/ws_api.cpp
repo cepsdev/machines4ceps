@@ -5,9 +5,6 @@
 #include <limits>
 #include <cstring>
 #include <atomic>
-#include "../../../cryptopp/sha.h"
-#include "../../../cryptopp/filters.h"
-#include "../../../cryptopp/hex.h"
 #include "core/include/base_defs.hpp"
 
 /*
@@ -315,14 +312,126 @@ static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string
  return std::make_tuple(false,std::string{},header_t{});
 }
 
-static std::string sha1(std::string s){
- CryptoPP::SHA1 sha1;
- std::string hash;
- auto a = new CryptoPP::StringSink(hash);
- auto b = new CryptoPP::HexEncoder(a);
- auto c = new CryptoPP::HashFilter(sha1, b);
- CryptoPP::StringSource(s, true, c);
- return hash;
+
+
+struct sha1_t{
+    char digest[20];
+};
+
+static uint32_t rotl5(uint32_t value)
+{
+    return (value << 5 ) | (value >> 27); 
+}
+
+static uint32_t rotl1(uint32_t value)
+{
+    return ( value << 1 ) | (value >> 31); 
+}
+
+static uint32_t rotl30(uint32_t value)
+{
+    return ( value << 30 ) | (value >> 2); 
+}
+static std::string encode_base64(void * mem, size_t len);
+static std::string encode_hex(void * mem, size_t len);
+
+static sha1_t compute_sha1(std::string msg){
+    using namespace std;
+
+
+    auto len{msg.size()};
+    char* data{new char[len + 64]};
+    memset(data, 0, len + 64);
+    memcpy(data, msg.c_str(), len);
+
+    sha1_t r;
+    memset(r.digest,0,sizeof(r.digest));
+    uint64_t bit_length{len * 8};
+    //cout << "bit_length: " << bit_length << '\n';
+    uint64_t ext_bit_length = bit_length + 1/*append one*/ + 64 /*size of original message as uint64*/;
+    uint64_t padded_bit_length{ (512 - ext_bit_length % 512)  + ext_bit_length };
+    uint64_t padding_bit_length{ padded_bit_length - bit_length};
+    
+
+    *(data + len) = 0x80;
+
+    auto padded_data_len{padded_bit_length >> 3};
+    *(uint64_t*)(data + padded_data_len - 8) = htobe64(bit_length);
+
+    uint32_t A = 0x67452301;
+    uint32_t B = 0xefcdab89;
+    uint32_t C = 0x98badcfe;
+    uint32_t D = 0x10325476;
+    uint32_t E = 0xc3d2e1f0;
+
+    uint32_t W[80];
+
+    for(size_t i{}; i < padded_data_len ;  i +=64 ){
+        auto a = A;
+        auto b = B;
+        auto c = C;
+        auto d = D;        
+        auto e = E;
+
+        auto frag = data + i;
+        memcpy(W, frag, 64);
+        for(size_t j{}; j < 16; ++j) W[j] = be32toh(W[j]);
+
+        for( size_t t = 16; t < 80; ++t){
+            W[t] = rotl1(W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16]) ;
+        }
+
+        for( size_t t = 0; t < 20; ++t){
+            auto temp{ rotl5(a) + ( (b & c) | ( (~b) & d) )  + e + W[t] + 0x5a827999 };            
+            e = d;
+            d = c;
+            c = rotl30(b);
+            b = a;
+            a = temp;
+        }
+        for( size_t t = 20; t < 40; ++t){
+            auto temp{ rotl5(a) + (b ^ c ^ d)  + e + W[t] + 0x6ed9eba1 };
+            e = d;
+            d = c;
+            c = rotl30(b);
+            b = a;
+            a = temp;
+        }
+        for( size_t t = 40; t < 60; ++t){
+            auto temp{ rotl5(a) + ( (b & c) | (b & d)  | (c & d) )  + e + W[t] + 0x8f1bbcdc };            
+            e = d;
+            d = c;
+            c = rotl30(b);
+            b = a;
+            a = temp;
+        }
+        for( size_t t = 60; t < 80; ++t){
+            auto temp{ rotl5(a) + ( b ^ c ^ d )  + e + W[t] + 0xca62c1d6 };
+            e = d;
+            d = c;
+            c = rotl30(b);
+            b = a;
+            a = temp;
+        }
+        A += a;
+        B += b; 
+        C += c; 
+        D += d; 
+        E += e;
+    }
+    delete []data;
+
+    * (uint32_t*)r.digest = htobe32(A);
+    * (uint32_t*)(r.digest  + sizeof(uint32_t)) = htobe32(B);
+    * (uint32_t*)(r.digest + 2*sizeof(uint32_t)) =htobe32(C);
+    * (uint32_t*)(r.digest + 3*sizeof(uint32_t)) = htobe32(D);
+    * (uint32_t*)(r.digest + 4*sizeof(uint32_t)) = htobe32(E);
+    return r;
+}
+
+
+std::string base64_encoded_sha1(std::string s){
+ return encode_base64(compute_sha1(s).digest, sizeof(sha1_t::digest));
 }
 
 struct websocket_frame{
@@ -412,9 +521,7 @@ static void comm_act_as_websocket_server(State_machine_simulation_core::dispatch
  if (!r.first)return;
 
  auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
- unsigned char digest[CryptoPP::SHA::DIGESTSIZE];
- CryptoPP::SHA().CalculateDigest(digest, (unsigned char *)phrase.c_str(),phrase.length());
- auto hash = encode_base64(digest,CryptoPP::SHA::DIGESTSIZE);
+ auto hash = base64_encoded_sha1(phrase);
  std::stringstream response;
  response
   << "HTTP/1.1 101 Switching Protocols\r\n"
@@ -729,9 +836,7 @@ void Websocket_interface::handler(int sck){
  if (!r.first)return;
 
  auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
- unsigned char digest[CryptoPP::SHA::DIGESTSIZE];
- CryptoPP::SHA().CalculateDigest(digest, (unsigned char *)phrase.c_str(),phrase.length());
- auto hash = encode_base64(digest,CryptoPP::SHA::DIGESTSIZE);
+ auto hash = base64_encoded_sha1(phrase);
  std::stringstream response;
  response << "HTTP/1.1 101 Switching Protocols\r\n"<< "Upgrade: websocket\r\n"<< "Connection: Upgrade\r\n"
   << "Sec-WebSocket-Accept: "<< hash <<"\r\n\r\n";

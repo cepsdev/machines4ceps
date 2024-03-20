@@ -18,10 +18,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/base_defs.hpp"
 #include "core/include/websocket.hpp"
 
-#include "../../cryptopp/sha.h"
-#include "../../cryptopp/filters.h"
-#include "../../cryptopp/hex.h"
-
+std::string base64_encoded_sha1(std::string s);
 
 void comm_sender_generic_tcp_out_thread(
  State_machine_simulation_core::frame_queue_t* frames,
@@ -203,9 +200,7 @@ static void comm_act_as_websocket_server(State_machine_simulation_core::dispatch
  auto r = ceps::http::get_http_attribute_content("Sec-WebSocket-Key",attrs);
  if (!r.first)return;
  auto phrase = r.second+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
- unsigned char digest[CryptoPP::SHA::DIGESTSIZE];
- CryptoPP::SHA().CalculateDigest(digest, (unsigned char *)phrase.c_str(),phrase.length());
- auto hash = ceps::net::encode_base64(digest,CryptoPP::SHA::DIGESTSIZE);
+ auto hash = base64_encoded_sha1(phrase);
  std::stringstream response;
  response
   << "HTTP/1.1 101 Switching Protocols\r\n"

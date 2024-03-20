@@ -29,24 +29,6 @@ if [ ! -d "log4ceps" ] && ! git clone https://github.com/cepsdev/log4ceps.git ; 
 	exit 4
 fi
 
-if [ ! -d "cryptopp" ] && ! git clone https://github.com/weidai11/cryptopp.git ; then
-	echo >/dev/stderr "Couldn't clone cryptopp"
-	exit 5
-fi
-
-cd cryptopp
-if ! git checkout CRYPTOPP_5_6_5 ; then
-	echo >/dev/stderr "Couldn't checkout tag CRYPTOPP_5_6_5"
-	exit 6
-fi
-echo "\033[1;32mBuilding cryptopp\033[0m"
-if ! make $parallelization ; then
-	echo >/dev/stderr "Couldn't build cryptopp"
-	exit 7
-fi
-
-cd ..
-
 
 cd machines4ceps || exit 9 
 
