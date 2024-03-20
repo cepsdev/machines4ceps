@@ -32,12 +32,6 @@ All repositories need to be in the same directory as machines4ceps.
   * cd ../..
 * Clone log4ceps
   * git clone https://github.com/cepsdev/log4ceps.git
-* Clone, checkout 5.x branch, and build cryptopp:
-  * git clone https://github.com/weidai11/cryptopp.git 
-  * cd cryptopp
-  * git checkout CRYPTOPP_5_6_5
-  * make
-  * cd ..
 * Clone and build  machines4ceps
   * git clone https://github.com/cepsdev/machines4ceps.git
   * cd machines4ceps
