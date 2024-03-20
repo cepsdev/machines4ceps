@@ -44,4 +44,5 @@ This should produce a binary called __ceps__ in the directory machines4ceps/bin.
 
 * Ubuntu 18.04 (bionic)
 * Ubuntu 20.04 (focal)
+* Ubuntu 22.04 (jammy jellyfish)
 * Raspberry Pi OS (Kernel >= 5.10)
