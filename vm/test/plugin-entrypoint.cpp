@@ -431,7 +431,7 @@ class CepsComputeGraphNotationTraverser{
     public:
         struct array_ref{
             std::string id;
-            size_t idx;
+            int64_t idx;
             uint8_t width{8};
         };
 
@@ -672,7 +672,7 @@ template<>
     void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter>::compile 
     (CepsComputeGraphNotationTraverser& graph_def,CepsOblectamentaMnemonicsEmitter& emitter){
         using namespace std;
-        map<string,pair<size_t,size_t>> addrs;
+        map<string,pair<size_t,int64_t>> addrs;
         map<string,size_t> predef_array_offs;
         
 
@@ -690,7 +690,7 @@ template<>
             auto assign_expr{stmt.is_assign_op()};
             if (!assign_expr){
                 auto fcall {stmt.as_expr().as_funccall()};
-                if("array" == fcall->fid.name){
+                if( fcall && "array" == fcall->fid.name){
                     //handle declarations
                     auto args{fcall->arguments()};
                     if (args.size() == 3){
@@ -705,8 +705,13 @@ template<>
                         }
                     }                    
                 }
-                continue;
             }
+        }
+        for(size_t i{0}; i < graph_def.size(); ++i){
+            auto stmt{graph_def[i]};
+            auto assign_expr{stmt.is_assign_op()};
+            if (!assign_expr) continue;
+
             auto left_side{assign_expr->lhs()};
             auto right_side{assign_expr->rhs()};
             auto array_ref{left_side.as_array_ref()};
@@ -735,7 +740,9 @@ template<>
             auto it{predef_array_offs.find(e.first)};
             if (it == predef_array_offs.end()) continue;
             e.second.first = it->second;
+
             auto t{e.second.first + e.second.second};
+
             if (t > cur_mem_addr) cur_mem_addr = t;
         }
 
@@ -752,7 +759,8 @@ template<>
         {
 
             cout << e.first << " " << e.second.first << " " << e.second.second << '\n';
-        }*/
+        }
+        exit(0);*/
 
         //second step: generate code
 

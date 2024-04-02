@@ -1,0 +1,1 @@
+../test/plugin-entrypoint.cpp
