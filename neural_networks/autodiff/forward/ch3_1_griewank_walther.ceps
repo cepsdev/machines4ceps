@@ -34,7 +34,7 @@ docinfo_se("Lighthouse Procedure");
 
 lighthouse{
     differentiable_program{
-        docinfo_se("Differeniable programs are translated to assembler code, which needs a properly setup data segment.");
+        docinfo_se("Differentiable programs are translated into assembler code, therefore we have to specify a data segment with a matching layout.");
         
         
         OblectamentaDataLabel x, v, y, nu, gamma, omega, t;//Declare lables for the data
@@ -45,9 +45,9 @@ lighthouse{
             gamma; 1.2;
             omega; 1.3;
             t; 1.4;
-            docinfo_se("The ys");
+            docinfo_se("The vs");
             v; for( i : -3 .. 7) {0.0;}
-            docinfo_se("The xs");
+            docinfo_se("The ys");
             y; for( i : 1 .. 20) {0.0;}
         };
 
