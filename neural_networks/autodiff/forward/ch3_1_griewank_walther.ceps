@@ -1,0 +1,109 @@
+docinfo_se("
+
+Chapter 2
+
+A Framework for Evaluating Functions 
+
+2.1 The Lighthouse example
+
+2.2 Three-Part Evaluation procedures
+
+Table 2.1: Lighthouse Procedure
+
+v_{-3} = x_1 = \\nu
+v_{-2} = x_2 = \\gamma
+v_{-1} = x_3 = \\omega
+v_{0} = x_4 = t
+------------------------
+v_1 = v_{-1} \\times v_0
+v_2 = \\tan(v_{1})
+v_3 = v_{-2} - v_2
+v_4 = v_{-3} - v_2
+v_5 = v_{4} - v_3
+v_6 = v_5
+v_7 = v_5 \\times v_{-2}
+------------------------
+y_1 = v_6
+y_2 = v_7
+
+");
+
+
+
+docinfo_se("Lighthouse Procedure");
+
+lighthouse{
+    differentiable_program{
+        docinfo_se("Differeniable programs are translated to assembler code, which needs a properly setup data segment.");
+        
+        
+        OblectamentaDataLabel x, v, y, nu, gamma, omega, t;//Declare lables for the data
+        data{
+            docinfo_se("Here starts the x block");
+            0.0;                 
+            nu; 1.1;
+            gamma; 1.2;
+            omega; 1.3;
+            t; 1.4;
+            docinfo_se("The ys");
+            v; for( i : -3 .. 7) {0.0;}
+            docinfo_se("The xs");
+            y; for( i : 1 .. 20) {0.0;}
+        };
+
+        computation_graph{
+                docinfo_se("We have to specify the data layout, otherwise the graph compiler would make appropriate but possibly incompatible layout decisions.");
+                array(x,f64,base(0)); // the x values form the very start of the block
+                val base_addr =  64; // == 5 * sizeof(double)
+                array(v,f64,base(base_addr + 3*8));//we address this region with v(-3) .. v(7)
+                let base_addr = 128; //start of the ys
+                array(y,f64,base(base_addr));
+                v(-3) = x(1);
+                v(-2) = x(2);
+                v(-1) = x(3);
+                v(0) = x(4);
+                docinfo_se("---------------------------------------");
+                v(1) = v(-1) * v(0);
+                v(2) = tan(v(1));
+                v(3) = v(-2) - v(2);
+                v(4) = v(-3) * v(2);
+                v(5) = v(4) / v(3);
+                v(6) = v(5);
+                v(7) = v(5) * v(-2);
+                docinfo_se("---------------------------------------");
+                y(0) = v(6);
+                y(1) = v(7);                
+        };
+    };
+};
+
+val the_asm_code = 
+    operation(
+        compile_diffprog{
+            differentiable_program{
+                root.lighthouse.differentiable_program.computation_graph;
+            };
+        }
+);
+
+val the_vm = operation(
+         run{
+            vm{
+                root.lighthouse.differentiable_program.data;
+                text{
+                    asm{
+                        the_asm_code.asm.content();halt;
+                    };
+                 };
+            }; 
+          }
+        );
+
+
+{
+    OblectamentaDataLabel y;
+    as_double(the_vm.vm.data.content().slice(y,8)); //== y1
+}
+
+
+
