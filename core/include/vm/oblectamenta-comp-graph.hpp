@@ -22,12 +22,20 @@ namespace ceps{
         namespace oblectamenta{
 
            template<typename T> class NotationTraverser;
-           
+             
+           struct compgraph_parameter_t{
+                string name;
+                int idx{};
+            };
+
            template<typename NotationTraverser, typename CodeEmitter> 
            class ComputationGraph{
             public:
+
              void compile(NotationTraverser&, CodeEmitter& );
+             template <typename NotationEmitter> void tangent_forward_diff(NotationTraverser&,NotationEmitter&, compgraph_parameter_t );
            };
+
         }
     }
 } 

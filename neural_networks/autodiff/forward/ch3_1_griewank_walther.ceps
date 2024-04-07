@@ -77,6 +77,17 @@ lighthouse{
     };
 };
 
+val forward_diff_graph =
+ operation(
+    tangent_forward_diff{
+        OblectamentaDataLabel x;
+        x(4);
+        root.lighthouse.differentiable_program;
+    }
+ );
+
+"forward_diff_graph:"; forward_diff_graph;
+
 val the_asm_code = 
     operation(
         compile_diffprog{

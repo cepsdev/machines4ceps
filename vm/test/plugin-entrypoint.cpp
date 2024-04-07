@@ -425,14 +425,32 @@ ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
     return factory_it->second(ceps_struct);
 }
 
+ceps::ast::node_t mk_func_call(ceps::ast::node_t func_id, ceps::ast::node_t arg){
+    using namespace ceps::ast;
+    Func_call* f = new Func_call();
+	f->children_.push_back(func_id);
+    Call_parameters* params = new Call_parameters();
+	f->children_.push_back(params);
+    params->children_.push_back(arg);
+    return f;
+}
+
 class CepsComputeGraphNotationTraverser{
     
         std::vector<ceps::ast::node_t> v; 
     public:
+        struct expr;
         struct array_ref{
+            ceps::ast::node_t node{};
             std::string id;
-            int64_t idx;
+            int64_t idx{};
             uint8_t width{8};
+            array_ref() = default;
+            array_ref(std::string id, int64_t idx):id{id}, idx{idx} {
+                ast_proc_prolog
+                node = mk_func_call(ceps::ast::mk_symbol(id,"OblectamentaDataLabel"),mk_int_node(idx) );
+            } 
+            expr as_expr();
         };
 
         struct expr;
@@ -579,10 +597,14 @@ class CepsComputeGraphNotationTraverser{
 
         };
         CepsComputeGraphNotationTraverser(std::vector<ceps::ast::node_t> v):v{v} {}
+        CepsComputeGraphNotationTraverser() = default;
         stmt operator[](size_t i){
             return {v[i]};            
         }
         size_t size() const {return v.size();}
+        void push_back(stmt s) {v.push_back(s.node);}
+        void push_back(expr e) {v.push_back(e.root);}
+        std::vector<ceps::ast::node_t> nodes() const {return v;}
 };
 
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::noary_or_unary_funccall_expr::argument(){
@@ -598,6 +620,8 @@ std::vector<CepsComputeGraphNotationTraverser::expr> CepsComputeGraphNotationTra
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::lhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[0]} ;}
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::rhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[1]} ;}
 
+CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::array_ref::as_expr(){return expr{node};}
+
 template <typename F, typename E> 
  void traverse(F f, E e){
     if (f(e)){
@@ -607,15 +631,6 @@ template <typename F, typename E>
     }
 }
 
-ceps::ast::node_t mk_func_call(ceps::ast::node_t func_id, ceps::ast::node_t arg){
-    using namespace ceps::ast;
-    Func_call* f = new Func_call();
-	f->children_.push_back(func_id);
-    Call_parameters* params = new Call_parameters();
-	f->children_.push_back(params);
-    params->children_.push_back(arg);
-    return f;
-}
 
 class CepsOblectamentaMnemonicsEmitter{
         std::vector<ceps::ast::node_t> v; 
@@ -669,8 +684,8 @@ class CepsOblectamentaMnemonicsEmitter{
 };
 
 template<>
-    void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter>::compile 
-    (CepsComputeGraphNotationTraverser& graph_def,CepsOblectamentaMnemonicsEmitter& emitter){
+    void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter>::compile( CepsComputeGraphNotationTraverser& graph_def,
+    CepsOblectamentaMnemonicsEmitter& emitter){
         using namespace std;
         map<string,pair<size_t,int64_t>> addrs;
         map<string,size_t> predef_array_offs;
@@ -822,6 +837,73 @@ template<>
         }       
     }
 
+template<>
+ template<>
+    void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,
+                                                  CepsOblectamentaMnemonicsEmitter>::
+                                                  tangent_forward_diff<CepsComputeGraphNotationTraverser>( 
+                                                     CepsComputeGraphNotationTraverser& graph_def,
+                                                     CepsComputeGraphNotationTraverser& writer,
+                                                     ceps::vm::oblectamenta::compgraph_parameter_t p)
+{
+
+    auto  dot = [&](CepsComputeGraphNotationTraverser::array_ref e) -> CepsComputeGraphNotationTraverser::expr{
+        return CepsComputeGraphNotationTraverser::array_ref{"dot_"+e.id, e.idx}.as_expr();
+    };
+
+    function<CepsComputeGraphNotationTraverser::expr(CepsComputeGraphNotationTraverser::expr)> diff;
+    diff = [&](CepsComputeGraphNotationTraverser::expr e) {
+                    auto aref{e.as_array_ref()};
+                    if (aref)
+                        return dot(*aref);
+                    return e;
+    };
+
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) continue;
+        auto right_side{assign_expr->rhs()};
+        auto left_side{assign_expr->lhs()};
+        auto diff_rhs{diff(right_side)};
+        auto diff_lhs{diff(left_side)};
+
+
+        writer.push_back(CepsComputeGraphNotationTraverser::op_expr{"==",diff_lhs,diff_rhs}.as_expr());
+    }
+}
+
+ceps::ast::node_t handle_operationn_tangent_forward_diff(ceps::ast::Struct& ceps_struct){
+    ast_proc_prolog
+    node_struct_t computation_graph{};
+    auto result = mk_struct("asm");
+    vector<CepsComputeGraphNotationTraverser::array_ref> vars;
+
+    for(auto e : children(ceps_struct))
+        if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "differentiable_program" ){
+            auto& diff_struct = as_struct_ref(e);
+            for(auto e : children(diff_struct))
+                if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "computation_graph" )
+                    computation_graph = as_struct_ptr(e);
+        } else {
+            CepsComputeGraphNotationTraverser::expr expr{e};
+            auto opt_array_ref{expr.as_array_ref()};
+            if (opt_array_ref)
+                vars.push_back(*opt_array_ref);
+        }
+
+    if (!computation_graph || vars.size() != 1 ) return mk_undef();
+    CepsComputeGraphNotationTraverser traverser{children(*computation_graph)};
+    CepsComputeGraphNotationTraverser writer;
+    //ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
+    //comp_graph.compile(traverser,emitter); 
+    ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
+    int a;
+    comp_graph.tangent_forward_diff<CepsComputeGraphNotationTraverser>(traverser,writer, ceps::vm::oblectamenta::compgraph_parameter_t{} );
+    children(*result) = writer.nodes();
+    return result;
+}
+
 ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params){
     ast_proc_prolog    
     auto data = get_first_child(params);    
@@ -857,7 +939,8 @@ ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params)
                     return result;
                 }
             }
-    }
+    } else if (name(ceps_struct) == "tangent_forward_diff" )
+        return handle_operationn_tangent_forward_diff(ceps_struct);
     return mk_undef();
 }
 
