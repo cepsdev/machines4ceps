@@ -96,7 +96,7 @@ val the_asm_code =
             };
         }
 );
-
+//the_asm_code;
 val the_vm = operation(
          run{
             vm{

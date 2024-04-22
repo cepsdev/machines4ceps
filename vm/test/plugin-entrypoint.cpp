@@ -25,14 +25,17 @@
 #include "ceps_ast.hh"
 #include "core/include/state_machine_simulation_core.hpp"
 
-#include "core/include/vm/vm_base.hpp"
-#include "core/include/vm/oblectamenta-assembler.hpp"
-#include "core/include/vm/oblectamenta-comp-graph.hpp"
-
-#define ast_proc_prolog  using namespace ceps::ast;\
+#define ast_proc_prolog  \
+    using namespace ceps::ast;\
     using namespace ceps::vm::oblectamenta;\
     using namespace ceps::interpreter;\
     using namespace std;
+
+#include "core/include/vm/vm_base.hpp"
+#include "core/include/vm/oblectamenta-assembler.hpp"
+#include "core/include/vm/oblectamenta-comp-graph.hpp"
+#include "core/include/differentiable_programming/graph_notation_traverser.hpp"
+
 
 namespace cepsplugin{
     static Ism4ceps_plugin_interface* plugin_master = nullptr;
@@ -425,203 +428,6 @@ ceps::ast::node_t cepsplugin::obj(ceps::ast::node_callparameters_t params){
     return factory_it->second(ceps_struct);
 }
 
-ceps::ast::node_t mk_func_call(ceps::ast::node_t func_id, ceps::ast::node_t arg){
-    using namespace ceps::ast;
-    Func_call* f = new Func_call();
-	f->children_.push_back(func_id);
-    Call_parameters* params = new Call_parameters();
-	f->children_.push_back(params);
-    params->children_.push_back(arg);
-    return f;
-}
-
-class CepsComputeGraphNotationTraverser{
-    
-        std::vector<ceps::ast::node_t> v; 
-    public:
-        struct expr;
-        struct array_ref{
-            ceps::ast::node_t node{};
-            std::string id;
-            int64_t idx{};
-            uint8_t width{8};
-            array_ref() = default;
-            array_ref(std::string id, int64_t idx):id{id}, idx{idx} {
-                ast_proc_prolog
-                node = mk_func_call(ceps::ast::mk_symbol(id,"OblectamentaDataLabel"),mk_int_node(idx) );
-            } 
-            expr as_expr();
-        };
-
-        struct expr;
-
-        struct op_expr{
-            ceps::ast::node_t root;
-            std::string op;
-            expr lhs();
-            expr rhs();
-        };
-
-        struct func_id{
-            std::string name;
-            std::optional<std::string> sym_kind;
-        };
-        
-        struct noary_or_unary_funccall_expr{
-            ceps::ast::node_t root;
-            func_id fid;
-            ceps::ast::node_t  arg;
-            noary_or_unary_funccall_expr() = default;
-            noary_or_unary_funccall_expr(ceps::ast::node_t root, func_id fid, ceps::ast::node_t  arg)
-            : root{root}, fid{fid}, arg{arg}{}
-            expr argument();
-        };
-
-        struct funccall_expr{
-            ceps::ast::node_t root;
-            func_id fid;
-            std::vector<ceps::ast::node_t>  args;
-            funccall_expr() = default;
-            funccall_expr(ceps::ast::node_t root, func_id fid, std::vector<ceps::ast::node_t>  args)
-            : root{root}, fid{fid}, args{args}{}
-            std::vector<expr> arguments();
-        };
-
-        struct expr{
-            ceps::ast::node_t root;
-
-            std::optional<int> as_int(){
-                using namespace std;
-                using namespace ceps::ast;
-                if(!is<ceps::ast::Ast_node_kind::int_literal>(root)) return {};
-                return value(as_int_ref(root));
-            }
-
-            std::optional<std::string> as_id(){
-                using namespace std;
-                using namespace ceps::ast;
-                if(!is<ceps::ast::Ast_node_kind::identifier>(root)) return {};
-                return name(as_id_ref(root));
-            }
-
-            std::optional<std::pair<std::string,std::string>> as_symbol(){
-                using namespace std;
-                using namespace ceps::ast;
-                if(!is<ceps::ast::Ast_node_kind::symbol>(root)) return {};
-                return { make_pair(name(as_symbol_ref(root)), kind(as_symbol_ref(root))) };
-            }
-
-            std::optional<noary_or_unary_funccall_expr> as_noary_or_unary_funccall(){
-                using namespace std;
-                using namespace ceps::ast;
-                if(!is<ceps::ast::Ast_node_kind::func_call>(root)) return {};
-				
-                string func_id;
-				string fkind; 
-				string sym_name;
-				node_t ftarget; 
-				vector<node_t> args;
-                if (args.size() > 1) return {};
-
-                is_a_funccall(	root, func_id, fkind, sym_name, ftarget, args);
-                return noary_or_unary_funccall_expr( root, 
-                                               { (fkind == "" ? func_id : sym_name), fkind == "" ? optional<string>{} : optional<string>{fkind}  },
-                                               args.size() == 0 ? nullptr : args[0]);
-
-            }
-            
-            std::optional<funccall_expr> as_funccall(){
-                using namespace std;
-                using namespace ceps::ast;
-                if(!is<ceps::ast::Ast_node_kind::func_call>(root)) return {};
-				
-                string func_id;
-				string fkind; 
-				string sym_name;
-				node_t ftarget; 
-				vector<node_t> args;
-
-                is_a_funccall(	root, func_id, fkind, sym_name, ftarget, args);
-                return funccall_expr( root, 
-                                               { (fkind == "" ? func_id : sym_name), fkind == "" ? optional<string>{} : optional<string>{fkind}  },
-                                               args);
-
-            }
-
-            std::optional<array_ref> as_array_ref () {
-                using namespace std;
-                using namespace ceps::ast;
-
-                string sym_name;
-	            string sym_kind;
-	            vector<node_t> args;
-                if (is_a_symbol_with_arguments(root, sym_name, sym_kind, args)){
-                    if (sym_kind == "OblectamentaDataLabel" && args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
-                        return array_ref{sym_name,(size_t)value(as_int_ref(args[0])) };                        
-                    }                 
-                }
-                return {};
-            }
-            std::optional<op_expr> as_binary_operation() const{
-                using namespace ceps::ast;
-                if(is<Ast_node_kind::binary_operator>(root)){
-                    return op_expr{root, op_val(as_binop_ref(root)) };
-                }
-                return {};
-            }
-
-            bool is_leaf() const{
-                using namespace std;
-                using namespace ceps::ast;
-                return is<Ast_node_kind::int_literal>(root) || is<Ast_node_kind::float_literal>(root) || is<Ast_node_kind::string_literal>(root)
-                       || is<Ast_node_kind::identifier>(root) || is<Ast_node_kind::uint8>(root) || is<Ast_node_kind::long_literal>(root);
-            }
-            size_t size() const{
-                if (is_leaf()) return 0;
-                return children(*nlf_ptr(root)).size();
-            }
-            expr operator[](size_t i){
-                return expr{children(*nlf_ptr(root))[i]};
-            } 
-        };
-        struct stmt{
-            ceps::ast::node_t node;
-            std::optional<op_expr> is_assign_op() const {
-                using namespace ceps::ast; 
-                if (!is<Ast_node_kind::binary_operator>(node)) return {};
-                if("=" == op_val(as_binop_ref(node))) 
-                 return op_expr{node};
-                return {};
-            }
-            expr as_expr(){return expr{node};}
-
-        };
-        CepsComputeGraphNotationTraverser(std::vector<ceps::ast::node_t> v):v{v} {}
-        CepsComputeGraphNotationTraverser() = default;
-        stmt operator[](size_t i){
-            return {v[i]};            
-        }
-        size_t size() const {return v.size();}
-        void push_back(stmt s) {v.push_back(s.node);}
-        void push_back(expr e) {v.push_back(e.root);}
-        std::vector<ceps::ast::node_t> nodes() const {return v;}
-};
-
-CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::noary_or_unary_funccall_expr::argument(){
-    return expr{arg};
-}
-
-std::vector<CepsComputeGraphNotationTraverser::expr> CepsComputeGraphNotationTraverser::funccall_expr::arguments(){
-    std::vector<CepsComputeGraphNotationTraverser::expr> r;
-    for(auto e: args) r.push_back(expr{e});
-    return r;
-}
-
-CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::lhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[0]} ;}
-CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::op_expr::rhs() { return { ceps::ast::children(ceps::ast::as_binop_ref(root))[1]} ;}
-
-CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::array_ref::as_expr(){return expr{node};}
-
 template <typename F, typename E> 
  void traverse(F f, E e){
     if (f(e)){
@@ -837,6 +643,11 @@ template<>
         }       
     }
 
+// Documentation helper
+template <typename T> inline bool Invariant(T e){ return true;}
+template <typename T> inline bool Comment(T e){ return true;}
+template <typename T1, typename T2> inline bool BookReference(T1 , T2 ){ return true;}
+
 template<>
  template<>
     void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,
@@ -846,9 +657,10 @@ template<>
                                                      CepsComputeGraphNotationTraverser& writer,
                                                      ceps::vm::oblectamenta::compgraph_parameter_t p)
 {
+    using Traverser = CepsComputeGraphNotationTraverser;
 
-    auto  dot = [&](CepsComputeGraphNotationTraverser::array_ref e) -> CepsComputeGraphNotationTraverser::expr{
-        return CepsComputeGraphNotationTraverser::array_ref{"dot_"+e.id, e.idx}.as_expr();
+    auto  dot = [&](CepsComputeGraphNotationTraverser::array_ref e) {
+        return CepsComputeGraphNotationTraverser::array_ref{e.id+"_dot", e.idx}.as_expr();
     };
 
     function<CepsComputeGraphNotationTraverser::expr(CepsComputeGraphNotationTraverser::expr)> diff;
@@ -856,27 +668,41 @@ template<>
                     auto aref{e.as_array_ref()};
                     if (aref)
                         return dot(*aref);
+                    else if(auto abinary_op{e.as_binary_operation()};abinary_op){
+                        auto binary_op{*abinary_op};
+                        if (binary_op.op == "*"){
+                            BookReference("Griewank,Walther:EvDev:","p.35, Table 3.3, 3rd row");
+                            auto lhs_diff{diff(binary_op.lhs())};
+                            auto rhs_diff{diff(binary_op.rhs())};
+                            return Traverser::expr::mk_addition(
+                                Traverser::expr::mk_multiplication(lhs_diff,binary_op.rhs()),
+                                Traverser::expr::mk_multiplication(binary_op.lhs(),rhs_diff)
+                            );
+                        }                        
+                    }
                     return e;
     };
 
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
         auto assign_expr{stmt.is_assign_op()};
-        if (!assign_expr) continue;
+        if (!assign_expr) { 
+            writer.push_back(graph_def[i]); continue;}
+        Invariant("stmt is an assignment. i.e. it contains a left and a right side.");
         auto right_side{assign_expr->rhs()};
         auto left_side{assign_expr->lhs()};
+        
         auto diff_rhs{diff(right_side)};
         auto diff_lhs{diff(left_side)};
-
-
-        writer.push_back(CepsComputeGraphNotationTraverser::op_expr{"==",diff_lhs,diff_rhs}.as_expr());
+        writer.push_back(graph_def[i]);
+        writer.push_back(Traverser::expr::mk_assignment(diff_lhs,diff_rhs));
     }
 }
 
 ceps::ast::node_t handle_operationn_tangent_forward_diff(ceps::ast::Struct& ceps_struct){
     ast_proc_prolog
     node_struct_t computation_graph{};
-    auto result = mk_struct("asm");
+    auto result = mk_struct("computation_graph");
     vector<CepsComputeGraphNotationTraverser::array_ref> vars;
 
     for(auto e : children(ceps_struct))
@@ -899,7 +725,8 @@ ceps::ast::node_t handle_operationn_tangent_forward_diff(ceps::ast::Struct& ceps
     //comp_graph.compile(traverser,emitter); 
     ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
     int a;
-    comp_graph.tangent_forward_diff<CepsComputeGraphNotationTraverser>(traverser,writer, ceps::vm::oblectamenta::compgraph_parameter_t{} );
+    comp_graph.tangent_forward_diff<CepsComputeGraphNotationTraverser>(
+        traverser,writer, ceps::vm::oblectamenta::compgraph_parameter_t{} );
     children(*result) = writer.nodes();
     return result;
 }
