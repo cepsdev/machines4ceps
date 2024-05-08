@@ -1,37 +1,23 @@
 /*
-Copyright 2014, cepsdev (cepsdev@hotmail.com).
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+Copyright 2014-2024 Tomas Prerovsky (cepsdev@hotmail.com).
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-    * Neither the name of Google Inc. nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
+    http://www.apache.org/licenses/LICENSE-2.0
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #include <signal.h>
 #include <sys/types.h>
 #include <limits>
 #include <cstring>
+#include <filesystem>
 #include "core/include/base_defs.hpp"
 
 
@@ -41,7 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define VERSION_SM4CEPS_MAJOR "0"
-#define VERSION_SM4CEPS_MINOR "8.1.3"
+#define VERSION_SM4CEPS_MINOR "8.1.3.1"
 
 vector < string > generated_sql_file_names;
 bool DUMP_PLANTUML_REP_TO_COUT = false;
@@ -281,7 +267,8 @@ int main(int argc,char ** argv)
 			cout << "Usage: ceps [options] file...\n";
 			cout << "Options:\n";
 			vector<pair<string,string>> options = {
-				{"--create_plugin_project            ","Generate cmake build files for a plugin project."},
+				{"--create_plugin_project [PROJECT_NAME] ","Generate cmake build files for a plugin project."},
+				{"--create_plugin_ceps_root PATH ","Sets root dir of ceps for build scripts. Only applicable with --create_plugin_project."},
 				{"--dot_gen                          ","Generate DOT file for each top level state machine."},
 				{"--format FORMAT                    ","Set output format (applies to options --pr, --pe). Default is 'ansi'."},
 				{"  Supported values are :           ",""},
@@ -312,11 +299,11 @@ int main(int argc,char ** argv)
 		} else {
 			if (result_cmd_line.create_plugin_project){
 			{
-				ofstream os{"CMakeLists.ceps-plugin.txt"};
+				ofstream os{"CMakeLists.txt"};
 				os << 
 R"~~(
 cmake_minimum_required(VERSION 3.10)
-project(INSERT_PROJECT_NAME_HERE)
+project()~~"<<result_cmd_line.create_plugin_project_name<<R"~~()
 
 add_compile_options(-O  -Wall -MD  -std=c++2a  -fPIC -static -Wno-undef )
 
@@ -342,16 +329,17 @@ include_directories(../include)
 
 link_directories($ENV{CEPSCORE}/bin)
 
-add_library(INSERT_PLUGIN_NAME_HERE SHARED 
+add_library()~~" << result_cmd_line.create_plugin_project_name  <<R"~~( SHARED 
            plugin-entrypoint.cpp 
            )
 
-target_link_libraries(INSERT_PLUGIN_NAME_HERE cepscore)					
+target_link_libraries()~~" << result_cmd_line.create_plugin_project_name<< R"~~( cepscore)					
 )~~";
 			}
-
+			if (result_cmd_line.create_plugin_ceps_root.length() && result_cmd_line.create_plugin_ceps_root[result_cmd_line.create_plugin_ceps_root.length()-1] != '/' )
+				result_cmd_line.create_plugin_ceps_root += "/";
 			{
-				ofstream os{"rebuild.ceps-plugin.sh"};
+				ofstream os{"rebuild.ceps-plugin"};
 				os << R"(
 #!/bin/bash
 
@@ -364,10 +352,16 @@ rm CMakeCache.txt -f 2>/dev/null
 rm Makefile -f 2>/dev/null
 rm lib* -f 2>/dev/null
 
-CEPSCORE=../ceps/core MACHINES4CEPS=../machines4ceps LOG4CEPS=../log4ceps cmake .. && make -B
+CEPSCORE=)" << result_cmd_line.create_plugin_ceps_root << "ceps/core MACHINES4CEPS=" <<
+result_cmd_line.create_plugin_ceps_root << "machines4ceps LOG4CEPS="<<result_cmd_line.create_plugin_ceps_root <<R"(log4ceps cmake .. && make -B
 cd ..					
 				)";
 			}
+			std::filesystem::permissions("rebuild.ceps-plugin", 
+										   std::filesystem::perms::owner_exec 
+										 | std::filesystem::perms::group_exec
+										 | std::filesystem::perms::others_exec, 
+										 std::filesystem::perm_options::add);
 			{
 				ofstream os{"plugin-entrypoint.cpp"};
 				os << R"~~(
@@ -388,14 +382,13 @@ cd ..
 #include <map>
 #include <algorithm>
 #include <future>
-#include <netinet/sctp.h> 
 
 #include "ceps_ast.hh"
 #include "core/include/state_machine_simulation_core.hpp"
 
 namespace cepsplugin{
     static Ism4ceps_plugin_interface* plugin_master = nullptr;
-    static const std::string version_info = "INSERT_NAME_HERE v0.1";
+    static const std::string version_info = ")~~"<<result_cmd_line.create_plugin_project_name<<R"~~( v0.1";
     static constexpr bool print_debug_info{true};
     ceps::ast::node_t plugin_entrypoint(ceps::ast::node_callparameters_t params);
 }
@@ -421,24 +414,30 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
 extern "C" void init_plugin(IUserdefined_function_registry* smc)
 {
   cepsplugin::plugin_master = smc->get_plugin_interface();
-  cepsplugin::plugin_master->reg_ceps_phase0plugin("INSERT_NAME_FOR_FUNCTION_HERE", cepsplugin::plugin_entrypoint);
+  cepsplugin::plugin_master->reg_ceps_phase0plugin(")~~" << result_cmd_line.create_plugin_project_name << R"~~(", cepsplugin::plugin_entrypoint);
 }					
 				)~~";
 				{
-					ofstream os{"run.ceps-plugin.sh"};
+					ofstream os{"run.ceps-plugin"};
 					os << R"(
 #!/bin/bash
 
 LD_LIBRARY_PATH=$(pwd)/bin:$LD_LIBRARY_PATH ceps \
  $1 \
- --pluginlibINSERT_PLUGIN_NAME_HERE.so						
+ --pluginlib)" << result_cmd_line.create_plugin_project_name << R"(.so						
 					)";
 				}
+			std::filesystem::permissions("run.ceps-plugin", 
+										   std::filesystem::perms::owner_exec 
+										 | std::filesystem::perms::group_exec
+										 | std::filesystem::perms::others_exec, 
+										 std::filesystem::perm_options::add);
+
 			}
 
 				{
 					ofstream os{"ceps-plugin.test.ceps"};
-					os << R"~~(INSERT_NAME_FOR_FUNCTION_HERE(
+					os << result_cmd_line.create_plugin_project_name << R"~~((
 	input{
 		123;
 		"abc";
