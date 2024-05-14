@@ -1,5 +1,5 @@
 ﻿/*
-Copyright 2014,2015,2016,2017,2018,2019,2020,2021 Tomas Prerovsky (cepsdev@hotmail.com).
+Copyright 2014-2024 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -289,9 +289,26 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
 				continue;
 			}
 			else if (arg == "--doc-option") { 
-				if (i+1 == argc) break; r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
+				if (i+1 == argc) break; 
+				r.output_format_flags.push_back(std::string{"doc-option-"}+argv[i+1]); ++i;continue;}
 			else if (arg == "--help") {r.print_help = true;continue;}
-			else if (arg == "--create_plugin_project") {r.create_plugin_project = true;continue;}
+			else if (arg == "--create_plugin_project") {
+				r.create_plugin_project = true;
+				if (i+1 < argc){
+					string t{argv[i+1]};
+					if (t.length() && t[0] != '-'){
+					 	r.create_plugin_project_name = t;
+						++i;
+					}
+				}
+				continue;
+			} else if (arg == "--create_plugin_ceps_root"){
+				if (i+1 < argc) {
+					r.create_plugin_ceps_root = argv[i + 1];
+					++i;
+				}
+				continue;
+			}
 			else if (arg.substr(0, 6) == "--port") { 
 				if (arg.length() > 6) {
 					r.server_port = r.port = arg.substr(6);

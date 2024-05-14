@@ -1,5 +1,5 @@
 /*
-Copyright 2014,2015,2016,2017,2018,2019,2020,2021 Tomas Prerovsky (cepsdev@hotmail.com).
+Copyright 2014-2024 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -100,6 +100,8 @@ struct Result_process_cmd_line
    std::string sleep_before_ws_delta_ms;
    std::string push_dir;
    bool create_plugin_project = false;
+   std::string create_plugin_project_name{"INSERT_PROJECT_NAME_HERE"};
+   std::string create_plugin_ceps_root{"../"};
    Result_process_cmd_line() = default;
    Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,
