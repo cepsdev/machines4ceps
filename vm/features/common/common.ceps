@@ -112,7 +112,8 @@ OblectamentaOpcode
     negdbl,
     negi32,
     negi64,
-    stsdbl;
+    stsdbl,
+    tanhdbl;
 
 
 OblectamentaModifier addr;

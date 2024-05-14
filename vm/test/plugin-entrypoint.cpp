@@ -484,6 +484,9 @@ class CepsOblectamentaMnemonicsEmitter{
         void emitExpDouble(){
             v.push_back(ceps::interpreter::mk_symbol("expdbl","OblectamentaOpcode"));
         }
+        void emitTanhDouble(){
+            v.push_back(ceps::interpreter::mk_symbol("tanhdbl","OblectamentaOpcode"));
+        }
 
 
         std::vector<ceps::ast::node_t> listing() const { return v;}
@@ -626,6 +629,8 @@ template<>
                          emitter.emitAtanDouble();
                         else if (simple_funccall->fid.name == "exp")
                          emitter.emitExpDouble();
+                        else if (simple_funccall->fid.name == "tanh")
+                         emitter.emitTanhDouble();
                         return false;
 
                     }

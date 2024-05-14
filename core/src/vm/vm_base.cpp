@@ -499,6 +499,10 @@ namespace ceps::vm::oblectamenta{
         push_cs<double>(exp(pop_cs<double>()));
         return base_opcode_width + pos;
     }
+    size_t VMEnv::tanhdbl(size_t pos){
+        push_cs<double>(tanh(pop_cs<double>()));
+        return base_opcode_width + pos;
+    }
 
     size_t VMEnv::negdbl(size_t pos){
         push_cs<double>(-1.0 * (pop_cs<double>()));
@@ -637,6 +641,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::negi32);
         op_dispatch.push_back(&VMEnv::negi64);
         op_dispatch.push_back(&VMEnv::stsdbl);
+        op_dispatch.push_back(&VMEnv::tanhdbl);
+
     }
      
     void VMEnv::dump(ostream& os){

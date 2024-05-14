@@ -1,0 +1,106 @@
+docinfo_se("
+
+Algorithm: Backpropagation
+Input: Input vector x_n
+       Network parameters w
+       Error function E_n(w) for input x_n
+       Activation function h(a)
+Output: Error function derivatives {\partial E_n / \partial w_{ji}}
+-------------------------------------------------------------------
+// Forward propagation
+for j \in all hidden and output units do
+ a_j \left \sum_i w_{ji} z_i // \{z_i\} includes inputs \{x_i\}
+ z_j \left h(a_j) //activation function
+end for
+
+ // Error Evaluation
+for k \in all output units do 
+  \delta_k \left \frac{\partial E_n}{\partial a_k} // compute errors
+end for
+
+// Backward propagation, in reverse order
+
+for j \in all hidden units do
+ \delta_j \left h'(a_j)\sum_k w_{kj}\delta_k // recursive backward evaluation 
+ \frac{\partial E_n}{\partial w_{ji}} \left \delta_j z_i // evaluate derivatives
+end for
+return \{ frac{\partial E_n}{ \partial w_{ji}}}
+");
+
+
+macro _{
+ if (hd(arglist) <= 2) hd(arglist)*4 + hd(tail(arglist));
+ else if (hd(arglist) <= 4) 3*4 + (hd(arglist)-3)*3 + hd(tail(arglist));
+};
+
+backprop{
+    // OblectamentaDataLabel x, v, y, nu, gamma, omega, t;//Declare lables for the data
+    OblectamentaDataLabel a,x,w,z,y,E,t,one_half;
+    differentiable_program{
+        val base_addr = 8;
+        val num_of_x = 4;
+        val num_of_weights = 4;
+        val size_layer_1 = 3;
+        val size_out_layer = 2;
+
+        data{
+            one_half;0.5;
+            //array(x,f64,base(base_addr));
+            1.0;0.0;0.0;0.0;
+            //array(w,f64,base(base_addr + num_of_x * 8));
+            1.0;0.0;0.0;0.0;
+            //array(a,f64,base(base_addr + num_of_x * 8 + num_of_weights * 8));
+            0.0;0.0;0.0; //a
+            0.0;0.0;0.0; //z
+            0.0;0.0; //y
+            0.0;0.0; //t
+            E;0.0; //E
+
+        };
+        computation_graph{
+            array(one_half,f64,base(0));
+            array(x,f64,base(base_addr));
+            array(w,f64,base(base_addr + num_of_x * 8));
+            array(a,f64,base(base_addr + num_of_x * 8 + num_of_weights * 8));
+            array(z,f64,base(base_addr + num_of_x * 8 + num_of_weights * 8 + size_layer_1*8));
+            array(y,f64,base(base_addr + num_of_x * 8 + num_of_weights * 8 + 2*size_layer_1*8));
+            array(t,f64,base(base_addr + num_of_x * 8 + num_of_weights * 8 + 2*size_layer_1*8 + size_out_layer*8));            
+            array(E,f64,base(base_addr + num_of_x * 8 + num_of_weights * 8 + 2*size_layer_1*8 + 2*size_out_layer*8));
+
+            a(0) = w(_(0,0))*x(0) + w(_(0,1))*x(1) + w(_(0,2))*x(2) + w(_(0,3))*x(3);
+            a(1) = w(_(1,0))*x(0) + w(_(1,1))*x(1) + w(_(1,2))*x(2) + w(_(1,3))*x(3);
+            a(2) = w(_(2,0))*x(0) + w(_(2,1))*x(1) + w(_(2,1))*x(2) + w(_(2,3))*x(3);
+            z(0) = tanh(a(0));
+            z(1) = tanh(a(1));
+            z(2) = tanh(a(2));
+            y(0) = w(_(3,0))*z(0) + w(_(3,1))*z(1) + w(_(3,2))*z(2);
+            y(1) = w(_(4,0))*z(0) + w(_(4,1))*z(1) + w(_(4,2))*z(2);
+            E(0) = one_half(0)*((y(0) - t(0))*(y(0) - t(0))) + one_half(0)*((y(1) - t(1))*(y(1) - t(1))) ;
+        };
+    };
+};
+
+val the_asm_code = 
+    operation(
+        compile_diffprog{
+            differentiable_program{
+                root.backprop.differentiable_program.computation_graph;
+            };
+        }
+);
+the_asm_code;
+val the_vm = operation(
+ run{
+  vm{
+   root.backprop.differentiable_program.data;
+    text{
+        asm{
+            the_asm_code.asm.content();
+            halt;
+            };
+        };
+    }; 
+  }
+);
+
+the_vm;
