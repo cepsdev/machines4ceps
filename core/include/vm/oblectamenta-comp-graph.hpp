@@ -33,9 +33,11 @@ namespace ceps{
             public:
 
              void compile(NotationTraverser&, CodeEmitter& );
-             template <typename NotationEmitter> void tangent_forward_diff(NotationTraverser&,NotationEmitter&, compgraph_parameter_t );
+             template <typename NotationEmitter> 
+              void tangent_forward_diff(NotationTraverser&,NotationEmitter&, compgraph_parameter_t );
+             template <typename NotationEmitter> 
+              void backprop(NotationTraverser&,NotationEmitter&, compgraph_parameter_t );
            };
-
         }
     }
 } 

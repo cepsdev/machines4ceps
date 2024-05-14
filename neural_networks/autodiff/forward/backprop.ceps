@@ -104,3 +104,18 @@ val the_vm = operation(
 );
 
 the_vm;
+
+val backprop_graph =
+ operation(
+    backpropagation{
+        root.backprop.differentiable_program;
+    }
+ );
+
+ backprop_graph;
+
+
+
+
+
+
