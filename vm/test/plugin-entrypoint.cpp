@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <future>
 #include <memory>
-#include <netinet/sctp.h> 
 #include <vector>
 #include <string>
 #include <optional>
