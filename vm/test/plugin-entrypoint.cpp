@@ -760,7 +760,9 @@ template<typename F>
     if(auto abinary_op{e.as_binary_operation()};abinary_op){
         for_all_leaves(abinary_op->lhs(),f);
         for_all_leaves(abinary_op->rhs(),f);
-    }    
+    } else if (auto afunc_call{e.as_noary_or_unary_funccall()}; afunc_call) {
+        for_all_leaves(afunc_call->argument(),f);          
+    }
 }
 
 template<>
@@ -771,7 +773,7 @@ template<>
                                                      CepsComputeGraphNotationTraverser& graph_def,
                                                      CepsComputeGraphNotationTraverser& writer,
                                                      string weight_id)
-{
+{   
     using Traverser = CepsComputeGraphNotationTraverser;
     auto  dot = [&](CepsComputeGraphNotationTraverser::array_ref e) {
         return CepsComputeGraphNotationTraverser::array_ref{e.id+"_dot", e.idx}.as_expr();
@@ -801,39 +803,51 @@ template<>
     //Determine constants
 
     set<string> constants;
-    set<string> occurs_in_lhs_of_a_definition;
+    set<string> occurs_in_lhs_of_an_equation;
+    set<string> occurs_in_rhs_of_an_equation;
     
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
         auto assign_expr{stmt.is_assign_op()};
         if (!assign_expr) continue;
-        for_all_leaves(assign_expr->lhs(),[&occurs_in_lhs_of_a_definition](Traverser::array_ref leaf){
-            occurs_in_lhs_of_a_definition.insert(leaf.id);
+        for_all_leaves(assign_expr->lhs(),[&occurs_in_lhs_of_an_equation](Traverser::array_ref leaf){
+            occurs_in_lhs_of_an_equation.insert(leaf.id);
         });
     }
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
         auto assign_expr{stmt.is_assign_op()};
         if (!assign_expr) continue;
-        for_all_leaves(assign_expr->rhs(),[&weight_id, &occurs_in_lhs_of_a_definition, &constants](Traverser::array_ref leaf){
-            if (weight_id != leaf.id &&  occurs_in_lhs_of_a_definition.find(leaf.id) == occurs_in_lhs_of_a_definition.end() )
+        for_all_leaves(assign_expr->rhs(),[&](Traverser::array_ref leaf){
+            occurs_in_rhs_of_an_equation.insert(leaf.id);
+            if (weight_id != leaf.id &&  occurs_in_lhs_of_an_equation.find(leaf.id) ==occurs_in_lhs_of_an_equation.end() )
                 constants.insert(leaf.id);
         });
     }
 
     // Debug output : constant / nonconstant information
     //for(auto t: constants) {cerr << t << "(constant)\n";}
-    //for(auto t: occurs_in_lhs_of_a_definition) {cerr << t << '\n';}
+    //for(auto t: occurs_in_lhs_of_an_equation) {cerr << t << '\n';}
+    //for(auto t: occurs_in_rhs_of_an_equation) {cerr << t << '\n';}
     
-    //Determine error layer
+    
+    // Determine error function layer, i.e. find the assignments l = r  
+    // such that there is no assignment of the form l'= f(l).
+    vector<int> error_function_layer;
 
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
         auto assign_expr{stmt.is_assign_op()};
         if (!assign_expr) continue;
-        //for_all_leaves(assign_expr->lhs(),[](Traverser::array_ref leaf){cerr << leaf.id <<"!\n";});
-        //for_all_leaves(assign_expr->rhs(),[](Traverser::array_ref leaf){cerr << leaf.id <<"!!\n";});
+        auto aref{assign_expr->lhs().as_array_ref()};
+        if (!aref) continue;
+        if (occurs_in_rhs_of_an_equation.find(aref->id) == occurs_in_rhs_of_an_equation.end())
+         error_function_layer.push_back(i);
     }
+    //for (auto e : error_function_layer) cerr << e << '\n';
+    vector<int> y_ks;
+    for(auto e : error_function_layer)
+
     exit(0);
 
     for(size_t i{}; i < graph_def.size(); ++i){
@@ -855,9 +869,14 @@ template<>
 
 ceps::ast::node_t handle_operation_backpropagation(ceps::ast::Struct& ceps_struct){
     ast_proc_prolog
+    static const string weight_id_default {"w"};
+
     node_struct_t computation_graph{};
     auto result = mk_struct("computation_graph");
     vector<CepsComputeGraphNotationTraverser::array_ref> vars;
+    
+    string weight_id {weight_id_default};
+
 
     for(auto e : children(ceps_struct))
         if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "differentiable_program" ){
@@ -878,7 +897,7 @@ ceps::ast::node_t handle_operation_backpropagation(ceps::ast::Struct& ceps_struc
 
     ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
     comp_graph.backprop<CepsComputeGraphNotationTraverser>(
-        traverser,writer, "w" );
+        traverser,writer, weight_id );
     children(*result) = writer.nodes();
     return result;
 }
