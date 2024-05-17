@@ -88,7 +88,7 @@ val the_asm_code =
             };
         }
 );
-the_asm_code;
+//the_asm_code;
 val the_vm = operation(
  run{
   vm{
@@ -103,7 +103,7 @@ val the_vm = operation(
   }
 );
 
-the_vm;
+//the_vm;
 
 val backprop_graph =
  operation(

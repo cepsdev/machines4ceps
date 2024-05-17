@@ -659,7 +659,7 @@ template<>
                                                   tangent_forward_diff<CepsComputeGraphNotationTraverser>( 
                                                      CepsComputeGraphNotationTraverser& graph_def,
                                                      CepsComputeGraphNotationTraverser& writer,
-                                                     ceps::vm::oblectamenta::compgraph_parameter_t p)
+                                                     string weight_id)
 {
     using Traverser = CepsComputeGraphNotationTraverser;
 
@@ -703,58 +703,8 @@ template<>
     }
 }
 
-template<>
- template<>
-    void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,
-                                                  CepsOblectamentaMnemonicsEmitter>::
-                                                  backprop<CepsComputeGraphNotationTraverser>( 
-                                                     CepsComputeGraphNotationTraverser& graph_def,
-                                                     CepsComputeGraphNotationTraverser& writer,
-                                                     ceps::vm::oblectamenta::compgraph_parameter_t p)
-{
-    using Traverser = CepsComputeGraphNotationTraverser;
 
-    auto  dot = [&](CepsComputeGraphNotationTraverser::array_ref e) {
-        return CepsComputeGraphNotationTraverser::array_ref{e.id+"_dot", e.idx}.as_expr();
-    };
-
-    function<CepsComputeGraphNotationTraverser::expr(CepsComputeGraphNotationTraverser::expr)> diff;
-    diff = [&](CepsComputeGraphNotationTraverser::expr e) {
-                    auto aref{e.as_array_ref()};
-                    if (aref)
-                        return dot(*aref);
-                    else if(auto abinary_op{e.as_binary_operation()};abinary_op){
-                        auto binary_op{*abinary_op};
-                        if (binary_op.op == "*"){
-                            BookReference("Griewank,Walther:EvDev:","p.35, Table 3.3, 3rd row");
-                            auto lhs_diff{diff(binary_op.lhs())};
-                            auto rhs_diff{diff(binary_op.rhs())};
-                            return Traverser::expr::mk_addition(
-                                Traverser::expr::mk_multiplication(lhs_diff,binary_op.rhs()),
-                                Traverser::expr::mk_multiplication(binary_op.lhs(),rhs_diff)
-                            );
-                        }                        
-                    }
-                    return e;
-    };
-
-    for(size_t i{}; i < graph_def.size(); ++i){
-        auto stmt{graph_def[i]};
-        auto assign_expr{stmt.is_assign_op()};
-        if (!assign_expr) { 
-            writer.push_back(graph_def[i]); continue;}
-        Invariant("stmt is an assignment. i.e. it contains a left and a right side.");
-        auto right_side{assign_expr->rhs()};
-        auto left_side{assign_expr->lhs()};
-        
-        auto diff_rhs{diff(right_side)};
-        auto diff_lhs{diff(left_side)};
-        writer.push_back(graph_def[i]);
-        writer.push_back(Traverser::expr::mk_assignment(diff_lhs,diff_rhs));
-    }
-}
-
-ceps::ast::node_t handle_operationn_tangent_forward_diff(ceps::ast::Struct& ceps_struct){
+ceps::ast::node_t handle_operation_tangent_forward_diff(ceps::ast::Struct& ceps_struct){
     ast_proc_prolog
     node_struct_t computation_graph{};
     auto result = mk_struct("computation_graph");
@@ -779,14 +729,131 @@ ceps::ast::node_t handle_operationn_tangent_forward_diff(ceps::ast::Struct& ceps
     //ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
     //comp_graph.compile(traverser,emitter); 
     ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
-    int a;
     comp_graph.tangent_forward_diff<CepsComputeGraphNotationTraverser>(
-        traverser,writer, ceps::vm::oblectamenta::compgraph_parameter_t{} );
+        traverser,writer, {} );
     children(*result) = writer.nodes();
     return result;
 }
+/**
+Backpropagation
 
-ceps::ast::node_t handle_operationn_backpropagation(ceps::ast::Struct& ceps_struct){
+Input: Input vector x_n
+       Network parameter w
+       Error function E_n(w) for input x_n
+       Activation function h(a)
+Output:
+       Error function derivatives \{\partial E_n / \partial w_{ji}\}
+//Forward propagation
+for j \in all hidden and output units do
+ a_j \leftarrow \sum_i w_{ji}z_i
+ z_j \leftarrow h(a_j)
+end for
+//Error evaluation
+for k \in all output units do
+ \delta_k = \frac{\partial E_n}{\partial a_k}
+end for 
+*/
+template<typename F>
+ void for_all_leaves(CepsComputeGraphNotationTraverser::expr e, F f) {
+    auto aref{e.as_array_ref()};
+    if (aref) {f(*aref); return;}        
+    if(auto abinary_op{e.as_binary_operation()};abinary_op){
+        for_all_leaves(abinary_op->lhs(),f);
+        for_all_leaves(abinary_op->rhs(),f);
+    }    
+}
+
+template<>
+ template<>
+    void ceps::vm::oblectamenta::ComputationGraph<CepsComputeGraphNotationTraverser,
+                                                  CepsOblectamentaMnemonicsEmitter>::
+                                                  backprop<CepsComputeGraphNotationTraverser>( 
+                                                     CepsComputeGraphNotationTraverser& graph_def,
+                                                     CepsComputeGraphNotationTraverser& writer,
+                                                     string weight_id)
+{
+    using Traverser = CepsComputeGraphNotationTraverser;
+    auto  dot = [&](CepsComputeGraphNotationTraverser::array_ref e) {
+        return CepsComputeGraphNotationTraverser::array_ref{e.id+"_dot", e.idx}.as_expr();
+    };
+
+    function<CepsComputeGraphNotationTraverser::expr(CepsComputeGraphNotationTraverser::expr)> diff;
+    diff = [&](CepsComputeGraphNotationTraverser::expr e) {
+        auto aref{e.as_array_ref()};
+        if (aref)
+            return dot(*aref);
+        else if(auto abinary_op{e.as_binary_operation()};abinary_op){
+            auto binary_op{*abinary_op};
+            if (binary_op.op == "*"){
+                BookReference("Griewank,Walther:EvDev:","p.35, Table 3.3, 3rd row");
+                auto lhs_diff{diff(binary_op.lhs())};
+                auto rhs_diff{diff(binary_op.rhs())};
+                return Traverser::expr::mk_addition(
+                    Traverser::expr::mk_multiplication(lhs_diff,binary_op.rhs()),
+                    Traverser::expr::mk_multiplication(binary_op.lhs(),rhs_diff)
+                );
+            }                        
+        }
+        return e;
+    };
+
+
+    //Determine constants
+
+    set<string> constants;
+    set<string> occurs_in_lhs_of_a_definition;
+    
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) continue;
+        for_all_leaves(assign_expr->lhs(),[&occurs_in_lhs_of_a_definition](Traverser::array_ref leaf){
+            occurs_in_lhs_of_a_definition.insert(leaf.id);
+        });
+    }
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) continue;
+        for_all_leaves(assign_expr->rhs(),[&weight_id, &occurs_in_lhs_of_a_definition, &constants](Traverser::array_ref leaf){
+            if (weight_id != leaf.id &&  occurs_in_lhs_of_a_definition.find(leaf.id) == occurs_in_lhs_of_a_definition.end() )
+                constants.insert(leaf.id);
+        });
+    }
+
+    // Debug output : constant / nonconstant information
+    //for(auto t: constants) {cerr << t << "(constant)\n";}
+    //for(auto t: occurs_in_lhs_of_a_definition) {cerr << t << '\n';}
+    
+    //Determine error layer
+
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) continue;
+        //for_all_leaves(assign_expr->lhs(),[](Traverser::array_ref leaf){cerr << leaf.id <<"!\n";});
+        //for_all_leaves(assign_expr->rhs(),[](Traverser::array_ref leaf){cerr << leaf.id <<"!!\n";});
+    }
+    exit(0);
+
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) { 
+            writer.push_back(graph_def[i]); continue;}
+        Invariant("stmt is an assignment. i.e. it contains a left and a right side.");
+        //auto right_side{assign_expr->rhs()};
+        //auto left_side{assign_expr->lhs()};
+        //cerr << *stmt.node << "\n";
+        
+        //auto diff_rhs{diff(right_side)};
+        //auto diff_lhs{diff(left_side)};
+        //writer.push_back(graph_def[i]);
+        //writer.push_back(Traverser::expr::mk_assignment(diff_lhs,diff_rhs));
+    }
+}
+
+ceps::ast::node_t handle_operation_backpropagation(ceps::ast::Struct& ceps_struct){
     ast_proc_prolog
     node_struct_t computation_graph{};
     auto result = mk_struct("computation_graph");
@@ -808,12 +875,10 @@ ceps::ast::node_t handle_operationn_backpropagation(ceps::ast::Struct& ceps_stru
     if (!computation_graph ) return mk_undef();
     CepsComputeGraphNotationTraverser traverser{children(*computation_graph)};
     CepsComputeGraphNotationTraverser writer;
-    //ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
-    //comp_graph.compile(traverser,emitter); 
+
     ComputationGraph<CepsComputeGraphNotationTraverser,CepsOblectamentaMnemonicsEmitter> comp_graph;
-    int a;
     comp_graph.backprop<CepsComputeGraphNotationTraverser>(
-        traverser,writer, ceps::vm::oblectamenta::compgraph_parameter_t{} );
+        traverser,writer, "w" );
     children(*result) = writer.nodes();
     return result;
 }
@@ -854,9 +919,9 @@ ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params)
                 }
             }
     } else if (name(ceps_struct) == "tangent_forward_diff" )
-        return handle_operationn_tangent_forward_diff(ceps_struct);
+        return handle_operation_tangent_forward_diff(ceps_struct);
     else if (name(ceps_struct) == "backpropagation" )
-        return handle_operationn_backpropagation(ceps_struct);
+        return handle_operation_backpropagation(ceps_struct);
     return mk_undef();
 }
 

@@ -143,7 +143,7 @@ class CepsComputeGraphNotationTraverser{
 	            vector<node_t> args;
                 if (is_a_symbol_with_arguments(root, sym_name, sym_kind, args)){
                     if (sym_kind == "OblectamentaDataLabel" && args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
-                        return array_ref{sym_name,(size_t)value(as_int_ref(args[0])) };                        
+                        return array_ref{sym_name,value(as_int_ref(args[0])) };                        
                     }                 
                 }
                 return {};

@@ -31,12 +31,11 @@ namespace ceps{
            template<typename NotationTraverser, typename CodeEmitter> 
            class ComputationGraph{
             public:
-
              void compile(NotationTraverser&, CodeEmitter& );
              template <typename NotationEmitter> 
-              void tangent_forward_diff(NotationTraverser&,NotationEmitter&, compgraph_parameter_t );
+              void tangent_forward_diff(NotationTraverser&,NotationEmitter&, string );
              template <typename NotationEmitter> 
-              void backprop(NotationTraverser&,NotationEmitter&, compgraph_parameter_t );
+              void backprop(NotationTraverser&,NotationEmitter&, string );
            };
         }
     }
