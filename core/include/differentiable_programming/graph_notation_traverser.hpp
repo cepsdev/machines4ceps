@@ -83,6 +83,13 @@ class CepsComputeGraphNotationTraverser{
                 return value(as_int_ref(root));
             }
 
+            std::optional<double> as_double(){
+                using namespace std;
+                using namespace ceps::ast;
+                if(!is<ceps::ast::Ast_node_kind::float_literal>(root)) return {};
+                return value(as_double_ref(root));
+            }
+
             std::optional<std::string> as_id(){
                 using namespace std;
                 using namespace ceps::ast;
@@ -172,7 +179,9 @@ class CepsComputeGraphNotationTraverser{
 
             static expr mk_assignment(expr lhs, expr rhs);
             static expr mk_addition(expr lhs, expr rhs);
+            static expr mk_subtraction(expr lhs, expr rhs);
             static expr mk_multiplication(expr lhs, expr rhs);
+            static expr mk_double(double);
         };
         struct stmt{
             ceps::ast::node_t node;
@@ -224,9 +233,19 @@ CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::expr:
  e.root = mk_binary_op("+",lhs.root, rhs.root);
  return e;
 }
+CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::expr::mk_subtraction(CepsComputeGraphNotationTraverser::expr lhs, CepsComputeGraphNotationTraverser::expr rhs){
+ expr e;
+ e.root = mk_binary_op("-",lhs.root, rhs.root);
+ return e;
+}
 CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::expr::mk_multiplication(CepsComputeGraphNotationTraverser::expr lhs, CepsComputeGraphNotationTraverser::expr rhs){
  expr e;
  e.root = mk_binary_op("*",lhs.root, rhs.root);
+ return e;
+}
+CepsComputeGraphNotationTraverser::expr CepsComputeGraphNotationTraverser::expr::mk_double(double value){
+ expr e;
+ e.root = ceps::interpreter::mk_double_node(value, ceps::ast::Unit_rep{});
  return e;
 }
 

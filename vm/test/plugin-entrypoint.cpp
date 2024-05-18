@@ -779,27 +779,81 @@ template<>
         return CepsComputeGraphNotationTraverser::array_ref{e.id+"_dot", e.idx}.as_expr();
     };
 
-    function<CepsComputeGraphNotationTraverser::expr(CepsComputeGraphNotationTraverser::expr)> diff;
-    diff = [&](CepsComputeGraphNotationTraverser::expr e) {
+
+
+    function<CepsComputeGraphNotationTraverser::expr(CepsComputeGraphNotationTraverser::expr, Traverser::array_ref, set<string> const &)> diff;
+    diff = [&](CepsComputeGraphNotationTraverser::expr e, Traverser::array_ref x, set<string> const & constants) {
         auto aref{e.as_array_ref()};
-        if (aref)
-            return dot(*aref);
-        else if(auto abinary_op{e.as_binary_operation()};abinary_op){
+        if (aref){
+            if (constants.find(aref->id) != constants.end()) 
+             return Traverser::expr::mk_double(0.0);
+            else if (x.id == aref->id && x.idx == aref->idx)
+             return Traverser::expr::mk_double(1.0);
+            else
+             return Traverser::expr::mk_double(0.0);
+        } else if(auto abinary_op{e.as_binary_operation()};abinary_op){
             auto binary_op{*abinary_op};
             if (binary_op.op == "*"){
-                BookReference("Griewank,Walther:EvDev:","p.35, Table 3.3, 3rd row");
-                auto lhs_diff{diff(binary_op.lhs())};
-                auto rhs_diff{diff(binary_op.rhs())};
+                auto lhs_diff{diff(binary_op.lhs(), x, constants)};
+                auto rhs_diff{diff(binary_op.rhs(), x, constants)};
+                auto l{Traverser::expr::mk_multiplication(lhs_diff,binary_op.rhs())};
+                auto r{Traverser::expr::mk_multiplication(binary_op.lhs(),rhs_diff)};
+
+                if (auto a_double{lhs_diff.as_double()}; a_double) 
+                    if (*a_double == 0.0) l = Traverser::expr::mk_double(0.0);
+                    else if (*a_double == 1.0) l = binary_op.rhs();
+
+                if (auto a_double{binary_op.rhs().as_double()}; a_double) 
+                    if (*a_double == 0.0) l = Traverser::expr::mk_double(0.0);
+
+                if (auto a_double{rhs_diff.as_double()}; a_double) 
+                    if (*a_double == 0.0) r = Traverser::expr::mk_double(0.0);
+                    else if (*a_double == 1.0) r = binary_op.lhs();
+
+                if (auto a_double{binary_op.lhs().as_double()}; a_double) 
+                    if (*a_double == 0.0) r = Traverser::expr::mk_double(0.0);
+
+                if (auto l_double{l.as_double()}; l_double)
+                 if (auto r_double{r.as_double()}; r_double)
+                  return Traverser::expr::mk_double(*l_double + *r_double); 
+
+                if (auto l_double{l.as_double()}; l_double)
+                 if (*l_double == 0.0) return r;
+                if (auto r_double{r.as_double()}; r_double)
+                 if (*r_double == 0.0) return l;
+
+
+                return Traverser::expr::mk_addition(l,r);
+            } else if (binary_op.op == "+"){
+                auto lhs_diff{diff(binary_op.lhs(), x, constants)};
+                auto rhs_diff{diff(binary_op.rhs(), x, constants)};
+                if (auto a_double{lhs_diff.as_double()}; a_double) 
+                    if (*a_double == 0.0) return rhs_diff;
+                if (auto a_double{rhs_diff.as_double()}; a_double) 
+                    if (*a_double == 0.0) return lhs_diff;
+                if (auto l_double{lhs_diff.as_double()}; l_double)
+                 if (auto r_double{rhs_diff.as_double()}; r_double)
+                  return Traverser::expr::mk_double(*l_double + *r_double); 
                 return Traverser::expr::mk_addition(
-                    Traverser::expr::mk_multiplication(lhs_diff,binary_op.rhs()),
-                    Traverser::expr::mk_multiplication(binary_op.lhs(),rhs_diff)
-                );
-            }                        
+                    lhs_diff,
+                    rhs_diff);
+            } else if (binary_op.op == "-"){
+                auto lhs_diff{diff(binary_op.lhs(), x, constants)};
+                auto rhs_diff{diff(binary_op.rhs(), x, constants)};
+                if (auto a_double{lhs_diff.as_double()}; a_double) 
+                    if (*a_double == 0.0) return rhs_diff;
+                if (auto a_double{rhs_diff.as_double()}; a_double) 
+                    if (*a_double == 0.0) return lhs_diff;
+                if (auto l_double{lhs_diff.as_double()}; l_double)
+                 if (auto r_double{rhs_diff.as_double()}; r_double)
+                  return Traverser::expr::mk_double(*l_double - *r_double); 
+                return Traverser::expr::mk_subtraction(
+                    lhs_diff,
+                    rhs_diff);
+            }
         }
         return e;
     };
-
-
     //Determine constants
 
     set<string> constants;
@@ -844,12 +898,43 @@ template<>
         if (occurs_in_rhs_of_an_equation.find(aref->id) == occurs_in_rhs_of_an_equation.end())
          error_function_layer.push_back(i);
     }
-    //for (auto e : error_function_layer) cerr << e << '\n';
+    //for (auto e : error_function_layer) cerr << *graph_def[e].node << '\n'<< '\n'<< '\n';
     vector<int> y_ks;
-    for(auto e : error_function_layer)
+    for(auto ie : error_function_layer){
+        for_all_leaves(
+            graph_def[ie].is_assign_op()->rhs(), [&](Traverser::array_ref leaf){
+               for(size_t _i {graph_def.size()}; _i > 0; --_i){
+                    Invariant("_i > 0");
+                    auto i{_i-1};
+                    Invariant("graph_def.size() > i >= 0");
+                    auto stmt{graph_def[i]};
+                    auto assign_expr{stmt.is_assign_op()};
+                    if (!assign_expr) continue;
+                    auto aref{assign_expr->lhs().as_array_ref()};
+                    if (!aref) continue;
+                    if(leaf.id == aref->id && leaf.idx == aref->idx){
+                        y_ks.push_back(i);
+                        break;    
+                    }
+               } 
+            }
+        );
+    }
+    sort(y_ks.begin(), y_ks.end());
+    auto last = unique(y_ks.begin(), y_ks.end());
+    y_ks.erase(last, y_ks.end());
+    vector<Traverser::expr> delta_k;
+    for(auto it{y_ks.begin()}; it != last;++it){
+        for(auto ie : error_function_layer){
+            delta_k.push_back(diff(graph_def[ie].is_assign_op()->rhs(),
+                                   *graph_def[*it].is_assign_op()->lhs().as_array_ref(),
+                                   constants));
+        }      
+    }
 
-    exit(0);
-
+    //for (auto e : delta_k) cerr << *e.root << "\n\n\n\n\n";
+    
+    
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
         auto assign_expr{stmt.is_assign_op()};
@@ -862,9 +947,11 @@ template<>
         
         //auto diff_rhs{diff(right_side)};
         //auto diff_lhs{diff(left_side)};
-        //writer.push_back(graph_def[i]);
+        writer.push_back(graph_def[i]);
         //writer.push_back(Traverser::expr::mk_assignment(diff_lhs,diff_rhs));
     }
+    for (auto e : delta_k)writer.push_back(e);
+    
 }
 
 ceps::ast::node_t handle_operation_backpropagation(ceps::ast::Struct& ceps_struct){
