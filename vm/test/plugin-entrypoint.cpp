@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <stdexcept>
 
 #include "ceps_ast.hh"
 #include "core/include/state_machine_simulation_core.hpp"
@@ -932,8 +933,78 @@ template<>
         }      
     }
 
+    //for(auto e : y_ks)
+    // cerr << e << '\n';
+
+    //for(auto ie : error_function_layer)
+    // cerr << ie << '\n';
+
+
+    vector<Traverser::expr> inner_deltas;
     //for (auto e : delta_k) cerr << *e.root << "\n\n\n\n\n";
+    // Let's introduce first a bumch of helper structures
+    // for a layer i we need the referred to layers j, i.e. the layers which send information to i
+    // First map the id part of array_ref to an index, there are only a handful of them
+    vector<string> names2idx;
     
+    // fill names2idx
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) continue;
+        auto aref{assign_expr->lhs().as_array_ref()};
+        if(!aref) continue;
+        auto& id{aref->id};
+        bool found {};
+        for(size_t j{}; j< names2idx.size();++j) if (names2idx[j] == id) { found=true;break;}
+        if(!found) names2idx.push_back(id);
+    }
+    
+    //for(size_t j{}; j< names2idx.size();++j) cerr << names2idx[j] << " -> " << j << '\n';
+
+    auto name2idx = [&](string n) -> optional<size_t>{
+        for(size_t j{}; j< names2idx.size();++j) if (names2idx[j] == n) return j;
+        return {};
+    };
+
+    // Next one maps left hand sides to line numbers
+
+    vector<size_t> lhs2line{graph_def.size() * names2idx.size(), 0 };
+
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) continue;
+        auto aref{assign_expr->lhs().as_array_ref()};
+        if(!aref) continue;
+        auto ididx {name2idx(aref->id)};
+        lhs2line[*ididx * graph_def.size() + aref->idx] = i;
+    }
+
+    auto aref2linenumber = [&](Traverser::array_ref aref) -> size_t {
+        return lhs2line[ *name2idx(aref.id) * graph_def.size() + aref.idx];
+    };
+
+    exit(0);
+
+
+    
+    for(size_t i{}; i < graph_def.size(); ++i){
+        auto stmt{graph_def[i]};
+        auto assign_expr{stmt.is_assign_op()};
+        if (!assign_expr) continue;
+    }
+
+    auto delta_next{y_ks};
+    while(delta_next.size()){
+        decltype(delta_next) delta_current;
+
+
+
+
+        delta_next = delta_current;
+    }
+
     
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
@@ -950,8 +1021,16 @@ template<>
         writer.push_back(graph_def[i]);
         //writer.push_back(Traverser::expr::mk_assignment(diff_lhs,diff_rhs));
     }
-    for (auto e : delta_k)writer.push_back(e);
-    
+    size_t delta_k_i{};
+    for(size_t i{}; i < error_function_layer.size(); ++i){
+        for (size_t j{}; j < y_ks.size(); ++j){
+            writer.push_back(
+                Traverser::expr::mk_assignment(Traverser::array_ref{"delta", y_ks[j] }.as_expr()  , delta_k[delta_k_i]) );
+            ++delta_k_i;
+        }
+    }    
+    for (auto e : inner_deltas) writer.push_back(e);
+
 }
 
 ceps::ast::node_t handle_operation_backpropagation(ceps::ast::Struct& ceps_struct){
