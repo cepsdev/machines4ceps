@@ -967,7 +967,7 @@ template<>
         return {};
     };
 
-    // Next one maps left hand sides to line numbers
+    // Next structure maps left hand sides to line numbers
 
     vector<size_t> lhs2line{graph_def.size() * names2idx.size(), 0 };
 
@@ -985,9 +985,6 @@ template<>
         return lhs2line[ *name2idx(aref.id) * graph_def.size() + aref.idx];
     };
 
-    exit(0);
-
-
     
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
@@ -998,12 +995,26 @@ template<>
     auto delta_next{y_ks};
     while(delta_next.size()){
         decltype(delta_next) delta_current;
-
-
-
+        vector <size_t> delta_k;
+        vector <size_t> line;
+        vector <size_t> weight;
+        for(auto k : delta_next)
+            for_all_leaves(graph_def[k].is_assign_op()->rhs(),[&](Traverser::array_ref leaf){
+                if (weight_id == leaf.id) {weight.push_back(leaf.idx);delta_k.push_back(k);}
+                else if (name2idx(leaf.id)) line.push_back(aref2linenumber(leaf));
+            });
+        /*for(size_t i{}; i < weight.size();++i){
+            cerr << delta_k[i] << '\n';
+            cerr << weight[i] << '\n';
+            cerr << line[i] << '\n';
+            cerr << '\n';        
+        }*/
 
         delta_next = delta_current;
     }
+
+
+    exit(0);
 
     
     for(size_t i{}; i < graph_def.size(); ++i){
