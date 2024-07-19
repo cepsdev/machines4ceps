@@ -1,0 +1,173 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+kind OblectamentaOpcode;
+kind OblectamentaDataLabel;
+kind OblectamentaModifier;
+kind OblectamentaCodeLabel;
+kind OblectamentaReg;
+
+OblectamentaOpcode
+    halt,
+    noop,
+    ldi32,
+    ldsi32,
+    ldsi64,
+    ldi64,
+    lddbl,
+    sti32,
+    sti64,
+    stsi32,
+    stsi64,
+    sri64,
+    stdbl,
+    ldptr,
+    stptr,
+    lea,
+    addi32,
+    addi64,
+    adddbl,
+    subi32,
+    subi64,
+    subdbl,
+    buc,
+    bgteqzeroi32,
+    blteqzeroi32,
+    bltzeroi32,
+    bzeroi32,
+    bnzeroi32,
+    bzeroi64,
+    bnzeroi64,
+    bzerodbl,
+    bnzerodbl,
+    call,
+    ret,
+    swp,
+    andni32,
+    andni64,
+    andi32,
+    andi64,
+    ori32,
+    ori64,
+    noti32,
+    noti64,
+    xori32,
+    xori64,
+    duptopi32,
+    muli32,
+    muli64,
+    muldbl,
+    divi32,
+    divi64,
+    divdbl,
+    remi32,
+    remi64,
+    lti32,
+    lti64,
+    ltdbl,
+    lteqi32,
+    lteqi64,
+    lteqdbl,
+    gti32,
+    gti64,
+    gtdbl,
+    gteqi32,
+    gteqi64,
+    gteqdbl,
+    eqi32,
+    eqi64,
+    eqdbl,
+    cpysi32,
+    wrsi32,
+    setframe, 
+    popi32,
+    pushi32,
+    ui32toui64,
+    sindbl,
+    cosdbl,
+    tandbl,
+    atandbl,
+    expdbl,
+    ldsdbl,
+    negdbl,
+    negi32,
+    negi64,
+    stsdbl,
+    tanhdbl;
+
+OblectamentaModifier addr;
+OblectamentaModifier reg;
+OblectamentaReg SP, FP; 
+
+oblectamenta{
+ global{
+    data{
+        OblectamentaDataLabel array;
+        OblectamentaDataLabel i;
+        OblectamentaDataLabel n;
+        OblectamentaDataLabel x;
+        OblectamentaDataLabel j;
+        OblectamentaDataLabel cur_m;
+        cur_m; -1;
+        i; 0;
+        array; 4;1;7;9;2;5;8;10;3;6;
+        n; 10;
+    };
+ };
+};
+
+sm{
+    S;
+    states{Initial;A;};
+    Actions{
+        doFindMaxElement{
+            oblectamenta{
+                text{
+                 OblectamentaDataLabel array;
+                 OblectamentaDataLabel i;
+                 OblectamentaDataLabel cur_m, n;
+                 OblectamentaCodeLabel done,loop,loop_tail;
+                 loop;
+                  ldi32(i);
+                  ldi32(n);
+                  subi32;
+                  blteqzeroi32(done); // if (i >= n) goto done;
+
+                  ldi32(i);
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+                  ldsi32; // array[i] on top of stack
+                  ldi32(cur_m); 
+                  bgteq(loop_tail);
+
+                  ldi32(i);
+                  ldi32(4);
+                  muli32;
+                  lea(array);
+                  addi32;
+                  ldsi32; // array[i] on top of stack
+                  sti32(cur_m); // cur_m = array[i] 
+
+
+                 loop_tail;
+                  ldi32(1);
+                  ldi32(i);
+                  addi32;
+                  sti32(i); // i = i +1 ;
+                  buc(loop);
+
+                 done; 
+                  halt;
+           };
+            };
+        };
+    };
+    t{Initial;A;doFindMaxElement;};
+};
+
+Simulation{
+    Start{S;};
+};
