@@ -111,7 +111,7 @@ val backprop_graph =
         root.backprop.differentiable_program;
     }
  );
-
+backprop_graph;
 /*val the_asm_code2 = 
     operation(
         compile_diffprog{
