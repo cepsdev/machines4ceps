@@ -1091,7 +1091,8 @@ ceps::ast::node_t handle_operation_backpropagation(ceps::ast::Struct& ceps_struc
 }
 
 ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params){
-    ast_proc_prolog    
+    ast_proc_prolog
+        
     auto data = get_first_child(params);    
     if (!is<Ast_node_kind::structdef>(data)) {
         return mk_undef();
@@ -1106,6 +1107,7 @@ ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params)
                 vm.run(0);
                 return ast_rep<ceps::vm::oblectamenta::VMEnv&> (vm);
             } else {
+                
                 return mk_undef();
             }
          }

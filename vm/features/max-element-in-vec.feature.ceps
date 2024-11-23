@@ -5,71 +5,73 @@ Scenario{
         the_stack;
      };
      And{
-		let the_data = obj(
-            data{
-                OblectamentaDataLabel array;
-                OblectamentaDataLabel i;
-                OblectamentaDataLabel n;
-                OblectamentaDataLabel x;
-                OblectamentaDataLabel j;
-                OblectamentaDataLabel cur_m;
-                cur_m; -1;
-                i; 0;
-                array; 4;1;7;9;2;5;8;10;3;6;
-                n; 10;
-            }
-        );
-        the_data;
      };
      And{
-		let the_code = obj(
-            text{
-                 OblectamentaDataLabel array;
-                 OblectamentaDataLabel i;
-                 OblectamentaDataLabel cur_m, n;
-                 OblectamentaCodeLabel done,loop,loop_tail;
-                 loop;
-                  ldi32(i);
-                  ldi32(n);
-                  subi32;
-                  blteqzeroi32(done); // if (i >= n) goto done;
-
-                  ldi32(i);
-                  ldi32(4);
-                  muli32;
-                  lea(array);
-                  addi32;
-                  ldsi32; // array[i] on top of stack
-                  ldi32(cur_m); 
-                  bgteq(loop_tail);
-
-                  ldi32(i);
-                  ldi32(4);
-                  muli32;
-                  lea(array);
-                  addi32;
-                  ldsi32; // array[i] on top of stack
-                  sti32(cur_m); // cur_m = array[i] 
-
-
-                 loop_tail;
-                  ldi32(1);
-                  ldi32(i);
-                  addi32;
-                  sti32(i); // i = i +1 ;
-                  buc(loop);
-
-                 done; 
-                  halt;
-           });
-        the_code;
      };
      When{
-        let the_vm = run_oblectamenta_bytecode(
-            vm{
-                the_stack;
-                the_data;
-                the_code;
+        let the_vm = operation(
+            run{
+                vm{
+                    data{
+                        OblectamentaDataLabel array;
+                        OblectamentaDataLabel i;
+                        OblectamentaDataLabel n;
+                        OblectamentaDataLabel x;
+                        OblectamentaDataLabel j;
+                        OblectamentaDataLabel cur_m;
+                        OblectamentaDataLabel four, one;
+                        cur_m; -1;
+                        i; 0;
+                        array; 4;1;7;9;2;5;8;10;3;6;
+                        n; 10;
+                        four; 4;
+                        one; 1;
+                    };
+
+                    text{
+                        asm{
+                            OblectamentaDataLabel array;
+                            OblectamentaDataLabel i,four,one;
+                            OblectamentaDataLabel cur_m, n;
+                            OblectamentaCodeLabel done,loop,loop_tail;
+                        loop;
+                            ldi32(i);
+                            ldi32(n);
+                            subi32;
+                            blteqzeroi32(done); // if (i >= n) goto done;
+
+                            ldi32(i);
+                            ldi32(four);
+                            muli32;
+                            ui32toui64;
+                            lea(array);                            
+                            addi64;
+                            ldsi32; // array[i] on top of stack
+                            ldi32(cur_m);
+                            subi32;
+                            bgteqzeroi32(loop_tail);
+                            ldi32(i);
+                            ldi32(four);
+                            muli32;
+                            ui32toui64;
+                            lea(array);
+                            addi64;
+                            ldsi32; // array[i] on top of stack
+                            sti32(cur_m); // cur_m = array[i] 
+
+
+                            loop_tail;                    
+                            ldi32(one);
+                            ldi32(i);
+                            addi32;
+                            sti32(i); // i = i +1 ;
+                            buc(loop);
+
+                        done; 
+                            halt;
+                        };
+                    };
+                };
             }
         );
         docinfo_se("Run");
@@ -81,8 +83,7 @@ Scenario{
             the_data;
         };
         output{
-            the_vm.vm.stack;
-            the_vm.vm.data;
+            the_vm;
         };
         verdict{equality_test{the_vm.vm.data.content().at(0); 10; };};
      };
