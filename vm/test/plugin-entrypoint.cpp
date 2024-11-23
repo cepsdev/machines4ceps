@@ -869,10 +869,11 @@ template<>
             occurs_in_lhs_of_an_equation.insert(leaf.id);
         });
     }
+    int nunber_of_ignored_stamts{};
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
         auto assign_expr{stmt.is_assign_op()};
-        if (!assign_expr) continue;
+        if (!assign_expr) {++nunber_of_ignored_stamts; continue;}
         for_all_leaves(assign_expr->rhs(),[&](Traverser::array_ref leaf){
             occurs_in_rhs_of_an_equation.insert(leaf.id);
             if (weight_id != leaf.id &&  occurs_in_lhs_of_an_equation.find(leaf.id) ==occurs_in_lhs_of_an_equation.end() )
@@ -900,7 +901,10 @@ template<>
          error_function_layer.push_back(i);
     }
     //for (auto e : error_function_layer) cerr << *graph_def[e].node << '\n'<< '\n'<< '\n';
-    vector<int> y_ks;
+
+    vector<int> y_ks; // the line numbers of the output units (y_k)
+    // To compute the line numbers of the output units we go essentially have to 
+    // find the line numbers of all assignments l = r with l occuring in the error layer
     for(auto ie : error_function_layer){
         for_all_leaves(
             graph_def[ie].is_assign_op()->rhs(), [&](Traverser::array_ref leaf){
@@ -921,9 +925,12 @@ template<>
             }
         );
     }
+
     sort(y_ks.begin(), y_ks.end());
     auto last = unique(y_ks.begin(), y_ks.end());
     y_ks.erase(last, y_ks.end());
+    Invariant("y_ks is the sorted (in ascending order) of exactly the lines i such that at the position i in the computuation graph is l = r with l referenced from the error layer.");
+
     vector<Traverser::expr> delta_k;
     for(auto it{y_ks.begin()}; it != last;++it){
         for(auto ie : error_function_layer){
@@ -932,9 +939,10 @@ template<>
                                    constants));
         }      
     }
+    Invariant("delta_k contains all \delta_k of the output units k.");
 
     //for(auto e : y_ks)
-    // cerr << e << '\n';
+    //  cerr << e << '\n';
 
     //for(auto ie : error_function_layer)
     // cerr << ie << '\n';
@@ -1013,10 +1021,7 @@ template<>
         delta_next = delta_current;
     }
 
-
-    exit(0);
-
-    
+    // Forward Propagation
     for(size_t i{}; i < graph_def.size(); ++i){
         auto stmt{graph_def[i]};
         auto assign_expr{stmt.is_assign_op()};
@@ -1032,15 +1037,21 @@ template<>
         writer.push_back(graph_def[i]);
         //writer.push_back(Traverser::expr::mk_assignment(diff_lhs,diff_rhs));
     }
+    // Error evaluation
     size_t delta_k_i{};
     for(size_t i{}; i < error_function_layer.size(); ++i){
         for (size_t j{}; j < y_ks.size(); ++j){
             writer.push_back(
-                Traverser::expr::mk_assignment(Traverser::array_ref{"delta", y_ks[j] }.as_expr()  , delta_k[delta_k_i]) );
+                Traverser::expr::mk_assignment(Traverser::array_ref{"delta", y_ks[j] /*- nunber_of_ignored_stamts*/ }.as_expr()  , delta_k[delta_k_i]) );
             ++delta_k_i;
         }
     }    
-    for (auto e : inner_deltas) writer.push_back(e);
+    // Backward propagation
+    
+    /*for(;;){
+
+    }*/
+    //for (auto e : inner_deltas) writer.push_back(e);
 
 }
 
@@ -1080,7 +1091,8 @@ ceps::ast::node_t handle_operation_backpropagation(ceps::ast::Struct& ceps_struc
 }
 
 ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params){
-    ast_proc_prolog    
+    ast_proc_prolog
+        
     auto data = get_first_child(params);    
     if (!is<Ast_node_kind::structdef>(data)) {
         return mk_undef();
@@ -1095,6 +1107,7 @@ ceps::ast::node_t cepsplugin::operation(ceps::ast::node_callparameters_t params)
                 vm.run(0);
                 return ast_rep<ceps::vm::oblectamenta::VMEnv&> (vm);
             } else {
+                
                 return mk_undef();
             }
          }

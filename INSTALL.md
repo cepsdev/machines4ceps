@@ -1,9 +1,7 @@
 # Installation
-## Download binary from sourceforge
-### x86-64
-- [Ubuntu 20.04](https://sourceforge.net/projects/ceps-tool/files/x86-64/ubuntu-20.04)
-- [Ubuntu 22.04](https://sourceforge.net/projects/ceps-tool/files/x86-64/ubuntu-22.04)
-## How to build the thing
+## Best Choice: Pick a published release
+[Available Releases](https://github.com/cepsdev/machines4ceps/releases)
+## Second best choice: How to build the thing
 
 ### Prerequisites:
 * Linux (Kernel Version >= 2.6)

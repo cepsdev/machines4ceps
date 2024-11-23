@@ -14,7 +14,8 @@ objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_
   sm_livelog_storage_utils.o signalgenerator.o gensm.o partitions.o cover_path.o sm_global_functions.o fibex_import.o can_layer_docgen.o asciidoc.o sm_sim_core_shadow_states.o sm_sim_process_sm.o concept_dependency_graph.o stddoc.o \
    generic_tcp_communication.o ceps_websocket.o sm_sim_core_timer.o sm_sim_execute_action_seq.o streamtransform.o\
   ws_api.o virtual_can_api.o docgen_formats.o docgen_sm.o docgen_macros.o docgen_docwriter_ansi_console.o docgen_docwriter_html5.o\
-   docgen_docwriter_markdown_jira_style.o docgen_docwriter_factory.o docgen_theme_factory.o  docgen.o docgen_ifelse.o docgen_docwriter_markdown_github_style.o  docgen_docwriter_markdown_minimal.o
+   docgen_docwriter_markdown_jira_style.o docgen_docwriter_factory.o docgen_theme_factory.o  docgen.o docgen_ifelse.o\
+   docgen_docwriter_markdown_github_style.o  docgen_docwriter_markdown_minimal.o oblectamenta-assembler.o vm_base.o
 objfiles := $(patsubst %,$(OBJDIR)/%,$(objfiles))
 CEPSLIB := ../ceps/core/$(TARGET)/libcepscore.a
 tutorial_dir := tutorial
@@ -90,6 +91,8 @@ $(TARGET)/ceps: $(objfiles) $(CEPSLIB)
 	$(TARGET)/generic_tcp_communication.o \
 	$(TARGET)/sm_sim_core_timer.o \
 	$(TARGET)/sm_sim_execute_action_seq.o \
+	$(TARGET)/oblectamenta-assembler.o \
+	$(TARGET)/vm_base.o \
 	$(TARGET)/docgen_docwriter_factory.o $(TARGET)/docgen_ifelse.o $(TARGET)/docgen_docwriter_html5.o $(TARGET)/docgen_docwriter_markdown_minimal.o -o $(TARGET)/ceps -ldl -lpthread -lrt -lcepscore
 
 $(TARGET)/main.o: src/main.cpp
@@ -220,7 +223,10 @@ $(TARGET)/sm_sim_execute_action_seq.o:  core/src/sm_sim_execute_action_seq.cpp c
 	$(CXX)   $(cflags) $(includes) core/src/sm_sim_execute_action_seq.cpp -c -o $(TARGET)/sm_sim_execute_action_seq.o
 $(TARGET)/docgen_docwriter_markdown_minimal.o: core/src/docgen/docgenerator_docwriter_markdown_minimal.cpp core/include/docgen/docgenerator_docwriter_markdown_minimal.hpp
 	$(CXX)   $(cflags) $(includes) core/src/docgen/docgenerator_docwriter_markdown_minimal.cpp -c -o $(TARGET)/docgen_docwriter_markdown_minimal.o
-	
+$(TARGET)/oblectamenta-assembler.o: core/src/vm/oblectamenta-assembler.cpp core/include/vm/vm_base.hpp core/include/vm/oblectamenta-assembler.hpp
+	$(CXX)   $(cflags) $(includes) core/src/vm/oblectamenta-assembler.cpp -c -o $(TARGET)/oblectamenta-assembler.o
+$(TARGET)/vm_base.o: core/src/vm/vm_base.cpp core/include/vm/vm_base.hpp
+	$(CXX)   $(cflags) $(includes) core/src/vm/vm_base.cpp -c -o $(TARGET)/vm_base.o
 
 clean:
 	rm $(TARGET)/*

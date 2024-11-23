@@ -189,64 +189,65 @@ namespace ceps::vm::oblectamenta{
         return *(size_t*)(text + pos  + base_opcode_width) ;
     }
     size_t VMEnv::beq(size_t pos){
-        if (pop_cs<int>() == pop_cs<int>()) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() == pop_cs<int>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bneq(size_t pos){
-        if (pop_cs<int>() != pop_cs<int>()) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() != pop_cs<int>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::blt(size_t pos){
-        if (pop_cs<int>() < pop_cs<int>()) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() < pop_cs<int>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::blteq(size_t pos){
-        if (pop_cs<int>() <= pop_cs<int>()) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() <= pop_cs<int>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bgt(size_t pos){
-        if (pop_cs<int>() > pop_cs<int>()) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() > pop_cs<int>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bgteq(size_t pos){
-        if (pop_cs<int>() >= pop_cs<int>()) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() >= pop_cs<int>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bgteqzeroi32(size_t pos){
-        if (pop_cs<int>() >= 0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() >= 0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::blteqzeroi32(size_t pos){
-        if (pop_cs<int>() <= 0) return *(size_t*)(text + pos  + base_opcode_width);
+        auto v = pop_cs<int>(); 
+        if (v <= 0) return *(size_t*)(text + pos  + base_opcode_width);
         return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bltzeroi32(size_t pos){
-        if (pop_cs<int>() < 0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int>() < 0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bzeroi32(size_t pos){
         if (pop_cs<int>() == 0) return *(size_t*)(text + pos  + base_opcode_width);
         return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bzeroi64(size_t pos){
-        if (pop_cs<int64_t>() == 0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int64_t>() == 0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bzerodbl(size_t pos){
-        if (pop_cs<double>() == 0.0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<double>() == 0.0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bnzeroi32(size_t pos){
         if (pop_cs<int>() != 0) return *(size_t*)(text + pos  + base_opcode_width);
         return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bnzeroi64(size_t pos){
-        if (pop_cs<int64_t>() != 0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<int64_t>() != 0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
     size_t VMEnv::bnzerodbl(size_t pos){
-        if (pop_cs<double>() != 0.0) return text[pos+1];
-        return base_opcode_width + 1 + pos;
+        if (pop_cs<double>() != 0.0) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
     }
 
     size_t VMEnv::call(size_t pos){

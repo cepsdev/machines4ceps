@@ -62,6 +62,12 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/transform/streamtransform.hpp"
 #include "core/include/threadsafequeue.hpp"
 
+//Oblectamenta VM
+#include "core/include/vm/vm_base.hpp"
+#include "core/include/vm/oblectamenta-assembler.hpp"
+#include "core/include/vm/oblectamenta-comp-graph.hpp"
+
+
 namespace log4cepsloggers = log4ceps_loggers;
 
 constexpr int SM4CEPS_PARAMETER_MAX_SHADOW_DEPTH = 128;
@@ -143,6 +149,10 @@ class State_machine_simulation_core:
 		        Ism4ceps_plugin_interface
 {
 public:
+    
+	ceps::vm::oblectamenta::VMEnv vm; //The associated Oblectamenta VM, used for actions, guards, in Oblectamenta's assembler. 
+	                                  // Later we will compile all actions/guards to Oblectamenta machine language )
+
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
         using frame_queue_elem_t = std::tuple<
