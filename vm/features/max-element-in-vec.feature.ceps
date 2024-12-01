@@ -78,14 +78,8 @@ Scenario{
      };
      Then
      {
-        input{
-            the_stack;
-            the_data;
-        };
-        output{
-            the_vm;
-        };
-        verdict{equality_test{the_vm.vm.data.content().at(0); 10; };};
+        the_vm;
+        verdict{equality_test{the_vm.vm.data.content().at(1); as_uint8(10); };};
      };
 };
 
