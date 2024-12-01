@@ -102,17 +102,20 @@ OblectamentaReg SP, FP;
 
 oblectamenta{
  global{
-    data{
+   data{
         OblectamentaDataLabel array;
         OblectamentaDataLabel i;
         OblectamentaDataLabel n;
         OblectamentaDataLabel x;
         OblectamentaDataLabel j;
         OblectamentaDataLabel cur_m;
+        OblectamentaDataLabel four, one;
         cur_m; -1;
         i; 0;
         array; 4;1;7;9;2;5;8;10;3;6;
         n; 10;
+        four; 4;
+        one; 1;
     };
  };
 };
@@ -123,45 +126,49 @@ sm{
     Actions{
         doFindMaxElement{
             oblectamenta{
-                text{
-                 OblectamentaDataLabel array;
-                 OblectamentaDataLabel i;
-                 OblectamentaDataLabel cur_m, n;
-                 OblectamentaCodeLabel done,loop,loop_tail;
-                 loop;
-                  ldi32(i);
-                  ldi32(n);
-                  subi32;
-                  blteqzeroi32(done); // if (i >= n) goto done;
+                        text{
+                            asm{
+                                OblectamentaDataLabel array;
+                                OblectamentaDataLabel i,four,one;
+                                OblectamentaDataLabel cur_m, n;
+                                OblectamentaCodeLabel done,loop,loop_tail;
+                            loop;
+                                ldi32(i);
+                                ldi32(n);
+                                subi32;
+                                blteqzeroi32(done); // if (i >= n) goto done;
 
-                  ldi32(i);
-                  ldi32(4);
-                  muli32;
-                  lea(array);
-                  addi32;
-                  ldsi32; // array[i] on top of stack
-                  ldi32(cur_m); 
-                  bgteq(loop_tail);
+                                ldi32(i);
+                                ldi32(four);
+                                muli32;
+                                ui32toui64;
+                                lea(array);                            
+                                addi64;
+                                ldsi32; // array[i] on top of stack
+                                ldi32(cur_m);
+                                subi32;
+                                bgteqzeroi32(loop_tail);
+                                ldi32(i);
+                                ldi32(four);
+                                muli32;
+                                ui32toui64;
+                                lea(array);
+                                addi64;
+                                ldsi32; // array[i] on top of stack
+                                sti32(cur_m); // cur_m = array[i] 
 
-                  ldi32(i);
-                  ldi32(4);
-                  muli32;
-                  lea(array);
-                  addi32;
-                  ldsi32; // array[i] on top of stack
-                  sti32(cur_m); // cur_m = array[i] 
 
+                                loop_tail;                    
+                                ldi32(one);
+                                ldi32(i);
+                                addi32;
+                                sti32(i); // i = i +1 ;
+                                buc(loop);
 
-                 loop_tail;
-                  ldi32(1);
-                  ldi32(i);
-                  addi32;
-                  sti32(i); // i = i +1 ;
-                  buc(loop);
-
-                 done; 
-                  halt;
-           };
+                            done; 
+                                halt;
+                            };
+                        };
             };
         };
     };
