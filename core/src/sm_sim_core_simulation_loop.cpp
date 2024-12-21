@@ -466,7 +466,11 @@ static void run_triggered_actions(State_machine_simulation_core* smc,
     if(trans.a1_script) { auto r = smc->execute_action_seq(smc->current_smp(),(ceps::ast::Nodebase_ptr)trans.a1_script);}
     if(trans.a2_script) smc->execute_action_seq(smc->current_smp(),(ceps::ast::Nodebase_ptr)trans.a2_script);
     if(trans.a3_script) smc->execute_action_seq(smc->current_smp(),(ceps::ast::Nodebase_ptr)trans.a3_script);
-   } else {
+   } else if (trans.oblectamenta) {
+    //INVARIANT: flag oblectamenta is set iff at least one oblectamenta actionn is defined, hence trans.a1 contains a valid jump address.
+    //Remark:  Zero is a valid address in Oblectamenta's VM so we can't test trans.a1 against zero to check whether it contains a valid value.
+    smc->vm.run((size_t) trans.a1);  if (trans.a2) smc->vm.run((size_t) trans.a2); if (trans.a3) smc->vm.run((size_t) trans.a3);
+   } else  {
     auto a1 = trans.a1;auto a2 = trans.a2; auto a3 = trans.a3;
     if (a1) a1();  if (a2) a2(); if (a3) a3();
    }

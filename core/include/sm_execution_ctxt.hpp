@@ -191,6 +191,7 @@ public:
 		int root_sms = 0; //root state machine, i.e. the very top level sms which transitively contains this transition
 		int smp = 0,from = 0, to = 0, ev = 0;int rel_idx = -1;
         bool native = true;
+		bool oblectamenta {};
 		bool(**guard)() = nullptr;
 		void(* a1)() = nullptr;
 		void(* a2)() = nullptr;

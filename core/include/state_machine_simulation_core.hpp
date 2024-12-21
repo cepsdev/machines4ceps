@@ -150,8 +150,9 @@ class State_machine_simulation_core:
 {
 public:
     
-	ceps::vm::oblectamenta::VMEnv vm; //The associated Oblectamenta VM, used for actions, guards, in Oblectamenta's assembler. 
-	                                  // Later we will compile all actions/guards to Oblectamenta machine language )
+	ceps::vm::oblectamenta::VMEnv vm; //The associated Oblectamenta VM, used for actions, guards, etc. in Oblectamenta's assembler.
+									// Oblectamenta serves as an intermediate for native machine language, i.e. on an x64 platform 
+									// routines in Oblectamenta assembler will be compiled to x84 machine code. 
 
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
