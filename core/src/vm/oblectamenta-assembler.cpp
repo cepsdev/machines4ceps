@@ -191,3 +191,288 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
 
 
 }
+
+
+
+namespace ceps::vm::oblectamenta::ast{
+
+template<> bool check<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "vm";
+}
+
+template<> bool check<ser_wrapper_stack>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "stack";
+}
+
+template<> ser_wrapper_stack fetch<ser_wrapper_stack>(ceps::ast::Struct& s)
+{
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    ser_wrapper_stack r{make_shared<VMEnv>()};
+    if(children(s).size()) 
+    for(size_t i{children(s).size()}; i > 0; --i){
+     auto e {children(s)[i-1]};
+     if (is<Ast_node_kind::int_literal>(e)){ 
+        auto v{value(as_int_ref(e))};
+        r.vm->registers.file[VMEnv::registers_t::SP] -= sizeof(int32_t);
+        *(int*)&(r.vm->mem.base[r.vm->registers.file[VMEnv::registers_t::SP]]) = v;
+     } else if (is<Ast_node_kind::uint8>(e)){
+        auto v{value(as_uint8_ref(e))};
+        r.vm->registers.file[VMEnv::registers_t::SP] -= sizeof(v);
+        *(decltype(v)*)&(r.vm->mem.base[r.vm->registers.file[VMEnv::registers_t::SP]]) = v;
+     }
+    }        
+    return r;
+}
+
+template<> bool check<ser_wrapper_text>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "text";
+}
+
+
+template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s)
+{
+    OBLECTAMENTA_AST_PROC_PROLOGUE
+
+    ser_wrapper_text r{make_shared<VMEnv>()};
+    try{
+        for(auto e : children(s))
+         if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
+          ceps::vm::oblectamenta::oblectamenta_assembler(*r.vm,children(as_struct_ref(e)));
+         } else if (is<Ast_node_kind::uint8>(e)){
+            auto v{value(as_uint8_ref(e))};
+            r.vm->text[r.vm->text_loc++] = v;
+         }
+    } catch (std::string const& msg){
+        std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << s << '\n' << '\n';
+    }
+    return r;
+}
+
+template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s, ceps::vm::oblectamenta::VMEnv& vm)
+{
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    ser_wrapper_text r{};
+
+    size_t tot_size{};
+    // compute total size
+    for(auto e : children(s))
+        if (is<Ast_node_kind::uint8>(e))
+            ++tot_size;
+    if (tot_size > vm.text_size) vm.resize_text(tot_size);
+
+    try{
+        for(auto e : children(s))
+         if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
+          ceps::vm::oblectamenta::oblectamenta_assembler(vm,children(as_struct_ref(e)));
+         } else if (is<Ast_node_kind::uint8>(e)){
+            auto v{value(as_uint8_ref(e))};
+            vm.text[vm.text_loc++] = v;
+         }
+    } catch (std::string const& msg){
+        std::cerr << "***Error oblectamenta_assembler:" <<  msg << '\n' << '\n' <<"Erroneous segment:\n" << s << '\n' << '\n';
+    }
+    return r;
+}
+
+template<> bool check<ser_wrapper_data>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "data";
+}
+
+template<> ser_wrapper_data fetch<ser_wrapper_data>(ceps::ast::Struct& s)
+{
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    ser_wrapper_data r{make_shared<VMEnv>()};
+    for(auto e: children(s)){
+        if (is<Ast_node_kind::int_literal>(e)) r.vm->store(value(as_int_ref(e)));
+        else if (is<Ast_node_kind::float_literal>(e)) r.vm->store(value(as_double_ref(e)));
+        else if (is<Ast_node_kind::string_literal>(e)) r.vm->store(value(as_string_ref(e)));
+        else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
+                r.vm->data_labels()[name(as_symbol_ref(e))] = r.vm->mem.heap - r.vm->mem.base;
+        } else if (is<Ast_node_kind::uint8>(e)){
+            auto v{value(as_uint8_ref(e))};
+            r.vm->store(v);
+        }
+    }        
+    return r;
+}
+
+template<> bool check<ser_wrapper_cstack>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "compute_stack";
+}
+
+template<> ser_wrapper_cstack fetch<ser_wrapper_cstack>(ceps::ast::Struct& s)
+{
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    ser_wrapper_cstack r{make_shared<VMEnv>()};
+    for(auto e: children(s)){
+        if (is<Ast_node_kind::int_literal>(e)) r.vm->push_cs(value(as_int_ref(e)));
+        else if (is<Ast_node_kind::float_literal>(e)) r.vm->push_cs(value(as_double_ref(e)));
+        else if (is<Ast_node_kind::string_literal>(e)) r.vm->push_cs(value(as_string_ref(e)));
+        else if (is<Ast_node_kind::uint8>(e)) r.vm->push_cs(value(as_uint8_ref(e)));
+    }
+    return r;
+}
+
+template<> bool check<ceps::vm::oblectamenta::VMEnv::registers_t>(ceps::ast::Struct & s)
+{
+    using namespace ceps::ast;
+    return name(s) == "registers";
+}
+
+template<> ceps::vm::oblectamenta::VMEnv::registers_t fetch<ceps::vm::oblectamenta::VMEnv::registers_t>(ceps::ast::Struct& s)
+{
+    OBLECTAMENTA_AST_PROC_PROLOGUE
+    VMEnv r{};
+    auto regs{r.registers};
+
+    for (auto e : children(s)){
+     if (!is<Ast_node_kind::structdef>(e)) continue;
+     auto it{regs.reg_mnemonic2idx.find(name(*as_struct_ptr(e)))};
+     if (it == regs.reg_mnemonic2idx.end()) continue;
+     if (!children(*as_struct_ptr(e)).size()) continue;
+     if (is<Ast_node_kind::int_literal>(children(*as_struct_ptr(e))[0]) )
+      regs.file[it->second] = value(as_int_ref(children(*as_struct_ptr(e))[0]));
+     else if (is<Ast_node_kind::long_literal>(children(*as_struct_ptr(e))[0]))
+      regs.file[it->second] = value(as_int64_ref(children(*as_struct_ptr(e))[0]));     
+    }
+   return regs;
+}
+
+template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& s)
+{
+    OBLECTAMENTA_AST_PROC_PROLOGUE
+    VMEnv r{};
+    optional<Struct*> st;
+
+    for (auto e : children(s)){
+     if (!is<Ast_node_kind::structdef>(e)) continue;
+     if (name(*as_struct_ptr(e)) == "stack") {
+        auto stack_opt{read_value<ser_wrapper_stack>(*as_struct_ptr(e))};
+        if (!stack_opt) continue;
+        copy_stack( *(*stack_opt).vm, r );
+     } 
+     else if (name(*as_struct_ptr(e)) == "data" ){
+        auto data_opt{read_value<ser_wrapper_data>(*as_struct_ptr(e))};
+        if (!data_opt) continue;
+        copy_data( *(*data_opt).vm, r );             
+     }
+     else if ( name(*as_struct_ptr(e)) == "compute_stack") {
+        auto cs_opt{read_value<ser_wrapper_cstack>(*as_struct_ptr(e))};
+        if (!cs_opt) continue;
+        copy_compute_stack( *(*cs_opt).vm, r );
+     } else if ( name(*as_struct_ptr(e)) == "text") {
+        auto text_opt{read_value<ser_wrapper_text>(*as_struct_ptr(e),r)};
+        if (!text_opt) continue;
+        /*r.text = (*text_opt).vm->text;
+        r.text_loc = (*text_opt).vm->text_loc;
+        (*text_opt).vm->text = nullptr;*/
+     } 
+ 
+    }
+   return r;
+}
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_stack stack, ceps::vm::oblectamenta::VMEnv& vm ){
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    auto result = mk_struct("stack");
+    auto& ch {children(*result)};
+    auto mem_size{vm.mem.end -vm.mem.base};
+    for (ssize_t i = 0; i < mem_size  - vm.registers.file[VMEnv::registers_t::SP]; ++i )
+        ch.push_back(mk_uint8( vm.mem.base[vm.registers.file[VMEnv::registers_t::SP] + i] ));
+    return result;
+}
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_data data, ceps::vm::oblectamenta::VMEnv& vm){
+    OBLECTAMENTA_AST_PROC_PROLOGUE
+    vector< pair<string, size_t> > lbls{vm.data_labels().rbegin(), vm.data_labels().rend()};
+    sort(lbls.begin(), lbls.end(), [](pair<string, size_t> const & lhs, pair<string, size_t> const & rhs ){return lhs.second < rhs.second;});
+  
+    auto result = mk_struct("data");
+    auto& ch {children(*result)};
+    size_t static_mem_size{ (size_t)(vm.mem.heap -vm.mem.base)};
+    size_t cur_lbl = 0;
+    for (size_t i = 0; i < static_mem_size; ++i ){
+         while(cur_lbl < lbls.size() && lbls[cur_lbl].second == i){
+            ch.push_back(ceps::ast::mk_symbol(lbls[cur_lbl].first,"OblectamentaDataLabel"));
+            ++cur_lbl;
+        } 
+        ch.push_back(mk_uint8( vm.mem.base[i] ));
+    }
+    return result;
+}
+
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_cstack cstack, ceps::vm::oblectamenta::VMEnv& vm ){
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    auto result = mk_struct("compute_stack");
+    auto& ch {children(*result)};
+    for(size_t i = 0; i < (size_t)vm.registers.file[VMEnv::registers_t::CSP] ; ++i)
+     ch.push_back(mk_uint8(vm.compute_stack[i]));
+    return result;
+}
+
+// AST representation ser_wrapper_text
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_text text, ceps::vm::oblectamenta::VMEnv& vm ){
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    auto result = mk_struct("text");
+    auto& ch {children(*result)};
+    for (size_t loc = 0; loc < vm.text_loc; ++loc)
+     ch.push_back(mk_uint8(vm.text[loc]));
+    return result;
+}
+
+template<> ceps::ast::node_t ast_rep (ser_wrapper_text text){
+    OBLECTAMENTA_AST_PROC_PROLOGUE    
+    auto result = mk_struct("text");
+    return result;
+}
+
+// AST representation ceps::vm::oblectamenta::VMEnv::registers_t
+template<> ceps::ast::node_t ast_rep (ceps::vm::oblectamenta::VMEnv::registers_t regs){
+    OBLECTAMENTA_AST_PROC_PROLOGUE   
+    auto result = mk_struct("registers");
+    auto& ch {children(*result)};
+    for (auto reg : regs.reg_mnemonic2idx)
+    {
+        auto t{mk_struct(reg.first)}; ch.push_back(t);
+        children(*t).push_back(mk_int64_node(regs.file[reg.second]));
+    }
+    return result;
+}
+
+// AST representation ceps::vm::oblectamenta::VMEnv
+template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv&> (ceps::vm::oblectamenta::VMEnv& vm){
+    OBLECTAMENTA_AST_PROC_PROLOGUE
+    
+    auto result = mk_struct("vm");
+    children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
+    children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
+    children(*result).push_back(ast_rep(ser_wrapper_text{},vm));
+    children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
+    children(*result).push_back(ast_rep(vm.registers)); 
+    return result;
+}
+
+template<> ceps::ast::node_t ast_rep<ceps::vm::oblectamenta::VMEnv> (ceps::vm::oblectamenta::VMEnv vm){
+    OBLECTAMENTA_AST_PROC_PROLOGUE
+    
+    auto result = mk_struct("vm");
+    children(*result).push_back(ast_rep(ser_wrapper_stack{},vm));
+    children(*result).push_back(ast_rep(ser_wrapper_data{}, vm));
+    children(*result).push_back(ast_rep(ser_wrapper_text{}, vm));
+    children(*result).push_back(ast_rep(ser_wrapper_cstack{}, vm));
+    children(*result).push_back(ast_rep(vm.registers));
+    return result;
+}
+}

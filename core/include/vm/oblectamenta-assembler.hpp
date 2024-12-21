@@ -17,6 +17,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <vector>
 #include "ceps_ast.hh"
+#include "ceps_interpreter.hh"
+#include "core/include/vm/vm_base.hpp"
 
 namespace ceps{
     namespace vm{
@@ -28,3 +30,78 @@ namespace ceps{
         }
     }
 } 
+
+
+
+#define OBLECTAMENTA_AST_PROC_PROLOGUE \
+    using namespace ceps::ast;\
+    using namespace ceps::vm::oblectamenta;\
+    using namespace ceps::interpreter;\
+    using namespace std;
+
+
+namespace ceps::vm::oblectamenta::ast{
+template<typename T> 
+    T  fetch(ceps::ast::Struct&);
+template<typename T> 
+    T  fetch(ceps::ast::node_t);
+template<typename T> 
+    T  fetch(ceps::ast::Struct&, ceps::vm::oblectamenta::VMEnv&);
+
+template<> ceps::vm::oblectamenta::VMEnv fetch<ceps::vm::oblectamenta::VMEnv>(ceps::ast::Struct& );
+
+
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s);
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s, ceps::vm::oblectamenta::VMEnv& vm);
+template<typename T> 
+    std::optional<T> read_value(size_t idx, ceps::ast::Struct& s);
+template<typename T> 
+    bool check(ceps::ast::Struct&);
+template<typename T> 
+    bool check(ceps::ast::node_t);
+
+template<typename T> 
+    std::optional<T> read_value(size_t idx, ceps::ast::Struct& s){
+        auto & v{children(s)};
+        if(v.size() <= idx || !check<T>(v[idx])) return {};
+        return fetch<T>(v[idx]);
+    }
+
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s){
+        if(!check<T>(s)) return {};
+        return fetch<T>(s);
+    }
+
+template<typename T> 
+    std::optional<T> read_value(ceps::ast::Struct& s, ceps::vm::oblectamenta::VMEnv& vm){
+        if(!check<T>(s)) return {};
+        return fetch<T>(s,vm);
+    }
+
+template<typename T> ceps::ast::node_t ast_rep (T entity);
+template<typename T> ceps::ast::node_t ast_rep (T entity, ceps::vm::oblectamenta::VMEnv&);
+
+
+////////
+
+struct ser_wrapper_stack{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;
+};
+
+struct ser_wrapper_data{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;
+};
+
+struct ser_wrapper_text{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;    
+};
+
+struct ser_wrapper_cstack{
+    std::shared_ptr<ceps::vm::oblectamenta::VMEnv> vm;
+};
+
+
+}
