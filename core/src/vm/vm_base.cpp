@@ -539,6 +539,7 @@ namespace ceps::vm::oblectamenta{
         for(auto p{mem.heap}; p - mem.heap < default_mem_size;) *p++ = 0;
         mem.end = mem.base + default_mem_size;
         text = new remove_pointer_t<text_t>[text_size = default_text_size];
+        emit<Opcode::halt>(*this,0);
 
         registers.file[registers_t::SP] = mem.end - mem.base;
         registers.file[registers_t::CSP] = 0;

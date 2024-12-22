@@ -156,6 +156,21 @@ static int get_state_idx(state_rep_t  s){
 	return -1;
 }
 
+static std::optional<ceps::ast::node_t> oblectamenta_assembly_code(ceps::ast::node_t action){
+	//is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "vm"
+	using namespace ceps::ast;
+	if (!is<Ast_node_kind::structdef>(action)) return {};
+	if(!children(as_struct_ref(action)).size()) return {};
+	if(!is<Ast_node_kind::structdef>(children(as_struct_ref(action))[0])) return {};
+	if(name(as_struct_ref(children(as_struct_ref(action))[0])) != "oblectamenta") return {};
+	auto& oblectamenta_sec {as_struct_ref(children(as_struct_ref(action))[0])};
+	if(!children(oblectamenta_sec).size()) return {};
+	if(!is<Ast_node_kind::structdef>(children(oblectamenta_sec)[0])) return {};
+	if(name(as_struct_ref(children(oblectamenta_sec)[0])) != "text") return {};
+	auto& text_sec{as_struct_ref(children(oblectamenta_sec)[0])};
+	return {&text_sec};
+}
+
 int compute_state_and_event_ids(State_machine_simulation_core* smp,
 		                        std::map<std::string,State_machine*> sms,
 								std::map<std::string,int>& map_fullqualified_sm_id_to_computed_idx){
@@ -319,9 +334,30 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
               if (t.action_.size() && t.action_[0].native_func_ == nullptr){
                //Case: no native implementation available
                tt.native = false;
-               if (t.action_.size() >= 1) tt.a1_script = t.action_[0].body();
-               if (t.action_.size() >= 2) tt.a2_script = t.action_[1].body();
-               if (t.action_.size() >= 3) tt.a3_script = t.action_[2].body();
+               if (t.action_.size() >= 1) {
+				tt.a1_script = t.action_[0].body();
+				auto oblectamenta_text{oblectamenta_assembly_code(t.action_[0].body())};
+				if (oblectamenta_text){
+					tt.oblectamenta[0] = true;
+					tt.a1 = {};				
+				}
+			   }
+               if (t.action_.size() >= 2) {
+				tt.a2_script = t.action_[1].body();
+				auto oblectamenta_text{oblectamenta_assembly_code(t.action_[1].body())};
+				if (oblectamenta_text){
+					tt.oblectamenta[1] = true;
+					tt.a2 = {};				
+				}
+			   }
+               if (t.action_.size() >= 3) {
+				tt.a3_script = t.action_[2].body();
+				auto oblectamenta_text{oblectamenta_assembly_code(t.action_[2].body())};
+				if (oblectamenta_text){
+					tt.oblectamenta[2] = true;
+					tt.a3 = {};				
+				}
+			   }
               } else{
                if (t.action_.size() >= 1) tt.a1 = t.action_[0].native_func_;
                if (t.action_.size() >= 2) tt.a2 = t.action_[1].native_func_;
@@ -836,6 +872,32 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
     auto unique_event_declarations   = ns["unique"];
 	auto no_transitions_declarations = ns["no_transitions"];
     auto exported_events             = ns["export"];
+	auto oblectamenta			     = ns["oblectamenta"];
+
+	for(auto obl_sec : oblectamenta.nodes()){
+		if (!is<Ast_node_kind::structdef>(obl_sec) || name(as_struct_ref(obl_sec)) != "global" ) continue;
+		for (auto sub_sec : children(as_struct_ref(obl_sec)))
+			if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "data" ) 
+			 oblectamenta_data_globals.push_back(sub_sec);
+	}
+
+/*
+    for(auto e: children(s)){
+        if (is<Ast_node_kind::int_literal>(e)) r.vm->store(value(as_int_ref(e)));
+        else if (is<Ast_node_kind::float_literal>(e)) r.vm->store(value(as_double_ref(e)));
+        else if (is<Ast_node_kind::string_literal>(e)) r.vm->store(value(as_string_ref(e)));
+        else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
+                r.vm->data_labels()[name(as_symbol_ref(e))] = r.vm->mem.heap - r.vm->mem.base;
+        } else if (is<Ast_node_kind::uint8>(e)){
+            auto v{value(as_uint8_ref(e))};
+            r.vm->store(v);
+        }
+    }        
+
+*/
+	if (oblectamenta_data_globals.size()){
+
+	}
 
 	start_comm_threads() = !generate_cpp_code();
 

@@ -149,10 +149,11 @@ class State_machine_simulation_core:
 		        Ism4ceps_plugin_interface
 {
 public:
-    
+    //Oblectamenta related stuff
 	ceps::vm::oblectamenta::VMEnv vm; //The associated Oblectamenta VM, used for actions, guards, etc. in Oblectamenta's assembler.
 									// Oblectamenta serves as an intermediate for native machine language, i.e. on an x64 platform 
-									// routines in Oblectamenta assembler will be compiled to x84 machine code. 
+									// routines in Oblectamenta assembler will be compiled to x84 machine code.
+	std::vector<ceps::ast::node_t> oblectamenta_data_globals;
 
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
