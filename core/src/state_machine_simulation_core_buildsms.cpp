@@ -756,15 +756,6 @@ static int establish_inet_stream_connect(std::string remote, std::string port) {
     return cfd;
 }
 
-static std::pair<bool,std::string> get_virtual_can_attribute_content(std::string attr, std::vector<std::pair<std::string,std::string>> const & http_header){
- for(auto const & v : http_header){
-     if (v.first == attr)
-         return {true,v.second};
- }
- return {false,{}};
-}
-
-
 static std::tuple<bool,std::string,std::vector<std::pair<std::string,std::string>>> read_virtual_can_msg(int sck,std::string& unconsumed_data){
  using header_t = std::vector<std::pair<std::string,std::string>>;
  std::tuple<bool,std::string,header_t> r;
@@ -874,30 +865,24 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
     auto exported_events             = ns["export"];
 	auto oblectamenta			     = ns["oblectamenta"];
 
+	//INVARIANT: oblectamenta contains all 'oblectamenta{global{data{...}}}' nodes in document order
 	for(auto obl_sec : oblectamenta.nodes()){
 		if (!is<Ast_node_kind::structdef>(obl_sec) || name(as_struct_ref(obl_sec)) != "global" ) continue;
 		for (auto sub_sec : children(as_struct_ref(obl_sec)))
-			if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "data" ) 
-			 oblectamenta_data_globals.push_back(sub_sec);
+			if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "data" )
+			for (auto e: children(as_struct_ref(sub_sec))){
+        		if (is<Ast_node_kind::int_literal>(e)) vm.store(value(as_int_ref(e))); // int data
+        		else if (is<Ast_node_kind::float_literal>(e)) vm.store(value(as_double_ref(e))); //double data (we call them float)
+        		else if (is<Ast_node_kind::string_literal>(e)) vm.store(value(as_string_ref(e))); // string data
+        		else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){  //Label for data
+                	vm.data_labels()[name(as_symbol_ref(e))] = vm.mem.heap - vm.mem.base;
+        		} else if (is<Ast_node_kind::uint8>(e)){ // Bytes
+            		auto v{value(as_uint8_ref(e))};
+            		vm.store(v);
+        		}
+			}
 	}
-
-/*
-    for(auto e: children(s)){
-        if (is<Ast_node_kind::int_literal>(e)) r.vm->store(value(as_int_ref(e)));
-        else if (is<Ast_node_kind::float_literal>(e)) r.vm->store(value(as_double_ref(e)));
-        else if (is<Ast_node_kind::string_literal>(e)) r.vm->store(value(as_string_ref(e)));
-        else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){
-                r.vm->data_labels()[name(as_symbol_ref(e))] = r.vm->mem.heap - r.vm->mem.base;
-        } else if (is<Ast_node_kind::uint8>(e)){
-            auto v{value(as_uint8_ref(e))};
-            r.vm->store(v);
-        }
-    }        
-
-*/
-	if (oblectamenta_data_globals.size()){
-
-	}
+	//INVARIANT:  Global vm's Data section initialized according to global data definitions in document.
 
 	start_comm_threads() = !generate_cpp_code();
 

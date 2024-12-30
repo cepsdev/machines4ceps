@@ -154,7 +154,7 @@ void ceps::docgen::Statemachine::print_states(std::ostream& os, Doc_writer* doc_
 				bool margin_annotation = false;
 				if (print_coverage_statistics){
 					for(auto idx: active_pointers_to_composite_ids_with_coverage_info){
-						if (ctxt.composite_ids_with_coverage_info.size() <= idx) break;
+						if (ctxt.composite_ids_with_coverage_info.size() <= (size_t) idx) break;
 						if(ctxt.composite_ids_with_coverage_info[idx+1] == nullptr) continue;
 						if(!is<Ast_node_kind::identifier>(ctxt.composite_ids_with_coverage_info[idx+1])) continue;
 						if (ceps::ast::name(as_id_ref(ctxt.composite_ids_with_coverage_info[idx+1]))!=states[i]) continue;
@@ -200,12 +200,11 @@ void ceps::docgen::Statemachine::print_states(std::ostream& os, Doc_writer* doc_
 
 void ceps::docgen::Statemachine::print_states_tabularized(std::ostream& os, Doc_writer* doc_writer, bool states_on_single_line, bool print_coverage_statistics){
 	auto tbl_writer = doc_writer->get_table_writer(&os); 
-	bool visited_column = print_coverage_statistics;
 	std::vector<std::string> tbl_header {"State"};
 	auto write_cell_visited = [](ceps::docgen::Statemachine* sm, std::string state_name, std::ostream& os, Doc_writer* doc_writer){
 		auto visited = false;
 		for(auto idx: sm->active_pointers_to_composite_ids_with_coverage_info){
-			if(sm->ctxt.composite_ids_with_coverage_info.size() <= idx) break;
+			if(sm->ctxt.composite_ids_with_coverage_info.size() <= (size_t)idx) break;
 			if(sm->ctxt.composite_ids_with_coverage_info[idx+1] == nullptr) continue;
 			if(!is<Ast_node_kind::identifier>(sm->ctxt.composite_ids_with_coverage_info[idx+1])) continue;
 			if (ceps::ast::name(as_id_ref(sm->ctxt.composite_ids_with_coverage_info[idx+1]))!=state_name) continue;
@@ -280,7 +279,7 @@ void ceps::docgen::Statemachine::print_transitions(std::ostream& os, Doc_writer*
 		auto max_from_len = 0;
 		for(auto t : transitions){
 			auto s = default_text_representation(t.from);
-		 if (s.length() > max_from_len) max_from_len = s.length();
+		 if (s.length() > (size_t)max_from_len) max_from_len = s.length();
 		}
 
 		if (doc_writer->supports_tables())
@@ -325,9 +324,9 @@ void ceps::docgen::Statemachine::print_transitions(std::ostream& os, Doc_writer*
 				doc_writer->top().ignore_indent = true;
 				doc_writer->top().normal_intensity =true;
 				doc_writer->out(os, ([&](){std::string s = ""; 
-				                           for(size_t i = 0; i < max_from_len/2; ++i) s.append(" ");
+				                           for(size_t i = 0; i < (size_t) (max_from_len/2); ++i) s.append(" ");
 										   s.append(".");
-										   for(size_t i = 0; i < max_from_len - ( 1 +max_from_len/2); ++i) s.append(" ");
+										   for(size_t i = 0; i < (size_t)(max_from_len - ( 1 +max_from_len/2)); ++i) s.append(" ");
 										   return s;})());
 				doc_writer->pop_ctx();
 			}

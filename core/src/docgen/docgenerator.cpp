@@ -581,7 +581,6 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 	
 	size_t primitives = 0;
 	bool data_section  = only_primitives(children(strct), primitives);
-	bool print_eol {};
 	auto old_indent = doc_writer->top().indent;
 	{
 		doc_writer->push_ctx();
@@ -620,16 +619,13 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 	}
 	if (!data_section) ++doc_writer->top().indent;
 	
-	print_eol= !data_section /*|| primitives > 1*/;
 	auto default_eol = data_section ? 0 : 1 ;
 	//doc_writer->start_line();
 	doc_writer->push_ctx();
 	doc_writer->top().eol = 0;
 
 	if (default_eol == 0) doc_writer->top().ignore_indent = true;
-	bool eol_printed = false;
 	for(size_t i = 0; i < children(strct).size();++i){
-		eol_printed = false;
 		auto n = children(strct)[i];
 		if (is_a_struct(n)){
 			auto& strct{ceps::ast::as_struct_ref(n)};
@@ -657,7 +653,6 @@ void ceps::docgen::fmt_out_handle_inner_struct(std::ostream& os,
 				
 				doc_writer->top().eol = 0;
 				doc_writer->top().ignore_indent = false;
-				eol_printed = true;
 			}
 		}
 	}

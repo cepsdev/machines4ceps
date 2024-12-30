@@ -345,7 +345,7 @@ namespace ceps{
 			void print_transitions(std::ostream& os, Doc_writer* doc_writer);
 			void print_transitions_tabularized(std::ostream& os, Doc_writer* doc_writer);
             void print_left_margin (std::ostream& os, fmt_out_ctx& ctx) override ;
-            ~Statemachine () { for (auto e:sub_machines) delete e;}
+            virtual ~Statemachine () { for (auto e:sub_machines) delete e;}
 		};
 
 		class Simulation {
