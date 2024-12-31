@@ -136,7 +136,8 @@ namespace ceps{
                 negi32,
                 negi64,
                 stsdbl,
-                tanhdbl
+                tanhdbl,
+                dbg_printlni32
 
             };
 
@@ -353,6 +354,7 @@ namespace ceps{
                     size_t negi64(size_t);
                     size_t stsdbl(size_t);
                     size_t tanhdbl(size_t);
+                    size_t dbg_printlni32(size_t);
 
 
                     using fn = size_t (VMEnv::*) (size_t) ;
@@ -509,9 +511,9 @@ namespace ceps{
                 {"negi32",{Opcode::negi32, "",emit<Opcode::negi32>,nullptr,nullptr}},
                 {"negi64",{Opcode::negi64, "",emit<Opcode::negi64>,nullptr,nullptr}},
                 {"stsdbl",{Opcode::stsdbl, "",emit<Opcode::stsdbl>, nullptr,nullptr }},
-                {"tanhdbl",{Opcode::tanhdbl, "",emit<Opcode::tanhdbl>,nullptr,nullptr}}
+                {"tanhdbl",{Opcode::tanhdbl, "",emit<Opcode::tanhdbl>,nullptr,nullptr}},
+                {"dbg_printlni32",{Opcode::dbg_printlni32, "",nullptr,emit<Opcode::dbg_printlni32>,nullptr} }
             };
-           
         }//namespace oblectamenta
     }
 }

@@ -99,6 +99,11 @@ namespace ceps::vm::oblectamenta{
         push_cs(*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   ));
         return base_opcode_width + sizeof(addr_t) + pos;
     }
+    
+    size_t VMEnv::dbg_printlni32(size_t pos){
+        cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
 
 // Replace address on stack with referenced value
     size_t VMEnv::ldsi32(size_t pos){
@@ -644,7 +649,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::negi64);
         op_dispatch.push_back(&VMEnv::stsdbl);
         op_dispatch.push_back(&VMEnv::tanhdbl);
-
+        op_dispatch.push_back(&VMEnv::dbg_printlni32);
     }
      
     void VMEnv::dump(ostream& os){

@@ -94,7 +94,8 @@ OblectamentaOpcode
     negi32,
     negi64,
     stsdbl,
-    tanhdbl;
+    tanhdbl,
+    dbg_printlni32;
 
 OblectamentaModifier addr;
 OblectamentaModifier reg;
@@ -132,6 +133,7 @@ sm{
                                 OblectamentaDataLabel i,four,one;
                                 OblectamentaDataLabel cur_m, n;
                                 OblectamentaCodeLabel done,loop,loop_tail;
+                                dbg_printlni32(cur_m); //Pseudo opcode for printing i32 to stdout
                             loop;
                                 ldi32(i);
                                 ldi32(n);
@@ -165,7 +167,8 @@ sm{
                                 sti32(i); // i = i +1 ;
                                 buc(loop);
 
-                            done; 
+                            done;
+                                dbg_printlni32(cur_m);//Pseudo opcode for printing i32 to stdout
                                 halt;
                             };
                         };

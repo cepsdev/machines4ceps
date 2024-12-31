@@ -339,7 +339,18 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				auto oblectamenta_text{oblectamenta_assembly_code(t.action_[0].body())};
 				if (oblectamenta_text){
 					tt.oblectamenta[0] = true;
-					tt.a1 = {};				
+					tt.a1 = (void (*)()) smp->vm.text_loc;
+					try{
+						for(auto e : children(as_struct_ref(*oblectamenta_text)))
+							if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
+								ceps::vm::oblectamenta::oblectamenta_assembler(smp->vm,children(as_struct_ref(e)));
+							} else if (is<Ast_node_kind::uint8>(e)){
+								auto v{value(as_uint8_ref(e))};
+								smp->vm.text[smp->vm.text_loc++] = v;
+							}
+    				} catch (std::string const& msg){
+    					throw std::runtime_error{"***Error oblectamenta_assembler:" + msg + " "};
+					}
 				}
 			   }
                if (t.action_.size() >= 2) {
@@ -865,6 +876,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
     auto exported_events             = ns["export"];
 	auto oblectamenta			     = ns["oblectamenta"];
 
+	//Process global data for VM
 	//INVARIANT: oblectamenta contains all 'oblectamenta{global{data{...}}}' nodes in document order
 	for(auto obl_sec : oblectamenta.nodes()){
 		if (!is<Ast_node_kind::structdef>(obl_sec) || name(as_struct_ref(obl_sec)) != "global" ) continue;
