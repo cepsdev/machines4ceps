@@ -172,6 +172,26 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
 		fnames.push_back({file_names[i],root_elem});
 	}
 
+	// Oblectamenta declarations come at the very top
+	{
+		std::string oblectamenta_declarations = 
+		#include "core/include/oblectamenta_decls.ceps"
+		;
+        std::stringstream def_file{oblectamenta_declarations};
+        if (!def_file) fatal_(ERR_FILE_OPEN_FAILED,"Oblectamenta Declarations");
+
+        Ceps_parser_driver driver{ceps_env_current().get_global_symboltable(),def_file};
+        ceps::Cepsparser parser{driver};
+        if (parser.parse() != 0 || driver.errors_occured())
+                fatal_(ERR_CEPS_PARSER, "Oblectamenta Declarations");
+        ceps::interpreter::evaluate(current_universe(),
+                                        driver.parsetree().get_root(),
+                                        ceps_env_current().get_global_symboltable(),
+                                        ceps_env_current().interpreter_env(),
+                                        &generated_nodes
+                                        );
+	}
+
     for(auto file_info : fnames)
 	{
 		auto file_name = file_info.first;
