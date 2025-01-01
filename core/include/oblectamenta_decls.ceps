@@ -101,6 +101,6 @@ OblectamentaOpcode
 
 OblectamentaModifier addr;
 OblectamentaModifier reg;
-OblectamentaReg SP, FP; 
+OblectamentaReg SP, FP, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5; 
   
 )"

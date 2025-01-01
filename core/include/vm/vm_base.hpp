@@ -153,8 +153,16 @@ namespace ceps{
                         static constexpr uint32_t FP = 1;  // frame pointer
                         static constexpr uint32_t CSP = 2; // compute stack
                         static constexpr uint32_t PC = 3; // program counter 
-                        int64_t file[4];
-                        map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP}, {"CSP",CSP}, {"PC",PC} };
+                        static constexpr uint32_t ARG0 = 4; // register for first call argument (%rdi in SysV Amd64 ABI) 
+                        static constexpr uint32_t ARG1 = 5; // register for 2nd call argument (%rsi in SysV Amd64 ABI) 
+                        static constexpr uint32_t ARG2 = 6; // register for 3rd call argument (%rdx in SysV Amd64 ABI) 
+                        static constexpr uint32_t ARG3 = 7; // register for 4th  call argument (%rcx in SysV Amd64 ABI) 
+                        static constexpr uint32_t ARG4 = 8; // register for 5th call argument (%r8 in SysV Amd64 ABI) 
+                        static constexpr uint32_t ARG5 = 9; // register for 6th call argument (%r9 in SysV Amd64 ABI) 
+
+                        int64_t file[10];
+                        map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP}, {"CSP",CSP}, {"PC",PC} , {"ARG0",ARG0 } , {"ARG1",ARG1 } , 
+                                                                 {"ARG2",ARG2 } , {"ARG3",ARG3 } , {"ARG4",ARG4 } , {"ARG5",ARG5 } };
                     } registers;
 
                     using reg_t = uint32_t;
