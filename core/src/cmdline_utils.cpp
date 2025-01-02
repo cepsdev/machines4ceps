@@ -264,6 +264,8 @@ Result_process_cmd_line process_cmd_line(int argc,char ** argv, Result_process_c
             else if (arg == "--pe") {r.print_evaluated_input_tree=true; continue;}
 			else if (arg == "--ppe") {r.print_evaluated_postprocessing_tree=true;continue;}
             else if (arg == "--format") { if (i+1 == argc) break; r.output_format_flags.push_back(argv[i+1]); ++i;continue;}
+            else if (arg == "--link" || arg == "-l") { if (i+1 == argc) break; r.shard_objects.push_back(argv[i+1]); ++i;continue;}
+
             else if (arg == "--report_state_machines_only") { 
 				r.attributes.push_back(
 					Result_process_cmd_line::attribute_t{"report_state_machines_only",{}}

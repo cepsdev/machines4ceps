@@ -292,6 +292,8 @@ int main(int argc,char ** argv)
 				{"--rport SHORT                      ","IP port of remote ceps server."},
 				{"--server                           ","Start in server mode."},
 				{"--timeout T                        ","ceps runs for at most T seconds."},
+				{"--link filename                    ",""},
+				{"-l filename                        ","Load shared object specified by filename."}
 
 			};
 			for(auto e: options)

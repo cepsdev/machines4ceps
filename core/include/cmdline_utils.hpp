@@ -102,6 +102,7 @@ struct Result_process_cmd_line
    bool create_plugin_project = false;
    std::string create_plugin_project_name{"INSERT_PROJECT_NAME_HERE"};
    std::string create_plugin_ceps_root{"../"};
+   std::vector<std::string> shard_objects;
    Result_process_cmd_line() = default;
    Result_process_cmd_line(bool version_flag_set_,
 			bool debug_mode_,

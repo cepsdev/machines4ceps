@@ -1303,6 +1303,12 @@ void init_state_machine_simulation(	int argc,
         auto init_fn = (init_plugin_t)init_fn_;
         init_fn(smc);
     }
+    for(auto const & lib : result_cmd_line.shard_objects){
+        void* handle = dlopen(lib.c_str(), RTLD_LAZY);
+        if (handle == nullptr)
+            smc->fatal_(-1,dlerror());
+    }
+
 #endif
 #ifdef _WIN32
 /*	for (auto const & plugin_lib : result_cmd_line.plugins) {
