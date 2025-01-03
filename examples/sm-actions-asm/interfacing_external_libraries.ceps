@@ -1,0 +1,51 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+
+oblectamenta{
+ global{
+   data{
+        OblectamentaDataLabel width, height, title, four, one;
+        width; 800;
+        height; 600;
+        title; "ceps@raylib";0;
+        four; 4; 
+        one; 1;
+    };
+    extern{
+        InitWindow(int, int, sz) : void;
+    };
+ };
+};
+
+sm{
+    S;
+    states{Initial;A;};
+    Actions{
+        doFindMaxElement{
+            oblectamenta{
+                        text{
+                            asm{
+                                OblectamentaDataLabel width, height, title, four, one;
+                                ldi32(width);
+                                ldi32(height);
+                                lea(title);
+                                sti64(ARG2);
+                                sti32(ARG1);
+                                sti32(ARG0);
+                                call(InitWindow);
+                                halt;
+                            };
+                        };
+            };
+        };
+    };
+    t{Initial;A;doFindMaxElement;};
+};
+
+Simulation{
+    Event EXIT;
+    Start{S;};
+    start_timer(5.0*s,EXIT);
+};

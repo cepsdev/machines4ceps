@@ -12,13 +12,7 @@ kind Systemstate;
 oblectamenta{
  global{
    data{
-        OblectamentaDataLabel array;
-        OblectamentaDataLabel i;
-        OblectamentaDataLabel n;
-        OblectamentaDataLabel x;
-        OblectamentaDataLabel j;
-        OblectamentaDataLabel cur_m;
-        OblectamentaDataLabel four, one;
+        OblectamentaDataLabel array,i,n,x,j,cur_m,four, one;
         cur_m; -1; // int32_t cur_sm = -1;
         i; 0; // int32_t i = -1;
         array; 4;1;7;9;2;5;8;10;3;6; // int32_t array[10] = {4,1,7,9,2,5,8,10,3,6S};
@@ -37,9 +31,7 @@ sm{
             oblectamenta{
                         text{
                             asm{
-                                OblectamentaDataLabel array;
-                                OblectamentaDataLabel i,four,one;
-                                OblectamentaDataLabel cur_m, n;
+                                OblectamentaDataLabel array,i,four,one,cur_m, n;
                                 OblectamentaCodeLabel done,loop,loop_tail;
                                 dbg_printlni32(cur_m); //Pseudo opcode for printing i32 to stdout
                             loop;
