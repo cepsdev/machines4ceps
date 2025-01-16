@@ -137,7 +137,8 @@ namespace ceps{
                 negi64,
                 stsdbl,
                 tanhdbl,
-                dbg_printlni32
+                dbg_printlni32,
+                callx
 
             };
 
@@ -186,6 +187,16 @@ namespace ceps{
                     text_t text{};
                     size_t text_size{};
                     size_t text_loc{};
+
+                    struct exfuncdescr_t{
+                        void* addr;
+                        string name;
+                        unsigned short call_regs;
+                        size_t stack_size;
+                    };
+                    std::vector<exfuncdescr_t> exfuncs;
+                    std::vector<exfuncdescr_t>::iterator j;
+
 
                     static constexpr size_t default_mem_size {4096};
                     static constexpr size_t default_text_size {16};
@@ -363,6 +374,7 @@ namespace ceps{
                     size_t stsdbl(size_t);
                     size_t tanhdbl(size_t);
                     size_t dbg_printlni32(size_t);
+                    size_t callx(size_t);
 
 
                     using fn = size_t (VMEnv::*) (size_t) ;
@@ -520,7 +532,8 @@ namespace ceps{
                 {"negi64",{Opcode::negi64, "",emit<Opcode::negi64>,nullptr,nullptr}},
                 {"stsdbl",{Opcode::stsdbl, "",emit<Opcode::stsdbl>, nullptr,nullptr }},
                 {"tanhdbl",{Opcode::tanhdbl, "",emit<Opcode::tanhdbl>,nullptr,nullptr}},
-                {"dbg_printlni32",{Opcode::dbg_printlni32, "",nullptr,emit<Opcode::dbg_printlni32>,nullptr} }
+                {"dbg_printlni32",{Opcode::dbg_printlni32, "",nullptr,emit<Opcode::dbg_printlni32>,nullptr} },
+                {"callx",{Opcode::callx, "",nullptr,emit<Opcode::callx>,nullptr}}            
             };
         }//namespace oblectamenta
     }

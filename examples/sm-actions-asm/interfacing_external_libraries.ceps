@@ -14,6 +14,7 @@ oblectamenta{
         one; 1;
     };
     extern{
+        OblectamentaExternalFunc InitWindow;
         InitWindow(int, int, sz) : void;
     };
  };
@@ -27,13 +28,15 @@ sm{
             oblectamenta{
                         text{
                             asm{
+                                OblectamentaExternalFunc InitWindow;
+
                                 OblectamentaDataLabel width, height, title, four, one;
                                 ldi32(width);
                                 ldi32(height);
                                 lea(title);
                                 sti64(ARG2);
-                                sti32(ARG1);
-                                sti32(ARG0);
+                                //sti32(ARG1);
+                                //sti32(ARG0);
                                 call(InitWindow);
                                 halt;
                             };

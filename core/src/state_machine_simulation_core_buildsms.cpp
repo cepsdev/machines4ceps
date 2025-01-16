@@ -878,20 +878,58 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 
 	//Process global data for VM
 	//INVARIANT: oblectamenta contains all 'oblectamenta{global{data{...}}}' nodes in document order
-	for(auto obl_sec : oblectamenta.nodes()){
+	for(auto obl_sec : oblectamenta.nodes())
+	{
 		if (!is<Ast_node_kind::structdef>(obl_sec) || name(as_struct_ref(obl_sec)) != "global" ) continue;
 		for (auto sub_sec : children(as_struct_ref(obl_sec)))
-			if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "data" )
-			for (auto e: children(as_struct_ref(sub_sec))){
-        		if (is<Ast_node_kind::int_literal>(e)) vm.store(value(as_int_ref(e))); // int data
-        		else if (is<Ast_node_kind::float_literal>(e)) vm.store(value(as_double_ref(e))); //double data (we call them float)
-        		else if (is<Ast_node_kind::string_literal>(e)) vm.store(value(as_string_ref(e))); // string data
-        		else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){  //Label for data
-                	vm.data_labels()[name(as_symbol_ref(e))] = vm.mem.heap - vm.mem.base;
-        		} else if (is<Ast_node_kind::uint8>(e)){ // Bytes
-            		auto v{value(as_uint8_ref(e))};
-            		vm.store(v);
-        		}
+			if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "data" ){ 
+			//handle case: oblectamenta{... global{ ...data{}... }...}
+				for (auto e: children(as_struct_ref(sub_sec))){
+					if (is<Ast_node_kind::int_literal>(e)) vm.store(value(as_int_ref(e))); // int data
+					else if (is<Ast_node_kind::float_literal>(e)) vm.store(value(as_double_ref(e))); //double data (we call them float)
+					else if (is<Ast_node_kind::string_literal>(e)) vm.store(value(as_string_ref(e))); // string data
+					else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){  //Label for data
+						vm.data_labels()[name(as_symbol_ref(e))] = vm.mem.heap - vm.mem.base;
+					} else if (is<Ast_node_kind::uint8>(e)){ // Bytes
+						auto v{value(as_uint8_ref(e))};
+						vm.store(v);
+					}
+				}
+			} else if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "extern" ) { 
+			//handle case: oblectamenta{... global{ ...extern{}... }...}
+				for (auto e: children(as_struct_ref(sub_sec))){
+					if (!is<Ast_node_kind::binary_operator>(e) || op_val(as_binop_ref(e)) != ":") continue;
+					auto return_type = as_binop_ref(e).right();
+					auto signature = as_binop_ref(e).left();
+
+					string sym_name, sym_kind;
+					vector<Nodebase_ptr> args;
+					if(!is_a_symbol_with_arguments( signature, sym_name, sym_kind, args)) continue;
+					if(sym_kind != "OblectamentaExternalFunc") continue;
+					auto it{vm.exfuncs.begin()};
+					for (;it != vm.exfuncs.end();++it) if (it->name == sym_name) break;
+					if(it != vm.exfuncs.end()) continue;
+
+					ceps::vm::oblectamenta::VMEnv::exfuncdescr_t exfuncdescr;
+					exfuncdescr.name = sym_name;
+					exfuncdescr.stack_size = 0;
+
+					auto it_dll{loaded_dlls.begin()};
+					for(; it_dll != loaded_dlls.end();++it_dll){
+						dlerror();
+						exfuncdescr.addr = dlsym(it_dll->first, exfuncdescr.name.c_str());
+						if (dlerror() == nullptr) break;
+					}
+					if (it_dll ==  loaded_dlls.end())
+						//couldn't resolve symbol
+						fatal_(-1,"Oblectamenta: external reference '"+ sym_name +"' couldn't be resolved.");
+
+					for(size_t i{}; i != args.size();++i){
+						exfuncdescr.call_regs |= 1 << i;						
+					}
+
+					vm.exfuncs.push_back(exfuncdescr);
+				}
 			}
 	}
 	//INVARIANT:  Global vm's Data section initialized according to global data definitions in document.

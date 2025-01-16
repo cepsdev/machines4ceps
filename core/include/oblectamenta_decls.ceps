@@ -9,6 +9,8 @@ kind OblectamentaDataLabel;
 kind OblectamentaModifier;
 kind OblectamentaCodeLabel;
 kind OblectamentaReg;
+kind OblectamentaExternalFunc;
+
 
 OblectamentaOpcode
     halt,

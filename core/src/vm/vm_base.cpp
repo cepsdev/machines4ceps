@@ -259,6 +259,14 @@ namespace ceps::vm::oblectamenta{
         push_data_stack<size_t>(base_opcode_width + sizeof(addr_t) + pos);
         return *(size_t*)(text + pos  + base_opcode_width);
     }
+    
+    size_t VMEnv::callx(size_t pos){
+        auto addr = *(size_t*)(text + pos  + base_opcode_width);
+        auto fp = (void (*) (int, int, const char *)) addr;
+        fp(100,100,"Hi there!");
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
     size_t VMEnv::ret(size_t pos){
         auto target_addr{pop_data_stack<size_t>()};
         return target_addr;
@@ -650,6 +658,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::stsdbl);
         op_dispatch.push_back(&VMEnv::tanhdbl);
         op_dispatch.push_back(&VMEnv::dbg_printlni32);
+        op_dispatch.push_back(&VMEnv::callx);
+ 
     }
      
     void VMEnv::dump(ostream& os){

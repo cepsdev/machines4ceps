@@ -159,8 +159,28 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     patch_entries[pe].text_loc = backpatch_loc;
                     strncpy(patch_entries[pe].id, name(as_symbol_ref(args[0])).c_str(), sizeof(patch_entry::id)); 
                 }
+            } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaExternalFunc") {
+                // Handle case when statement is of the form: call(external function name);
+                auto ref_ext_name{name(as_symbol_ref(args[0]))};
+                auto query_opcode_x_version_it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"x")};
+                if (query_opcode_x_version_it == ceps::vm::oblectamenta::mnemonics.end()) 
+                    throw std::string{"oblectamenta_assembler: Opcode doesn't support external references: '"+ mnemonic+"'" };
+                auto op_code_entry{query_opcode_x_version_it->second};
+                
+                auto ref_external_it{vm.exfuncs.begin()};
+				for (;ref_external_it != vm.exfuncs.end();++ref_external_it) if (ref_external_it->name == ref_ext_name) break;
+				if(ref_external_it == vm.exfuncs.end()) 
+                    throw std::string{"oblectamenta_assembler: '"+ref_ext_name+"'not declared as external" };
+
+                if (get<3>(op_code_entry)) text_loc = get<3>(op_code_entry)(vm,text_loc,(size_t)ref_external_it->addr); 
+                    else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+                    
             } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
-                if (sym_kind2 == "OblectamentaModifier" && sym_name2 == "addr" && args2.size() == 1 && is<Ast_node_kind::int_literal>(args2[0]) ) {
+                if (sym_kind2 == "OblectamentaModifier" 
+                    && sym_name2 == "addr" 
+                    && args2.size() == 1 
+                    && is<Ast_node_kind::int_literal>(args2[0]) ) 
+                {
                     if (get<3>(v)) 
                      text_loc = get<3>(v)(vm,text_loc,value(as_int_ref(args2[0]))); 
                     else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
