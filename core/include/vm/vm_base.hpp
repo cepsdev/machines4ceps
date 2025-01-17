@@ -138,7 +138,8 @@ namespace ceps{
                 stsdbl,
                 tanhdbl,
                 dbg_printlni32,
-                callx
+                callx,
+                lea_absolute
 
             };
 
@@ -375,7 +376,7 @@ namespace ceps{
                     size_t tanhdbl(size_t);
                     size_t dbg_printlni32(size_t);
                     size_t callx(size_t);
-
+                    size_t lea_absolute(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -533,7 +534,8 @@ namespace ceps{
                 {"stsdbl",{Opcode::stsdbl, "",emit<Opcode::stsdbl>, nullptr,nullptr }},
                 {"tanhdbl",{Opcode::tanhdbl, "",emit<Opcode::tanhdbl>,nullptr,nullptr}},
                 {"dbg_printlni32",{Opcode::dbg_printlni32, "",nullptr,emit<Opcode::dbg_printlni32>,nullptr} },
-                {"callx",{Opcode::callx, "",nullptr,emit<Opcode::callx>,nullptr}}            
+                {"callx",{Opcode::callx, "",nullptr,emit<Opcode::callx>,nullptr}},
+                {"lea_absolute",{Opcode::lea_absolute, "",nullptr,emit<Opcode::lea_absolute>,nullptr}}
             };
         }//namespace oblectamenta
     }

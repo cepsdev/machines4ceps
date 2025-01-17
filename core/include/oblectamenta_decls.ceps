@@ -99,7 +99,8 @@ OblectamentaOpcode
     negi64,
     stsdbl,
     tanhdbl,
-    dbg_printlni32;
+    dbg_printlni32,
+    lea_absolute;
 
 OblectamentaModifier addr;
 OblectamentaModifier reg;

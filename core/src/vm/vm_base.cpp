@@ -190,6 +190,11 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
+    size_t VMEnv::lea_absolute(size_t pos){
+        push_cs( mem.base + *((addr_t*)(text+pos+base_opcode_width)) );
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
     size_t VMEnv::buc(size_t pos){
         return *(size_t*)(text + pos  + base_opcode_width) ;
     }
@@ -262,8 +267,12 @@ namespace ceps::vm::oblectamenta{
     
     size_t VMEnv::callx(size_t pos){
         auto addr = *(size_t*)(text + pos  + base_opcode_width);
-        auto fp = (void (*) (int, int, const char *)) addr;
-        fp(100,100,"Hi there!");
+        //auto fp = (void (*) ()) addr;
+        //fp();
+        cerr << registers.file[registers_t::ARG0] << "\n";
+        cerr << registers.file[registers_t::ARG1] << "\n";
+        cerr << registers.file[registers_t::ARG2] << "\n";
+
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
@@ -659,7 +668,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::tanhdbl);
         op_dispatch.push_back(&VMEnv::dbg_printlni32);
         op_dispatch.push_back(&VMEnv::callx);
- 
+        op_dispatch.push_back(&VMEnv::lea_absolute); 
     }
      
     void VMEnv::dump(ostream& os){

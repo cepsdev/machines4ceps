@@ -33,7 +33,7 @@ sm{
                                 OblectamentaDataLabel width, height, title, four, one;
                                 ldi32(width);
                                 ldi32(height);
-                                lea(title);
+                                lea_absolute(title);
                                 sti64(ARG2);
                                 //sti32(ARG1);
                                 //sti32(ARG0);
