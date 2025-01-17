@@ -144,6 +144,14 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
     }
 
+    size_t VMEnv::sti32reg(size_t pos){
+        reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
+        reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
+        auto t {(int64_t)pop_cs<int32_t>()};
+        registers.file[reg] =  t + reg_offs;
+        return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
+    }
+
     size_t VMEnv::lddbl(size_t pos){
         auto addr{*((addr_t*)(text+pos+base_opcode_width))};
         push_cs(*((double*) &mem.base[  *((addr_t*)(text+pos+base_opcode_width)) ]));
@@ -266,13 +274,27 @@ namespace ceps::vm::oblectamenta{
     }
     
     size_t VMEnv::callx(size_t pos){
-        auto addr = *(size_t*)(text + pos  + base_opcode_width);
-        //auto fp = (void (*) ()) addr;
-        //fp();
-        cerr << registers.file[registers_t::ARG0] << "\n";
-        cerr << registers.file[registers_t::ARG1] << "\n";
-        cerr << registers.file[registers_t::ARG2] << "\n";
+        auto addr =  *(size_t*)(text + pos  + base_opcode_width);
+        //auto fp = (void (*) (int,int,const char *)) addr;
+        auto fp = (void (*) ()) addr;
+        
+    
+        #ifdef __x86_64__
+        auto arg0{registers.file[registers_t::ARG0]};
+        auto arg1{registers.file[registers_t::ARG1]};
+        auto arg2{registers.file[registers_t::ARG2]};
+        //fp(arg0,arg1,(char const*)arg2);
 
+        asm __volatile__ (
+            "mov %0 , %%rdi;"
+            "mov %1 , %%rsi;"
+            "mov %2 , %%rdx;"
+            "movq %3, %%rax;"
+            //"call *%%rax;" !! Crashes
+            :: "r"(arg0),"r"(arg1),"r"(arg2), "r"(addr): "%rdi","%rsi","%rdx", "%rax"
+        );
+        fp();//Hack see comment above
+        #endif
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
@@ -668,7 +690,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::tanhdbl);
         op_dispatch.push_back(&VMEnv::dbg_printlni32);
         op_dispatch.push_back(&VMEnv::callx);
-        op_dispatch.push_back(&VMEnv::lea_absolute); 
+        op_dispatch.push_back(&VMEnv::lea_absolute);
+        op_dispatch.push_back(&VMEnv::sti32reg);    
     }
      
     void VMEnv::dump(ostream& os){

@@ -35,8 +35,8 @@ sm{
                                 ldi32(height);
                                 lea_absolute(title);
                                 sti64(ARG2);
-                                //sti32(ARG1);
-                                //sti32(ARG0);
+                                sti32(ARG1);
+                                sti32(ARG0);
                                 call(InitWindow);
                                 halt;
                             };
