@@ -1,0 +1,67 @@
+kind Guard;
+
+
+oblectamenta{
+ global{
+   data{
+        OblectamentaDataLabel i,n,one;
+        i; 0;
+        n; 10;
+        one; 1; 
+    };
+ };
+};
+
+Guard g;
+g = oblectamenta{
+    text{
+        asm{
+            OblectamentaDataLabel i,one,n;
+            ldi32(i);
+            ldi32(n);
+            subi32;
+            sti32(ARG0);
+            halt;
+        };
+    };
+};
+
+Guard g_not;
+g_not = oblectamenta{
+    text{
+        asm{
+            OblectamentaDataLabel i,one,n;
+            ldi32(i);
+            ldi32(n);
+            subi32;
+            noti32;
+            sti32(ARG0);
+            halt;
+        };
+    };
+};
+
+
+sm{
+    CountingMachine;
+    states{Initial;Count;F;};
+    Actions{
+        doIncrementCounter{
+            oblectamenta{
+                        text{
+                            asm{
+                                OblectamentaDataLabel i, n;
+                                halt;
+                            };
+                        };
+            };
+        };
+    };
+    t{Initial;Count;};
+    t{Count;Count;g;doIncrementCounter;};
+    t{Count;F;g_not;};
+};
+
+Simulation{
+    Start{CountingMachine;};
+};

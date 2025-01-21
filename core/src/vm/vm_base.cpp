@@ -334,11 +334,11 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
     size_t VMEnv::noti32(size_t pos){
-        push_cs<uint32_t>(~pop_cs<uint32_t>());
+        push_cs<uint32_t>(pop_cs<uint32_t>()? 0 : 1);
         return base_opcode_width + pos;
     }
     size_t VMEnv::noti64(size_t pos){
-        push_cs<uint64_t>(~pop_cs<uint64_t>());
+        push_cs<uint64_t>(pop_cs<uint64_t>() ? 0 : 1);
         return base_opcode_width + pos;
     }
     size_t VMEnv::xori32(size_t pos){
