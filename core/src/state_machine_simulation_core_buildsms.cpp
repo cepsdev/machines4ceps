@@ -874,12 +874,18 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
     auto unique_event_declarations   = ns["unique"];
 	auto no_transitions_declarations = ns["no_transitions"];
     auto exported_events             = ns["export"];
-	auto oblectamenta			     = ns["oblectamenta"];
 
 	//Process global data for VM
 	//INVARIANT: oblectamenta contains all 'oblectamenta{global{data{...}}}' nodes in document order
-	for(auto obl_sec : oblectamenta.nodes())
+	for(auto p : ns.nodes())
 	{
+		if (is<Ast_node_kind::binary_operator>(p) && is<Ast_node_kind::symbol>(as_binop_ref(p).left())
+		    && kind(as_symbol_ref(as_binop_ref(p).left())) == "Guard" 
+			&& op_val(as_binop_ref(p)) == "="){
+			cerr << *p << '\n';						
+		} else if (is<Ast_node_kind::structdef>(p) && name(as_struct_ref(p)) == "oblectamenta"){
+		for (auto obl_sec : children(as_struct_ref(p))){
+
 		if (!is<Ast_node_kind::structdef>(obl_sec) || name(as_struct_ref(obl_sec)) != "global" ) continue;
 		for (auto sub_sec : children(as_struct_ref(obl_sec)))
 			if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "data" ){ 
@@ -931,6 +937,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 					vm.exfuncs.push_back(exfuncdescr);
 				}
 			}
+		}// for all nodes in oblectamenta struct
+		}// if is oblectamenta struct
 	}
 	//INVARIANT:  Global vm's Data section initialized according to global data definitions in document.
 
