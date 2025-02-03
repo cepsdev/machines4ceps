@@ -191,7 +191,9 @@ public:
 		int root_sms = 0; //root state machine, i.e. the very top level sms which transitively contains this transition
 		int smp = 0,from = 0, to = 0, ev = 0;int rel_idx = -1;
         bool native = true;
-		bool oblectamenta[3] = {};
+		bool oblectamenta[3] = {}; // oblectamenta[i] <=> ith action is in oblectamenta's machine language, in which case ai contains the address
+		bool oblectamenta_guard_valid = {};
+		size_t oblectamenta_guard = {}; // contains pointer to guard code in oblectementa's machine language, takes precedence over all other guards
 		bool(**guard)() = nullptr;
 		void(* a1)() = nullptr;
 		void(* a2)() = nullptr;

@@ -32,7 +32,6 @@ void handle_oblectamenta_blocks(State_machine_simulation_core* smc,Result_proces
 		if (is<Ast_node_kind::binary_operator>(p) && is<Ast_node_kind::symbol>(as_binop_ref(p).left())
 		    && kind(as_symbol_ref(as_binop_ref(p).left())) == "Guard" 
 			&& op_val(as_binop_ref(p)) == "="){
-			cerr << *p << '\n';						
 		} else if (is<Ast_node_kind::structdef>(p) && name(as_struct_ref(p)) == "oblectamenta"){
 		for (auto obl_sec : children(as_struct_ref(p))){
 

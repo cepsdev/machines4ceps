@@ -319,7 +319,11 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,
      if (t.smp != smp) break;
      if (temp[t.to] && ev_id == 0 && t.ev == 0 && t.from == t.to && t.guard == nullptr && t.script_guard.length() == 0) continue;
      if (t.ev == ev_id && t.from == s){
-      if (!t.script_guard.empty()){
+      if (t.oblectamenta_guard_valid) {
+        smc->vm.run(t.oblectamenta_guard);
+        bool r = smc->vm.registers.file[ceps::vm::oblectamenta::VMEnv::registers_t::ARG0]  != 0 ;
+        if (r){triggered_transitions[triggered_transitions_end++]=execution_ctxt.states2transitions_slots[i];triggered=true;}
+      } else if (!t.script_guard.empty()){
          State_machine_simulation_core::states_t st;
          bool r = smc->eval_guard(ceps_env,t.script_guard,st);
          if (r){triggered_transitions[triggered_transitions_end++]=execution_ctxt.states2transitions_slots[i];triggered=true;}
@@ -331,33 +335,6 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,
   }
   if (!triggered) {temp[s] = 1;}
  }
-
- return;
-
- for (int s = 0; s != cur_states_size && max_number_of_active_transitions != (size_t)triggered_transitions_end;++s){
-   if (execution_ctxt.current_states[s] == 0) continue;
-		ssize_t i = execution_ctxt.state_to_first_transition[s];
-		int smp = execution_ctxt.transitions[i].smp;
-
-		bool triggered = false;
-		for(;(std::size_t)i != execution_ctxt.transitions.size();++i){
-			auto const & t = execution_ctxt.transitions[i];
-			if (t.props & executionloop_context_t::TRANS_PROP_ABSTRACT) continue;
-			if (t.smp != smp) break;
-			if (temp[t.to] && ev_id == 0 && t.ev == 0 && t.from == t.to && t.guard == nullptr && t.script_guard.length() == 0) continue;
-			if (t.ev == ev_id && t.from == s){
-                if (!t.script_guard.empty()){
-					State_machine_simulation_core::states_t st;
-                    bool r = smc->eval_guard(ceps_env,t.script_guard,st);
-                    if (r){triggered_transitions[triggered_transitions_end++]=i;triggered=true;}
-				} else if (t.guard == nullptr || (*t.guard)() )  {
-					triggered_transitions[triggered_transitions_end++]=i;triggered=true;
-				}
-				if (triggered) execution_ctxt.visit_transition(i);
-			}
-		}
-		if (!triggered) {temp[s] = 1;}
-	}
 }
 
 

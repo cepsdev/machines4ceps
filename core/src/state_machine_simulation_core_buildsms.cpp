@@ -174,6 +174,19 @@ static std::optional<ceps::ast::node_t> oblectamenta_assembly_code(ceps::ast::no
 	return {&text_sec};
 }
 
+static std::optional<ceps::ast::node_t> oblectamenta_assembly_code_guard_rhs(ceps::ast::node_t rhs){
+	//is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "vm"
+	using namespace ceps::ast;
+	if (!is<Ast_node_kind::structdef>(rhs)) return {};
+	if(name(as_struct_ref(rhs)) != "oblectamenta") return {};
+	auto& oblectamenta_sec {as_struct_ref(rhs)};
+	if(!children(oblectamenta_sec).size()) return {};
+	if(!is<Ast_node_kind::structdef>(children(oblectamenta_sec)[0])) return {};
+	if(name(as_struct_ref(children(oblectamenta_sec)[0])) != "text") return {};
+	auto& text_sec{as_struct_ref(children(oblectamenta_sec)[0])};
+	return {&text_sec};
+}
+
 // compiles asm - blocks into Oblectamenta machine language. Entry address of generated code starts is smp->vm.text_loc.
 static void run_oblectamenta_assembler(State_machine_simulation_core* smp, ceps::ast::node_t obl_block){
 	using namespace ceps::ast;
@@ -350,6 +363,15 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 			  }
 			  if (tt.guard == nullptr && t.has_guard()){
 				  tt.script_guard = t.guard();
+				  Nodebase_ptr guard_expr = smp->guards()[tt.script_guard];
+				  if (guard_expr){
+				  	auto asm_text{oblectamenta_assembly_code_guard_rhs(guard_expr)};
+				  	if (asm_text){
+						tt.oblectamenta_guard = smp->vm.text_loc;
+						run_oblectamenta_assembler(smp,*asm_text);
+						tt.oblectamenta_guard_valid = true;
+				  	}
+				  }
 			  }
               if (t.action_.size() && t.action_[0].native_func_ == nullptr){
                //Case: no native implementation available

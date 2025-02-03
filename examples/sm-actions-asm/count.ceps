@@ -1,12 +1,15 @@
-kind Guard;
+/*
+Example for guards and actions in Oblectamenta assembler.
+*/
 
+kind Guard;
 
 oblectamenta{
  global{
    data{
         OblectamentaDataLabel i,n,one;
-        i; 0;
-        n; 10;
+        i; 0; // counting index
+        n; 100000; // number of iterations
         one; 1; 
     };
  };
@@ -42,15 +45,33 @@ g_not = oblectamenta{
 };
 
 
+/*
+Slow way of counting, should still run reasonably fast.
+*/
 sm{
     CountingMachine;
-    states{Initial;Count;F;};
+    states{Initial;Count;Done;};
     Actions{
         doIncrementCounter{
             oblectamenta{
                         text{
                             asm{
-                                OblectamentaDataLabel i, n;
+                                OblectamentaDataLabel i, n, one;
+                                ldi32(i);
+                                ldi32(one);
+                                addi32;
+                                sti32(i);
+                                halt;
+                            };
+                        };
+            };
+        };
+        doPrintCounter{
+            oblectamenta{
+                        text{
+                            asm{
+                                OblectamentaDataLabel i, n, one;
+                                dbg_printlni32(i);
                                 halt;
                             };
                         };
@@ -59,7 +80,7 @@ sm{
     };
     t{Initial;Count;};
     t{Count;Count;g;doIncrementCounter;};
-    t{Count;F;g_not;};
+    t{Count;Done;g_not;doPrintCounter;};
 };
 
 Simulation{
