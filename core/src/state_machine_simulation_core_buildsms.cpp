@@ -48,6 +48,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <unordered_set>
 #include <list>
 
+void handle_oblectamenta_blocks(State_machine_simulation_core* smc,Result_process_cmd_line const& result_cmd_line, ceps::ast::Nodeset& ns);
+
+
 static std::string escape_string(std::string const & s){
     bool transform_necessary = false;
     for(std::size_t i = 0; i!=s.length();++i){
@@ -169,6 +172,23 @@ static std::optional<ceps::ast::node_t> oblectamenta_assembly_code(ceps::ast::no
 	if(name(as_struct_ref(children(oblectamenta_sec)[0])) != "text") return {};
 	auto& text_sec{as_struct_ref(children(oblectamenta_sec)[0])};
 	return {&text_sec};
+}
+
+// compiles asm - blocks into Oblectamenta machine language. Entry address of generated code starts is smp->vm.text_loc.
+static void run_oblectamenta_assembler(State_machine_simulation_core* smp, ceps::ast::node_t obl_block){
+	using namespace ceps::ast;
+
+	try{
+		for(auto e : children(as_struct_ref(obl_block)))
+			if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
+				ceps::vm::oblectamenta::oblectamenta_assembler(smp->vm,children(as_struct_ref(e)));
+			} else if (is<Ast_node_kind::uint8>(e)){
+				auto v{value(as_uint8_ref(e))};
+				smp->vm.text[smp->vm.text_loc++] = v;
+			}
+    	} catch (std::string const& msg){
+    			throw std::runtime_error{"***Error oblectamenta_assembler:" + msg + " "};
+	}
 }
 
 int compute_state_and_event_ids(State_machine_simulation_core* smp,
@@ -340,17 +360,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				if (oblectamenta_text){
 					tt.oblectamenta[0] = true;
 					tt.a1 = (void (*)()) smp->vm.text_loc;
-					try{
-						for(auto e : children(as_struct_ref(*oblectamenta_text)))
-							if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
-								ceps::vm::oblectamenta::oblectamenta_assembler(smp->vm,children(as_struct_ref(e)));
-							} else if (is<Ast_node_kind::uint8>(e)){
-								auto v{value(as_uint8_ref(e))};
-								smp->vm.text[smp->vm.text_loc++] = v;
-							}
-    				} catch (std::string const& msg){
-    					throw std::runtime_error{"***Error oblectamenta_assembler:" + msg + " "};
-					}
+					run_oblectamenta_assembler(smp,*oblectamenta_text);
 				}
 			   }
                if (t.action_.size() >= 2) {
@@ -358,7 +368,8 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				auto oblectamenta_text{oblectamenta_assembly_code(t.action_[1].body())};
 				if (oblectamenta_text){
 					tt.oblectamenta[1] = true;
-					tt.a2 = {};				
+					tt.a2 = (void (*)()) smp->vm.text_loc;
+					run_oblectamenta_assembler(smp,*oblectamenta_text);				
 				}
 			   }
                if (t.action_.size() >= 3) {
@@ -366,7 +377,8 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				auto oblectamenta_text{oblectamenta_assembly_code(t.action_[2].body())};
 				if (oblectamenta_text){
 					tt.oblectamenta[2] = true;
-					tt.a3 = {};				
+					tt.a3 = (void (*)()) smp->vm.text_loc;
+					run_oblectamenta_assembler(smp,*oblectamenta_text);
 				}
 			   }
               } else{
@@ -844,7 +856,6 @@ static std::tuple<bool, std::string, std::vector<std::pair<std::string, std::str
     return read_virtual_can_msg(sock, unconsumed_data);
 }
 
-
 void State_machine_simulation_core::processs_content(Result_process_cmd_line const& result_cmd_line,State_machine **entry_machine)
 {
 	using namespace ceps::ast;
@@ -875,71 +886,8 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	auto no_transitions_declarations = ns["no_transitions"];
     auto exported_events             = ns["export"];
 
-	//Process global data for VM
-	//INVARIANT: oblectamenta contains all 'oblectamenta{global{data{...}}}' nodes in document order
-	for(auto p : ns.nodes())
-	{
-		if (is<Ast_node_kind::binary_operator>(p) && is<Ast_node_kind::symbol>(as_binop_ref(p).left())
-		    && kind(as_symbol_ref(as_binop_ref(p).left())) == "Guard" 
-			&& op_val(as_binop_ref(p)) == "="){
-			cerr << *p << '\n';						
-		} else if (is<Ast_node_kind::structdef>(p) && name(as_struct_ref(p)) == "oblectamenta"){
-		for (auto obl_sec : children(as_struct_ref(p))){
-
-		if (!is<Ast_node_kind::structdef>(obl_sec) || name(as_struct_ref(obl_sec)) != "global" ) continue;
-		for (auto sub_sec : children(as_struct_ref(obl_sec)))
-			if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "data" ){ 
-			//handle case: oblectamenta{... global{ ...data{}... }...}
-				for (auto e: children(as_struct_ref(sub_sec))){
-					if (is<Ast_node_kind::int_literal>(e)) vm.store(value(as_int_ref(e))); // int data
-					else if (is<Ast_node_kind::float_literal>(e)) vm.store(value(as_double_ref(e))); //double data (we call them float)
-					else if (is<Ast_node_kind::string_literal>(e)) vm.store(value(as_string_ref(e))); // string data
-					else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaDataLabel"){  //Label for data
-						vm.data_labels()[name(as_symbol_ref(e))] = vm.mem.heap - vm.mem.base;
-					} else if (is<Ast_node_kind::uint8>(e)){ // Bytes
-						auto v{value(as_uint8_ref(e))};
-						vm.store(v);
-					}
-				}
-			} else if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "extern" ) { 
-			//handle case: oblectamenta{... global{ ...extern{}... }...}
-				for (auto e: children(as_struct_ref(sub_sec))){
-					if (!is<Ast_node_kind::binary_operator>(e) || op_val(as_binop_ref(e)) != ":") continue;
-					auto return_type = as_binop_ref(e).right();
-					auto signature = as_binop_ref(e).left();
-
-					string sym_name, sym_kind;
-					vector<Nodebase_ptr> args;
-					if(!is_a_symbol_with_arguments( signature, sym_name, sym_kind, args)) continue;
-					if(sym_kind != "OblectamentaExternalFunc") continue;
-					auto it{vm.exfuncs.begin()};
-					for (;it != vm.exfuncs.end();++it) if (it->name == sym_name) break;
-					if(it != vm.exfuncs.end()) continue;
-
-					ceps::vm::oblectamenta::VMEnv::exfuncdescr_t exfuncdescr;
-					exfuncdescr.name = sym_name;
-					exfuncdescr.stack_size = 0;
-
-					auto it_dll{loaded_dlls.begin()};
-					for(; it_dll != loaded_dlls.end();++it_dll){
-						dlerror();
-						exfuncdescr.addr = dlsym(it_dll->first, exfuncdescr.name.c_str());
-						if (dlerror() == nullptr) break;
-					}
-					if (it_dll ==  loaded_dlls.end())
-						//couldn't resolve symbol
-						fatal_(-1,"Oblectamenta: external reference '"+ sym_name +"' couldn't be resolved.");
-
-					for(size_t i{}; i != args.size();++i){
-						exfuncdescr.call_regs |= 1 << i;						
-					}
-
-					vm.exfuncs.push_back(exfuncdescr);
-				}
-			}
-		}// for all nodes in oblectamenta struct
-		}// if is oblectamenta struct
-	}
+	
+	handle_oblectamenta_blocks(this,result_cmd_line,ns);//Process global data blocks , oblectamenta - guards
 	//INVARIANT:  Global vm's Data section initialized according to global data definitions in document.
 
 	start_comm_threads() = !generate_cpp_code();
