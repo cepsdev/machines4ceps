@@ -1,0 +1,64 @@
+/*
+Example for events without payload in actions written in Oblectamenta assembler.
+*/
+
+kind Event;
+Event E,F;
+
+oblectamenta{
+ global{
+   data{
+        OblectamentaDataLabel i,n,one;
+        i; 0; // counting index
+        n; 10; // number of iterations
+        one; 1; 
+    };
+ };
+};
+
+sm{
+    CountingMachine;
+    states{Initial;Count;Done;};
+    Actions{
+        doIncrementCounter{
+            oblectamenta{
+                        text{
+                            asm{
+                                OblectamentaDataLabel i, n, one;
+                                OblectamentaCodeLabel done;
+                                ldi32(i);
+                                ldi32(n);
+                                blteq(done);
+                                ldi32(i);
+                                ldi32(one);
+                                addi32;
+                                sti32(i);
+                                E; // fire event E => loop (see state machine's transition under event E)
+                                halt;                                
+                                done;
+                                F; // fire event F => terminate (see state machine's transition under event F)
+                                halt;
+                            };
+                        };
+            };
+        };
+        doPrintCounter{
+            oblectamenta{
+                        text{
+                            asm{
+                                OblectamentaDataLabel i, n, one;
+                                dbg_printlni32(i);
+                                halt;
+                            };
+                        };
+            };
+        };
+    };
+    t{Initial;Count;doIncrementCounter;};
+    t{Count;Count;E;doIncrementCounter;};
+    t{Count;Done;F;doPrintCounter;};
+};
+
+Simulation{
+    Start{CountingMachine;};
+};
