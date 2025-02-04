@@ -561,7 +561,11 @@ namespace ceps::vm::oblectamenta{
         push_cs<int64_t>(-1 * (pop_cs<int64_t>()));
         return base_opcode_width + pos;
     }
-
+    size_t VMEnv::msg(size_t pos){
+        auto event_id { *((addr_t*)(text+pos+base_opcode_width))};
+        if (event_queue) event_queue->fire_event(event_id);
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
     void VMEnv::reset(){
         registers.file[registers_t::SP] = 0;
     }
@@ -691,7 +695,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::dbg_printlni32);
         op_dispatch.push_back(&VMEnv::callx);
         op_dispatch.push_back(&VMEnv::lea_absolute);
-        op_dispatch.push_back(&VMEnv::sti32reg);    
+        op_dispatch.push_back(&VMEnv::sti32reg);
+        op_dispatch.push_back(&VMEnv::msg);    
     }
      
     void VMEnv::dump(ostream& os){

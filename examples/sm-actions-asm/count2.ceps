@@ -10,7 +10,7 @@ oblectamenta{
    data{
         OblectamentaDataLabel i,n,one;
         i; 0; // counting index
-        n; 10; // number of iterations
+        n; 100; // number of iterations
         one; 1; 
     };
  };
@@ -26,6 +26,7 @@ sm{
                             asm{
                                 OblectamentaDataLabel i, n, one;
                                 OblectamentaCodeLabel done;
+                                
                                 ldi32(i);
                                 ldi32(n);
                                 blteq(done);

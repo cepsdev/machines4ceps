@@ -140,8 +140,13 @@ namespace ceps{
                 dbg_printlni32,
                 callx,
                 lea_absolute,
-                sti32reg
+                sti32reg,
+                msg
+            };
 
+            class EventQueue{
+                public:
+                virtual void fire_event(int) = 0;
             };
 
             class VMEnv{
@@ -271,15 +276,14 @@ namespace ceps{
                         registers.file[registers_t::SP] += sizeof(T);
                         return r;
                     }
-
+                    void set_event_queue(EventQueue* new_event_queue) {event_queue = new_event_queue; }
                     size_t run(size_t start = 0);
-
                     VMEnv();
-
                     void dump(ostream& os);
                     void reset();
                     map<string, size_t>& data_labels(){return label2loc;}
                 private:
+                    EventQueue* event_queue = nullptr;
                     size_t noop(size_t);
                     size_t ldi32(size_t);
                     size_t ldsi32(size_t);
@@ -379,6 +383,7 @@ namespace ceps{
                     size_t callx(size_t);
                     size_t lea_absolute(size_t);
                     size_t sti32reg(size_t);
+                    size_t msg(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -538,7 +543,8 @@ namespace ceps{
                 {"dbg_printlni32",{Opcode::dbg_printlni32, "",nullptr,emit<Opcode::dbg_printlni32>,nullptr} },
                 {"callx",{Opcode::callx, "",nullptr,emit<Opcode::callx>,nullptr}},
                 {"lea_absolute",{Opcode::lea_absolute, "",nullptr,emit<Opcode::lea_absolute>,nullptr}},
-                {"sti32reg",{Opcode::sti32reg, "",nullptr,nullptr,emit<Opcode::sti32reg> }}
+                {"sti32reg",{Opcode::sti32reg, "",nullptr,nullptr,emit<Opcode::sti32reg> }},
+                {"msg",{Opcode::msg, "",nullptr,emit<Opcode::msg>,nullptr }}
             };
         }//namespace oblectamenta
     }

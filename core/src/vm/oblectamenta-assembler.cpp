@@ -58,7 +58,7 @@ static std::optional<std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>> is_register_of
     return {};
 }
 
-void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics)
+void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics, std::map<std::string, int> const & ev_to_id)
 {
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
 
@@ -94,6 +94,18 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
          throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
         auto v{it->second};
         if (get<2>(v)) text_loc = get<2>(v)(vm,text_loc);      
+    } else if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "Event" ){
+        //Events are mapped to msg
+        auto& event_name{name(as_symbol_ref(e))};
+        auto it{ceps::vm::oblectamenta::mnemonics.find("msg")};
+        if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+         throw std::string{"oblectamenta_assembler: Internal Error (msg opcode not found)" };
+        auto v{it->second};
+        auto ev_id_it{ev_to_id.find(event_name)};
+        if (ev_id_it == ev_to_id.end())
+         throw std::string{"oblectamenta_assembler: event '"+event_name+"' has no encoding" };
+
+        if (get<3>(v)) text_loc = get<3>(v)(vm,text_loc,ev_id_it->second);      
     } else if (is_a_symbol_with_arguments( e,sym_name,sym_kind,args)) {
         if (sym_kind == "OblectamentaOpcode"){
             auto& mnemonic{sym_name};
@@ -263,7 +275,7 @@ template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s)
     try{
         for(auto e : children(s))
          if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
-          ceps::vm::oblectamenta::oblectamenta_assembler(*r.vm,children(as_struct_ref(e)));
+          ceps::vm::oblectamenta::oblectamenta_assembler(*r.vm,children(as_struct_ref(e)),{});
          } else if (is<Ast_node_kind::uint8>(e)){
             auto v{value(as_uint8_ref(e))};
             r.vm->text[r.vm->text_loc++] = v;
@@ -289,7 +301,7 @@ template<> ser_wrapper_text fetch<ser_wrapper_text>(ceps::ast::Struct& s, ceps::
     try{
         for(auto e : children(s))
          if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
-          ceps::vm::oblectamenta::oblectamenta_assembler(vm,children(as_struct_ref(e)));
+          ceps::vm::oblectamenta::oblectamenta_assembler(vm,children(as_struct_ref(e)),{});
          } else if (is<Ast_node_kind::uint8>(e)){
             auto v{value(as_uint8_ref(e))};
             vm.text[vm.text_loc++] = v;

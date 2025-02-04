@@ -415,6 +415,8 @@ public:
 struct event_rep_t {
 	bool valid_ = false;
 	State_machine* smp_ = nullptr;
+  bool sid_valid_ = true;
+  int iid_;
 	std::string sid_;
 	std::vector<ceps::ast::Nodebase_ptr> payload_;
 	std::vector<sm4ceps_plugin_int::Variant> payload_native_;

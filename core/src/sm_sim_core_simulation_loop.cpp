@@ -98,6 +98,7 @@ static void check_for_events(State_machine_simulation_core* smc,
 							 bool& do_continue,
 							 bool& do_break,
 							 State_machine_simulation_core::event_signature** ev_sig){
+    
 
 	State_machine_simulation_core::states_t new_states_fetch;
 	smc->current_event().id_= {};
@@ -105,6 +106,7 @@ static void check_for_events(State_machine_simulation_core* smc,
 	std::vector<State_machine*> on_enter_seq;
 	bool fetch_made_states_update = false;
 	if (!smc->fetch_event(ev,sim,pos,new_states_fetch,fetch_made_states_update,on_enter_seq)) {
+
 	 if (fetch_made_states_update){         
       for(auto const & s : new_states_fetch){
           auto const & idx = s.id_;
@@ -177,7 +179,11 @@ static void check_for_events(State_machine_simulation_core* smc,
 	 }
 	smc->current_event() = ev;
 	if (ev_read) {
-		ev_id = execution_ctxt.ev_to_id[smc->current_event().id_];
+        if (!smc->current_event().str_id_valid_)
+         ev_id = smc->current_event().iid_;
+        else
+		 ev_id = execution_ctxt.ev_to_id[smc->current_event().id_];
+      
 		if (ev.sid_ == "EXIT" ) {quit = true;return;}
 		if (ev_id <= 0) return;
 		//Check signature

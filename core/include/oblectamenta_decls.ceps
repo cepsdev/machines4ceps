@@ -36,6 +36,8 @@ OblectamentaOpcode
     subi64,
     subdbl,
     buc,
+    blt,
+    blteq,
     bgteqzeroi32,
     blteqzeroi32,
     bltzeroi32,
@@ -100,7 +102,9 @@ OblectamentaOpcode
     stsdbl,
     tanhdbl,
     dbg_printlni32,
-    lea_absolute;
+    lea_absolute,
+    msg
+    ;
 
 OblectamentaModifier addr;
 OblectamentaModifier reg;

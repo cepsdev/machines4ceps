@@ -16,6 +16,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #pragma once
 
 #include <vector>
+#include <map>
+#include <string>
 #include "ceps_ast.hh"
 #include "ceps_interpreter.hh"
 #include "core/include/vm/vm_base.hpp"
@@ -26,7 +28,7 @@ namespace ceps{
             namespace assembler {
                 static double constexpr text_growth_factor{1.4};
             }
-            void oblectamenta_assembler(VMEnv& vm, vector<ceps::ast::node_t> mnemonics);
+            void oblectamenta_assembler(VMEnv& vm, vector<ceps::ast::node_t> mnemonics, std::map<std::string, int> const & ev_to_id);
         }
     }
 } 

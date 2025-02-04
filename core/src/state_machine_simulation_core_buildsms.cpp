@@ -188,13 +188,13 @@ static std::optional<ceps::ast::node_t> oblectamenta_assembly_code_guard_rhs(cep
 }
 
 // compiles asm - blocks into Oblectamenta machine language. Entry address of generated code starts is smp->vm.text_loc.
-static void run_oblectamenta_assembler(State_machine_simulation_core* smp, ceps::ast::node_t obl_block){
+static void run_oblectamenta_assembler(State_machine_simulation_core* smp, ceps::ast::node_t obl_block, std::map<std::string, int> const & ev_to_id){
 	using namespace ceps::ast;
 
 	try{
 		for(auto e : children(as_struct_ref(obl_block)))
 			if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
-				ceps::vm::oblectamenta::oblectamenta_assembler(smp->vm,children(as_struct_ref(e)));
+				ceps::vm::oblectamenta::oblectamenta_assembler(smp->vm,children(as_struct_ref(e)), ev_to_id);
 			} else if (is<Ast_node_kind::uint8>(e)){
 				auto v{value(as_uint8_ref(e))};
 				smp->vm.text[smp->vm.text_loc++] = v;
@@ -368,7 +368,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				  	auto asm_text{oblectamenta_assembly_code_guard_rhs(guard_expr)};
 				  	if (asm_text){
 						tt.oblectamenta_guard = smp->vm.text_loc;
-						run_oblectamenta_assembler(smp,*asm_text);
+						run_oblectamenta_assembler(smp,*asm_text, ev_to_id);
 						tt.oblectamenta_guard_valid = true;
 				  	}
 				  }
@@ -382,7 +382,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				if (oblectamenta_text){
 					tt.oblectamenta[0] = true;
 					tt.a1 = (void (*)()) smp->vm.text_loc;
-					run_oblectamenta_assembler(smp,*oblectamenta_text);
+					run_oblectamenta_assembler(smp,*oblectamenta_text, ev_to_id);
 				}
 			   }
                if (t.action_.size() >= 2) {
@@ -391,7 +391,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				if (oblectamenta_text){
 					tt.oblectamenta[1] = true;
 					tt.a2 = (void (*)()) smp->vm.text_loc;
-					run_oblectamenta_assembler(smp,*oblectamenta_text);				
+					run_oblectamenta_assembler(smp,*oblectamenta_text, ev_to_id);				
 				}
 			   }
                if (t.action_.size() >= 3) {
@@ -400,7 +400,7 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 				if (oblectamenta_text){
 					tt.oblectamenta[2] = true;
 					tt.a3 = (void (*)()) smp->vm.text_loc;
-					run_oblectamenta_assembler(smp,*oblectamenta_text);
+					run_oblectamenta_assembler(smp,*oblectamenta_text, ev_to_id);
 				}
 			   }
               } else{
@@ -908,7 +908,7 @@ void State_machine_simulation_core::processs_content(Result_process_cmd_line con
 	auto no_transitions_declarations = ns["no_transitions"];
     auto exported_events             = ns["export"];
 
-	
+	vm.set_event_queue(this);
 	handle_oblectamenta_blocks(this,result_cmd_line,ns);//Process global data blocks , oblectamenta - guards
 	//INVARIANT:  Global vm's Data section initialized according to global data definitions in document.
 

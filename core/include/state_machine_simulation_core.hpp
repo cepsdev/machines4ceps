@@ -146,7 +146,8 @@ public:
 
 class State_machine_simulation_core:
 		 public IUserdefined_function_registry,
-		        Ism4ceps_plugin_interface
+		        Ism4ceps_plugin_interface,
+				ceps::vm::oblectamenta::EventQueue
 {
 public:
     //Oblectamenta related stuff
@@ -154,6 +155,8 @@ public:
 									// Oblectamenta serves as an intermediate for native machine language, i.e. on an x64 platform 
 									// routines in Oblectamenta assembler will be compiled to x84 machine code.
 	std::vector< std::pair<void *, std::string>> loaded_dlls;
+
+	void fire_event(int) override;
 
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
@@ -365,6 +368,9 @@ public:
 
 	struct event_t {
 		std::string id_;
+		int iid_;
+		bool str_id_valid_{true};
+
 		bool already_sent_to_out_queues_ = false;
 		std::vector<ceps::ast::Nodebase_ptr> payload_;
 		std::vector<sm4ceps_plugin_int::Variant> payload_native_;
@@ -377,11 +383,16 @@ public:
 		event_t(const event_t &) = default;
 		event_t& operator = (const event_t &) = default;
 		event_t(std::string const & id,std::vector<ceps::ast::Nodebase_ptr> const & payload = {}):id_(id),payload_(payload) {}
+		event_t(int id){iid_ = id;str_id_valid_=false; }
 		bool operator < (event_t const & rhs) const {
 			return id_ < rhs.id_;
 		}
 		bool is_epsilon() const {return id_ == "";}
-		event_t& operator = (event_rep_t const & rhs) { error_ = (error_t*) rhs.error_token_; id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;}
+		event_t& operator = (event_rep_t const & rhs) {
+			str_id_valid_ = rhs.sid_valid_;
+			iid_ = rhs.iid_;
+			error_ = (error_t*) rhs.error_token_; id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;
+		}
 		~event_t(){
 
 			

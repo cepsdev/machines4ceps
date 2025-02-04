@@ -28,6 +28,13 @@ void State_machine_simulation_core::queue_event(std::string ev_name,std::initial
 	enqueue_event(ev,true);
 }
 
+void State_machine_simulation_core::fire_event(int id) {
+	event_t ev{id};
+	ev.already_sent_to_out_queues_ = false;
+	ev.unique_ = unique_events().find(ev.id_) != unique_events().end();
+	//std::cerr << "fire_event:" << id << "\n";
+	enqueue_event(ev,true);
+}
 
 void State_machine_simulation_core::sync_queue_event(int ev_id){
 	executionloop_context().push_ev_sync_queue(ev_id);
@@ -184,9 +191,12 @@ do{
                  delete eev.exec;
              }
 
-             if (eev.id_.length() == 0) continue;
+             if (eev.str_id_valid_ && eev.id_.length() == 0) continue;
 
 			 ev.sid_ = eev.id_;
+			 ev.sid_valid_ = eev.str_id_valid_;
+			 ev.iid_ = eev.iid_;
+
              if (map_ceps_payload_to_native_ && eev.payload_.size()){
                 eev.payload_native_.clear();
                for(auto v : eev.payload_){
