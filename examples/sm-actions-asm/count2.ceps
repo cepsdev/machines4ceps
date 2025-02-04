@@ -26,17 +26,20 @@ sm{
                             asm{
                                 OblectamentaDataLabel i, n, one;
                                 OblectamentaCodeLabel done;
-                                
-                                ldi32(i);
-                                ldi32(n);
-                                blteq(done);
-                                ldi32(i);
-                                ldi32(one);
-                                addi32;
-                                sti32(i);
+
+                                //Invariant: compute stack empty
+                                ldi32(i); // push value of i to compute stack
+                                ldi32(n); // push value of n to compute stack
+                                blteq(done); // branch to done iff i >= n
+                                //Invariant: compute stack empty 
+                                ldi32(i); // push value of i to compute stack
+                                ldi32(one); // push value of one == 1 to compute stack
+                                addi32; // push i + 1 to compute stack
+                                sti32(i); // store int32 value on top of compute stack to i
                                 E; // fire event E => loop (see state machine's transition under event E)
                                 halt;                                
                                 done;
+                                //Invariant: compute stack empty
                                 F; // fire event F => terminate (see state machine's transition under event F)
                                 halt;
                             };
