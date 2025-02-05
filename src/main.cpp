@@ -27,7 +27,7 @@ limitations under the License.
 
 
 #define VERSION_SM4CEPS_MAJOR "0"
-#define VERSION_SM4CEPS_MINOR "8.1.3.2"
+#define VERSION_SM4CEPS_MINOR "8.1.3.3"
 
 vector < string > generated_sql_file_names;
 bool DUMP_PLANTUML_REP_TO_COUT = false;
