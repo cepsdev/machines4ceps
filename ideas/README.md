@@ -70,7 +70,9 @@ text{
     ...
 }
 Where Fi is wellformed assembler code, and tagj is one of i32,i64,ui32,ui63,float32,float16,float64,sz,utf8.
-The result is a linearization of the tree fragment :
+
+The result is a 'linearization of the tree fragment' :
+
 N0|....|Nn,1|tag1 representation of the top size(tag1) bytes of the compute stack immediately after processing F1|
         Nn,2|tag2 representation of the top size(tag2) bytes of the compute stack immediatley after processing F2|
         ...
