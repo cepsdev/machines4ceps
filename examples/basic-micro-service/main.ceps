@@ -1,0 +1,69 @@
+/*
+Small Service
+*/
+
+macro asm_routine{
+            oblectamenta{
+                        text{
+                            asm{
+                                hd(arglist).arg.content();                                
+                            };
+                        };
+            };
+};
+
+kind Event;
+Event AddAccount;
+
+val account_id = 0;
+val account_flags = 8;
+val account_user = 16;
+val accounts_hd_size_ofs = 0;
+val accounts_hd_capacity_ofs = 8;
+
+oblectamenta{
+ global{
+   data{
+        OblectamentaDataLabel i,n,one, accounts_data,accounts_hd,accounts_hd_size, example_account,dbg_print_cs_and_regs_flags;
+        dbg_print_cs_and_regs_flags;
+        0;
+        one; 1;
+        
+        example_account;
+        0; // id
+        0;
+        "My Account";
+
+        accounts_hd;
+        accounts_hd_size;
+        0; // size
+        4; // capacity; 
+        accounts_data;
+    };
+ };
+};
+
+doAddAccount{
+    OblectamentaDataLabel dbg_print_cs_and_regs_flags;
+    OblectamentaDataLabel i,n,one, accounts_data,accounts_hd,accounts_hd_size, example_account;
+    lea(example_account);
+    
+    dbg_print_cs_and_regs(dbg_print_cs_and_regs_flags);
+    halt;
+};
+
+
+sm{
+    Service;
+    states{Initial;Ready;};
+    Actions{
+        doAddAccount{asm_routine{arg{root.doAddAccount.content();};}; };
+    };
+    t{Initial;Ready;};
+    t{Ready;Ready;AddAccount;doAddAccount;};
+};
+
+Simulation{
+    Start{Service;};
+    AddAccount;
+};

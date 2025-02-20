@@ -141,7 +141,8 @@ namespace ceps{
                 callx,
                 lea_absolute,
                 sti32reg,
-                msg
+                msg,
+                dbg_print_cs_and_regs //print compute stack
             };
 
             class EventQueue{
@@ -384,6 +385,7 @@ namespace ceps{
                     size_t lea_absolute(size_t);
                     size_t sti32reg(size_t);
                     size_t msg(size_t);
+                    size_t dbg_print_cs_and_regs(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -544,9 +546,11 @@ namespace ceps{
                 {"callx",{Opcode::callx, "",nullptr,emit<Opcode::callx>,nullptr}},
                 {"lea_absolute",{Opcode::lea_absolute, "",nullptr,emit<Opcode::lea_absolute>,nullptr}},
                 {"sti32reg",{Opcode::sti32reg, "",nullptr,nullptr,emit<Opcode::sti32reg> }},
-                {"msg",{Opcode::msg, "",nullptr,emit<Opcode::msg>,nullptr }}
+                {"msg",{Opcode::msg, "",nullptr,emit<Opcode::msg>,nullptr }},
+                {"dbg_print_cs_and_regs",{Opcode::dbg_print_cs_and_regs, "",nullptr,emit<Opcode::dbg_print_cs_and_regs>,nullptr} }
             };
         }//namespace oblectamenta
     }
 }
 
+std::ostream& operator << (std::ostream&, ceps::vm::oblectamenta::VMEnv::registers_t);

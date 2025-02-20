@@ -105,6 +105,27 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
+    size_t VMEnv::dbg_print_cs_and_regs(size_t pos){
+        //cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
+        cout << "\nRegisters: " << registers << "\n";
+        cout << "\nCompute Stack:\n\n";
+        if (compute_stack.size() >=4) cout << " Top Element (int32, uint32): " << *(int32_t*)&compute_stack[compute_stack.size() - 4]
+                                           << "   " << *(uint32_t*)&compute_stack[compute_stack.size() - 4]  << "\n";
+        if (compute_stack.size() >=8) cout << " Top Element (int64, uint64): " << *(int64_t*)&compute_stack[compute_stack.size() - 8]
+                                           << "   " << *(uint64_t*)&compute_stack[compute_stack.size() - 8]  << "\n";
+        cout << "\n Bytes:\n";        
+        size_t w {8};
+        for(size_t i{}; i <  compute_stack.size(); ++i){
+            auto v {compute_stack[i]};
+            cout.width(4);
+            cout << (uint32_t) v << " ";
+            if ( (i + 1)% w == 0) cout << "\n"; 
+        }
+        cout << "\n";
+
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
 // Replace address on stack with referenced value
     size_t VMEnv::ldsi32(size_t pos){
         auto addr{pop_cs<addr_t>()};
@@ -696,11 +717,27 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::callx);
         op_dispatch.push_back(&VMEnv::lea_absolute);
         op_dispatch.push_back(&VMEnv::sti32reg);
-        op_dispatch.push_back(&VMEnv::msg);    
+        op_dispatch.push_back(&VMEnv::msg);
+        op_dispatch.push_back(&VMEnv::dbg_print_cs_and_regs);
     }
      
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )
     //  os << "| "<< stack_seg[i] << "\t|\n";
     }
+}
+
+std::ostream& operator << (std::ostream& os, ceps::vm::oblectamenta::VMEnv::registers_t regs){
+    
+    size_t w {};
+    for(auto r : regs.reg_mnemonic2idx) if (r.first.length() > w) w = r.first.length();
+    size_t lc {};
+    auto nl {regs.reg_mnemonic2idx.size()};
+    for(auto r : regs.reg_mnemonic2idx){
+        os.width(w);os << r.first << ": " ;
+        os << " ";
+        os << regs.file[r.second];
+        if (++lc < nl) os << " | ";
+    }
+    return os;
 }

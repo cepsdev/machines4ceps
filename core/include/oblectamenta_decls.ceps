@@ -103,7 +103,8 @@ OblectamentaOpcode
     tanhdbl,
     dbg_printlni32,
     lea_absolute,
-    msg
+    msg,
+    dbg_print_cs_and_regs
     ;
 
 OblectamentaModifier addr;
