@@ -17,7 +17,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/vm/vm_base.hpp"
 #include <cstring>
 #include <cmath>
-
+#include <iomanip>
 namespace ceps::vm::oblectamenta{
 
    bool copy_stack(VMEnv& from, VMEnv& to){
@@ -125,6 +125,32 @@ namespace ceps::vm::oblectamenta{
 
         return base_opcode_width + sizeof(addr_t) + pos;
     }
+
+    size_t VMEnv::dbg_print_data(size_t pos){
+        //cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
+        cout << "\nData: "; cout << mem.heap - mem.base << " bytes static data ";
+        auto w{8};
+        auto i{0};
+        //hexdump
+        for ( auto p = mem.base; p != mem.heap; ++p){
+            if (i % w == 0) {       
+                if (i){
+                    cout << "  ";
+                    for (auto pp = p - w; pp != p;++pp)
+                        if (isprint(*pp)) cout << (char) *pp << " ";
+                        else cout << ". ";
+                }
+                cout << "\n";
+                cout << setw(3) << i << ": ";
+            }
+            cout << setw(3) << (int) *p << " ";
+            ++i;            
+        }
+        cout << "\n";
+
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
 
 // Replace address on stack with referenced value
     size_t VMEnv::ldsi32(size_t pos){
@@ -719,6 +745,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::sti32reg);
         op_dispatch.push_back(&VMEnv::msg);
         op_dispatch.push_back(&VMEnv::dbg_print_cs_and_regs);
+        op_dispatch.push_back(&VMEnv::dbg_print_data);
     }
      
     void VMEnv::dump(ostream& os){

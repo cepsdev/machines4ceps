@@ -1,0 +1,104 @@
+kind Event;
+kind Guard;
+kind Systemstate;
+
+Event AnEvent;
+
+
+
+oblectamenta{
+ global{
+   data{
+        OblectamentaDataLabel msg_buffer2, msg_buffer,msg_text, one, some_number;
+        one; 1; 
+        msg_text;"Hello there!";
+        some_number; 43;
+        msg_buffer; for (i : 1 .. 64){0;}
+        
+        msg_buffer2;
+        msg{
+            A{
+                id{
+                    i32(1);
+                };
+                name{
+                    sz("Hello there!");
+                };
+                B{
+                    age{i32(10);};
+                };
+            };
+            B{
+                id1{ id2{}; };
+            };
+            C{};
+        };//msg
+    };
+ };
+};
+
+
+kind OblectamentaMessageTagInt32;
+kind OblectamentaMessageTagZeroTerminatedString;
+
+
+sm{
+    S;
+    states{Initial; A;};
+    Actions{
+        doSendEvent{
+            oblectamenta{text{asm{
+                OblectamentaDataLabel msg_text, one, some_number;
+                OblectamentaMessageTagInt32 i32;
+                OblectamentaMessageTagZeroTerminatedString sz;
+                
+                dbg_print_cs_and_regs(0);
+                dbg_print_data(0);
+
+                AnEvent
+                (
+                msg{msg_buffer;
+                    A{
+                        id{
+                            i32(1);
+                        };
+                        name{
+                            sz("Hello there!");
+                        };
+                        B{
+                            age{i32(10);};
+                        };
+                    };
+                    B{
+                        id1{ id2{}; };
+                    };
+                    C{};
+                }
+                );
+                halt;
+            };};};
+
+        };
+    };
+
+    t{Initial; A; doSendEvent;};
+};
+
+sm{
+    T;
+    states{Initial; A;};
+    Actions{
+        doReceiveEvent{
+            print("doReceiveEvent\n");
+        };
+    };
+
+    t{Initial; A;AnEvent;doReceiveEvent;};
+};
+
+
+
+
+Simulation{
+    Start{S;T;};
+};

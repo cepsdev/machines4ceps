@@ -58,6 +58,146 @@ static std::optional<std::tuple<VMEnv::reg_t, VMEnv::reg_offs_t>> is_register_of
     return {};
 }
 
+static string escape_str(string const & s)
+{
+	string result;
+	for(unsigned int i = 0; i != s.length();++i)
+	{
+		if (s[i] == '\n')
+			result+="\\n";
+		else if (s[i] == '\\')
+			result+="\\\\";
+		else if (s[i] == '\t')
+			result+="\\t";
+		else if (s[i] == '\r')
+			result+="\\r";
+		else if (s[i] == '"')
+			result+="\\\"";
+		else if (std::isprint(s[i]))
+			result += s[i];
+	}
+	return result;
+}
+
+
+static size_t dispatch_serialize_event_payload(ceps::ast::node_t msg, char* buffer, size_t remaining_bytes){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    size_t written{};
+    vector<node_t> args;
+    string sym_name, sym_kind;
+    if (is<Ast_node_kind::structdef>(msg)){
+        auto the_name {name(as_struct_ref(msg))};
+        if (remaining_bytes < the_name.size() + 1 + sizeof(msg_node)) return {};
+        if (msg_node_ex::MAX_NAME < sizeof(msg_node) + 1) return {};
+        msg_node& n{ *(msg_node*)buffer };
+        n.what = msg_node::NODE;
+        written = n.size =  the_name.size() + 1 + sizeof(msg_node);
+        msg_node_ex& nn{*(msg_node_ex*)buffer};
+        strncpy(nn.name,the_name.c_str(),the_name.size()+1);
+        for (auto e: children(as_struct_ref(msg))){
+            auto r = dispatch_serialize_event_payload(e, buffer + written, remaining_bytes - written);
+            written += r;
+            if (written > remaining_bytes) return {};
+        }
+        nn.size = written;
+    } else if (is_a_symbol_with_arguments( msg,sym_name,sym_kind,args)){
+        if (sym_kind == "OblectamentaMessageTagInt32" && args.size() && is<Ast_node_kind::int_literal>(args[0])){
+            if (sizeof(msg_node_int32) > remaining_bytes) return {};
+            msg_node_int32& n{ *(msg_node_int32*)buffer };
+            n.what = msg_node::INT32;
+            n.size = sizeof(msg_node_int32);
+            n.value = value(as_int_ref(args[0]));
+            return n.size; 
+        } else if (sym_kind == "OblectamentaMessageTagZeroTerminatedString" && args.size() && is<Ast_node_kind::string_literal>(args[0])){
+            if (sizeof(msg_node) + 1 + value(as_string_ref(args[0])).size() > remaining_bytes) return {};
+            msg_node_sz& n{ *(msg_node_sz*)buffer };
+            n.what = msg_node::SZ;
+            n.size = sizeof(msg_node) + 1 + value(as_string_ref(args[0])).size();
+            strncpy(n.value,value(as_string_ref(args[0])).c_str(),value(as_string_ref(args[0])).size()+1);
+            return n.size; 
+        } 
+    } 
+    return written;
+}
+
+static size_t serialize_event_payload(ceps::ast::node_t msg, char* buffer, size_t remaining_bytes){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    if (sizeof(msg_node) > remaining_bytes) return 0;
+    msg_node* root{ (msg_node*)buffer };
+    root->what = msg_node::ROOT;
+    size_t& written {root->size};
+    written = sizeof(msg_node);
+    for (auto e: children(as_struct_ref(msg))){
+        auto r = dispatch_serialize_event_payload(e, buffer + written, remaining_bytes - written);
+        written += r;
+    }
+    return written;
+}
+
+static size_t find_trailing_zero(char* buffer, size_t size)
+{
+    size_t r{};
+    for (;r < size && buffer[r]; ++r);
+    return r;
+}
+
+static size_t deserialize_event_payload(char* buffer, size_t size, string& res){
+    string r;
+    if (size == 0) return {};
+    if (size < sizeof(msg_node)) return {};
+
+    msg_node& root{ *(msg_node*)buffer };
+    size_t len_extra_info{};
+    if (root.what == msg_node::NODE){
+        auto t = find_trailing_zero(buffer + sizeof(msg_node), size - sizeof(msg_node));
+        len_extra_info = t + 1;
+    }
+
+    auto hd_size = sizeof(msg_node) + len_extra_info;
+    auto content_size = root.size - hd_size;
+    size_t consumed_content_bytes{};
+    
+    if (root.what == msg_node::ROOT || root.what == msg_node::NODE){
+        string prefix,suffix;
+        if (root.what == msg_node::NODE)
+        {
+            prefix = string{"\""}+ (char*)((msg_node_ex*)buffer)->name +"\":";
+        } else {
+            prefix = "{";
+            suffix = "}";
+        }
+        string inner;
+        bool contains_nodes {};
+        
+        if (content_size){
+            for (;consumed_content_bytes < content_size;){
+                msg_node& n{ *(msg_node*)(buffer + hd_size + consumed_content_bytes)};
+                string t;
+                contains_nodes |= (n.what == msg_node::NODE); 
+                consumed_content_bytes += 
+                 deserialize_event_payload(buffer+hd_size+consumed_content_bytes, content_size - consumed_content_bytes, t);
+                inner += t;
+                if (consumed_content_bytes < content_size )inner += ",";
+            }
+        }
+        if (root.what == msg_node::NODE ) 
+         if (inner.size() == 0) inner = "{}";
+         else if (contains_nodes) inner = "{" + inner + "}"; 
+        res = prefix  + inner + suffix;   
+    } else if (root.what == msg_node::INT32){
+        msg_node_int32& m{ *(msg_node_int32*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_int32);
+    } else if (root.what == msg_node::SZ){
+        msg_node_sz& m{ *(msg_node_sz*)&root};
+        res = "\"" + escape_str(m.value)+ "\"";
+        return sizeof(msg_node) + res.size() + 1;
+    }
+    return hd_size + content_size;
+}
+
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics, std::map<std::string, int> const & ev_to_id)
 {
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
@@ -107,7 +247,16 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
 
         if (get<3>(v)) text_loc = get<3>(v)(vm,text_loc,ev_id_it->second);      
     } else if (is_a_symbol_with_arguments( e,sym_name,sym_kind,args)) {
-        if (sym_kind == "OblectamentaOpcode"){
+        if (sym_kind == "Event"){
+            if (args.size() && is<Ast_node_kind::structdef>(args[0]) && "msg" == name(as_struct_ref(args[0]))) {
+                // Case : message
+                /*char buffer[512];
+                auto written_bytes = serialize_event_payload(args[0],buffer,512);
+                string json_msg;
+                deserialize_event_payload(buffer,written_bytes,json_msg);*/
+                //cerr <<">>" << json_msg << "<<" << "\n";
+            }
+        }else if (sym_kind == "OblectamentaOpcode"){
             auto& mnemonic{sym_name};
             std::string sym_name2;
 	        std::string sym_kind2;

@@ -142,7 +142,8 @@ namespace ceps{
                 lea_absolute,
                 sti32reg,
                 msg,
-                dbg_print_cs_and_regs //print compute stack
+                dbg_print_cs_and_regs,//print compute stack
+                dbg_print_data // print data section
             };
 
             class EventQueue{
@@ -386,6 +387,7 @@ namespace ceps{
                     size_t sti32reg(size_t);
                     size_t msg(size_t);
                     size_t dbg_print_cs_and_regs(size_t);
+                    size_t dbg_print_data(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -547,8 +549,36 @@ namespace ceps{
                 {"lea_absolute",{Opcode::lea_absolute, "",nullptr,emit<Opcode::lea_absolute>,nullptr}},
                 {"sti32reg",{Opcode::sti32reg, "",nullptr,nullptr,emit<Opcode::sti32reg> }},
                 {"msg",{Opcode::msg, "",nullptr,emit<Opcode::msg>,nullptr }},
-                {"dbg_print_cs_and_regs",{Opcode::dbg_print_cs_and_regs, "",nullptr,emit<Opcode::dbg_print_cs_and_regs>,nullptr} }
+                {"dbg_print_cs_and_regs",{Opcode::dbg_print_cs_and_regs, "",nullptr,emit<Opcode::dbg_print_cs_and_regs>,nullptr} },
+                {"dbg_print_data",{Opcode::dbg_print_data, "",nullptr,emit<Opcode::dbg_print_data>,nullptr} }
             };
+
+            
+            #pragma pack(push,1)
+            struct msg_node{
+                static constexpr uint32_t ROOT = 1;
+                static constexpr uint32_t NODE = 2;
+                static constexpr uint32_t INT32 = 3;
+                static constexpr uint32_t INT64 = 4;
+                static constexpr uint32_t UINT32 = 5;
+                static constexpr uint32_t UINT64 = 6;
+                static constexpr uint32_t SZ = 7;
+                uint32_t what;
+                size_t size;
+            };
+            struct msg_node_ex:msg_node{
+                static constexpr size_t MAX_NAME = 1024;
+                char name[MAX_NAME];
+            };
+            struct msg_node_int32:msg_node{
+                int32_t value;
+            };
+            struct msg_node_sz:msg_node{
+                static constexpr size_t MAX_SZ = 0xFFFFFFFFFF;
+                char value[MAX_SZ];
+            };
+
+            #pragma pack(pop)
         }//namespace oblectamenta
     }
 }
