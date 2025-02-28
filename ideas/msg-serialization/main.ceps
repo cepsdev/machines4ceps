@@ -9,7 +9,11 @@ Event AnEvent;
 oblectamenta{
  global{
    data{
+
         OblectamentaDataLabel msg_buffer2, msg_buffer,msg_text, one, some_number;
+        OblectamentaMessageTagInt32 i32;
+        OblectamentaMessageTagZeroTerminatedString sz;
+
         one; 1; 
         msg_text;"Hello there!";
         some_number; 43;
@@ -19,13 +23,13 @@ oblectamenta{
         msg{
             A{
                 id{
-                    i32(1);
+                    1;
                 };
                 name{
-                    sz("Hello there!");
+                    "Hello there!";
                 };
                 B{
-                    age{i32(10);};
+                    age{10;};
                 };
             };
             B{
@@ -38,8 +42,6 @@ oblectamenta{
 };
 
 
-kind OblectamentaMessageTagInt32;
-kind OblectamentaMessageTagZeroTerminatedString;
 
 
 sm{

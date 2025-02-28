@@ -22,6 +22,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <ostream>
 #include <iostream> 
 #include <map>
+#include <optional>
+#include <cstring>
 
 namespace ceps{
     namespace vm{
@@ -222,6 +224,23 @@ namespace ceps{
                         auto t{mem.heap - mem.base};
                         new (mem.heap) T{data};
                         mem.heap += sizeof(data);                        
+                        return t;
+                    }
+                    std::optional<size_t> reserve(size_t n){
+                        size_t t = mem.heap - mem.base;
+                        if ( (size_t)(mem.end - mem.heap) > n)
+                         mem.heap += n;
+                        else {
+                            size_t new_size = mem.end - mem.base + n;
+                            size_t heap_pos = mem.heap-mem.base;
+                            auto new_base = new char[new_size];
+                            if (!new_base) return {};
+                            memcpy(new_base,mem.base, mem.end - mem.base);
+                            delete mem.base;
+                            mem.base = (data_t)new_base;
+                            mem.heap = mem.base + heap_pos;
+                            mem.end = mem.base + new_size;
+                        }
                         return t;
                     }
   

@@ -80,60 +80,6 @@ static string escape_str(string const & s)
 }
 
 
-static size_t dispatch_serialize_event_payload(ceps::ast::node_t msg, char* buffer, size_t remaining_bytes){
-    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
-    size_t written{};
-    vector<node_t> args;
-    string sym_name, sym_kind;
-    if (is<Ast_node_kind::structdef>(msg)){
-        auto the_name {name(as_struct_ref(msg))};
-        if (remaining_bytes < the_name.size() + 1 + sizeof(msg_node)) return {};
-        if (msg_node_ex::MAX_NAME < sizeof(msg_node) + 1) return {};
-        msg_node& n{ *(msg_node*)buffer };
-        n.what = msg_node::NODE;
-        written = n.size =  the_name.size() + 1 + sizeof(msg_node);
-        msg_node_ex& nn{*(msg_node_ex*)buffer};
-        strncpy(nn.name,the_name.c_str(),the_name.size()+1);
-        for (auto e: children(as_struct_ref(msg))){
-            auto r = dispatch_serialize_event_payload(e, buffer + written, remaining_bytes - written);
-            written += r;
-            if (written > remaining_bytes) return {};
-        }
-        nn.size = written;
-    } else if (is_a_symbol_with_arguments( msg,sym_name,sym_kind,args)){
-        if (sym_kind == "OblectamentaMessageTagInt32" && args.size() && is<Ast_node_kind::int_literal>(args[0])){
-            if (sizeof(msg_node_int32) > remaining_bytes) return {};
-            msg_node_int32& n{ *(msg_node_int32*)buffer };
-            n.what = msg_node::INT32;
-            n.size = sizeof(msg_node_int32);
-            n.value = value(as_int_ref(args[0]));
-            return n.size; 
-        } else if (sym_kind == "OblectamentaMessageTagZeroTerminatedString" && args.size() && is<Ast_node_kind::string_literal>(args[0])){
-            if (sizeof(msg_node) + 1 + value(as_string_ref(args[0])).size() > remaining_bytes) return {};
-            msg_node_sz& n{ *(msg_node_sz*)buffer };
-            n.what = msg_node::SZ;
-            n.size = sizeof(msg_node) + 1 + value(as_string_ref(args[0])).size();
-            strncpy(n.value,value(as_string_ref(args[0])).c_str(),value(as_string_ref(args[0])).size()+1);
-            return n.size; 
-        } 
-    } 
-    return written;
-}
-
-static size_t serialize_event_payload(ceps::ast::node_t msg, char* buffer, size_t remaining_bytes){
-    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
-    if (sizeof(msg_node) > remaining_bytes) return 0;
-    msg_node* root{ (msg_node*)buffer };
-    root->what = msg_node::ROOT;
-    size_t& written {root->size};
-    written = sizeof(msg_node);
-    for (auto e: children(as_struct_ref(msg))){
-        auto r = dispatch_serialize_event_payload(e, buffer + written, remaining_bytes - written);
-        written += r;
-    }
-    return written;
-}
-
 static size_t find_trailing_zero(char* buffer, size_t size)
 {
     size_t r{};
@@ -141,7 +87,8 @@ static size_t find_trailing_zero(char* buffer, size_t size)
     return r;
 }
 
-static size_t deserialize_event_payload(char* buffer, size_t size, string& res){
+extern size_t deserialize_event_payload(char* buffer, size_t size, std::string& res);
+size_t deserialize_event_payload(char* buffer, size_t size, std::string& res){
     string r;
     if (size == 0) return {};
     if (size < sizeof(msg_node)) return {};

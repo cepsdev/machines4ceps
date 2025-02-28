@@ -91,9 +91,9 @@ $(TARGET)/ceps: $(objfiles) $(CEPSLIB)
 	$(TARGET)/generic_tcp_communication.o \
 	$(TARGET)/sm_sim_core_timer.o \
 	$(TARGET)/sm_sim_execute_action_seq.o \
+	$(TARGET)/vm_ceps_core_helper.o \
 	$(TARGET)/oblectamenta-assembler.o \
 	$(TARGET)/vm_base.o \
-	$(TARGET)/vm_ceps_core_helper.o \
 	$(TARGET)/docgen_docwriter_factory.o $(TARGET)/docgen_ifelse.o $(TARGET)/docgen_docwriter_html5.o $(TARGET)/docgen_docwriter_markdown_minimal.o -o $(TARGET)/ceps -ldl -lpthread -lrt -lcepscore
 
 $(TARGET)/main.o: src/main.cpp

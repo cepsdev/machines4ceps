@@ -128,11 +128,14 @@ namespace ceps::vm::oblectamenta{
 
     size_t VMEnv::dbg_print_data(size_t pos){
         //cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
-        cout << "\nData: "; cout << mem.heap - mem.base << " bytes static data ";
+        cout << "\nStatic data ("; cout << mem.heap - mem.base << " bytes) :\n";
         auto w{8};
         auto i{0};
         //hexdump
         for ( auto p = mem.base; p != mem.heap; ++p){
+            if (i % w == 0) cout << setw(3) << i << ": ";
+            cout << setw(3) << (int) *p << " ";
+            ++i;
             if (i % w == 0) {       
                 if (i){
                     cout << "  ";
@@ -141,12 +144,18 @@ namespace ceps::vm::oblectamenta{
                         else cout << ". ";
                 }
                 cout << "\n";
-                cout << setw(3) << i << ": ";
             }
-            cout << setw(3) << (int) *p << " ";
-            ++i;            
         }
         cout << "\n";
+        if (data_labels().size()){
+            size_t sym_col_w{0};
+            for (auto e : data_labels() ) if (sym_col_w < e.first.length()) sym_col_w = e.first.length();
+            cout << "\nSymboltable:\n\n";
+            for (auto e : data_labels() ){
+                cout.width(sym_col_w); cout << std::left << e.first << "  " ;
+                cout.width(6); cout << e.second << "\n";
+            }
+        }
 
         return base_opcode_width + sizeof(addr_t) + pos;
     }
