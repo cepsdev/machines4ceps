@@ -103,6 +103,7 @@ size_t deserialize_event_payload(char* buffer, size_t size, std::string& res){
     }
 
     auto hd_size = sizeof(msg_node) + len_extra_info;
+    if (root.size <  hd_size) return 0;
     auto content_size = root.size - hd_size;
     size_t consumed_content_bytes{};
     
@@ -178,6 +179,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          //INVARIANT: mnem is a message directive, and mem_loc holds a pointer into static memory to hold the serialized result.
          //Next: replace message directive with Oblectamenta Machine Code which will generate the message at runtime
          //mnem = CODE;
+
+
          
 
         }
