@@ -144,8 +144,10 @@ namespace ceps{
                 lea_absolute,
                 sti32reg,
                 msg,
-                dbg_print_cs_and_regs,//print compute stack
-                dbg_print_data // print data section
+                dbg_print_cs_and_regsimm, //print compute stack
+                dbg_print_dataimm, //print data section
+                dbg_deserialize_protobufish_to_json, //deserialize and print message in protobufish format
+                ldi32imm
             };
 
             class EventQueue{
@@ -405,8 +407,10 @@ namespace ceps{
                     size_t lea_absolute(size_t);
                     size_t sti32reg(size_t);
                     size_t msg(size_t);
-                    size_t dbg_print_cs_and_regs(size_t);
-                    size_t dbg_print_data(size_t);
+                    size_t dbg_print_cs_and_regsimm(size_t);
+                    size_t dbg_print_dataimm(size_t);
+                    size_t dbg_deserialize_protobufish_to_json(size_t);
+                    size_t ldi32imm(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -568,10 +572,11 @@ namespace ceps{
                 {"lea_absolute",{Opcode::lea_absolute, "",nullptr,emit<Opcode::lea_absolute>,nullptr}},
                 {"sti32reg",{Opcode::sti32reg, "",nullptr,nullptr,emit<Opcode::sti32reg> }},
                 {"msg",{Opcode::msg, "",nullptr,emit<Opcode::msg>,nullptr }},
-                {"dbg_print_cs_and_regs",{Opcode::dbg_print_cs_and_regs, "",nullptr,emit<Opcode::dbg_print_cs_and_regs>,nullptr} },
-                {"dbg_print_data",{Opcode::dbg_print_data, "",nullptr,emit<Opcode::dbg_print_data>,nullptr} }
+                {"dbg_print_cs_and_regsimm",{Opcode::dbg_print_cs_and_regsimm, "",nullptr,emit<Opcode::dbg_print_cs_and_regsimm>,nullptr} },
+                {"dbg_print_dataimm",{Opcode::dbg_print_dataimm, "",nullptr,emit<Opcode::dbg_print_dataimm>,nullptr} },
+                {"dbg_deserialize_protobufish_to_json",{Opcode::dbg_deserialize_protobufish_to_json, "",nullptr,emit<Opcode::dbg_deserialize_protobufish_to_json>,nullptr} },
+                {"ldi32imm",{Opcode::ldi32imm, "Push 32 bit signed integer immediate.",nullptr,emit<Opcode::ldi32imm>,nullptr} }
             };
-
             
             #pragma pack(push,1)
             struct msg_node{

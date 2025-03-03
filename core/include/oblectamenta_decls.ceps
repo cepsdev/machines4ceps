@@ -105,7 +105,8 @@ OblectamentaOpcode
     lea_absolute,
     msg,
     dbg_print_cs_and_regs,
-    dbg_print_data
+    dbg_print_data,
+    dbg_deserialize_protobufish_to_json
     ;
 
 OblectamentaModifier addr;

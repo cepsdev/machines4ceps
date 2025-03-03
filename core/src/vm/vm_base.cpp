@@ -19,7 +19,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <cmath>
 #include <iomanip>
 namespace ceps::vm::oblectamenta{
-
+    size_t deserialize_event_payload(char* buffer, size_t size, std::string& res);
+    
    bool copy_stack(VMEnv& from, VMEnv& to){
         auto from_stack_size{from.mem.end - from.mem.base - from.registers.file[VMEnv::registers_t::SP] };
         if (to.mem.end - to.mem.base < from_stack_size ) return false;
@@ -99,41 +100,50 @@ namespace ceps::vm::oblectamenta{
         push_cs(*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   ));
         return base_opcode_width + sizeof(addr_t) + pos;
     }
-    
+
+    size_t VMEnv::ldi32imm(size_t pos){
+        push_cs(*((int*)(text+pos+base_opcode_width))) ;
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
     size_t VMEnv::dbg_printlni32(size_t pos){
         cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
-    size_t VMEnv::dbg_print_cs_and_regs(size_t pos){
+    size_t VMEnv::dbg_print_cs_and_regsimm(size_t pos){
         //cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
         cout << "\nRegisters: " << registers << "\n";
-        cout << "\nCompute Stack:\n\n";
-        if (compute_stack.size() >=4) cout << " Top Element (int32, uint32): " << *(int32_t*)&compute_stack[compute_stack.size() - 4]
-                                           << "   " << *(uint32_t*)&compute_stack[compute_stack.size() - 4]  << "\n";
-        if (compute_stack.size() >=8) cout << " Top Element (int64, uint64): " << *(int64_t*)&compute_stack[compute_stack.size() - 8]
-                                           << "   " << *(uint64_t*)&compute_stack[compute_stack.size() - 8]  << "\n";
-        cout << "\n Bytes:\n";        
-        size_t w {8};
-        for(size_t i{}; i <  compute_stack.size(); ++i){
-            auto v {compute_stack[i]};
-            cout.width(4);
-            cout << (uint32_t) v << " ";
-            if ( (i + 1)% w == 0) cout << "\n"; 
+        if (registers.file[registers_t::CSP]){ 
+            cout << "\nCompute Stack:\n\n";
+            if (registers.file[registers_t::CSP] >=4) 
+             cout << " Top Element (int32, uint32): " << *(int32_t*)&compute_stack[registers.file[registers_t::CSP] - 4]
+                                            << "   " << *(uint32_t*)&compute_stack[registers.file[registers_t::CSP] - 4]  << "\n";
+            if (registers.file[registers_t::CSP] >=8) 
+             cout << " Top Element (int64, uint64): " << *(int64_t*)&compute_stack[registers.file[registers_t::CSP] - 8]
+                                            << "   " << *(uint64_t*)&compute_stack[registers.file[registers_t::CSP] - 8]  << "\n";
+            cout << "\n Bytes:\n";        
+            size_t w {8};
+            for(size_t i{}; i <  registers.file[registers_t::CSP]; ++i){
+                auto v {compute_stack[i]};
+                cout.width(4);
+                cout << (uint32_t) v << " ";
+                if ( (i + 1)% w == 0) cout << "\n"; 
+            }
+            cout << "\n";
         }
-        cout << "\n";
 
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
-    size_t VMEnv::dbg_print_data(size_t pos){
+    size_t VMEnv::dbg_print_dataimm(size_t pos){
         //cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
         cout << "\nStatic data ("; cout << mem.heap - mem.base << " bytes) :\n";
         auto w{8};
         auto i{0};
         //hexdump
         for ( auto p = mem.base; p != mem.heap; ++p){
-            if (i % w == 0) cout << setw(3) << i << ": ";
+            if (i % w == 0) cout << setw(5) << i << ": ";
             cout << setw(3) << (int) *p << " ";
             ++i;
             if (i % w == 0) {       
@@ -156,10 +166,16 @@ namespace ceps::vm::oblectamenta{
                 cout.width(6); cout << e.second << "\n";
             }
         }
-
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
+    size_t VMEnv::dbg_deserialize_protobufish_to_json (size_t pos){
+        char* buffer = (char*)mem.base +  *((addr_t*)(text+pos+base_opcode_width));
+        string res;
+        deserialize_event_payload(buffer,(mem.heap  - mem.base)- *((addr_t*)(text+pos+base_opcode_width)) , res);
+        cout << res << "\n";
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
 
 // Replace address on stack with referenced value
     size_t VMEnv::ldsi32(size_t pos){
@@ -753,8 +769,10 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::lea_absolute);
         op_dispatch.push_back(&VMEnv::sti32reg);
         op_dispatch.push_back(&VMEnv::msg);
-        op_dispatch.push_back(&VMEnv::dbg_print_cs_and_regs);
-        op_dispatch.push_back(&VMEnv::dbg_print_data);
+        op_dispatch.push_back(&VMEnv::dbg_print_cs_and_regsimm);
+        op_dispatch.push_back(&VMEnv::dbg_print_dataimm);
+        op_dispatch.push_back(&VMEnv::dbg_deserialize_protobufish_to_json);
+        op_dispatch.push_back(&VMEnv::ldi32imm);
     }
      
     void VMEnv::dump(ostream& os){

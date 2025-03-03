@@ -27,6 +27,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <queue>
 #include <unordered_map>
 #include <cstring>
+#include <sstream>
+
 
 namespace ceps::vm::oblectamenta{
 
@@ -145,9 +147,50 @@ size_t deserialize_event_payload(char* buffer, size_t size, std::string& res){
     return hd_size + content_size;
 }
 
-void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t> mnemonics, std::map<std::string, int> const & ev_to_id)
+static bool is_a_msgdefdirective(ceps::ast::node_t n){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    return is<Ast_node_kind::structdef>(n) && children(as_struct_ref(n)).size() && 
+    children(as_struct_ref(n))[0] && is<Ast_node_kind::symbol>(children(as_struct_ref(n))[0]) &&  
+    "OblectamentaMsgDefDirective" == kind(as_symbol_ref(children(as_struct_ref(n))[0]));
+}
+
+static std::optional<size_t> static_mem_location(ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t msg_directive){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    for (auto e: children(as_struct_ref(msg_directive)))
+        if(is<Ast_node_kind::symbol>(e) && "OblectamentaDataLabel" == kind(as_symbol_ref(e))){
+            auto data_label_it{vm.data_labels().find(name(as_symbol_ref(e)))};
+            if (data_label_it != vm.data_labels().end()) return data_label_it->second;
+        }
+    return {};
+}
+
+
+static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    for (auto& mnem: mnemonics){
+        if (is_a_msgdefdirective(mnem)){
+         auto mem_loc = static_mem_location(vm,mnem);
+         if (!mem_loc) {
+          stringstream offending_msg;
+          offending_msg << *mnem;
+          throw string{"oblectamenta_assembler: Message Dirctive contains no data label (hence I don't know where to write the bytes to). Offending message directive is >>>"+ offending_msg.str() +"<<<" };
+         }
+         //INVARIANT: mnem is a message directive, and mem_loc holds a pointer into static memory to hold the serialized result.
+         //Next: replace message directive with Oblectamenta Machine Code which will generate the message at runtime
+         //mnem = CODE;
+         
+
+        }
+    }
+}
+
+void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, 
+                            std::vector<ceps::ast::node_t>& mnemonics, 
+                            std::map<std::string, int> const & ev_to_id)
 {
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+ //First Step: preprocess assembler text and expand macros/structures like message serializations
+ oblectamenta_assembler_preproccess(vm,mnemonics);
 
  map<int32_t,size_t> immediate2loc; // immediate values => location in storage
  map<string,size_t> codelabel2loc; // code label => location in storage
@@ -209,11 +252,6 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
 	        std::string sym_kind2;
 	        std::vector<node_t> args2;
             
-            auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
-            if (it == ceps::vm::oblectamenta::mnemonics.end()) 
-               throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
-            auto v{it->second};
-
             if (auto r = is_register_offset_expression(args)){
                 auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"reg")};
                 if (it == ceps::vm::oblectamenta::mnemonics.end()) 
@@ -227,13 +265,12 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                 }
             } else if (args.size() == 1 && is<Ast_node_kind::int_literal>(args[0])){
                 auto arg{value(as_int_ref(args[0]))};
-                //auto loc_it{immediate2loc.find(arg)};
                 size_t addr {arg};
-                //if (loc_it != immediate2loc.end()) addr = loc_it->second;
-                //else {
-                //   addr = vm.store(arg);
-                //    immediate2loc[arg] = addr;
-               // }
+                
+                auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"imm")};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"imm'" };
+                auto v{it->second};
                     
                 if (get<3>(v)) 
                  text_loc = get<3>(v)(vm,text_loc,addr); 
@@ -242,8 +279,14 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                 auto data_label_it{vm.data_labels().find(name(as_symbol_ref(args[0])))};
                 if (data_label_it == vm.data_labels().end()) 
                     throw std::string{"oblectamenta_assembler: unknown data label: '"+ name(as_symbol_ref(args[0])) +"'" };
-                if (get<3>(v)) 
-                     text_loc = get<3>(v)(vm,text_loc,data_label_it->second); 
+                
+                auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+                auto opcode{it->second};
+    
+                if (get<3>(opcode)) 
+                     text_loc = get<3>(opcode)(vm,text_loc,data_label_it->second); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
             } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaCodeLabel") {
                 auto label_name{name(as_symbol_ref(args[0]))};
@@ -257,8 +300,15 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     backpatch = true;
                 } else loc = code_label_it->second; 
 
-                if (get<3>(v)) 
-                     backpatch_loc = text_loc = get<3>(v)(vm,text_loc,loc); 
+                auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                   throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+                auto opcode{it->second};
+    
+    
+
+                if (get<3>(opcode)) 
+                     backpatch_loc = text_loc = get<3>(opcode)(vm,text_loc,loc); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
                 if (backpatch){
                     size_t pe{};
@@ -289,8 +339,13 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps:
                     && args2.size() == 1 
                     && is<Ast_node_kind::int_literal>(args2[0]) ) 
                 {
-                    if (get<3>(v)) 
-                     text_loc = get<3>(v)(vm,text_loc,value(as_int_ref(args2[0]))); 
+                    auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
+                    if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                       throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+                    auto opcode{it->second};
+    
+                    if (get<3>(opcode)) 
+                     text_loc = get<3>(opcode)(vm,text_loc,value(as_int_ref(args2[0]))); 
                     else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
                 } else  if (sym_kind2 == "OblectamentaModifier" && 
                             sym_name2 == "reg" &&
