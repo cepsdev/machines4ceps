@@ -93,6 +93,7 @@ extern size_t deserialize_event_payload(char* buffer, size_t size, std::string& 
 size_t deserialize_event_payload(char* buffer, size_t size, std::string& res){
     string r;
     if (size == 0) return {};
+    
     if (size < sizeof(msg_node)) return {};
 
     msg_node& root{ *(msg_node*)buffer };
@@ -103,6 +104,7 @@ size_t deserialize_event_payload(char* buffer, size_t size, std::string& res){
     }
 
     auto hd_size = sizeof(msg_node) + len_extra_info;
+    
     if (root.size <  hd_size) return 0;
     auto content_size = root.size - hd_size;
     size_t consumed_content_bytes{};
@@ -155,23 +157,40 @@ static bool is_a_msgdefdirective(ceps::ast::node_t n){
     "OblectamentaMsgDefDirective" == kind(as_symbol_ref(children(as_struct_ref(n))[0]));
 }
 
-static std::optional<size_t> static_mem_location(ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t msg_directive){
+static std::optional<std::string> static_mem_location(ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t msg_directive){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     for (auto e: children(as_struct_ref(msg_directive)))
         if(is<Ast_node_kind::symbol>(e) && "OblectamentaDataLabel" == kind(as_symbol_ref(e))){
             auto data_label_it{vm.data_labels().find(name(as_symbol_ref(e)))};
-            if (data_label_it != vm.data_labels().end()) return data_label_it->second;
+            if (data_label_it != vm.data_labels().end()) return data_label_it->first;
         }
     return {};
 }
 
+static ceps::ast::node_t gen_mnemonic(std::string name){
+    using namespace ceps::ast; 
+    return mk_symbol(name, "OblectamentaOpcode");
+} 
+
+static ceps::ast::node_t gen_mnemonic(std::string name, int v){
+    using namespace ceps::ast; 
+    return mk_func_call(mk_symbol(name, "OblectamentaOpcode"), ceps::interpreter::mk_int_node(v));
+} 
+
+static ceps::ast::node_t gen_mnemonic_sym_arg(std::string name, std::string sym_name, std::string sym_kind){
+    using namespace ceps::ast; 
+    return mk_func_call(mk_symbol(name, "OblectamentaOpcode"), mk_symbol(sym_name, sym_kind));
+} 
+
+
 
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    size_t pos{};
     for (auto& mnem: mnemonics){
         if (is_a_msgdefdirective(mnem)){
          auto mem_loc = static_mem_location(vm,mnem);
-         if (!mem_loc) {
+         if (!mem_loc) { 
           stringstream offending_msg;
           offending_msg << *mnem;
           throw string{"oblectamenta_assembler: Message Dirctive contains no data label (hence I don't know where to write the bytes to). Offending message directive is >>>"+ offending_msg.str() +"<<<" };
@@ -179,11 +198,31 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          //INVARIANT: mnem is a message directive, and mem_loc holds a pointer into static memory to hold the serialized result.
          //Next: replace message directive with Oblectamenta Machine Code which will generate the message at runtime
          //mnem = CODE;
-
-
-         
-
+         vector<node_t> r;
+         r.push_back(gen_mnemonic("ldi32", msg_node::ROOT));
+         r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));
+         r.push_back(gen_mnemonic("stsi32")); // write node type
+         r.push_back(gen_mnemonic("ldi32", sizeof(msg_node)));
+         r.push_back(gen_mnemonic("ui32toui64")); 
+         r.push_back(gen_mnemonic("ldi32",sizeof(msg_node::what)));
+         r.push_back(gen_mnemonic("ui32toui64"));
+         r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));
+         r.push_back(gen_mnemonic("addi64"));
+         r.push_back(gen_mnemonic("stsi64"));
+         mnemonics.insert(mnemonics.begin() +  pos, r.begin(), r.end());
+         /*
+         ldi32(1);
+         lea(msg_buffer);
+         stsi32;                
+         ldi32(12);
+         ui32toui64;
+         ldi32(4);
+         ui32toui64;
+         lea(msg_buffer);
+         addi64;
+         stsi64;*/
         }
+        ++pos;
     }
 }
 
