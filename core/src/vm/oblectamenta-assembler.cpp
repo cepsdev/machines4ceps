@@ -183,7 +183,6 @@ static ceps::ast::node_t gen_mnemonic_sym_arg(std::string name, std::string sym_
 } 
 
 
-
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     size_t pos{};
@@ -199,17 +198,22 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          //Next: replace message directive with Oblectamenta Machine Code which will generate the message at runtime
          //mnem = CODE;
          vector<node_t> r;
-         r.push_back(gen_mnemonic("ldi32", msg_node::ROOT));
-         r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));
-         r.push_back(gen_mnemonic("stsi32")); // write node type
-         r.push_back(gen_mnemonic("ldi32", sizeof(msg_node)));
-         r.push_back(gen_mnemonic("ui32toui64")); 
-         r.push_back(gen_mnemonic("ldi32",sizeof(msg_node::what)));
-         r.push_back(gen_mnemonic("ui32toui64"));
-         r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));
-         r.push_back(gen_mnemonic("addi64"));
-         r.push_back(gen_mnemonic("stsi64"));
-         mnemonics.insert(mnemonics.begin() +  pos, r.begin(), r.end());
+         r.push_back(gen_mnemonic("ldi32", msg_node::ROOT));                           // ldi32(1);
+         r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));    // lea(msg_buffer);
+         r.push_back(gen_mnemonic("stsi32"));                                          // stsi32 (write node type)
+         r.push_back(gen_mnemonic("ldi32", sizeof(msg_node)));                         // ldi32(sizeof(msg_node))
+         r.push_back(gen_mnemonic("ui32toui64"));                                      // ui32toui64
+         r.push_back(gen_mnemonic("ldi32",sizeof(msg_node::what)));                    // ldi32(sizeof(msg_node::what))
+         r.push_back(gen_mnemonic("ui32toui64"));                                      // ui32toui64
+         r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));    // lea(*mem_loc)
+         r.push_back(gen_mnemonic("addi64"));                                          // addi64
+         r.push_back(gen_mnemonic("stsi64"));                                          // stsi64
+         mnemonics.insert(mnemonics.begin() +  pos, r.begin(), r.end());               // INVARIANT : ROOT node with zero content at address *mem_loc
+         
+         // Create stack frame
+
+
+         
          /*
          ldi32(1);
          lea(msg_buffer);
@@ -376,6 +380,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                     else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
                     
             } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
+                
                 if (sym_kind2 == "OblectamentaModifier" 
                     && sym_name2 == "addr" 
                     && args2.size() == 1 

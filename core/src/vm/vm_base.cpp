@@ -2,7 +2,7 @@
 Copyright 2022 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
+   you may not use this file excepregt in compliance with the License.
    You may obtain a copy of the License at
 
        http://www.apache.org/licenses/LICENSE-2.0
@@ -166,6 +166,29 @@ namespace ceps::vm::oblectamenta{
                 cout.width(6); cout << e.second << "\n";
             }
         }
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
+    size_t VMEnv::dbg_print_stackimm(size_t pos){
+        cout << "\nStack("; cout << (uint64_t)( (mem.end - mem.base) - registers.file[registers_t::SP] )<< " bytes) :\n";
+        auto w{8};
+        auto i{0};
+        //hexdump
+        for ( auto p = mem.base + registers.file[registers_t::SP] ; p != mem.end; ++p){
+            if (i % w == 0) cout << setw(5) << i << ": ";
+            cout << setw(3) << (int) *p << " ";
+            ++i;
+            if (i % w == 0) {       
+                if (i){
+                    cout << "  ";
+                    for (auto pp = p - w; pp != p;++pp)
+                        if (isprint(*pp)) cout << (char) *pp << " ";
+                        else cout << ". ";
+                }
+                cout << "\n";
+            }
+        }
+        cout << "\n";
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
@@ -585,6 +608,35 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos +1;
     }
 
+    size_t VMEnv::popi64reg(size_t pos){
+        auto v{*(int64_t*) &mem.base[registers.file[registers_t::SP]]};
+        registers.file[registers_t::SP] += sizeof(int64_t);
+        auto reg{*((int*) &text[pos+1])};
+        registers.file[reg] = v;
+        return base_opcode_width + pos + 1;
+    }
+
+    size_t VMEnv::pushi64reg(size_t pos){
+        reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
+        reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
+        registers.file[registers_t::SP] -= sizeof(int64_t);
+        *(int64_t*) &mem.base[registers.file[registers_t::SP]] = registers.file[reg] + reg_offs; 
+        return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
+    }
+
+    
+    size_t VMEnv::pushi64(size_t pos){
+        auto v{*((int64_t*) &mem.base[text[pos+1]])};
+        registers.file[registers_t::SP] -= sizeof(int64_t);
+        *(int64_t*) &mem.base[registers.file[registers_t::SP]] = v; 
+        return base_opcode_width + pos +1;
+    }
+
+    size_t VMEnv::popi64(size_t pos){
+        registers.file[registers_t::SP] += sizeof(int64_t);
+        return base_opcode_width + pos;
+    }
+
     size_t VMEnv::ui32toui64(size_t pos){
         auto v{pop_cs<uint32_t>()};
         uint64_t to{v};
@@ -773,6 +825,12 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::dbg_print_dataimm);
         op_dispatch.push_back(&VMEnv::dbg_deserialize_protobufish_to_json);
         op_dispatch.push_back(&VMEnv::ldi32imm);
+
+        op_dispatch.push_back(&VMEnv::popi64);
+        op_dispatch.push_back(&VMEnv::pushi64reg);
+        op_dispatch.push_back(&VMEnv::popi64reg);
+        op_dispatch.push_back(&VMEnv::pushi64);
+        op_dispatch.push_back(&VMEnv::dbg_print_stackimm);
     }
      
     void VMEnv::dump(ostream& os){

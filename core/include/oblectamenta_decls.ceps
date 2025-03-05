@@ -106,7 +106,10 @@ OblectamentaOpcode
     msg,
     dbg_print_cs_and_regs,
     dbg_print_data,
-    dbg_deserialize_protobufish_to_json
+    dbg_deserialize_protobufish_to_json,
+    popi64,
+    pushi64,
+    dbg_print_stack
     ;
 
 OblectamentaModifier addr;

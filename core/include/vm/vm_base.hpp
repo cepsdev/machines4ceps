@@ -147,7 +147,12 @@ namespace ceps{
                 dbg_print_cs_and_regsimm, //print compute stack
                 dbg_print_dataimm, //print data section
                 dbg_deserialize_protobufish_to_json, //deserialize and print message in protobufish format
-                ldi32imm
+                ldi32imm,
+                popi64,
+                pushi64reg,
+                popi64reg,
+                pushi64,
+                dbg_print_stackimm //print stack
             };
 
             class EventQueue{
@@ -411,7 +416,12 @@ namespace ceps{
                     size_t dbg_print_dataimm(size_t);
                     size_t dbg_deserialize_protobufish_to_json(size_t);
                     size_t ldi32imm(size_t);
-
+                    size_t popi64(size_t);
+                    size_t pushi64reg(size_t);
+                    size_t popi64reg(size_t);
+                    size_t pushi64(size_t);
+                    size_t dbg_print_stackimm(size_t);
+    
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
@@ -575,7 +585,13 @@ namespace ceps{
                 {"dbg_print_cs_and_regsimm",{Opcode::dbg_print_cs_and_regsimm, "",nullptr,emit<Opcode::dbg_print_cs_and_regsimm>,nullptr} },
                 {"dbg_print_dataimm",{Opcode::dbg_print_dataimm, "",nullptr,emit<Opcode::dbg_print_dataimm>,nullptr} },
                 {"dbg_deserialize_protobufish_to_json",{Opcode::dbg_deserialize_protobufish_to_json, "",nullptr,emit<Opcode::dbg_deserialize_protobufish_to_json>,nullptr} },
-                {"ldi32imm",{Opcode::ldi32imm, "Push 32 bit signed integer immediate.",nullptr,emit<Opcode::ldi32imm>,nullptr} }
+                {"ldi32imm",{Opcode::ldi32imm, "Push 32 bit signed integer immediate.",nullptr,emit<Opcode::ldi32imm>,nullptr} },
+                
+                {"popi64",{Opcode::popi64, "",emit<Opcode::popi64>,nullptr,nullptr}},
+                {"pushi64reg",{Opcode::pushi64reg, "",nullptr,nullptr,emit<Opcode::pushi64reg>}},
+                {"popi64reg",{Opcode::popi64reg, "",nullptr,nullptr,emit<Opcode::popi64reg>}},
+                {"pushi64",{Opcode::pushi64, "",emit<Opcode::pushi64>,nullptr,nullptr}},
+                {"dbg_print_stackimm",{Opcode::dbg_print_stackimm, "",nullptr,emit<Opcode::dbg_print_stackimm>,nullptr} }
             };
             
             #pragma pack(push,1)
