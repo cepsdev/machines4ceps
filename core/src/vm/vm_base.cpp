@@ -106,6 +106,11 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
+    size_t VMEnv::ldi64imm(size_t pos){
+        push_cs(*((int64_t*)(text+pos+base_opcode_width))) ;
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
     size_t VMEnv::dbg_printlni32(size_t pos){
         cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
         return base_opcode_width + sizeof(addr_t) + pos;
@@ -831,6 +836,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::popi64reg);
         op_dispatch.push_back(&VMEnv::pushi64);
         op_dispatch.push_back(&VMEnv::dbg_print_stackimm);
+        op_dispatch.push_back(&VMEnv::ldi64imm);
     }
      
     void VMEnv::dump(ostream& os){

@@ -152,7 +152,8 @@ namespace ceps{
                 pushi64reg,
                 popi64reg,
                 pushi64,
-                dbg_print_stackimm //print stack
+                dbg_print_stackimm, //print stack
+                ldi64imm
             };
 
             class EventQueue{
@@ -421,6 +422,7 @@ namespace ceps{
                     size_t popi64reg(size_t);
                     size_t pushi64(size_t);
                     size_t dbg_print_stackimm(size_t);
+                    size_t ldi64imm(size_t);
     
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -591,7 +593,8 @@ namespace ceps{
                 {"pushi64reg",{Opcode::pushi64reg, "",nullptr,nullptr,emit<Opcode::pushi64reg>}},
                 {"popi64reg",{Opcode::popi64reg, "",nullptr,nullptr,emit<Opcode::popi64reg>}},
                 {"pushi64",{Opcode::pushi64, "",emit<Opcode::pushi64>,nullptr,nullptr}},
-                {"dbg_print_stackimm",{Opcode::dbg_print_stackimm, "",nullptr,emit<Opcode::dbg_print_stackimm>,nullptr} }
+                {"dbg_print_stackimm",{Opcode::dbg_print_stackimm, "",nullptr,emit<Opcode::dbg_print_stackimm>,nullptr} },
+                {"ldi64imm",{Opcode::ldi64imm, "Push 63 bit signed integer immediate.",nullptr,emit<Opcode::ldi64imm>,nullptr} }
             };
             
             #pragma pack(push,1)
