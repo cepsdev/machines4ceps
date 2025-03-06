@@ -110,7 +110,13 @@ OblectamentaOpcode
     popi64,
     pushi64,
     dbg_print_stack,
-    duptopi64
+    duptopi64,
+    discardtopi32,
+    discardtopi64,
+    ldi8,
+    sti8,
+    stsi8,
+    ldsi8
     ;
 
 OblectamentaModifier addr;

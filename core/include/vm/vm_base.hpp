@@ -154,7 +154,13 @@ namespace ceps{
                 pushi64,
                 dbg_print_stackimm, //print stack
                 ldi64imm,
-                duptopi64
+                duptopi64,
+                discardtopi32,
+                discardtopi64,
+                ldi8,
+                sti8,
+                stsi8,
+                ldsi8           
             };
 
             class EventQueue{
@@ -428,6 +434,13 @@ namespace ceps{
                     size_t dbg_print_stackimm(size_t);
                     size_t ldi64imm(size_t);
                     size_t duptopi64(size_t);
+                    size_t discardtopi32(size_t);
+                    size_t discardtopi64(size_t);
+                    size_t ldi8(size_t);
+                    size_t sti8(size_t);
+                    size_t stsi8(size_t);
+                    size_t ldsi8(size_t);
+                
     
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -600,7 +613,13 @@ namespace ceps{
                 {"pushi64",{Opcode::pushi64, "",emit<Opcode::pushi64>,nullptr,nullptr}},
                 {"dbg_print_stackimm",{Opcode::dbg_print_stackimm, "",nullptr,emit<Opcode::dbg_print_stackimm>,nullptr} },
                 {"ldi64imm",{Opcode::ldi64imm, "Push 63 bit signed integer immediate.",nullptr,emit<Opcode::ldi64imm>,nullptr} },
-                {"duptopi64",{Opcode::duptopi64, "",emit<Opcode::duptopi64>,nullptr,nullptr}}
+                {"duptopi64",{Opcode::duptopi64, "",emit<Opcode::duptopi64>,nullptr,nullptr}},
+                {"discardtopi32",{Opcode::discardtopi32, "",emit<Opcode::discardtopi32>,nullptr,nullptr}},
+                {"discardtopi64",{Opcode::discardtopi64, "",emit<Opcode::discardtopi64>,nullptr,nullptr}},
+                {"ldi8",{Opcode::ldi8, "Push 8 bit signed integer.",nullptr,emit<Opcode::ldi8>,nullptr} },
+                {"sti8",{Opcode::sti8, "",nullptr,emit<Opcode::sti8>,nullptr}},
+                {"stsi8",{Opcode::stsi8, "",emit<Opcode::stsi8>, nullptr,nullptr }},
+                {"ldsi8",{Opcode::ldsi8, "",emit<Opcode::ldsi8>, nullptr,nullptr }}            
             };
             
             #pragma pack(push,1)

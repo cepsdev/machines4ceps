@@ -199,7 +199,13 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic("addi64"));
         r.push_back(gen_mnemonic("stsi64"));
         //lbl_counter
-        
+        r.push_back(gen_mnemonic("ldi64", 0));
+        string lbl = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+        r.push_back(mk_symbol(lbl,"OblectamentaCodeLabel"));
+        r.push_back(gen_mnemonic("duptopi64"));
+        r.push_back(gen_mnemonic("ldi64", addr_node_name));
+        r.push_back(gen_mnemonic("addi64"));
+
 
 
 
