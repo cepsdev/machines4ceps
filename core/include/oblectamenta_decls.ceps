@@ -109,12 +109,13 @@ OblectamentaOpcode
     dbg_deserialize_protobufish_to_json,
     popi64,
     pushi64,
-    dbg_print_stack
+    dbg_print_stack,
+    duptopi64
     ;
 
 OblectamentaModifier addr;
 OblectamentaModifier reg;
-OblectamentaReg SP, FP, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5; 
+OblectamentaReg SP, FP, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, RES; 
 kind OblectamentaMessageTagInt32;
 kind OblectamentaMessageTagZeroTerminatedString;
 

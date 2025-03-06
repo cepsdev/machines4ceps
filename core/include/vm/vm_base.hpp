@@ -153,7 +153,8 @@ namespace ceps{
                 popi64reg,
                 pushi64,
                 dbg_print_stackimm, //print stack
-                ldi64imm
+                ldi64imm,
+                duptopi64
             };
 
             class EventQueue{
@@ -180,9 +181,11 @@ namespace ceps{
                         static constexpr uint32_t ARG4 = 8; // register for 5th call argument (%r8 in SysV Amd64 ABI) 
                         static constexpr uint32_t ARG5 = 9; // register for 6th call argument (%r9 in SysV Amd64 ABI) 
 
-                        int64_t file[10];
+                        static constexpr uint32_t RES = 10; // register for result (%rax in SysV Amd64 ABI) 
+
+                        int64_t file[11];
                         map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP}, {"CSP",CSP}, {"PC",PC} , {"ARG0",ARG0 } , {"ARG1",ARG1 } , 
-                                                                 {"ARG2",ARG2 } , {"ARG3",ARG3 } , {"ARG4",ARG4 } , {"ARG5",ARG5 } };
+                                                                 {"ARG2",ARG2 } , {"ARG3",ARG3 } , {"ARG4",ARG4 } , {"ARG5",ARG5 }, {"RES",RES } };
                     } registers;
 
                     using reg_t = uint32_t;
@@ -206,6 +209,7 @@ namespace ceps{
                     text_t text{};
                     size_t text_size{};
                     size_t text_loc{};
+                    int lbl_counter{}; // used by assembler to generate unique labels
 
                     struct exfuncdescr_t{
                         void* addr;
@@ -423,6 +427,7 @@ namespace ceps{
                     size_t pushi64(size_t);
                     size_t dbg_print_stackimm(size_t);
                     size_t ldi64imm(size_t);
+                    size_t duptopi64(size_t);
     
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -594,7 +599,8 @@ namespace ceps{
                 {"popi64reg",{Opcode::popi64reg, "",nullptr,nullptr,emit<Opcode::popi64reg>}},
                 {"pushi64",{Opcode::pushi64, "",emit<Opcode::pushi64>,nullptr,nullptr}},
                 {"dbg_print_stackimm",{Opcode::dbg_print_stackimm, "",nullptr,emit<Opcode::dbg_print_stackimm>,nullptr} },
-                {"ldi64imm",{Opcode::ldi64imm, "Push 63 bit signed integer immediate.",nullptr,emit<Opcode::ldi64imm>,nullptr} }
+                {"ldi64imm",{Opcode::ldi64imm, "Push 63 bit signed integer immediate.",nullptr,emit<Opcode::ldi64imm>,nullptr} },
+                {"duptopi64",{Opcode::duptopi64, "",emit<Opcode::duptopi64>,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)
