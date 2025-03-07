@@ -162,7 +162,8 @@ namespace ceps{
                 stsi8,
                 ldsi8,
                 ui8toui32, // cast ui8 to ui32
-                ui8toui64
+                ui8toui64,
+                duptopi8 // duplicate top int8
             };
 
             class EventQueue{
@@ -444,6 +445,7 @@ namespace ceps{
                     size_t ldsi8(size_t);
                     size_t ui8toui32(size_t);
                     size_t ui8toui64(size_t);
+                    size_t duptopi8(size_t);
                 
     
                     using fn = size_t (VMEnv::*) (size_t) ;
@@ -625,7 +627,8 @@ namespace ceps{
                 {"stsi8",{Opcode::stsi8, "",emit<Opcode::stsi8>, nullptr,nullptr }},
                 {"ldsi8",{Opcode::ldsi8, "",emit<Opcode::ldsi8>, nullptr,nullptr }},
                 {"ui8toui32",{Opcode::ui8toui32, "",emit<Opcode::ui8toui32>,nullptr,nullptr}},
-                {"ui8toui64",{Opcode::ui8toui64, "",emit<Opcode::ui8toui64>,nullptr,nullptr}}            
+                {"ui8toui64",{Opcode::ui8toui64, "",emit<Opcode::ui8toui64>,nullptr,nullptr}},
+                {"duptopi8",{Opcode::duptopi8, "",emit<Opcode::duptopi8>,nullptr,nullptr}}            
             };
             
             #pragma pack(push,1)
