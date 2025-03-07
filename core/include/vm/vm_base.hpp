@@ -160,7 +160,9 @@ namespace ceps{
                 ldi8,
                 sti8,
                 stsi8,
-                ldsi8           
+                ldsi8,
+                ui8toui32, // cast ui8 to ui32
+                ui8toui64
             };
 
             class EventQueue{
@@ -440,6 +442,8 @@ namespace ceps{
                     size_t sti8(size_t);
                     size_t stsi8(size_t);
                     size_t ldsi8(size_t);
+                    size_t ui8toui32(size_t);
+                    size_t ui8toui64(size_t);
                 
     
                     using fn = size_t (VMEnv::*) (size_t) ;
@@ -619,7 +623,9 @@ namespace ceps{
                 {"ldi8",{Opcode::ldi8, "Push 8 bit signed integer.",nullptr,emit<Opcode::ldi8>,nullptr} },
                 {"sti8",{Opcode::sti8, "",nullptr,emit<Opcode::sti8>,nullptr}},
                 {"stsi8",{Opcode::stsi8, "",emit<Opcode::stsi8>, nullptr,nullptr }},
-                {"ldsi8",{Opcode::ldsi8, "",emit<Opcode::ldsi8>, nullptr,nullptr }}            
+                {"ldsi8",{Opcode::ldsi8, "",emit<Opcode::ldsi8>, nullptr,nullptr }},
+                {"ui8toui32",{Opcode::ui8toui32, "",emit<Opcode::ui8toui32>,nullptr,nullptr}},
+                {"ui8toui64",{Opcode::ui8toui64, "",emit<Opcode::ui8toui64>,nullptr,nullptr}}            
             };
             
             #pragma pack(push,1)

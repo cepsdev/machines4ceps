@@ -205,6 +205,13 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic("duptopi64"));
         r.push_back(gen_mnemonic("ldi64", addr_node_name));
         r.push_back(gen_mnemonic("addi64"));
+        r.push_back(gen_mnemonic("ldsi8"));
+        r.push_back(gen_mnemonic_sym_arg("ldi64","ARG0","OblectamentaReg"));
+        r.push_back(gen_mnemonic("ldi64", sizeof(msg_node) + node_name.length() + 1));
+        r.push_back(gen_mnemonic("addi64"));
+        r.push_back(gen_mnemonic("stsi8"));
+
+
 
 
 

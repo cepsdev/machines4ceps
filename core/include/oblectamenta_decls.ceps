@@ -116,7 +116,9 @@ OblectamentaOpcode
     ldi8,
     sti8,
     stsi8,
-    ldsi8
+    ldsi8,
+    ui8toui32,
+    ui8toui64
     ;
 
 OblectamentaModifier addr;

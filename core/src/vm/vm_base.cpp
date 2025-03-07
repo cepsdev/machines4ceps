@@ -654,6 +654,19 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width  + pos;
     }
 
+    size_t VMEnv::ui8toui32(size_t pos){
+        auto v{pop_cs<uint8_t>()};
+        uint32_t to{v};
+        push_cs<uint32_t> (to);
+        return base_opcode_width  + pos;
+    }
+    size_t VMEnv::ui8toui64(size_t pos){
+        auto v{pop_cs<uint8_t>()};
+        uint64_t to{v};
+        push_cs<uint64_t> (to);
+        return base_opcode_width  + pos;
+    }
+
     size_t VMEnv::sindbl(size_t pos){
         push_cs<double>(sin(pop_cs<double>()));
         return base_opcode_width + pos;
@@ -881,9 +894,9 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::sti8);
         op_dispatch.push_back(&VMEnv::stsi8);
         op_dispatch.push_back(&VMEnv::ldsi8);
-
-    }
-     
+        op_dispatch.push_back(&VMEnv::ui8toui32);
+        op_dispatch.push_back(&VMEnv::ui8toui64);
+    }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )
     //  os << "| "<< stack_seg[i] << "\t|\n";
