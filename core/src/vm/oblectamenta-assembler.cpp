@@ -200,16 +200,27 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic("stsi64"));
         //lbl_counter
         r.push_back(gen_mnemonic("ldi64", 0));
+        //copy node name into message header
         string lbl = string{"__msgdef_"} +to_string(vm.lbl_counter++);
         r.push_back(mk_symbol(lbl,"OblectamentaCodeLabel"));
         r.push_back(gen_mnemonic("duptopi64"));
         r.push_back(gen_mnemonic("ldi64", addr_node_name));
         r.push_back(gen_mnemonic("addi64"));
         r.push_back(gen_mnemonic("ldsi8"));
+        r.push_back(gen_mnemonic("duptopi8"));
         r.push_back(gen_mnemonic_sym_arg("ldi64","ARG0","OblectamentaReg"));
         r.push_back(gen_mnemonic("ldi64", sizeof(msg_node) + node_name.length() + 1));
         r.push_back(gen_mnemonic("addi64"));
         r.push_back(gen_mnemonic("stsi8"));
+        r.push_back(gen_mnemonic("ui8toui64"));
+        r.push_back(gen_mnemonic("swpi64"));
+        r.push_back(gen_mnemonic("ldi64", 1));
+        r.push_back(gen_mnemonic("addi64"));
+        r.push_back(gen_mnemonic("swpi64"));
+        
+        //r.push_back(gen_mnemonic_sym_arg("bzeroi32",*mem_loc,"OblectamentaDataLabel"));    // lea(msg_buffer);
+
+
 
 
 
