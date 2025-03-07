@@ -120,7 +120,8 @@ OblectamentaOpcode
     ui8toui32,
     ui8toui64,
     duptopi8,
-    swpi64
+    swpi64,
+    swpi16i64
     ;
 
 OblectamentaModifier addr;
