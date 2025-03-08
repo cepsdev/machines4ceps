@@ -233,7 +233,7 @@ namespace ceps{
 
 
                     static constexpr size_t default_mem_size {4096};
-                    static constexpr size_t default_text_size {16};
+                    static constexpr size_t default_text_size {4096};
 
                     text_t resize_text(size_t new_size);
 

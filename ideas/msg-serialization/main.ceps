@@ -1,24 +1,39 @@
+/*
+Copyright 2025 Tomas Prerovsky (cepsdev@hotmail.com).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 kind Event;
 kind Guard;
 kind Systemstate;
 
 Event AnEvent;
-
-
+kind OblectamentaMsgDefDirective;
+        
+OblectamentaDataLabel msg_buffer2, msg_buffer,msg_text, one, some_number;
+OblectamentaMessageTagInt32 i32;
+OblectamentaMessageTagZeroTerminatedString sz;
 
 oblectamenta{
  global{
    data{
-
-        OblectamentaDataLabel msg_buffer2, msg_buffer,msg_text, one, some_number;
-        OblectamentaMessageTagInt32 i32;
-        OblectamentaMessageTagZeroTerminatedString sz;
-
         one; 1; 
-        msg_text;"Hello there!";
+        msg_text;"Hello there!";0;
         some_number; 43;
-        msg_buffer; for (i : 1 .. 64){0;}
-        
+        123;
+        msg_buffer; for (i : 1 .. 256){0;} // here goes the serialized message as generated in S::Actions::doSendEvent()
+        123;
         msg_buffer2;
         msg{
             A{
@@ -29,7 +44,9 @@ oblectamenta{
                     "Hello there!";
                 };
                 B{
-                    age{10;};
+                    age{
+                        10;
+                    };
                 };
             };
             B{
@@ -41,65 +58,63 @@ oblectamenta{
  };
 };
 
-
-
-
-sm{
-    S;
+sm/*state machine*/{
+    /*name*/S;
     states{Initial; A;};
     Actions{
         doSendEvent{
-            oblectamenta{text{asm{
-                OblectamentaDataLabel msg_text, one, some_number;
-                OblectamentaMessageTagInt32 i32;
-                OblectamentaMessageTagZeroTerminatedString sz;
-                
-                dbg_print_cs_and_regs(0);
-                dbg_print_data(0);
-
-                AnEvent
-                (
-                msg{msg_buffer;
+            oblectamenta{
+            text{
+                asm{
+                                   
+                msg{
+                    OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
+                    this_is_a_msg_to_be_serialized; // we want this to be treated as a message. 
+                    msg_buffer; // That's the location the resulting byte stream should be written to
                     A{
-                        id{
-                            i32(1);
+                       /*id{
+                            ldi32(5);
+                            i32;//tag top of compute stack as an i32 value to be written to the message
                         };
                         name{
-                            sz("Hello there!");
+                            lea(msg_text);
+                            sz;//tag top of compute stack as address of zero terminated string which has to be written to the message
                         };
                         B{
-                            age{i32(10);};
-                        };
+                            age{
+                                ldi32(33);
+                                i32; //tag top of compute stack as an i32 value to be written to the message
+                            };
+                        };*/
                     };
-                    B{
-                        id1{ id2{}; };
+                    /*B{
+                        //id1{ id2{}; };
                     };
-                    C{};
-                }
-                );
+                    C{};*/
+                };//msg
+                //dbg_print_data(0);
+                dbg_print_cs_and_regs(0);
+                dbg_print_stack(0);
+                dbg_deserialize_protobufish_to_json(msg_buffer);
                 halt;
-            };};};
-
-        };
-    };
-
-    t{Initial; A; doSendEvent;};
+              };//asm
+             };//text
+            };//oblectamenta
+        };//doSendEvent
+    };//Actions
+    t/*transition*/{/*from*/Initial; /*to*/A;/*action*/doSendEvent;};
 };
 
-sm{
-    T;
+sm/*state machine*/{
+    /*name*/T;
     states{Initial; A;};
     Actions{
         doReceiveEvent{
             print("doReceiveEvent\n");
         };
     };
-
-    t{Initial; A;AnEvent;doReceiveEvent;};
+    t/*transition*/{/*from*/Initial; /*to*/A;/*Triggering Event*/AnEvent;/*Action*/doReceiveEvent;};
 };
-
-
-
 
 Simulation{
     Start{S;T;};

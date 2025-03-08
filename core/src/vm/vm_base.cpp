@@ -148,7 +148,7 @@ namespace ceps::vm::oblectamenta{
                 if ( (i + 1)% w == 0) cout << "\n"; 
             }
             cout << "\n";
-        }
+        } else cout << "\nCompute Stack is empty\n\n";
 
         return base_opcode_width + sizeof(addr_t) + pos;
     }
@@ -639,11 +639,14 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::popi64reg(size_t pos){
+        reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
+        reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
+
         auto v{*(int64_t*) &mem.base[registers.file[registers_t::SP]]};
         registers.file[registers_t::SP] += sizeof(int64_t);
-        auto reg{*((int*) &text[pos+1])};
-        registers.file[reg] = v;
-        return base_opcode_width + pos + 1;
+
+        registers.file[reg] = v - reg_offs;
+        return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
     }
 
     size_t VMEnv::pushi64reg(size_t pos){
