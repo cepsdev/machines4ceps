@@ -298,21 +298,16 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic("addi64"));
         r.push_back(gen_mnemonic("stsi64"));
 
-        r.push_back(gen_mnemonic("dbg_print_stack", 0));
         r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
         r.push_back(gen_mnemonic_sym_arg("sti64","SP","OblectamentaReg"));
-        r.push_back(gen_mnemonic("dbg_print_stack", 0));
         r.push_back(gen_mnemonic_sym_arg("popi64","FP","OblectamentaReg"));
-        r.push_back(gen_mnemonic("dbg_print_stack", 0));
-        r.push_back(gen_mnemonic("dbg_print_stack", 0));
-        r.push_back(gen_mnemonic("dbg_print_stack", 0));
     }
 }
 
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
-    size_t pos{};
-    for (auto& mnem: mnemonics){
+    for (size_t pos{}; pos != mnemonics.size(); ++pos){
+        auto mnem{mnemonics[pos]};
         if (is_a_msgdefdirective(mnem)){
          auto mem_loc = static_mem_location(vm,mnem);
          if (!mem_loc) { 
@@ -324,6 +319,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          //Next: replace message directive with Oblectamenta Machine Code which will generate the message at runtime
          //mnem = CODE;
          vector<node_t> r;
+         r.push_back(nullptr);
          //write node type
          r.push_back(gen_mnemonic("ldi32", msg_node::ROOT));                           // ldi32(1);
          r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));    // lea(msg_buffer);
@@ -398,10 +394,11 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));            
         r.push_back(gen_mnemonic_sym_arg("sti64","SP","OblectamentaReg"));
         r.push_back(gen_mnemonic_sym_arg("popi64","FP","OblectamentaReg"));
-
-        mnemonics.insert(mnemonics.begin() +  pos, r.begin(), r.end());               // INVARIANT : ROOT node with zero content at address *mem_loc
+ 
+        mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());               // INVARIANT : ROOT node with zero content at address *mem_loc
+        pos += r.size(); 
      }
-        ++pos;
+
     }
 }
 
@@ -410,15 +407,15 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                             std::map<std::string, int> const & ev_to_id)
 {
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+ 
  //First Step: preprocess assembler text and expand macros/structures like message serializations
  oblectamenta_assembler_preproccess(vm,mnemonics);
-
+ 
  map<int32_t,size_t> immediate2loc; // immediate values => location in storage
  map<string,size_t> codelabel2loc; // code label => location in storage
  size_t& text_loc = vm.text_loc;
 
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
-
     if ( text_loc + 2*max_opcode_width >= vm.text_size){
         //vm.resize_text(8192);
         vm.resize_text(  2*max_opcode_width + assembler::text_growth_factor * (double)vm.text_size );

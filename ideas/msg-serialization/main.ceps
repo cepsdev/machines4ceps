@@ -65,7 +65,7 @@ sm/*state machine*/{
         doSendEvent{
             oblectamenta{
             text{
-                asm{
+                asm{                  
                                    
                 msg{
                     OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
@@ -87,11 +87,12 @@ sm/*state machine*/{
                             };
                         };*/
                     };
-                    /*B{
+                    B{
                         //id1{ id2{}; };
                     };
-                    C{};*/
+                    C{};
                 };//msg
+                
                 //dbg_print_data(0);
                 dbg_print_cs_and_regs(0);
                 dbg_print_stack(0);
