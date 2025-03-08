@@ -5,7 +5,7 @@
 includes :=  -I"include" -I"../ceps/core/include" -I"../ceps/core/include/include-gen" -I"." -I"../pugixml/src" -I"../log4ceps/include" -I"core/src_gen/logging" -I"./utils" 
 #cflags := -std=c++17 -O3 -s -Wall -MD -fmessage-length=0 -Wl,--no-as-needed
 #cflags := -g3 -O2 -pg -Wall -MD -fmessage-length=0 -std=c++1y -Wl,--no-as-needed -ldl -lpthread -lrt -fPIC -Wall
-cflags := -O3  -Wall -MD -fmessage-length=0 -std=c++17 -Wl,--no-as-needed -fPIC
+cflags := -g3 -O3  -Wall -MD -fmessage-length=0 -std=c++17 -Wl,--no-as-needed -fPIC
 TARGET :=
 OBJDIR := $(TARGET)
 objfiles := serialization.o main.o state_machines.o sm_sim_core_asserts.o state_machine_simulation_core.o sm_sim_core_simulation_loop.o state_machine_simulation_core_action_handling.o state_machine_simulation_core_event_handling.o \

@@ -306,7 +306,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
 
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
-    for (size_t pos{}; pos != mnemonics.size(); ++pos){
+    for (size_t pos{}; pos < mnemonics.size(); ++pos){
         auto mnem{mnemonics[pos]};
         if (is_a_msgdefdirective(mnem)){
          auto mem_loc = static_mem_location(vm,mnem);
@@ -319,7 +319,6 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          //Next: replace message directive with Oblectamenta Machine Code which will generate the message at runtime
          //mnem = CODE;
          vector<node_t> r;
-         r.push_back(nullptr);
          //write node type
          r.push_back(gen_mnemonic("ldi32", msg_node::ROOT));                           // ldi32(1);
          r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel"));    // lea(msg_buffer);
