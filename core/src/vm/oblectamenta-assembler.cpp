@@ -189,7 +189,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
     //result.push_back(gen_mnemonic("ldi64", 8));
     if (is<Ast_node_kind::structdef>(mnemonic)){
         auto node_name{name(as_struct_ref(mnemonic))};
-        const auto addr_node_name = vm.store(node_name);vm.store('\0');
+        const auto addr_node_name = vm.mem.heap - vm.mem.base; 
+        vm.store(node_name);vm.store('\0');
         r.push_back(gen_mnemonic("ldi32", msg_node::NODE));
         r.push_back(gen_mnemonic_sym_arg("ldi64","ARG0","OblectamentaReg"));
         r.push_back(gen_mnemonic("stsi32")); 
@@ -205,6 +206,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(mk_symbol(lbl,"OblectamentaCodeLabel"));                         // |
         r.push_back(gen_mnemonic("duptopi64"));                                      // |
         r.push_back(gen_mnemonic("duptopi64"));                                      // |
+        
+        
         r.push_back(gen_mnemonic("ldi64", addr_node_name));                          // |
         r.push_back(gen_mnemonic("addi64"));                                         // |
         r.push_back(gen_mnemonic("swpi64"));                                         // |
@@ -237,6 +240,14 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          r.push_back(gen_mnemonic_sym_arg("ldi64","SP","OblectamentaReg"));            // ldi64(SP);      |-------------------------------------|
          r.push_back(gen_mnemonic("subi64"));                                          // subi64;         |
          r.push_back(gen_mnemonic_sym_arg("sti64","SP","OblectamentaReg"));            // sti64(SP);      | SP <- SP - 8 // make room for address to root
+
+
+         // [FP - rel_addr_content_size] = 0
+         r.push_back(gen_mnemonic("ldi64", 0));
+         r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));                       
+         r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
+         r.push_back(gen_mnemonic("subi64"));                                                   
+         r.push_back(gen_mnemonic("stsi64"));                                          
 
          //[FP - 8] <-  & msg_node
          r.push_back(gen_mnemonic_sym_arg("ldi64","ARG0","OblectamentaReg"));
@@ -278,6 +289,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic("subi64"));
         r.push_back(gen_mnemonic("ldsi64"));
         
+        
         r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
         r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
         r.push_back(gen_mnemonic("subi64"));
@@ -285,6 +297,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic("ldi64",sizeof(msg_node::what)));
         r.push_back(gen_mnemonic("addi64"));
         r.push_back(gen_mnemonic("ldsi64"));
+       // r.push_back(gen_mnemonic("dbg_print_cs_and_regs",0));
         r.push_back(gen_mnemonic("addi64"));
 
         r.push_back(gen_mnemonic_sym_arg("sti64","RES","OblectamentaReg"));
@@ -351,6 +364,14 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));            // ldii64(FP);     | 
          r.push_back(gen_mnemonic("subi64"));                                          // subi64;         |         
          r.push_back(gen_mnemonic("stsi64"));                                          // stsi64          | [FP - 8] <-  & mem_loc->size
+
+         // [FP - rel_addr_content_size] = 0
+         r.push_back(gen_mnemonic("ldi64", 0));
+         r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));                       
+         r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
+         r.push_back(gen_mnemonic("subi64"));                                                   
+         r.push_back(gen_mnemonic("stsi64"));                                          
+         
          for(auto child: children(as_struct_ref(mnem)) ){
             if (is<Ast_node_kind::structdef>(child)){
              r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel")); 

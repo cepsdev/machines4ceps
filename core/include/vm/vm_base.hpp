@@ -239,7 +239,7 @@ namespace ceps{
 
                     size_t store (string  data){
                         size_t t{};
-                        for(auto e: data) t = store(e);
+                        for(auto e: data) t += store(e);
                         return t;
                     }
   

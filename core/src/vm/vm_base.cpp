@@ -166,9 +166,12 @@ namespace ceps::vm::oblectamenta{
             if (i % w == 0) {       
                 if (i){
                     cout << "  ";
-                    for (auto pp = p - w; pp != p;++pp)
+                    for (auto pp = p - (w-1); ;++pp){
                         if (isprint(*pp)) cout << (char) *pp << " ";
                         else cout << ". ";
+                        if (p == pp) break;
+                    }
+
                 }
                 cout << "\n";
             }

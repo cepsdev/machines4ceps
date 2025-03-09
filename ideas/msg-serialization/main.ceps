@@ -71,29 +71,20 @@ sm/*state machine*/{
                     OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
                     this_is_a_msg_to_be_serialized; // we want this to be treated as a message. 
                     msg_buffer; // That's the location the resulting byte stream should be written to
-                    A{
-                       /*id{
-                            ldi32(5);
-                            i32;//tag top of compute stack as an i32 value to be written to the message
-                        };
-                        name{
-                            lea(msg_text);
-                            sz;//tag top of compute stack as address of zero terminated string which has to be written to the message
-                        };
-                        B{
-                            age{
-                                ldi32(33);
-                                i32; //tag top of compute stack as an i32 value to be written to the message
-                            };
-                        };*/
+                    abcddd{
+                        defff{};
                     };
-                    B{
-                        //id1{ id2{}; };
+                    ghi{};
+                    jkl{};
+                    mn{
+                        op{};
+                        qr{st{};uv{};};
+                        wxy{};
                     };
-                    C{};
                 };//msg
                 
-                //dbg_print_data(0);
+                
+                dbg_print_data(0);
                 dbg_print_cs_and_regs(0);
                 dbg_print_stack(0);
                 dbg_deserialize_protobufish_to_json(msg_buffer);
