@@ -166,6 +166,7 @@ namespace ceps{
                 duptopi8, // duplicate top int8
                 swpi64, // swap the two top 64 bit wide elements on the compute stack
                 swpi16i64, // swap the top 16 bit wide element with the adjacent 64 bit element on the compute stack
+                swpi32i64, // swap the top 32 bit wide element with the adjacent 64 bit element on the compute stack
             };
 
             class EventQueue{
@@ -450,7 +451,8 @@ namespace ceps{
                     size_t duptopi8(size_t);
                     size_t swpi64(size_t);
                     size_t swpi16i64(size_t);
-    
+                    size_t swpi32i64(size_t)
+                    ;
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
@@ -633,7 +635,9 @@ namespace ceps{
                 {"ui8toui64",{Opcode::ui8toui64, "",emit<Opcode::ui8toui64>,nullptr,nullptr}},
                 {"duptopi8",{Opcode::duptopi8, "",emit<Opcode::duptopi8>,nullptr,nullptr}},
                 {"swpi64",{Opcode::swpi64, "",emit<Opcode::swpi64>,nullptr,nullptr}},
-                {"swpi16i64",{Opcode::swpi16i64, "",emit<Opcode::swpi16i64>,nullptr,nullptr}}
+                {"swpi16i64",{Opcode::swpi16i64, "",emit<Opcode::swpi16i64>,nullptr,nullptr}},
+                {"swpi32i64",{Opcode::swpi32i64, "",emit<Opcode::swpi32i64>,nullptr,nullptr}}
+                
             };
             
             #pragma pack(push,1)

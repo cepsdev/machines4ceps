@@ -281,7 +281,45 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
              r.push_back(gen_mnemonic("subi64"));
              r.push_back(gen_mnemonic("stsi64")); // [FP - rel_addr_content_size] += RES
-            }
+            } else if (is<Ast_node_kind::symbol>(child) && (kind(as_symbol_ref(child)) == "OblectamentaMessageTag")){
+                if ( "i32" == name (as_symbol_ref(child)) ){
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("ldsi64"));
+                  r.push_back(gen_mnemonic("ldi64", sizeof(msg_node) + node_name.length() + 1));
+                  r.push_back(gen_mnemonic("addi64"));
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("ldsi64"));
+                  r.push_back(gen_mnemonic("addi64")); //next free offset on cs
+                  r.push_back(gen_mnemonic("duptopi64"));
+                  r.push_back(gen_mnemonic("ldi32", msg_node::INT32));
+                  r.push_back(gen_mnemonic("swpi32i64"));
+                  r.push_back(gen_mnemonic("stsi32")); // node type written
+                  r.push_back(gen_mnemonic("duptopi64"));
+                  r.push_back(gen_mnemonic("ldi64", sizeof(msg_node::what)));
+                  r.push_back(gen_mnemonic("addi64"));
+                  r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_int32)));
+                  r.push_back(gen_mnemonic("swpi64"));
+                  r.push_back(gen_mnemonic("stsi64"));
+                  r.push_back(gen_mnemonic("ldi64", sizeof(msg_node)));
+                  r.push_back(gen_mnemonic("addi64"));
+                  r.push_back(gen_mnemonic("stsi32"));
+                  r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_int32)));
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("ldsi64"));
+                  r.push_back(gen_mnemonic("addi64"));
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("stsi64")); // [FP - rel_addr_content_size] += RES     
+                }
+            } 
+            else r.push_back(child);
         }
         // update msg_node::size
         r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));

@@ -22,8 +22,8 @@ Event AnEvent;
 kind OblectamentaMsgDefDirective;
         
 OblectamentaDataLabel msg_buffer2, msg_buffer,msg_text, one, some_number;
-OblectamentaMessageTagInt32 i32;
-OblectamentaMessageTagZeroTerminatedString sz;
+OblectamentaMessageTag i32;
+OblectamentaMessageTag sz;
 
 oblectamenta{
  global{
@@ -72,7 +72,10 @@ sm/*state machine*/{
                     this_is_a_msg_to_be_serialized; // we want this to be treated as a message. 
                     msg_buffer; // That's the location the resulting byte stream should be written to
                     abcddd{
-                        defff{};
+                        defff{
+                            ldi32(12);
+                            i32;
+                        };
                     };
                     ghi{};
                     jkl{};
