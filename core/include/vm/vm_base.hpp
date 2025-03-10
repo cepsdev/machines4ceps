@@ -167,7 +167,9 @@ namespace ceps{
                 swpi64, // swap the two top 64 bit wide elements on the compute stack
                 swpi16i64, // swap the top 16 bit wide element with the adjacent 64 bit element on the compute stack
                 swpi32i64, // swap the top 32 bit wide element with the adjacent 64 bit element on the compute stack
-                swp128i64 // swap the top 128 bit wide element with the adjacent 64 bit element on the compute stack
+                swp128i64,// swap the top 128 bit wide element with the adjacent 64 bit element on the compute stack
+                swp80i64,
+                swpi64b72
             };
 
             class EventQueue{
@@ -454,6 +456,8 @@ namespace ceps{
                     size_t swpi16i64(size_t);
                     size_t swpi32i64(size_t);
                     size_t swp128i64(size_t);
+                    size_t swp80i64(size_t);
+                    size_t swpi64b72(size_t);
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
                     map<string, size_t> label2loc;
@@ -638,9 +642,9 @@ namespace ceps{
                 {"swpi64",{Opcode::swpi64, "",emit<Opcode::swpi64>,nullptr,nullptr}},
                 {"swpi16i64",{Opcode::swpi16i64, "",emit<Opcode::swpi16i64>,nullptr,nullptr}},
                 {"swpi32i64",{Opcode::swpi32i64, "",emit<Opcode::swpi32i64>,nullptr,nullptr}},
-                {"swp128i64",{Opcode::swp128i64, "",emit<Opcode::swp128i64>,nullptr,nullptr}}
-                
-                
+                {"swp128i64",{Opcode::swp128i64, "",emit<Opcode::swp128i64>,nullptr,nullptr}},
+                {"swp80i64",{Opcode::swp80i64, "",emit<Opcode::swp80i64>,nullptr,nullptr}},
+                {"swpi64b72",{Opcode::swpi64b72, "",emit<Opcode::swpi64b72>,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)

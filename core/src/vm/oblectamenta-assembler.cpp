@@ -350,11 +350,11 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                   // source addr | destination addr | source addr | *((int8_t*)source addr)
                   r.push_back(gen_mnemonic("duptopi8"));
                   // source addr | destination addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) 
-                  r.push_back(gen_mnemonic("swpi80i64"));
+                  r.push_back(gen_mnemonic("swp80i64"));
                   // source addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) | destination addr
                   r.push_back(gen_mnemonic("duptopi64"));
                   // source addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) | destination addr | destination addr
-                  r.push_back(gen_mnemonic("swpi64i72")); 
+                  r.push_back(gen_mnemonic("swpi64b72")); 
                   // source addr | source addr | *((int8_t*)source addr) | destination addr| *((int8_t*)source addr) | destination addr 
                   r.push_back(gen_mnemonic("stsi8"));
                   // source addr | source addr | *((int8_t*)source addr) | destination addr

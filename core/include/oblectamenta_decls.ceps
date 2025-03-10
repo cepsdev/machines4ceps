@@ -123,7 +123,9 @@ OblectamentaOpcode
     swpi64,
     swpi16i64,
     swpi32i64,
-    swp128i64
+    swp128i64,
+    swp80i64,
+    swpi64b72
     ;
 
 OblectamentaModifier addr;
