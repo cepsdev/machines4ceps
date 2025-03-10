@@ -57,7 +57,6 @@ oblectamenta{
     };
  };
 };
-
 sm/*state machine*/{
     /*name*/S;
     states{Initial; A;};
@@ -77,7 +76,10 @@ sm/*state machine*/{
                             i32;
                         };
                     };
-                    ghi{};
+                    ghi{
+                        lea(msg_text);
+                        //sz;
+                    };
                     jkl{};
                     mn{
                         op{};

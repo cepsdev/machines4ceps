@@ -317,6 +317,77 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                   r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
                   r.push_back(gen_mnemonic("subi64"));
                   r.push_back(gen_mnemonic("stsi64")); // [FP - rel_addr_content_size] += RES     
+                } else if ( "sz" == name (as_symbol_ref(child)) ){
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("ldsi64"));
+                  r.push_back(gen_mnemonic("ldi64", sizeof(msg_node) + node_name.length() + 1));
+                  r.push_back(gen_mnemonic("addi64"));
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("ldsi64"));
+                  r.push_back(gen_mnemonic("addi64")); //next free offset on cs
+                  r.push_back(gen_mnemonic("duptopi64"));
+                  r.push_back(gen_mnemonic("ldi32", msg_node::SZ));
+                  r.push_back(gen_mnemonic("swpi32i64"));
+                  r.push_back(gen_mnemonic("stsi32")); // node type written
+                  r.push_back(gen_mnemonic("ldi64", sizeof(msg_node)));
+                  r.push_back(gen_mnemonic("addi64"));
+                  // source addr | destination addr
+                  r.push_back(gen_mnemonic("swpi64"));
+                  // destination addr | source addr
+                  r.push_back(gen_mnemonic("duptopi64"));
+                  // destination addr | source addr | source addr
+                  r.push_back(gen_mnemonic("swp128i64"));
+                  // source addr | source addr | destination addr
+                  string lbl = string{"__msgdef_"} +to_string(vm.lbl_counter++);               // || Copy routine for zero terminated strings
+                  r.push_back(mk_symbol(lbl,"OblectamentaCodeLabel"));                         // |
+                  r.push_back(gen_mnemonic("swpi64"));
+                  r.push_back(gen_mnemonic("duptopi64"));
+                  r.push_back(gen_mnemonic("ldsi8"));
+                  // source addr | destination addr | source addr | *((int8_t*)source addr)
+                  r.push_back(gen_mnemonic("duptopi8"));
+                  // source addr | destination addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) 
+                  r.push_back(gen_mnemonic("swpi80i64"));
+                  // source addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) | destination addr
+                  r.push_back(gen_mnemonic("duptopi64"));
+                  // source addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) | destination addr | destination addr
+                  r.push_back(gen_mnemonic("swpi64i72")); 
+                  // source addr | source addr | *((int8_t*)source addr) | destination addr| *((int8_t*)source addr) | destination addr 
+                  r.push_back(gen_mnemonic("stsi8"));
+                  // source addr | source addr | *((int8_t*)source addr) | destination addr
+                  r.push_back(gen_mnemonic("ldi64", 1));
+                  r.push_back(gen_mnemonic("addi64"));
+                  // source addr | source addr | *((int8_t*)source addr) | destination addr + 1
+                  r.push_back(gen_mnemonic("swpi72i64"));
+                  // source addr | *((int8_t*)source addr) | destination addr + 1 | source addr 
+                  r.push_back(gen_mnemonic("ldi64", 1));
+                  r.push_back(gen_mnemonic("addi64"));
+                  // source addr | *((int8_t*)source addr) | destination addr + 1 | source addr + 1
+                  r.push_back(gen_mnemonic("swpi64"));
+                  // source addr |  *((int8_t*)source addr) | source addr + 1 | destination addr + 1 
+                  r.push_back(gen_mnemonic("swpi128i8"));
+                  // source addr | source addr + 1 | destination addr + 1 | *((int8_t*)source addr)
+                  r.push_back(gen_mnemonic_sym_arg("bnzeroi8",lbl,"OblectamentaCodeLabel")); 
+                  // source addr | source addr + len of string | destination addr + len of string
+                  r.push_back(gen_mnemonic("discardtopi64"));
+                  // source addr | source addr + len of string
+                  r.push_back(gen_mnemonic("subi64"));
+                  // len of string
+                  r.push_back(gen_mnemonic("ldi64", 1));
+                  r.push_back(gen_mnemonic("addi64"));
+                  // len of string + 1
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("ldsi64"));
+                  r.push_back(gen_mnemonic("addi64"));
+                  r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                  r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                  r.push_back(gen_mnemonic("subi64"));
+                  r.push_back(gen_mnemonic("stsi64")); // [FP - rel_addr_content_size] += len of string + 1
                 }
             } 
             else r.push_back(child);
