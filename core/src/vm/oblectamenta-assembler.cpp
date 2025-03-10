@@ -370,7 +370,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                   // source addr |  *((int8_t*)source addr) | source addr + 1 | destination addr + 1 
                   r.push_back(gen_mnemonic("swp128b8"));
                   // source addr | source addr + 1 | destination addr + 1 | *((int8_t*)source addr)
-                  r.push_back(gen_mnemonic_sym_arg("bnzeroi8",lbl,"OblectamentaCodeLabel")); 
+                  r.push_back(gen_mnemonic("ui8toui32"));
+                  r.push_back(gen_mnemonic_sym_arg("bnzeroi32",lbl,"OblectamentaCodeLabel")); 
                   // source addr | source addr + len of string | destination addr + len of string
                   r.push_back(gen_mnemonic("discardtopi64"));
                   // source addr | source addr + len of string
