@@ -361,7 +361,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                   r.push_back(gen_mnemonic("ldi64", 1));
                   r.push_back(gen_mnemonic("addi64"));
                   // source addr | source addr | *((int8_t*)source addr) | destination addr + 1
-                  r.push_back(gen_mnemonic("swpi72i64"));
+                  r.push_back(gen_mnemonic("swp72i64"));
                   // source addr | *((int8_t*)source addr) | destination addr + 1 | source addr 
                   r.push_back(gen_mnemonic("ldi64", 1));
                   r.push_back(gen_mnemonic("addi64"));
