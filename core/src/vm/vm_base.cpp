@@ -453,7 +453,7 @@ namespace ceps::vm::oblectamenta{
 
     size_t VMEnv::swp80i64(size_t pos){
         auto t1{pop_cs<int64_t>()};
-        auto t2{pop_cs<int8_t>()};
+        auto t2{pop_cs<int16_t>()};
         auto t3{pop_cs<int64_t>()};
         push_cs(t2);push_cs(t1);push_cs(t3);
         return base_opcode_width + pos;

@@ -335,6 +335,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                   r.push_back(gen_mnemonic("stsi32")); // node type written
                   r.push_back(gen_mnemonic("ldi64", sizeof(msg_node)));
                   r.push_back(gen_mnemonic("addi64"));
+                  
+                  
                   // source addr | destination addr
                   r.push_back(gen_mnemonic("swpi64"));
                   // destination addr | source addr
@@ -352,6 +354,9 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                   // source addr | destination addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) 
                   r.push_back(gen_mnemonic("swp80i64"));
                   // source addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) | destination addr
+                  r.push_back(gen_mnemonic("dbg_print_cs_and_regs", 0));
+                  r.push_back(gen_mnemonic("halt"));
+
                   r.push_back(gen_mnemonic("duptopi64"));
                   // source addr | source addr | *((int8_t*)source addr) | *((int8_t*)source addr) | destination addr | destination addr
                   r.push_back(gen_mnemonic("swpi64b72")); 

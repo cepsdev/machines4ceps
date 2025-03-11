@@ -78,7 +78,7 @@ sm/*state machine*/{
                     };
                     ghi{
                         lea(msg_text);
-                        //sz;
+                        sz;
                     };
                     jkl{};
                     mn{
