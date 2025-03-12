@@ -44,21 +44,41 @@ sm/*state machine*/{
     Actions{
         doSendEvent{
             oblectamenta{
+                    OblectamentaMessageTag i32;
+                    OblectamentaMessageTag i64;
+                    OblectamentaMessageTag sz;                                   
+                    OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
+
             text{
                 asm{
-                    OblectamentaMessageTag i32;
-                    OblectamentaMessageTag sz;                                   
-                msg{
-                    OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
+                
+                    msg{
                     this_is_a_msg_to_be_serialized; // we want this to be treated as a message. 
                     msg_buffer; // That's the location the resulting byte stream should be written to
-
+                   age{
+                    ldi32(33);
+                    i32;
+                   };
+                   id{
+                    ldi64(123456789);
+                    i64;
+                   };
                    firstName{
-                    //lea(firstname2);
+                    lea(firstname1);
                     sz;
                    };
-                };//msg                
+                   initialName{
+                    lea(initial1);
+                    sz;
+                   };
+                   lastName{
+                    lea(lastname1);
+                    sz;
+                   };
+                };//msg
+                  
                 dbg_deserialize_protobufish_to_json(msg_buffer);
+
               };//asm
              };//text
             };//oblectamenta

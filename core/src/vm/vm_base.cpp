@@ -833,8 +833,8 @@ namespace ceps::vm::oblectamenta{
         auto old_size{text_size};
         text_size = new_size;
         text = (uint8_t*) new char[text_size];
-        memset(text,(int)Opcode::halt, text_size );
         if(!text) { throw std::runtime_error{"oblectamenta_assembler: out of text space"}; }
+        memset(text,(int)Opcode::halt, text_size );
         memcpy(text,t,std::min(old_size,new_size));
         delete[] t;
         return text;
@@ -844,7 +844,7 @@ namespace ceps::vm::oblectamenta{
         mem.heap = mem.base = new remove_pointer_t<data_t>[default_mem_size];
         for(auto p{mem.heap}; p - mem.heap < default_mem_size;) *p++ = 0;
         mem.end = mem.base + default_mem_size;
-        text = new remove_pointer_t<text_t>[text_size = default_text_size];
+        text = new remove_pointer_t<text_t>[text_size = default_text_size + 100];
         emit<Opcode::halt>(*this,0);
 
         registers.file[registers_t::SP] = mem.end - mem.base;

@@ -239,7 +239,7 @@ namespace ceps{
 
 
                     static constexpr size_t default_mem_size {4096};
-                    static constexpr size_t default_text_size {4096};
+                    static constexpr size_t default_text_size {4*4096};
 
                     text_t resize_text(size_t new_size);
 
@@ -674,6 +674,9 @@ namespace ceps{
             };
             struct msg_node_int32:msg_node{
                 int32_t value;
+            };
+            struct msg_node_int64:msg_node{
+                int64_t value;
             };
             struct msg_node_sz:msg_node{
                 static constexpr size_t MAX_SZ = 0xFFFFFFFFFF;
