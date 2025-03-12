@@ -21,7 +21,7 @@ kind Systemstate;
 Event AnEvent;
 
 kind OblectamentaMsgDefDirective;        
-OblectamentaDataLabel firstname1,initial1,lastname1,msg_buffer2, msg_buffer,msg_text, one, some_number;
+OblectamentaDataLabel zip,street,firstname1,initial1,lastname1,msg_buffer2, msg_buffer,msg_text, one, some_number;
 
 //Global Data
 oblectamenta{
@@ -32,7 +32,8 @@ oblectamenta{
         firstname1;"Max";0;
         initial1;"M";0;
         lastname1;"Mustermann";0;
-
+        street;"Pennsylvania Avenue";
+        zip;"78996-5643";
         msg_buffer; for (i : 1 .. 256){0;} // here goes the serialized message as generated in S::Actions::doSendEvent()
     };
  };
@@ -49,11 +50,9 @@ sm/*state machine*/{
                     OblectamentaMessageTag f64;
                     OblectamentaMessageTag sz;                                   
                     OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
-
             text{
                 asm{
-                
-                    msg{
+                  msg{
                     this_is_a_msg_to_be_serialized; // we want this to be treated as a message. 
                     msg_buffer; // That's the location the resulting byte stream should be written to
                    age{
@@ -81,10 +80,14 @@ sm/*state machine*/{
                     lea(lastname1);
                     sz;
                    };
+                   address{
+                    street{lea(street);sz;};
+                    no{ldi32(1000);i32;};
+                    zip{lea(zip);sz;};
+                   };
                 };//msg
-                  
-                
-dbg_print_data(0);dbg_deserialize_protobufish_to_json(msg_buffer);
+                dbg_print_data(0);
+                dbg_deserialize_protobufish_to_json(msg_buffer);
               };//asm
              };//text
             };//oblectamenta
