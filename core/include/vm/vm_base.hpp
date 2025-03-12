@@ -294,6 +294,8 @@ namespace ceps{
                         return t;
                     }
                     template<typename T> T pop_cs(){
+                        if (registers.file[registers_t::CSP] <= 0)
+                         throw std::runtime_error{"Invalid operation performed: Pop applied to empty computation stack."};
                         T r;
                         size_t start = registers.file[registers_t::CSP] - sizeof(T) / sizeof(compute_stack_t::value_type);
                         for (size_t i = 0; i < sizeof(T) / sizeof(compute_stack_t::value_type); ++i)

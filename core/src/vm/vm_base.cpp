@@ -21,6 +21,28 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace ceps::vm::oblectamenta{
     size_t deserialize_event_payload(char* buffer, size_t size, std::string& res);
     
+    static void print_cs_and_regsimm(VMEnv& vm){        
+        cout << "\nRegisters: " << vm.registers << "\n";
+      if (vm.registers.file[VMEnv::registers_t::CSP]){ 
+        cout << "\nCompute Stack:\n\n";
+        if (vm.registers.file[VMEnv::registers_t::CSP] >=4) 
+         cout << " Top Element (int32, uint32): " << *(int32_t*)&vm.compute_stack[vm.registers.file[VMEnv::registers_t::CSP] - 4]
+                                        << "   " << *(uint32_t*)&vm.compute_stack[vm.registers.file[VMEnv::registers_t::CSP] - 4]  << "\n";
+        if (vm.registers.file[VMEnv::registers_t::CSP] >=8) 
+         cout << " Top Element (int64, uint64): " << *(int64_t*)&vm.compute_stack[vm.registers.file[VMEnv::registers_t::CSP] - 8]
+                                        << "   " << *(uint64_t*)&vm.compute_stack[vm.registers.file[VMEnv::registers_t::CSP] - 8]  << "\n";
+        cout << "\n Bytes:\n";        
+        size_t w {8};
+        for(size_t i{}; i <  vm.registers.file[VMEnv::registers_t::CSP]; ++i){
+            auto v {vm.compute_stack[i]};
+            cout.width(4);
+            cout << (uint32_t) v << " ";
+            if ( (i + 1)% w == 0) cout << "\n"; 
+        }
+        cout << "\n";
+     } else cout << "\nCompute Stack is empty\n\n";
+    }
+
    bool copy_stack(VMEnv& from, VMEnv& to){
         auto from_stack_size{from.mem.end - from.mem.base - from.registers.file[VMEnv::registers_t::SP] };
         if (to.mem.end - to.mem.base < from_stack_size ) return false;
@@ -53,8 +75,14 @@ namespace ceps::vm::oblectamenta{
    size_t VMEnv::run(size_t start){
         registers.file[registers_t::PC] = start;
         for(; (Opcode) (*(base_opcode*)(text + registers.file[registers_t::PC] )) != Opcode::halt;){
-            registers.file[registers_t::PC]  = 
-            (this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
+            try{
+             registers.file[registers_t::PC]  = 
+            ( this ->*op_dispatch[ text[registers.file[registers_t::PC]] ])(registers.file[registers_t::PC] );
+            } catch (std::runtime_error& re){
+                cerr << "***Fatal Error in VMEnv::run. Instruction caused an exception, offending opcode: " << (uint32_t)text[registers.file[registers_t::PC]] << "\n";
+                print_cs_and_regsimm(*this);
+                throw(re); 
+            }
         }
         return start;
     }
@@ -130,26 +158,7 @@ namespace ceps::vm::oblectamenta{
 
     size_t VMEnv::dbg_print_cs_and_regsimm(size_t pos){
         //cout << (*((int*) (mem.base +  *((addr_t*)(text+pos+base_opcode_width)) )   )) << '\n';
-        cout << "\nRegisters: " << registers << "\n";
-        if (registers.file[registers_t::CSP]){ 
-            cout << "\nCompute Stack:\n\n";
-            if (registers.file[registers_t::CSP] >=4) 
-             cout << " Top Element (int32, uint32): " << *(int32_t*)&compute_stack[registers.file[registers_t::CSP] - 4]
-                                            << "   " << *(uint32_t*)&compute_stack[registers.file[registers_t::CSP] - 4]  << "\n";
-            if (registers.file[registers_t::CSP] >=8) 
-             cout << " Top Element (int64, uint64): " << *(int64_t*)&compute_stack[registers.file[registers_t::CSP] - 8]
-                                            << "   " << *(uint64_t*)&compute_stack[registers.file[registers_t::CSP] - 8]  << "\n";
-            cout << "\n Bytes:\n";        
-            size_t w {8};
-            for(size_t i{}; i <  registers.file[registers_t::CSP]; ++i){
-                auto v {compute_stack[i]};
-                cout.width(4);
-                cout << (uint32_t) v << " ";
-                if ( (i + 1)% w == 0) cout << "\n"; 
-            }
-            cout << "\n";
-        } else cout << "\nCompute Stack is empty\n\n";
-
+        print_cs_and_regsimm(*this);
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 

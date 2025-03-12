@@ -634,7 +634,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
             std::string sym_name2;
 	        std::string sym_kind2;
 	        std::vector<node_t> args2;
-            
+                        
             if (auto r = is_register_offset_expression(args)){
                 auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"reg")};
                 if (it == ceps::vm::oblectamenta::mnemonics.end()) 
@@ -717,7 +717,6 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                     else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
                     
             } else if (args.size() == 1 && is_a_symbol_with_arguments( args[0],sym_name2,sym_kind2,args2)){
-                
                 if (sym_kind2 == "OblectamentaModifier" 
                     && sym_name2 == "addr" 
                     && args2.size() == 1 
@@ -748,6 +747,8 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                     auto op_code_entry{query_opcode_reg_version_it->second};
                     if (get<3>(op_code_entry)) text_loc = get<3>(op_code_entry)(vm,text_loc,query_reg_it->second); 
                     else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+                } else {
+                    
                 }
             }
         }
