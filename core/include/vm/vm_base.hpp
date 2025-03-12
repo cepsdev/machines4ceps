@@ -171,7 +171,8 @@ namespace ceps{
                 swp80i64,
                 swpi64b72,
                 swp72i64,
-                swp128b8
+                swp128b8,
+                lddblimm
             };
 
             class EventQueue{
@@ -464,6 +465,7 @@ namespace ceps{
                     size_t swpi64b72(size_t);
                     size_t swp72i64(size_t);
                     size_t swp128b8(size_t);
+                    size_t lddblimm(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -479,11 +481,15 @@ namespace ceps{
                     *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
                     return pos + sizeof(base_opcode);
             }
-
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos, size_t v){
                     *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
                     *(size_t*)(vm.text + pos + sizeof(base_opcode)) = v; 
                     return pos + sizeof(base_opcode) + sizeof(v);
+            }
+            template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos, double v){
+                *(base_opcode*)(vm.text + pos) = (base_opcode) opcode; 
+                *(double*)(vm.text + pos + sizeof(base_opcode)) = v; 
+                return pos + sizeof(base_opcode) + sizeof(v);
             }
 
             template<Opcode opcode> size_t emit(VMEnv& vm,size_t pos, int v){
@@ -509,151 +515,153 @@ namespace ceps{
                          string, 
                          size_t (*)(VMEnv& ,size_t), 
                          size_t (*)(VMEnv& ,size_t, addr_t),
-                         size_t (*)(VMEnv& ,size_t, VMEnv::reg_t, VMEnv::reg_offs_t)
+                         size_t (*)(VMEnv& ,size_t, VMEnv::reg_t, VMEnv::reg_offs_t),
+                         size_t (*)(VMEnv& ,size_t, double)
                         > 
                       > mnemonics = {
              
-                {"halt", {Opcode::halt,"Yields the processor.",emit<Opcode::halt>,nullptr,nullptr} } ,
-                {"noop", {Opcode::noop,"No operation.",emit<Opcode::noop>,nullptr,nullptr}},
-                {"ldi32",{Opcode::ldi32, "Push 32 bit signed integer.",nullptr,emit<Opcode::ldi32>,nullptr} },
-                {"ldsi32",{Opcode::ldsi32, "Push 32 bit signed integer.",emit<Opcode::ldsi32>,nullptr,nullptr} },
-                {"ldi64",{Opcode::ldi64, "",nullptr,emit<Opcode::ldi64>,nullptr}},
-                {"lddbl",{Opcode::lddbl, "",nullptr,emit<Opcode::lddbl>,nullptr}},
-                {"sti32",{Opcode::sti32, "",nullptr,emit<Opcode::sti32>,nullptr}},
-                {"stsi32",{Opcode::stsi32, "",emit<Opcode::stsi32>,nullptr,nullptr}},
-                {"sri64",{Opcode::sri64, "",nullptr,emit<Opcode::sri64>,nullptr}},
-                {"stdbl",{Opcode::stdbl, "",nullptr,emit<Opcode::stdbl>,nullptr}},
-                {"ldptr",{Opcode::ldptr, "",nullptr,emit<Opcode::ldptr>,nullptr}},
-                {"stptr",{Opcode::stptr, "",nullptr,emit<Opcode::stptr>,nullptr}},
-                {"lea",{Opcode::lea, "",nullptr,emit<Opcode::lea>,nullptr}},
-                {"duptopi32",{Opcode::duptopi32, "",emit<Opcode::duptopi32>,nullptr,nullptr}},
+                {"halt", {Opcode::halt,"Yields the processor.",emit<Opcode::halt>,nullptr,nullptr,nullptr} } ,
+                {"noop", {Opcode::noop,"No operation.",emit<Opcode::noop>,nullptr,nullptr,nullptr}},
+                {"ldi32",{Opcode::ldi32, "Push 32 bit signed integer.",nullptr,emit<Opcode::ldi32>,nullptr,nullptr} },
+                {"ldsi32",{Opcode::ldsi32, "Push 32 bit signed integer.",emit<Opcode::ldsi32>,nullptr,nullptr,nullptr} },
+                {"ldi64",{Opcode::ldi64, "",nullptr,emit<Opcode::ldi64>,nullptr,nullptr}},
+                {"lddbl",{Opcode::lddbl, "",nullptr,emit<Opcode::lddbl>,nullptr,nullptr}},
+                {"sti32",{Opcode::sti32, "",nullptr,emit<Opcode::sti32>,nullptr,nullptr}},
+                {"stsi32",{Opcode::stsi32, "",emit<Opcode::stsi32>,nullptr,nullptr,nullptr}},
+                {"sri64",{Opcode::sri64, "",nullptr,emit<Opcode::sri64>,nullptr,nullptr}},
+                {"stdbl",{Opcode::stdbl, "",nullptr,emit<Opcode::stdbl>,nullptr,nullptr}},
+                {"ldptr",{Opcode::ldptr, "",nullptr,emit<Opcode::ldptr>,nullptr,nullptr}},
+                {"stptr",{Opcode::stptr, "",nullptr,emit<Opcode::stptr>,nullptr,nullptr}},
+                {"lea",{Opcode::lea, "",nullptr,emit<Opcode::lea>,nullptr,nullptr}},
+                {"duptopi32",{Opcode::duptopi32, "",emit<Opcode::duptopi32>,nullptr,nullptr,nullptr}},
 
                 //Arithmetic
                 
-                {"addi32",{Opcode::addi32, "",emit<Opcode::addi32>,nullptr,nullptr}},
-                {"addi64",{Opcode::addi64, "",emit<Opcode::addi64>,nullptr,nullptr}},
-                {"adddbl",{Opcode::adddbl, "",emit<Opcode::adddbl>,nullptr,nullptr}},
-                {"subi32",{Opcode::subi32, "",emit<Opcode::subi32>,nullptr,nullptr}},
-                {"subi64",{Opcode::subi64, "",emit<Opcode::subi64>,nullptr,nullptr}},
-                {"subdbl",{Opcode::subdbl, "",emit<Opcode::subdbl>,nullptr,nullptr}},
+                {"addi32",{Opcode::addi32, "",emit<Opcode::addi32>,nullptr,nullptr,nullptr}},
+                {"addi64",{Opcode::addi64, "",emit<Opcode::addi64>,nullptr,nullptr,nullptr}},
+                {"adddbl",{Opcode::adddbl, "",emit<Opcode::adddbl>,nullptr,nullptr,nullptr}},
+                {"subi32",{Opcode::subi32, "",emit<Opcode::subi32>,nullptr,nullptr,nullptr}},
+                {"subi64",{Opcode::subi64, "",emit<Opcode::subi64>,nullptr,nullptr,nullptr}},
+                {"subdbl",{Opcode::subdbl, "",emit<Opcode::subdbl>,nullptr,nullptr,nullptr}},
 
-                {"muli32",{Opcode::muli32, "",emit<Opcode::muli32>,nullptr,nullptr}},
-                {"muli64",{Opcode::muli64, "",emit<Opcode::muli64>,nullptr,nullptr}},
-                {"muldbl",{Opcode::muldbl, "",emit<Opcode::muldbl>,nullptr,nullptr}},
-                {"divi32",{Opcode::divi32, "",emit<Opcode::divi32>,nullptr,nullptr}},
-                {"divi64",{Opcode::divi64, "",emit<Opcode::divi64>,nullptr,nullptr}},
-                {"divdbl",{Opcode::divdbl, "",emit<Opcode::divdbl>,nullptr,nullptr}},
-                {"remi32",{Opcode::remi32, "",emit<Opcode::remi32>,nullptr,nullptr}},
-                {"remi64",{Opcode::remi64, "",emit<Opcode::remi64>,nullptr,nullptr}},
-                {"lti32",{Opcode::lti32, "",emit<Opcode::lti32>,nullptr,nullptr}},
-                {"lti64",{Opcode::lti64, "",emit<Opcode::lti64>,nullptr,nullptr}},
-                {"ltdbl",{Opcode::ltdbl, "",emit<Opcode::ltdbl>,nullptr,nullptr}},
-                {"lteqi32",{Opcode::lteqi32, "",emit<Opcode::lteqi32>,nullptr,nullptr}},
-                {"lteqi64",{Opcode::lteqi64, "",emit<Opcode::lteqi64>,nullptr,nullptr}},
-                {"lteqdbl",{Opcode::lteqdbl, "",emit<Opcode::lteqdbl>,nullptr,nullptr}},
-                {"gti32",{Opcode::gti32, "",emit<Opcode::gti32>,nullptr,nullptr}},
-                {"gti64",{Opcode::gti64, "",emit<Opcode::gti64>,nullptr,nullptr}},
-                {"gtdbl",{Opcode::gtdbl, "",emit<Opcode::gtdbl>,nullptr,nullptr}},
-                {"gteqi32",{Opcode::gteqi32, "",emit<Opcode::gteqi32>,nullptr,nullptr}},
-                {"gteqi64",{Opcode::gteqi64, "",emit<Opcode::gteqi64>,nullptr,nullptr}},
-                {"gteqdbl",{Opcode::gteqdbl, "",emit<Opcode::gteqdbl>,nullptr,nullptr}},
-                {"eqi32",{Opcode::eqi32, "",emit<Opcode::eqi32>,nullptr,nullptr}},
-                {"eqi64",{Opcode::eqi64, "",emit<Opcode::eqi64>,nullptr,nullptr}},
-                {"eqdbl",{Opcode::eqdbl, "",emit<Opcode::eqdbl>,nullptr,nullptr}},
+                {"muli32",{Opcode::muli32, "",emit<Opcode::muli32>,nullptr,nullptr,nullptr}},
+                {"muli64",{Opcode::muli64, "",emit<Opcode::muli64>,nullptr,nullptr,nullptr}},
+                {"muldbl",{Opcode::muldbl, "",emit<Opcode::muldbl>,nullptr,nullptr,nullptr}},
+                {"divi32",{Opcode::divi32, "",emit<Opcode::divi32>,nullptr,nullptr,nullptr}},
+                {"divi64",{Opcode::divi64, "",emit<Opcode::divi64>,nullptr,nullptr,nullptr}},
+                {"divdbl",{Opcode::divdbl, "",emit<Opcode::divdbl>,nullptr,nullptr,nullptr}},
+                {"remi32",{Opcode::remi32, "",emit<Opcode::remi32>,nullptr,nullptr,nullptr}},
+                {"remi64",{Opcode::remi64, "",emit<Opcode::remi64>,nullptr,nullptr,nullptr}},
+                {"lti32",{Opcode::lti32, "",emit<Opcode::lti32>,nullptr,nullptr,nullptr}},
+                {"lti64",{Opcode::lti64, "",emit<Opcode::lti64>,nullptr,nullptr,nullptr}},
+                {"ltdbl",{Opcode::ltdbl, "",emit<Opcode::ltdbl>,nullptr,nullptr,nullptr}},
+                {"lteqi32",{Opcode::lteqi32, "",emit<Opcode::lteqi32>,nullptr,nullptr,nullptr}},
+                {"lteqi64",{Opcode::lteqi64, "",emit<Opcode::lteqi64>,nullptr,nullptr,nullptr}},
+                {"lteqdbl",{Opcode::lteqdbl, "",emit<Opcode::lteqdbl>,nullptr,nullptr,nullptr}},
+                {"gti32",{Opcode::gti32, "",emit<Opcode::gti32>,nullptr,nullptr,nullptr}},
+                {"gti64",{Opcode::gti64, "",emit<Opcode::gti64>,nullptr,nullptr,nullptr}},
+                {"gtdbl",{Opcode::gtdbl, "",emit<Opcode::gtdbl>,nullptr,nullptr,nullptr}},
+                {"gteqi32",{Opcode::gteqi32, "",emit<Opcode::gteqi32>,nullptr,nullptr,nullptr}},
+                {"gteqi64",{Opcode::gteqi64, "",emit<Opcode::gteqi64>,nullptr,nullptr,nullptr}},
+                {"gteqdbl",{Opcode::gteqdbl, "",emit<Opcode::gteqdbl>,nullptr,nullptr,nullptr}},
+                {"eqi32",{Opcode::eqi32, "",emit<Opcode::eqi32>,nullptr,nullptr,nullptr}},
+                {"eqi64",{Opcode::eqi64, "",emit<Opcode::eqi64>,nullptr,nullptr,nullptr}},
+                {"eqdbl",{Opcode::eqdbl, "",emit<Opcode::eqdbl>,nullptr,nullptr,nullptr}},
 
                 //Control Flow
-                {"buc",{Opcode::buc, "",nullptr,emit<Opcode::buc>,nullptr}},
-                {"beq",{Opcode::beq, "",nullptr,emit<Opcode::beq>,nullptr}},
-                {"bneq",{Opcode::bneq, "",nullptr,emit<Opcode::bneq>,nullptr}},
-                {"blt",{Opcode::blt, "",nullptr,emit<Opcode::blt>,nullptr}},
-                {"blteq",{Opcode::blteq, "",nullptr,emit<Opcode::blteq>,nullptr}},
-                {"bgt",{Opcode::bgt, "",nullptr,emit<Opcode::bgt>,nullptr}},
-                {"bgteq",{Opcode::bgteq, "",nullptr,emit<Opcode::bgteq>,nullptr}},
-                {"bgteqzeroi32",{Opcode::bgteqzeroi32, "",nullptr,emit<Opcode::bgteqzeroi32>,nullptr}},
-                {"blteqzeroi32",{Opcode::blteqzeroi32, "",nullptr,emit<Opcode::blteqzeroi32>,nullptr}},                
-                {"bltzeroi32",{Opcode::bltzeroi32, "",nullptr,emit<Opcode::bltzeroi32>,nullptr}},
-                {"bzeroi32",{Opcode::bzeroi32, "",nullptr,emit<Opcode::bzeroi32>,nullptr}},
-                {"bnzeroi32",{Opcode::bnzeroi32, "",nullptr,emit<Opcode::bnzeroi32>,nullptr}},
-                {"bzeroi64",{Opcode::bzeroi64, "",nullptr,emit<Opcode::bzeroi64>,nullptr}},
-                {"bnzeroi64",{Opcode::bnzeroi64, "",nullptr,emit<Opcode::bnzeroi64>,nullptr}},
-                {"bzerodbl",{Opcode::bzerodbl, "",nullptr,emit<Opcode::bzerodbl>,nullptr}},
-                {"bnzerodbl",{Opcode::bnzerodbl, "",nullptr,emit<Opcode::bnzerodbl>,nullptr}},
-                {"call",{Opcode::call, "",nullptr,emit<Opcode::call>,nullptr}},
-                {"ret",{Opcode::ret, "",emit<Opcode::ret>,nullptr,nullptr}},
-                {"swp",{Opcode::swp, "",emit<Opcode::swp>,nullptr,nullptr}},
+                {"buc",{Opcode::buc, "",nullptr,emit<Opcode::buc>,nullptr,nullptr}},
+                {"beq",{Opcode::beq, "",nullptr,emit<Opcode::beq>,nullptr,nullptr}},
+                {"bneq",{Opcode::bneq, "",nullptr,emit<Opcode::bneq>,nullptr,nullptr}},
+                {"blt",{Opcode::blt, "",nullptr,emit<Opcode::blt>,nullptr,nullptr}},
+                {"blteq",{Opcode::blteq, "",nullptr,emit<Opcode::blteq>,nullptr,nullptr}},
+                {"bgt",{Opcode::bgt, "",nullptr,emit<Opcode::bgt>,nullptr,nullptr}},
+                {"bgteq",{Opcode::bgteq, "",nullptr,emit<Opcode::bgteq>,nullptr,nullptr}},
+                {"bgteqzeroi32",{Opcode::bgteqzeroi32, "",nullptr,emit<Opcode::bgteqzeroi32>,nullptr,nullptr}},
+                {"blteqzeroi32",{Opcode::blteqzeroi32, "",nullptr,emit<Opcode::blteqzeroi32>,nullptr,nullptr}},                
+                {"bltzeroi32",{Opcode::bltzeroi32, "",nullptr,emit<Opcode::bltzeroi32>,nullptr,nullptr}},
+                {"bzeroi32",{Opcode::bzeroi32, "",nullptr,emit<Opcode::bzeroi32>,nullptr,nullptr}},
+                {"bnzeroi32",{Opcode::bnzeroi32, "",nullptr,emit<Opcode::bnzeroi32>,nullptr,nullptr}},
+                {"bzeroi64",{Opcode::bzeroi64, "",nullptr,emit<Opcode::bzeroi64>,nullptr,nullptr}},
+                {"bnzeroi64",{Opcode::bnzeroi64, "",nullptr,emit<Opcode::bnzeroi64>,nullptr,nullptr}},
+                {"bzerodbl",{Opcode::bzerodbl, "",nullptr,emit<Opcode::bzerodbl>,nullptr,nullptr}},
+                {"bnzerodbl",{Opcode::bnzerodbl, "",nullptr,emit<Opcode::bnzerodbl>,nullptr,nullptr}},
+                {"call",{Opcode::call, "",nullptr,emit<Opcode::call>,nullptr,nullptr}},
+                {"ret",{Opcode::ret, "",emit<Opcode::ret>,nullptr,nullptr,nullptr}},
+                {"swp",{Opcode::swp, "",emit<Opcode::swp>,nullptr,nullptr,nullptr}},
 
                 //Bitoperators
-                {"andni32",{Opcode::andni32, "",emit<Opcode::andni32>,nullptr,nullptr}},
-                {"andni64",{Opcode::andni64, "",emit<Opcode::andni64>,nullptr,nullptr}},
-                {"andi32",{Opcode::andi32, "",emit<Opcode::andi32>,nullptr,nullptr}},
-                {"andi64",{Opcode::andi64, "",emit<Opcode::andi64>,nullptr,nullptr}},
-                {"ori32",{Opcode::ori32, "",emit<Opcode::ori32>,nullptr,nullptr}},
-                {"ori64",{Opcode::ori64, "",emit<Opcode::ori64>,nullptr,nullptr}},
-                {"noti32",{Opcode::noti32, "",emit<Opcode::noti32>,nullptr,nullptr}},
-                {"noti64",{Opcode::noti64, "",emit<Opcode::noti64>,nullptr,nullptr}},
-                {"xori32",{Opcode::xori32, "",emit<Opcode::xori32>,nullptr,nullptr}},
-                {"xori64",{Opcode::xori64, "",emit<Opcode::xori64>,nullptr,nullptr}},
-                {"muli32",{Opcode::muli32, "",emit<Opcode::muli32>,nullptr,nullptr}},
-                {"muli32",{Opcode::muldbl, "",emit<Opcode::muldbl>,nullptr,nullptr}},
-                {"setframe",{Opcode::setframe, "",emit<Opcode::setframe>,nullptr,nullptr}},
-                {"cpysi32",{Opcode::cpysi32, "",nullptr,emit<Opcode::cpysi32>,nullptr}},
-                {"wrsi32",{Opcode::wrsi32, "",nullptr,emit<Opcode::wrsi32>,nullptr}},
-                {"popi32",{Opcode::popi32, "",emit<Opcode::popi32>,nullptr,nullptr}},
-                {"pushi32reg",{Opcode::pushi32reg, "",nullptr,emit<Opcode::pushi32reg>,nullptr}},
-                {"popi32reg",{Opcode::popi32reg, "",nullptr,emit<Opcode::popi32reg>,nullptr}},
-                {"pushi32",{Opcode::pushi32, "",emit<Opcode::pushi32>,nullptr,nullptr}},
-                {"sti64",{Opcode::sti64, "",nullptr,emit<Opcode::sti64>,nullptr}},
-                {"ui32toui64",{Opcode::ui32toui64, "",emit<Opcode::ui32toui64>,nullptr,nullptr}},
-                {"ldi64reg",{Opcode::ldi64reg, "",nullptr,nullptr,emit<Opcode::ldi64reg> }},
-                {"sti64reg",{Opcode::sti64reg, "",nullptr,nullptr,emit<Opcode::sti64reg> }},
-                {"stsi64",{Opcode::stsi64, "",emit<Opcode::stsi64>, nullptr,nullptr }},
-                {"ldsi64",{Opcode::ldsi64, "",emit<Opcode::ldsi64>, nullptr,nullptr }},
+                {"andni32",{Opcode::andni32, "",emit<Opcode::andni32>,nullptr,nullptr,nullptr}},
+                {"andni64",{Opcode::andni64, "",emit<Opcode::andni64>,nullptr,nullptr,nullptr}},
+                {"andi32",{Opcode::andi32, "",emit<Opcode::andi32>,nullptr,nullptr,nullptr}},
+                {"andi64",{Opcode::andi64, "",emit<Opcode::andi64>,nullptr,nullptr,nullptr}},
+                {"ori32",{Opcode::ori32, "",emit<Opcode::ori32>,nullptr,nullptr,nullptr}},
+                {"ori64",{Opcode::ori64, "",emit<Opcode::ori64>,nullptr,nullptr,nullptr}},
+                {"noti32",{Opcode::noti32, "",emit<Opcode::noti32>,nullptr,nullptr,nullptr}},
+                {"noti64",{Opcode::noti64, "",emit<Opcode::noti64>,nullptr,nullptr,nullptr}},
+                {"xori32",{Opcode::xori32, "",emit<Opcode::xori32>,nullptr,nullptr,nullptr}},
+                {"xori64",{Opcode::xori64, "",emit<Opcode::xori64>,nullptr,nullptr,nullptr}},
+                {"muli32",{Opcode::muli32, "",emit<Opcode::muli32>,nullptr,nullptr,nullptr}},
+                {"muli32",{Opcode::muldbl, "",emit<Opcode::muldbl>,nullptr,nullptr,nullptr}},
+                {"setframe",{Opcode::setframe, "",emit<Opcode::setframe>,nullptr,nullptr,nullptr}},
+                {"cpysi32",{Opcode::cpysi32, "",nullptr,emit<Opcode::cpysi32>,nullptr,nullptr}},
+                {"wrsi32",{Opcode::wrsi32, "",nullptr,emit<Opcode::wrsi32>,nullptr,nullptr}},
+                {"popi32",{Opcode::popi32, "",emit<Opcode::popi32>,nullptr,nullptr,nullptr}},
+                {"pushi32reg",{Opcode::pushi32reg, "",nullptr,emit<Opcode::pushi32reg>,nullptr,nullptr}},
+                {"popi32reg",{Opcode::popi32reg, "",nullptr,emit<Opcode::popi32reg>,nullptr,nullptr}},
+                {"pushi32",{Opcode::pushi32, "",emit<Opcode::pushi32>,nullptr,nullptr,nullptr}},
+                {"sti64",{Opcode::sti64, "",nullptr,emit<Opcode::sti64>,nullptr,nullptr}},
+                {"ui32toui64",{Opcode::ui32toui64, "",emit<Opcode::ui32toui64>,nullptr,nullptr,nullptr}},
+                {"ldi64reg",{Opcode::ldi64reg, "",nullptr,nullptr,emit<Opcode::ldi64reg> ,nullptr}},
+                {"sti64reg",{Opcode::sti64reg, "",nullptr,nullptr,emit<Opcode::sti64reg> ,nullptr}},
+                {"stsi64",{Opcode::stsi64, "",emit<Opcode::stsi64>, nullptr,nullptr ,nullptr}},
+                {"ldsi64",{Opcode::ldsi64, "",emit<Opcode::ldsi64>, nullptr,nullptr ,nullptr}},
 
-                {"sindbl",{Opcode::sindbl, "",emit<Opcode::sindbl>,nullptr,nullptr}},
-                {"cosdbl",{Opcode::cosdbl, "",emit<Opcode::cosdbl>,nullptr,nullptr}},
-                {"tandbl",{Opcode::tandbl, "",emit<Opcode::tandbl>,nullptr,nullptr}},
-                {"atandbl",{Opcode::atandbl, "",emit<Opcode::atandbl>,nullptr,nullptr}},
-                {"expdbl",{Opcode::expdbl, "",emit<Opcode::expdbl>,nullptr,nullptr}},
-                {"ldsdbl",{Opcode::ldsdbl, "",emit<Opcode::ldsdbl>, nullptr,nullptr }},
-                {"negdbl",{Opcode::negdbl, "",emit<Opcode::negdbl>,nullptr,nullptr}},
-                {"negi32",{Opcode::negi32, "",emit<Opcode::negi32>,nullptr,nullptr}},
-                {"negi64",{Opcode::negi64, "",emit<Opcode::negi64>,nullptr,nullptr}},
-                {"stsdbl",{Opcode::stsdbl, "",emit<Opcode::stsdbl>, nullptr,nullptr }},
-                {"tanhdbl",{Opcode::tanhdbl, "",emit<Opcode::tanhdbl>,nullptr,nullptr}},
-                {"dbg_printlni32",{Opcode::dbg_printlni32, "",nullptr,emit<Opcode::dbg_printlni32>,nullptr} },
-                {"callx",{Opcode::callx, "",nullptr,emit<Opcode::callx>,nullptr}},
-                {"lea_absolute",{Opcode::lea_absolute, "",nullptr,emit<Opcode::lea_absolute>,nullptr}},
-                {"sti32reg",{Opcode::sti32reg, "",nullptr,nullptr,emit<Opcode::sti32reg> }},
-                {"msg",{Opcode::msg, "",nullptr,emit<Opcode::msg>,nullptr }},
-                {"dbg_print_cs_and_regsimm",{Opcode::dbg_print_cs_and_regsimm, "",nullptr,emit<Opcode::dbg_print_cs_and_regsimm>,nullptr} },
-                {"dbg_print_dataimm",{Opcode::dbg_print_dataimm, "",nullptr,emit<Opcode::dbg_print_dataimm>,nullptr} },
-                {"dbg_deserialize_protobufish_to_json",{Opcode::dbg_deserialize_protobufish_to_json, "",nullptr,emit<Opcode::dbg_deserialize_protobufish_to_json>,nullptr} },
-                {"ldi32imm",{Opcode::ldi32imm, "Push 32 bit signed integer immediate.",nullptr,emit<Opcode::ldi32imm>,nullptr} },
+                {"sindbl",{Opcode::sindbl, "",emit<Opcode::sindbl>,nullptr,nullptr,nullptr}},
+                {"cosdbl",{Opcode::cosdbl, "",emit<Opcode::cosdbl>,nullptr,nullptr,nullptr}},
+                {"tandbl",{Opcode::tandbl, "",emit<Opcode::tandbl>,nullptr,nullptr,nullptr}},
+                {"atandbl",{Opcode::atandbl, "",emit<Opcode::atandbl>,nullptr,nullptr,nullptr}},
+                {"expdbl",{Opcode::expdbl, "",emit<Opcode::expdbl>,nullptr,nullptr,nullptr}},
+                {"ldsdbl",{Opcode::ldsdbl, "",emit<Opcode::ldsdbl>, nullptr,nullptr ,nullptr}},
+                {"negdbl",{Opcode::negdbl, "",emit<Opcode::negdbl>,nullptr,nullptr,nullptr}},
+                {"negi32",{Opcode::negi32, "",emit<Opcode::negi32>,nullptr,nullptr,nullptr}},
+                {"negi64",{Opcode::negi64, "",emit<Opcode::negi64>,nullptr,nullptr,nullptr}},
+                {"stsdbl",{Opcode::stsdbl, "",emit<Opcode::stsdbl>, nullptr,nullptr,nullptr }},
+                {"tanhdbl",{Opcode::tanhdbl, "",emit<Opcode::tanhdbl>,nullptr,nullptr,nullptr}},
+                {"dbg_printlni32",{Opcode::dbg_printlni32, "",nullptr,emit<Opcode::dbg_printlni32>,nullptr,nullptr} },
+                {"callx",{Opcode::callx, "",nullptr,emit<Opcode::callx>,nullptr,nullptr}},
+                {"lea_absolute",{Opcode::lea_absolute, "",nullptr,emit<Opcode::lea_absolute>,nullptr,nullptr}},
+                {"sti32reg",{Opcode::sti32reg, "",nullptr,nullptr,emit<Opcode::sti32reg>,nullptr }},
+                {"msg",{Opcode::msg, "",nullptr,emit<Opcode::msg>,nullptr,nullptr }},
+                {"dbg_print_cs_and_regsimm",{Opcode::dbg_print_cs_and_regsimm, "",nullptr,emit<Opcode::dbg_print_cs_and_regsimm>,nullptr,nullptr} },
+                {"dbg_print_dataimm",{Opcode::dbg_print_dataimm, "",nullptr,emit<Opcode::dbg_print_dataimm>,nullptr,nullptr} },
+                {"dbg_deserialize_protobufish_to_json",{Opcode::dbg_deserialize_protobufish_to_json, "",nullptr,emit<Opcode::dbg_deserialize_protobufish_to_json>,nullptr,nullptr} },
+                {"ldi32imm",{Opcode::ldi32imm, "Push 32 bit signed integer immediate.",nullptr,emit<Opcode::ldi32imm>,nullptr,nullptr} },
                 
-                {"popi64",{Opcode::popi64, "",emit<Opcode::popi64>,nullptr,nullptr}},
-                {"pushi64reg",{Opcode::pushi64reg, "",nullptr,nullptr,emit<Opcode::pushi64reg>}},
-                {"popi64reg",{Opcode::popi64reg, "",nullptr,nullptr,emit<Opcode::popi64reg>}},
-                {"pushi64",{Opcode::pushi64, "",emit<Opcode::pushi64>,nullptr,nullptr}},
-                {"dbg_print_stackimm",{Opcode::dbg_print_stackimm, "",nullptr,emit<Opcode::dbg_print_stackimm>,nullptr} },
-                {"ldi64imm",{Opcode::ldi64imm, "Push 63 bit signed integer immediate.",nullptr,emit<Opcode::ldi64imm>,nullptr} },
-                {"duptopi64",{Opcode::duptopi64, "",emit<Opcode::duptopi64>,nullptr,nullptr}},
-                {"discardtopi32",{Opcode::discardtopi32, "",emit<Opcode::discardtopi32>,nullptr,nullptr}},
-                {"discardtopi64",{Opcode::discardtopi64, "",emit<Opcode::discardtopi64>,nullptr,nullptr}},
-                {"ldi8",{Opcode::ldi8, "Push 8 bit signed integer.",nullptr,emit<Opcode::ldi8>,nullptr} },
-                {"sti8",{Opcode::sti8, "",nullptr,emit<Opcode::sti8>,nullptr}},
-                {"stsi8",{Opcode::stsi8, "",emit<Opcode::stsi8>, nullptr,nullptr }},
-                {"ldsi8",{Opcode::ldsi8, "",emit<Opcode::ldsi8>, nullptr,nullptr }},
-                {"ui8toui32",{Opcode::ui8toui32, "",emit<Opcode::ui8toui32>,nullptr,nullptr}},
-                {"ui8toui64",{Opcode::ui8toui64, "",emit<Opcode::ui8toui64>,nullptr,nullptr}},
-                {"duptopi8",{Opcode::duptopi8, "",emit<Opcode::duptopi8>,nullptr,nullptr}},
-                {"swpi64",{Opcode::swpi64, "",emit<Opcode::swpi64>,nullptr,nullptr}},
-                {"swpi16i64",{Opcode::swpi16i64, "",emit<Opcode::swpi16i64>,nullptr,nullptr}},
-                {"swpi32i64",{Opcode::swpi32i64, "",emit<Opcode::swpi32i64>,nullptr,nullptr}},
-                {"swp128i64",{Opcode::swp128i64, "",emit<Opcode::swp128i64>,nullptr,nullptr}},
-                {"swp80i64",{Opcode::swp80i64, "",emit<Opcode::swp80i64>,nullptr,nullptr}},
-                {"swpi64b72",{Opcode::swpi64b72, "",emit<Opcode::swpi64b72>,nullptr,nullptr}},
-                {"swp72i64",{Opcode::swp72i64, "",emit<Opcode::swp72i64>,nullptr,nullptr}},
-                {"swp128b8",{Opcode::swp128b8, "",emit<Opcode::swp128b8>,nullptr,nullptr}}                
+                {"popi64",{Opcode::popi64, "",emit<Opcode::popi64>,nullptr,nullptr,nullptr}},
+                {"pushi64reg",{Opcode::pushi64reg, "",nullptr,nullptr,emit<Opcode::pushi64reg>,nullptr}},
+                {"popi64reg",{Opcode::popi64reg, "",nullptr,nullptr,emit<Opcode::popi64reg>,nullptr}},
+                {"pushi64",{Opcode::pushi64, "",emit<Opcode::pushi64>,nullptr,nullptr,nullptr}},
+                {"dbg_print_stackimm",{Opcode::dbg_print_stackimm, "",nullptr,emit<Opcode::dbg_print_stackimm>,nullptr,nullptr} },
+                {"ldi64imm",{Opcode::ldi64imm, "Push 63 bit signed integer immediate.",nullptr,emit<Opcode::ldi64imm>,nullptr,nullptr} },
+                {"duptopi64",{Opcode::duptopi64, "",emit<Opcode::duptopi64>,nullptr,nullptr,nullptr}},
+                {"discardtopi32",{Opcode::discardtopi32, "",emit<Opcode::discardtopi32>,nullptr,nullptr,nullptr}},
+                {"discardtopi64",{Opcode::discardtopi64, "",emit<Opcode::discardtopi64>,nullptr,nullptr,nullptr}},
+                {"ldi8",{Opcode::ldi8, "Push 8 bit signed integer.",nullptr,emit<Opcode::ldi8>,nullptr,nullptr} },
+                {"sti8",{Opcode::sti8, "",nullptr,emit<Opcode::sti8>,nullptr,nullptr}},
+                {"stsi8",{Opcode::stsi8, "",emit<Opcode::stsi8>, nullptr,nullptr,nullptr }},
+                {"ldsi8",{Opcode::ldsi8, "",emit<Opcode::ldsi8>, nullptr,nullptr,nullptr }},
+                {"ui8toui32",{Opcode::ui8toui32, "",emit<Opcode::ui8toui32>,nullptr,nullptr,nullptr}},
+                {"ui8toui64",{Opcode::ui8toui64, "",emit<Opcode::ui8toui64>,nullptr,nullptr,nullptr}},
+                {"duptopi8",{Opcode::duptopi8, "",emit<Opcode::duptopi8>,nullptr,nullptr,nullptr}},
+                {"swpi64",{Opcode::swpi64, "",emit<Opcode::swpi64>,nullptr,nullptr,nullptr}},
+                {"swpi16i64",{Opcode::swpi16i64, "",emit<Opcode::swpi16i64>,nullptr,nullptr,nullptr}},
+                {"swpi32i64",{Opcode::swpi32i64, "",emit<Opcode::swpi32i64>,nullptr,nullptr,nullptr}},
+                {"swp128i64",{Opcode::swp128i64, "",emit<Opcode::swp128i64>,nullptr,nullptr,nullptr}},
+                {"swp80i64",{Opcode::swp80i64, "",emit<Opcode::swp80i64>,nullptr,nullptr,nullptr}},
+                {"swpi64b72",{Opcode::swpi64b72, "",emit<Opcode::swpi64b72>,nullptr,nullptr,nullptr}},
+                {"swp72i64",{Opcode::swp72i64, "",emit<Opcode::swp72i64>,nullptr,nullptr,nullptr}},
+                {"swp128b8",{Opcode::swp128b8, "",emit<Opcode::swp128b8>,nullptr,nullptr,nullptr}}
+                ,{"lddblimm",{Opcode::lddblimm, "",nullptr,nullptr,nullptr,emit<Opcode::lddblimm>}}                
             };
             
             #pragma pack(push,1)
@@ -665,6 +673,7 @@ namespace ceps{
                 static constexpr uint32_t UINT32 = 5;
                 static constexpr uint32_t UINT64 = 6;
                 static constexpr uint32_t SZ = 7;
+                static constexpr uint32_t F64 = 8;
                 uint32_t what;
                 size_t size;
             };
@@ -678,6 +687,10 @@ namespace ceps{
             struct msg_node_int64:msg_node{
                 int64_t value;
             };
+            struct msg_node_f64:msg_node{
+                double value;
+            };
+
             struct msg_node_sz:msg_node{
                 static constexpr size_t MAX_SZ = 0xFFFFFFFFFF;
                 char value[MAX_SZ];

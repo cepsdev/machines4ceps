@@ -141,12 +141,18 @@ size_t deserialize_event_payload(char* buffer, size_t size, std::string& res){
         ss << m.value;
         res = ss.str();
         return sizeof(msg_node_int32);
-    }else if (root.what == msg_node::INT64){
+    } else if (root.what == msg_node::INT64){
         msg_node_int64& m{ *(msg_node_int64*)&root};
         stringstream ss;
         ss << m.value;
         res = ss.str();
         return sizeof(msg_node_int64);
+    } else if (root.what == msg_node::F64){
+        msg_node_f64& m{ *(msg_node_f64*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_f64);
     } else if (root.what == msg_node::SZ){
         msg_node_sz& m{ *(msg_node_sz*)&root};
         res = "\"" + escape_str(m.value)+ "\"";
@@ -335,19 +341,54 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                     r.push_back(gen_mnemonic("ldsi64"));
                     r.push_back(gen_mnemonic("addi64")); //next free offset on cs
                     r.push_back(gen_mnemonic("duptopi64"));
-                    r.push_back(gen_mnemonic("ldi32", msg_node::INT32));
+                    r.push_back(gen_mnemonic("ldi32", msg_node::INT64));
                     r.push_back(gen_mnemonic("swpi32i64"));
                     r.push_back(gen_mnemonic("stsi32")); // node type written
                     r.push_back(gen_mnemonic("duptopi64"));
                     r.push_back(gen_mnemonic("ldi64", sizeof(msg_node::what)));
                     r.push_back(gen_mnemonic("addi64"));
-                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_int32)));
+                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_int64)));
                     r.push_back(gen_mnemonic("swpi64"));
                     r.push_back(gen_mnemonic("stsi64"));
                     r.push_back(gen_mnemonic("ldi64", sizeof(msg_node)));
                     r.push_back(gen_mnemonic("addi64"));
                     r.push_back(gen_mnemonic("stsi64"));
-                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_int32)));
+                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_int64)));
+                    r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                    r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                    r.push_back(gen_mnemonic("subi64"));
+                    r.push_back(gen_mnemonic("ldsi64"));
+                    r.push_back(gen_mnemonic("addi64"));
+                    r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                    r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                    r.push_back(gen_mnemonic("subi64"));
+                    r.push_back(gen_mnemonic("stsi64")); // [FP - rel_addr_content_size] += RES 
+                 } else if ( "f64" == name (as_symbol_ref(child)) ){
+                    r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
+                    r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
+                    r.push_back(gen_mnemonic("subi64"));
+                    r.push_back(gen_mnemonic("ldsi64"));
+                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node) + node_name.length() + 1));
+                    r.push_back(gen_mnemonic("addi64"));
+                    r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+                    r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
+                    r.push_back(gen_mnemonic("subi64"));
+                    r.push_back(gen_mnemonic("ldsi64"));
+                    r.push_back(gen_mnemonic("addi64")); //next free offset on cs
+                    r.push_back(gen_mnemonic("duptopi64"));
+                    r.push_back(gen_mnemonic("ldi32", msg_node::F64));
+                    r.push_back(gen_mnemonic("swpi32i64"));
+                    r.push_back(gen_mnemonic("stsi32")); // node type written
+                    r.push_back(gen_mnemonic("duptopi64"));
+                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node::what)));
+                    r.push_back(gen_mnemonic("addi64"));
+                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_f64)));
+                    r.push_back(gen_mnemonic("swpi64"));
+                    r.push_back(gen_mnemonic("stsi64"));
+                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node)));
+                    r.push_back(gen_mnemonic("addi64"));
+                    r.push_back(gen_mnemonic("stsdbl"));
+                    r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_f64)));
                     r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
                     r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
                     r.push_back(gen_mnemonic("subi64"));
@@ -697,6 +738,17 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                     
                 if (get<3>(v)) 
                  text_loc = get<3>(v)(vm,text_loc,addr); 
+                else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
+            } else if (args.size() == 1 && is<Ast_node_kind::float_literal>(args[0])){
+                auto arg{value(as_double_ref(args[0]))};
+                
+                auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic+"imm")};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"imm'" };
+                auto v{it->second};
+                    
+                if (get<5>(v)) 
+                 text_loc = get<5>(v)(vm,text_loc,arg); 
                 else throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
             } else if (args.size() == 1 && is<Ast_node_kind::symbol>(args[0]) && kind(as_symbol_ref(args[0]))=="OblectamentaDataLabel") {
                 auto data_label_it{vm.data_labels().find(name(as_symbol_ref(args[0])))};

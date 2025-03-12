@@ -87,8 +87,6 @@ sm/*state machine*/{
                         wxy{};
                     };
                 };//msg
-                
-                
                 dbg_print_data(0);
                 dbg_print_cs_and_regs(0);
                 dbg_print_stack(0);

@@ -46,6 +46,7 @@ sm/*state machine*/{
             oblectamenta{
                     OblectamentaMessageTag i32;
                     OblectamentaMessageTag i64;
+                    OblectamentaMessageTag f64;
                     OblectamentaMessageTag sz;                                   
                     OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
 
@@ -60,8 +61,13 @@ sm/*state machine*/{
                     i32;
                    };
                    id{
-                    ldi64(123456789);
+                    ldi64(11);
                     i64;
+                   };
+                   salary{
+                    lddbl(33.3);
+                    dbg_print_cs_and_regs(0);
+                    f64;
                    };
                    firstName{
                     lea(firstname1);
@@ -77,8 +83,8 @@ sm/*state machine*/{
                    };
                 };//msg
                   
-                dbg_deserialize_protobufish_to_json(msg_buffer);
-
+                
+dbg_print_data(0);dbg_deserialize_protobufish_to_json(msg_buffer);
               };//asm
              };//text
             };//oblectamenta
