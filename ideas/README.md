@@ -20,11 +20,11 @@ text{
      message{
         user{
             id{
-                ldi32 one;
+                ldi32(1);
                 i32;
             };
             name{
-                lea text;
+                lea(text);
                 sz;
             };
         };
@@ -81,4 +81,28 @@ N0|....|Nn,1|tag1 representation of the top size(tag1) bytes of the compute stac
    ...
 ...
 
+```
+
+### Reading messages
+
+```
+kind OblectamentaMsgDefDirective;        
+kind OblectamentaMsgReadDirective;
+OblectamentaMsgReadDirective read_message;
+...
+data{
+ buffer; ... // here is the serialized message
+};
+...
+text{
+ msg{
+   read_message;
+   buffer;
+   on_error{pr("Ups");halt;};
+   A{
+    i32;
+    //value lies on top of the compute stack
+   };
+ };   
+};
 ```
