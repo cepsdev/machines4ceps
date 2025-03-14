@@ -37,7 +37,12 @@ namespace ceps::vm::oblectamenta{
             auto v {vm.compute_stack[i]};
             cout.width(4);
             cout << (uint32_t) v << " ";
-            if ( (i + 1)% w == 0) cout << "\n"; 
+            if (i + 1 >= vm.registers.file[VMEnv::registers_t::CSP]){
+                auto j = i;
+                for(; ((j+1) % w);++j) {cout << "     ";} 
+                cout << "    " << "<== Top\n";
+            } 
+            else if ( (i + 1)% w == 0) cout << "\n"; 
         }
         cout << "\n";
      } else cout << "\nCompute Stack is empty\n\n";

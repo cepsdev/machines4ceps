@@ -21,6 +21,8 @@ kind Systemstate;
 Event AnEvent;
 
 kind OblectamentaMsgDefDirective;        
+kind OblectamentaMsgReadDirective;        
+
 OblectamentaDataLabel zip,street,firstname1,initial1,lastname1,msg_buffer2, msg_buffer,msg_text, one, some_number;
 
 //Global Data
@@ -49,11 +51,12 @@ sm/*state machine*/{
                     OblectamentaMessageTag i64;
                     OblectamentaMessageTag f64;
                     OblectamentaMessageTag sz;                                   
-                    OblectamentaMsgDefDirective this_is_a_msg_to_be_serialized;
+                    OblectamentaMsgDefDirective write;
+                    OblectamentaMsgReadDirective read;
             text{
                 asm{
                   msg{
-                    this_is_a_msg_to_be_serialized; // we want this to be treated as a message. 
+                    write; // we want this to be treated as a message. 
                     msg_buffer; // That's the location the resulting byte stream should be written to
                    age{
                     ldi32(33);
@@ -65,7 +68,7 @@ sm/*state machine*/{
                    };
                    salary{
                     lddbl(33.3);
-                    dbg_print_cs_and_regs(0);
+                    //dbg_print_cs_and_regs(0);
                     f64;
                    };
                    firstName{
@@ -86,8 +89,16 @@ sm/*state machine*/{
                     zip{lea(zip);sz;};
                    };
                 };//msg
-                dbg_print_data(0);
-                dbg_deserialize_protobufish_to_json(msg_buffer);
+                //dbg_print_data(0);
+                //dbg_deserialize_protobufish_to_json(msg_buffer);
+                msg{
+                    read;
+                    msg_buffer;
+                    age{
+                        i32;
+                        dbg_print_cs_and_regs(0); 
+                    };
+                };
               };//asm
              };//text
             };//oblectamenta

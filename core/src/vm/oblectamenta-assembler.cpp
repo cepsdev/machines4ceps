@@ -168,6 +168,13 @@ static bool is_a_msgdefdirective(ceps::ast::node_t n){
     "OblectamentaMsgDefDirective" == kind(as_symbol_ref(children(as_struct_ref(n))[0]));
 }
 
+static bool is_a_msgreaddirective(ceps::ast::node_t n){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    return is<Ast_node_kind::structdef>(n) && children(as_struct_ref(n)).size() && 
+    children(as_struct_ref(n))[0] && is<Ast_node_kind::symbol>(children(as_struct_ref(n))[0]) &&  
+    "OblectamentaMsgReadDirective" == kind(as_symbol_ref(children(as_struct_ref(n))[0]));
+}
+
 static std::optional<std::string> static_mem_location(ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t msg_directive){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     for (auto e: children(as_struct_ref(msg_directive)))
@@ -543,12 +550,100 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
     }
 }
 
+//emit_mnemonic_with_sym_arg
+
+static std::vector<ceps::ast::node_t>& emwsa(std::vector<ceps::ast::node_t>& r,std::string name, std::string sym, std::string kind){
+    r.push_back(gen_mnemonic_sym_arg(name,sym,kind));
+    return r;
+}
+
+//emit_mnemonic_with_arg
+
+static std::vector<ceps::ast::node_t>& emwa(std::vector<ceps::ast::node_t>& r, std::string name, int v){
+    r.push_back(gen_mnemonic(name, v));
+    return r;
+}
+
+//emit_mnemonic
+
+static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, std::string name){
+    r.push_back(gen_mnemonic(name));
+    return r;
+}
+
+static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, std::string name, int v){
+    return emwa(r, name, v);
+}
+
+static std::vector<ceps::ast::node_t>& emlbl(std::vector<ceps::ast::node_t>& r, std::string name){
+    using namespace ceps::ast;
+    r.push_back(mk_symbol(name,"OblectamentaCodeLabel"));
+    return r;
+}
+
+static void oblectamenta_assembler_preproccess_match (std::string node_name, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& r, std::vector<ceps::ast::node_t>& mnemonics){
+    //CS : |addr of first node| content size |
+    //em(r,"duptopi64");
+    //CS : |addr of root||addr of root
+
+     
+}
+
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
-    mnemonics.reserve(1000000);
     for (size_t pos{}; pos < mnemonics.size(); ++pos){
         auto mnem{mnemonics[pos]};
-        if (is_a_msgdefdirective(mnem)){
+        if (is_a_msgreaddirective(mnem)){
+         auto mem_loc = static_mem_location(vm,mnem);
+         if (!mem_loc) { 
+          stringstream offending_msg;
+          offending_msg << *mnem;
+          throw string{"oblectamenta_assembler: Message Dirctive contains no data label (hence I don't know where to read the bytes from). Offending message directive is >>>"+ offending_msg.str() +"<<<" };
+         }
+         vector<node_t> r;
+         emwsa(r,"lea",*mem_loc,"OblectamentaDataLabel");
+         em(r,"duptopi64");
+         //|addr of message|addr of message|
+         em(r,"ldsi32"); 
+         //|addr of message|type of message|
+         emwa(r,"ldi32",msg_node::ROOT);
+         //|addr of message|type of message|msg_node::ROOT
+         em(r,"subi32");
+         string lbl_error_root_type_wrong = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+         emwsa(r,"bnzeroi32",lbl_error_root_type_wrong,"OblectamentaCodeLabel");
+         //|addr of message|
+         //INVARIANT: Type = ROOT
+         for(auto child: children(as_struct_ref(mnem)) ){
+            if (is<Ast_node_kind::structdef>(child)){
+             //|addr of message|
+             em(r,"duptopi64");
+             //|addr of message|addr of message|
+             em(r,"ldi64", sizeof(msg_node::what));
+             em(r,"ldi32", sizeof(msg_node::what));
+             //em(r,"addi64");
+             //|addr of message|addr of message-size|
+             //em(r,"ldsi64");
+             //em(r,"ldi64", sizeof(msg_node));
+             //em(r,"swpi64");
+             //em(r,"subi64");
+             //|addr of message|content-size|
+             //em(r,"swpi64");
+             //em(r,"duptopi64");
+             //em(r,"swp128i64");
+             //|addr of message|content-size|addr of message|
+
+         emwa(r,"dbg_print_cs_and_regs", 0);
+         em(r,"halt");
+
+             oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
+            }
+         }         
+         emwa(r,"dbg_print_cs_and_regs", 0);
+         em(r,"halt");
+         emlbl(r,lbl_error_root_type_wrong);em(r,"halt");
+         mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());
+         pos += r.size();
+        } else if (is_a_msgdefdirective(mnem)){
          auto mem_loc = static_mem_location(vm,mnem);
          if (!mem_loc) { 
           stringstream offending_msg;

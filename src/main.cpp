@@ -233,7 +233,7 @@ int main(int argc,char ** argv)
 	auto result_cmd_line = process_cmd_line(argc,argv);
 
 	if (result_cmd_line.version_flag_set)
-        std::cout << "ceps version " VERSION_SM4CEPS_MAJOR << "."<<  VERSION_SM4CEPS_MINOR<<"\n";
+        std::cout << "ceps version " VERSION_SM4CEPS_MAJOR << "."<<  VERSION_SM4CEPS_MINOR<< " (built "<<__DATE__ << " " << __TIME__ << ")" <<"\n";
 #ifdef _WIN32
 	WORD wVersionRequested;
 	WSADATA wsaData;
