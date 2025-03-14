@@ -156,6 +156,10 @@ namespace ceps::vm::oblectamenta{
         push_cs(*((int*)(text+pos+base_opcode_width))) ;
         return base_opcode_width + sizeof(addr_t) + pos;
     }
+    size_t VMEnv::dbg_printlni32imm(size_t pos){
+        cout << (*((int*)(text+pos+base_opcode_width))) << '\n' ;
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }    
 
     size_t VMEnv::ldi64imm(size_t pos){
         push_cs(*((int64_t*)(text+pos+base_opcode_width))) ;
@@ -1032,7 +1036,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::bneqi8);
         op_dispatch.push_back(&VMEnv::bzeroi8);
         op_dispatch.push_back(&VMEnv::bnzeroi8);
-        
+        op_dispatch.push_back(&VMEnv::dbg_printlni32imm);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

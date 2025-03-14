@@ -7,7 +7,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
        http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
+   Unless required by applicable law or agreed to iswp128b8n writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
@@ -626,15 +626,13 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"ldi64",1);em(r,"addi64");em(r,"swpi64");
     //|content-size|addr of first child|addr of node-name+1|addr of name+1|
 
-em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
     emwsa(r,"buc",lbl_check_strings,"OblectamentaCodeLabel");
     emlbl(r,lbl_check_strings_unequal);
     //|content-size|addr of first child|addr of node-name|addr of name
     em(r,"discardtopi64");em(r,"discardtopi64");emwsa(r,"buc",lbl_next_node,"OblectamentaCodeLabel");
     emlbl(r,lbl_names_equal);
     //|content-size|addr of first child|addr of node-name|addr of name
-
-
+    em(r,"dbg_printlni32",42);
     em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
 
     emlbl(r,lbl_next_node);
