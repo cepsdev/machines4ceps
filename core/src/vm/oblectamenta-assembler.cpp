@@ -582,11 +582,65 @@ static std::vector<ceps::ast::node_t>& emlbl(std::vector<ceps::ast::node_t>& r, 
 }
 
 static void oblectamenta_assembler_preproccess_match (std::string node_name, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& r, std::vector<ceps::ast::node_t>& mnemonics){
-    //CS : |addr of first node| content size |
-    //em(r,"duptopi64");
-    //CS : |addr of root||addr of root
+    //Top of CS: |addr of first child|content-size|
+    
+    const auto addr_node_name = vm.mem.heap - vm.mem.base; 
+    vm.store(node_name);vm.store('\0');
 
-     
+    string lbl_start = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_next_node = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_names_equal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    em(r,"swpi64");
+    //|content-size|addr of first child|
+    em(r,"duptopi64");
+    emlbl(r,lbl_next_node);
+    em(r,"ldsi32"); 
+    //|content-size|addr of first child|node type
+    em(r,"ldi32",msg_node::NODE);
+    em(r,"subi32");
+    emwsa(r,"bnzeroi32",lbl_next_node, "OblectamentaCodeLabel");
+    // check name
+    em(r,"duptopi64");
+    //|content-size|addr of first child|addr of first child|
+    em(r,"ldi64",sizeof(msg_node));
+    em(r,"addi64");
+    //|content-size|addr of first child|addr of node-name|
+    em(r,"ldi64",addr_node_name);
+    //|content-size|addr of first child|addr of node-name|addr of name|
+    string lbl_check_strings = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_check_strings_unequal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    emlbl(r,lbl_check_strings);
+    em(r,"duptopi128");
+    em(r,"ldsi8");
+    em(r,"swpi8i64");
+    em(r,"ldsi8");
+    //|content-size|addr of first child|addr of node-name|addr of name|name[i]|node-name[i]
+    emwsa(r,"bneqi8",lbl_check_strings_unequal,"OblectamentaCodeLabel");
+    //|content-size|addr of first child|addr of node-name|addr of name|
+    em(r,"duptopi64");
+    em(r,"ldsi8");
+    //|content-size|addr of first child|addr of node-name|addr of name|name[i]|
+    emwsa(r,"bzeroi8",lbl_names_equal,"OblectamentaCodeLabel");
+    
+    em(r,"ldi64",1);em(r,"addi64");em(r,"swpi64");
+    em(r,"ldi64",1);em(r,"addi64");em(r,"swpi64");
+    //|content-size|addr of first child|addr of node-name+1|addr of name+1|
+
+em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+    emwsa(r,"buc",lbl_check_strings,"OblectamentaCodeLabel");
+    emlbl(r,lbl_check_strings_unequal);
+    //|content-size|addr of first child|addr of node-name|addr of name
+    em(r,"discardtopi64");em(r,"discardtopi64");emwsa(r,"buc",lbl_next_node,"OblectamentaCodeLabel");
+    emlbl(r,lbl_names_equal);
+    //|content-size|addr of first child|addr of node-name|addr of name
+
+
+    em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+
+    emlbl(r,lbl_next_node);
+
+    em(r,"dbg_print_cs_and_regs", 0);
+    em(r,"halt");
 }
 
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
@@ -619,27 +673,28 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              em(r,"duptopi64");
              //|addr of message|addr of message|
              em(r,"ldi64", sizeof(msg_node::what));
-             em(r,"ldi32", sizeof(msg_node::what));
-             //em(r,"addi64");
-             //|addr of message|addr of message-size|
-             //em(r,"ldsi64");
-             //em(r,"ldi64", sizeof(msg_node));
-             //em(r,"swpi64");
-             //em(r,"subi64");
+             em(r,"addi64");
+             //|addr of message|addr of node-size|
+             em(r,"ldsi64");
+             //|addr of message|node-size|
+             em(r,"ldi64", sizeof(msg_node));
+             em(r,"swpi64");
+             em(r,"subi64");
              //|addr of message|content-size|
-             //em(r,"swpi64");
-             //em(r,"duptopi64");
-             //em(r,"swp128i64");
-             //|addr of message|content-size|addr of message|
-
-         emwa(r,"dbg_print_cs_and_regs", 0);
-         em(r,"halt");
-
+             em(r,"swpi64");
+             em(r,"duptopi64");
+             em(r,"swp128i64");
+             //|addr of message|addr of message|content-size|
+             em(r,"swpi64");
+             em(r,"ldi64", sizeof(msg_node));
+             em(r,"addi64");
+             em(r,"swpi64");
+             //|addr of message|addr of first child|content-size|
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
+             emwa(r,"dbg_print_cs_and_regs", 0);
+             em(r,"halt");
             }
          }         
-         emwa(r,"dbg_print_cs_and_regs", 0);
-         em(r,"halt");
          emlbl(r,lbl_error_root_type_wrong);em(r,"halt");
          mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());
          pos += r.size();

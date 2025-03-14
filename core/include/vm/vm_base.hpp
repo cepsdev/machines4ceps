@@ -172,7 +172,13 @@ namespace ceps{
                 swpi64b72,
                 swp72i64,
                 swp128b8,
-                lddblimm
+                lddblimm,
+                duptopi128,
+                swpi8i64,
+                beqi8,
+                bneqi8,
+                bzeroi8,
+                bnzeroi8
             };
 
             class EventQueue{
@@ -466,6 +472,12 @@ namespace ceps{
                     size_t swp72i64(size_t);
                     size_t swp128b8(size_t);
                     size_t lddblimm(size_t);
+                    size_t duptopi128(size_t);
+                    size_t swpi8i64(size_t);
+                    size_t beqi8(size_t);
+                    size_t bneqi8(size_t);
+                    size_t bzeroi8(size_t);
+                    size_t bnzeroi8(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -660,8 +672,14 @@ namespace ceps{
                 {"swp80i64",{Opcode::swp80i64, "",emit<Opcode::swp80i64>,nullptr,nullptr,nullptr}},
                 {"swpi64b72",{Opcode::swpi64b72, "",emit<Opcode::swpi64b72>,nullptr,nullptr,nullptr}},
                 {"swp72i64",{Opcode::swp72i64, "",emit<Opcode::swp72i64>,nullptr,nullptr,nullptr}},
-                {"swp128b8",{Opcode::swp128b8, "",emit<Opcode::swp128b8>,nullptr,nullptr,nullptr}}
-                ,{"lddblimm",{Opcode::lddblimm, "",nullptr,nullptr,nullptr,emit<Opcode::lddblimm>}}                
+                {"swp128b8",{Opcode::swp128b8, "",emit<Opcode::swp128b8>,nullptr,nullptr,nullptr}},
+                {"lddblimm",{Opcode::lddblimm, "",nullptr,nullptr,nullptr,emit<Opcode::lddblimm>}},
+                {"duptopi128",{Opcode::duptopi128, "",emit<Opcode::duptopi128>,nullptr,nullptr,nullptr}},
+                {"swpi8i64",{Opcode::swpi8i64, "",emit<Opcode::swpi8i64>,nullptr,nullptr,nullptr}},
+                {"beqi8",{Opcode::beqi8, "",nullptr,emit<Opcode::beqi8>,nullptr,nullptr}},
+                {"bneqi8",{Opcode::bneqi8, "",nullptr,emit<Opcode::bneqi8>,nullptr,nullptr}},
+                {"bzeroi8",{Opcode::bzeroi8, "",nullptr,emit<Opcode::bzeroi8>,nullptr,nullptr}},
+                {"bnzeroi8",{Opcode::bnzeroi8, "",nullptr,emit<Opcode::bnzeroi8>,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)
