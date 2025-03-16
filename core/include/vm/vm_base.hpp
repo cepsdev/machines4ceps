@@ -179,7 +179,8 @@ namespace ceps{
                 bneqi8,
                 bzeroi8,
                 bnzeroi8,
-                dbg_printlni32imm
+                dbg_printlni32imm,
+                swpi64b128
             };
 
             class EventQueue{
@@ -480,6 +481,7 @@ namespace ceps{
                     size_t bzeroi8(size_t);
                     size_t bnzeroi8(size_t);
                     size_t dbg_printlni32imm(size_t);
+                    size_t swpi64b128(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -682,7 +684,8 @@ namespace ceps{
                 {"bneqi8",{Opcode::bneqi8, "",nullptr,emit<Opcode::bneqi8>,nullptr,nullptr}},
                 {"bzeroi8",{Opcode::bzeroi8, "",nullptr,emit<Opcode::bzeroi8>,nullptr,nullptr}},
                 {"bnzeroi8",{Opcode::bnzeroi8, "",nullptr,emit<Opcode::bnzeroi8>,nullptr,nullptr}},
-                {"dbg_printlni32imm",{Opcode::dbg_printlni32imm, "",nullptr,emit<Opcode::dbg_printlni32imm>,nullptr,nullptr}}
+                {"dbg_printlni32imm",{Opcode::dbg_printlni32imm, "",nullptr,emit<Opcode::dbg_printlni32imm>,nullptr,nullptr}},
+                {"swpi64b128",{Opcode::swpi64b128, "",emit<Opcode::swpi64b128>,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)

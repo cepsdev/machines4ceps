@@ -625,15 +625,16 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"ldi64",1);em(r,"addi64");em(r,"swpi64");
     em(r,"ldi64",1);em(r,"addi64");em(r,"swpi64");
     //|content-size|addr of first child|addr of node-name+1|addr of name+1|
-
     emwsa(r,"buc",lbl_check_strings,"OblectamentaCodeLabel");
     emlbl(r,lbl_check_strings_unequal);
     //|content-size|addr of first child|addr of node-name|addr of name
     em(r,"discardtopi64");em(r,"discardtopi64");emwsa(r,"buc",lbl_next_node,"OblectamentaCodeLabel");
     emlbl(r,lbl_names_equal);
     //|content-size|addr of first child|addr of node-name|addr of name
-    em(r,"dbg_printlni32",42);
-    em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+
+    em(r,"dbg_print_cs_and_regs", 0);
+    em(r,"dbg_print_data", 0);
+    em(r,"halt");
 
     emlbl(r,lbl_next_node);
 

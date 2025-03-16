@@ -99,6 +99,7 @@ sm/*state machine*/{
                         dbg_print_cs_and_regs(0); 
                     };
                 };
+                  
               };//asm
              };//text
             };//oblectamenta
