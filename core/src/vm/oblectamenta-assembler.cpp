@@ -582,6 +582,7 @@ static std::vector<ceps::ast::node_t>& emlbl(std::vector<ceps::ast::node_t>& r, 
 }
 
 static void oblectamenta_assembler_preproccess_match (std::string node_name, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& r, std::vector<ceps::ast::node_t>& mnemonics){
+    using namespace ceps::ast;
     //Top of CS: |addr of current child|content-size|
     
     const auto addr_node_name = vm.mem.heap - vm.mem.base; 
@@ -655,19 +656,29 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"addi64");
     em(r,"ldsi64");
     //|content-size|len of name+1|addr of current child|total size of current child|
-    
+    em(r,"swp128i64");
+    em(r,"swpi64");
+    em(r,"subi64");
+    em(r,"ldi64",sizeof(msg_node));
+    em(r,"swpi64");
+    em(r,"subi64");
+    //|content-size|addr of current child|content size|
+    em(r,"ldi64",0);
+    for(auto mn: mnemonics){
+        //addr of current child|content size|offset|
+        if(is<Ast_node_kind::structdef>(mn)){
 
+        } else if (is<Ast_node_kind::symbol>(mn) && (kind(as_symbol_ref(mn)) == "OblectamentaMessageTag")){
+            if ("i32" == name(as_symbol_ref(mn))){
 
-    em(r,"dbg_printlni32", 1);
-
-    em(r,"dbg_print_cs_and_regs", 0);
-    //em(r,"dbg_print_data", 0);
-    em(r,"halt");
-
+            }
+        } else r.push_back(mn);
+    }
+  
     emlbl(r,lbl_next_node);
 
-    em(r,"dbg_print_cs_and_regs", 0);
-    em(r,"halt");
+    //em(r,"dbg_print_cs_and_regs", 0);
+    //em(r,"halt");
 }
 
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
@@ -718,8 +729,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              em(r,"swpi64");
              //|addr of message|addr of first child|content-size|
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
-             emwa(r,"dbg_print_cs_and_regs", 0);
-             em(r,"halt");
+             //emwa(r,"dbg_print_cs_and_regs", 0);
+             //em(r,"halt");
             }
          }         
          emlbl(r,lbl_error_root_type_wrong);em(r,"halt");
