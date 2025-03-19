@@ -618,7 +618,8 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     string lbl_check_strings = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_check_strings_unequal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_wrong_node_type_i32_expected = string{"__msgdef_"} +to_string(vm.lbl_counter++);
-
+    string lbl_not_enough_space = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     emlbl(r,lbl_check_strings);
     em(r,"duptopi128");
     em(r,"ldsi8");
@@ -729,20 +730,22 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
                 em(r,"swpi192i32");
                 //|content-size|addr of node node_name|addr of it+1h child|content size|new offset|ith child's payload|
 
-                
-
-
 //em(r,"dbg_print_data",0);em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
-
                 
             }
         } else em(r,mn);
     }
 
+    emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
+
+    emlbl(r,lbl_not_enough_space);
+    //|content-size|addr of node node_name|addr of ith child of node_name|content size|offset|
+
     emlbl(r,lbl_wrong_node_type_i32_expected);
     //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|
   
     emlbl(r,lbl_next_node);
+    emlbl(r,lbl_done);
     
     //em(r,"dbg_print_cs_and_regs", 0);
     //em(r,"halt");

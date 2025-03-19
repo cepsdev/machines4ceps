@@ -97,11 +97,10 @@ sm/*state machine*/{
                     age{
                         i32;
                         dbg_print_cs_and_regs(0);//Expectation: 33 is top i32 element of CS
-                        discardtopi32;
+                        asserti32(34);
                         dbg_print_cs_and_regs(0);
                     };
-                };
-                  
+                };                  
               };//asm
              };//text
             };//oblectamenta

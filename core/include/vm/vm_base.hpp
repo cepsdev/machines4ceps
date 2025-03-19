@@ -182,7 +182,8 @@ namespace ceps{
                 dbg_printlni32imm,
                 swpi64b128,
                 swpi160i64,
-                swpi192i32
+                swpi192i32,
+                asserti32imm
             };
 
             class EventQueue{
@@ -486,6 +487,7 @@ namespace ceps{
                     size_t swpi64b128(size_t);
                     size_t swpi160i64(size_t);
                     size_t swpi192i32(size_t);
+                    size_t asserti32imm(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -691,7 +693,9 @@ namespace ceps{
                 {"dbg_printlni32imm",{Opcode::dbg_printlni32imm, "",nullptr,emit<Opcode::dbg_printlni32imm>,nullptr,nullptr}},
                 {"swpi64b128",{Opcode::swpi64b128, "",emit<Opcode::swpi64b128>,nullptr,nullptr,nullptr}},
                 {"swpi160i64",{Opcode::swpi160i64, "",emit<Opcode::swpi160i64>,nullptr,nullptr,nullptr}},
-                {"swpi192i32",{Opcode::swpi192i32, "",emit<Opcode::swpi192i32>,nullptr,nullptr,nullptr}}
+                {"swpi192i32",{Opcode::swpi192i32, "",emit<Opcode::swpi192i32>,nullptr,nullptr,nullptr}},
+                {"asserti32imm",{Opcode::asserti32imm, "",nullptr,emit<Opcode::asserti32imm>,nullptr,nullptr} }
+
             };
             
             #pragma pack(push,1)
