@@ -34,8 +34,8 @@ oblectamenta{
         firstname1;"Max";0;
         initial1;"M";0;
         lastname1;"Mustermann";0;
-        street;"Pennsylvania Avenue";
-        zip;"78996-5643";
+        street;"Pennsylvania Avenue";0;
+        zip;"78996-5643";0;
         msg_buffer; for (i : 1 .. 256){0;} // here goes the serialized message as generated in S::Actions::doSendEvent()
     };
  };
@@ -96,7 +96,9 @@ sm/*state machine*/{
                     msg_buffer;
                     age{
                         i32;
-                        dbg_print_cs_and_regs(0); 
+                        dbg_print_cs_and_regs(0);//Expectation: 33 is top i32 element of CS
+                        discardtopi32;
+                        dbg_print_cs_and_regs(0);
                     };
                 };
                   

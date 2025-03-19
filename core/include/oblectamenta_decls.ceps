@@ -131,7 +131,9 @@ OblectamentaOpcode
     duptopi128,
     swpi8i64,
     beqi8,
-    bneqi8
+    bneqi8,
+    swpi160i64,
+    swpi192i32
     ;
 
 OblectamentaModifier addr;

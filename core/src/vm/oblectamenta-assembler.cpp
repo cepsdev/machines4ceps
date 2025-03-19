@@ -564,7 +564,13 @@ static std::vector<ceps::ast::node_t>& emwa(std::vector<ceps::ast::node_t>& r, s
     return r;
 }
 
+
 //emit_mnemonic
+
+static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, ceps::ast::node_t n){
+    r.push_back(n);
+    return r;
+}
 
 static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, std::string name){
     r.push_back(gen_mnemonic(name));
@@ -608,8 +614,11 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     //|content-size|addr of current child|addr of node-name|
     em(r,"ldi64",addr_node_name);
     //|content-size|addr of current child|addr of node-name|addr of name|
+    
     string lbl_check_strings = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_check_strings_unequal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_wrong_node_type_i32_expected = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+
     emlbl(r,lbl_check_strings);
     em(r,"duptopi128");
     em(r,"ldsi8");
@@ -648,35 +657,93 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"subi64");
     em(r,"ldi64",1);
     em(r,"addi64");
-    //|content-size|addr of current child|len of name+1   
+    //|content-size|addr of node node_name|len of name+1|
+    em(r,"duptopi128");
+    //|content-size|addr of node node_name|len of name+1|addr of node node_name|len of name+1|
+    em(r,"ldi64",sizeof(msg_node));
+    //|content-size|addr of node node_name|len of name+1|addr of node node_name|len of name+1|sizeof(msg_node)|
+    em(r,"addi64");
+    //|content-size|addr of node node_name|len of name+1|addr of node node_name|len of name+1+sizeof(msg_node)|
+    em(r,"addi64");
+    //|content-size|addr of node node_name|len of name+1|addr of first child of node_name|
+    em(r,"swpi64b128");
+    //|content-size|addr of first child of node_name|addr of node node_name|len of name+1|
     //Compute content size
     em(r,"swpi64");
     em(r,"duptopi64");
     em(r,"ldi64",sizeof(msg_node::what));
     em(r,"addi64");
     em(r,"ldsi64");
-    //|content-size|len of name+1|addr of current child|total size of current child|
+    //|content-size|addr of first child of node_name|len of name+1|addr of node node_name|total size of current child|
+    
+
     em(r,"swp128i64");
     em(r,"swpi64");
     em(r,"subi64");
     em(r,"ldi64",sizeof(msg_node));
     em(r,"swpi64");
     em(r,"subi64");
-    //|content-size|addr of current child|content size|
+    //|content-size|addr of first child of node_name|addr of node node_name|content size|
+    em(r,"swp128i64");
+    em(r,"swpi64");
     em(r,"ldi64",0);
+    //|content-size|addr of node node_name|addr of first child of node_name|content size|offset|
     for(auto mn: mnemonics){
-        //addr of current child|content size|offset|
+        //|content-size|addr of node node_name|addr of ith child of node_name|content size|offset|
         if(is<Ast_node_kind::structdef>(mn)){
 
         } else if (is<Ast_node_kind::symbol>(mn) && (kind(as_symbol_ref(mn)) == "OblectamentaMessageTag")){
             if ("i32" == name(as_symbol_ref(mn))){
+                //ToDo: Check size
+                em(r,"swp128i64");
+                em(r,"duptopi64");
+                //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|addr of first child of node_name|
+                em(r,"ldsi32");
+                //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|child of node_name.what|
+                em(r,"ldi32",msg_node::INT32);
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|child of node_name.what|msg_node::INT32|
+                emwsa(r,"bneq",lbl_wrong_node_type_i32_expected,"OblectamentaCodeLabel");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|
+                em(r,"ldi64",sizeof(msg_node));
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|sizeof(msg_node)|
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|
+                em(r,"duptopi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|addr of ith child's payload|
+                em(r,"ldsi32");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|ith child's payload|
+                em(r,"swpi32i64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's payload|
+                em(r,"ldi64",sizeof(msg_node_int32::value));
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of it+1h child|
+                em(r,"swp128i64");
+                //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|offset|
+                em(r,"ldi64",sizeof(msg_node_int32));
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|new offset|
+                em(r,"swpi160i64");
+                //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|new offset|content size|
+                em(r,"swpi64");
+                //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|content size|new offset|
+                em(r,"swpi192i32");
+                //|content-size|addr of node node_name|addr of it+1h child|content size|new offset|ith child's payload|
 
+                
+
+
+//em(r,"dbg_print_data",0);em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+
+                
             }
-        } else r.push_back(mn);
+        } else em(r,mn);
     }
+
+    emlbl(r,lbl_wrong_node_type_i32_expected);
+    //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|
   
     emlbl(r,lbl_next_node);
-
+    
     //em(r,"dbg_print_cs_and_regs", 0);
     //em(r,"halt");
 }
