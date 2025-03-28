@@ -91,7 +91,7 @@ sm/*state machine*/{
                 };//msg
                 //dbg_print_data(0);
                 //dbg_deserialize_protobufish_to_json(msg_buffer);
-                dbg_print_data(0);
+                //dbg_print_data(0);
                 msg{
                     read;
                     msg_buffer;

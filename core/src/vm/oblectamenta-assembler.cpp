@@ -597,6 +597,12 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     string lbl_start = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_next_node = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_names_equal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_check_strings = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_check_strings_unequal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_wrong_node_type_i32_expected = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_not_enough_space = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+
     em(r,"swpi64");
     //|content-size|addr of current child|
     emlbl(r,lbl_next_node);
@@ -619,11 +625,6 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"ldi64",addr_node_name);
     //|content-size|addr of current child|addr of node-name|addr of name|
     
-    string lbl_check_strings = string{"__msgdef_"} +to_string(vm.lbl_counter++);
-    string lbl_check_strings_unequal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
-    string lbl_wrong_node_type_i32_expected = string{"__msgdef_"} +to_string(vm.lbl_counter++);
-    string lbl_not_enough_space = string{"__msgdef_"} +to_string(vm.lbl_counter++);
-    string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     emlbl(r,lbl_check_strings);
     em(r,"duptopi128");
     em(r,"ldsi8");
@@ -635,15 +636,44 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"duptopi64");
     em(r,"ldsi8");
     //|content-size|addr of current child|addr of node-name|addr of name|name[i]|
+    
+    
+
     emwsa(r,"bzeroi8",lbl_names_equal,"OblectamentaCodeLabel");
     
+    //em(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
+
     em(r,"ldi64",1);em(r,"addi64");em(r,"swpi64");
     em(r,"ldi64",1);em(r,"addi64");em(r,"swpi64");
     //|content-size|addr of current child|addr of node-name+1|addr of name+1|
     emwsa(r,"buc",lbl_check_strings,"OblectamentaCodeLabel");
+    
     emlbl(r,lbl_check_strings_unequal);
     //|content-size|addr of current child|addr of node-name|addr of name
-    em(r,"discardtopi64");em(r,"discardtopi64");emwsa(r,"buc",lbl_next_node,"OblectamentaCodeLabel");
+    
+    em(r,"discardtopi64");em(r,"discardtopi64");
+    //|content-size|addr of current child|
+    //1. Update content-size
+    em(r,"duptopi64");
+    em(r,"ldi64",sizeof(msg_node::what));
+    em(r,"addi64");
+    em(r,"ldsi64");
+    //|content-size|addr of current child|size of current child|
+    em(r,"swp128i64");
+    //|addr of current child|size of current child|content-size|
+    em(r,"subi64");
+    em(r,"swpi64");
+    //|content-size|addr of current child|
+    //2. Update addr to current node
+    em(r,"duptopi64");
+    em(r,"ldi64",sizeof(msg_node::what));
+    em(r,"addi64");
+    em(r,"ldsi64");
+    em(r,"addi64");
+    //|content-size|addr of next child|
+    //em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+
+    emwsa(r,"buc",lbl_next_node,"OblectamentaCodeLabel");
     emlbl(r,lbl_names_equal);
     //|content-size|addr of current child|addr of node-name|addr of name
     //Invariant: we found our node, match the rest
