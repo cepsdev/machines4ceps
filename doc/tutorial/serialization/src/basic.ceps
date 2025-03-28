@@ -63,8 +63,8 @@ sm/*state machine*/{
                     i32;
                    };
                    id{
-                    ldi64(11);
-                    i64;
+                    ldi32(11);
+                    i32;
                    };
                    salary{
                     lddbl(33.3);
@@ -91,6 +91,7 @@ sm/*state machine*/{
                 };//msg
                 //dbg_print_data(0);
                 //dbg_deserialize_protobufish_to_json(msg_buffer);
+                dbg_print_data(0);
                 msg{
                     read;
                     msg_buffer;
@@ -100,9 +101,13 @@ sm/*state machine*/{
                         asserti32(33);
                         //dbg_print_cs_and_regs(0);
                     };
+                    id{
+                        i32;
+                        asserti32(11);
+                    };
                 };
               //Invariant: CS is empty
-              //dbg_print_cs_and_regs(0);
+              dbg_print_cs_and_regs(0);
               };//asm
              };//text
             };//oblectamenta

@@ -602,9 +602,9 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     emlbl(r,lbl_next_node);
     em(r,"duptopi64");
     //|content-size|addr of current child|addr of current child|
-    //Update content-size, i.e. content-size = content-size - size of current child node 
-    em(r,"ldi64",sizeof(msg_node::what));em(r,"addi64");em(r,"ldsi64");em(r,"swp128i64");em(r,"subi64");em(r,"swpi64");em(r,"duptopi64");
-    
+    //XXXUpdate content-size, i.e. content-size = content-size - size of current child node 
+    //em(r,"ldi64",sizeof(msg_node::what));em(r,"addi64");em(r,"ldsi64");em(r,"swp128i64");em(r,"subi64");em(r,"swpi64");
+    //em(r,"duptopi64");    
     em(r,"ldsi32"); 
     //|content-size|addr of current child|node type
     em(r,"ldi32",msg_node::NODE);
@@ -744,12 +744,12 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     if (tag_read){
         //Invariant: |content-size|addr of node node_name|addr of it+1h child|content size|new offset|
         //
-        em(r,"dbg_print_data",0);em(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
+        //em(r,"dbg_print_data",0);em(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
         em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
         //Invariant: |content-size|addr of node node_name|
         em(r,"swpi64");
         //Invariant: |addr of node node_name|content-size|
-        em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+        //em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
     }
     //Ready to bounce back
 
@@ -763,6 +763,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
   
     emlbl(r,lbl_next_node);
     emlbl(r,lbl_done);
+    //Invariant: |content-size|addr of node node_name|
     
     //em(r,"dbg_print_cs_and_regs", 0);
     //em(r,"halt");
@@ -793,40 +794,67 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          emwsa(r,"bnzeroi32",lbl_error_root_type_wrong,"OblectamentaCodeLabel");
          //|addr of message|
          //INVARIANT: Type = ROOT
-         bool tag_child_match{};
+
+         //|addr of message|
+         em(r,"duptopi64");
+         //|addr of message|addr of message|
+         em(r,"ldi64", sizeof(msg_node::what));
+         em(r,"addi64");
+         //|addr of message|addr of node-size|
+         em(r,"ldsi64");
+         //|addr of message|node-size|
+         em(r,"ldi64", sizeof(msg_node));
+         em(r,"swpi64");
+         em(r,"subi64");
+         //|addr of message|content-size|
+         em(r,"swpi64");
+         em(r,"duptopi64");
+         em(r,"swp128i64");
+         //|addr of message|addr of message|content-size|
+         em(r,"swpi64");
+         em(r,"ldi64", sizeof(msg_node));
+         em(r,"addi64");
+         em(r,"swpi64");
+         //|addr of message|addr of first child|content-size|
+
          for(auto child: children(as_struct_ref(mnem)) ){
             if (is<Ast_node_kind::structdef>(child)){
-             tag_child_match = true;
-             //|addr of message|
+             //emwa(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
+             //Invariant: |addr of message|addr of last non matched child|content-size|
+             //Find node name(as_struct_ref(child))
+             //emwa(r,"dbg_print_cs_and_regs", 0);
+             oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
+             //Invariant: |addr of message|addr of matched node|remaining content-size|
+             //Move pointer to next node
+             em(r,"swpi64");
+             //|addr of message|remaining content-size|addr of matched node|
              em(r,"duptopi64");
-             //|addr of message|addr of message|
              em(r,"ldi64", sizeof(msg_node::what));
              em(r,"addi64");
-             //|addr of message|addr of node-size|
              em(r,"ldsi64");
-             //|addr of message|node-size|
-             em(r,"ldi64", sizeof(msg_node));
+             //|addr of message|remaining content-size|addr of matched node| size of matched node|
+             em(r,"swpi64");
+             em(r,"swpi64b128");
              em(r,"swpi64");
              em(r,"subi64");
-             //|addr of message|content-size|
+             //|addr of message|addr of matched node|remaining content-size|
              em(r,"swpi64");
+             //|addr of message|remaining content-size|addr of matched node|
              em(r,"duptopi64");
-             em(r,"swp128i64");
-             //|addr of message|addr of message|content-size|
-             em(r,"swpi64");
-             em(r,"ldi64", sizeof(msg_node));
+             em(r,"ldi64", sizeof(msg_node::what));
+             em(r,"addi64");
+             em(r,"ldsi64");
              em(r,"addi64");
              em(r,"swpi64");
-             //|addr of message|addr of first child|content-size|
-
-             oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
-             //|addr of message|addr of next child|remaining content-size|
-             emwa(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+             //|addr of message|addr of next unmatched node|remaining content-size|
+             //emwa(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
             }
          }
-         if (tag_child_match){
-            em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
-         }
+         
+         //Invariant: |addr of message|addr of next child|remaining content-size|
+         //emwa(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+         em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
+
          emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
          emlbl(r,lbl_error_root_type_wrong);em(r,"halt");
          emlbl(r,lbl_done);
