@@ -599,8 +599,12 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     string lbl_names_equal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     em(r,"swpi64");
     //|content-size|addr of current child|
-    em(r,"duptopi64");
     emlbl(r,lbl_next_node);
+    em(r,"duptopi64");
+    //|content-size|addr of current child|addr of current child|
+    //Update content-size, i.e. content-size = content-size - size of current child node 
+    em(r,"ldi64",sizeof(msg_node::what));em(r,"addi64");em(r,"ldsi64");em(r,"swp128i64");em(r,"subi64");em(r,"swpi64");em(r,"duptopi64");
+    
     em(r,"ldsi32"); 
     //|content-size|addr of current child|node type
     em(r,"ldi32",msg_node::NODE);
@@ -688,6 +692,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"swp128i64");
     em(r,"swpi64");
     em(r,"ldi64",0);
+    bool tag_read {};
     //|content-size|addr of node node_name|addr of first child of node_name|content size|offset|
     for(auto mn: mnemonics){
         //|content-size|addr of node node_name|addr of ith child of node_name|content size|offset|
@@ -695,6 +700,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
 
         } else if (is<Ast_node_kind::symbol>(mn) && (kind(as_symbol_ref(mn)) == "OblectamentaMessageTag")){
             if ("i32" == name(as_symbol_ref(mn))){
+                tag_read = true;
                 //ToDo: Check size
                 em(r,"swp128i64");
                 em(r,"duptopi64");
@@ -735,6 +741,17 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
             }
         } else em(r,mn);
     }
+    if (tag_read){
+        //Invariant: |content-size|addr of node node_name|addr of it+1h child|content size|new offset|
+        //
+        em(r,"dbg_print_data",0);em(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
+        em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
+        //Invariant: |content-size|addr of node node_name|
+        em(r,"swpi64");
+        //Invariant: |addr of node node_name|content-size|
+        em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+    }
+    //Ready to bounce back
 
     emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
 
@@ -772,11 +789,14 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          //|addr of message|type of message|msg_node::ROOT
          em(r,"subi32");
          string lbl_error_root_type_wrong = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+         string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
          emwsa(r,"bnzeroi32",lbl_error_root_type_wrong,"OblectamentaCodeLabel");
          //|addr of message|
          //INVARIANT: Type = ROOT
+         bool tag_child_match{};
          for(auto child: children(as_struct_ref(mnem)) ){
             if (is<Ast_node_kind::structdef>(child)){
+             tag_child_match = true;
              //|addr of message|
              em(r,"duptopi64");
              //|addr of message|addr of message|
@@ -798,12 +818,18 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              em(r,"addi64");
              em(r,"swpi64");
              //|addr of message|addr of first child|content-size|
+
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
-             //emwa(r,"dbg_print_cs_and_regs", 0);
-             //em(r,"halt");
+             //|addr of message|addr of next child|remaining content-size|
+             emwa(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
             }
-         }         
+         }
+         if (tag_child_match){
+            em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
+         }
+         emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
          emlbl(r,lbl_error_root_type_wrong);em(r,"halt");
+         emlbl(r,lbl_done);
          mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());
          pos += r.size();
         } else if (is_a_msgdefdirective(mnem)){
