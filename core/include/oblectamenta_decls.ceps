@@ -134,7 +134,8 @@ OblectamentaOpcode
     bneqi8,
     swpi160i64,
     swpi192i32,
-    asserti32
+    asserti32,
+    assertf64
     ;
 
 OblectamentaModifier addr;
