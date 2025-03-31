@@ -105,9 +105,16 @@ sm/*state machine*/{
                         i32;
                         asserti32(11);
                     };
+                    salary{
+                        f64;
+                        //dbg_print_cs_and_regs(0);
+                        assertf64(33.3);
+                    };
                 };
               //Invariant: CS is empty
-              dbg_print_cs_and_regs(0);
+              //dbg_print_cs_and_regs(0);
+              lddbl(33.3);
+              assertf64(33.3);
               };//asm
              };//text
             };//oblectamenta

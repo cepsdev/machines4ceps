@@ -184,7 +184,9 @@ namespace ceps{
                 swpi160i64,
                 swpi192i32,
                 asserti32imm,
-                assertf64imm
+                assertf64imm,
+                swp96i64,
+                swp192i64
             };
 
             class EventQueue{
@@ -490,6 +492,8 @@ namespace ceps{
                     size_t swpi192i32(size_t);
                     size_t asserti32imm(size_t);
                     size_t assertf64imm(size_t);
+                    size_t swp96i64(size_t);
+                    size_t swp192i64(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -697,7 +701,9 @@ namespace ceps{
                 {"swpi160i64",{Opcode::swpi160i64, "",emit<Opcode::swpi160i64>,nullptr,nullptr,nullptr}},
                 {"swpi192i32",{Opcode::swpi192i32, "",emit<Opcode::swpi192i32>,nullptr,nullptr,nullptr}},
                 {"asserti32imm",{Opcode::asserti32imm, "",nullptr,emit<Opcode::asserti32imm>,nullptr,nullptr} },
-                {"assertf64imm",{Opcode::assertf64imm, "",nullptr,nullptr,nullptr,emit<Opcode::assertf64imm>} }
+                {"assertf64imm",{Opcode::assertf64imm, "",nullptr,nullptr,nullptr,emit<Opcode::assertf64imm>} },
+                {"swp96i64",{Opcode::swp96i64, "",emit<Opcode::swp96i64>,nullptr,nullptr,nullptr}},
+                {"swp192i64",{Opcode::swp192i64, "",emit<Opcode::swp192i64>,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)
