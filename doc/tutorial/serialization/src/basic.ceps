@@ -110,6 +110,10 @@ sm/*state machine*/{
                         //dbg_print_cs_and_regs(0);
                         assertf64(33.3);
                     };
+                    firstName{
+                     sz;
+                     dbg_print_cs_and_regs(0);
+                    };
                 };
               //Invariant: CS is empty
               //dbg_print_cs_and_regs(0);

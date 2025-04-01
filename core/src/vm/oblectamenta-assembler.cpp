@@ -800,10 +800,63 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
                 em(r,"swpi64");
                 //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|content size|new offset|
                 em(r,"swp192i64");
-                //|content-size|addr of node node_name|addr of it+1h child|content size|new offset|ith child's payload|
+                //|content-size|addr of node node_name|addr of it+1h child|content size|new offset|ith child's payload|                
+            } else if ("sz" == name(as_symbol_ref(mn))){
+                tag_read = true;
+                //ToDo: Check size
+                em(r,"swp128i64");
+                em(r,"duptopi64");
+                //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|addr of first child of node_name|
+                em(r,"ldsi32");
+                //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|child of node_name.what|
+                em(r,"ldi32",msg_node::SZ);
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|child of node_name.what|msg_node::INT32|
+                emwsa(r,"bneq",lbl_wrong_node_type_i32_expected,"OblectamentaCodeLabel");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|
+                em(r,"ldi64",sizeof(msg_node));
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|sizeof(msg_node)|
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|
+                em(r,"duptopi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|addr of ith child's payload|
+                em(r,"ldsi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|ith child's payload (pointer)|
+                em(r,"swpi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's payload|
+                //Compute address of next child
+                em(r,"ldi64",sizeof(msg_node::size));
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's payload|sizeof(msg_node::size)|
+                em(r,"swpi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|sizeof(msg_node::size)|addr of ith child's payload|
+                em(r,"subi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's size field|
+                em(r,"duptopi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's size field|addr of ith child's size field|
+                em(r,"ldsi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's size field|ith child's size|
+                em(r,"swpi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|ith child's size|addr of ith child's size field|
+                em(r,"ldi64",sizeof(msg_node::what));
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|ith child's size|addr of ith child's size field|sizeof(msg_node::what))|
+                em(r,"swpi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|ith child's size|sizeof(msg_node::what))|addr of ith child's size field|
+                em(r,"subi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|ith child's size|addr of ith child|
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith+1 child|
 
-//em(r,"dbg_print_data",0);em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
-                
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of it+1h child|
+                em(r,"swp128i64");
+                //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|offset|
+                em(r,"ldi64",sizeof(msg_node_f64));
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|new offset|
+                em(r,"swp192i64");
+                //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|new offset|content size|
+                em(r,"swpi64");
+                //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|content size|new offset|
+                em(r,"swp192i64");
+                //|content-size|addr of node node_name|addr of it+1h child|content size|new offset|ith child's payload|                
             }
         } else em(r,mn);
     }
