@@ -818,8 +818,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
                 em(r,"addi64");
                 //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|
                 em(r,"duptopi64");
-                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|addr of ith child's payload|
-                em(r,"ldsi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|addr of ith child's payload == ith child's payload |
                 //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|ith child's payload (pointer)|
                 em(r,"swpi64");
                 //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's payload|
@@ -848,7 +847,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
                 //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of it+1h child|
                 em(r,"swp128i64");
                 //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|offset|
-                em(r,"ldi64",sizeof(msg_node_f64));
+                em(r,"ldi64",sizeof(msg_node_sz));
                 em(r,"addi64");
                 //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|new offset|
                 em(r,"swp192i64");

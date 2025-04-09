@@ -89,17 +89,13 @@ sm/*state machine*/{
                     zip{lea(zip);sz;};
                    };
                 };//msg
-                //dbg_print_data(0);
-                //dbg_deserialize_protobufish_to_json(msg_buffer);
-                //dbg_print_data(0);
+
                 msg{
                     read;
                     msg_buffer;
                     age{
                         i32;
-                        //dbg_print_cs_and_regs(0);//Expectation: 33 is top i32 element of CS
                         asserti32(33);
-                        //dbg_print_cs_and_regs(0);
                     };
                     id{
                         i32;
@@ -107,18 +103,16 @@ sm/*state machine*/{
                     };
                     salary{
                         f64;
-                        //dbg_print_cs_and_regs(0);
                         assertf64(33.3);
                     };
                     firstName{
                      sz;
-                     dbg_print_cs_and_regs(0);
+                     assertsz(firstname1);
                     };
                 };
               //Invariant: CS is empty
+              //assert_empty_cs;
               //dbg_print_cs_and_regs(0);
-              lddbl(33.3);
-              assertf64(33.3);
               };//asm
              };//text
             };//oblectamenta
