@@ -183,6 +183,13 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
+    size_t VMEnv::assert_empty_cs(size_t pos){
+        if (registers.file[VMEnv::registers_t::CSP]) {
+            throw std::runtime_error{"assert_empty_cs: Compute Stack is not empty." };
+        }
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
     size_t VMEnv::dbg_printlni32imm(size_t pos){
         cout << (*((int*)(text+pos+base_opcode_width))) << '\n' ;
         return base_opcode_width + sizeof(addr_t) + pos;
@@ -1110,6 +1117,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::swp96i64);
         op_dispatch.push_back(&VMEnv::swp192i64);
         op_dispatch.push_back(&VMEnv::assertsz);
+        op_dispatch.push_back(&VMEnv::assert_empty_cs);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

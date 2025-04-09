@@ -187,7 +187,8 @@ namespace ceps{
                 assertf64imm,
                 swp96i64,
                 swp192i64,
-                assertsz
+                assertsz,
+                assert_empty_cs
             };
 
             class EventQueue{
@@ -496,6 +497,7 @@ namespace ceps{
                     size_t swp96i64(size_t);
                     size_t swp192i64(size_t);
                     size_t assertsz(size_t);
+                    size_t assert_empty_cs(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -706,7 +708,8 @@ namespace ceps{
                 {"assertf64imm",{Opcode::assertf64imm, "",nullptr,nullptr,nullptr,emit<Opcode::assertf64imm>} },
                 {"swp96i64",{Opcode::swp96i64, "",emit<Opcode::swp96i64>,nullptr,nullptr,nullptr}},
                 {"swp192i64",{Opcode::swp192i64, "",emit<Opcode::swp192i64>,nullptr,nullptr,nullptr}},
-                {"assertsz",{Opcode::assertsz, "",nullptr,emit<Opcode::assertsz>,nullptr,nullptr}}
+                {"assertsz",{Opcode::assertsz, "",nullptr,emit<Opcode::assertsz>,nullptr,nullptr}},
+                {"assert_empty_cs",{Opcode::assert_empty_cs, "",emit<Opcode::assert_empty_cs>,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)

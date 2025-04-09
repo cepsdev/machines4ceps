@@ -138,7 +138,8 @@ OblectamentaOpcode
     assertf64,
     swp96i64,
     swp192i64,
-    assertsz
+    assertsz,
+    assert_empty_cs
     ;
 
 OblectamentaModifier addr;

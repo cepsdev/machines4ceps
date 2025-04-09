@@ -106,12 +106,12 @@ sm/*state machine*/{
                         assertf64(33.3);
                     };
                     firstName{
-                     sz;
-                     assertsz(firstname1);
+                        sz;
+                        assertsz(firstname1);
                     };
                 };
               //Invariant: CS is empty
-              //assert_empty_cs;
+              assert_empty_cs;
               //dbg_print_cs_and_regs(0);
               };//asm
              };//text
