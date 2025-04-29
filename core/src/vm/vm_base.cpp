@@ -161,9 +161,29 @@ namespace ceps::vm::oblectamenta{
         auto expected_value = *((int*)(text+pos+base_opcode_width));
         auto t{pop_cs<int32_t>()};
         if (expected_value != t) {
-            throw std::runtime_error{"asserti32: Expected " + std::to_string(expected_value) + " read " + std::to_string(t) +"." };
+            throw std::runtime_error{"asserti32(imm): Expected " + std::to_string(expected_value) + " read " + std::to_string(t) +"." };
         }
         return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
+    size_t VMEnv::asserti64imm(size_t pos){
+        auto expected_value = *((int64_t*)(text+pos+base_opcode_width));
+        auto t{pop_cs<int64_t>()};
+
+        if (expected_value != t) {
+            throw std::runtime_error{"asserti64(imm): Expected " + std::to_string(expected_value) + " read " + std::to_string(t) +"." };
+        }
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+    size_t VMEnv::asserti64immsz(size_t pos){
+        auto expected_value = *((int64_t*)(text+pos+base_opcode_width));
+        auto t{pop_cs<int64_t>()};
+        if (expected_value != t) {
+            auto msg_sz_loc = *((addr_t*)(text+pos+base_opcode_width+sizeof(addr_t)));
+            string msg {(char*)(mem.base+msg_sz_loc)};
+            throw std::runtime_error{msg+"[asserti64(immsz) Expected " + std::to_string(expected_value) + " read " + std::to_string(t) +"]." };
+        }
+        return base_opcode_width + sizeof(addr_t) + sizeof(addr_t) + pos;
     }
 
     size_t VMEnv::assertf64imm(size_t pos){
@@ -1118,6 +1138,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::swp192i64);
         op_dispatch.push_back(&VMEnv::assertsz);
         op_dispatch.push_back(&VMEnv::assert_empty_cs);
+        op_dispatch.push_back(&VMEnv::asserti64imm);
+        op_dispatch.push_back(&VMEnv::asserti64immsz);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )
