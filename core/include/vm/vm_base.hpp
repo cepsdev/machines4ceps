@@ -190,7 +190,8 @@ namespace ceps{
                 assertsz,
                 assert_empty_cs,
                 asserti64imm,
-                asserti64immsz
+                asserti64immsz,
+                duptopi192
             };
 
             class EventQueue{
@@ -507,6 +508,7 @@ namespace ceps{
                     size_t assert_empty_cs(size_t);
                     size_t asserti64imm(size_t);
                     size_t asserti64immsz(size_t);
+                    size_t duptopi192(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -734,7 +736,8 @@ namespace ceps{
                 {"assertsz",{Opcode::assertsz, "",nullptr,emit<Opcode::assertsz>,nullptr,nullptr,nullptr}},
                 {"assert_empty_cs",{Opcode::assert_empty_cs, "",emit<Opcode::assert_empty_cs>,nullptr,nullptr,nullptr,nullptr}},
                 {"asserti64imm",{Opcode::asserti64imm, "",nullptr,emit<Opcode::asserti64imm>,nullptr,nullptr,nullptr} },
-                {"asserti64immsz",{Opcode::asserti64immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti64immsz>} }
+                {"asserti64immsz",{Opcode::asserti64immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti64immsz>} },
+                {"duptopi192",{Opcode::duptopi192, "",emit<Opcode::duptopi192>,nullptr,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)
