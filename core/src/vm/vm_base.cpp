@@ -551,6 +551,14 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
 
+    size_t VMEnv::swpi8i128(size_t pos){
+        auto t1{pop_cs<int8_t>()};
+        auto t2{pop_cs<int64_t>()};
+        auto t3{pop_cs<int64_t>()};
+        push_cs(t1);push_cs(t2);push_cs(t3);
+        return base_opcode_width + pos;
+    }
+
     size_t VMEnv::swpi32i64(size_t pos){
         auto t1{pop_cs<int32_t>()};
         auto t2{pop_cs<int64_t>()};
@@ -1149,6 +1157,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::asserti64imm);
         op_dispatch.push_back(&VMEnv::asserti64immsz);
         op_dispatch.push_back(&VMEnv::duptopi192);
+        op_dispatch.push_back(&VMEnv::swpi8i128);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

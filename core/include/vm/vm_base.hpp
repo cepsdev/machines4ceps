@@ -160,7 +160,7 @@ namespace ceps{
                 ldi8,
                 sti8,
                 stsi8,
-                ldsi8,
+                ldsi8, // ADDR = pop64(CS), push8(*(int8_t*)ADDR)
                 ui8toui32, // cast ui8 to ui32
                 ui8toui64,
                 duptopi8, // duplicate top int8
@@ -191,7 +191,8 @@ namespace ceps{
                 assert_empty_cs,
                 asserti64imm,
                 asserti64immsz,
-                duptopi192
+                duptopi192,
+                swpi8i128
             };
 
             class EventQueue{
@@ -509,6 +510,7 @@ namespace ceps{
                     size_t asserti64imm(size_t);
                     size_t asserti64immsz(size_t);
                     size_t duptopi192(size_t);
+                    size_t swpi8i128(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -737,7 +739,8 @@ namespace ceps{
                 {"assert_empty_cs",{Opcode::assert_empty_cs, "",emit<Opcode::assert_empty_cs>,nullptr,nullptr,nullptr,nullptr}},
                 {"asserti64imm",{Opcode::asserti64imm, "",nullptr,emit<Opcode::asserti64imm>,nullptr,nullptr,nullptr} },
                 {"asserti64immsz",{Opcode::asserti64immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti64immsz>} },
-                {"duptopi192",{Opcode::duptopi192, "",emit<Opcode::duptopi192>,nullptr,nullptr,nullptr,nullptr}}
+                {"duptopi192",{Opcode::duptopi192, "",emit<Opcode::duptopi192>,nullptr,nullptr,nullptr,nullptr}},
+                {"swpi8i128",{Opcode::swpi8i128, "",emit<Opcode::swpi8i128>,nullptr,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)
