@@ -192,7 +192,8 @@ namespace ceps{
                 asserti64imm,
                 asserti64immsz,
                 duptopi192,
-                swpi8i128
+                swpi8i128,
+                swpi16i128
             };
 
             class EventQueue{
@@ -511,6 +512,7 @@ namespace ceps{
                     size_t asserti64immsz(size_t);
                     size_t duptopi192(size_t);
                     size_t swpi8i128(size_t);
+                    size_t swpi16i128(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -740,7 +742,8 @@ namespace ceps{
                 {"asserti64imm",{Opcode::asserti64imm, "",nullptr,emit<Opcode::asserti64imm>,nullptr,nullptr,nullptr} },
                 {"asserti64immsz",{Opcode::asserti64immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti64immsz>} },
                 {"duptopi192",{Opcode::duptopi192, "",emit<Opcode::duptopi192>,nullptr,nullptr,nullptr,nullptr}},
-                {"swpi8i128",{Opcode::swpi8i128, "",emit<Opcode::swpi8i128>,nullptr,nullptr,nullptr,nullptr}}
+                {"swpi8i128",{Opcode::swpi8i128, "",emit<Opcode::swpi8i128>,nullptr,nullptr,nullptr,nullptr}},
+                {"swpi16i128",{Opcode::swpi16i128, "",emit<Opcode::swpi16i128>,nullptr,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)

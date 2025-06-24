@@ -142,7 +142,8 @@ OblectamentaOpcode
     assert_empty_cs,
     asserti64,
     duptopi192,
-    swpi8i128
+    swpi8i128,
+    swpi16i128
     ;
 
 OblectamentaModifier addr;
