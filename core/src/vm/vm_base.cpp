@@ -555,15 +555,15 @@ namespace ceps::vm::oblectamenta{
         auto t1{pop_cs<int8_t>()};
         auto t2{pop_cs<int64_t>()};
         auto t3{pop_cs<int64_t>()};
-        push_cs(t1);push_cs(t2);push_cs(t3);
+        push_cs(t1);push_cs(t3);push_cs(t2);
         return base_opcode_width + pos;
     }
 
     size_t VMEnv::swpi16i128(size_t pos){
-        auto t1{pop_cs<int16_t>()};
+        auto t1{pop_cs<int16_t>()};    // t3 | t2 | t 1 |
         auto t2{pop_cs<int64_t>()};
         auto t3{pop_cs<int64_t>()};
-        push_cs(t1);push_cs(t2);push_cs(t3);
+        push_cs(t1);push_cs(t3);push_cs(t2); // t1 | t3 | t 2 |
         return base_opcode_width + pos;
     }
 
