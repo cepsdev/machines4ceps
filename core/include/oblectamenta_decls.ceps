@@ -143,7 +143,9 @@ OblectamentaOpcode
     asserti64,
     duptopi192,
     swpi8i128,
-    swpi16i128
+    swpi16i128,
+    bzeroi8,
+    bnzeroi8
     ;
 
 OblectamentaModifier addr;
