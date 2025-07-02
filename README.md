@@ -12,7 +12,7 @@ __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ sta
 - Any output format supported, the very same language engine allows you to export your state machine into any imaginable format by adding simple transformation rules.
 - Supports WebSocket, Bosch-CAN.
 - Runs on any Unixish device.
-- **New**: Supports Oblectamenta, a high level machine language which is JITed to x86-64/ARM. Look what CodePilot has to say about the apporach taken: ![CodePilot reviews Oblectamenta](core/src/vm/README.md) 
+- **New**: Supports Oblectamenta, a high level machine language which is JITed to x86-64/ARM. Look what CodePilot has to say about it: [CodePilot reviews Oblectamenta](core/src/vm/README.md) 
 ## Installation
 
 Details can be found [here](./INSTALL.md)  
