@@ -146,7 +146,8 @@ OblectamentaOpcode
     swpi16i128,
     bzeroi8,
     bnzeroi8,
-    swpi64b128
+    swpi64b128,
+    dbg_print_topi64
     ;
 
 OblectamentaModifier addr;

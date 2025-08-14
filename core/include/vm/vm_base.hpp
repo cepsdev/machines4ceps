@@ -33,9 +33,9 @@ namespace ceps{
             using base_opcode = uint32_t;
             static constexpr unsigned int max_opcode_width {16}; 
             enum class Opcode:base_opcode{
-                halt,
-                noop,
-                ldi32,
+                halt,                     // Stop execution
+                noop,                     // Do nothing 
+                ldi32,                    // [ldi32(addr)] :=  *((int32_t*) CS) = *((int32_t*) addr); CS += sizeof(int32_t) 
                 ldsi32,
                 ldi64,
                 lddbl,
@@ -193,7 +193,8 @@ namespace ceps{
                 asserti64immsz,
                 duptopi192,
                 swpi8i128,
-                swpi16i128
+                swpi16i128,
+                dbg_print_topi64
             };
 
             class EventQueue{
@@ -513,6 +514,7 @@ namespace ceps{
                     size_t duptopi192(size_t);
                     size_t swpi8i128(size_t);
                     size_t swpi16i128(size_t);
+                    size_t dbg_print_topi64(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -743,7 +745,8 @@ namespace ceps{
                 {"asserti64immsz",{Opcode::asserti64immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti64immsz>} },
                 {"duptopi192",{Opcode::duptopi192, "",emit<Opcode::duptopi192>,nullptr,nullptr,nullptr,nullptr}},
                 {"swpi8i128",{Opcode::swpi8i128, "",emit<Opcode::swpi8i128>,nullptr,nullptr,nullptr,nullptr}},
-                {"swpi16i128",{Opcode::swpi16i128, "",emit<Opcode::swpi16i128>,nullptr,nullptr,nullptr,nullptr}}
+                {"swpi16i128",{Opcode::swpi16i128, "",emit<Opcode::swpi16i128>,nullptr,nullptr,nullptr,nullptr}},
+                {"dbg_print_topi64",{Opcode::dbg_print_topi64, "",emit<Opcode::dbg_print_topi64>,nullptr,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)

@@ -602,10 +602,16 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     string lbl_wrong_node_type_i32_expected = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_not_enough_space = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_not_found = string{"__msgdef_"} +to_string(vm.lbl_counter++);
 
     em(r,"swpi64");
     //|content-size|addr of current child|
     emlbl(r,lbl_next_node);
+    
+    //Check remaining content size, if content-size <= 0 then we haven't found the requested node
+    em(r,"swpi64");      //|addr of current child|content-size|
+    em(r,"duptopi64");   //|addr of current child|content-size|content-size|
+    em(r,"dbg_print_topi64");
     em(r,"duptopi64");
     //|content-size|addr of current child|addr of current child|
     //XXXUpdate content-size, i.e. content-size = content-size - size of current child node 
@@ -880,7 +886,11 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|
   
     emlbl(r,lbl_next_node);
+    emlbl(r,lbl_not_found);
+    em(r,"halt");
+    emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
     emlbl(r,lbl_done);
+    em(r,"noop");
     //Invariant: |content-size|addr of node node_name|
     
     //em(r,"dbg_print_cs_and_regs", 0);
@@ -891,14 +901,14 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     for (size_t pos{}; pos < mnemonics.size(); ++pos){
         auto mnem{mnemonics[pos]};
-        if (is_a_msgreaddirective(mnem)){
-         auto mem_loc = static_mem_location(vm,mnem);
+        if (is_a_msgreaddirective(mnem)){ //Case: Deserialization
+         auto mem_loc = static_mem_location(vm,mnem); //Fetch buffer address
          if (!mem_loc) { 
           stringstream offending_msg;
           offending_msg << *mnem;
-          throw string{"oblectamenta_assembler: Message Dirctive contains no data label (hence I don't know where to read the bytes from). Offending message directive is >>>"+ offending_msg.str() +"<<<" };
+          throw string{"oblectamenta_assembler: Message Directive contains no data label (hence I don't know where to read the bytes from). Offending message directive is >>>"+ offending_msg.str() +"<<<" };
          }
-         vector<node_t> r;
+         vector<node_t> r; // r contains the generated code
          emwsa(r,"lea",*mem_loc,"OblectamentaDataLabel");
          em(r,"duptopi64");
          //|addr of message|addr of message|
@@ -935,6 +945,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          em(r,"swpi64");
          //|addr of message|addr of first child|content-size|
 
+
+
          for(auto child: children(as_struct_ref(mnem)) ){
             if (is<Ast_node_kind::structdef>(child)){
              //emwa(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
@@ -942,6 +954,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              //Find node name(as_struct_ref(child))
              //emwa(r,"dbg_print_cs_and_regs", 0);
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
+             //emwa(r,"dbg_print_cs_and_regs", 0);
              //Invariant: |addr of message|addr of matched node|remaining content-size|
              //Move pointer to next node
              em(r,"swpi64");
