@@ -194,7 +194,8 @@ namespace ceps{
                 duptopi192,
                 swpi8i128,
                 swpi16i128,
-                dbg_print_topi64
+                dbg_print_topi64,
+                haltimm
             };
 
             class EventQueue{
@@ -208,6 +209,8 @@ namespace ceps{
                     using data_t = uint8_t*;
                     using text_t = uint8_t*;
                     using compute_stack_t = vector<uint8_t>;
+
+                    struct halt_triggered{};
 
                     struct registers_t{
                         static constexpr uint32_t SP = 0;  // stack pointer
@@ -515,6 +518,7 @@ namespace ceps{
                     size_t swpi8i128(size_t);
                     size_t swpi16i128(size_t);
                     size_t dbg_print_topi64(size_t);
+                    size_t haltimm(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -746,7 +750,8 @@ namespace ceps{
                 {"duptopi192",{Opcode::duptopi192, "",emit<Opcode::duptopi192>,nullptr,nullptr,nullptr,nullptr}},
                 {"swpi8i128",{Opcode::swpi8i128, "",emit<Opcode::swpi8i128>,nullptr,nullptr,nullptr,nullptr}},
                 {"swpi16i128",{Opcode::swpi16i128, "",emit<Opcode::swpi16i128>,nullptr,nullptr,nullptr,nullptr}},
-                {"dbg_print_topi64",{Opcode::dbg_print_topi64, "",emit<Opcode::dbg_print_topi64>,nullptr,nullptr,nullptr,nullptr}}
+                {"dbg_print_topi64",{Opcode::dbg_print_topi64, "",emit<Opcode::dbg_print_topi64>,nullptr,nullptr,nullptr,nullptr}},
+                {"haltimm",{Opcode::haltimm, "",nullptr,emit<Opcode::haltimm>,nullptr,nullptr,nullptr} }
             };
             
             #pragma pack(push,1)

@@ -14,23 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-kind Event;
-kind Guard;
-kind Systemstate;
 
-Event AnEvent;
+/*
+Demonstrates serialization and deserialization of messages to and from global data.  
+*/
 
-kind OblectamentaMsgDefDirective;        
-kind OblectamentaMsgReadDirective;        
+kind Event;         // Make available events
+kind Guard;         // Make available guards
+kind Systemstate;   // Make available system states
+
+Event AnEvent;      // Declare the event AnEvent
+
+kind OblectamentaMsgDefDirective;  // Make available message serialization
+kind OblectamentaMsgReadDirective; // Make available message deserialization
 
 OblectamentaDataLabel zip,street,firstname1,initial1,lastname1,msg_buffer2, 
-                      msg_buffer,msg_text, one, some_number, address_street_read;
+                      msg_buffer,msg_text, one, some_number, address_street_read; // a bnch of data labels
 
 //Global Data
 oblectamenta{
  global{
    data{
-        msg_text;"Hello there!";0;
+        //Notation                    // How it ends up in memory
+                                      // rel. offset    content (bytes delimited by |)
+        msg_text;"Hello there!";0;    // 0              |'H'|'e'|'l'|'l'|'o'|' '|'t'|'h'|'e'|'r'|'e'|'!'|0|0|0|0|  //0 is an signed 32 bit integer
         
         firstname1;"Max";0;
         initial1;"M";0;
@@ -57,24 +64,32 @@ sm/*state machine*/{
                     OblectamentaMsgReadDirective read;
             text{
                 asm{
+
                   msg{
                     write; // we want this to be treated as a message. 
-                    msg_buffer; // That's the location the resulting byte stream should be written to
-                   age{
-                    ldi32(33);
+                    msg_buffer; // Location the resulting byte stream should be written to
+                    //Code for the creation of the message's root has been created at this point
+
+                   age{ //Define the sub message age
+                    ldi32(33); // Put i32 value 33 on top of the computation stack (cs)
+                    i32;       // At this point code is injected to write the top i32 element of the cs to the message structure.
+                   };
+
+                   id{ // Define the sub-message id
+                    // There are no restrictions regarding the instructions which may be used inside
+                    // a sub message defining structure, i.e. we can compute values.
+                    ldi32(1);
+                    ldi32(10);
+                    addi32;
                     i32;
                    };
-                   id{
-                    ldi32(11);
-                    i32;
-                   };
-                   salary{
-                    lddbl(33.3);
+                   salary{ //Define the sub-message salary
+                    lddbl(33.3); // It contans the double value 33.3.
                     f64;
                    };
-                   firstName{
-                    lea(firstname1);
-                    sz;
+                   firstName{ // Define the sub-message firstName
+                    lea(firstname1); // which contais the value labeled with firstname1
+                    sz;       // of type zero terminated signed char string
                    };
                    initialName{
                     lea(initial1);
@@ -91,10 +106,9 @@ sm/*state machine*/{
                    };
                   };//msg
 
-                  msg{
-                    read;
-                    msg_buffer;
-                    age{
+                  msg{read;  // The name of the structure is irrelevant, the read symbol qualifies the content as a deserialization routine
+                    msg_buffer; // Label identifiyig the message content
+                    /*age{
                         i32;
                         asserti32(33);
                     };
@@ -117,8 +131,9 @@ sm/*state machine*/{
                     lastName{
                         sz;
                         assertsz(lastname1);
-                    };
-                    address{
+                    };*/
+                    gag{};
+                    /*address{
                         street{
                             sz;
                             assertsz(street); //Check value
@@ -134,11 +149,11 @@ sm/*state machine*/{
                             sz;
                             assertsz(zip);
                         };
-                   };
+                   };*/
                   };           
                   //dbg_print_data(0);                               
-                  ldi64(address_street_read);
-                  asserti64(1,"Address of street wasn't processed properly.");
+                  //ldi64(address_street_read);
+                  //asserti64(1,"Address of street wasn't processed properly.");
                   //Invariant: CS is empty
                   assert_empty_cs;
                   //dbg_print_cs_and_regs(0);
@@ -150,17 +165,6 @@ sm/*state machine*/{
     t/*transition*/{/*from*/Initial; /*to*/A;/*action*/doSendEvent;};
 };
 
-sm/*state machine*/{
-    /*name*/T;
-    states{Initial; A;};
-    Actions{
-        doReceiveEvent{
-            print("doReceiveEvent\n");
-        };
-    };
-    t/*transition*/{/*from*/Initial; /*to*/A;/*Triggering Event*/AnEvent;/*Action*/doReceiveEvent;};
-};
-
 Simulation{
-    Start{S;T;};
+    Start{S;};
 };

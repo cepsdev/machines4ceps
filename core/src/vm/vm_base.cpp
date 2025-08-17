@@ -87,6 +87,8 @@ namespace ceps::vm::oblectamenta{
                 cerr << "***Fatal Error in VMEnv::run. Instruction caused an exception, offending opcode: " << (uint32_t)text[registers.file[registers_t::PC]] << "\n";
                 print_cs_and_regsimm(*this);
                 throw(re); 
+            } catch (halt_triggered& hlt) {
+                break;
             }
         }
         return start;
@@ -171,6 +173,13 @@ namespace ceps::vm::oblectamenta{
         if (expected_value != t) {
             throw std::runtime_error{"asserti32(imm): Expected " + std::to_string(expected_value) + " read " + std::to_string(t) +"." };
         }
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
+
+    size_t VMEnv::haltimm(size_t pos){
+        auto& n = *((int64_t*)(text+pos+base_opcode_width));
+        if (n <= 0) throw halt_triggered{};
+        --n;
         return base_opcode_width + sizeof(addr_t) + pos;
     }
 
@@ -1175,6 +1184,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::swpi8i128);
         op_dispatch.push_back(&VMEnv::swpi16i128);
         op_dispatch.push_back(&VMEnv::dbg_print_topi64);
+        op_dispatch.push_back(&VMEnv::haltimm);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

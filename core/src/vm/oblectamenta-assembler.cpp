@@ -604,14 +604,18 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_not_found = string{"__msgdef_"} +to_string(vm.lbl_counter++);
 
-    em(r,"swpi64");
-    //|content-size|addr of current child|
-    emlbl(r,lbl_next_node);
-    
+    em(r,"swpi64");           // |content-size|addr of current child|
+    emlbl(r,lbl_next_node);   //lbl_next_node:
+    em(r,"swpi64");           // |addr of current child|content-size|
+    em(r,"dbg_print_topi64"); // debug: print top i64 value
+    em(r,"swpi64");           // |content-size|addr of current child|
+
+
     //Check remaining content size, if content-size <= 0 then we haven't found the requested node
-    em(r,"swpi64");      //|addr of current child|content-size|
+    /*em(r,"swpi64");      //|addr of current child|content-size|
     em(r,"duptopi64");   //|addr of current child|content-size|content-size|
     em(r,"dbg_print_topi64");
+    emwa(r, "halt", 5);*/
     em(r,"duptopi64");
     //|content-size|addr of current child|addr of current child|
     //XXXUpdate content-size, i.e. content-size = content-size - size of current child node 
@@ -621,7 +625,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     //|content-size|addr of current child|node type
     em(r,"ldi32",msg_node::NODE);
     em(r,"subi32");
-    emwsa(r,"bnzeroi32",lbl_next_node, "OblectamentaCodeLabel");
+    emwsa(r,"bnzeroi32",lbl_next_node, "OblectamentaCodeLabel");//TODO: Error-Handling
     // check name
     em(r,"duptopi64");
     //|content-size|addr of current child|addr of first child|
