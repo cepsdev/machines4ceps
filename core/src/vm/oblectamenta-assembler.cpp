@@ -170,9 +170,10 @@ static bool is_a_msgdefdirective(ceps::ast::node_t n){
 
 static bool is_a_msgreaddirective(ceps::ast::node_t n){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
-    return is<Ast_node_kind::structdef>(n) && children(as_struct_ref(n)).size() && 
+    bool is_msgreaddir = is<Ast_node_kind::structdef>(n) && children(as_struct_ref(n)).size() && 
     children(as_struct_ref(n))[0] && is<Ast_node_kind::symbol>(children(as_struct_ref(n))[0]) &&  
     "OblectamentaMsgReadDirective" == kind(as_symbol_ref(children(as_struct_ref(n))[0]));
+    return is_msgreaddir;
 }
 
 static std::optional<std::string> static_mem_location(ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t msg_directive){
@@ -590,7 +591,8 @@ static std::vector<ceps::ast::node_t>& emlbl(std::vector<ceps::ast::node_t>& r, 
 static void oblectamenta_assembler_preproccess_match (std::string node_name, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& r, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast;
     //Top of CS: |addr of current child|content-size|
-    
+
+
     const auto addr_node_name = vm.mem.heap - vm.mem.base; 
     vm.store(node_name);vm.store('\0');
 
@@ -604,11 +606,14 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_not_found = string{"__msgdef_"} +to_string(vm.lbl_counter++);
 
-    em(r,"swpi64");           // |content-size|addr of current child|
-    emlbl(r,lbl_next_node);   //lbl_next_node:
-    em(r,"swpi64");           // |addr of current child|content-size|
-    em(r,"dbg_print_topi64"); // debug: print top i64 value
-    em(r,"swpi64");           // |content-size|addr of current child|
+    em(r,"swpi64");                        // |content-size|addr of current child|
+    emlbl(r,lbl_next_node);                // WHILE NODE NOT FOUND DO
+    em(r,"swpi64");                        // |addr of current child|content-size|
+    //em(r,"dbg_print_topi64");              // debug: print top i64 value
+    em(r,"duptopi64");                     // |addr of current child|content-size|content-size|
+    emwsa(r,"bzeroi64",lbl_not_found, "OblectamentaCodeLabel");
+                                           // |addr of current child|content-size|
+    em(r,"swpi64");                        // |content-size|addr of current child|
 
 
     //Check remaining content size, if content-size <= 0 then we haven't found the requested node
@@ -658,8 +663,8 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     //|content-size|addr of current child|addr of node-name+1|addr of name+1|
     emwsa(r,"buc",lbl_check_strings,"OblectamentaCodeLabel");
     
-    emlbl(r,lbl_check_strings_unequal);
-    //|content-size|addr of current child|addr of node-name|addr of name
+    emlbl(r,lbl_check_strings_unequal);    // CASE: node's name doesn't match     
+                                           //|content-size|addr of current child|addr of node-name|addr of name
     
     em(r,"discardtopi64");em(r,"discardtopi64");
     //|content-size|addr of current child|
@@ -674,14 +679,14 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     em(r,"subi64");
     em(r,"swpi64");
     //|content-size|addr of current child|
+
     //2. Update addr to current node
-    em(r,"duptopi64");
-    em(r,"ldi64",sizeof(msg_node::what));
-    em(r,"addi64");
-    em(r,"ldsi64");
-    em(r,"addi64");
-    //|content-size|addr of next child|
-    //em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
+    em(r,"duptopi64");                     //|content-size|addr of current child|addr of current child|
+    em(r,"ldi64",sizeof(msg_node::what));  //|content-size|addr of current child|addr of current child|sizeof(msg_node::what)|
+    em(r,"addi64");                        //|content-size|addr of current child|addr of current child+sizeof(msg_node::what)|
+    em(r,"ldsi64");                        //|content-size|*((int64_t*)addr of current child+sizeof(msg_node::what)) |
+    em(r,"addi64");                        //|content-size|addr of current child+*((int64_t*)addr of current child+sizeof(msg_node::what))|
+                                           //|content-size|addr of next child|
 
     emwsa(r,"buc",lbl_next_node,"OblectamentaCodeLabel");
     emlbl(r,lbl_names_equal);
@@ -880,7 +885,8 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
         //em(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
     }
     //Ready to bounce back
-
+    //Write Result
+    em(r,"ldi64",1);                       // |content-size|addr of current child| result == false |
     emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
 
     emlbl(r,lbl_not_enough_space);
@@ -891,11 +897,15 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
   
     emlbl(r,lbl_next_node);
     emlbl(r,lbl_not_found);
-    em(r,"halt");
+                                           // |addr of current child|content-size|
+    em(r,"swpi64");                        // |content-size|addr of current child|
+    em(r,"ldi64",0);                       // |content-size|addr of current child| result == false |
+    
     emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
     emlbl(r,lbl_done);
+
     em(r,"noop");
-    //Invariant: |content-size|addr of node node_name|
+    //Invariant: |content-size|addr of node node_name| Result |
     
     //em(r,"dbg_print_cs_and_regs", 0);
     //em(r,"halt");
@@ -959,6 +969,17 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              //emwa(r,"dbg_print_cs_and_regs", 0);
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
              //emwa(r,"dbg_print_cs_and_regs", 0);
+             //Invariant: |addr of message|addr of matched node|remaining content-size| Node Matched |
+             //Check whether successful or not
+
+             string lbl_continue = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+             emwsa(r,"bnzeroi64",lbl_continue,"OblectamentaCodeLabel");
+             //em(r,"dbg_print_cs_and_regs", 0);
+             //em(r,"halt");             
+             em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
+             //Invariant: CS points to old value before entering message read directive
+             emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
+             emlbl(r,lbl_continue);
              //Invariant: |addr of message|addr of matched node|remaining content-size|
              //Move pointer to next node
              em(r,"swpi64");

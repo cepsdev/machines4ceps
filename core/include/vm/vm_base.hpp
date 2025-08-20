@@ -56,7 +56,7 @@ namespace ceps{
                 subdbl,
                 //Control Flow
 
-                buc,
+                buc,                      // buc(label) = branch unconditionally to address of label
                 beq,
                 bneq,
                 blt,

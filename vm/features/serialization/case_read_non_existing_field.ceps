@@ -1,0 +1,143 @@
+/*
+Copyright 2025 Tomas Prerovsky (cepsdev@hotmail.com).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+/*
+Tests serialization and deserialization of messages to and from global data.
+What: Read non existing member data from a previously serialized message.
+Expected Behaviour: Error  
+*/
+
+kind Event;         // Make available events
+kind Guard;         // Make available guards
+kind Systemstate;   // Make available system states
+
+Event AnEvent;      // Declare the event AnEvent
+
+kind OblectamentaMsgDefDirective;  // Make available message serialization
+kind OblectamentaMsgReadDirective; // Make available message deserialization
+
+OblectamentaDataLabel zip,street,firstname1,initial1,lastname1,msg_buffer2, 
+                      msg_buffer,msg_text, one, some_number, address_street_read, salary_read; // a bnch of data labels
+
+//Global Data
+oblectamenta{
+ global{
+   data{
+        //Notation                    // How it ends up in memory
+                                      // rel. offset    content (bytes delimited by |)
+        msg_text;"Hello there!";0;    // 0              |'H'|'e'|'l'|'l'|'o'|' '|'t'|'h'|'e'|'r'|'e'|'!'|0|0|0|0|  //0 is an signed 32 bit integer
+        
+        firstname1;"Max";0;
+        initial1;"M";0;
+        lastname1;"Mustermann";0;
+        street;"Pennsylvania Avenue";0;
+        zip;"78996-5643";0;
+        msg_buffer; for (i : 1 .. 256){0;} // here goes the serialized message as generated in S::Actions::doSendEvent()
+        address_street_read;0;0;
+        salary_read;0;0;
+    };
+ };
+};
+
+sm/*state machine*/{
+    /*name*/S;
+    states{Initial; A;};
+    Actions{
+        doSendEvent{
+            oblectamenta{
+                    OblectamentaMessageTag i32;
+                    OblectamentaMessageTag i64;
+                    OblectamentaMessageTag f64;
+                    OblectamentaMessageTag sz;                                   
+                    OblectamentaMsgDefDirective write;
+                    OblectamentaMsgReadDirective read;
+            text{
+                asm{
+
+                  msg{
+                    write; // we want this to be treated as a message. 
+                    msg_buffer; // Location the resulting byte stream should be written to
+                    //Code for the creation of the message's root has been created at this point
+
+                   age{ //Define the sub message age
+                    ldi32(33); // Put i32 value 33 on top of the computation stack (cs)
+                    i32;       // At this point code is injected to write the top i32 element of the cs to the message structure.
+                   };
+
+                   id{ // Define the sub-message id
+                    // There are no restrictions regarding the instructions which may be used inside
+                    // a sub message defining structure, i.e. we can compute values.
+                    ldi32(1);
+                    ldi32(10);
+                    addi32;
+                    i32;
+                   };
+                   firstName{ // Define the sub-message firstName
+                    lea(firstname1); // which contais the value labeled with firstname1
+                    sz;       // of type zero terminated signed char string
+                   };
+                   initialName{
+                    lea(initial1);
+                    sz;
+                   };
+                   lastName{
+                    lea(lastname1);
+                    sz;
+                   };
+                   address{
+                    street{lea(street);sz;};
+                    no{ldi32(1000);i32;};
+                    zip{lea(zip);sz;};
+                   };
+                   xsalary{ //Define the sub-message salary
+                    lddbl(33.3); // It contans the double value 33.3.
+                    f64;
+                   };
+
+                  };//msg
+
+                  msg{
+                    read;  // The name of the structure is irrelevant, the read symbol qualifies the content as a deserialization routine
+                    msg_buffer; // Label identifiyig the message content
+/*=========>*/      salary{
+                     f64;
+                     assertf64(33.3);
+                     ldi64(1);
+                     lea(salary_read);
+                     stsi64;
+                    }; //doesn't exist should trigger error
+                  };           
+
+
+                  ldi64(salary_read);
+                  asserti64(0,"Salary was processed properly in contradiction to expectation.");                             
+                  //ldi64(address_street_read);
+                  //asserti64(1,"Address of street wasn't processed properly.");
+                  //Invariant: CS is empty
+                  assert_empty_cs;
+                  //dbg_print_cs_and_regs(0);
+              };//asm
+             };//text
+            };//oblectamenta
+        };//doSendEvent
+    };//Actions
+    t/*transition*/{/*from*/Initial; /*to*/A;/*action*/doSendEvent;};
+};
+
+Simulation{
+    Start{S;};
+};
