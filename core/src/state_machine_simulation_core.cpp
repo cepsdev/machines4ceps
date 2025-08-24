@@ -166,7 +166,7 @@ std::vector<ceps::ast::Nodebase_ptr> State_machine_simulation_core::process_file
     bool next_is_expression = false;
 
 	vector< pair<string, string> > fnames;
-	for( ssize_t i = 0; i < file_names.size(); ++i ){
+	for( size_t i = 0; i < file_names.size(); ++i ){
 		string root_elem{};
 		if (result_cmd_line.root_struct.size() > i ) root_elem = result_cmd_line.root_struct[i];
 		fnames.push_back({file_names[i],root_elem});

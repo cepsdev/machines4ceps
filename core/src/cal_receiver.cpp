@@ -246,7 +246,7 @@ void comm_receiver_socket_can(int id,
                can_frame_payload(any);
               };*/
             for(auto c : frame2id){
-                if ((int)can_message.can_id == c.second){
+                if ((size_t)can_message.can_id == c.second){
                     //We found a matching frame
                     char* buf = new char[can_message.can_dlc];
                     memcpy(buf,can_message.data, can_message.can_dlc);

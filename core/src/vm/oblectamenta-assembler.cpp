@@ -186,6 +186,22 @@ static std::optional<std::string> static_mem_location(ceps::vm::oblectamenta::VM
     return {};
 }
 
+static std::optional<std::vector<ceps::ast::node_t>> global_error_handler(ceps::ast::node_t msg_directive){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    for (auto e: children(as_struct_ref(msg_directive)))
+        if(is<Ast_node_kind::structdef>(e)){
+            for (auto ee: children(as_struct_ref(e)))         
+             if(is<Ast_node_kind::symbol>(ee) && "OblectamentaMsgOnError" == kind(as_symbol_ref(ee))){
+                std::vector<ceps::ast::node_t> r;
+                for (auto eee: children(as_struct_ref(e)))
+                  if(!is<Ast_node_kind::symbol>(eee) || "OblectamentaMsgOnError" != kind(as_symbol_ref(eee)))
+                   r.push_back(eee);
+                return r;
+             }
+        }
+    return {};
+}
+
 static ceps::ast::node_t gen_mnemonic(std::string name){
     using namespace ceps::ast; 
     return mk_symbol(name, "OblectamentaOpcode");
@@ -922,6 +938,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
           offending_msg << *mnem;
           throw string{"oblectamenta_assembler: Message Directive contains no data label (hence I don't know where to read the bytes from). Offending message directive is >>>"+ offending_msg.str() +"<<<" };
          }
+         auto glb_err_handler = global_error_handler(mnem);
+
          vector<node_t> r; // r contains the generated code
          emwsa(r,"lea",*mem_loc,"OblectamentaDataLabel");
          em(r,"duptopi64");
@@ -933,6 +951,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          em(r,"subi32");
          string lbl_error_root_type_wrong = string{"__msgdef_"} +to_string(vm.lbl_counter++);
          string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+         string lbl_error = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+
          emwsa(r,"bnzeroi32",lbl_error_root_type_wrong,"OblectamentaCodeLabel");
          //|addr of message|
          //INVARIANT: Type = ROOT
@@ -978,7 +998,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              //em(r,"halt");             
              em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
              //Invariant: CS points to old value before entering message read directive
-             emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
+
+             emwsa(r,"buc",lbl_error,"OblectamentaCodeLabel");
              emlbl(r,lbl_continue);
              //Invariant: |addr of message|addr of matched node|remaining content-size|
              //Move pointer to next node
@@ -1013,6 +1034,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
 
          emwsa(r,"buc",lbl_done,"OblectamentaCodeLabel");
          emlbl(r,lbl_error_root_type_wrong);em(r,"halt");
+         emlbl(r,lbl_error);if (glb_err_handler) for (auto e: *glb_err_handler) r.push_back(e);
          emlbl(r,lbl_done);
          mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());
          pos += r.size();

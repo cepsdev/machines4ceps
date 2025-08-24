@@ -328,9 +328,6 @@ eval_locked_ceps_expr_no_symbol_expansion(
 	ceps::ast::Nodebase_ptr root_node,
 	ceps::parser_env::Scope* scope)
 {
-	ceps_interface_eval_func_callback_ctxt_t ctxt;
-	ctxt.active_smp = containing_smp;
-	ctxt.smc  = smc;
 	std::shared_ptr<ceps::parser_env::Scope> sms_global_scope = nullptr;
 	std::shared_ptr<ceps::parser_env::Scope> scope_ptr; 
 
@@ -360,7 +357,6 @@ eval_locked_ceps_expr_no_symbol_expansion(
 
 	if (scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(scope_ptr);
     if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
-	auto ppp = smc->ceps_env_current().get_global_symboltable().lookup("mme_type");
 
 	bool symbols_found{false};
 	auto r = ceps::interpreter::evaluate_generic(node,
@@ -422,7 +418,6 @@ eval_locked_ceps_expr(
 
 	if (scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(scope_ptr);
     if (sms_global_scope) smc->ceps_env_current().get_global_symboltable().scopes.push_back(sms_global_scope);
-	auto ppp = smc->ceps_env_current().get_global_symboltable().lookup("mme_type");
 
 	bool symbols_found{false};
 	auto r = ceps::interpreter::evaluate_generic(node,

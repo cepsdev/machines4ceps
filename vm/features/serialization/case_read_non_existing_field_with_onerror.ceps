@@ -105,7 +105,7 @@ sm/*state machine*/{
                     no{ldi32(1000);i32;};
                     zip{lea(zip);sz;};
                    };
-                   xsalary{ //Define the sub-message salary
+                   xsalary{ //Define the sub-message xsalary instead of salary
                     lddbl(33.3); // It contans the double value 33.3.
                     f64;
                    };
@@ -122,7 +122,7 @@ sm/*state machine*/{
                      lea(salary_read);
                      stsi64;
                     }; //doesn't exist should trigger error
-                    on_error{
+                    handler{
                         onerror;
                         ldi64(1);
                         lea(on_error_block_reached);
