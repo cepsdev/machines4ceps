@@ -3,3 +3,4 @@ echo "=====> case_read_field_in_substruct:" && ceps case_read_field_in_substruct
 echo "=====> case_read_non_existing_field_with_onerror:" && ceps case_read_non_existing_field_with_onerror.ceps
 echo "=====> case_read_non_existing_field:" && ceps case_read_non_existing_field.ceps
 echo "=====> case_read_existing_field:" && ceps case_read_existing_field.ceps
+echo "=====> case_read_fields_in_wrong_order:" && ceps case_read_fields_in_wrong_order.ceps
