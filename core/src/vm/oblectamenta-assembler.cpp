@@ -985,6 +985,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
             if (is<Ast_node_kind::structdef>(child)){
              //emwa(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
              //Invariant: |addr of message|addr of last non matched child|content-size|
+             //em(r,"dbg_print_cs_and_regs", 0);
              //Find node name(as_struct_ref(child))
              //emwa(r,"dbg_print_cs_and_regs", 0);
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
@@ -998,7 +999,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              //em(r,"halt");             
              em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
              //Invariant: CS points to old value before entering message read directive
-
+             
              emwsa(r,"buc",lbl_error,"OblectamentaCodeLabel");
              emlbl(r,lbl_continue);
              //Invariant: |addr of message|addr of matched node|remaining content-size|
