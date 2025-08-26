@@ -195,7 +195,8 @@ namespace ceps{
                 swpi8i128,
                 swpi16i128,
                 dbg_print_topi64,
-                haltimm
+                haltimm,
+                swpi64i192
             };
 
             class EventQueue{
@@ -519,6 +520,7 @@ namespace ceps{
                     size_t swpi16i128(size_t);
                     size_t dbg_print_topi64(size_t);
                     size_t haltimm(size_t);
+                    size_t swpi64i192(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -751,7 +753,8 @@ namespace ceps{
                 {"swpi8i128",{Opcode::swpi8i128, "",emit<Opcode::swpi8i128>,nullptr,nullptr,nullptr,nullptr}},
                 {"swpi16i128",{Opcode::swpi16i128, "",emit<Opcode::swpi16i128>,nullptr,nullptr,nullptr,nullptr}},
                 {"dbg_print_topi64",{Opcode::dbg_print_topi64, "",emit<Opcode::dbg_print_topi64>,nullptr,nullptr,nullptr,nullptr}},
-                {"haltimm",{Opcode::haltimm, "",nullptr,emit<Opcode::haltimm>,nullptr,nullptr,nullptr} }
+                {"haltimm",{Opcode::haltimm, "",nullptr,emit<Opcode::haltimm>,nullptr,nullptr,nullptr} },
+                {"swpi64i192",{Opcode::swpi64i192, "",emit<Opcode::swpi64i192>,nullptr,nullptr,nullptr,nullptr}}
             };
             
             #pragma pack(push,1)

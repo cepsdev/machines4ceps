@@ -758,6 +758,20 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name, cep
     for(auto mn: mnemonics){
         //|content-size|addr of node node_name|addr of ith child of node_name|content size|offset|
         if(is<Ast_node_kind::structdef>(mn)){
+            //|content-size|addr of node node_name|addr of first child of node_name|content size|offset|
+
+
+            em(r,"dbg_print_cs_and_regs", 0);
+            
+            em(r,"swpi64i192");
+
+            em(r,"dbg_print_cs_and_regs", 0);
+
+            em(r,"halt");
+
+            //Invariant: |addr of message|addr of last non matched child|content-size|
+            //oblectamenta_assembler_preproccess_match(name(as_struct_ref(mn)), vm, r, children(as_struct_ref(mn)));
+
 
         } else if (is<Ast_node_kind::symbol>(mn) && (kind(as_symbol_ref(mn)) == "OblectamentaMessageTag")){
             if ("i32" == name(as_symbol_ref(mn))){
@@ -990,7 +1004,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              //emwa(r,"dbg_print_cs_and_regs", 0);
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
              //emwa(r,"dbg_print_cs_and_regs", 0);
-             //Invariant: |addr of message|addr of matched node|remaining content-size| Node Matched |
+             //Invariant: |addr of message|addr of matched node|remaining content-size| Node Matched (flag) |
              //Check whether successful or not
 
              string lbl_continue = string{"__msgdef_"} +to_string(vm.lbl_counter++);
