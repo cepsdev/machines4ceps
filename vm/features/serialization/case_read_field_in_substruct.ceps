@@ -121,10 +121,10 @@ sm/*state machine*/{
 /*=========>*/      address{
                       no{
                         i32;
-                        asserti32(1001,"address.no has incorrect value.");
+                        asserti32(1000,"address.no has incorrect value.");
                         ldi64(1);
                         lea(address_no_read);
-                        ststi64;
+                        stsi64;
                      };
                     }; //doesn't exist should trigger error
                   };           
