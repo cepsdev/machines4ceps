@@ -17,8 +17,8 @@ limitations under the License.
 
 /*
 Tests serialization and deserialization of messages to and from global data.
-What: Read non existing member data from a previously serialized message.
-Expected Behaviour: Error  
+What: Read existing member of a nested message from a previously serialized message.
+Expected Behaviour: Success  
 */
 
 kind Event;         // Make available events
@@ -112,8 +112,6 @@ sm/*state machine*/{
                    };
 
                   };//msg
-                  dbg_deserialize_protobufish_to_json(msg_buffer);
-                  dbg_print_data(0);
 
                   msg{
                     read;  // The name of the structure is irrelevant, the read symbol qualifies the content as a deserialization routine
@@ -130,7 +128,6 @@ sm/*state machine*/{
                   };           
                   //Invariant: CS is empty
                   assert_empty_cs;
-
                   ldi64(address_no_read);
                   asserti64(1,"address.no was not processed properly.");                             
               };//asm
@@ -254,6 +251,21 @@ Compute Stack:
 38   1    0    0    0    0    0    0       = 294    address.street type = 2 size 51
 121  0    0    0    0    0    0    0       = 121    remaining content size of address node (141 - (sizeof(NODE) + len("address") + 1) ) 
 0    0    0    0    0    0    0    0        <== Top offset
+
+After match:
+
+ Bytes:
+79   0    0    0    0    0    0    0    
+180  0    0    0    0    0    0    0    
+0    0    0    0    0    0    0    0    
+18   1    0    0    0    0    0    0        274 = addr of parent node = address
+89   1    0    0    0    0    0    0        345 addr of matched node  = address.no
+70   0    0    0    0    0    0    0        70 remaining content-size
+
+            //Invariant:|content-size|offset|addr of message|addr of matched node|remaining content-size| Node Matched (flag) |
+
+
+
 */
 
 
