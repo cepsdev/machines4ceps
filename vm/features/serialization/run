@@ -4,3 +4,4 @@ echo "=====> case_read_non_existing_field_with_onerror:" && ceps case_read_non_e
 echo "=====> case_read_non_existing_field:" && ceps case_read_non_existing_field.ceps
 echo "=====> case_read_existing_field:" && ceps case_read_existing_field.ceps
 echo "=====> case_read_fields_in_wrong_order:" && ceps case_read_fields_in_wrong_order.ceps
+echo "=====> case_read_two_fields_in_substruct:" && ceps  case_read_two_fields_in_substruct.ceps
