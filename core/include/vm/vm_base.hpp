@@ -747,7 +747,7 @@ namespace ceps{
                 {"assertf64imm",{Opcode::assertf64imm, "",nullptr,nullptr,nullptr,emit<Opcode::assertf64imm>,nullptr} },
                 {"swp96i64",{Opcode::swp96i64, "",emit<Opcode::swp96i64>,nullptr,nullptr,nullptr,nullptr}},
                 {"swp192i64",{Opcode::swp192i64, "",emit<Opcode::swp192i64>,nullptr,nullptr,nullptr,nullptr}},
-                {"assertsz",{Opcode::assertsz, "",nullptr,emit<Opcode::assertsz>,nullptr,nullptr,nullptr}},
+                {"assertszsz",{Opcode::assertsz, "",nullptr,emit<Opcode::assertsz>,nullptr,nullptr,nullptr}},
                 {"assert_empty_cs",{Opcode::assert_empty_cs, "",emit<Opcode::assert_empty_cs>,nullptr,nullptr,nullptr,nullptr}},
                 {"asserti64imm",{Opcode::asserti64imm, "",nullptr,emit<Opcode::asserti64imm>,nullptr,nullptr,nullptr} },
                 {"asserti64immsz",{Opcode::asserti64immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti64immsz>} },

@@ -1385,7 +1385,32 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                 } else {
                     
                 }
-            } else if (args.size() > 1) {
+            } else if (args.size() == 1) {
+                auto mangled_mnemonic{mnemonic};
+                for(auto e: args){
+                    if (is<Ast_node_kind::int_literal>(e) || is<Ast_node_kind::long_literal>(e)) mangled_mnemonic+="imm";
+                    else if (is<Ast_node_kind::string_literal>(e)) mangled_mnemonic+="sz";
+                }
+                //Get opcode
+                auto it{ceps::vm::oblectamenta::mnemonics.find(mangled_mnemonic)};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+mangled_mnemonic+"'" };
+                auto opcode{it->second};
+                
+                if (get<MNEM_IMM>(opcode)){
+                    addr_t imm;
+                    auto e = args[0];
+                    if (is<Ast_node_kind::int_literal>(e) || is<Ast_node_kind::long_literal>(e)) 
+                     imm = value(as_int_ref(e));
+                    else if (is<Ast_node_kind::string_literal>(e)){
+                     auto t{vm.store(value(as_string_ref(e)))};
+                     vm.store('\0');
+                     imm = t;
+                    }
+                    text_loc = get<MNEM_IMM>(opcode)(vm,text_loc, imm);
+                }  else 
+                 throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" }; 
+            } else if (args.size() == 2){
                 auto mangled_mnemonic{mnemonic};
                 for(auto e: args){
                     if (is<Ast_node_kind::int_literal>(e) || is<Ast_node_kind::long_literal>(e)) mangled_mnemonic+="imm";
@@ -1411,10 +1436,7 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                 } 
                 else 
                  throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" };
-            } else {
-                stringstream ss;ss << *mnemonics[stmt_pos];
-                throw std::string{"oblectamenta_assembler: illformed mnemonic :\n>>"+ ss.str()+"<<\n" };
-            }
+            } else throw std::string{"oblectamenta_assembler: illformed mnemonic '"+ mnemonic+"'" };
         }
     } 
  } //for
