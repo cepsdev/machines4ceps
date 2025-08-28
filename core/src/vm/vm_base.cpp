@@ -235,7 +235,7 @@ namespace ceps::vm::oblectamenta{
         if (registers.file[VMEnv::registers_t::CSP]) {
             throw std::runtime_error{"assert_empty_cs: Compute Stack is not empty." };
         }
-        return base_opcode_width + sizeof(addr_t) + pos;
+        return base_opcode_width +  pos;
     }
 
     size_t VMEnv::dbg_print_topi64(size_t pos){

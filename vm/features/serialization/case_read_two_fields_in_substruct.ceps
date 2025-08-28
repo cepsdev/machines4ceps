@@ -31,7 +31,7 @@ kind OblectamentaMsgDefDirective;  // Make available message serialization
 kind OblectamentaMsgReadDirective; // Make available message deserialization
 
 OblectamentaDataLabel zip,street,firstname1,initial1,lastname1,msg_buffer2, 
-                      msg_buffer,msg_text, one, some_number, address_street_read, salary_read, address_no_read; // a bnch of data labels
+                      msg_buffer,msg_text, one, some_number, address_street_read, salary_read, address_no_read, address_zip_read; // a bnch of data labels
 
 //Global Data
 oblectamenta{
@@ -50,6 +50,7 @@ oblectamenta{
         address_street_read;0;0;
         salary_read;0;0;
         address_no_read;0;0;
+        address_zip_read;0;0;
     };
  };
 };
@@ -113,7 +114,6 @@ sm/*state machine*/{
 
                   };//msg
                   //dbg_print_data(0);
-
                   msg{
                     read;  // The name of the structure is irrelevant, the read symbol qualifies the content as a deserialization routine
                     msg_buffer; // Label identifiyig the message content
@@ -128,12 +128,17 @@ sm/*state machine*/{
                      zip{
                         sz;
                         assertsz("78996-5643");
+                        ldi64(1);
+                        lea(address_zip_read);
+                        stsi64;
                      };
                     }; //doesn't exist should trigger error
                   };           
                   //Invariant: CS is empty
                   assert_empty_cs;
                   ldi64(address_no_read);
+                  asserti64(1,"address.no was not processed properly.");                             
+                  ldi64(address_zip_read);
                   asserti64(1,"address.no was not processed properly.");                             
               };//asm
              };//text
