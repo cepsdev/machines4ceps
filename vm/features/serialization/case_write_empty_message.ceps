@@ -54,7 +54,7 @@ sm{
                     msg_buffer;
                    };//msg
                    assert_empty_cs;
-                   assert_protobufish_message(msg_buffer,"{}");
+                   assert_deserialized_protobufish_message_equals_str("{}", msg_buffer);
               };//asm
              };//text
             };//oblectamenta
