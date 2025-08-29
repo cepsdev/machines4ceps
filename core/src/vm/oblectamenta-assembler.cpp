@@ -218,14 +218,53 @@ static ceps::ast::node_t gen_mnemonic_sym_arg(std::string name, std::string sym_
 } 
 
 
+//emit_mnemonic_with_sym_arg
+
+static std::vector<ceps::ast::node_t>& emwsa(std::vector<ceps::ast::node_t>& r,std::string name, std::string sym, std::string kind){
+    r.push_back(gen_mnemonic_sym_arg(name,sym,kind));
+    return r;
+}
+
+//emit_mnemonic_with_arg
+
+static std::vector<ceps::ast::node_t>& emwa(std::vector<ceps::ast::node_t>& r, std::string name, int v){
+    r.push_back(gen_mnemonic(name, v));
+    return r;
+}
+
+
+//emit_mnemonic
+
+static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, ceps::ast::node_t n){
+    r.push_back(n);
+    return r;
+}
+
+static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, std::string name){
+    r.push_back(gen_mnemonic(name));
+    return r;
+}
+
+static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, std::string name, int v){
+    return emwa(r, name, v);
+}
+
+static std::vector<ceps::ast::node_t>& emlbl(std::vector<ceps::ast::node_t>& r, std::string name){
+    using namespace ceps::ast;
+    r.push_back(mk_symbol(name,"OblectamentaCodeLabel"));
+    return r;
+}
+
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t mnemonic,std::vector<ceps::ast::node_t>& r){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     //INVARIANT: ARG0 contains destination address
     //result.push_back(gen_mnemonic("ldi64", 8));
-    if (is<Ast_node_kind::structdef>(mnemonic)){
-        auto node_name{name(as_struct_ref(mnemonic))};
-        const auto addr_node_name = vm.mem.heap - vm.mem.base; 
-        vm.store(node_name);vm.store('\0');
+    if (!is<Ast_node_kind::structdef>(mnemonic)) return;
+
+    auto node_name{name(as_struct_ref(mnemonic))};
+    const auto addr_node_name = vm.mem.heap - vm.mem.base; 
+    vm.store(node_name);vm.store('\0');
+    
         r.push_back(gen_mnemonic("ldi32", msg_node::NODE));
         r.push_back(gen_mnemonic_sym_arg("ldi64","ARG0","OblectamentaReg"));
         r.push_back(gen_mnemonic("stsi32")); 
@@ -263,7 +302,6 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic_sym_arg("bnzeroi64",lbl,"OblectamentaCodeLabel"));  // |
         r.push_back(gen_mnemonic("discardtopi64"));
 
-
          //Create stack frame  
          r.push_back(gen_mnemonic_sym_arg("pushi64","FP","OblectamentaReg"));          // pushi64(FP);----|
          r.push_back(gen_mnemonic_sym_arg("ldi64","SP","OblectamentaReg"));            // ldi64(SP);      |
@@ -289,10 +327,10 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
          r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
          r.push_back(gen_mnemonic("subi64"));                                                   
-         r.push_back(gen_mnemonic("stsi64"));                                          
+         r.push_back(gen_mnemonic("stsi64"));
+                                                   
          for(auto child: children(as_struct_ref(mnemonic)) ){
             if (is<Ast_node_kind::structdef>(child)){
-            
              r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
              r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
              r.push_back(gen_mnemonic("subi64"));
@@ -300,10 +338,13 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              r.push_back(gen_mnemonic("ldi64", sizeof(msg_node) + node_name.length() + 1));
              r.push_back(gen_mnemonic("addi64"));
              r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
+             
+
              r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
              r.push_back(gen_mnemonic("subi64"));
              r.push_back(gen_mnemonic("ldsi64"));
              r.push_back(gen_mnemonic("addi64"));
+             
              r.push_back(gen_mnemonic_sym_arg("sti64","ARG0","OblectamentaReg"));
              oblectamenta_assembler_preproccess(vm,child,r);
              r.push_back(gen_mnemonic_sym_arg("ldi64","RES","OblectamentaReg"));
@@ -316,6 +357,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
              r.push_back(gen_mnemonic("subi64"));
              r.push_back(gen_mnemonic("stsi64")); // [FP - rel_addr_content_size] += RES
+
             } else if (is<Ast_node_kind::symbol>(child) && (kind(as_symbol_ref(child)) == "OblectamentaMessageTag")){
                 if ( "i32" == name (as_symbol_ref(child)) ){
                   r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
@@ -341,6 +383,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                   r.push_back(gen_mnemonic("stsi64"));
                   r.push_back(gen_mnemonic("ldi64", sizeof(msg_node)));
                   r.push_back(gen_mnemonic("addi64"));
+                  
                   r.push_back(gen_mnemonic("stsi32"));
                   r.push_back(gen_mnemonic("ldi64", sizeof(msg_node_int32)));
                   r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
@@ -534,6 +577,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
             else r.push_back(child);
         }
         // update msg_node::size
+
         r.push_back(gen_mnemonic("ldi64", rel_addr_content_size));
         r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
         r.push_back(gen_mnemonic("subi64"));
@@ -564,45 +608,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));
         r.push_back(gen_mnemonic_sym_arg("sti64","SP","OblectamentaReg"));
         r.push_back(gen_mnemonic_sym_arg("popi64","FP","OblectamentaReg"));
-    }
 }
 
-//emit_mnemonic_with_sym_arg
-
-static std::vector<ceps::ast::node_t>& emwsa(std::vector<ceps::ast::node_t>& r,std::string name, std::string sym, std::string kind){
-    r.push_back(gen_mnemonic_sym_arg(name,sym,kind));
-    return r;
-}
-
-//emit_mnemonic_with_arg
-
-static std::vector<ceps::ast::node_t>& emwa(std::vector<ceps::ast::node_t>& r, std::string name, int v){
-    r.push_back(gen_mnemonic(name, v));
-    return r;
-}
-
-
-//emit_mnemonic
-
-static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, ceps::ast::node_t n){
-    r.push_back(n);
-    return r;
-}
-
-static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, std::string name){
-    r.push_back(gen_mnemonic(name));
-    return r;
-}
-
-static std::vector<ceps::ast::node_t>& em(std::vector<ceps::ast::node_t>& r, std::string name, int v){
-    return emwa(r, name, v);
-}
-
-static std::vector<ceps::ast::node_t>& emlbl(std::vector<ceps::ast::node_t>& r, std::string name){
-    using namespace ceps::ast;
-    r.push_back(mk_symbol(name,"OblectamentaCodeLabel"));
-    return r;
-}
 
 static void oblectamenta_assembler_preproccess_match (std::string node_name, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& r, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast;
@@ -1411,10 +1418,11 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                 }  else 
                  throw std::string{"oblectamenta_assembler: illformed parameter list for '"+ mnemonic+"'" }; 
             } else if (args.size() == 2){
-                auto mangled_mnemonic{mnemonic};
+                auto mangled_mnemonic{mnemonic};                
                 for(auto e: args){
                     if (is<Ast_node_kind::int_literal>(e) || is<Ast_node_kind::long_literal>(e)) mangled_mnemonic+="imm";
                     else if (is<Ast_node_kind::string_literal>(e)) mangled_mnemonic+="sz";
+                    else if (is<Ast_node_kind::symbol>(e)) mangled_mnemonic+="@"+kind(as_symbol_ref(e))+"@";
                 }
                 //Get opcode
                 auto it{ceps::vm::oblectamenta::mnemonics.find(mangled_mnemonic)};
@@ -1430,6 +1438,11 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                             auto t{vm.store(value(as_string_ref(e)))};
                             vm.store('\0');
                             imm[i] = t;
+                        } else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaDataLabel" ){
+                            auto data_label_it{vm.data_labels().find(name(as_symbol_ref(e)))};
+                            if (data_label_it == vm.data_labels().end()) 
+                              throw std::string{"oblectamenta_assembler: unknown data label: '"+ name(as_symbol_ref(e)) +"'" };
+                              imm[1] = data_label_it->second;
                         }
                     }
                     text_loc = get<MNEM_IMM_IMM>(opcode)(vm,text_loc, imm[0], imm[1]);

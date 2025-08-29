@@ -214,6 +214,18 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + sizeof(addr_t) + pos;
     }
 
+    size_t VMEnv::assert_deserialized_protobufish_message_equals_str(size_t pos){
+        auto expected_value =   (char*) (*(addr_t*)(text+pos+base_opcode_width) + mem.base);
+        auto msg = *(addr_t*)(text+pos+base_opcode_width+sizeof(addr_t)) + mem.base;
+        string res;
+        deserialize_event_payload((char*) msg,mem.heap  - mem.base , res);
+        if (res != string{expected_value}) {
+            throw std::runtime_error{"[assert_deserialized_protobufish_message_equals_str Expected " + 
+            string{expected_value} + " read " + res +"]." };
+        }
+        return base_opcode_width + sizeof(addr_t) + sizeof(addr_t) + pos;
+    }
+
     size_t VMEnv::assertf64imm(size_t pos){
         auto expected_value = *((double*)(text+pos+base_opcode_width));
         auto t{pop_cs<double>()};
@@ -1207,6 +1219,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::haltimm);
         op_dispatch.push_back(&VMEnv::swpi64i192);
         op_dispatch.push_back(&VMEnv::asserti32immsz);
+        op_dispatch.push_back(&VMEnv::assert_deserialized_protobufish_message_equals_str);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

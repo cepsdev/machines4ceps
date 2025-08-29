@@ -197,7 +197,8 @@ namespace ceps{
                 dbg_print_topi64,
                 haltimm,
                 swpi64i192,
-                asserti32immsz
+                asserti32immsz,
+                assert_deserialized_protobufish_message_equals_str                
             };
 
             class EventQueue{
@@ -523,6 +524,7 @@ namespace ceps{
                     size_t haltimm(size_t);
                     size_t swpi64i192(size_t);
                     size_t asserti32immsz(size_t);
+                    size_t assert_deserialized_protobufish_message_equals_str(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -757,7 +759,8 @@ namespace ceps{
                 {"dbg_print_topi64",{Opcode::dbg_print_topi64, "",emit<Opcode::dbg_print_topi64>,nullptr,nullptr,nullptr,nullptr}},
                 {"haltimm",{Opcode::haltimm, "",nullptr,emit<Opcode::haltimm>,nullptr,nullptr,nullptr} },
                 {"swpi64i192",{Opcode::swpi64i192, "",emit<Opcode::swpi64i192>,nullptr,nullptr,nullptr,nullptr}},
-                {"asserti32immsz",{Opcode::asserti32immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti32immsz>}}                
+                {"asserti32immsz",{Opcode::asserti32immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti32immsz>}},
+                {"assert_deserialized_protobufish_message_equals_strsz@OblectamentaDataLabel@",{Opcode::assert_deserialized_protobufish_message_equals_str, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::assert_deserialized_protobufish_message_equals_str>}}               
             };
             
             #pragma pack(push,1)

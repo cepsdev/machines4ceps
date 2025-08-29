@@ -139,7 +139,7 @@ sm/*state machine*/{
                   ldi64(address_no_read);
                   asserti64(1,"address.no was not processed properly.");                             
                   ldi64(address_zip_read);
-                  asserti64(1,"address.no was not processed properly.");                             
+                  asserti64(1,"address.zip was not processed properly.");                             
               };//asm
              };//text
             };//oblectamenta

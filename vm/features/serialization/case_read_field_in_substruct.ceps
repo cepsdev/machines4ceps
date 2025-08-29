@@ -46,7 +46,8 @@ oblectamenta{
         lastname1;"Mustermann";0;
         street;"Pennsylvania Avenue";0;
         zip;"78996-5643";0;
-        msg_buffer; for (i : 1 .. 256){0;} // here goes the serialized message as generated in S::Actions::doSendEvent()
+        msg_buffer;
+        for (i : 1 .. 256){0;} // here goes the serialized message as generated in S::Actions::doSendEvent()
         address_street_read;0;0;
         salary_read;0;0;
         address_no_read;0;0;
@@ -112,6 +113,10 @@ sm/*state machine*/{
                    };
 
                   };//msg
+
+                  assert_deserialized_protobufish_message_equals_str(
+                    "{\"age\":33,\"id\":11,\"firstName\":\"Max\",\"initialName\":\"M\",\"lastName\":\"Mustermann\",\"address\":{\"street\":\"Pennsylvania Avenue\",\"no\":1000,\"zip\":\"78996-5643\"},\"salary\":33.3}", 
+                    msg_buffer);
 
                   msg{
                     read;  // The name of the structure is irrelevant, the read symbol qualifies the content as a deserialization routine
