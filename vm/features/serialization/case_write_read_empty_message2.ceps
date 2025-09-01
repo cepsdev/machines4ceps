@@ -52,23 +52,15 @@ sm{
                    msg{
                     write;  
                     msg_buffer;
-                    for(e : 1 .. 10){
-                        item{
-                            ldi32(2*e);
-                            i32;
-                        };
-                     }
-                    };//msg
-
+                   };//msg
+                   assert_empty_cs;
+                   assert_deserialized_protobufish_message_equals_str("{}", msg_buffer);
                    msg{
-                    read;
+                    read;  
                     msg_buffer;
-                    item{
-                        i32;all;
-                        dbg_print_topi32;
-                        discardtopi32;                        
-                    };
-                   };
+                    non_existing_field{};
+                    non_existing_field{};
+                   };//msg
                    assert_empty_cs;
               };//asm
              };//text

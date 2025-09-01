@@ -7,3 +7,5 @@ echo "=====> case_read_fields_in_wrong_order:" && ceps case_read_fields_in_wrong
 echo "=====> case_read_two_fields_in_substruct:" && ceps  case_read_two_fields_in_substruct.ceps
 echo "=====> case_using_allmodifier:" && ceps case_using_allmodifier.ceps
 echo "=====> case_write_empty_message:" && ceps case_write_empty_message.ceps
+echo "=====>  case_write_read_empty_message: "&& ceps case_write_read_empty_message.ceps
+echo "=====>  case_write_read_empty_message2: " && ceps case_write_read_empty_message2.ceps

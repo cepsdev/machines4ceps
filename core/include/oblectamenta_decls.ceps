@@ -149,7 +149,8 @@ OblectamentaOpcode
     swpi64b128,
     dbg_print_topi64,
     swpi64i192,
-    assert_deserialized_protobufish_message_equals_str
+    assert_deserialized_protobufish_message_equals_str,
+    dbg_print_topi32
     ;
 
 OblectamentaModifier addr;
