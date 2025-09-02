@@ -31,12 +31,14 @@ OblectamentaMessageModifier all;
 OblectamentaMsgDefDirective write;
 OblectamentaMsgReadDirective read;
    
-OblectamentaDataLabel msg_buffer;
+OblectamentaDataLabel msg_buffer, item_counter, expectation;
 
 oblectamenta{
  global{
    data{
         msg_buffer; for (i : 1 .. 128){0;}
+        item_counter;0;
+        expectation;0;for(e : 1 .. 10) { 2*e;}
     };
  };
 };
@@ -49,24 +51,38 @@ sm{
             oblectamenta{
             text{
                 asm{
+                   //dbg_print_data(0);
                    msg{
                     write;  
                     msg_buffer;
-                    for(e : 1 .. 10){
+                    for(e : 1 .. 10){ // for loop evaluated during AST creation, i.e. before runtime 
                         item{
                             ldi32(2*e);
                             i32;
                         };
                      }
                     };//msg
-
                    msg{
                     read;
                     msg_buffer;
                     item{
-                        i32;all;
-                        dbg_print_topi32;
-                        discardtopi32;                        
+                        i32;
+                        all; // loops through all instances of 'item'
+                        lea(item_counter);
+                        ldsi32;
+                        ldi32(1);
+                        addi32;
+                        lea(item_counter);
+                        stsi32;
+                        lea(item_counter);
+                        ldsi32;
+                        ldi32(4);
+                        muli32;
+                        ui32toui64;
+                        lea(expectation);
+                        addi64;
+                        ldsi32;
+                        asserteqi32("item[i] != expectation[i].");
                     };
                    };
                    assert_empty_cs;

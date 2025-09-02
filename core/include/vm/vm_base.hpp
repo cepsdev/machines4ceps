@@ -199,7 +199,8 @@ namespace ceps{
                 swpi64i192,
                 asserti32immsz,
                 assert_deserialized_protobufish_message_equals_str,
-                dbg_print_topi32                
+                dbg_print_topi32,
+                asserteqi32                
             };
 
             class EventQueue{
@@ -527,6 +528,7 @@ namespace ceps{
                     size_t asserti32immsz(size_t);
                     size_t assert_deserialized_protobufish_message_equals_str(size_t);
                     size_t dbg_print_topi32(size_t);
+                    size_t asserteqi32sz(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -763,7 +765,8 @@ namespace ceps{
                 {"swpi64i192",{Opcode::swpi64i192, "",emit<Opcode::swpi64i192>,nullptr,nullptr,nullptr,nullptr}},
                 {"asserti32immsz",{Opcode::asserti32immsz, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti32immsz>}},
                 {"assert_deserialized_protobufish_message_equals_strsz@OblectamentaDataLabel@",{Opcode::assert_deserialized_protobufish_message_equals_str, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::assert_deserialized_protobufish_message_equals_str>}},
-                {"dbg_print_topi32",{Opcode::dbg_print_topi32, "",emit<Opcode::dbg_print_topi32>,nullptr,nullptr,nullptr,nullptr}}               
+                {"dbg_print_topi32",{Opcode::dbg_print_topi32, "",emit<Opcode::dbg_print_topi32>,nullptr,nullptr,nullptr,nullptr}},               
+                {"asserteqi32sz",{Opcode::asserteqi32, "",nullptr,emit<Opcode::asserteqi32>,nullptr,nullptr,nullptr} }
             };
             
             #pragma pack(push,1)

@@ -610,11 +610,21 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         r.push_back(gen_mnemonic_sym_arg("popi64","FP","OblectamentaReg"));
 }
 
-
-static void oblectamenta_assembler_preproccess_match (std::string node_name, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& r, std::vector<ceps::ast::node_t>& mnemonics){
+template <typename T> static const bool all_modfifier(T const & v){
     using namespace ceps::ast;
-    //Top of CS: |addr of current child|content-size|
+    for(auto e : v)
+     if (is<Ast_node_kind::symbol>(e) && (kind(as_symbol_ref(e)) == "OblectamentaMessageModifier")
+                                      && (name(as_symbol_ref(e)) == "all")) return true;
+    return false;
+}
 
+static void oblectamenta_assembler_preproccess_match (std::string node_name, 
+                                                      ceps::vm::oblectamenta::VMEnv& vm, 
+                                                      std::vector<ceps::ast::node_t>& r, 
+                                                      std::vector<ceps::ast::node_t>& mnemonics){
+    using namespace ceps::ast;
+
+    //Top of CS: |addr of current child|content-size|
 
     const auto addr_node_name = vm.mem.heap - vm.mem.base; 
     vm.store(node_name);vm.store('\0');
@@ -1042,11 +1052,20 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
 
          for(auto child: children(as_struct_ref(mnem)) ){
             if (is<Ast_node_kind::structdef>(child)){
+                 auto loop_over_all{all_modfifier(children(as_struct_ref(child)))};
+
              //emwa(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
              //Invariant: |addr of message|addr of last non matched child|content-size|
              //em(r,"dbg_print_cs_and_regs", 0);
              //Find node name(as_struct_ref(child))
              //emwa(r,"dbg_print_cs_and_regs", 0);
+             string lbl_loop,lbl_loop_end;
+             if (loop_over_all){ 
+                lbl_loop = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+                lbl_loop_end = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+                emlbl(r,lbl_loop);
+             }
+
              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
              //emwa(r,"dbg_print_cs_and_regs", 0);
              //Invariant: |addr of message|addr of matched node|remaining content-size| Node Matched (flag) |
@@ -1054,8 +1073,9 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
 
              string lbl_continue = string{"__msgdef_"} +to_string(vm.lbl_counter++);
              emwsa(r,"bnzeroi64",lbl_continue,"OblectamentaCodeLabel");
-             //em(r,"dbg_print_cs_and_regs", 0);
-             //em(r,"halt");             
+             if (loop_over_all){
+              emwsa(r,"buc",lbl_loop_end,"OblectamentaCodeLabel");
+             } 
              em(r,"discardtopi64");em(r,"discardtopi64");em(r,"discardtopi64");
              //Invariant: CS points to old value before entering message read directive
              
@@ -1084,6 +1104,10 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
              em(r,"addi64");
              em(r,"swpi64");
              //|addr of message|addr of next unmatched node|remaining content-size|
+             if (loop_over_all){
+              emwsa(r,"buc",lbl_loop,"OblectamentaCodeLabel");
+              emlbl(r,lbl_loop_end); em(r,"noop");
+             }
              //emwa(r,"dbg_print_cs_and_regs", 0);em(r,"halt");
             }
          }
