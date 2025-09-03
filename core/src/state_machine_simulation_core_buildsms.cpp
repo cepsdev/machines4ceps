@@ -194,7 +194,7 @@ static void run_oblectamenta_assembler(State_machine_simulation_core* smp, ceps:
 	try{
 		for(auto e : children(as_struct_ref(obl_block)))
 			if (is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "asm" ){
-				ceps::vm::oblectamenta::oblectamenta_assembler(smp->vm,children(as_struct_ref(e)), ev_to_id);
+				ceps::vm::oblectamenta::oblectamenta_assembler(smp->vm,children(as_struct_ref(e)), ev_to_id, true);
 			} else if (is<Ast_node_kind::uint8>(e)){
 				auto v{value(as_uint8_ref(e))};
 				smp->vm.text[smp->vm.text_loc++] = v;

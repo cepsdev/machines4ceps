@@ -1,69 +1,91 @@
-/*
-Small Service
-*/
-
-macro asm_routine{
-            oblectamenta{
-                        text{
-                            asm{
-                                hd(arglist).arg.content();                                
-                            };
-                        };
-            };
-};
 
 kind Event;
-Event AddAccount;
+kind Guard;
+kind Systemstate;
 
-val account_id = 0;
-val account_flags = 8;
-val account_user = 16;
-val accounts_hd_size_ofs = 0;
-val accounts_hd_capacity_ofs = 8;
+kind OblectamentaMsgDefDirective;
+kind OblectamentaMsgReadDirective;
+kind OblectamentaMessageModifier;
+
+OblectamentaMessageTag i32;
+OblectamentaMessageTag i64;
+OblectamentaMessageTag f64;
+OblectamentaMessageTag sz;
+OblectamentaMessageModifier all;
+
+OblectamentaMsgDefDirective write;
+OblectamentaMsgReadDirective read;
+   
+OblectamentaDataLabel msg_buffer, accounts, count;
+
+Event evAddAccount;
+
+val max_accounts = 10;
+
 
 oblectamenta{
  global{
    data{
-        OblectamentaDataLabel i,n,one, accounts_data,accounts_hd,accounts_hd_size, example_account,dbg_print_cs_and_regs_flags;
-        dbg_print_cs_and_regs_flags;
-        0;
-        one; 1;
-        
-        example_account;
-        0; // id
-        0;
-        "My Account";
-
-        accounts_hd;
-        accounts_hd_size;
-        0; // size
-        4; // capacity; 
-        accounts_data;
-    };
+    count; 0;
+    accounts; for (e: 1 .. max_accounts){0;0;}
+    msg_buffer; for(e : 1 .. 32) {e;}
+   };
  };
 };
 
-doAddAccount{
-    OblectamentaDataLabel dbg_print_cs_and_regs_flags;
-    OblectamentaDataLabel i,n,one, accounts_data,accounts_hd,accounts_hd_size, example_account;
-    lea(example_account);
-    
-    dbg_print_cs_and_regs(dbg_print_cs_and_regs_flags);
-    halt;
-};
 
 
 sm{
     Service;
-    states{Initial;Ready;};
+    states{Initial;Ready;ProcessRequest;};
     Actions{
-        doAddAccount{asm_routine{arg{root.doAddAccount.content();};}; };
+        doAddAccount{
+        oblectamenta{text{asm{
+            msg{
+                read;
+                msg_buffer;
+                Account{
+                    a{
+                        i32;
+                        dbg_print_topi32;
+                        discardtopi32;
+                    };
+                    b{
+                        i32;
+                        dbg_print_topi32;
+                        discardtopi32;
+                    };
+                };
+            };
+            assert_empty_cs;
+        };};};    
+        };
     };
     t{Initial;Ready;};
-    t{Ready;Ready;AddAccount;doAddAccount;};
+    t{Ready;ProcessRequest;evAddAccount;doAddAccount;};
+};
+
+sm{
+    Client;
+    Actions{
+      doRequest{
+        oblectamenta{text{asm{
+         msg{
+            write;
+            msg_buffer;
+            Account{
+             a{ldi32(6);i32;};
+             b{ldi32(6256);i32;};
+            };
+         };
+         evAddAccount;
+        };};};
+      };
+    };
+    states{Initial;Request;WaitForReply;Final;};
+    t{Initial;Request;doRequest;};
 };
 
 Simulation{
-    Start{Service;};
-    AddAccount;
+    Start{Service;Client;};
 };

@@ -28,7 +28,7 @@ namespace ceps{
             namespace assembler {
                 static double constexpr text_growth_factor{1.4};
             }
-            void oblectamenta_assembler(VMEnv& vm, vector<ceps::ast::node_t>& mnemonics, std::map<std::string, int> const & ev_to_id);
+            void oblectamenta_assembler(VMEnv& vm, vector<ceps::ast::node_t>& mnemonics, std::map<std::string, int> const & ev_to_id, bool append_halt = false);
         }
     }
 } 

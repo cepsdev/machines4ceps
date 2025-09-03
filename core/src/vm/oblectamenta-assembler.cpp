@@ -1224,7 +1224,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
 
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, 
                             std::vector<ceps::ast::node_t>& mnemonics, 
-                            std::map<std::string, int> const & ev_to_id)
+                            std::map<std::string, int> const & ev_to_id,
+                            bool append_halt)
 {
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
  
@@ -1477,6 +1478,8 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
         }
     } 
  } //for
+ if (append_halt)
+    text_loc = emit<Opcode::halt>(vm,text_loc);
 }//function
 
 }
