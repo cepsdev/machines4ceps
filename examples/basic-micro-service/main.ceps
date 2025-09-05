@@ -144,7 +144,7 @@ sm{
     t{Print;Initial;};
 };
 
-Simulation{
+xSimulation{
     Start{Service;Client;TablePrinter;};
 };
 
