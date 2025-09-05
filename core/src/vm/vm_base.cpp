@@ -397,6 +397,13 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
     }
 
+    size_t VMEnv::ldi32reg(size_t pos){
+        reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
+        reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
+        push_cs<int32_t>(registers.file[reg] + reg_offs);
+        return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
+    }
+
     size_t VMEnv::sti64reg(size_t pos){
         reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
         reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
@@ -1239,6 +1246,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::assert_deserialized_protobufish_message_equals_str);
         op_dispatch.push_back(&VMEnv::dbg_print_topi32);
         op_dispatch.push_back(&VMEnv::asserteqi32sz);
+        op_dispatch.push_back(&VMEnv::ldi32reg);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

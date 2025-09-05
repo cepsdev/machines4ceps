@@ -16,11 +16,15 @@ OblectamentaMessageModifier all;
 OblectamentaMsgDefDirective write;
 OblectamentaMsgReadDirective read;
    
-OblectamentaDataLabel msg_buffer, accounts, count;
+OblectamentaDataLabel msg_buffer, accounts, count, client_count;
 
-Event evAddAccount;
+Event evAddAccount, evReplyOK, evReplyNOKTableFull, evPrintTable;
 
-val max_accounts = 10;
+val max_accounts = 32;
+val entry_len = 8;
+val offs_a = 0;
+val offs_b = 4;
+val max_client_requests = 12;
 
 
 oblectamenta{
@@ -29,44 +33,49 @@ oblectamenta{
     count; 0;
     accounts; for (e: 1 .. max_accounts){0;0;}
     msg_buffer; for(e : 1 .. 32) {e;}
+    client_count;0;
    };
  };
 };
-
-
 
 sm{
     Service;
     states{Initial;Ready;ProcessRequest;};
     Actions{
         doAddAccount{
-        oblectamenta{text{asm{
+         oblectamenta{text{asm{
            OblectamentaCodeLabel lbl_table_full;
-
            lea(count);
-           ldsi32;dbg_print_topi32;
+           ldsi32;
            ldi32(max_accounts);
-           blteq(lbl_table_full);
+           blteq(lbl_table_full);           
+           lea(count);ldsi32;ldi32(entry_len);muli32;sti32(R0); // R0 = count * entry_len;
            lea(count);ldsi32;ldi32(1);addi32;lea(count);stsi32; // count = count + 1
-
-            msg{
+           lea(accounts);ldi64(R0);addi64;sti64(R1);
+           msg{
                 read;
                 msg_buffer;
                 Account{
                     a{
                         i32;
-                        dbg_print_topi32;
-                        discardtopi32;
+                        ldi64(offs_a);
+                        ldi64(R1);
+                        addi64;
+                        stsi32;
                     };
                     b{
                         i32;
-                        dbg_print_topi32;
-                        discardtopi32;
+                        ldi64(offs_b);
+                        ldi64(R1);
+                        addi64;
+                        stsi32;
                     };
                 };
             };
-            lbl_table_full;assert_empty_cs;
-        };};};
+            assert_empty_cs;
+            evReplyOK;halt;
+            lbl_table_full;evReplyNOKTableFull;
+         };};};
         };
     };
     t{Initial;Ready;};
@@ -78,26 +87,65 @@ sm{
     Actions{
       doRequest{
         oblectamenta{text{asm{
-         dbg_print_cs_and_regs(0); halt;
-         msg{
+           msg{
             write;
             msg_buffer;
             Account{
-             a{ldi32(6);i32;};
-             b{ldi32(6256);i32;};
+             a{ldi32(10);lea(client_count);ldsi32;addi32;i32;};
+             b{ldi32(100);lea(client_count);ldsi32;addi32;i32;};
             };
-         };
-         for(i : 1 .. 20){evAddAccount;} // generates 20 evAddAccount events statically, 
-                                         // i.e. the for loop is evaluated during compilation.
-                                         // Run `ceps main.ceps --pe --format ansi` for more details.
-                                          
+           };
+           lea(client_count);ldsi32;ldi32(1);addi32;lea(client_count);stsi32; // client_count = client_count + 1
+         evAddAccount;                            
         };};};
       };
     };
     states{Initial;Request;WaitForReply;Final;};
-    t{Initial;Request;doRequest;};
+    t{Initial;Request;};
+    t{Request;WaitForReply;doRequest;};
+    t{WaitForReply;Request;evReplyOK;};
+    t{WaitForReply;Final;evReplyNOKTableFull;};
+};
+
+sm{
+    TablePrinter;
+    states{Initial;Print;};
+    Actions{
+     doPrintTable{oblectamenta{text{asm{
+        OblectamentaCodeLabel lbl_done, lbl_loop;
+        lea(accounts); sti64(R0);      // R0 = address of accounts
+        lea(count);ldsi32;sti32(R1);   // R1 = number of stored entries
+        ldi32(entry_len); sti32(R2);   // R2 = size of enry in bytes
+        ldi32(0); sti32(R3);           // R3 = 0
+        lbl_loop;
+        ldi32(R3);ldi32(R1);           // CS = ...|R3(i32)|R1(i32)|
+        blteq(lbl_done);               // if R1 <= R2 (<=> #entries <= counter) then gotot lbl_done
+        ldi64(R0);ldi64(R3);ldi64(R2);muli64;addi64; // CS = ...|Address of R3th entry|
+        duptopi64;
+        ldsi32;
+        dbg_print_topi32;
+        discardtopi32;
+        ldi64(offs_b);
+        addi64;
+        ldsi32;
+        dbg_print_topi32;
+        discardtopi32;
+        ldi32(R3);ldi32(1);addi32;sti32(R3); // R3 = R3 + 1
+        buc(lbl_loop);
+        lbl_done;
+        assert_empty_cs;        
+     };};};};
+    };
+    t{Initial;Print;evReplyOK;doPrintTable;};
+    t{Print;Initial;};
 };
 
 Simulation{
-    Start{Service;Client;};
+    Start{Service;Client;TablePrinter;};
 };
+
+
+
+
+
+

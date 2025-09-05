@@ -445,6 +445,7 @@ static void run_triggered_actions(State_machine_simulation_core* smc,
    auto t = *p;
    auto const & trans = execution_ctxt.transitions[t];
    smc->current_smp() = execution_ctxt.get_assoc_sm(trans.smp);
+   try{
    if(!trans.native) {
     if(trans.oblectamenta[0]){
         smc->vm.run((size_t) trans.a1);
@@ -459,7 +460,12 @@ static void run_triggered_actions(State_machine_simulation_core* smc,
     auto a1 = trans.a1;auto a2 = trans.a2; auto a3 = trans.a3;
     if (a1) a1();  if (a2) a2(); if (a3) a3();
    }
+   } catch (std::runtime_error& re){
+    std::cerr << "***Fatal Error: State Machine Exection Core: Action triggered exception in >>"<< smc->current_smp()->id() << "<<\n";
+    throw;
+   }
  }
+
 }
 
 static void log_state_changes(State_machine_simulation_core* smc,executionloop_context_t & execution_ctxt, executionloop_context_t::states_t & temp){
