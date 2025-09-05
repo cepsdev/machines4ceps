@@ -156,6 +156,7 @@ OblectamentaOpcode
 
 OblectamentaModifier addr;
 OblectamentaModifier reg;
-OblectamentaReg SP, FP, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, RES; 
+OblectamentaReg SP, FP, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, RES;
+ OblectamentaReg R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15;
 kind OblectamentaMessageTag;
 )"

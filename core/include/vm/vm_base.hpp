@@ -227,14 +227,36 @@ namespace ceps{
                         static constexpr uint32_t ARG2 = 6; // register for 3rd call argument (%rdx in SysV Amd64 ABI) 
                         static constexpr uint32_t ARG3 = 7; // register for 4th  call argument (%rcx in SysV Amd64 ABI) 
                         static constexpr uint32_t ARG4 = 8; // register for 5th call argument (%r8 in SysV Amd64 ABI) 
-                        static constexpr uint32_t ARG5 = 9; // register for 6th call argument (%r9 in SysV Amd64 ABI) 
+                        static constexpr uint32_t ARG5 = 9; // register for 6th call argument (%r9 in SysV Amd64 ABI)
 
                         static constexpr uint32_t RES = 10; // register for result (%rax in SysV Amd64 ABI) 
 
-                        int64_t file[11];
-                        map<string, uint32_t> reg_mnemonic2idx { {"SP",SP},{"FP",FP}, {"CSP",CSP}, {"PC",PC} , 
-                                                                 {"ARG0",ARG0 } , {"ARG1",ARG1 } , {"ARG2",ARG2 } , {"ARG3",ARG3 } , 
-                                                                 {"ARG4",ARG4 } , {"ARG5",ARG5 }, {"RES",RES } };
+                        static constexpr uint32_t R0 = 11;
+                        static constexpr uint32_t R1 = R0 + 1;
+                        static constexpr uint32_t R2 = R0 + 2;
+                        static constexpr uint32_t R3 = R0 + 3;
+                        static constexpr uint32_t R4 = R0 + 4;
+                        static constexpr uint32_t R5 = R0 + 5;
+                        static constexpr uint32_t R6 = R0 + 6;
+                        static constexpr uint32_t R7 = R0 + 7;
+                        static constexpr uint32_t R8 = R0 + 8;
+                        static constexpr uint32_t R9 = R0 + 9;
+                        static constexpr uint32_t R10 = R0 + 10;
+                        static constexpr uint32_t R11 = R0 + 11;
+                        static constexpr uint32_t R12 = R0 + 12;
+                        static constexpr uint32_t R13 = R0 + 13;
+                        static constexpr uint32_t R14 = R0 + 14;
+                        static constexpr uint32_t R15 = R0 + 15;
+
+                        int64_t file[27] = {};
+                        map<string, uint32_t> reg_mnemonic2idx { {"SP",SP}, {"FP",FP}, {"CSP",CSP}, {"PC",PC} , 
+                                                                 {"ARG0",ARG0 } , {"ARG1",ARG1 } , {"ARG2",ARG2 } , 
+                                                                 {"ARG3",ARG3 } , {"ARG4",ARG4 } , {"ARG5",ARG5 }, 
+                                                                 {"RES",RES }, {"R0",R0 } , {"R1",R1 }, {"R2",R2 },
+                                                                 {"R3",R3 }, {"R4",R4 }, {"R5",R5 }, {"R6",R6 },
+                                                                 {"R7",R7 }, {"R8",R8 }, {"R9",R9 }, {"R10",R10 },
+                                                                 {"R11",R11 }, {"R12",R12 }, {"R13",R13 }, {"R14",R14 }, {"R15",R15 }
+                                                                };
                     } registers;
 
                     using reg_t = uint32_t;

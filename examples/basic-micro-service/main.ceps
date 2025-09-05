@@ -41,6 +41,14 @@ sm{
     Actions{
         doAddAccount{
         oblectamenta{text{asm{
+           OblectamentaCodeLabel lbl_table_full;
+
+           lea(count);
+           ldsi32;dbg_print_topi32;
+           ldi32(max_accounts);
+           blteq(lbl_table_full);
+           lea(count);ldsi32;ldi32(1);addi32;lea(count);stsi32; // count = count + 1
+
             msg{
                 read;
                 msg_buffer;
@@ -57,12 +65,12 @@ sm{
                     };
                 };
             };
-            assert_empty_cs;
-        };};};    
+            lbl_table_full;assert_empty_cs;
+        };};};
         };
     };
     t{Initial;Ready;};
-    t{Ready;ProcessRequest;evAddAccount;doAddAccount;};
+    t{Ready;Ready;evAddAccount;doAddAccount;};
 };
 
 sm{
@@ -70,6 +78,7 @@ sm{
     Actions{
       doRequest{
         oblectamenta{text{asm{
+         dbg_print_cs_and_regs(0); halt;
          msg{
             write;
             msg_buffer;
@@ -78,7 +87,10 @@ sm{
              b{ldi32(6256);i32;};
             };
          };
-         evAddAccount;
+         for(i : 1 .. 20){evAddAccount;} // generates 20 evAddAccount events statically, 
+                                         // i.e. the for loop is evaluated during compilation.
+                                         // Run `ceps main.ceps --pe --format ansi` for more details.
+                                          
         };};};
       };
     };

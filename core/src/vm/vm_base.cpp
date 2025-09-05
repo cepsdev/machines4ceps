@@ -1247,16 +1247,19 @@ namespace ceps::vm::oblectamenta{
 }
 
 std::ostream& operator << (std::ostream& os, ceps::vm::oblectamenta::VMEnv::registers_t regs){
-    
+    using namespace std;
     size_t w {};
     for(auto r : regs.reg_mnemonic2idx) if (r.first.length() > w) w = r.first.length();
     size_t lc {};
     auto nl {regs.reg_mnemonic2idx.size()};
-    for(auto r : regs.reg_mnemonic2idx){
+    size_t n{sizeof(regs.file) / sizeof(int64_t)};
+    for(int i{}; i < n; ++i){
+        pair<string, uint32_t> r{"gaga",0};
+        for (auto const & rr : regs.reg_mnemonic2idx) if (rr.second == i) {r = rr; break;} //Yeah, i know
         os.width(w);os << r.first << ": " ;
         os << " ";
         os << regs.file[r.second];
-        if (++lc < nl) os << " | ";
+        if (i + 1 < n) os << " | ";
     }
     return os;
 }
