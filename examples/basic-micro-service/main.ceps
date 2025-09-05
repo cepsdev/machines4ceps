@@ -1,3 +1,7 @@
+/*
+First Planckservice - smallest possible microservice.
+Implemented using state machines with actions written in Oblectamenta Assembler.
+*/
 
 kind Event;
 kind Guard;
