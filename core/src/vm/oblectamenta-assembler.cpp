@@ -1329,10 +1329,13 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                 auto data_label_it{vm.data_labels().find(name(as_symbol_ref(args[0])))};
                 if (data_label_it == vm.data_labels().end()) 
                     throw std::string{"oblectamenta_assembler: unknown data label: '"+ name(as_symbol_ref(args[0])) +"'" };
-                
                 auto it{ceps::vm::oblectamenta::mnemonics.find(mnemonic)};
-                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
-                    throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+                if (it == ceps::vm::oblectamenta::mnemonics.end()){
+                    mnemonic+="@"+kind(as_symbol_ref(args[0]))+"@";
+                    it = ceps::vm::oblectamenta::mnemonics.find(mnemonic);
+                    if (it == ceps::vm::oblectamenta::mnemonics.end())
+                     throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+                }
                 auto opcode{it->second};
     
                 if (get<3>(opcode)) 
