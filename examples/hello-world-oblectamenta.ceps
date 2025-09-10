@@ -1,32 +1,31 @@
-kind Event;
-kind Guard;
-kind Systemstate;
-   
-OblectamentaDataLabel hello_world;
+/*
+* Run with 'ceps hello-world-oblectamenta.ceps'
+*/
 
-Event E;
+kind Event;Event E;
 
-oblectamenta{
- global{
-   data{
-    hello_world;"Hello, World!\n";0;
-   };
- };
+OblectamentaDataLabel msg;
+
+oblectamenta{global{
+ data{
+  msg;"Hello, World!\n";
+ };};
 };
+
 sm{
-    S;    
-    states{Initial;};
-    Actions{
-        doPrintHello{
-         oblectamenta{text{asm{
-            dbg_printsz(hello_world);
-         };};};
-        };
-    };
-    t{Initial;Initial;E;doPrintHello;};
+ S;    
+ states{Initial;};
+ Actions{
+  doPrintHello{
+   oblectamenta{text{asm{
+    dbg_printsz(msg);
+   };};};
+  };
+ };
+ t{Initial;Initial;E;doPrintHello;};
 };
 
 Simulation{
-    Start{S;};
-    E;
+ Start{S;};
+ E;
 };
