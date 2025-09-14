@@ -112,6 +112,17 @@ public:
 		on_exit[state] = fn;
 	}
 
+	void set_on_enter_oblectamenta(int state,size_t loc){
+		if ((size_t)number_of_states > on_enter_oblectamenta.size())
+			on_enter_oblectamenta.resize(number_of_states+1,0);
+		on_enter_oblectamenta[state] = loc;
+	}
+	void set_on_exit_oblectamenta(int state,size_t loc){
+		if ((size_t)number_of_states > on_exit_oblectamenta.size())
+			on_exit_oblectamenta.resize(number_of_states+1,0);
+		on_exit_oblectamenta[state] = loc;
+	}
+
 	void set_initial_state(int state,int initial){
 		if ((size_t)number_of_states > initial_state.size())
 			initial_state.resize(number_of_states+1,0);
@@ -221,6 +232,10 @@ public:
         std::vector<unsigned int> inf_vec;
 	std::vector<void(*)()> on_enter;
 	std::vector<void(*)()> on_exit;
+
+	std::vector<size_t> on_enter_oblectamenta;
+	std::vector<size_t> on_exit_oblectamenta;
+
 	std::vector<int> initial_state;
 	std::vector<int> final_state;
 	std::vector<int> children;

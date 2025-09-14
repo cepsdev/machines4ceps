@@ -281,7 +281,7 @@ namespace ceps{
                     compute_stack_t compute_stack;
                     text_t text{};
                     size_t text_size{};
-                    size_t text_loc{};
+                    size_t text_loc{4}; // a valid code location can never be less than 4;
                     int lbl_counter{}; // used by assembler to generate unique labels
 
                     struct exfuncdescr_t{

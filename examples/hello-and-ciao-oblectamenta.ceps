@@ -1,0 +1,30 @@
+/*
+* Demonstrates on_enter/on_exit using Oblectamenta.
+*/
+OblectamentaDataLabel msg, msg2;
+
+oblectamenta{global{
+ data{
+  msg;"Hello!\n";0;
+  msg2;"Ciao!\n";
+ };};
+};
+
+sm{
+ Main;    
+ states{Initial;};
+ on_enter{
+   oblectamenta{text{asm{
+    dbg_printsz(msg);
+   };};};
+ };
+ on_exit{
+   oblectamenta{text{asm{
+    dbg_printsz(msg2);
+   };};};
+ };
+};
+
+Simulation{
+ Start{Main;};
+};

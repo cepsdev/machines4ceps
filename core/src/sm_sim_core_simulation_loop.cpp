@@ -22,9 +22,10 @@ void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,i
 		}
 		if (!current_states[sms] /*&& on_enter.size() > (size_t)sms && on_enter[sms]*/) {
 			smc->current_smp() = get_assoc_sm(sms);
-            //std::cout << "##### Calling on_enter B" << std::endl;
 			if (on_enter.size() > (size_t)sms && on_enter[sms])
 			 on_enter[sms]();
+            else if (on_enter_oblectamenta.size() > (size_t)sms  && on_enter_oblectamenta[sms])
+              smc->vm.run(on_enter_oblectamenta[sms]);
 			else{
 				auto it = smc->current_smp()->find_action("on_enter");
 				if (it && it->body_ != nullptr)
@@ -33,8 +34,8 @@ void executionloop_context_t::do_enter_impl(State_machine_simulation_core* smc,i
 		}
 	}
 void executionloop_context_t::do_enter(State_machine_simulation_core* smc,int* sms,int n,std::vector<executionloop_context_t::state_present_rep_t> const & v){
-
-		if (n){
+		
+        if (n){
 			for(int i = 0;i != number_of_states+1;++i) set_inf(i,executionloop_context_t::VISITED,false);
 			for(int j = 0; j != n;++j) do_enter_impl(smc,*(sms+j),v);
 		}
@@ -53,7 +54,9 @@ void executionloop_context_t::do_exit_impl(State_machine_simulation_core* smc,in
 		if (on_exit.size() > (size_t)sms && on_exit[sms]) {
 			smc->current_smp() = get_assoc_sm(sms);
 			on_exit[sms]();
-        } else {
+        } else if (on_exit_oblectamenta.size() > (size_t)sms  && on_exit_oblectamenta[sms])
+            smc->vm.run(on_exit_oblectamenta[sms]);
+        else {
             smc->current_smp() = get_assoc_sm(sms);
             auto it = smc->current_smp()->find_action("on_exit");
             if (it && it->body_ != nullptr)
@@ -98,6 +101,7 @@ static void check_for_events(State_machine_simulation_core* smc,
 							 bool& do_continue,
 							 bool& do_break,
 							 State_machine_simulation_core::event_signature** ev_sig){
+    using namespace std;
     
 
 	State_machine_simulation_core::states_t new_states_fetch;
@@ -121,6 +125,12 @@ static void check_for_events(State_machine_simulation_core* smc,
  	  if (on_enter_seq.size()){
 	   for(auto const & sm : on_enter_seq){
 		 //Handle on_enter
+         auto sm_idx = sm->idx_;
+
+        if (execution_ctxt.on_enter_oblectamenta.size() > (size_t)sm_idx  && execution_ctxt.on_enter_oblectamenta[sm_idx]){
+              smc->vm.run(execution_ctxt.on_enter_oblectamenta[sm_idx]);
+              continue;
+        }
 		 auto it = sm->find_action("on_enter");
 		 if (it == nullptr) continue;
          if (it->native_func()){
@@ -597,7 +607,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
 		                                     ceps::ast::Nodeset& universe){
-
+ using namespace std;
  auto & execution_ctxt = executionloop_context();
  //std::chrono::time_point<std::chrono::high_resolution_clock> time_stamp;
  int ev_id;
@@ -1000,7 +1010,7 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  if (execution_ctxt.start_of_covering_states_valid()){
       bool changes_exists = false || dangling_cover_state_changed_handler_call();
       if(!changes_exists)for(std::size_t i = execution_ctxt.start_of_covering_states; i < execution_ctxt.current_states.size();++i){
-         if (temp[i] != execution_ctxt.current_states[i]){changes_exists=true;break;}
+         if (temp[i] !=execution_ctxt.current_states[i]){changes_exists=true;break;}
       }
       if (changes_exists)run_execution_context_loop_cover_state_changed_handlers(temp);
  }
@@ -1010,6 +1020,16 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
  if (global_event_call_back_fn_!=nullptr && ev_id != 0 && execution_ctxt.exported_events.find(ev_id) != execution_ctxt.exported_events.end())
 		global_ev_cllbck();
  }
+ // call exit procedures
+for(size_t stidx{}; stidx < executionloop_context().current_states.size();++stidx){
+    if(!executionloop_context().current_states[stidx]) continue;
+    if (execution_ctxt.get_inf(stidx,executionloop_context_t::SM) && !execution_ctxt.get_parent(stidx))
+     execution_ctxt.do_exit_impl(this,stidx,executionloop_context().current_states);
+}
+//for(int i = 0;i < execution_ctxt.number_of_states+1;++i) 
+   // cerr << execution_ctxt.get_inf(i,executionloop_context_t::SM) << " " << execution_ctxt.get_parent(i) << " "<<execution_ctxt.get_inf(i,executionloop_context_t::VISITED) <<  "\n";
+			//for(int j = 0; j != n;++j) do_exit_impl(smc,*(sms+j),v);
+
  //info("Simulation finished.");
 }
 

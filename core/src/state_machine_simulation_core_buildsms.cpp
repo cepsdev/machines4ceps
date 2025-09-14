@@ -487,14 +487,25 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 	});
 
 	//Set on_enter / on_exit information
-	traverse_sms(smsv,[&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
+	traverse_sms(smsv,[smp,&ctr,&ev_ctr,&ev_to_id, &ctx](State_machine* cur_sm){
 		for(auto a : cur_sm->actions()){
 			if (a.id_ == "on_enter") {
-			 ctx.set_on_enter(cur_sm->idx_,a.native_func_);
-			 ctx.set_inf(cur_sm->idx_,executionloop_context_t::ENTER,true);
+			 auto obl_code{oblectamenta_assembly_code(a.body())};
+			 if (obl_code){
+              ctx.set_on_enter_oblectamenta(cur_sm->idx_,smp->vm.text_loc);
+			  run_oblectamenta_assembler(smp,*obl_code, ev_to_id);
+			 } else
+			  ctx.set_on_enter(cur_sm->idx_,a.native_func_);
+
+			  ctx.set_inf(cur_sm->idx_,executionloop_context_t::ENTER,true);
 			}
 			else if (a.id_ == "on_exit") {
-			 ctx.set_on_exit(cur_sm->idx_,a.native_func_);
+			 auto obl_code{oblectamenta_assembly_code(a.body())};
+			 if (obl_code){
+              ctx.set_on_exit_oblectamenta(cur_sm->idx_,smp->vm.text_loc);
+			  run_oblectamenta_assembler(smp,*obl_code, ev_to_id);
+			 } else			 
+			  ctx.set_on_exit(cur_sm->idx_,a.native_func_);
 			 ctx.set_inf(cur_sm->idx_,executionloop_context_t::EXIT,true);
 			}
 		}
