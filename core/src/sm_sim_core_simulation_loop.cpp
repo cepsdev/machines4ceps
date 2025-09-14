@@ -1021,9 +1021,9 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		global_ev_cllbck();
  }
  // call exit procedures
-for(size_t stidx{}; stidx < executionloop_context().current_states.size();++stidx){
+for(size_t stidx{}; stidx < min(executionloop_context().current_states.size(), executionloop_context().inf_vec.size());++stidx){
     if(!executionloop_context().current_states[stidx]) continue;
-    if (execution_ctxt.get_inf(stidx,executionloop_context_t::SM) && !execution_ctxt.get_parent(stidx))
+    if (execution_ctxt.get_inf(stidx,executionloop_context_t::SM) && !execution_ctxt.get_parent_read(stidx) )
      execution_ctxt.do_exit_impl(this,stidx,executionloop_context().current_states);
 }
 //for(int i = 0;i < execution_ctxt.number_of_states+1;++i) 

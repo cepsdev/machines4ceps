@@ -12,7 +12,6 @@ oblectamenta{global{
 
 sm{
  Main;    
- states{Initial;};
  on_enter{
    oblectamenta{text{asm{
     dbg_printsz(msg);

@@ -69,11 +69,18 @@ public:
 		return true;
 	}
 
-        int& get_parent(int state){
-                return parent_vec[state];
-        }
+    int& get_parent(int state){
+		
+            return parent_vec[state];
+    }
 
-        int get_parent(int state) const{
+    int get_parent_read(int state){
+		if (parent_vec.size() < (size_t)state) return 0;		
+        return parent_vec[state];
+    }
+
+    int get_parent(int state) const{
+		if (parent_vec.size() < (size_t)state) return 0;
 		return parent_vec[state];
 	}
 
