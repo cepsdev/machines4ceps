@@ -64,7 +64,7 @@ static size_t find_trailing_zero(char* buffer, size_t size)
 
 using namespace std;
 struct json_token{
-    enum {number, string, boolean, null} type;
+    enum {number, string, boolean, null, eoi /*end of input*/} type;
     size_t from, end;
     double value_f;
     int64_t value_i;
@@ -98,7 +98,9 @@ optional<double> match_json_fraction(char * buffer, size_t& loc, size_t n){
 }
 
 optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
+    
     for(;loc < n;){
+        if (isspace(static_cast<unsigned char>(buffer[loc]))) {++loc; continue;}
         json_token tok{};
         if (isdigit(buffer[loc]) || buffer[loc] == '.' || buffer[loc] == '-' ){
             tok.type = json_token::number;
@@ -141,9 +143,20 @@ optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
             }                                 
             if (sign_neg) tok.value_f *= -1.0;
             return tok;
-        }
-    }
-    return {};
+        } else if (buffer[loc] == '"'){
+            ++loc;
+            if (loc >= n) return {};
+            tok.from = loc;
+            tok.type = json_token::string;
+            for(;loc < n && buffer[loc]!='"';++loc){
+
+            }
+            if (buffer[loc]!='"') return {};
+            tok.end = loc; ++loc;
+            return tok;
+        } else return {};
+    } 
+    return {json_token{json_token::eoi}};
 }
 
 optional< pair< char* , size_t >> json2protobufish(string json){
@@ -152,13 +165,21 @@ optional< pair< char* , size_t >> json2protobufish(string json){
     auto buffer = new char[available];
     size_t loc{};
     size_t n{json.length()};
-    auto cur_tok = get_token(json.data(), loc, n);
-    if (!cur_tok) return {};
-    if (cur_tok->type == json_token::number){
-        cerr << "Number: "<< setprecision(14) << cur_tok->value_f << '\n';
-
-    }
-
+    json_token cur_tok{};
+    do {
+     auto cur_tok_ = get_token(json.data(), loc, n);
+     if (!cur_tok_) return {};
+     cur_tok = *cur_tok_;
+     if (cur_tok.type == json_token::number){
+        cerr << "Number: "<< setprecision(14) << cur_tok.value_f << '\n';
+     } else if (cur_tok.type == json_token::string){
+        string str(cur_tok.end - cur_tok.from, ' ');
+        strncpy(str.data(),json.data() + cur_tok.from,cur_tok.end - cur_tok.from);
+        cerr << "String: '"<< str << "'" << '\n';
+     } else if (cur_tok.type == json_token::eoi){
+        cerr << "EOI\n";
+     }
+    } while (cur_tok.type != json_token::eoi);
 
     return {make_pair(buffer, available+used)};
 }

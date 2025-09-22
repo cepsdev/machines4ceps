@@ -19,6 +19,10 @@ protobufish(
 		"1.0e-3";
 		"-3.14159265359e-3";
 		"-3.14159265359e+10";
+		"\"Hello world!\"";
+		"\"\"";
+		"\"Hello world!";
+		"Hello world!\"";
 	}
 );
 
