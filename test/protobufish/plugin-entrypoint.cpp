@@ -72,6 +72,45 @@ struct json_token{
     bool is_int;
 };
 
+optional<string> extract_str_value(json_token tok, string msg){
+    if (tok.type != json_token::string || tok.from >= tok.end || tok.end > msg.length())
+     return {};
+    string r; r.resize(tok.end - tok.from + 1,'\0');
+    size_t to{};
+    for(size_t i{tok.from}; i < tok.end; ++i){
+        if (msg[i] != '\\') {r[to++] = msg[i]; continue;}
+        ++i; if (i >= tok.end) return {};
+        if (msg[i] == '"') r[to++] = '"';
+        else if (msg[i] == '/') r[to++] = '/';
+        else if (msg[i] == '\\') r[to++] = '\\';
+        else if (msg[i] == 'b') r[to++] = '\b';
+        else if (msg[i] == 'f') r[to++] = '\f';
+        else if (msg[i] == 'n') r[to++] = '\n';
+        else if (msg[i] == 'r') r[to++] = '\r';
+        else if (msg[i] == 't') r[to++] = '\t';
+        else if (msg[i] == 'u'){
+            if (i + 4 >= tok.end) return {};
+            auto hexvalue = [&](size_t l)->optional<int> {
+                if (isdigit(msg[l])) return msg[l] - '0';
+                if(msg[l]=='a' || msg[l]=='b' || msg[l]=='c' || msg[l]=='d' || msg[l]=='e' || msg[l]=='f' )
+                return msg[l] - 'a' + 10;
+                if(msg[l]=='A' || msg[l]=='B' || msg[l]=='C' || msg[l]=='D' || msg[l]=='E' || msg[l]=='F' )
+                return msg[l] - 'A' + 10;
+                return {};
+            };
+            uint16_t v{};
+            auto d = hexvalue(i+4); if (d) v = *d; else return{};
+            d = hexvalue(i+3); if (d) v += *d << 4; else return{};
+            d = hexvalue(i+2); if (d) v += *d << 8; else return{};
+            d = hexvalue(i+1); if (d) v += *d << 12; else return{};
+            i += 4;
+            *(uint16_t*)(r.data()+to) = v;
+            to += 2; 
+        }
+    }
+    return r;
+}
+
 optional<uint64_t> match_json_integer(char * buffer, size_t& loc, size_t n){
     uint64_t r{};
     auto start_loc{loc};
@@ -151,7 +190,7 @@ optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
             for(;loc < n && buffer[loc]!='"';++loc){
                 if (buffer[loc] == '\\') {
                     ++loc; if (loc >= n) return {};
-                    if (buffer[loc] == '\"'|| buffer[loc] == '\\' || buffer[loc] == 'b'|| buffer[loc] == 'f'
+                    if (buffer[loc] == '\"'|| buffer[loc] == '\\' || buffer[loc] == '/' || buffer[loc] == 'b'|| buffer[loc] == 'f'
                        || buffer[loc] == 'n' || buffer[loc] == 'r' || buffer[loc] == 't' ) continue;
                     if (buffer[loc] != 'u') return {};
                     if (loc + 4 >= n) return {};
@@ -190,6 +229,9 @@ optional< pair< char* , size_t >> json2protobufish(string json){
         string str(cur_tok.end - cur_tok.from, ' ');
         strncpy(str.data(),json.data() + cur_tok.from,cur_tok.end - cur_tok.from);
         cerr << "String: '"<< str << "'" << '\n';
+        auto seval = extract_str_value(cur_tok,json);
+        if (!seval) cerr << "String is not well formed\n";
+        else cerr << "String (evaluated): '"<< *seval << "'" << '\n';
      } else if (cur_tok.type == json_token::eoi){
         cerr << "EOI\n";
      }
