@@ -23,6 +23,15 @@ protobufish(
 		"\"\"";
 		"\"Hello world!";
 		"Hello world!\"";
+		"\"Hello world!\\\"\"";
+		"\"\\n\"";
+		"\"\\t\"";
+		"\"\\b\"";
+		"\"\\f\"";
+		"\"\\r\"";
+		"\"\\uWAA\"";
+		"\"\\uAAAF\"";
+
 	}
 );
 

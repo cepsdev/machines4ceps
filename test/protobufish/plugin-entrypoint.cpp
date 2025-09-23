@@ -149,7 +149,21 @@ optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
             tok.from = loc;
             tok.type = json_token::string;
             for(;loc < n && buffer[loc]!='"';++loc){
-
+                if (buffer[loc] == '\\') {
+                    ++loc; if (loc >= n) return {};
+                    if (buffer[loc] == '\"'|| buffer[loc] == '\\' || buffer[loc] == 'b'|| buffer[loc] == 'f'
+                       || buffer[loc] == 'n' || buffer[loc] == 'r' || buffer[loc] == 't' ) continue;
+                    if (buffer[loc] != 'u') return {};
+                    if (loc + 4 >= n) return {};
+                    auto is_hexdigit = [&](size_t l)->bool {
+                     if (!isdigit(buffer[l]) && !(buffer[l]=='a' || buffer[l]=='A' || buffer[l]=='b' || buffer[l]=='B'
+                                                  || buffer[l]=='c' || buffer[l]=='C' || buffer[l]=='d' || buffer[l]=='D'
+                                                  || buffer[l]=='e' || buffer[l]=='E' || buffer[l]=='f' || buffer[l]=='F') ) 
+                     return false;
+                     return true; 
+                    };
+                    if (!is_hexdigit(loc+1) || !is_hexdigit(loc+2) || !is_hexdigit(loc+3) || !is_hexdigit(loc+4)) return{};
+                } 
             }
             if (buffer[loc]!='"') return {};
             tok.end = loc; ++loc;

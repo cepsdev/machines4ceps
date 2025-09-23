@@ -1422,9 +1422,15 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                 }
             } else if (args.size() == 1) {
                 auto mangled_mnemonic{mnemonic};
-                for(auto e: args){
-                    if (is<Ast_node_kind::int_literal>(e) || is<Ast_node_kind::long_literal>(e)) mangled_mnemonic+="imm";
-                    else if (is<Ast_node_kind::string_literal>(e)) mangled_mnemonic+="sz";
+                for(auto ee: args){
+                    if (is<Ast_node_kind::int_literal>(ee) || is<Ast_node_kind::long_literal>(ee)) mangled_mnemonic+="imm";
+                    else if (is<Ast_node_kind::string_literal>(ee)) mangled_mnemonic+="sz";
+                    else {
+                        stringstream ss;
+                        ss << "Illformed opcode. In '" << *e << " the offending argument is ";
+                        ss << *ee << "\n";
+                        throw std::string{ss.str()};
+                    }
                 }
                 //Get opcode
                 auto it{ceps::vm::oblectamenta::mnemonics.find(mangled_mnemonic)};
