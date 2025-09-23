@@ -807,6 +807,8 @@ namespace ceps{
                 static constexpr uint32_t UINT64 = 6;
                 static constexpr uint32_t SZ = 7;
                 static constexpr uint32_t F64 = 8;
+                static constexpr uint32_t ARRAY = 9;
+                static constexpr uint32_t SCOPE = 10;
                 uint32_t what;
                 size_t size;
             };

@@ -231,16 +231,13 @@ optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
     return {json_token{json_token::eoi}};
 }
 
-optional< pair< char* , size_t >> json2protobufish(string json){
-    size_t available{32};
-    size_t used{};
-    auto buffer = new char[available];
-    size_t loc{};
+bool json2protobufish_test_lexer(string json){
+   size_t loc{};
     size_t n{json.length()};
     json_token cur_tok{};
     do {
      auto cur_tok_ = get_token(json.data(), loc, n);
-     if (!cur_tok_) return {};
+     if (!cur_tok_) return false;
      cur_tok = *cur_tok_;
      if (cur_tok.type == json_token::number){
         cerr << "Number: "<< setprecision(14) << cur_tok.value_f << '\n';
@@ -265,11 +262,41 @@ optional< pair< char* , size_t >> json2protobufish(string json){
         cerr << "}\n";
      } else if (cur_tok.type == json_token::lbrace){
         cerr << "{\n";
+     } else if (cur_tok.type == json_token::null) {
+        cerr << "null" << '\n';
      } else if (cur_tok.type == json_token::eoi){
         cerr << "EOI\n";
      }
     } while (cur_tok.type != json_token::eoi);
+    return true;
+}
 
+struct ser_ctxt_t{
+ json_token cur_tok{};
+ string& input;
+ size_t loc;
+ size_t n;
+ ser_ctxt_t(string& input): input{input},loc{}, n{input.length()} {}
+ bool read_token(){
+    auto cur_tok_ = get_token(input.data(), loc, n);
+    if (cur_tok_) cur_tok = *cur_tok_;
+    return cur_tok_.has_value();
+ }
+};
+
+optional< pair< char* , size_t >> json2protobufish(string json){
+    size_t available{32};
+    size_t used{};
+    auto buffer = new char[available];
+    size_t loc{};
+    size_t n{json.length()};
+    ser_ctxt_t ctx{json};
+    if (!ctx.read_token()) return {};    
+    for(;ctx.cur_tok.type != json_token::eoi;) {
+     auto cur_tok = ctx.cur_tok;
+
+     if (!ctx.read_token()) return {};
+    }
     return {make_pair(buffer, available+used)};
 }
 
@@ -355,14 +382,29 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
     auto data = get_first_child(params);    
     if (!is<Ast_node_kind::structdef>(data)) return nullptr;
     auto& ceps_struct = *as_struct_ptr(data);
-    
+    //Lexer Tests
     for(auto e : children(ceps_struct)){
-        if (!is<Ast_node_kind::string_literal>(e)) continue;
-
-        cout <<"Input: "<< value(as_string_ref(e)) << "\n";
-        auto r{json2protobufish(value(as_string_ref(e)))};
-        if (!r) cout << "Failed\n";
+        if (!is<Ast_node_kind::structdef>(e) || name(as_struct_ref(e)) != "lexer_test" ) continue;
+        cerr << "*** Lexer Tests:\n";
+        for(auto ee : children(as_struct_ref(e))){
+         if (!is<Ast_node_kind::string_literal>(ee)) continue;
+         cout <<"Input: "<< value(as_string_ref(ee)) << "\n";
+         auto r{json2protobufish_test_lexer(value(as_string_ref(ee)))};
+         if (!r) cout << "Failed\n";
+        }
     }
+    // Serialization
+    for(auto e : children(ceps_struct)){
+        if (!is<Ast_node_kind::structdef>(e) || name(as_struct_ref(e)) != "serialization_test" ) continue;
+        cerr << "*** Serialization Tests:\n";
+        for(auto ee : children(as_struct_ref(e))){
+         if (!is<Ast_node_kind::string_literal>(ee)) continue;
+         cout <<"Input: "<< value(as_string_ref(ee)) << "\n";
+         auto r{json2protobufish(value(as_string_ref(ee)))};
+         if (!r) cout << "Failed\n";
+        }
+    }
+
     cout <<"\n\n";
     auto result = mk_struct("result");
     children(*result).push_back(mk_int_node(42));
