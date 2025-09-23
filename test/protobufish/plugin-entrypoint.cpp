@@ -64,7 +64,7 @@ static size_t find_trailing_zero(char* buffer, size_t size)
 
 using namespace std;
 struct json_token{
-    enum {number, string, boolean, null, eoi /*end of input*/} type;
+    enum {number, string, boolean, null, lbrace, rbrace, lsqrbra, rsqrbra, comma,colon, eoi /*end of input*/} type;
     size_t from, end;
     double value_f;
     int64_t value_i;
@@ -207,7 +207,26 @@ optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
             if (buffer[loc]!='"') return {};
             tok.end = loc; ++loc;
             return tok;
-        } else return {};
+        } else if (buffer[loc] == 't' && (loc + 3 < n) && buffer[loc+1] == 'r' && buffer[loc+2] == 'u' && buffer[loc+3] == 'e'){
+            loc += 4; if (loc >= n) return json_token{.type=json_token::boolean,.from=loc-4,.end=loc, .value_b = true};
+            if (isspace(buffer[loc]) || !isalpha(buffer[loc]) && !isdigit(buffer[loc]) ) return json_token{.type=json_token::boolean,.from=loc-4,.end=loc, .value_b = true};
+            return {};
+        } else if (buffer[loc] == 'f' && (loc + 4 < n) && buffer[loc+1] == 'a' && buffer[loc+2] == 'l' && buffer[loc+3] == 's' && buffer[loc+4] == 'e'){
+            loc += 5; if (loc >= n) return json_token{.type=json_token::boolean,.from=loc-4,.end=loc, .value_b = false};
+            if (isspace(buffer[loc]) || !isalpha(buffer[loc]) && !isdigit(buffer[loc]) ) return json_token{.type=json_token::boolean,.from=loc-4,.end=loc, .value_b = false};
+            return {};
+        } else if (buffer[loc] == 'n' && (loc + 3 < n) && buffer[loc+1] == 'u' && buffer[loc+2] == 'l' && buffer[loc+3] == 'l'){
+            loc += 4; if (loc >= n) return json_token{.type=json_token::null,.from=loc-4,.end=loc};
+            if (isspace(buffer[loc]) || !isalpha(buffer[loc]) && !isdigit(buffer[loc]) ) 
+             return json_token{.type=json_token::null,.from=loc-4,.end=loc};
+            return {};
+        } else if (buffer[loc] == '{'){++loc;return json_token{.type=json_token::lbrace,.from=loc-1,.end=loc};}
+        else if (buffer[loc] == '}'){++loc;return json_token{.type=json_token::rbrace,.from=loc-1,.end=loc};}
+        else if (buffer[loc] == ','){++loc;return json_token{.type=json_token::comma,.from=loc-1,.end=loc};}
+        else if (buffer[loc] == ':'){++loc;return json_token{.type=json_token::colon,.from=loc-1,.end=loc};}
+        else if (buffer[loc] == '['){++loc;return json_token{.type=json_token::lsqrbra,.from=loc-1,.end=loc};}
+        else if (buffer[loc] == ']'){++loc;return json_token{.type=json_token::rsqrbra,.from=loc-1,.end=loc};}
+        else return {};
     } 
     return {json_token{json_token::eoi}};
 }
@@ -232,6 +251,20 @@ optional< pair< char* , size_t >> json2protobufish(string json){
         auto seval = extract_str_value(cur_tok,json);
         if (!seval) cerr << "String is not well formed\n";
         else cerr << "String (evaluated): '"<< *seval << "'" << '\n';
+     } else if (cur_tok.type == json_token::boolean) {
+        cerr << cur_tok.value_b << '\n';
+     } else if (cur_tok.type == json_token::colon){
+        cerr << ":\n";
+     } else if (cur_tok.type == json_token::comma){
+        cerr << ",\n";
+     } else if (cur_tok.type == json_token::rsqrbra){
+        cerr << "]\n";
+     } else if (cur_tok.type == json_token::lsqrbra){
+        cerr << "[\n";
+     } else if (cur_tok.type == json_token::rbrace){
+        cerr << "}\n";
+     } else if (cur_tok.type == json_token::lbrace){
+        cerr << "{\n";
      } else if (cur_tok.type == json_token::eoi){
         cerr << "EOI\n";
      }

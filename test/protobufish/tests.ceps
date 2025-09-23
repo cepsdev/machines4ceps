@@ -31,7 +31,15 @@ protobufish(
 		"\"\\r\"";
 		"\"\\uWAA\"";
 		"\"\\uAAAF\"";
-
+		"true";
+		"false";
+		"null";
+		"   true   ";
+		"  false ";
+		" null";
+		"[]{},:";
+		" [ ] {  }  , : ";
+		" [ ] {  }  false , : true null \"hello\" \"he\\nllo\" \"\\\"\\\"\" ";
 	}
 );
 
