@@ -41,6 +41,7 @@ protobufish(
 		"[]{},:";
 		" [ ] {  }  , : ";
 		" [ ] {  }  false , : true null \"hello\" \"he\\nllo\" \"\\\"\\\"\" ";
+		"{\"updatedAt\":\"2025-09-18 11:10\"}";
 	 };
 	 serialization_test{
 		"1";
