@@ -812,7 +812,7 @@ namespace ceps{
                 uint32_t what;
                 size_t size;
             };
-            struct msg_node_ex:msg_node{
+            struct msg_node_ex : msg_node{
                 static constexpr size_t MAX_NAME = 1024;
                 char name[MAX_NAME];
             };

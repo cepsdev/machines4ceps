@@ -64,12 +64,13 @@ static size_t find_trailing_zero(char* buffer, size_t size)
 
 using namespace std;
 struct json_token{
-    enum {number, string, boolean, null, lbrace, rbrace, lsqrbra, rsqrbra, comma,colon, eoi /*end of input*/} type;
+    enum {undef,id, number, string, boolean, null, lbrace, rbrace, lsqrbra, rsqrbra, comma,colon, eoi /*end of input*/} type;
     size_t from, end;
     double value_f;
     int64_t value_i;
     bool value_b;    
     bool is_int;
+    operator bool() const {return type != undef;}
 };
 
 optional<string> extract_str_value(json_token tok, string msg){
@@ -226,6 +227,11 @@ optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
         else if (buffer[loc] == ':'){++loc;return json_token{.type=json_token::colon,.from=loc-1,.end=loc};}
         else if (buffer[loc] == '['){++loc;return json_token{.type=json_token::lsqrbra,.from=loc-1,.end=loc};}
         else if (buffer[loc] == ']'){++loc;return json_token{.type=json_token::rsqrbra,.from=loc-1,.end=loc};}
+        else if (isalpha(buffer[loc])){
+            auto start = loc; ++loc;
+            for(;(loc < n) && isalnum(buffer[loc]) ;++loc);
+            return json_token{.type=json_token::id,.from=start,.end=loc};
+        }
         else return {};
     } 
     return {json_token{json_token::eoi}};
@@ -272,34 +278,91 @@ bool json2protobufish_test_lexer(string json){
 }
 
 struct ser_ctxt_t{
- json_token cur_tok{};
+ json_token cur_tok{.type=json_token::undef};
+ json_token lookahead{.type=json_token::undef}; 
  string& input;
  size_t loc;
  size_t n;
+ char* buffer;
+ size_t total{};
+ size_t used{};
+ ceps::vm::oblectamenta::msg_node* cur_node;
  ser_ctxt_t(string& input): input{input},loc{}, n{input.length()} {}
+ size_t available_space(){
+        return total - used;
+ }
  bool read_token(){
-    auto cur_tok_ = get_token(input.data(), loc, n);
-    if (cur_tok_) cur_tok = *cur_tok_;
-    return cur_tok_.has_value();
+    if (lookahead.type != json_token::undef){
+        cur_tok = lookahead;
+        return true;
+    } else { 
+       auto cur_tok_ = get_token(input.data(), loc, n);
+       if (cur_tok_) cur_tok = *cur_tok_;
+       return cur_tok_.has_value();
+    }
+ }
+ json_token peek(){
+   if (lookahead.type != json_token::undef) return lookahead;
+   auto lookahead_ = get_token(input.data(), loc, n);
+   if (!lookahead_) {lookahead.type = json_token::undef; return lookahead;}
+   lookahead = *lookahead_;
+   return lookahead;
  }
 };
 
-optional< pair< char* , size_t >> json2protobufish(string json){
-    size_t available{32};
-    size_t used{};
-    auto buffer = new char[available];
-    size_t loc{};
-    size_t n{json.length()};
-    ser_ctxt_t ctx{json};
-    if (!ctx.read_token()) return {};    
-    for(;ctx.cur_tok.type != json_token::eoi;) {
-     auto cur_tok = ctx.cur_tok;
 
+
+bool json2protobufish_internal(ser_ctxt_t& ctx){
+    using namespace ceps::vm::oblectamenta;
+    while(ctx.cur_tok.type != json_token::eoi){
+     if (ctx.cur_tok.type == json_token::number) {
+      if (ctx.available_space()<sizeof(msg_node_f64)) return {};
+      ((msg_node_f64*)(ctx.buffer + ctx.used))->what = msg_node::F64;
+      ((msg_node_f64*)(ctx.buffer + ctx.used))->size = sizeof(msg_node_f64);
+      ((msg_node_f64*)(ctx.buffer + ctx.used))->value = ctx.cur_tok.value_f;
+      ctx.used += sizeof(msg_node_f64); ctx.cur_node->size += sizeof(msg_node_f64); 
+     } else if (ctx.cur_tok.type == json_token::lbrace) {
+      if (ctx.available_space()<sizeof(msg_node) + 1) return {};
+      msg_node* new_node = (msg_node*)(ctx.buffer + ctx.used); 
+      new_node->what = msg_node::NODE;
+      new_node->size = sizeof(msg_node) + 1;
+      *((char*)(ctx.buffer + ctx.used + sizeof(msg_node)))= '\0';
+      ctx.cur_node->size += new_node->size;
+      auto t = ctx.cur_node;
+      auto old_size = new_node->size;
+      ctx.cur_node = new_node;
+      ctx.used += new_node->size; 
+      if (!ctx.read_token()) return {};json2protobufish_internal(ctx);
+      if (ctx.cur_tok.type != json_token::rbrace) return false;
+      ctx.cur_node = t;
+      ctx.cur_node->size += new_node->size - old_size; 
+     } else if (ctx.cur_tok.type == json_token::string){
+        if (ctx.peek().type == json_token::colon){
+            //Memmber
+        }
+     } 
+     else break;
      if (!ctx.read_token()) return {};
     }
-    return {make_pair(buffer, available+used)};
+    return true;
 }
 
+optional< pair< char* , pair<size_t,size_t> >> json2protobufish(string json){
+    using namespace ceps::vm::oblectamenta;
+    ser_ctxt_t ctx{json};
+    ctx.total = 1024;
+    ctx.used = 0;
+    ctx.buffer = new char[ctx.total];
+    ctx.cur_node = (msg_node*) ctx.buffer;
+    ctx.used += sizeof(msg_node);
+    ctx.cur_node->what = msg_node::ROOT;
+    ctx.cur_node->size = sizeof(msg_node);
+    ctx.loc = 0;
+    ctx.n = json.length();
+    if (!ctx.read_token()) return {};
+    if (!json2protobufish_internal(ctx)) return {};    
+    return {make_pair(ctx.buffer, make_pair(ctx.total, ctx.used))};
+}
 
 static size_t protobufish2stdrep(char* buffer, size_t size, std::string& res){
     using namespace ceps::vm::oblectamenta;
@@ -325,10 +388,11 @@ static size_t protobufish2stdrep(char* buffer, size_t size, std::string& res){
         string prefix,suffix;
         if (root.what == msg_node::NODE)
         {
-            prefix = string{"\""}+ (char*)((msg_node_ex*)buffer)->name +"\":";
+            if (!strlen((char*)((msg_node_ex*)buffer)->name)) prefix = "";
+            else prefix = string{"\""}+ (char*)((msg_node_ex*)buffer)->name +"\":";
         } else {
-            prefix = "{";
-            suffix = "}";
+            prefix = "";
+            suffix = "";
         }
         string inner;
         bool contains_nodes {};
@@ -402,6 +466,9 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
          cout <<"Input: "<< value(as_string_ref(ee)) << "\n";
          auto r{json2protobufish(value(as_string_ref(ee)))};
          if (!r) cout << "Failed\n";
+         string deser;
+         protobufish2stdrep(r->first, r->second.second,deser);
+         cout << "Deserialized:" << deser << "\n";
         }
     }
 
