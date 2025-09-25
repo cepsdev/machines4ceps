@@ -360,10 +360,11 @@ bool json2protobufish_consume_boolean(ser_ctxt_t& ctx){
     return ctx.read_token(); 
 }
 bool json2protobufish_consume_object(ser_ctxt_t& ctx);
+bool json2protobufish_consume_array(ser_ctxt_t& ctx);
 
-bool json2protobufish_consume_element(ser_ctxt_t& ctx){
+bool json2protobufish_consume_element(ser_ctxt_t& ctx, bool read_token = true){
     using namespace ceps::vm::oblectamenta;
-    if (!ctx.read_token()) return false;
+    if (read_token) if (!ctx.read_token()) return false;
     if (ctx.cur_tok.type == json_token::eoi) return false;
     if (ctx.cur_tok.type == json_token::number){
         if(!json2protobufish_consume_number(ctx)) return false;        
@@ -375,6 +376,8 @@ bool json2protobufish_consume_element(ser_ctxt_t& ctx){
         if(!json2protobufish_consume_boolean(ctx)) return false;
     } else if (ctx.cur_tok.type == json_token::lbrace){
         if(!json2protobufish_consume_object(ctx)) return false;
+    } else if (ctx.cur_tok.type == json_token::lsqrbra){
+        if(!json2protobufish_consume_array(ctx)) return false;
     }
     return true;
 }
@@ -430,6 +433,31 @@ bool json2protobufish_consume_object(ser_ctxt_t& ctx){
     return ctx.read_token(); // consume '}'
 }
 
+bool json2protobufish_consume_array(ser_ctxt_t& ctx){
+    using namespace ceps::vm::oblectamenta;
+    if (ctx.available_space()<sizeof(msg_node)) return false;
+    
+    msg_node* new_node = (msg_node*)(ctx.buffer + ctx.used); 
+    new_node->what = msg_node::ARRAY;
+    new_node->size = sizeof(msg_node);
+    ctx.cur_node->size += new_node->size;
+    auto t = ctx.cur_node;
+    auto old_size = new_node->size;
+    ctx.cur_node = new_node;
+    ctx.used += new_node->size; 
+    if (!ctx.read_token()) return false; //consume '['
+    if(ctx.cur_tok.type != json_token::rsqrbra) 
+    for(;;){ 
+     if(!json2protobufish_consume_element(ctx,false)) return false;
+     if (ctx.cur_tok.type == json_token::comma) {if (!ctx.read_token()) return false;}
+     else break;
+    }//while
+    ctx.cur_node = t;
+    ctx.cur_node->size += new_node->size - old_size;
+    if (ctx.cur_tok.type != json_token::rsqrbra) return false;
+    return ctx.read_token(); // consume ']'
+}
+
 bool json2protobufish_internal(ser_ctxt_t& ctx){
     using namespace ceps::vm::oblectamenta;
     if (!ctx.read_token()) return false;
@@ -448,6 +476,9 @@ bool json2protobufish_internal(ser_ctxt_t& ctx){
         return ctx.cur_tok.type == json_token::eoi;
     } else if (ctx.cur_tok.type == json_token::lbrace){
         if(!json2protobufish_consume_object(ctx)) return false;
+        return ctx.cur_tok.type == json_token::eoi;
+    } else if (ctx.cur_tok.type == json_token::lsqrbra){
+        if(!json2protobufish_consume_array(ctx)) return false;
         return ctx.cur_tok.type == json_token::eoi;
     }
     return false;
@@ -489,15 +520,18 @@ static size_t protobufish2stdrep(char* buffer, size_t size, std::string& res){
     auto content_size = root.size - hd_size;
     size_t consumed_content_bytes{};
     
-    if (root.what == msg_node::ROOT || root.what == msg_node::NODE){
+    if (root.what == msg_node::ROOT || root.what == msg_node::NODE || root.what == msg_node::ARRAY){
         string prefix,suffix;
         if (root.what == msg_node::NODE)
         {
             if (!strlen((char*)((msg_node_ex*)buffer)->name)) prefix = "";
             else prefix = string{"\""}+ (char*)((msg_node_ex*)buffer)->name +"\":";
-        } else {
+        } else if (root.what == msg_node::ROOT) {
             prefix = "";
             suffix = "";
+        } else {
+            prefix = "[";
+            suffix = "]";
         }
         string inner;
         bool contains_nodes {};
