@@ -320,7 +320,7 @@ bool json2protobufish_consume_number(ser_ctxt_t& ctx){
     ((msg_node_f64*)(ctx.buffer + ctx.used))->value = ctx.cur_tok.value_f;
      ctx.used += sizeof(msg_node_f64); 
      ctx.cur_node->size += sizeof(msg_node_f64); 
-    return true;
+    return ctx.read_token();
 }
 
 bool json2protobufish_consume_string(ser_ctxt_t& ctx){
@@ -336,7 +336,7 @@ bool json2protobufish_consume_string(ser_ctxt_t& ctx){
     ctx.cur_node->size += sizeof(msg_node) + value.length() + 1;
     *(((char*)new_node) + sizeof(msg_node) + value.length()) = '\0';
     strncpy( ((char*)new_node) + sizeof(msg_node), value.data(), value.length());
-    return true;
+    return ctx.read_token();
 }
 
 bool json2protobufish_consume_null(ser_ctxt_t& ctx){
@@ -346,7 +346,7 @@ bool json2protobufish_consume_null(ser_ctxt_t& ctx){
     ((msg_node*)(ctx.buffer + ctx.used))->size = sizeof(msg_node);
     ctx.used += sizeof(msg_node); 
     ctx.cur_node->size += sizeof(msg_node); 
-    return true;
+    return ctx.read_token();
 }
 
 bool json2protobufish_consume_boolean(ser_ctxt_t& ctx){
@@ -356,8 +356,78 @@ bool json2protobufish_consume_boolean(ser_ctxt_t& ctx){
     ((msg_node_bool*)(ctx.buffer + ctx.used))->size = sizeof(msg_node_bool);
     ((msg_node_bool*)(ctx.buffer + ctx.used))->value = ctx.cur_tok.value_b;
     ctx.used += sizeof(msg_node_bool); 
-    ctx.cur_node->size += sizeof(msg_node_bool); 
+    ctx.cur_node->size += sizeof(msg_node_bool);
+    return ctx.read_token(); 
+}
+bool json2protobufish_consume_object(ser_ctxt_t& ctx);
+
+bool json2protobufish_consume_element(ser_ctxt_t& ctx){
+    using namespace ceps::vm::oblectamenta;
+    if (!ctx.read_token()) return false;
+    if (ctx.cur_tok.type == json_token::eoi) return false;
+    if (ctx.cur_tok.type == json_token::number){
+        if(!json2protobufish_consume_number(ctx)) return false;        
+    } else if (ctx.cur_tok.type == json_token::string){
+        if(!json2protobufish_consume_string(ctx)) return false;
+    } else if (ctx.cur_tok.type == json_token::null){
+        if(!json2protobufish_consume_null(ctx)) return false;
+    } else if (ctx.cur_tok.type == json_token::boolean){
+        if(!json2protobufish_consume_boolean(ctx)) return false;
+    } else if (ctx.cur_tok.type == json_token::lbrace){
+        if(!json2protobufish_consume_object(ctx)) return false;
+    }
     return true;
+}
+
+bool json2protobufish_consume_member(ser_ctxt_t& ctx){
+   using namespace ceps::vm::oblectamenta;
+   auto value_ = extract_str_value(ctx.cur_tok, ctx.input);
+   if (!value_) return false;
+   auto value = *value_;
+   if (ctx.available_space()<sizeof(msg_node) + value.length() + 1) return {};
+   if(!ctx.read_token()) return false;
+   if (ctx.cur_tok.type != json_token::colon) return false;
+
+   msg_node* new_node = (msg_node*)(ctx.buffer + ctx.used); 
+   new_node->what = msg_node::NODE;
+   new_node->size = sizeof(msg_node) + value.length() + 1;
+   *( (char*)(ctx.buffer + ctx.used + sizeof(msg_node) + value.length()))= '\0';
+   strncpy((char*)(ctx.buffer + ctx.used + sizeof(msg_node)), value.data(), value.length());
+   ctx.cur_node->size += new_node->size;
+   auto t = ctx.cur_node;
+   auto old_size = new_node->size;
+   ctx.cur_node = new_node;
+   ctx.used += new_node->size;
+
+   if (!json2protobufish_consume_element(ctx)) return false;
+   ctx.cur_node = t;
+   ctx.cur_node->size += new_node->size - old_size;
+   return true;
+}
+
+bool json2protobufish_consume_object(ser_ctxt_t& ctx){
+    using namespace ceps::vm::oblectamenta;
+    if (ctx.available_space()<sizeof(msg_node) + 1) return false;
+    
+    msg_node* new_node = (msg_node*)(ctx.buffer + ctx.used); 
+    new_node->what = msg_node::NODE;
+    new_node->size = sizeof(msg_node) + 1;
+    *((char*)(ctx.buffer + ctx.used + sizeof(msg_node)))= '\0';
+    ctx.cur_node->size += new_node->size;
+    auto t = ctx.cur_node;
+    auto old_size = new_node->size;
+    ctx.cur_node = new_node;
+    ctx.used += new_node->size; 
+    if (!ctx.read_token()) return false; //consume '{'
+    for(;ctx.cur_tok.type == json_token::string || ctx.cur_tok.type == json_token::comma;){
+     if (ctx.cur_tok.type == json_token::string){ // consume members
+      if (!json2protobufish_consume_member(ctx)) return false;
+     } else if (ctx.cur_tok.type == json_token::comma) if (!ctx.read_token()) return false;
+    }//while
+    ctx.cur_node = t;
+    ctx.cur_node->size += new_node->size - old_size;
+    if (ctx.cur_tok.type != json_token::rbrace) return false;
+    return ctx.read_token(); // consume '}'
 }
 
 bool json2protobufish_internal(ser_ctxt_t& ctx){
@@ -366,85 +436,20 @@ bool json2protobufish_internal(ser_ctxt_t& ctx){
     if (ctx.cur_tok.type == json_token::eoi) return false;
     if (ctx.cur_tok.type == json_token::number){
         if(!json2protobufish_consume_number(ctx)) return false;
-        if (!ctx.read_token()) return false;
         return ctx.cur_tok.type == json_token::eoi;
     } else if (ctx.cur_tok.type == json_token::string){
         if(!json2protobufish_consume_string(ctx)) return false;
-        if (!ctx.read_token()) return false;
         return ctx.cur_tok.type == json_token::eoi;
     } else if (ctx.cur_tok.type == json_token::null){
         if(!json2protobufish_consume_null(ctx)) return false;
-        if (!ctx.read_token()) return false;
         return ctx.cur_tok.type == json_token::eoi;
     } else if (ctx.cur_tok.type == json_token::boolean){
         if(!json2protobufish_consume_boolean(ctx)) return false;
-        if (!ctx.read_token()) return false;
+        return ctx.cur_tok.type == json_token::eoi;
+    } else if (ctx.cur_tok.type == json_token::lbrace){
+        if(!json2protobufish_consume_object(ctx)) return false;
         return ctx.cur_tok.type == json_token::eoi;
     }
-
-
-
-/*
-
-    while(ctx.cur_tok.type != json_token::eoi){
-     if (ctx.cur_tok.type == json_token::number) {
-     } else if (ctx.cur_tok.type == json_token::lbrace) {
-      if (ctx.available_space()<sizeof(msg_node) + 1) return {};
-      msg_node* new_node = (msg_node*)(ctx.buffer + ctx.used); 
-      new_node->what = msg_node::NODE;
-      new_node->size = sizeof(msg_node) + 1;
-      *((char*)(ctx.buffer + ctx.used + sizeof(msg_node)))= '\0';
-      ctx.cur_node->size += new_node->size;
-      auto t = ctx.cur_node;
-      auto old_size = new_node->size;
-      ctx.cur_node = new_node;
-      ctx.used += new_node->size; 
-      if (!ctx.read_token()) return false;
-      if(!json2protobufish_internal(ctx)) return false;
-      if (ctx.cur_tok.type != json_token::rbrace) return false;
-      ctx.cur_node = t;
-      ctx.cur_node->size += new_node->size - old_size;
-      return true; 
-     } else if (ctx.cur_tok.type == json_token::string){
-        auto value_ = extract_str_value(ctx.cur_tok, ctx.input);
-        if (!value_) return false;
-        auto value = *value_;
-        if (ctx.peek().type == json_token::colon){
-         if (ctx.available_space()<sizeof(msg_node) + value.length() + 1) return {};
-         msg_node* new_node = (msg_node*)(ctx.buffer + ctx.used); 
-         new_node->what = msg_node::NODE;
-         new_node->size = sizeof(msg_node) + value.length() + 1;
-         *( (char*)(ctx.buffer + ctx.used + sizeof(msg_node) + value.length()))= '\0';
-         strncpy((char*)(ctx.buffer + ctx.used + sizeof(msg_node)), value.data(), value.length());
-         ctx.cur_node->size += new_node->size;
-         auto t = ctx.cur_node;
-         auto old_size = new_node->size;
-         ctx.cur_node = new_node;
-         ctx.used += new_node->size;
-         ctx.read_token(); //consume ':' 
-         if (!ctx.read_token()) return false;
-         cerr << ctx.cur_tok.type << "a?\n";
-         if(!json2protobufish_internal(ctx)) return false;
-         cerr << ctx.cur_tok.type << "B?\n";
-         ctx.cur_node = t;
-         ctx.cur_node->size += new_node->size - old_size;
-        } else {
-         if (ctx.available_space()<sizeof(msg_node) + value.length() + 1) return {};
-         auto new_node = (msg_node*)(ctx.buffer + ctx.used); 
-         new_node->what = msg_node::SZ;
-         new_node->size = sizeof(msg_node) + value.length() + 1;
-         ctx.used += sizeof(msg_node) + value.length() + 1; 
-         ctx.cur_node->size += sizeof(msg_node) + value.length() + 1;
-         *(((char*)new_node) + sizeof(msg_node) + value.length()) = '\0';
-         strncpy( ((char*)new_node) + sizeof(msg_node), value.data(), value.length());
-
-         cerr << ctx.cur_tok.type << "?\n";
-        }
-      } 
-      else break;
-      if (!ctx.read_token()) return false;
-    }
-    return true;*/
     return false;
 }
 
@@ -581,7 +586,7 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
          int i = 0;
         for ( auto p = r->first; p != r->first + r->second.second; ++p){
             if (i % w == 0) cout << setw(5) << i << ": ";
-            cout << setw(3) << (int) *p << " ";
+            cout << setw(3) << (int)(*(unsigned char*)p) << " ";
             ++i;
             if (i % w == 0) {       
                 if (i){
