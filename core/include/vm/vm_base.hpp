@@ -809,14 +809,19 @@ namespace ceps{
                 static constexpr uint32_t F64 = 8;
                 static constexpr uint32_t ARRAY = 9;
                 static constexpr uint32_t SCOPE = 10;
+                static constexpr uint32_t BOOLEAN = 11;
+                static constexpr uint32_t NIL = 12;
                 uint32_t what;
-                size_t size;
+                size_t size;// @TODO: Size field only necessary if node is not a leaf => move one level up
             };
             struct msg_node_ex : msg_node{
                 static constexpr size_t MAX_NAME = 1024;
                 char name[MAX_NAME];
             };
             struct msg_node_int32:msg_node{
+                int32_t value;
+            };
+            struct msg_node_bool:msg_node{
                 int32_t value;
             };
             struct msg_node_int64:msg_node{

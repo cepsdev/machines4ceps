@@ -45,8 +45,13 @@ protobufish(
 	 };
 	 serialization_test{
 		"1";
-		"{}";
-		"{\"updatedAt\":\"2025-09-18 11:10\"}";
+		"\"Hello, World!\"";
+		"null";
+		"true";
+		"false";
+		//"{}";
+		//"{\"updatedAt\":\"2025-09-18 11:10\"}";
+		//"{\"updatedAt\":\"2025-09-18 11:10\", \"readAt\":\"2025-10-19 11:10\"}";
 		//"[\"hello\", false, 1.3, null]";
 	 };
 	}
