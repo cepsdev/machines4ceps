@@ -811,8 +811,10 @@ namespace ceps{
                 static constexpr uint32_t SCOPE = 10;
                 static constexpr uint32_t BOOLEAN = 11;
                 static constexpr uint32_t NIL = 12;
-                uint32_t what;
+                uint32_t what; //@TODO: identifier field doesn't need to be 32 bits wide, 8 bits suffice for the moment, 
+                               // should be replaced by variable sized intergers
                 size_t size;// @TODO: Size field only necessary if node is not a leaf => move one level up
+                            // @TODO: Should be replaced by variable sized integers
             };
             struct msg_node_ex : msg_node{
                 static constexpr size_t MAX_NAME = 1024;
