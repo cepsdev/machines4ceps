@@ -74,7 +74,8 @@ struct json_token{
 };
 
 optional<string> extract_str_value(json_token tok, string msg){
-    if (tok.type != json_token::string || tok.from >= tok.end || tok.end > msg.length())
+    //cerr << ">>" << msg << "<<" << tok.from << " - " << tok.from<< "\n";
+    if (tok.type != json_token::string || tok.from > tok.end || tok.end > msg.length())
      return {};
     string r; r.resize(tok.end - tok.from +10,'\0');
     size_t to{};
@@ -487,7 +488,7 @@ bool json2protobufish_internal(ser_ctxt_t& ctx){
 optional< pair< char* , pair<size_t,size_t> >> json2protobufish(string json){
     using namespace ceps::vm::oblectamenta;
     ser_ctxt_t ctx{json};
-    ctx.total = 1024;
+    ctx.total = 4096;
     ctx.used = 0;
     ctx.buffer = new char[ctx.total];
     ctx.cur_node = (msg_node*) ctx.buffer;
