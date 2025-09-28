@@ -36,6 +36,7 @@ namespace cepsplugin{
 class Arena{
     struct arena_header{
      arena_header* next{};
+     arena_header* prev{};
      char* available{};
      char* limit{};
      size_t counter{};
@@ -58,51 +59,102 @@ class Arena{
     char* allocate(size_t n, size_t arena){
         if (arena >= arena_count) return nullptr;
         auto ap = arenatails[arena];
-        while(ap->available + n > ap->limit) {            
+        while(ap->available + n > ap->limit) {
+                        
             if(!ap->next){
-                if (freeblocks) {
-                    ap->next = freeblocks; 
+                if (freeblocks) { 
+                    ap->next = freeblocks;
+                    freeblocks->prev = ap; 
                     freeblocks = freeblocks->next;
+                    if (freeblocks) freeblocks->prev = nullptr;
                     ap = arenatails[arena] = ap->next;
                     ap->next = nullptr;
                     ap->available = (char*)ap + sizeof(arena_header);
+                    ap->counter = 0;
                     continue; 
-                }
+                } else {
+                 size_t m = n * resize_factor + sizeof(arena_header);
+                 auto ap_prev = ap;
+                 ap = ap->next = (arena_header*) malloc(m);
+                 if (!ap) return nullptr;
+                 ap->prev = ap_prev;
+                 ap->next = nullptr;
+                 ap->counter = 0;
+                 ap->limit = (char*)ap + m;
+                 ap->available = (char*)ap + sizeof(arena_header);
+                 arenatails[arena] = ap;
+                 continue;
+               }
             }
 
-            if (!ap->next){
-                size_t m = n * resize_factor + sizeof(arena_header);
-                ap = ap->next = (arena_header*) malloc(m);
-                if (!ap) return nullptr;
-                ap->next = nullptr;
-                ap->counter = 0;
-                ap->limit = (char*)ap + m;
-                ap->available = (char*)ap + sizeof(arena_header);
-                arenatails[arena] = ap;
-                continue;
-            } else {
-                ap = ap->next;
-            }
         }
         if (ap){
             ap->available += n;
-            ap->counter++;
+            ++ap->counter;
             return ap->available - n;
         }
         return nullptr;
     }
+    arena_header* find_page(char* mem, size_t arena){
+        for(auto p = &arenahds[arena]; p; p = p->next){
+            if (p->limit > mem && (char*)p < mem) return p;
+        }
+        return nullptr;
+    }
+
+    void free(arena_header& page, size_t arena){
+        if (arenatails[arena] == &page) arenatails[arena] = page.prev;
+        if (page.next) page.next->prev = page.prev;
+        if (page.prev) page.prev->next = page.next; 
+        page.next = freeblocks;
+        page.prev = nullptr;
+        if(freeblocks) freeblocks->prev = &page;
+        freeblocks = &page;
+        
+    }
+
     char* reallocate(char* mem, size_t n_old, size_t n_new, size_t arena){
-        auto new_mem = allocate(n_new, arena);
+        auto new_mem = allocate(n_new, arena); //(*)
         if (!new_mem) return nullptr;
-        memcpy(new_mem,mem, n_old);
+        memcpy(new_mem,mem, n_old);   
+        auto page = find_page(mem,arena);
+        if (page && 0 == --page->counter){
+            //INVARIANT: page is not referenced && last allocation (*) hit another page
+            //=> page is neither head nor tail of page list
+            free(*page, arena);            
+        }
         return new_mem;
     }
     void free(size_t arena){
+        if (!arenahds[arena].next) return; // nothing to free
+        //INVARIANT: &arenahds[arena] != arenatails[arena]
         auto t = freeblocks;
-        freeblocks = arenahds[arena].next;
+        freeblocks = arenahds[arena].next; 
+        if(arenahds[arena].next) arenahds[arena].next->prev = nullptr;
         arenatails[arena]->next = t;
+        if (t) t->prev = arenatails[arena];
         arenatails[arena] = &arenahds[arena];
-        arenahds[arena].next = nullptr;
+        arenahds[arena].next = arenahds[arena].prev = nullptr;
+    }
+    void free(size_t arena, char* mem){
+        auto page = find_page(mem,arena);
+        /*if(page){
+            cerr << (page->prev == &arenahds[arena]) << "\n";
+            cerr << (arenahds[arena].next == page) << "\n";
+            cerr << (page->next == nullptr) << "\n"; 
+            cerr << (arenahds[arena].prev == nullptr) << "\n";
+            cerr << (freeblocks == nullptr) << "\n";
+        }*/
+        if (page && page != &arenahds[arena] && 0 == --page->counter) free(*page, arena);
+        /*if(page){
+            cerr << "\n";
+            cerr << (arenahds[arena].next == nullptr) << "\n";
+            cerr << (arenahds[arena].prev == nullptr) << "\n";
+            cerr << (page->next == nullptr) << "\n"; 
+            cerr << (page->prev == nullptr) << "\n"; 
+
+        }*/
+    
     }
 };
 
@@ -312,7 +364,7 @@ optional<json_token> get_token(char * buffer, size_t& loc, size_t n){
     return {json_token{json_token::eoi}};
 }
 
-bool json2protobufish_test_lexer(string json){
+bool json2protobufish_test_lexer(string json, bool print_info = false){
    size_t loc{};
     size_t n{json.length()};
     json_token cur_tok{};
@@ -321,32 +373,32 @@ bool json2protobufish_test_lexer(string json){
      if (!cur_tok_) return false;
      cur_tok = *cur_tok_;
      if (cur_tok.type == json_token::number){
-        cerr << "Number: "<< setprecision(14) << cur_tok.value_f << '\n';
+        if  (print_info) cout << "Number: "<< setprecision(14) << cur_tok.value_f << '\n';
      } else if (cur_tok.type == json_token::string){
         string str(cur_tok.end - cur_tok.from, ' ');
         strncpy(str.data(),json.data() + cur_tok.from,cur_tok.end - cur_tok.from);
-        cerr << "String: '"<< str << "'" << '\n';
+        if  (print_info) cout << "String: '"<< str << "'" << '\n';
         auto seval = extract_str_value(cur_tok,json);
-        if (!seval) cerr << "String is not well formed\n";
-        else cerr << "String (evaluated): '"<< *seval << "'" << '\n';
+        if  (print_info) if (!seval) cout << "String is not well formed\n";
+        else  cout << "String (evaluated): '"<< *seval << "'" << '\n';
      } else if (cur_tok.type == json_token::boolean) {
-        cerr << cur_tok.value_b << '\n';
+        if  (print_info) cout << cur_tok.value_b << '\n';
      } else if (cur_tok.type == json_token::colon){
-        cerr << ":\n";
+        if  (print_info) cout << ":\n";
      } else if (cur_tok.type == json_token::comma){
-        cerr << ",\n";
+        if  (print_info) cout << ",\n";
      } else if (cur_tok.type == json_token::rsqrbra){
-        cerr << "]\n";
+        if  (print_info) cout << "]\n";
      } else if (cur_tok.type == json_token::lsqrbra){
-        cerr << "[\n";
+        if  (print_info) cout << "[\n";
      } else if (cur_tok.type == json_token::rbrace){
-        cerr << "}\n";
+        if  (print_info) cout << "}\n";
      } else if (cur_tok.type == json_token::lbrace){
-        cerr << "{\n";
+        if  (print_info) cout << "{\n";
      } else if (cur_tok.type == json_token::null) {
-        cerr << "null" << '\n';
+        if  (print_info) cout << "null" << '\n';
      } else if (cur_tok.type == json_token::eoi){
-        cerr << "EOI\n";
+        if  (print_info) cout << "EOI\n";
      }
     } while (cur_tok.type != json_token::eoi);
     return true;
@@ -722,10 +774,99 @@ static size_t protobufish2stdrep(char* buffer, size_t size, std::string& res){
     return hd_size + content_size;
 }
 
+
+static size_t protobufish2json(char* buffer, size_t size, std::string& res){
+    using namespace ceps::vm::oblectamenta;
+    string r;
+    if (size == 0) return {};
+    
+    if (size < sizeof(msg_node)) return {};
+
+    msg_node& root{ *(msg_node*)buffer };
+    size_t len_extra_info{};
+    if (root.what == msg_node::NODE){
+        auto t = find_trailing_zero(buffer + sizeof(msg_node), size - sizeof(msg_node));
+        len_extra_info = t + 1;
+    }
+
+    auto hd_size = sizeof(msg_node) + len_extra_info;
+    
+    if (root.size <  hd_size) return 0;
+    auto content_size = root.size - hd_size;
+    size_t consumed_content_bytes{};
+    
+    if (root.what == msg_node::ROOT || root.what == msg_node::NODE || root.what == msg_node::ARRAY){
+        string prefix,suffix;
+        if (root.what == msg_node::NODE)
+        {
+            if (!strlen((char*)((msg_node_ex*)buffer)->name)) {prefix = "{"; suffix = "}";}
+            else prefix = string{"\""}+ (char*)((msg_node_ex*)buffer)->name +"\":";
+        } else if (root.what == msg_node::ROOT) {
+            prefix = "";
+            suffix = "";
+        } else {
+            prefix = "[";
+            suffix = "]";
+        }
+        string inner;
+        bool contains_nodes {};
+        
+        if (content_size){
+            for (;consumed_content_bytes < content_size;){ 
+                msg_node& n{ *(msg_node*)(buffer + hd_size + consumed_content_bytes)};
+                string t;
+                contains_nodes |= (n.what == msg_node::NODE); 
+                consumed_content_bytes += 
+                 protobufish2json(buffer+hd_size+consumed_content_bytes, content_size - consumed_content_bytes, t);
+                inner += t;
+                if (consumed_content_bytes < content_size )inner += ",";
+            }
+        }
+        
+        /*if (root.what == msg_node::NODE ) 
+         if (inner.size() == 0) inner = "{}";
+         else if (contains_nodes) inner = "{" + inner + "}";*/ 
+
+        res = prefix  + inner + suffix;   
+    } else if (root.what == msg_node::INT32){
+        msg_node_int32& m{ *(msg_node_int32*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_int32);
+    } else if (root.what == msg_node::INT64){
+        msg_node_int64& m{ *(msg_node_int64*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_int64);
+    } else if (root.what == msg_node::BOOLEAN){
+        msg_node_bool& m{ *(msg_node_bool*)&root};
+        res = m.value?"true":"false" ;
+        return sizeof(msg_node_bool);
+    } else if (root.what == msg_node::F64){
+        msg_node_f64& m{ *(msg_node_f64*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_f64);
+    } else if (root.what == msg_node::SZ){
+        msg_node_sz& m{ *(msg_node_sz*)&root};
+        res = "\"" + escape_str(m.value)+ "\"";
+        return sizeof(msg_node) + strlen(m.value) + 1;
+    } else if (root.what == msg_node::NIL){
+        res = "null";
+        return sizeof(msg_node);
+    }
+    return hd_size + content_size;
+}
+
 ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t params){
     using namespace std;
     using namespace ceps::ast;
     using namespace ceps::interpreter;
+    bool print_info{true};
+    bool print_hexdump{};
 
     auto data = get_first_child(params);    
     if (!is<Ast_node_kind::structdef>(data)) return nullptr;
@@ -733,29 +874,29 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
     //Lexer Tests
     for(auto e : children(ceps_struct)){
         if (!is<Ast_node_kind::structdef>(e) || name(as_struct_ref(e)) != "lexer_test" ) continue;
-        cerr << "*** Lexer Tests:\n";
+        if (print_info) cout << "*** Lexer Tests:\n";
         for(auto ee : children(as_struct_ref(e))){
          if (!is<Ast_node_kind::string_literal>(ee)) continue;
-         cout <<"Input: "<< value(as_string_ref(ee)) << "\n";
-         auto r{json2protobufish_test_lexer(value(as_string_ref(ee)))};
-         if (!r) cout << "Failed\n";
+         if (print_info) cout <<"Input: "<< value(as_string_ref(ee)) << "\n";
+         auto r{json2protobufish_test_lexer(value(as_string_ref(ee)), print_info)};
+         if (print_info) if (!r) cout << "Failed\n";
         }
     }
     // Serialization
-    for(int i = 0; i < 1000;++i) {
+    for(int i = 0; i < 10000;++i) {
         for(auto e : children(ceps_struct)){
         if (!is<Ast_node_kind::structdef>(e) || name(as_struct_ref(e)) != "serialization_test" ) continue;
-        cerr << "*** Serialization Tests:\n";
+        if (print_info) cout << "*** Serialization Tests:\n";
         for(auto ee : children(as_struct_ref(e))){
          if (!is<Ast_node_kind::string_literal>(ee)) continue;
-         cout <<"Input: "<< value(as_string_ref(ee)) << "\n";
+         if (print_info) cout <<">>"<< value(as_string_ref(ee)) << "\n";
          auto r{json2protobufish(value(as_string_ref(ee)), &protobufish_memory, 0)};
-         if (!r) cout << "Failed\n";
+         if (print_info)if (!r) cout << "Failed\n";
          string deser;
-
-         int w = 10;
-         int i = 0;
-        if (r) for ( auto p = r->first; p != r->first + r->second.second; ++p){
+         if (print_info && print_hexdump){
+          int w = 10;
+          int i = 0;
+          if (r) for ( auto p = r->first; p != r->first + r->second.second; ++p){
             if (i % w == 0) cout << setw(5) << i << ": ";
             cout << setw(3) << (int)(*(unsigned char*)p) << " ";
             ++i;
@@ -771,19 +912,19 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
                 }
                 cout << "\n";
             }
-        }
-        cerr << "\n";
-
-
-         if (r)cerr << ">>\n"; protobufish2stdrep(r->first, r->second.second,deser);
-         if (r)cout << "Deserialized:" << deser << "\n";
+          }
+          cout << "\n";
+         }
+         protobufish2json(r->first, r->second.second,deser);
+         if (print_info)if (r)cout << "<<" << deser << "\n";
+         protobufish_memory.free(0,r->first);
         }
     }
-    protobufish_memory.free(0);
+    //protobufish_memory.free(0);
 
     }
 
-    cout <<"\n\n";
+    if (print_info) cout <<"\n\n";
     auto result = mk_struct("result");
     children(*result).push_back(mk_int_node(42));
     return result;

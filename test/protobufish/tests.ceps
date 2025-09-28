@@ -44,7 +44,82 @@ protobufish(
 		" [ ] {  }  false , : true null \"hello\" \"he\\nllo\" \"\\\"\\\"\" ";
 		"{\"updatedAt\":\"2025-09-18 11:10\"}";
 	 };
-	 serialization_test{
+   serialization_test{
+		"1";
+		"\"Hello, World!\"";
+		"null";
+		"true";
+		"false";
+		"{}";
+		"{\"updatedAt\":\"2025-09-18 11:10\"}";
+		"{\"updatedAt\":\"2025-09-18 11:10\",\"readAt\":\"2025-10-19 11:10\"}";
+		"{\"updatedAt\":\"2025-09-18 11:10\",\"readAt\":\"2025-10-19 11:10\",\"votes\":1}";
+		"{\"item\":{\"value\":1.1,\"second value\":\"A value.\"},\"flag\":true}";
+		"{\"item\":{\"value\":1.1,\"second value\":\"A value.\"},\"flag\":true,\"another one\":{\"updatedAt\":\"2025-09-18 11:10\"}}";
+		"[]";
+		"[1,2,3]";
+		"{\"updatedAt\":\"2025-09-18 11:10\",\"items\":[1,2,3]}";
+		"{\"updatedAt\":\"2025-09-18 11:10\",\"items\":[1,{},2,3]}";
+		"{\"updatedAt\":\"2025-09-18 11:10\",\"items\":[1,{\"field\":\"value\"},2,3]}";
+"
+{
+ \"updatedAt\": \"2050-09-01 10:11\",
+ \"items\": [
+    {
+      \"name\": \"machines4ceps\",
+      \"description\": \"A tool for executable specifications written in modern, portable C++. Offers a comprehensive extendable DSL (Domain Specific Language) for specifying software with built-in support for UML state machines (and more). Comes with a runtime to run, trace and visualize your (state) machines.\",
+      \"whatfor\":[\"Fun\", \"Specifications\", \"More Fun\", \"\"],
+      \"audience\": {
+        \"tanker grenadier\": null,
+        \"generals\": null,
+        \"officers\": \"\",
+        \"lieutenants\": \"\",
+      },
+     \"funowow_ometer\": \"\",
+      \"fun_phase\": \"NA\",
+      \"fruit_phase\": \"\",
+      \"never_thought_this_gonna_happen\": \"NA\",
+      \"you_dont_own_it\": {
+        \"department\": \"Ministry of Defence\",
+        \"rank_ids\": null
+      },
+      \"the_uri\": \"\",
+      \"grafana_uri\": \"\",
+      \"my_personal_fitness_level\": \"\",
+      \"status\": null,
+      \"repository_url\": null,
+      \"tags\": [],
+      \"data_source\": \"Holy Sh*t\"
+    },
+    {
+      \"name\": \"machines4ceps\",
+      \"description\": \"A tool for executable specifications written in modern, portable C++. Offers a comprehensive extendable DSL (Domain Specific Language) for specifying software with built-in support for UML state machines (and more). Comes with a runtime to run, trace and visualize your (state) machines.\",
+      \"whatfor\":[\"Fun\", \"Specifications\", \"More Fun\", \"\"],
+      \"audience\": {
+        \"tanker grenadier\": null,
+        \"generals\": null,
+        \"officers\": \"\",
+        \"lieutenants\": \"\",
+      },
+     \"funowow_ometer\": \"\",
+      \"fun_phase\": \"NA\",
+      \"fruit_phase\": \"\",
+      \"never_thought_this_gonna_happen\": \"NA\",
+      \"you_dont_own_it\": {
+        \"department\": \"Ministry of Defence\",
+        \"rank_ids\": null
+      },
+      \"the_uri\": \"\",
+      \"grafana_uri\": \"\",
+      \"my_personal_fitness_level\": \"\",
+      \"status\": null,
+      \"repository_url\": null,
+      \"tags\": [],
+      \"data_source\": \"Holy Sh*t\"
+    } 
+ ]
+}
+";
 		"1";
 		"\"Hello, World!\"";
 		"null";
