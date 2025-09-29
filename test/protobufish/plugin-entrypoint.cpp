@@ -23,6 +23,7 @@
 #include "ceps_ast.hh"
 #include "core/include/state_machine_simulation_core.hpp"
 #include "core/include/vm/vm_base.hpp"
+#include "core/include/arena.hpp"
 
 using namespace std;
 
@@ -33,132 +34,7 @@ namespace cepsplugin{
     ceps::ast::node_t plugin_entrypoint(ceps::ast::node_callparameters_t params);
 }
 
-class Arena{
-    struct arena_header{
-     arena_header* next{};
-     arena_header* prev{};
-     char* available{};
-     char* limit{};
-     size_t counter{};
-    };
-
-    arena_header* arenahds{};
-    arena_header** arenatails{};
-    arena_header* freeblocks{};
-    size_t arena_count{};
-    float resize_factor {1.1};
-    public:
-    Arena(size_t arena_count): arena_count{arena_count}{
-     arenahds = (arena_header*)memset(malloc(arena_count * sizeof(arena_header)),0,arena_count * sizeof(arena_header));
-     arenatails = (arena_header**)memset(malloc(arena_count * sizeof(arena_header*)),0,arena_count * sizeof(arena_header*));
-     freeblocks = nullptr;
-     for (size_t i{}; i < arena_count; ++i){
-        arenatails[i] = &arenahds[i]; 
-     }
-    }
-    char* allocate(size_t n, size_t arena){
-        if (arena >= arena_count) return nullptr;
-        auto ap = arenatails[arena];
-        while(ap->available + n > ap->limit) {
-                        
-            if(!ap->next){
-                if (freeblocks) { 
-                    ap->next = freeblocks;
-                    freeblocks->prev = ap; 
-                    freeblocks = freeblocks->next;
-                    if (freeblocks) freeblocks->prev = nullptr;
-                    ap = arenatails[arena] = ap->next;
-                    ap->next = nullptr;
-                    ap->available = (char*)ap + sizeof(arena_header);
-                    ap->counter = 0;
-                    continue; 
-                } else {
-                 size_t m = n * resize_factor + sizeof(arena_header);
-                 auto ap_prev = ap;
-                 ap = ap->next = (arena_header*) malloc(m);
-                 if (!ap) return nullptr;
-                 ap->prev = ap_prev;
-                 ap->next = nullptr;
-                 ap->counter = 0;
-                 ap->limit = (char*)ap + m;
-                 ap->available = (char*)ap + sizeof(arena_header);
-                 arenatails[arena] = ap;
-                 continue;
-               }
-            }
-
-        }
-        if (ap){
-            ap->available += n;
-            ++ap->counter;
-            return ap->available - n;
-        }
-        return nullptr;
-    }
-    arena_header* find_page(char* mem, size_t arena){
-        for(auto p = &arenahds[arena]; p; p = p->next){
-            if (p->limit > mem && (char*)p < mem) return p;
-        }
-        return nullptr;
-    }
-
-    void free(arena_header& page, size_t arena){
-        if (arenatails[arena] == &page) arenatails[arena] = page.prev;
-        if (page.next) page.next->prev = page.prev;
-        if (page.prev) page.prev->next = page.next; 
-        page.next = freeblocks;
-        page.prev = nullptr;
-        if(freeblocks) freeblocks->prev = &page;
-        freeblocks = &page;
-        
-    }
-
-    char* reallocate(char* mem, size_t n_old, size_t n_new, size_t arena){
-        auto new_mem = allocate(n_new, arena); //(*)
-        if (!new_mem) return nullptr;
-        memcpy(new_mem,mem, n_old);   
-        auto page = find_page(mem,arena);
-        if (page && 0 == --page->counter){
-            //INVARIANT: page is not referenced && last allocation (*) hit another page
-            //=> page is neither head nor tail of page list
-            free(*page, arena);            
-        }
-        return new_mem;
-    }
-    void free(size_t arena){
-        if (!arenahds[arena].next) return; // nothing to free
-        //INVARIANT: &arenahds[arena] != arenatails[arena]
-        auto t = freeblocks;
-        freeblocks = arenahds[arena].next; 
-        if(arenahds[arena].next) arenahds[arena].next->prev = nullptr;
-        arenatails[arena]->next = t;
-        if (t) t->prev = arenatails[arena];
-        arenatails[arena] = &arenahds[arena];
-        arenahds[arena].next = arenahds[arena].prev = nullptr;
-    }
-    void free(size_t arena, char* mem){
-        auto page = find_page(mem,arena);
-        /*if(page){
-            cerr << (page->prev == &arenahds[arena]) << "\n";
-            cerr << (arenahds[arena].next == page) << "\n";
-            cerr << (page->next == nullptr) << "\n"; 
-            cerr << (arenahds[arena].prev == nullptr) << "\n";
-            cerr << (freeblocks == nullptr) << "\n";
-        }*/
-        if (page && page != &arenahds[arena] && 0 == --page->counter) free(*page, arena);
-        /*if(page){
-            cerr << "\n";
-            cerr << (arenahds[arena].next == nullptr) << "\n";
-            cerr << (arenahds[arena].prev == nullptr) << "\n";
-            cerr << (page->next == nullptr) << "\n"; 
-            cerr << (page->prev == nullptr) << "\n"; 
-
-        }*/
-    
-    }
-};
-
-Arena protobufish_memory(3);
+Arena<3> protobufish_memory;
 
 static string escape_str(string const & s)
 {
@@ -403,7 +279,7 @@ bool json2protobufish_test_lexer(string json, bool print_info = false){
     } while (cur_tok.type != json_token::eoi);
     return true;
 }
-
+template<typename arena_allocator_t>
 struct ser_ctxt_t{
  json_token cur_tok{.type=json_token::undef};
  json_token lookahead{.type=json_token::undef}; 
@@ -414,7 +290,7 @@ struct ser_ctxt_t{
  size_t total{};
  size_t used{};
  size_t cur_node_ofs;
- Arena* arena;
+ arena_allocator_t* arena;
  size_t arena_id;
  ser_ctxt_t(string& input): input{input},loc{}, n{input.length()} {}
  size_t available_space(){
@@ -440,8 +316,8 @@ json_token peek(){
  }
 };
 
-
-bool json2protobufish_consume_number(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_number(ser_ctxt_t<arena_allocator_t>& ctx){
     using namespace ceps::vm::oblectamenta;
     if (ctx.available_space()<sizeof(msg_node_f64)){
       size_t new_size = (sizeof(msg_node_f64) + ctx.total) * 1.1;
@@ -458,7 +334,8 @@ bool json2protobufish_consume_number(ser_ctxt_t& ctx){
     return ctx.read_token();
 }
 
-bool json2protobufish_consume_string(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_string(ser_ctxt_t<arena_allocator_t>& ctx){
     using namespace ceps::vm::oblectamenta;
     auto value_ = extract_str_value(ctx.cur_tok, ctx.input);
     if (!value_) return false;
@@ -480,7 +357,8 @@ bool json2protobufish_consume_string(ser_ctxt_t& ctx){
     return ctx.read_token();
 }
 
-bool json2protobufish_consume_null(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_null(ser_ctxt_t<arena_allocator_t>& ctx){
     using namespace ceps::vm::oblectamenta;
     if (ctx.available_space()<sizeof(msg_node)){
       size_t new_size = (sizeof(msg_node) + ctx.total) * 1.1;
@@ -496,7 +374,8 @@ bool json2protobufish_consume_null(ser_ctxt_t& ctx){
     return ctx.read_token();
 }
 
-bool json2protobufish_consume_boolean(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_boolean(ser_ctxt_t<arena_allocator_t>& ctx){
     using namespace ceps::vm::oblectamenta;
     if (ctx.available_space()<sizeof(msg_node_bool)){
       size_t new_size = (sizeof(msg_node_bool) + ctx.total) * 1.1;
@@ -512,10 +391,14 @@ bool json2protobufish_consume_boolean(ser_ctxt_t& ctx){
     cur_node->size += sizeof(msg_node_bool);
     return ctx.read_token(); 
 }
-bool json2protobufish_consume_object(ser_ctxt_t& ctx);
-bool json2protobufish_consume_array(ser_ctxt_t& ctx);
 
-bool json2protobufish_consume_element(ser_ctxt_t& ctx, bool read_token = true){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_object(ser_ctxt_t<arena_allocator_t>& ctx);
+template<typename arena_allocator_t>
+bool json2protobufish_consume_array(ser_ctxt_t<arena_allocator_t>& ctx);
+
+template<typename arena_allocator_t>
+bool json2protobufish_consume_element(ser_ctxt_t<arena_allocator_t>& ctx, bool read_token = true){
     using namespace ceps::vm::oblectamenta;
     if (read_token) if (!ctx.read_token()) return false;
     if (ctx.cur_tok.type == json_token::eoi) return false;
@@ -535,7 +418,8 @@ bool json2protobufish_consume_element(ser_ctxt_t& ctx, bool read_token = true){
     return true;
 }
 
-bool json2protobufish_consume_member(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_member(ser_ctxt_t<arena_allocator_t>& ctx){
    using namespace ceps::vm::oblectamenta;
    auto value_ = extract_str_value(ctx.cur_tok, ctx.input);
    if (!value_) return false;
@@ -572,7 +456,8 @@ bool json2protobufish_consume_member(ser_ctxt_t& ctx){
    return true;
 }
 
-bool json2protobufish_consume_object(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_object(ser_ctxt_t<arena_allocator_t>& ctx){
     using namespace ceps::vm::oblectamenta;
     if (ctx.available_space()<sizeof(msg_node) + 1){
       size_t new_size = (ctx.total + sizeof(msg_node) + 1) * 1.1;
@@ -606,7 +491,8 @@ bool json2protobufish_consume_object(ser_ctxt_t& ctx){
     return ctx.read_token(); // consume '}'
 }
 
-bool json2protobufish_consume_array(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_consume_array(ser_ctxt_t<arena_allocator_t>& ctx){
     using namespace ceps::vm::oblectamenta;
     if (ctx.available_space()<sizeof(msg_node)){
       size_t new_size = (ctx.total+sizeof(msg_node)) * 1.1;
@@ -640,7 +526,8 @@ bool json2protobufish_consume_array(ser_ctxt_t& ctx){
     return ctx.read_token(); // consume ']'
 }
 
-bool json2protobufish_internal(ser_ctxt_t& ctx){
+template<typename arena_allocator_t>
+bool json2protobufish_internal(ser_ctxt_t<arena_allocator_t>& ctx){
     using namespace ceps::vm::oblectamenta;
     if (!ctx.read_token()) return false;
     if (ctx.cur_tok.type == json_token::eoi) return false;
@@ -666,9 +553,10 @@ bool json2protobufish_internal(ser_ctxt_t& ctx){
     return false;
 }
 
-optional< pair< char* , pair<size_t,size_t> >> json2protobufish(string json, Arena* arena, size_t arena_id){
+template<typename arena_allocator_t>
+optional< pair< char* , pair<size_t,size_t> >> json2protobufish(string json, arena_allocator_t* arena, size_t arena_id){
     using namespace ceps::vm::oblectamenta;
-    ser_ctxt_t ctx{json};
+    ser_ctxt_t<arena_allocator_t> ctx{json};
     ctx.total = sizeof(msg_node);
     ctx.used = 0;
     ctx.arena = arena;
@@ -865,7 +753,7 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
     using namespace std;
     using namespace ceps::ast;
     using namespace ceps::interpreter;
-    bool print_info{true};
+    bool print_info{};
     bool print_hexdump{};
 
     auto data = get_first_child(params);    
@@ -883,14 +771,14 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
         }
     }
     // Serialization
-    for(int i = 0; i < 10000;++i) {
+    for(int i = 0; i < 1000000;++i) {
         for(auto e : children(ceps_struct)){
         if (!is<Ast_node_kind::structdef>(e) || name(as_struct_ref(e)) != "serialization_test" ) continue;
         if (print_info) cout << "*** Serialization Tests:\n";
         for(auto ee : children(as_struct_ref(e))){
          if (!is<Ast_node_kind::string_literal>(ee)) continue;
          if (print_info) cout <<">>"<< value(as_string_ref(ee)) << "\n";
-         auto r{json2protobufish(value(as_string_ref(ee)), &protobufish_memory, 0)};
+         auto r{json2protobufish<Arena<3>>(value(as_string_ref(ee)), &protobufish_memory, 0)};
          if (print_info)if (!r) cout << "Failed\n";
          string deser;
          if (print_info && print_hexdump){
