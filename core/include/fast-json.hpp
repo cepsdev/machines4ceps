@@ -461,6 +461,8 @@ template<typename arena_allocator_t>
     }
     return false;
    }
+   using read_return_t = optional< pair< char* , pair<size_t,size_t> >>;
+   
    optional< pair< char* , pair<size_t,size_t> >> read(string json, arena_allocator_t* arena, size_t arena_id){
     ser_ctxt_t ctx{json};
     ctx.total = sizeof(msg_node);

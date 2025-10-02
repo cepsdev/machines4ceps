@@ -37,28 +37,6 @@ namespace cepsplugin{
 
 Arena<3> protobufish_memory;
 
-static string escape_str(string const & s)
-{
-	string result;
-	for(unsigned int i = 0; i != s.length();++i)
-	{
-		if (s[i] == '\n')
-			result+="\\n";
-		else if (s[i] == '\\')
-			result+="\\\\";
-		else if (s[i] == '\t')
-			result+="\\t";
-		else if (s[i] == '\r')
-			result+="\\r";
-		else if (s[i] == '"')
-			result+="\\\"";
-		else if (std::isprint(s[i]))
-			result += s[i];
-	}
-	return result;
-}
-
-
 static size_t find_trailing_zero(char* buffer, size_t size)
 {
     size_t r{};
@@ -105,6 +83,27 @@ bool json2protobufish_test_lexer(string json, bool print_info = false){
      }
     } while (cur_tok.type != json_token::eoi);
     return true;
+}
+
+static string escape_str(string const & s)
+{
+	string result;
+	for(unsigned int i = 0; i != s.length();++i)
+	{
+		if (s[i] == '\n')
+			result+="\\n";
+		else if (s[i] == '\\')
+			result+="\\\\";
+		else if (s[i] == '\t')
+			result+="\\t";
+		else if (s[i] == '\r')
+			result+="\\r";
+		else if (s[i] == '"')
+			result+="\\\"";
+		else if (std::isprint(s[i]))
+			result += s[i];
+	}
+	return result;
 }
 
 static size_t protobufish2json(char* buffer, size_t size, std::string& res){
@@ -192,7 +191,7 @@ ceps::ast::node_t cepsplugin::plugin_entrypoint(ceps::ast::node_callparameters_t
     using namespace std;
     using namespace ceps::ast;
     using namespace ceps::interpreter;
-    bool print_info{true};
+    bool print_info{};
     bool print_hexdump{};
 
     auto data = get_first_child(params);    

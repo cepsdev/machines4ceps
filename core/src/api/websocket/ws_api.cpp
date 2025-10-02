@@ -6,6 +6,8 @@
 #include <cstring>
 #include <atomic>
 #include "core/include/base_defs.hpp"
+#include "core/include/arena.hpp"
+#include "core/include/fast-json.hpp"
 
 /*
 * State Machine Utilities
@@ -797,6 +799,118 @@ class Execute_push : public sm4ceps_plugin_int::Executioncontext {
       if(!send_ws_text_msg(sck,r)) closesocket(sck);
     }
 };
+
+static size_t find_trailing_zero(char* buffer, size_t size)
+{
+    size_t r{};
+    for (;r < size && buffer[r]; ++r);
+    return r;
+}
+
+static std::string escape_str(std::string const & s)
+{
+    using namespace std;
+	string result;
+	for(unsigned int i = 0; i != s.length();++i)
+	{
+		if (s[i] == '\n')
+			result+="\\n";
+		else if (s[i] == '\\')
+			result+="\\\\";
+		else if (s[i] == '\t')
+			result+="\\t";
+		else if (s[i] == '\r')
+			result+="\\r";
+		else if (s[i] == '"')
+			result+="\\\"";
+		else if (std::isprint(s[i]))
+			result += s[i];
+	}
+	return result;
+}
+
+static size_t protobufish2json(char* buffer, size_t size, std::string& res){
+    using namespace std;
+    using namespace ceps::vm::oblectamenta;
+    string r;
+    if (size == 0) return {};
+    
+    if (size < sizeof(msg_node)) return {};
+
+    msg_node& root{ *(msg_node*)buffer };
+    size_t len_extra_info{};
+    if (root.what == msg_node::NODE){
+        auto t = find_trailing_zero(buffer + sizeof(msg_node), size - sizeof(msg_node));
+        len_extra_info = t + 1;
+    }
+
+    auto hd_size = sizeof(msg_node) + len_extra_info;
+    
+    if (root.size <  hd_size) return 0;
+    auto content_size = root.size - hd_size;
+    size_t consumed_content_bytes{};
+    
+    if (root.what == msg_node::ROOT || root.what == msg_node::NODE || root.what == msg_node::ARRAY){
+        string prefix,suffix;
+        if (root.what == msg_node::NODE)
+        {
+            if (!strlen((char*)((msg_node_ex*)buffer)->name)) {prefix = "{"; suffix = "}";}
+            else prefix = string{"\""}+ (char*)((msg_node_ex*)buffer)->name +"\":";
+        } else if (root.what == msg_node::ROOT) {
+            prefix = "";
+            suffix = "";
+        } else {
+            prefix = "[";
+            suffix = "]";
+        }
+        string inner;
+        bool contains_nodes {};
+        
+        if (content_size){
+            for (;consumed_content_bytes < content_size;){ 
+                msg_node& n{ *(msg_node*)(buffer + hd_size + consumed_content_bytes)};
+                string t;
+                contains_nodes |= (n.what == msg_node::NODE); 
+                consumed_content_bytes += 
+                 protobufish2json(buffer+hd_size+consumed_content_bytes, content_size - consumed_content_bytes, t);
+                inner += t;
+                if (consumed_content_bytes < content_size )inner += ",";
+            }
+        }
+        res = prefix  + inner + suffix;   
+    } else if (root.what == msg_node::INT32){
+        msg_node_int32& m{ *(msg_node_int32*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_int32);
+    } else if (root.what == msg_node::INT64){
+        msg_node_int64& m{ *(msg_node_int64*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_int64);
+    } else if (root.what == msg_node::BOOLEAN){
+        msg_node_bool& m{ *(msg_node_bool*)&root};
+        res = m.value?"true":"false" ;
+        return sizeof(msg_node_bool);
+    } else if (root.what == msg_node::F64){
+        msg_node_f64& m{ *(msg_node_f64*)&root};
+        stringstream ss;
+        ss << m.value;
+        res = ss.str();
+        return sizeof(msg_node_f64);
+    } else if (root.what == msg_node::SZ){
+        msg_node_sz& m{ *(msg_node_sz*)&root};
+        res = "\"" + escape_str(m.value)+ "\"";
+        return sizeof(msg_node) + strlen(m.value) + 1;
+    } else if (root.what == msg_node::NIL){
+        res = "null";
+        return sizeof(msg_node);
+    }
+    return hd_size + content_size;
+}
+
 void Websocket_interface::handler(int sck){
  using wstable_t = std::vector<State_machine_simulation_core::global_states_t::iterator>;
  auto period = std::shared_ptr<std::chrono::microseconds>(new std::chrono::microseconds{1000});
@@ -1070,7 +1184,31 @@ void Websocket_interface::handler(int sck){
           State_machine_simulation_core::event_t ev;
           ev.id_ = name;
           smc_->enqueue_event(ev);
-          reply = "{\"ok\": true }";
+          reply = "";
+        } else  if (args.size() == 2) /*JSON payload*/ {
+          State_machine_simulation_core::event_t ev;
+          bool fire_event{};
+          ceps::vm::oblectamenta::fast_json<Arena<1>>::read_return_t r{};
+          {
+            std::lock_guard<std::mutex> g{smc_->protobufish_payload_allocator_m};
+            ceps::vm::oblectamenta::fast_json<decltype(State_machine_simulation_core::protobufish_payload_allocator)> jsn{};
+            r = jsn.read(args[1],&smc_->protobufish_payload_allocator,0);
+            if (r){
+                fire_event = true;
+                ev.id_ = name;
+		        ev.protobufish_msg = r->first;
+		        ev.protobufish_msg_size = r->second.second;
+            }            
+          }        
+          if (fire_event){
+            std::string res;
+            protobufish2json(ev.protobufish_msg, ev.protobufish_msg_size, res);
+            std::cout << "Event " << ev.id_ << " payload="<< res << '\n';
+            smc_->enqueue_event(ev);
+            reply = "";
+          } else {
+            reply = "";
+          }
         }
      } else if (cmd[0] == "GET_KNOWN_STREAMING_ENDPOINTS") {
          reply = "{\"ok\": true,\n\"endpoints\":[";
@@ -1122,7 +1260,7 @@ void Websocket_interface::handler(int sck){
       }
     }//cmd.size()!=0
     //std::cout << reply << std::endl;
-    if(!send_reply(reply)) break;
+    if (reply.length()) if(!send_reply(reply)) break;
    }
   }//for
 }

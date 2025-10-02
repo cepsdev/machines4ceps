@@ -66,7 +66,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include "core/include/vm/vm_base.hpp"
 #include "core/include/vm/oblectamenta-assembler.hpp"
 #include "core/include/vm/oblectamenta-comp-graph.hpp"
-
+#include "core/include/arena.hpp"
+#include "core/include/fast-json.hpp"
 
 namespace log4cepsloggers = log4ceps_loggers;
 
@@ -151,6 +152,11 @@ class State_machine_simulation_core:
 {
 public:
     //Oblectamenta related stuff
+	Arena<1> protobufish_payload_allocator;      // messages which are serialized into a protobufish representation
+	                                             // are managed using this arena. 
+	std::mutex protobufish_payload_allocator_m;  // Arena is accessed councurrently from the communication threads on one
+	                                             // end and the event queue consumer on the other.
+
 	ceps::vm::oblectamenta::VMEnv vm; //The associated Oblectamenta VM, used for actions, guards, etc. in Oblectamenta's assembler.
 									// Oblectamenta serves as an intermediate for native machine language, i.e. on an x64 platform 
 									// routines in Oblectamenta assembler will be compiled to x84 machine code.
@@ -160,20 +166,20 @@ public:
 
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
-        using frame_queue_elem_t = std::tuple<
+    using frame_queue_elem_t = std::tuple<
                                               Rawframe_generator::gen_msg_return_t,
                                               size_t,
                                               size_t,
                                               int>;
 	using frame_queue_t = threadsafe_queue< frame_queue_elem_t, std::queue<frame_queue_elem_t>>;
-        using global_states_t = std::map<std::string, ceps::ast::Nodebase_ptr>;
-        int frame_carries_gateway_socket(frame_queue_elem_t const & frm){
+    using global_states_t = std::map<std::string, ceps::ast::Nodebase_ptr>;
+    int frame_carries_gateway_socket(frame_queue_elem_t const & frm){
             if ( std::get<1>(std::get<0>(frm)) == nullptr && std::get<1>(frm) == 0 && std::get<2>(frm) == 0 )
                 return std::get<3>(frm);
             return -1;
-        }
-        std::vector<std::string> push_modules;
-        std::string push_dir;
+    }
+    std::vector<std::string> push_modules;
+    std::string push_dir;
         //
         //
         //
@@ -372,6 +378,8 @@ public:
 		bool str_id_valid_{true};
 
 		bool already_sent_to_out_queues_ = false;
+		char* protobufish_msg = nullptr;
+		size_t protobufish_msg_size = 0;
 		std::vector<ceps::ast::Nodebase_ptr> payload_;
 		std::vector<sm4ceps_plugin_int::Variant> payload_native_;
 		bool unique_= false;
