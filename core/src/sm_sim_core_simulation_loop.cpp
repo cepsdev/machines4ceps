@@ -603,6 +603,8 @@ static bool is_a_simulation_directive(ceps::ast::Nodebase_ptr n){
  return false;
 }
 
+size_t protobufish2json(char* buffer, size_t size, std::string& res);
+
 void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
 		                                     states_t& states_in,
 		                                     ceps::Ceps_Environment& ceps_env,
@@ -894,8 +896,14 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
                       do_break,
                       &ev_sig);
 	 if (do_continue) continue;	 if (do_break) break;
+     if (current_event().protobufish_msg){
+        std::string res;
+        protobufish2json(current_event().protobufish_msg, current_event().protobufish_msg_size, res);
+        //std::cout << "Event " << current_event().id_ << " payload="<< res << '\n';
+        //TODO: Copy message to vm controlled buffer
+     }
 	} else {
-	 ev_read = true;ev_id   = execution_ctxt.front_ev_sync_queue();
+	 ev_read = true;ev_id   = execution_ctxt.front_ev_sync_queue(); 
 	 execution_ctxt.pop_ev_sync_queue(); execution_ctxt.current_ev_id = ev_id;
 	}
   }

@@ -397,6 +397,8 @@ public:
 		}
 		bool is_epsilon() const {return id_ == "";}
 		event_t& operator = (event_rep_t const & rhs) {
+			protobufish_msg = rhs.protobufish_msg;
+			protobufish_msg_size = rhs.protobufish_msg_size;
 			str_id_valid_ = rhs.sid_valid_;
 			iid_ = rhs.iid_;
 			error_ = (error_t*) rhs.error_token_; id_=rhs.sid_;payload_=rhs.payload_;payload_native_=rhs.payload_native_;return *this;

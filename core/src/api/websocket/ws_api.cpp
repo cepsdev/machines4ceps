@@ -829,7 +829,7 @@ static std::string escape_str(std::string const & s)
 	return result;
 }
 
-static size_t protobufish2json(char* buffer, size_t size, std::string& res){
+size_t protobufish2json(char* buffer, size_t size, std::string& res){
     using namespace std;
     using namespace ceps::vm::oblectamenta;
     string r;
@@ -1180,6 +1180,7 @@ void Websocket_interface::handler(int sck){
          }
       }else if (cmd[0] == "EVENT" && args.size()) {
         auto const & name = args[0];
+        //std::cout << name << " " << args.size() << '\n'; 
         if (args.size() == 1){
           State_machine_simulation_core::event_t ev;
           ev.id_ = name;
@@ -1201,9 +1202,9 @@ void Websocket_interface::handler(int sck){
             }            
           }        
           if (fire_event){
-            std::string res;
-            protobufish2json(ev.protobufish_msg, ev.protobufish_msg_size, res);
-            std::cout << "Event " << ev.id_ << " payload="<< res << '\n';
+            //std::string res;
+            //protobufish2json(ev.protobufish_msg, ev.protobufish_msg_size, res);
+            //std::cout << "Event " << ev.id_ << " payload="<< res << '\n';
             smc_->enqueue_event(ev);
             reply = "";
           } else {

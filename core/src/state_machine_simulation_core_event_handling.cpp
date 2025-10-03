@@ -194,6 +194,8 @@ do{
              if (eev.str_id_valid_ && eev.id_.length() == 0) continue;
 
 			 ev.sid_ = eev.id_;
+			 ev.protobufish_msg = eev.protobufish_msg;
+			 ev.protobufish_msg_size = eev.protobufish_msg_size;
 			 ev.sid_valid_ = eev.str_id_valid_;
 			 ev.iid_ = eev.iid_;
 

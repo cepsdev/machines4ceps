@@ -420,6 +420,8 @@ struct event_rep_t {
 	std::string sid_;
 	std::vector<ceps::ast::Nodebase_ptr> payload_;
 	std::vector<sm4ceps_plugin_int::Variant> payload_native_;
+  char* protobufish_msg = nullptr;
+  size_t protobufish_msg_size = 0;
 	sm4ceps_plugin_int::Variant (*glob_func_)()  = nullptr;
 	void* error_token_ = nullptr;
 	bool valid() const {return valid_;}
