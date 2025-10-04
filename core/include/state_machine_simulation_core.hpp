@@ -161,6 +161,7 @@ public:
 									// Oblectamenta serves as an intermediate for native machine language, i.e. on an x64 platform 
 									// routines in Oblectamenta assembler will be compiled to x84 machine code.
 	std::vector< std::pair<void *, std::string>> loaded_dlls;
+	size_t oblectamenta_global_event_buffer_offs{std::numeric_limits<size_t>::max()}; // offset in vm's global data for event payloads - a very low level feature
 
 	void fire_event(int) override;
 

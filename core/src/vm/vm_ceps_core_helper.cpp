@@ -153,7 +153,10 @@ void handle_oblectamenta_blocks(State_machine_simulation_core* smc,Result_proces
 								smc->fatal_(2,"[Oblectementa Assembler][data section] Failed to serialize message.\n"+ss.str());
 							}
 						}
-					}
+					} else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e))=="OblectamentaGlobalEventPayload")
+					{  
+						smc->oblectamenta_global_event_buffer_offs = smc->vm.mem.heap - smc->vm.mem.base;
+					}					
 				}
 			} else if (is<Ast_node_kind::structdef>(sub_sec) && name(as_struct_ref(sub_sec)) == "extern" ) { 
 			//handle case: oblectamenta{... global{ ...extern{}... }...}

@@ -897,8 +897,13 @@ void State_machine_simulation_core::run_simulation(ceps::ast::Nodeset sim,
                       &ev_sig);
 	 if (do_continue) continue;	 if (do_break) break;
      if (current_event().protobufish_msg){
-        std::string res;
-        protobufish2json(current_event().protobufish_msg, current_event().protobufish_msg_size, res);
+        if (oblectamenta_global_event_buffer_offs != std::numeric_limits<size_t>::max()){
+            memcpy(vm.mem.base+oblectamenta_global_event_buffer_offs,current_event().protobufish_msg,current_event().protobufish_msg_size);
+            std::lock_guard<std::mutex> g{protobufish_payload_allocator_m};
+            protobufish_payload_allocator.free(0,current_event().protobufish_msg);
+        }
+        //std::string res;
+        //protobufish2json(current_event().protobufish_msg, current_event().protobufish_msg_size, res);
         //std::cout << "Event " << current_event().id_ << " payload="<< res << '\n';
         //TODO: Copy message to vm controlled buffer
      }
