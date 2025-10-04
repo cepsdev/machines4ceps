@@ -724,6 +724,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name,
 
     emwsa(r,"buc",lbl_next_node,"OblectamentaCodeLabel");
     emlbl(r,lbl_names_equal);
+    //if (node_name.length() == 0) em(r,"dbg_print_cs_and_regs", 0);
     //|content-size|addr of current child|addr of node-name|addr of name
     //Invariant: we found our node, match the rest
     //Discard address of name which fulfilled its duty
@@ -775,7 +776,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name,
     //|content-size|addr of node node_name|addr of first child of node_name|content size|offset|
     for(auto mn: mnemonics){
         //|content-size|addr of node node_name|addr of ith child of node_name|content size|offset|
-        if(is<Ast_node_kind::structdef>(mn)){
+        if(is<Ast_node_kind::structdef>(mn) || is<Ast_node_kind::scope>(mn)){
             //|content-size|addr of node node_name|addr of first child of node_name|content size|offset|
             tag_read = true;
             em(r,"swpi64i192");
@@ -784,7 +785,11 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name,
 
             //em(r,"dbg_print_cs_and_regs", 0);
             //Invariant: |addr of message|addr of last non matched child|content-size|
-            oblectamenta_assembler_preproccess_match(name(as_struct_ref(mn)), vm, r, children(as_struct_ref(mn)));
+            if(is<Ast_node_kind::structdef>(mn)) 
+             oblectamenta_assembler_preproccess_match(name(as_struct_ref(mn)), vm, r, children(as_struct_ref(mn)));
+            else
+             oblectamenta_assembler_preproccess_match("", vm, r, children(as_scope_ref(mn)));
+
             em(r,"bzeroi32");
             //Invariant:|content-size|offset|addr of message|addr of matched node|remaining content-size| Node Matched (flag) |
             emwsa(r,"bzeroi64",lbl_match_failed,"OblectamentaCodeLabel");
@@ -1051,8 +1056,12 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
 
 
          for(auto child: children(as_struct_ref(mnem)) ){
-            if (is<Ast_node_kind::structdef>(child)){
-                 auto loop_over_all{all_modfifier(children(as_struct_ref(child)))};
+            if (is<Ast_node_kind::structdef>(child) || is<Ast_node_kind::scope>(child)  ){
+             vector<node_t> chldrn;
+             if (is<Ast_node_kind::structdef>(child)) chldrn = children(as_struct_ref(child));
+             else chldrn = children(as_scope_ref(child));
+
+             auto loop_over_all{all_modfifier(chldrn)};
 
              //emwa(r,"dbg_print_cs_and_regs", 0);//em(r,"halt");
              //Invariant: |addr of message|addr of last non matched child|content-size|
@@ -1066,7 +1075,10 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
                 emlbl(r,lbl_loop);
              }
 
-             oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, children(as_struct_ref(child)));
+             if (is<Ast_node_kind::structdef>(child)) 
+              oblectamenta_assembler_preproccess_match(name(as_struct_ref(child)), vm, r, chldrn);
+            else
+              oblectamenta_assembler_preproccess_match("", vm, r, chldrn);
              //emwa(r,"dbg_print_cs_and_regs", 0);
              //Invariant: |addr of message|addr of matched node|remaining content-size| Node Matched (flag) |
              //Check whether successful or not
