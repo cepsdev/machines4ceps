@@ -152,7 +152,8 @@ OblectamentaOpcode
     assert_deserialized_protobufish_message_equals_str,
     dbg_print_topi32,
     asserteqi32,
-    dbg_printsz
+    dbg_printsz,
+    dbg_print_topf64
     ;
 
 OblectamentaModifier addr;

@@ -255,13 +255,20 @@ static std::vector<ceps::ast::node_t>& emlbl(std::vector<ceps::ast::node_t>& r, 
     return r;
 }
 
-static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t mnemonic,std::vector<ceps::ast::node_t>& r){
+static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm,
+     ceps::ast::node_t mnemonic,
+     std::vector<ceps::ast::node_t>& r){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     //INVARIANT: ARG0 contains destination address
     //result.push_back(gen_mnemonic("ldi64", 8));
-    if (!is<Ast_node_kind::structdef>(mnemonic)) return;
+    //if (!is<Ast_node_kind::structdef>(mnemonic)) return;
 
-    auto node_name{name(as_struct_ref(mnemonic))};
+    string node_name{};
+    if (is<Ast_node_kind::structdef>(mnemonic)) node_name = name(as_struct_ref(mnemonic));
+    vector<node_t> chldrn;
+    if (is<Ast_node_kind::structdef>(mnemonic)) chldrn = children(as_struct_ref(mnemonic));
+    else chldrn = children(as_scope_ref(mnemonic));
+    
     const auto addr_node_name = vm.mem.heap - vm.mem.base; 
     vm.store(node_name);vm.store('\0');
     
@@ -329,8 +336,8 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          r.push_back(gen_mnemonic("subi64"));                                                   
          r.push_back(gen_mnemonic("stsi64"));
                                                    
-         for(auto child: children(as_struct_ref(mnemonic)) ){
-            if (is<Ast_node_kind::structdef>(child)){
+         for(auto child: chldrn ){
+            if (is<Ast_node_kind::structdef>(child) || is<Ast_node_kind::scope>(child) ){
              r.push_back(gen_mnemonic("ldi64", rel_addr_root));                       
              r.push_back(gen_mnemonic_sym_arg("ldi64","FP","OblectamentaReg"));             
              r.push_back(gen_mnemonic("subi64"));
@@ -1135,6 +1142,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());
          pos += r.size();
         } else if (is_a_msgdefdirective(mnem)){
+         // write case
          auto mem_loc = static_mem_location(vm,mnem);
          if (!mem_loc) { 
           stringstream offending_msg;
@@ -1186,7 +1194,7 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
          r.push_back(gen_mnemonic("stsi64"));                                          
          
          for(auto child: children(as_struct_ref(mnem)) ){
-            if (is<Ast_node_kind::structdef>(child)){
+            if (is<Ast_node_kind::structdef>(child) || is<Ast_node_kind::scope>(child)){
              r.push_back(gen_mnemonic_sym_arg("lea",*mem_loc,"OblectamentaDataLabel")); 
              r.push_back(gen_mnemonic("ldi64", sizeof(msg_node)));
              r.push_back(gen_mnemonic("addi64"));
@@ -1248,6 +1256,12 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
  map<string,size_t> codelabel2loc; // code label => location in storage
  size_t& text_loc = vm.text_loc;
 
+ bool postponed_msg_with_payload{};
+ size_t postponed_buffer{};
+ int postponed_ev{};
+ size_t postponed_insert_after{};
+ ceps::vm::oblectamenta::mnemonics_t::mapped_type postponed_mnem;
+
  for (size_t stmt_pos{}; stmt_pos < mnemonics.size(); ++stmt_pos){
     if ( text_loc + 10*max_opcode_width >= vm.text_size){
         //vm.resize_text(8192);
@@ -1291,6 +1305,49 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
         if (sym_kind == "Event"){
             if (args.size() && is<Ast_node_kind::structdef>(args[0]) && "msg" == name(as_struct_ref(args[0]))) {
                 // Case : message
+                //cout << *e << '\n';
+                vector<node_t> mnems;
+                mnems.push_back(args[0]);
+                oblectamenta_assembler_preproccess (vm, mnems);
+                mnemonics.insert(mnemonics.begin() + stmt_pos + 1, mnems.begin(), mnems.end());
+                
+                
+                //INVARIANT: Code for payload generation is in place
+                auto event_name{sym_name};
+                auto it{ceps::vm::oblectamenta::mnemonics.find("msg@Event@@OblectamentaDataLabel@")};
+                if (it == ceps::vm::oblectamenta::mnemonics.end()) 
+                 throw std::string{"oblectamenta_assembler: Internal Error (msg@Event@@OblectamentaDataLabel@ opcode not found)" };
+                auto v{it->second};
+                postponed_mnem = v;
+                auto ev_id_it{ev_to_id.find(event_name)};
+                if (ev_id_it == ev_to_id.end())
+                 throw std::string{"oblectamenta_assembler: event '"+event_name+"' has no encoding" };
+                // get the buffer address
+                string buffer_name{};
+                for(auto e: children(as_struct_ref(args[0]))){
+                    if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaDataLabel" ){
+                        buffer_name = name(as_symbol_ref(e));
+                        break;
+                    }
+                }//for
+                if (buffer_name.length() == 0) {
+                 stringstream offending_msg;
+                 offending_msg << *args[0];
+                 throw 
+                  string{"oblectamenta_assembler: Message Directive contains no data label (hence I don't know where to read the bytes from). Offending message directive is >>>"+ offending_msg.str() +"<<<" };
+                }
+                auto data_label_it{vm.data_labels().find(buffer_name)};
+                if (data_label_it == vm.data_labels().end()) 
+                    throw std::string{"oblectamenta_assembler: unknown data label: '"+ buffer_name +"'" };
+
+                postponed_msg_with_payload = true;
+                postponed_buffer = data_label_it->second;
+                postponed_ev = ev_id_it->second;
+                postponed_insert_after = stmt_pos + mnems.size();
+                //for (auto e: mnems) cout << *e << '\n';
+                //cout << "\n\n\n\n";
+                //for(size_t i = stmt_pos + 1; i < mnemonics.size(); ++i ) cout << *mnemonics[i] << '\n';
+                //for (auto e: mnems) cout << *e << '\n';
                 /*char buffer[512];
                 auto written_bytes = serialize_event_payload(args[0],buffer,512);
                 string json_msg;
@@ -1498,6 +1555,15 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
             } else throw std::string{"oblectamenta_assembler: illformed mnemonic '"+ mnemonic+"'" };
         }
     } 
+
+    if (postponed_msg_with_payload  && postponed_insert_after == stmt_pos){
+        if (get<6>(postponed_mnem)) text_loc = get<6>(postponed_mnem)(vm,text_loc,postponed_ev,postponed_buffer);
+        else throw std::string{"oblectamenta_assembler: Internal Error (msg@Event@@OblectamentaDataLabel@ opcode emitter not found)" };
+        postponed_msg_with_payload = false;
+        postponed_buffer = 0;
+        postponed_ev = 0;
+        postponed_insert_after = 0;
+    }
  } //for
  if (append_halt)
     text_loc = emit<Opcode::halt>(vm,text_loc);

@@ -272,6 +272,12 @@ namespace ceps::vm::oblectamenta{
         cout << t << '\n';
         return base_opcode_width + pos;
     } 
+    size_t VMEnv::dbg_print_topf64(size_t pos){
+        auto t{pop_cs<double>()};
+        push_cs(t);
+        cout << t << '\n';
+        return base_opcode_width + pos;
+    } 
 
     size_t VMEnv::dbg_print_topi32(size_t pos){
         auto t{pop_cs<int32_t>()};
@@ -1031,7 +1037,12 @@ namespace ceps::vm::oblectamenta{
         if (event_queue) event_queue->fire_event(event_id);
         return base_opcode_width + sizeof(addr_t) + pos;
     }
-
+    size_t VMEnv::msg_glob_buffer(size_t pos){
+        auto event_id { *((addr_t*)(text+pos+base_opcode_width))};
+        auto payload_addr { *((addr_t*)(text+pos+base_opcode_width + sizeof(addr_t)))};
+        if (event_queue) event_queue->fire_event(event_id, payload_addr);
+        return base_opcode_width + sizeof(addr_t) + sizeof(addr_t) + pos;
+    }   
     size_t VMEnv::discardtopi32(size_t pos){
         pop_cs<int32_t>();
         return base_opcode_width + pos;
@@ -1254,6 +1265,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::asserteqi32sz);
         op_dispatch.push_back(&VMEnv::ldi32reg);
         op_dispatch.push_back(&VMEnv::dbg_printsz);
+        op_dispatch.push_back(&VMEnv::dbg_print_topf64);
+        op_dispatch.push_back(&VMEnv::msg_glob_buffer);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

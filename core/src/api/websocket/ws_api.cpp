@@ -1195,6 +1195,31 @@ void Websocket_interface::handler(int sck){
             ceps::vm::oblectamenta::fast_json<decltype(State_machine_simulation_core::protobufish_payload_allocator)> jsn{};
             r = jsn.read(args[1],&smc_->protobufish_payload_allocator,0);
             if (r){
+                // add websocket information
+                // we add the connection details at the very end of the message
+                // the additional information is the field origin_websocket_sock
+                // We add a node of type NODE, with the field name 'origin_websocket_sock' and a 32 bit int value which
+                // contains the socket id
+                using namespace ceps::vm::oblectamenta;
+                string field_name = "origin_websocket_sock";
+                size_t additional_space_origin_info = sizeof(msg_node) + sizeof(msg_node_int32) + field_name.length() + 1;
+                if (r->second.first <= r->second.second + additional_space_origin_info ){
+                    // resize buffer to allow for addtional data
+                    auto r_realloc = 
+                     smc_->protobufish_payload_allocator.reallocate(r->first,r->second.first,r->second.second + additional_space_origin_info,0);
+                     if (!r_realloc){smc_->protobufish_payload_allocator.free(0,r->first);continue;}
+                     auto field{new (r_realloc + r->second.second)msg_node{}};
+                     field->what = msg_node::NODE;
+                     field->size = additional_space_origin_info;
+                     strncpy( r_realloc + r->second.second + sizeof(msg_node), field_name.c_str(),field_name.length());
+                     char* int_field_addr = r_realloc + r->second.second + sizeof(msg_node) + field_name.length() + 1;
+                     auto int_field{new (int_field_addr) msg_node_int32{.value = sck}};
+                     int_field->what = msg_node::INT32;
+                     int_field->size = sizeof(msg_node_int32);
+                     r->first = r_realloc;
+                     r->second.second = r->second.second + additional_space_origin_info;
+                     ((msg_node*)(r_realloc))->size += additional_space_origin_info;
+                }
                 fire_event = true;
                 ev.id_ = name;
 		        ev.protobufish_msg = r->first;

@@ -202,12 +202,15 @@ namespace ceps{
                 dbg_print_topi32,
                 asserteqi32,
                 ldi32reg,
-                dbg_printsz                
+                dbg_printsz,
+                dbg_print_topf64,
+                msg_glob_buffer                
             };
 
             class EventQueue{
                 public:
                 virtual void fire_event(int) = 0;
+                virtual void fire_event(int,size_t) = 0;
             };
 
             class VMEnv{
@@ -555,6 +558,8 @@ namespace ceps{
                     size_t asserteqi32sz(size_t);
                     size_t ldi32reg(size_t);
                     size_t dbg_printsz(size_t);
+                    size_t dbg_print_topf64(size_t);
+                    size_t msg_glob_buffer(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -610,6 +615,17 @@ namespace ceps{
             constexpr int MNEM_REG_REGOFS  = 4;
             constexpr int MNEM_DBL         = 5;
             constexpr int MNEM_IMM_IMM     = 6;
+            using mnemonics_t = map< string, 
+                        tuple<
+                         Opcode,
+                         string, 
+                         size_t (*)(VMEnv& ,size_t), 
+                         size_t (*)(VMEnv& ,size_t, addr_t),
+                         size_t (*)(VMEnv& ,size_t, VMEnv::reg_t, VMEnv::reg_offs_t),
+                         size_t (*)(VMEnv& ,size_t, double),
+                         size_t (*)(VMEnv& ,size_t, addr_t, addr_t)
+                        > 
+                      > ;
 
             static map< string, 
                         tuple<
@@ -794,7 +810,9 @@ namespace ceps{
                 {"dbg_print_topi32",{Opcode::dbg_print_topi32, "",emit<Opcode::dbg_print_topi32>,nullptr,nullptr,nullptr,nullptr}},               
                 {"asserteqi32sz",{Opcode::asserteqi32, "",nullptr,emit<Opcode::asserteqi32>,nullptr,nullptr,nullptr} },
                 {"ldi32reg",{Opcode::ldi32reg, "",nullptr,nullptr,emit<Opcode::ldi32reg> ,nullptr,nullptr}},
-                {"dbg_printsz@OblectamentaDataLabel@",{Opcode::dbg_printsz, "",nullptr,emit<Opcode::dbg_printsz>,nullptr,nullptr,nullptr}}                
+                {"dbg_printsz@OblectamentaDataLabel@",{Opcode::dbg_printsz, "",nullptr,emit<Opcode::dbg_printsz>,nullptr,nullptr,nullptr}},
+                {"dbg_print_topf64",{Opcode::dbg_print_topf64, "",emit<Opcode::dbg_print_topf64>,nullptr,nullptr,nullptr,nullptr}},
+                {"msg@Event@@OblectamentaDataLabel@",{Opcode::msg_glob_buffer, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::msg_glob_buffer>}}
             };
             
             #pragma pack(push,1)

@@ -35,6 +35,60 @@ void State_machine_simulation_core::fire_event(int id) {
 	//std::cerr << "fire_event:" << id << "\n";
 	enqueue_event(ev,true);
 }
+size_t protobufish2json(char* buffer, size_t size, std::string& res);
+void State_machine_simulation_core::fire_event(int id, size_t vm_buffer_addr) {
+
+ auto send_ws = [](int sck,std::string const & reply) -> bool   {
+     auto len = reply.length();
+     bool fin = true;
+     bool ext1_len = len >= 126 && len <= 65535;
+     bool ext2_len = len > 65535;
+
+     std::uint16_t header = 0;
+     if (fin) header |= 0x80;
+     if(!ext1_len && !ext2_len) header |= len << 8;
+     else if (ext1_len) header |= 126 << 8;
+     else header |= 127 << 8;
+     header |= 1;
+     auto wr = write(sck, &header,sizeof header );
+     if(wr != sizeof header) return false;
+     if (ext1_len)
+     {
+       std::uint16_t v = len;v = htons(v);
+       if( (wr = write(sck, &v,sizeof v )) != sizeof v) return false;
+     }
+     if (ext2_len)
+     {
+       std::uint64_t v = len;v = htobe64(v);
+       if( (wr = write(sck, &v,sizeof v )) != sizeof v) return false;
+     }
+     if ( (wr = write(sck, reply.c_str(),len )) != (int)len) return false;
+     return true;
+ };
+
+	//check for destination field
+	using namespace ceps::vm::oblectamenta;
+	char* msg = (char*) vm.mem.base + vm_buffer_addr;
+	msg_node* root_node = (msg_node*)msg ;
+	msg_node* first_node = (msg_node*)(msg + sizeof(msg_node));
+	if (root_node->what == msg_node::ROOT && first_node->what == msg_node::NODE && first_node->size > sizeof(msg_node) ){
+		string field_name{msg + 2*sizeof(msg_node) };
+		if  (field_name == "destination_websocket_sock"){
+			size_t hdr_size = sizeof(msg_node) + sizeof(msg_node) + 1 + field_name.length() + sizeof(msg_node_int32); 
+			char* socket_addr =  msg + sizeof(msg_node) + sizeof(msg_node) + 1 + field_name.length();
+			auto sock_value =((msg_node_int32*)(socket_addr)) ->value;
+			string msg_str;
+			protobufish2json(msg + hdr_size, root_node->size - hdr_size, msg_str);
+			send_ws(sock_value,msg_str);
+			return;
+		}
+	}
+	event_t ev{id};
+	ev.already_sent_to_out_queues_ = false;
+	ev.unique_ = unique_events().find(ev.id_) != unique_events().end();
+	//std::cerr << "fire_event:" << id << "\n";
+	enqueue_event(ev,true);
+}
 
 void State_machine_simulation_core::sync_queue_event(int ev_id){
 	executionloop_context().push_ev_sync_queue(ev_id);

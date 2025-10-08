@@ -164,6 +164,7 @@ public:
 	size_t oblectamenta_global_event_buffer_offs{std::numeric_limits<size_t>::max()}; // offset in vm's global data for event payloads - a very low level feature
 
 	void fire_event(int) override;
+	void fire_event(int, size_t vm_buffer) override;
 
 	typedef std::chrono::steady_clock clock_type;
 	using states_t = std::vector<state_rep_t>;
