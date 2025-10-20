@@ -153,7 +153,8 @@ OblectamentaOpcode
     dbg_print_topi32,
     asserteqi32,
     dbg_printsz,
-    dbg_print_topf64
+    dbg_print_topf64,
+    beq
     ;
 
 OblectamentaModifier addr;
