@@ -1546,6 +1546,14 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                             if (data_label_it == vm.data_labels().end()) 
                               throw std::string{"oblectamenta_assembler: unknown data label: '"+ name(as_symbol_ref(e)) +"'" };
                               imm[1] = data_label_it->second;
+                        } else if (is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaReg" ){
+                            auto reg_it = vm.registers.reg_mnemonic2idx.find(name(as_symbol_ref(e)));
+                            if (reg_it == vm.registers.reg_mnemonic2idx.end()){
+                             stringstream ss;
+                             ss <<  *e << '\n';
+                             throw std::string{"oblectamenta_assembler: unknown register '"+name(as_symbol_ref(e))+"' in " + ss.str()};
+                            }
+                            imm[i] = reg_it->second;
                         }
                     }
                     text_loc = get<MNEM_IMM_IMM>(opcode)(vm,text_loc, imm[0], imm[1]);

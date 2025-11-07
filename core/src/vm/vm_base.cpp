@@ -224,6 +224,20 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + sizeof(addr_t) + sizeof(addr_t) + pos;
     }
 
+    size_t VMEnv::asserti32immreg(size_t pos){
+        auto expected_value = *((int64_t*)(text+pos+base_opcode_width));
+        auto reg = *((int64_t*)(text+pos+base_opcode_width+sizeof(addr_t)));
+        auto t = registers.file[reg];
+        if ((int32_t)expected_value != (int32_t)t) {
+            string reg_name{"unknown"};
+            for (auto e:registers.reg_mnemonic2idx){
+                if (e.second == reg){ reg_name = e.first; break;}
+            }
+            throw std::runtime_error{"[asserti32immreg " + reg_name + " != " +  std::to_string(expected_value) + "  (read " + std::to_string(t) +" instead) ]." };
+        }
+        return base_opcode_width + sizeof(addr_t) + sizeof(addr_t) + pos;
+    }
+
     size_t VMEnv::assert_deserialized_protobufish_message_equals_str(size_t pos){
         auto expected_value =   (char*) (*(addr_t*)(text+pos+base_opcode_width) + mem.base);
         auto msg = *(addr_t*)(text+pos+base_opcode_width+sizeof(addr_t)) + mem.base;
@@ -1267,6 +1281,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::dbg_printsz);
         op_dispatch.push_back(&VMEnv::dbg_print_topf64);
         op_dispatch.push_back(&VMEnv::msg_glob_buffer);
+        op_dispatch.push_back(&VMEnv::asserti32immreg);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

@@ -204,7 +204,8 @@ namespace ceps{
                 ldi32reg,
                 dbg_printsz,
                 dbg_print_topf64,
-                msg_glob_buffer                
+                msg_glob_buffer,
+                asserti32immreg                
             };
 
             class EventQueue{
@@ -560,6 +561,7 @@ namespace ceps{
                     size_t dbg_printsz(size_t);
                     size_t dbg_print_topf64(size_t);
                     size_t msg_glob_buffer(size_t);
+                    size_t asserti32immreg(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -812,7 +814,8 @@ namespace ceps{
                 {"ldi32reg",{Opcode::ldi32reg, "",nullptr,nullptr,emit<Opcode::ldi32reg> ,nullptr,nullptr}},
                 {"dbg_printsz@OblectamentaDataLabel@",{Opcode::dbg_printsz, "",nullptr,emit<Opcode::dbg_printsz>,nullptr,nullptr,nullptr}},
                 {"dbg_print_topf64",{Opcode::dbg_print_topf64, "",emit<Opcode::dbg_print_topf64>,nullptr,nullptr,nullptr,nullptr}},
-                {"msg@Event@@OblectamentaDataLabel@",{Opcode::msg_glob_buffer, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::msg_glob_buffer>}}
+                {"msg@Event@@OblectamentaDataLabel@",{Opcode::msg_glob_buffer, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::msg_glob_buffer>}},
+                {"asserti32imm@OblectamentaReg@",{Opcode::asserti32immreg, "",nullptr,nullptr,nullptr,nullptr,emit<Opcode::asserti32immreg>}}
             };
             
             #pragma pack(push,1)
