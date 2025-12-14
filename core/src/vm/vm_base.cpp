@@ -112,16 +112,23 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::subi32(size_t pos){
-        push_cs(pop_cs<int>()-pop_cs<int>());
+        //push_cs(pop_cs<int>()-pop_cs<int>());
+        auto a = pop_cs<int>();
+        auto b = pop_cs<int>();
+        push_cs(a - b);
         return base_opcode_width + pos;    
     }
     size_t VMEnv::subi64(size_t pos){
-        push_cs(pop_cs<int64_t>()-pop_cs<int64_t>());
+        auto a = pop_cs<int64_t>();
+        auto b = pop_cs<int64_t>();
+        push_cs(a - b);
         return base_opcode_width + pos;    
     }
 
     size_t VMEnv::subdbl(size_t pos){
-        push_cs(pop_cs<double>()-pop_cs<double>());
+        auto a = pop_cs<double>();
+        auto b = pop_cs<double>();
+        push_cs(a-b);
         return base_opcode_width + pos;    
     }
 
@@ -441,6 +448,14 @@ namespace ceps::vm::oblectamenta{
         reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
         reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
         auto t {(int64_t)pop_cs<int32_t>()};
+        registers.file[reg] =  t + reg_offs;
+        return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
+    }
+
+    size_t VMEnv::sti8reg(size_t pos){
+        reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
+        reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
+        auto t {(int64_t)pop_cs<uint8_t>()};
         registers.file[reg] =  t + reg_offs;
         return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
     }
@@ -1282,6 +1297,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::dbg_print_topf64);
         op_dispatch.push_back(&VMEnv::msg_glob_buffer);
         op_dispatch.push_back(&VMEnv::asserti32immreg);
+        op_dispatch.push_back(&VMEnv::sti8reg);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )
