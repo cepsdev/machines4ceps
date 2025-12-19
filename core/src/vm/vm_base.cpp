@@ -11,7 +11,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
-   limitations under the License.
+   limitations under the License.andi64
 */
 
 #include "core/include/vm/vm_base.hpp"
@@ -634,6 +634,15 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
 
+    size_t VMEnv::shli64(size_t pos){
+        auto t1{pop_cs<uint64_t>()};
+        auto t2{pop_cs<uint32_t>()};
+        t1 <<= t2;
+        push_cs(t1);
+        return base_opcode_width + pos;
+    }
+    
+
     size_t VMEnv::swpi64(size_t pos){
         auto t1{pop_cs<int64_t>()};
         auto t2{pop_cs<int64_t>()};
@@ -765,11 +774,11 @@ namespace ceps::vm::oblectamenta{
     }    
 
     size_t VMEnv::andni32(size_t pos){
-        push_cs<unsigned int>(pop_cs<unsigned int>() & !pop_cs<unsigned int>());
+        push_cs<unsigned int>(pop_cs<unsigned int>() & ~pop_cs<unsigned int>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::andni64(size_t pos){
-        push_cs<uint64_t>(pop_cs<uint64_t>() & !pop_cs<uint64_t>());
+        push_cs<uint64_t>(pop_cs<uint64_t>() & ~pop_cs<uint64_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::andi32(size_t pos){
@@ -777,7 +786,7 @@ namespace ceps::vm::oblectamenta{
         return base_opcode_width + pos;
     }
     size_t VMEnv::andi64(size_t pos){
-        push_cs<uint64_t>(pop_cs<uint64_t>() & !pop_cs<uint64_t>());
+        push_cs<uint64_t>(pop_cs<uint64_t>() & pop_cs<uint64_t>());
         return base_opcode_width + pos;
     }
     size_t VMEnv::ori32(size_t pos){
@@ -1298,6 +1307,7 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::msg_glob_buffer);
         op_dispatch.push_back(&VMEnv::asserti32immreg);
         op_dispatch.push_back(&VMEnv::sti8reg);
+        op_dispatch.push_back(&VMEnv::shli64);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )
