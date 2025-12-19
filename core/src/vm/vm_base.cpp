@@ -455,7 +455,7 @@ namespace ceps::vm::oblectamenta{
     size_t VMEnv::sti8reg(size_t pos){
         reg_offs_t reg_offs{ *(reg_offs_t*)(text + pos + base_opcode_width) };
         reg_t reg{ *(reg_t*)(text + pos + base_opcode_width +  sizeof(reg_offs_t) ) };
-        auto t {(int64_t)pop_cs<uint8_t>()};
+        auto t {(uint64_t)pop_cs<uint8_t>()};
         registers.file[reg] =  t + reg_offs;
         return base_opcode_width + sizeof(reg_offs_t) + sizeof(reg_t) + pos;
     }
