@@ -1238,8 +1238,28 @@ static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& v
         mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());               // INVARIANT : ROOT node with zero content at address *mem_loc
         pos += r.size();
      }
-
     }
+}
+
+static optional<std::vector<ceps::ast::node_t>> is_x64Opcode(ceps::ast::node_t n)
+{   
+    using namespace std;
+    using namespace ceps;
+    using namespace ceps::ast;
+    string name,kind;
+	vector<node_t> args;
+    auto r{is_a_symbol_with_arguments(n,name,kind,args)};
+
+    return {};
+}
+
+static std::vector<byte> x64_assembler(std::vector<ceps::ast::node_t>& x64_asm){
+    for(auto x64_mnemonic_or_opcode: x64_asm){
+        if(auto r{is_x64Opcode(x64_mnemonic_or_opcode)}; r){
+
+        }
+    }
+    return {};
 }
 
 void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, 
@@ -1272,8 +1292,9 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
     std::string sym_name;
 	std::string sym_kind;
 	std::vector<node_t> args;
-    
-    if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaCodeLabel"){
+    if (is<Ast_node_kind::structdef>(e)){
+        auto x64_code = x64_assembler(children(as_struct_ref(e)));
+    } else if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaCodeLabel"){
         auto lbl{name(as_symbol_ref(e))};
         codelabel2loc[lbl] = text_loc;
         if (patch_entries.size())
