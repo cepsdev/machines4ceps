@@ -1374,6 +1374,10 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
                 string json_msg;
                 deserialize_event_payload(buffer,written_bytes,json_msg);*/
                 //cerr <<">>" << json_msg << "<<" << "\n";
+            } else {
+                stringstream err_msg;
+                err_msg << "oblectamenta_assembler: Expected msg{...} as argument to event. >>>" << *e << "<<<";
+                throw err_msg.str();
             }
         }else if (sym_kind == "OblectamentaOpcode"){
             auto& mnemonic{sym_name};
