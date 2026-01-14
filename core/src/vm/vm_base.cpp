@@ -526,11 +526,18 @@ namespace ceps::vm::oblectamenta{
         if (pop_cs<int8_t>() == pop_cs<int8_t>()) return *(size_t*)(text + pos  + base_opcode_width);
         return base_opcode_width + sizeof(addr_t) + pos;
     }
+    size_t VMEnv::beqi64(size_t pos){
+        if (pop_cs<int64_t>() == pop_cs<int64_t>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
     size_t VMEnv::bneqi8(size_t pos){
         if (pop_cs<int8_t>() != pop_cs<int8_t>()) return *(size_t*)(text + pos  + base_opcode_width);
         return base_opcode_width + sizeof(addr_t) + pos;
     }
-
+    size_t VMEnv::bneqi64(size_t pos){
+        if (pop_cs<int64_t>() != pop_cs<int64_t>()) return *(size_t*)(text + pos  + base_opcode_width);
+        return base_opcode_width + sizeof(addr_t) + pos;
+    }
     size_t VMEnv::blt(size_t pos){
         if (pop_cs<int>() < pop_cs<int>()) return *(size_t*)(text + pos  + base_opcode_width);
         return base_opcode_width + sizeof(addr_t) + pos;
@@ -1308,6 +1315,8 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::asserti32immreg);
         op_dispatch.push_back(&VMEnv::sti8reg);
         op_dispatch.push_back(&VMEnv::shli64);
+        op_dispatch.push_back(&VMEnv::beqi64);
+        op_dispatch.push_back(&VMEnv::bneqi64);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )

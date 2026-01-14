@@ -37,7 +37,8 @@ OblectamentaOpcode
     asserti64,         duptopi192,               swpi8i128,        swpi16i128,                                            bzeroi8,           bnzeroi8,
     swpi64b128,        dbg_print_topi64,         swpi64i192,       assert_deserialized_protobufish_message_equals_str,    dbg_print_topi32,  asserteqi32,
     dbg_printsz,       dbg_print_topf64,         beq,
-    shli64  // shift left.  CS = | 64 bit value A | 32 bit value  B|... ==> | A << B |...
+    shli64,  // shift left.  CS = | 64 bit value A | 32 bit value  B|... ==> | A << B |...
+    beqi64, bneqi64
     ;
 
 OblectamentaModifier addr;
