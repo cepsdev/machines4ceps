@@ -642,6 +642,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name,
     string lbl_check_strings = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_check_strings_unequal = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_wrong_node_type_i32_expected = string{"__msgdef_"} +to_string(vm.lbl_counter++);
+    string lbl_wrong_node_type_i64_expected = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_not_enough_space = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_done = string{"__msgdef_"} +to_string(vm.lbl_counter++);
     string lbl_not_found = string{"__msgdef_"} +to_string(vm.lbl_counter++);
@@ -868,6 +869,42 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name,
                 //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|content size|new offset|
                 em(r,"swpi192i32");
                 //|content-size|addr of node node_name|addr of it+1h child|content size|new offset|ith child's payload|
+            } else if ("i64" == name(as_symbol_ref(mn))){
+                tag_read = true;
+                //ToDo: Check size
+                em(r,"swp128i64");
+                em(r,"duptopi64");
+                //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|addr of first child of node_name|
+                em(r,"ldsi32");
+                //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|child of node_name.what|
+                em(r,"ldi32",msg_node::INT64);
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|child of node_name.what|msg_node::INT32|
+                emwsa(r,"bneq",lbl_wrong_node_type_i64_expected,"OblectamentaCodeLabel");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|
+                em(r,"ldi64",sizeof(msg_node));
+                //|content-size|addr of node node_name|content size|offset|addr of ith child of node_name|sizeof(msg_node)|
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|
+                em(r,"duptopi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|addr of ith child's payload|
+                em(r,"ldsi64");
+                //|content-size|addr of node node_name|content size|offset|addr of ith child's payload|ith child's payload|
+                em(r,"swpi64");                
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of ith child's payload|
+                em(r,"ldi64",sizeof(msg_node_int64::value));
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|offset|ith child's payload|addr of it+1h child|
+                em(r,"swp128i64");
+                //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|offset|
+                em(r,"ldi64",sizeof(msg_node_int64));
+                em(r,"addi64");
+                //|content-size|addr of node node_name|content size|ith child's payload|addr of it+1h child|new offset|
+                em(r,"swp192i64");
+                //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|new offset|content size|
+                em(r,"swpi64");
+                //|content-size|addr of node node_name|ith child's payload|addr of it+1h child|content size|new offset|
+                em(r,"swp192i64");
+                //|content-size|addr of node node_name|addr of it+1h child|content size|new offset|ith child's payload|
             } else if ("f64" == name(as_symbol_ref(mn))){
                 tag_read = true;
                 //ToDo: Check size
@@ -981,6 +1018,7 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name,
     //|content-size|addr of node node_name|addr of ith child of node_name|content size|offset|
 
     emlbl(r,lbl_wrong_node_type_i32_expected);
+    emlbl(r,lbl_wrong_node_type_i64_expected);
     //|content-size|addr of node node_name|content size|offset|addr of first child of node_name|
   
     emlbl(r,lbl_next_node);

@@ -565,7 +565,7 @@ namespace ceps{
                     size_t msg_glob_buffer(size_t);
                     size_t asserti32immreg(size_t);
                     size_t sti8reg(size_t);
-                    size_t shli64(size_t);
+                    size_t shli64(size_t); 
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
