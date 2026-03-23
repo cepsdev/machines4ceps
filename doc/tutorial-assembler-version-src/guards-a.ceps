@@ -1,0 +1,46 @@
+kind Guard;
+
+oblectamenta{
+ OblectamentaDataLabel vault_status;
+ global{
+   data{
+        vault_status;
+        1;
+    };
+ };
+};
+
+Guard vault_open;
+Guard vault_not_open;
+
+vault_open = 
+ oblectamenta{text{asm{
+    OblectamentaDataLabel vault_status;
+    ldi32(vault_status);
+    sti32(RES);
+ };};};
+
+vault_not_open =  oblectamenta{text{asm{
+    OblectamentaDataLabel vault_status;
+    OblectamentaCodeLabel is_unequal_zero;
+    ldi32(vault_status);
+    bnzeroi32(is_unequal_zero);
+    ldi32(1);
+    sti32(RES);
+    halt;
+    is_unequal_zero;
+    ldi32(0);
+    sti32(RES);
+ };};};
+ 
+sm{
+    S;
+    states{Initial;W;L;R;};
+    t{Initial;W;};
+    t{W;L;vault_open;};
+    t{W;R;vault_not_open;};
+};
+
+Simulation{
+    Start{S;};
+};

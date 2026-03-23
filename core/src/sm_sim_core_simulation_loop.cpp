@@ -337,7 +337,7 @@ static void compute_triggered_transitions(State_machine_simulation_core* smc,
      if (t.ev == ev_id && t.from == s){
       if (t.oblectamenta_guard_valid) {
         smc->vm.run(t.oblectamenta_guard);
-        bool r = smc->vm.registers.file[ceps::vm::oblectamenta::VMEnv::registers_t::ARG0]  != 0 ;
+        bool r = smc->vm.registers.file[ceps::vm::oblectamenta::VMEnv::registers_t::RES]  != 0 ;
         if (r){triggered_transitions[triggered_transitions_end++]=execution_ctxt.states2transitions_slots[i];triggered=true;}
       } else if (!t.script_guard.empty()){
          State_machine_simulation_core::states_t st;
