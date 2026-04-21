@@ -176,6 +176,17 @@ static bool is_a_msgreaddirective(ceps::ast::node_t n){
     return is_msgreaddir;
 }
 
+static bool is_expression(ceps::ast::node_t n){
+    using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+    if (is<Ast_node_kind::structdef>(n)) return false;
+    if(is<Ast_node_kind::symbol>(n) && kind(as_symbol_ref(n)) == "OblectamentaCodeLabel") return false;
+    if(is<Ast_node_kind::symbol>(n) && kind(as_symbol_ref(n)) == "OblectamentaOpcode") return false;
+    string sym_name,sym_kind;
+    vector<node_t>args;
+    if(is_a_symbol_with_arguments( n,sym_name,sym_kind,args)) return false;
+    return true;
+}
+
 static std::optional<std::string> static_mem_location(ceps::vm::oblectamenta::VMEnv& vm, ceps::ast::node_t msg_directive){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     for (auto e: children(as_struct_ref(msg_directive)))
@@ -1046,11 +1057,74 @@ static void oblectamenta_assembler_preproccess_match (std::string node_name,
     //em(r,"halt");
 }
 
+static std::optional<int> get_free_reg(uint64_t& regs, size_t max_reg, bool alloc){
+ size_t reg_idx{};
+ for(; reg_idx <= max_reg && regs & (1 << reg_idx); ++reg_idx);
+ if (reg_idx > max_reg) return {};
+ if (alloc) regs |= (1 << reg_idx);
+ return reg_idx;
+}
+
+static void free_reg(uint64_t& regs, size_t reg){
+ regs &= ~reg;
+}
+static std::string get_reg_name(size_t i){
+    switch(i){
+        case 0 : return "R0";case 1 : return "R1"; case 2 : return "R2";case 3 : return "R3"; case 4 : return "R4";case 5 : return "R5";case 6 : return "R6";
+        case 7 : return "R7";case 8 : return "R8";case 9 : return "R9";case 10 : return "R10";case 11 : return "R11";case 12 : return "R12";case 13 : return "R13";
+        case 14 : return "R14";case 15 : return "R15";
+        default: return "";
+    }
+}
+static optional<int> gen_expr(uint64_t regs, size_t max_reg, ceps::ast::node_t expr, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
+ using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
+ if ( is<Ast_node_kind::symbol>(expr) && kind(as_symbol_ref(expr))=="OblectamentaDataLabel"){
+     auto dest_reg_req = get_free_reg(regs, max_reg, true);
+     if (!dest_reg_req) return {}; //failed to acquire register => we give up (later versions will include register spills instead)
+     //Only supported type so far is int
+     auto dest_reg = *dest_reg_req;
+     emwsa(mnemonics,"ldi32",name(as_symbol_ref(expr)),"OblectamentaDataLabel");
+     emwsa(mnemonics,"sti32",get_reg_name(dest_reg),"OblectamentaReg");
+     return dest_reg;         
+ }    
+ return {};
+}
+
+static void gen_statement_expr(ceps::ast::node_t expr, ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
+ uint64_t regs{};
+ auto result_reg_ = gen_expr(regs, VMEnv::registers_t::R15 - VMEnv::registers_t::R0, expr,vm, mnemonics);
+ if (!result_reg_){
+    stringstream ss; ss << *expr;
+    throw string{"oblectamenta_assembler: Expression failed to compile. Offending expression is >>>"+ ss.str() +"<<<" };
+ }
+ auto result_reg = *result_reg_;
+ emwsa(mnemonics,"ldi32",get_reg_name(result_reg),"OblectamentaReg");
+ emwsa(mnemonics,"sti32","RES","OblectamentaReg");
+}
+
 static void oblectamenta_assembler_preproccess (ceps::vm::oblectamenta::VMEnv& vm, std::vector<ceps::ast::node_t>& mnemonics){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     for (size_t pos{}; pos < mnemonics.size(); ++pos){
         auto mnem{mnemonics[pos]};
-        if (is_a_msgreaddirective(mnem)){ //Case: Deserialization
+        if (is_expression(mnem)){
+            // Built-in expression compiler
+            // exp -> Int | Float | Double | Char | ( exp ) | exp + exp | exp - exp | exp * exp | exp == exp | exp != exp 
+            // Type is determined by looking up the data immediately following the corresponding data symbol.
+            // Example:
+            // OblectamentaDataLabel d;
+            // data{ ... d; 1; };
+            // ==> d points to an int (signed 32 bit)
+            // data{ ... d; as_int8(1); };
+            // ==> d points to a signed char
+            // data{ ... d; "A text"; };
+            // ==> d is a pointer to char
+            vector<node_t> r; // r contains the generated code
+            gen_statement_expr(mnem,vm,r);
+            //for(auto e: r) cout << *e << '\n';
+            mnemonics.insert(mnemonics.begin() + pos, r.begin(), r.end());               // INVARIANT : ROOT node with zero content at address *mem_loc
+            pos += r.size();
+        }
+        else if (is_a_msgreaddirective(mnem)){ //Case: Deserialization
          auto mem_loc = static_mem_location(vm,mnem); //Fetch buffer address
          if (!mem_loc) { 
           stringstream offending_msg;
