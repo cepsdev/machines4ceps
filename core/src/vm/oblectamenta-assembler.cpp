@@ -1086,7 +1086,18 @@ static optional<int> gen_expr(uint64_t regs, size_t max_reg, ceps::ast::node_t e
      emwsa(mnemonics,"ldi32",name(as_symbol_ref(expr)),"OblectamentaDataLabel");
      emwsa(mnemonics,"sti32",get_reg_name(dest_reg),"OblectamentaReg");
      return dest_reg;         
- }    
+ } else if (is<Ast_node_kind::unary_operator>(expr)){
+     auto operation = op(as_unary_op_ref(expr));
+     auto dest_reg_req = gen_expr(regs,max_reg,children(as_unary_op_ref(expr))[0],vm, mnemonics);
+     if (!dest_reg_req) return {};
+     auto dest_reg = *dest_reg_req;
+     if (operation == '!'){
+        emwsa(mnemonics,"ldi32",get_reg_name(dest_reg),"OblectamentaReg");
+        em(mnemonics,"noti32");
+        emwsa(mnemonics,"sti32",get_reg_name(dest_reg),"OblectamentaReg");
+        return dest_reg;        
+     }
+ }   
  return {};
 }
 
