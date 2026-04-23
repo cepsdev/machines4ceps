@@ -2,8 +2,6 @@
 guards-a.ceps
 
 Simple example with guards defined in assembler. 
-Oblectamenta expressions assigned to guards dont't need to be encapsulate
-withinin an assembler block. 
 
 Run this example with
  $ ceps guards-a.ceps
