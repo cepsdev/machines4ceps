@@ -2,8 +2,7 @@
 guards-c.ceps
 
 Simplified version of guards-b.ceps. 
-Oblectamenta expressions assigned to guards dont't need to be encapsulate
-withinin an assembler block. 
+Oblectamenta expressions assigned to guards dont't have to be encapsulated withinin an assembler block. 
 
 Run this example with
  $ ceps guards-c.ceps
