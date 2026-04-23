@@ -1,0 +1,42 @@
+/*
+Simplified version of guard-a.ceps. 
+Oblectamenta expressions assigned to guards dont't need to be encapsulate
+withinin an assembler block. 
+
+Run this example with
+ $ ceps guards-c.ceps
+Expected result:
+ S.Initial- S.W+ 
+ S.W- S.L+ 
+*/
+
+kind Guard;
+OblectamentaDataLabel valve_status;
+
+oblectamenta{
+ global{
+   data{
+        valve_status;
+        1;
+    };
+ };
+};
+
+Guard valve_open, valve_closed;
+
+valve_open = valve_status;
+
+valve_closed = !valve_status;
+
+ 
+sm{
+    S;
+    states{Initial;W;L;R;};
+    t{Initial;W;};
+    t{W;L;valve_open;};
+    t{W;R;valve_closed;};
+};
+
+Simulation{
+    Start{S;};
+};

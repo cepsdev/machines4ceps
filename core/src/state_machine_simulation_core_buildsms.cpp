@@ -159,6 +159,21 @@ static int get_state_idx(state_rep_t  s){
 	return -1;
 }
 
+static bool is_expression_compilable_to_oblectamenta(ceps::ast::node_t expr){
+	using namespace ceps::ast; using namespace std;
+// expr is a compilable expression iff it consists of literals,compilable operators/functioncalls and
+// symbols of kind OblectamentaDatalabel
+ if (expr == nullptr) return true;
+ auto k{expr->kind()};
+ if ( k == Ast_node_kind::string_literal || k == Ast_node_kind::int_literal || k == Ast_node_kind::float_literal
+      || k == Ast_node_kind::long_literal || k == Ast_node_kind::uint8 || k == Ast_node_kind::unsigned_long_literal ) return true;
+ if ( k == Ast_node_kind::symbol ) return kind(as_symbol_ref(expr)) == "OblectamentaDataLabel";	  
+ for(auto a: children(*nlf_ptr(expr))){
+  if (!is_expression_compilable_to_oblectamenta(a)) return false;
+ }
+ return true;
+}
+
 static std::optional<ceps::ast::node_t> oblectamenta_assembly_code(ceps::ast::node_t action){
 	//is<Ast_node_kind::structdef>(e) && name(as_struct_ref(e)) == "vm"
 	using namespace ceps::ast;
@@ -370,7 +385,17 @@ int compute_state_and_event_ids(State_machine_simulation_core* smp,
 						tt.oblectamenta_guard = smp->vm.text_loc;
 						run_oblectamenta_assembler(smp,*asm_text, ev_to_id);
 						tt.oblectamenta_guard_valid = true;
-				  	}
+				  	} else if (is_expression_compilable_to_oblectamenta(guard_expr)){
+						auto gexpr = mk_struct("oblectamenta",{mk_struct("text", {mk_struct("asm",{guard_expr})})});
+						auto asm_text{oblectamenta_assembly_code_guard_rhs(gexpr)};
+						if (asm_text){
+							tt.oblectamenta_guard = smp->vm.text_loc;
+							run_oblectamenta_assembler(smp,*asm_text, ev_to_id);
+							tt.oblectamenta_guard_valid = true;
+						} else {
+							throw std::runtime_error{"***Error oblectamenta_assembler: illformed guard" };
+						} 
+					}
 				  }
 			  }
               if (t.action_.size() && t.action_[0].native_func_ == nullptr){
