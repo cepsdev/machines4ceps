@@ -1,12 +1,12 @@
 /*
-guards-a.ceps
+guards-b.ceps
 
-Simple example with guards defined in assembler. 
+Simple example with guards defined in assembler, this time taking advantage of the built-in expression compiler. 
 Oblectamenta expressions assigned to guards dont't need to be encapsulate
 withinin an assembler block. 
 
 Run this example with
- $ ceps guards-a.ceps
+ $ ceps guards-b.ceps
 Expected result:
  S.Initial- S.W+ 
  S.W- S.L+ 
@@ -14,9 +14,8 @@ Expected result:
 
 
 kind Guard;
-
+OblectamentaDataLabel valve_status; // make valve_status globally visible
 oblectamenta{
- OblectamentaDataLabel valve_status;
  global{
    data{
         valve_status;
@@ -30,22 +29,11 @@ Guard valve_not_open;
 
 valve_open = 
  oblectamenta{text{asm{
-    OblectamentaDataLabel valve_status;
-    ldi32(valve_status);
-    sti32(RES);
+    valve_status;
  };};};
 
 valve_not_open =  oblectamenta{text{asm{
-    OblectamentaDataLabel valve_status;
-    OblectamentaCodeLabel is_unequal_zero;
-    ldi32(valve_status);
-    bnzeroi32(is_unequal_zero);
-    ldi32(1);
-    sti32(RES);
-    halt;
-    is_unequal_zero;
-    ldi32(0);
-    sti32(RES);
+    !valve_status;
  };};};
  
 sm{

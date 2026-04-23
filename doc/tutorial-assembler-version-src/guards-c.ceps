@@ -1,5 +1,7 @@
 /*
-Simplified version of guard-a.ceps. 
+guards-c.ceps
+
+Simplified version of guards-b.ceps. 
 Oblectamenta expressions assigned to guards dont't need to be encapsulate
 withinin an assembler block. 
 
