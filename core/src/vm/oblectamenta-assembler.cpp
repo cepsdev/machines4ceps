@@ -179,8 +179,8 @@ static bool is_a_msgreaddirective(ceps::ast::node_t n){
 static bool is_expression(ceps::ast::node_t n){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     if (is<Ast_node_kind::structdef>(n)) return false;
-    if(is<Ast_node_kind::symbol>(n) && kind(as_symbol_ref(n)) == "OblectamentaCodeLabel") return false;
-    if(is<Ast_node_kind::symbol>(n) && kind(as_symbol_ref(n)) == "OblectamentaOpcode") return false;
+    if(is<Ast_node_kind::symbol>(n) && kind(as_symbol_ref(n)) == "OblectamentaDataLabel") return true;
+    if(is<Ast_node_kind::symbol>(n)) return false;
     string sym_name,sym_kind;
     vector<node_t>args;
     if(is_a_symbol_with_arguments( n,sym_name,sym_kind,args)) return false;
