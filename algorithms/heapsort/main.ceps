@@ -1,0 +1,25 @@
+kind Guard;
+kind Event;
+
+oblectamenta{global{data{};};};
+
+macro max_heapify{
+ dbg_print_cs_and_regs(0);    
+};
+
+sm{
+    S;
+    states{Initial;Final;};
+    Actions{
+     sort{
+       oblectamenta{text{asm{
+        max_heapify{};
+       };};};
+     };
+    };
+    t{Initial;Final;sort;};
+};
+
+Simulation{
+    Start{S;};
+};
