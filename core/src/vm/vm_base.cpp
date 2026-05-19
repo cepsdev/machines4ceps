@@ -642,13 +642,36 @@ namespace ceps::vm::oblectamenta{
     }
 
     size_t VMEnv::shli64(size_t pos){
-        auto t1{pop_cs<uint64_t>()};
         auto t2{pop_cs<uint32_t>()};
+        auto t1{pop_cs<uint64_t>()};
+        t1 <<= t2;
+        push_cs(t1);
+        return base_opcode_width + pos;
+    }
+
+    size_t VMEnv::shri64(size_t pos){
+        auto t2{pop_cs<uint32_t>()};
+        auto t1{pop_cs<uint64_t>()};
+        t1 >>= t2;
+        push_cs(t1);
+        return base_opcode_width + pos;
+    }
+
+    size_t VMEnv::shli32(size_t pos){
+        auto t2{pop_cs<uint32_t>()};
+        auto t1{pop_cs<uint32_t>()};
         t1 <<= t2;
         push_cs(t1);
         return base_opcode_width + pos;
     }
     
+    size_t VMEnv::shri32(size_t pos){
+        auto t2{pop_cs<uint32_t>()};
+        auto t1{pop_cs<uint32_t>()};
+        t1 >>= t2;
+        push_cs(t1);
+        return base_opcode_width + pos;
+    }
 
     size_t VMEnv::swpi64(size_t pos){
         auto t1{pop_cs<int64_t>()};
@@ -1317,6 +1340,9 @@ namespace ceps::vm::oblectamenta{
         op_dispatch.push_back(&VMEnv::shli64);
         op_dispatch.push_back(&VMEnv::beqi64);
         op_dispatch.push_back(&VMEnv::bneqi64);
+        op_dispatch.push_back(&VMEnv::shri64);
+        op_dispatch.push_back(&VMEnv::shli32);
+        op_dispatch.push_back(&VMEnv::shri32);
     }     
     void VMEnv::dump(ostream& os){
        // for(ssize_t i = registers.file[registers_t::SP] - 1; i >= 0; --i )
