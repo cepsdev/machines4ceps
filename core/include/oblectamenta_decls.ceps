@@ -17,7 +17,7 @@ OblectamentaOpcode
     lddbl,             sti32,                    sti64,            stsi32,                                                stsi64,            sri64,
     stdbl,             ldptr,                    stptr,            lea,                                                   addi32,            addi64,
     adddbl,            subi32,                   subi64,           subdbl,                                                buc,               blt,
-    blteq,             bgteqzeroi32,             blteqzeroi32,     bltzeroi32,                                            bzeroi32,          bnzeroi32,
+    bgteq, blteq,             bgteqzeroi32,             blteqzeroi32,     bltzeroi32,                                            bzeroi32,          bnzeroi32,
     bzeroi64,          bnzeroi64,                bzerodbl,         bnzerodbl,                                             call,              ret,
     swp,               andni32,                  andni64,          andi32,                                                andi64,            ori32,
     ori64,             noti32,                   noti64,           xori32,                                                xori64,            duptopi32,
