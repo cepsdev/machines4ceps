@@ -1,10 +1,99 @@
 kind Guard;
 kind Event;
 
-oblectamenta{global{data{};};};
+oblectamenta{global{data{
+ OblectamentaDataLabel an_array, an_array_size;
+ 1;2;3; // some padding
+ an_array;27;17;3;16;13;10;1;5;7;12;4;8;9;0;
+ an_array_size;14;
+};};};
+
+/*
+p.165 Cormen et. al. Algorithms, 4th ed.
+
+Tail recursive version:
+
+MAX-HEAPIFY(A,i)
+ l = left(i)
+ r = right(i)
+ if (l <= A.heap_size() && A[l] > A[i]) largest = l;
+ else largest = i;
+ if ( r <= A.heap_size() && A{r] > A[largest]}) largest = r;
+ if (largest != i)
+  swap(A[i], A[largest]);
+  MAX-HEAPIFY(A,largest);
+
+Iterative version:
+
+MAX-HEAPIFY-ITER(A,i)
+while true 
+ l = left(i)
+ r = right(i)
+ if (l <= A.heap_size() && A[l] > A[i]) largest = l;
+ else largest = i;
+ if (r <= A.heap_size() && A{r] > A[largest]}) largest = r;
+ if (largest != i)
+  swap(A[i], A[largest]);
+ else break;
+
+*/
 
 macro max_heapify{
- dbg_print_cs_and_regs(0);    
+    val A = hd(arglist);
+    val i = hd(tail(arglist));
+    val size = hd(tail(tail(arglist)));
+    val l = R0;
+    val r = R1;
+    val w = R2;
+    ldi32(4);sti32(w); // w <- 4
+    OblectamentaCodeLabel start;
+start;
+    val largest = R3;
+    ldi32(i);
+    ldi32(1);
+    shli32;
+    ldi32(1);
+    addi32;
+    sti32(l); // l <- 2*i + 1
+    ldi32(i);
+    ldi32(1);
+    shli32;
+    ldi32(2);
+    addi32;
+    sti32(r); // r <- 2*i + 2
+    ldi32(size);
+    ldi32(l);
+    OblectamentaCodeLabel else_1, end_if_1;
+    bgteq(else_1);
+    
+    ldi64(A);
+    ldi32(l);
+    ldi32(w);
+    muli32;
+    ui32toui64;
+    addi64;
+    ldsi32;
+
+    ldi64(A);
+    ldi32(i);
+    ldi32(w);
+    muli32;
+    ui32toui64;
+    addi64;
+    ldsi32;
+    bgteq(else_1);
+    ldi32(l);
+    sti32(largest);
+    buc(end_if_1);
+else_1;
+    ldi32(i);
+    sti32(largest);
+end_if_1;            // if (l <= A.heap_size() && A[l] > A[i]) largest = l; else largest = i;
+
+
+
+    dbg_print_data(0);
+    dbg_print_cs_and_regs(0);    
 };
 
 sm{
@@ -13,7 +102,17 @@ sm{
     Actions{
      sort{
        oblectamenta{text{asm{
-        max_heapify{};
+        OblectamentaDataLabel an_array, an_array_size;
+        lea(an_array);
+        sti64(ARG0);
+        lea(an_array_size);
+        ldsi32;
+        sti32(ARG2);
+        ldi32(0);
+        sti32(ARG1);
+        //dbg_print_cs_and_regs(0);halt;
+        
+        max_heapify{ARG0;ARG1;ARG2;};
        };};};
      };
     };
