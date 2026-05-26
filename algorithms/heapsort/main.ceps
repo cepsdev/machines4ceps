@@ -18,7 +18,7 @@ MAX-HEAPIFY(A,i)
  r = right(i)
  if (l <= A.heap_size() && A[l] > A[i]) largest = l;
  else largest = i;
- if ( r <= A.heap_size() && A{r] > A[largest]}) largest = r;
+ if ( r <= A.heap_size() && A[r] > A[largest]}) largest = r;
  if (largest != i)
   swap(A[i], A[largest]);
   MAX-HEAPIFY(A,largest);
@@ -31,7 +31,7 @@ while true
  r = right(i)
  if (l <= A.heap_size() && A[l] > A[i]) largest = l;
  else largest = i;
- if (r <= A.heap_size() && A{r] > A[largest]}) largest = r;
+ if (r <= A.heap_size() && A[r] > A[largest]}) largest = r;
  if (largest != i)
   swap(A[i], A[largest]);
  else break;
@@ -89,8 +89,29 @@ else_1;
     ldi32(i);
     sti32(largest);
 end_if_1;            // if (l <= A.heap_size() && A[l] > A[i]) largest = l; else largest = i;
+    //if (r <= A.heap_size() && A{r] > A[largest]}) largest = r;
 
+    OblectamentaCodeLabel end_if_2;
+    ldi32(size);
+    ldi32(r);
+    bgteq(end_if_2);
+    ldi64(A);
+    ldi32(r);
+    ldi32(4);
+    muli32;
+    ui32toui64;
+    addi64;
+    ldsi32;
+    ldi64(A);
+    ldi32(i);
+    ldi32(4);
+    muli32;
+    ui32toui64;
+    addi64;
+    ldsi32;
+    bgteq(end_if_2);
 
+end_if_2;
 
     dbg_print_data(0);
     dbg_print_cs_and_regs(0);    
