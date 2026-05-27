@@ -2,10 +2,24 @@ kind Guard;
 kind Event;
 
 oblectamenta{global{data{
- OblectamentaDataLabel an_array, an_array_size;
- 1;2;3; // some padding
+ OblectamentaDataLabel an_array, an_array_size, an_array_expected_heapify_at_pos_2,array_p168;
  an_array;27;17;3;16;13;10;1;5;7;12;4;8;9;0;
  an_array_size;14;
+ /*
+                 27
+        17                 3
+     16     13          10     1
+   5    7 12   4      8    9  0
+ */
+ an_array_expected_heapify_at_pos_2;27;17;10;16;13;9;1;5;7;12;4;8;3;0;
+ /*
+                 27
+        17                 10
+     16     13          9      1
+   5    7 12   4      8    3  0
+ */
+ array_p168;4;1;3;2;16;9;10;14;8;7;
+ array_p168_size;10;
 };};};
 
 /*
@@ -46,8 +60,8 @@ macro max_heapify{
     val r = R1;
     val w = R2;
     ldi32(4);sti32(w); // w <- 4
-    OblectamentaCodeLabel start;
-start;
+    OblectamentaCodeLabel max_heapify_start, max_heapify_end;
+max_heapify_start;
     val largest = R3;
     ldi32(i);
     ldi32(1);
@@ -89,7 +103,6 @@ else_1;
     ldi32(i);
     sti32(largest);
 end_if_1;            // if (l <= A.heap_size() && A[l] > A[i]) largest = l; else largest = i;
-    //if (r <= A.heap_size() && A{r] > A[largest]}) largest = r;
 
     OblectamentaCodeLabel end_if_2;
     ldi32(size);
@@ -103,37 +116,87 @@ end_if_1;            // if (l <= A.heap_size() && A[l] > A[i]) largest = l; else
     addi64;
     ldsi32;
     ldi64(A);
-    ldi32(i);
+    ldi32(largest);
     ldi32(4);
     muli32;
     ui32toui64;
     addi64;
-    ldsi32;
+    ldsi32;    
     bgteq(end_if_2);
+    ldi32(r);
+    sti32(largest);
+    
 
-end_if_2;
+end_if_2;           //if (r <= A.heap_size() && A{r] > A[largest]}) largest = r;
 
-    dbg_print_data(0);
-    dbg_print_cs_and_regs(0);    
+    ldi32(largest);
+    ldi32(i);
+    beq(max_heapify_end);
+    //if (largest != i)
+    val i_addr = R4;
+    val largest_addr = R5;
+    val i_val = R6;
+    val largest_val = R7;
+    ldi64(A);
+    ldi32(i);
+    ldi32(w);
+    muli32;
+    ui32toui64;
+    addi64;
+    sti64(i_addr);
+    ldi64(A);
+    ldi32(largest);
+    ldi32(w);
+    muli32;
+    ui32toui64;
+    addi64;
+    sti64(largest_addr);
+    ldi64(i_addr);
+    ldsi32;
+    sti32(i_val);
+    ldi64(largest_addr);
+    ldsi32;
+    sti32(largest_val);
+    ldi32(i_val);
+    ldi64(largest_addr);
+    stsi32;
+    ldi32(largest_val);
+    ldi64(i_addr);
+    stsi32;
+    //swap(A[i], A[largest]);
+    ldi32(largest);
+    sti32(i);
+    //dbg_print_data(0);
+    //dbg_print_cs_and_regs(0);    
+
+    buc(max_heapify_start);
+    
+max_heapify_end;
+    //dbg_print_data(0);
+    //dbg_print_cs_and_regs(0);    
 };
 
 sm{
-    S;
+    Cormen_4ed_ex_6_2_1;
     states{Initial;Final;};
     Actions{
      sort{
        oblectamenta{text{asm{
-        OblectamentaDataLabel an_array, an_array_size;
+        OblectamentaDataLabel an_array, an_array_size, an_array_expected_heapify_at_pos_2;
         lea(an_array);
         sti64(ARG0);
         lea(an_array_size);
         ldsi32;
         sti32(ARG2);
-        ldi32(0);
+        ldi32(2);
         sti32(ARG1);
         //dbg_print_cs_and_regs(0);halt;
-        
         max_heapify{ARG0;ARG1;ARG2;};
+
+        //dbg_print_cs_and_regs(0);
+        dbg_print_data(0);
+
+  
        };};};
      };
     };
@@ -141,5 +204,5 @@ sm{
 };
 
 Simulation{
-    Start{S;};
+    Start{Cormen_4ed_ex_6_2_1;};
 };
