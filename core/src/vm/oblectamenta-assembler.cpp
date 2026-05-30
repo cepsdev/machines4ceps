@@ -1,5 +1,5 @@
 /*
-Copyright 2023 Tomas Prerovsky (cepsdev@hotmail.com).
+Copyright 2023-2026 Tomas Prerovsky (cepsdev@hotmail.com).
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -179,6 +179,7 @@ static bool is_a_msgreaddirective(ceps::ast::node_t n){
 static bool is_expression(ceps::ast::node_t n){
     using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
     if (is<Ast_node_kind::structdef>(n)) return false;
+    if (is<Ast_node_kind::scope>(n)) return false;
     if(is<Ast_node_kind::symbol>(n) && kind(as_symbol_ref(n)) == "OblectamentaDataLabel") return true;
     if(is<Ast_node_kind::symbol>(n)) return false;
     string sym_name,sym_kind;
@@ -1385,10 +1386,10 @@ static std::vector<byte> x64_assembler(std::vector<ceps::ast::node_t>& x64_asm){
     return {};
 }
 
-void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, 
+static void oblectamenta_assembler_impl(ceps::vm::oblectamenta::VMEnv& vm, 
                             std::vector<ceps::ast::node_t>& mnemonics, 
                             std::map<std::string, int> const & ev_to_id,
-                            bool append_halt)
+                            int level = 0)
 {
  using namespace ceps::ast; using namespace std; using namespace ceps::vm::oblectamenta;
  
@@ -1415,7 +1416,9 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
     std::string sym_name;
 	std::string sym_kind;
 	std::vector<node_t> args;
-    if (is<Ast_node_kind::structdef>(e)){
+    if (is<Ast_node_kind::scope>(e)){
+        oblectamenta_assembler_impl(vm, children(as_scope_ref(e)), ev_to_id, level+1);
+    } else if (is<Ast_node_kind::structdef>(e) && ("x86_64" == name(as_struct_ref(e))) ){
         auto x64_code = x64_assembler(children(as_struct_ref(e)));
     } else if(is<Ast_node_kind::symbol>(e) && kind(as_symbol_ref(e)) == "OblectamentaCodeLabel"){
         auto lbl{name(as_symbol_ref(e))};
@@ -1721,11 +1724,21 @@ void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm,
         postponed_insert_after = 0;
     }
  } //for
- if (append_halt)
-    text_loc = emit<Opcode::halt>(vm,text_loc);
-}//function
 
 }
+
+void oblectamenta_assembler(ceps::vm::oblectamenta::VMEnv& vm, 
+                            std::vector<ceps::ast::node_t>& mnemonics, 
+                            std::map<std::string, int> const & ev_to_id,
+                            bool append_halt)
+{
+ oblectamenta_assembler_impl(vm, mnemonics, ev_to_id);
+
+ if (append_halt)
+    vm.text_loc = emit<Opcode::halt>(vm,vm.text_loc);
+}//function
+
+}//namespace
 
 
 

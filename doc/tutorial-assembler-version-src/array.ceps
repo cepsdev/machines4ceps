@@ -1,0 +1,46 @@
+/*
+array.ceps
+
+Iterate through a contiguous sequence of 32 bit signed integers, i.a an array of int.
+Run this example with
+ $ ceps array.ceps
+Expected result:
+*/
+
+kind Guard;
+OblectamentaDataLabel index, array_length, array;
+
+
+oblectamenta{
+ global{
+   data{
+        index;
+        0;
+        array_length;10;
+        array;0;1;2;3;4;5;6;7;8;9;
+    };
+ };
+};
+
+{
+ !! - -  q;
+}
+
+/*Guard valve_open, valve_closed;
+
+valve_open = valve_status;
+
+valve_closed = !valve_status;
+
+ 
+sm{
+    S;
+    states{Initial;W;L;R;};
+    t{Initial;W;};
+    t{W;L;valve_open;};
+    t{W;R;valve_closed;};
+};
+
+Simulation{
+    Start{S;};
+};*/

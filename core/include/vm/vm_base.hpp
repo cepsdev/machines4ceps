@@ -208,7 +208,7 @@ namespace ceps{
                 asserti32immreg,
                 sti8reg,
                 shli64,
-                beqi64, bneqi64, shri64, shli32, shri32
+                beqi64, bneqi64, shri64, shli32, shri32, dbg_println
             };
 
             class EventQueue{
@@ -569,7 +569,7 @@ namespace ceps{
                     size_t shli64(size_t); 
                     size_t beqi64(size_t);
                     size_t bneqi64(size_t);
-                    size_t shri64(size_t); size_t shli32(size_t); size_t shri32(size_t);
+                    size_t shri64(size_t); size_t shli32(size_t); size_t shri32(size_t); size_t dbg_println(size_t);
 
                     using fn = size_t (VMEnv::*) (size_t) ;
                     vector<fn> op_dispatch;
@@ -829,7 +829,8 @@ namespace ceps{
                 {"beqi64",{Opcode::beqi64, "",nullptr,emit<Opcode::beqi64>,nullptr,nullptr,nullptr}},
                 {"bneqi64",{Opcode::bneqi64, "",nullptr,emit<Opcode::bneqi64>,nullptr,nullptr,nullptr}},
                 {"shri64",{Opcode::shri64, "",emit<Opcode::shri64>,nullptr,nullptr,nullptr,nullptr}}, {"shli32",{Opcode::shli32, "",emit<Opcode::shli32>,nullptr,nullptr,nullptr,nullptr}},
-                {"shri32",{Opcode::shri32, "",emit<Opcode::shri32>,nullptr,nullptr,nullptr,nullptr}}
+                {"shri32",{Opcode::shri32, "",emit<Opcode::shri32>,nullptr,nullptr,nullptr,nullptr}},
+                {"dbg_println",{Opcode::dbg_println, "",emit<Opcode::dbg_println>,nullptr,nullptr,nullptr,nullptr}}
                 
             };
             

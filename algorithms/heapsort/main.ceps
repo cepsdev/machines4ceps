@@ -52,6 +52,36 @@ while true
 
 */
 
+macro debug_print_i32array{
+  val A = hd(arglist);
+  val n = hd(tail(arglist));
+  val i = R0;
+  OblectamentaCodeLabel debug_print_i32array_start_loop, debug_print_i32array_end_loop;
+  {
+  ldi32(0); 
+  sti32(i); // i <- 0
+  debug_print_i32array_start_loop;
+  ldi32(n);
+  ldi32(i);
+  bgteq(debug_print_i32array_end_loop);
+  ldi64(A);
+  ldi32(i);
+  ldi32(4);
+  muli32;
+  ui32toui64;
+  addi64;
+  ldsi32;
+  dbg_print_topi32;discardtopi32;
+  ldi32(i);
+  ldi32(1);
+  addi32;
+  sti32(i);
+  buc(debug_print_i32array_start_loop);
+  //dbg_print_topi32;
+  debug_print_i32array_end_loop;
+ } 
+};
+
 macro max_heapify{
     val A = hd(arglist);
     val i = hd(tail(arglist));
@@ -191,10 +221,18 @@ sm{
         ldi32(2);
         sti32(ARG1);
         //dbg_print_cs_and_regs(0);halt;
+        debug_print_i32array{ARG0;ARG2;};
         max_heapify{ARG0;ARG1;ARG2;};
+        lea(an_array);
+        sti64(ARG0);
+        lea(an_array_size);
+        ldsi32;
+        sti32(ARG2);
+        dbg_println;
+        debug_print_i32array{ARG0;ARG2;};
 
         //dbg_print_cs_and_regs(0);
-        dbg_print_data(0);
+        //dbg_print_data(0);
 
   
        };};};
