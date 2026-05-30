@@ -1,16 +1,30 @@
 kind Event;
-kind Systemstate;
 
-Systemstate counter;
-counter  = 0;
+OblectamentaDataLabel counter;
+oblectamenta{global{data{counter;0;};};};
 
 sm{
  S;
- states{Initial;};
- t{Initial;Initial;counter < 100000000;doIncrementCounter;};
+ states{Initial;Final;};
+ t{Initial;Final;doIncrementCounter;};
  Actions{
   doIncrementCounter{
-   counter = counter + 1;
+   oblectamenta{text{asm{ 
+    OblectamentaCodeLabel start_loop, end_loop;
+    val i = R0;
+    ldi32(counter);
+    sti32(i);
+    start_loop;
+    ldi32(i);    
+    ldi32(10000000);
+    blteq(end_loop);
+    ldi32(i);
+    ldi32(1);
+    addi32;
+    sti32(i);    
+    buc(start_loop);
+    end_loop;
+   };};};
  };
  };
 };
