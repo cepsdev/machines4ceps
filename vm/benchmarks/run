@@ -1,2 +1,3 @@
 #!/bin/bash
 time ceps counting_a.ceps
+time python3 counting_a.py
