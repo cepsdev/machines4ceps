@@ -28,11 +28,12 @@ named_block{
 ```
 
 In the given example the first line contains an unbound identifier A, this is not an error. The second line contains 1+1 this is equivalent to 2. 
-Important: the expression statement 1+1; is not optimized away like in the C programming language, it is a distinct feature of ceps that a well formed expression statement has a normalized (term will be explained later) form which is its meaning after the normalization phase of the execution has terminated and befoer the operational phase of the execution has started. The execution of a specification has up to four phases:
+Important: the expression statement 1+1; is not optimized away like in the C programming language, it is a distinct feature of ceps that a well formed expression statement has a normalized (term will be explained later) form which is its meaning after the normalization phase of the execution has terminated and before the operational phase of the execution has started. The execution of a specification has up to four phases:
 - raw phase
 - normalization phase
 - operational phase
 - information gather phase
+
 The raw phase parses the input documents, by applying (if necessary) user defined lexers and parsers (this document doesn't explain user defined lexers/parsers). The result of the raw phase is an unevaluated Abstract Syntax Tree (uAST).
 The normalization phase is the phase where the uAST from the preceding phase is evaluated. The result is an evaluated or normalized AST (eAST or nAST). Evaluation of an AST means basically the execution of a functional program operating on the uAST. The expression 1+1; is such a (trivial) functional program.Even more to the point: the functional program is the uAST of the preceding step.
 
