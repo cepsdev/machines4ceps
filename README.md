@@ -17,6 +17,8 @@ __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ sta
 
 Details can be found [here](./INSTALL.md)  
 
+## Skill file for AI (use it to get an explanation of the language and the tool)
+[Skill](./ceps-skill.md)
 
 ## Writing, running, and rendering state machines - Quick Start
 
