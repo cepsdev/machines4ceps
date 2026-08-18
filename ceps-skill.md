@@ -50,6 +50,55 @@ The meaning of this specification is identical to the result of the normalizatio
 numbers{1;2;3;4;5;};
 15;
 ```
+We now explain the operational phase. Once the eAST has been generated it is executed like a C program would be executed, line by line, block by block.
+The ceps interpreter searches for named blocks or other eAST entities that have operational semantics. The most useful named block is the state machine
+definition block. Any state machine definition block has the following form:
+```
+sm{
+    Identifier;
+    ....
+};
+```
+Where Identifier is the unique name of the the state machine defined.
+Another block with operational semantics is the Simulation block:
+```
+Simulation{
+    [Start{List of state machine identifiers};]
+    [EVENT1;]
+    [EVENT2;]
+    ....
+}
+```
+
+Hence a specification of a simple sensor with a non trivial operational phase looks like this example:
+
+```
+kind Event;
+Event POWER_ON, POWER_OFF;
+
+sm{
+    Sensor;
+    states{Initial;Boot;Ready;};
+    t{Initial;Boot;POWER_ON;};
+    t{Boot;Ready;};
+    t{Ready;Initial;POWER_OFF;};
+};
+Simulation{
+ Start{Sensor;};
+ POWER_ON;
+};
+```
+This example shows a very basic state machine, transitions are t-blocks, the first transition changes the default state Initial into the state Boot under
+the event POWER_ON. The second transition is a so called epsiolon transition it has no conditions, so it is taken each time the system is in state Boot, the
+resulting state is Ready. The last transition describes what happens if the event POWER_OFF occurs.
+If you run this spec with ```ceps spec.ceps``` the resulting execution traces is:
+```
+Sensor.Initial- Sensor.Boot+ 
+Sensor.Boot- Sensor.Ready+ 
+```
+Two lines, this means that Sensor.Ready+ for example strictly happend after Sensor.Initial-.
+State machines can be nested, the state machines supported by ceps is a generalizaiton of so called Harel-Charts. Details in a later section.
+IMPORTANT: Only state machines defined at the lexical top level can be included in a Start-directive.
 
 
 [TOOL DESCRIPTION]
