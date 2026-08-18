@@ -12,7 +12,8 @@ The minimal ceps program is the empty string, i.e.
 is a wellformed ceps program.
 
 A ceps program is a sequence of expressions, named or unnamed blocks, and declarations. An expression is followd by a semicolon, a named block is followed by a semicolon, an unnamed block doesn't need to be terminated by a semicolon. Blocks, named or unnamed, can be nested. Unnamed blocks are also called scopes.
-Example: ```
+Example: 
+```
 1 + A;
 1 +1;
 {
@@ -24,7 +25,8 @@ named_block{
 
     };
 };
-``` 
+```
+
 In the given example the first line contains an unbound identifier A, this is not an error. The second line contains 1+1 this is equivalent to 2. 
 Important: the expression statement 1+1; is not optimized away like in the C programming language, it is a distinct feature of ceps that a well formed expression statement has a normalized (term will be explained later) form which is its meaning after the normalization phase of the execution has terminated and befoer the operational phase of the execution has started. The execution of a specification has up to four phases:
 - raw phase
