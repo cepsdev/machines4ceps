@@ -1,4 +1,4 @@
-# machines4ceps
+# machines4ceps - the tool for spec driven AI 
 __Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams).
 
 ## Features (machines4ceps as found in the standard distribution of the ceps tool)
