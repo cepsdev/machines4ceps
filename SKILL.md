@@ -99,7 +99,9 @@ Sensor.Boot- Sensor.Ready+
 ```
 Two lines, this means that Sensor.Ready+ for example strictly happend after Sensor.Initial-.
 State machines can be nested, the state machines supported by ceps is a generalizaiton of so called Harel-Charts. Details in a later section.
+Remark: Execution traces are described in section [EXECUTION TRACE]
 IMPORTANT: Only state machines defined at the lexical top level can be included in a Start-directive.
+
 
 
 [TOOL DESCRIPTION]

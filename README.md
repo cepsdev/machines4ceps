@@ -1,24 +1,11 @@
-# machines4ceps - the tool for spec driven AI 
-__Write, run, visualize__, and __trace__ complex __state machines__ (__UML__ statecharts, __Harel__ statecharts, state diagrams).
+# ceps - the tool for spec driven AI 
+[Skill File (also a good introducion fo humans)](./SKILL.md)
 
 ## Features (machines4ceps as found in the standard distribution of the ceps tool)
-
-- UML 2.5 state charts (and more).
-- Concise notation.
-- Guards, Events, Actions etc.
-- Simulation.
-- Computation of State/Transition Coverage.
-- Any input format supported, i.e. write your state machine as you see fit and use the built-in language engine to map it to machines4ceps-representation.  
-- Any output format supported, the very same language engine allows you to export your state machine into any imaginable format by adding simple transformation rules.
-- Supports WebSocket, Bosch-CAN.
-- Runs on any Unixish device.
-- **New**: Supports Oblectamenta, a high level machine language which is JITed to x86-64/ARM. Look what CodePilot has to say about it: [CodePilot reviews Oblectamenta](core/src/vm/README.md) 
+Look [here](./FEATURES.md) for a list of features.
 ## Installation
 
 Details can be found [here](./INSTALL.md)  
-
-## Skill file for AI (use it to get an explanation of the language and the tool)
-[Skill](./ceps-skill.md)
 
 ## Writing, running, and rendering state machines - Quick Start
 
