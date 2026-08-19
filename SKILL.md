@@ -35,7 +35,7 @@ Important: the expression statement 1+1; is not optimized away like in the C pro
 - information gather phase
 
 The raw phase parses the input documents, by applying (if necessary) user defined lexers and parsers (this document doesn't explain user defined lexers/parsers). The result of the raw phase is an unevaluated Abstract Syntax Tree (uAST).
-The normalization phase is the phase where the uAST from the preceding phase is evaluated. The result is an evaluated or normalized AST (eAST or nAST). Evaluation of an AST means basically the execution of a functional program operating on the uAST. The expression 1+1; is such a (trivial) functional program.Even more to the point: the functional program is the uAST of the preceding step.
+The normalization phase is the phase where the uAST from the preceding phase is evaluated. The result is an evaluated or normalized AST (eAST or nAST). Evaluation of an AST means basically the execution of a functional program defined by the uAST. The expression 1+1; is such a (trivial) functional program.
 
 Example:
 
@@ -102,6 +102,70 @@ State machines can be nested, the state machines supported by ceps is a generali
 Remark: Execution traces are described in section [EXECUTION TRACE]
 IMPORTANT: Only state machines defined at the lexical top level can be included in a Start-directive.
 
+[LANGUAGE DESCRIPTION - THE SM BLOCK]
+As already mentioned, state machines are defined via the sm block. Here is a list summarizing the main features of state machines:
+- Atomic states are the states listed in the states block, each sm block contains one or none states block. The location of which is not important.
+- Sub State Machines. State machines can be nested, i.e. a sm block can contain arbirtrarily many sm blocks, the identifiers of the sub sm blocks must be unique. A sub machine B of machine A is refered to by A.B .
+- Transitions. A sm block can contain multiple t-blocks, the order of which is not important, hence side effects of guard evaluations and actions
+that affect other guards or actions in the same scope lead to undefined behaviour. The minimal transitions define a pair of state ids, which must occur at the very beginning of the t-block, the first id is the source state-id, the second id is the destination source-id. State ids can be composite, i.e. a sourec/destination state can have the form A.B.C, all state ids (comnposite and non-composite) are interpreted relative to the enclosing sm-block (lexical scope). State ids can reference atomic states and sub states, by using composite ids you can reference states deeper down
+the sm-block induced hierarchy of composite states.
+Optional parts of transitions are: a guard expression or a guard id, an event-id, up to three actions. The optional parts can appear in any order.
+Some Examples for transitions:
+```
+sm{
+    S1;
+    states{Initial;a;};
+    t{Initial;a;};
+};
+```
+This example defines a single state machine with he name S1 and two atomic states S1.Initial and S1.a. A state machine doesn't need to have any states, but only state machines with an atomic state Initial are considered by the execution engine for scheduling. The example defines one transitions, if S1 gets exewcuted it immediately changes into state a, there it reamins for the entirety of the operational phase.
+```
+kind Event;
+Event E;
+
+sm{
+    S2;
+    states{Initial;a;};
+    t{Initial;a;E;};
+};
+```
+This example is identical to the previous one with the only exception that the tranistion from Initial to a must be triggered by an event E. Events
+are declared as symbols of kind Event, kinds are a weak form of typing. The kind Event has to be made available in the surrounding lexical scope, this
+is what the declaration ```kind Event;```does. If we append a Simulation block we can execute S2:
+```
+kind Event;
+Event E;
+
+sm{
+    S2;
+    states{Initial;a;};
+    t{Initial;a;E;};
+};
+Simulation{
+ Start{S2;};
+ E;E;E;
+};
+```
+Running this example with the ceps interpreter gives the following output:
+```
+S2.Initial- S2.a+
+```
+It is good practice to keep simulation blocks in different files from the actual specification, in this case the definition of the state machine S1 should be placed in a file s1.ceps and the simulation block in a file sim.,ceps. To run the complete simulation the comman looks like this
+```
+ceps s1.ceps sim.ceps
+```
+The command
+```
+ceps s1.ceps
+```
+Stops with the generation of the eAST, the eAST can be inspected with
+```
+ceps s1.ceps --pe
+```
+The uAST can be inspected with 
+```
+ceps s1.ceps --pr
+```
 
 
 [TOOL DESCRIPTION]
