@@ -1,5 +1,5 @@
 # ceps - the tool for spec driven AI 
-[Skill File (also a good introducion for humans)](./SKILL.md)
+[Skill File (also a good introduction for humans)](./SKILL.md)
 
 ## Features (machines4ceps as found in the standard distribution of the ceps tool)
 Look [here](./FEATURES.md) for a list of features.
