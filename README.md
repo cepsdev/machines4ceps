@@ -14,7 +14,7 @@ Details can be found [here](./INSTALL.md)
 
 Look [here](./QUICK-START-UML-WITH-CEPS.md) if you are interested mainly in using ceps' UML state charts features.
 
-# Spec-Driven AI-assisted development with ceps
+# Spec-Driven AI Coding Loop with ceps
 
 A tool-agnostic blueprint for using **ceps** executable specifications as the
 ground truth in an AI-assisted development loop. Works with any CI system
@@ -85,7 +85,7 @@ read my mind?" to reviewing a small, formal contract once.
 **A verification ladder gives early, localized, minimal feedback (→ 2).**
 ceps exposes three inspection levels — the unnormalized AST (`--pr`), the
 normalized AST (`--pe`), and the execution trace — each a machine-diffable
-artifact. This turns one late, coarse signal into three early, precise ones:
+artifact. This turns one late, coarse signal into several early, precise ones:
 
 - a *syntax*-level failure is caught before any evaluation, as an
   S-expression diff pointing at the malformed structure;
@@ -116,42 +116,35 @@ producing an *identical* eAST — a no-regression proof strictly stronger than
 gated behind an explicit, human-reviewed operation, so the contract cannot
 erode silently.
 
-**A conformance harness closes the spec–implementation gap (→ 5).**
-The same scenario events are fed to both the ceps engine and (via a thin
-adapter) the production implementation; both sides emit state-change logs in
-the same trace syntax, which are normalized and diffed. Conformance is no
-longer an interpretation encoded in hand-written tests — it is a mechanical
-comparison of two behaviors against one contract. A mismatch names the exact
-divergent state change, which feeds straight back into the agent loop as, once
-again, a minimal repair prompt.
+**Runtime coupling closes the spec–implementation gap (→ 5).**
+ceps offers runtime interaction via WebSockets and a binary interface
+(dynamic linking): the running implementation can send events directly to a
+*live* ceps engine. Conformance is no longer an interpretation encoded in
+hand-written tests, nor an after-the-fact log comparison — the specification
+itself acts as an **online runtime monitor**, detecting divergence at the
+exact step it occurs. A mismatch names the exact divergent state change with
+live context, which feeds straight back into the agent loop as, once again, a
+minimal repair prompt.
 
 ### The underlying principle
 
 Every element of the pipeline serves one goal: **replace judgment calls with
 diffs**. Ambiguity, late feedback, drift, and unverified gaps are all forms of
-missing or degraded signal. ceps's phase model (raw → normalized → operational)
-happens to expose exactly the artifacts needed to restore that signal at each
-level — and everything downstream (repository layout, golden files, the
-verify script, the conformance harness) is just plumbing that puts those
-artifacts in front of the agent, the reviewer, and the CI gate.
+missing or degraded signal. ceps's phase model (raw → normalized →
+operational) plus its runtime interfaces expose exactly the artifacts needed
+to restore that signal at each level — and everything downstream (repository
+layout, golden files, the verify script, the live monitor) is just plumbing
+that puts those artifacts in front of the agent, the reviewer, and the CI
+gate.
 
 ---
 
-## 1. Core Idea
+## 1. Core Idea: The Verification Ladder
 
-Prose specs let an AI grade its own homework. ceps specs don't:
-
-- **Executable** — a spec produces a deterministic execution trace.
-- **Partial programs are legal** — unbound identifiers are fine, so specs are
-  runnable at *every* refinement stage of an iterative agent loop.
-- **Inspectable at three levels** — unnormalized AST (`--pr`), normalized AST
-  (`--pe`), and the behavioral trace. Each level is a machine-diffable
-  S-expression or line-oriented text, i.e. a precise repair prompt for an agent.
-
-### The Verification Ladder
-
-Each rung is cheaper and earlier than the next. Failures produce a localized
-diff that is fed back to the agent.
+Each rung is cheaper, earlier, and more deterministic than the next. Failures
+produce a localized diff that is fed back to the agent. Rungs 1–3 are
+**hermetic** (offline, deterministic); rung 4 couples the spec to the real
+running implementation.
 
 ```
         agent writes / refines spec
@@ -172,14 +165,20 @@ diff that is fed back to the agent.
                     | pass
                     v
    +--------------------------------------+
-   | Rung 3: ceps spec.ceps scenario.ceps |   BEHAVIOR
+   | Rung 3: ceps spec.ceps scenario.ceps |   SCRIPTED BEHAVIOR
    |   Do the scenarios produce the       |   (execution trace)
    |   expected traces?                   |
    +--------------------------------------+
                     | pass
                     v
-        implementation conformance
-        (production code vs. traces)
+   +--------------------------------------+
+   | Rung 4: live coupling (ws / dynlib)  |   COUPLED BEHAVIOR
+   |   Does the running implementation    |   (online monitor verdict)
+   |   conform to the live spec engine?   |
+   +--------------------------------------+
+                    | pass
+                    v
+              merge / release
 ```
 
 Key insight for metaprogramming-heavy specs: the **eAST is a self-correcting
@@ -200,17 +199,20 @@ project/
 ├── scenarios/                  # one simulation per requirement / case
 │   ├── sim_req_041.ceps
 │   ├── sim_req_042.ceps
-│   ├── turnout_2of3.ceps
 │   └── ...
 ├── golden/                     # committed golden files (review artifacts)
 │   ├── past/                   # uAST goldens        (*.past)  [optional]
 │   ├── east/                   # eAST goldens        (*.east)  [recommended]
 │   └── traces/                 # trace goldens       (*.trace) [required]
 ├── impl/                       # production code (agent-authored)
-├── conformance/                # adapters: drive impl with scenario events,
-│   └── ...                     # emit trace-compatible state-change logs
+├── live/                       # rung-4 assets
+│   ├── instrumentation/        # event emission points in the impl
+│   │                           #   (ws client or dynlib bindings)
+│   └── recordings/             # captured live event streams
+│                               #   → replayable as new rung-3 scenarios
 └── tools/
-    ├── verify.sh               # the 3-rung pipeline (below)
+    ├── verify.sh               # the hermetic 3-rung pipeline (below)
+    ├── monitor.sh              # rung-4 launcher: spec engine + impl, coupled
     ├── sexp-diff               # S-expression-aware tree diff
     └── trace-normalize         # sorts states within each trace step
 ```
@@ -218,12 +220,15 @@ project/
 Conventions:
 
 - **Spec vs. scenario separation** — machines in `specs/`, `Simulation` blocks
-  in `scenarios/`. Composed at run time: `ceps specs/esc.ceps scenarios/sim_req_041.ceps`.
+  in `scenarios/`. Composed at run time:
+  `ceps specs/esc.ceps scenarios/sim_req_041.ceps`.
 - **Requirements traceability** — one scenario file per requirement ID
   (`sim_req_041.ceps` ↔ `SYS_REQ_041`), matching the requirement's declared
   verification method (Test / Simulation).
-- **The eAST golden is the reviewable contract** — it is the fully expanded,
+- **The eAST golden is the reviewable contract** — the fully expanded,
   metaprogram-free form of the spec.
+- **Live recordings are future regressions** — every rung-4 divergence is
+  captured and converted into a deterministic rung-3 scenario.
 
 ---
 
@@ -246,7 +251,7 @@ Two artifacts need canonicalization before diffing:
 
 ---
 
-## 4. The Pipeline (CI-agnostic)
+## 4. The Hermetic Pipeline (Rungs 1–3, CI-agnostic)
 
 Single entry point, exit code = gate; runnable locally, in any CI, or by the
 agent itself between edits.
@@ -281,7 +286,7 @@ for spec in specs/*.ceps; do
   [[ "$UPDATE" == "--update-golden" ]] && cp "/tmp/$name.east" "$golden"
 done
 
-# ---- Rung 3: behavior (traces) ----------------------------------------------
+# ---- Rung 3: scripted behavior (traces) --------------------------------------
 for scen in scenarios/*.ceps; do
   name=$(basename "$scen" .ceps)
   ceps specs/*.ceps "$scen" | tools/trace-normalize > "/tmp/$name.trace" \
@@ -307,36 +312,106 @@ Notes:
 
 ---
 
-## 5. The Full Loop
+## 5. Runtime Coupling: The Spec as Live Oracle (Rung 4)
+
+ceps can interact at runtime via **WebSockets** and via a **binary interface
+accessible through dynamic linking**. The implementation sends events (and
+other data) directly to a *running* ceps engine. This upgrades the spec from
+an offline oracle to an **online runtime monitor**.
+
+### From trace replay to live conformance
+
+```
+                 offline (rung 3)                        online (rung 4)
+
+ scenario ──► ceps ──► golden trace ─┐            ┌──────────────────────────┐
+                                     ├─► diff     │  implementation (live)   │
+ scenario ──► adapter ──► impl ──────┘            │        │ events          │
+                                                  │        ▼ (ws / dynlib)   │
+                                                  │  ceps engine (live)      │
+                                                  │        │                 │
+                                                  │  state divergence?       │
+                                                  │  → immediate verdict     │
+                                                  │  → event stream recorded │
+                                                  └──────────────────────────┘
+```
+
+What changes qualitatively:
+
+- **Divergence is detected at the step it occurs**, in the middle of real
+  execution — not reconstructed from logs afterwards. The specification
+  itself is the monitor; no separately-authored monitor to keep in sync.
+- **The adapter shrinks dramatically.** Instead of "map scenario events to
+  API calls *and* map observed behavior back into trace syntax," the
+  agent-authored glue is just "emit event X at instrumentation point Y."
+  Less adapter code = less agent-written code that could itself be wrong.
+- **Closed-loop testing.** The spec's current state determines which events
+  are legal or interesting next; a driver can walk the state machines to
+  exercise the implementation systematically (model-based testing), instead
+  of relying solely on hand-written scenario files.
+- **Long-running / non-terminating systems** become checkable. An offline
+  scenario ends; a live monitor rides along indefinitely, checking every
+  obligation (e.g. `COMM_TIMEOUT` → `SafeState`) as it happens.
+- **Interface choice by latency budget**: WebSockets for distributed or
+  loosely-coupled setups; the dynamic-linking binary interface where the
+  spec engine must sit inside a test rig or target process with minimal
+  overhead (e.g. hardware-in-the-loop).
+
+### The nondeterminism caveat — and how it's contained
+
+Runtime coupling reintroduces nondeterminism (timing, event interleaving from
+a real system), which the hermetic rungs deliberately avoid. Discipline:
+
+- **Rungs 1–3 remain the agent's inner loop**: fast, deterministic, hermetic.
+- A rung-4 divergence is either a genuine implementation bug **or** spec
+  under-specification (the spec didn't allow a legal interleaving). The
+  latter feeds into the *human-gated* spec refinement — exactly where such
+  discoveries belong.
+- **Record every rung-4 event stream** (`live/recordings/`). Any live
+  divergence is replayed as a new deterministic rung-3 scenario. Live
+  failures thereby continuously *grow* the scripted regression suite — the
+  runtime interface turns integration/field reality into a generator of new
+  golden scenarios, closing the loop between the contract and the world.
+
+---
+
+## 6. The Full Loop
 
 ```mermaid
 flowchart TD
-    REQ[Requirements<br/>e.g. DOORS export] -->|human authors / reviews| SPEC[ceps specs + scenarios<br/>+ golden traces = CONTRACT]
+    REQ[Requirements<br/>e.g. DOORS export] -->|human authors / reviews| SPEC[ceps specs + scenarios<br/>+ golden files = CONTRACT]
     SPEC --> AGENT[AI coding agent]
-    AGENT -->|writes / edits| CODE[Implementation]
+    AGENT -->|writes / edits| CODE[Implementation<br/>+ event instrumentation]
     AGENT -->|may extend, human-gated| SPEC
 
-    subgraph VERIFY [verify.sh — the ladder]
+    subgraph HERMETIC [verify.sh — hermetic rungs]
         R1[Rung 1: --pr<br/>uAST check]
         R2[Rung 2: --pe<br/>eAST diff]
         R3[Rung 3: run<br/>trace diff]
         R1 --> R2 --> R3
     end
 
-    SPEC --> VERIFY
-    R3 --> CONF[Conformance harness:<br/>drive impl with scenario events,<br/>compare emitted state log vs. golden trace]
-    CODE --> CONF
+    subgraph LIVE [monitor.sh — live rung]
+        R4[Rung 4: ws / dynlib<br/>spec engine as online monitor]
+    end
 
-    R1 -.->|S-expr diff| FEEDBACK[Minimal diff<br/>= repair prompt]
+    SPEC --> HERMETIC
+    R3 --> R4
+    CODE --> R4
+
+    R1 -.->|S-expr diff| FEEDBACK[Minimal diff / verdict<br/>= repair prompt]
     R2 -.->|S-expr tree diff| FEEDBACK
     R3 -.->|trace diff| FEEDBACK
-    CONF -.->|behavioral diff| FEEDBACK
+    R4 -.->|live divergence + context| FEEDBACK
     FEEDBACK --> AGENT
 
-    CONF -->|all green| DONE([Merge / release])
+    R4 -->|divergent event streams| REC[Recordings →<br/>new rung-3 scenarios]
+    REC --> SPEC
+
+    R4 -->|all green| DONE([Merge / release])
 ```
 
-### Agent inner loop (per edit)
+### Agent inner loop (per edit — hermetic rungs only)
 
 ```mermaid
 sequenceDiagram
@@ -361,36 +436,18 @@ sequenceDiagram
 
 ---
 
-## 6. Conformance: Implementation vs. Spec
-
-The final gate connects specs to production code:
-
-```
-scenario events ──► ceps engine ──► golden trace ─┐
-                                                   ├─► diff = verdict
-scenario events ──► adapter ──► impl ──► state log ┘
-```
-
-- The **adapter** (in `conformance/`) maps scenario events to real API calls /
-  inputs of the implementation, and maps the implementation's observable state
-  changes back into trace syntax (`Machine.State+` / `Machine.State-`).
-- Both sides are normalized with `trace-normalize`, then plain-diffed.
-- A mismatch yields exactly which state change diverged and in which step —
-  far more actionable agent feedback than "test failed."
-
----
-
 ## 7. Failure Signals Cheat Sheet
 
-| Rung | Command | Artifact | Failure means | Agent repair scope |
+| Rung | Command / mechanism | Artifact | Failure means | Agent repair scope |
 |---|---|---|---|---|
 | 1 | `ceps f.ceps --pr` | uAST S-expr | text didn't parse into intended structure | surface syntax |
 | 2 | `ceps f.ceps --pe` | eAST S-expr | normalization / metaprogram expansion wrong | metaprogram, `val`/`for` logic |
 | 3 | `ceps f.ceps s.ceps` | trace | spec behavior ≠ expected | transitions, guards, events |
-| 4 | conformance run | trace vs. state log | implementation ≠ spec | production code |
+| 4 | live coupling (ws / dynlib) | online monitor verdict + recorded event stream | running implementation ≠ spec, at a specific step | production code, instrumentation — or spec under-specification (human-gated) |
 
 Rule of thumb: **fix at the lowest failing rung first** — a rung-2 fix often
-resolves apparent rung-3 failures for free.
+resolves apparent rung-3 failures for free, and a rung-4 divergence should be
+replayed as a rung-3 scenario before attempting a fix.
 
 ---
 
@@ -405,3 +462,8 @@ resolves apparent rung-3 failures for free.
   part of the reviewable spec.
 - Only top-level state machines can appear in `Start{...}` — metaprograms
   must expand machines at the lexical top level.
+- Rungs 1–3 are the agent's inner loop; rung 4 is the integration gate.
+- Convert every rung-4 divergence recording into a rung-3 regression scenario.
+- Choose ws for distributed setups, the dynlib binary interface for
+  low-latency / in-process coupling (e.g. hardware-in-the-loop).
+```
