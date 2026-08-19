@@ -267,6 +267,7 @@ int main(int argc,char ** argv)
 			cout << "Usage: ceps [options] file...\n";
 			cout << "Options:\n";
 			vector<pair<string,string>> options = {
+				{"--ignore_simulations               ","Ignore any Simulation block."},
 				{"--mcp-stdin                        ","Runs as Model Context Protocol sever communicating via standard input/output."},
 				{"--create_plugin_project [PROJECT_NAME] ","Generate cmake build files for a plugin project."},
 				{"--create_plugin_ceps_root PATH ","Sets root dir of ceps for build scripts. Only applicable with --create_plugin_project."},
