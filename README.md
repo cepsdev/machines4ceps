@@ -379,7 +379,7 @@ a real system), which the hermetic rungs deliberately avoid. Discipline:
 
 ```mermaid
 flowchart TD
-    REQ[Requirements-->|human authors / reviews| SPEC[ceps specs + scenarios<br/>+ golden files = CONTRACT]
+    REQ[Requirements] -->|human authors / reviews| SPEC[ceps specs + scenarios<br/>+ golden files = CONTRACT]
     SPEC --> AGENT[AI coding agent]
     AGENT -->|writes / edits| CODE[Implementation<br/>+ event instrumentation]
     AGENT -->|may extend, human-gated| SPEC
