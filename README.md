@@ -2,7 +2,19 @@
 
 [Skill File (also a good introduction for humans)](./SKILL.md)
 
-# Spec-Driven AI-assisted developmentwith ceps
+## Features (machines4ceps as found in the standard distribution of the ceps tool)
+
+Look [here](./FEATURES.md) for a list of features.
+
+## Installation
+
+Details can be found [here](./INSTALL.md)  
+
+## Writing, running, and rendering state machines - Quick Start
+
+Look [here](./QUICK-START-UML-WITH-CEPS.md) if you are interested mainly in using ceps' UML state charts features.
+
+# Spec-Driven AI-assisted development with ceps
 
 A tool-agnostic blueprint for using **ceps** executable specifications as the
 ground truth in an AI-assisted development loop. Works with any CI system
@@ -393,15 +405,3 @@ resolves apparent rung-3 failures for free.
   part of the reviewable spec.
 - Only top-level state machines can appear in `Start{...}` — metaprograms
   must expand machines at the lexical top level.
-
-## Features (machines4ceps as found in the standard distribution of the ceps tool)
-
-Look [here](./FEATURES.md) for a list of features.
-
-## Installation
-
-Details can be found [here](./INSTALL.md)  
-
-## Writing, running, and rendering state machines - Quick Start
-
-Look [here](./QUICK-START-UML-WITH-CEPS.md) if you are interested mainly in using ceps' UML state charts features.
