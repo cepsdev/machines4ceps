@@ -209,7 +209,12 @@ by different transistions is imposed, hence relying on the result of an action i
 ceps offers a high level assembler for the specification of operational semantics, the name of the assembler is Oblectamenta. Oblectamenta runs on
 a virtual machine which has 64 bit wide register, a 64 bit address space, a computation stack, 16 general purpose registers R0-R15, a stack pointer register
 SP (stack grows from higher to lower addresses), a frame register FP, a compute stack register CSP (CSP is intially 0 and grows towards higher addresses),
-an instruction pointer PC, 6 argument registers AG0 - ARG5, a result register RES. ceps comes with a built-in just in time compiler for x86 and ARM architectures (remark: experimental). Example of a state machine with an action that finds the maximal element in an array:
+an instruction pointer PC, 6 argument registers AG0 - ARG5, a result register RES. ceps comes with a built-in just in time compiler for x86 and ARM architectures (remark: experimental). It might strike you as highly unusual to find a low level assembler combined with very high level concepts like
+metaprograms operating on normalized ASTs and state machines, but there is a method to the madness. ceps is about incrementally deriving programs, and
+it offers the full range of an algebraic expression with unbound identifiers to a full blown micro service defined down to the level of individual
+machine registers. After giving a very detailed, very low level example of a very simple function (comuting the maximal element of an array), we'll show how a readable specification with precise semantics can be derived.
+
+Example of a state machine with an action that finds the maximal element in an array:
 ```
 kind Event;
 
