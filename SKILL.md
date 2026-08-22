@@ -172,6 +172,141 @@ The uAST can be inspected with
 ```
 ceps s1.ceps --pr
 ```
+[STATE MACHINE ATIONS AND HIGH LEVEL ASSEMBLER]
+[STATE MACHINE ATIONS]
+State machines can have actions, actions can be called as a side effect of a transition, actions are defined in the Actions sub-block of an sm-block.
+An Actions block can appear anywhere in the same lexical scope as the state machine's id as long as it appears after the id, there can be multiple
+Actions blocks, a transition can reference up to three actions:
+```
+sm{
+    S;
+    Actions{
+        action_1{
+
+        };
+        action_2{
+
+        };
+    };
+    states{Initial;a;b;};
+    Actions{
+        action_3{
+
+        };
+        action_4{
+
+        };
+    };
+    t{Initial;a;action_1;action_2;};
+    t{a;b;action_4;action_3;action_2;};
+
+};
+```
+Remark: The calling order of the actions referenced by a transition is the same as their order in the calling list, no order between actions defined
+by different transistions is imposed, hence relying on the result of an action in second one is only defined within a transition.
+
+[HIGH LEVEL ASSEMBLER: Oblectamenta]
+ceps offers a high level assembler for the specification of operational semantics, the name of the assembler is Oblectamenta. Oblectamenta runs on
+a virtual machine which has 64 bit wide register, a 64 bit address space, a computation stack, 16 general purpose registers R0-R15, a stack pointer register
+SP (stack grows from higher to lower addresses), a frame register FP, a compute stack register CSP (CSP is intially 0 and grows towards higher addresses),
+an instruction pointer PC, 6 argument registers AG0 - ARG5, a result register RES. ceps comes with a built-in just in time compiler for x86 and ARM architectures (remark: experimental). Example of a state machine with an action that finds the maximal element in an array:
+```
+kind Event;
+
+kind OblectamentaOpcode;
+kind OblectamentaDataLabel;
+kind OblectamentaModifier;
+kind OblectamentaCodeLabel;
+kind OblectamentaReg;
+
+
+OblectamentaModifier addr;
+OblectamentaModifier reg;
+OblectamentaReg SP, FP; 
+
+oblectamenta{
+ global{
+   data{
+        OblectamentaDataLabel array;
+        OblectamentaDataLabel i;
+        OblectamentaDataLabel n;
+        OblectamentaDataLabel x;
+        OblectamentaDataLabel j;
+        OblectamentaDataLabel cur_m;
+        OblectamentaDataLabel four, one;
+        cur_m; -1;
+        i; 0;
+        array; 4;1;7;9;2;5;8;10;3;6;
+        n; 10;
+        four; 4;
+        one; 1;
+    };
+ };
+};
+
+sm{
+    S;
+    states{Initial;A;};
+    Actions{
+        doFindMaxElement{
+            oblectamenta{
+                        text{
+                            asm{
+                                OblectamentaOpcode halt, noop, ldi32,blteqzeroi32,muli32,ui32toui64,ui32toui64,lea,addi64,ldsi32,sti32,buc,dbg_printlni32;
+
+                                OblectamentaDataLabel array;
+                                OblectamentaDataLabel i,four,one;
+                                OblectamentaDataLabel cur_m, n;
+                                OblectamentaCodeLabel done,loop,loop_tail;
+                            loop;
+                                ldi32(i); // push i32 value referenced by i onto compute stack
+                                ldi32(n); // push i32 value referenced by n onto compute stack
+                                subi32; // push_cs_i32(pop_cs_i32 - pop_cs_i32)
+                                blteqzeroi32(done); // if (i >= n) goto done;
+
+                                ldi32(i); // push int 32 value referenced by i onto compute stack
+                                ldi32(four); // push int 32 value referenced by i onto compute stack
+                                muli32; // pushi32()
+                                ui32toui64;
+                                lea(array);                            
+                                addi64;
+                                ldsi32; // array[i] on top of stack
+                                ldi32(cur_m);
+                                subi32;
+                                bgteqzeroi32(loop_tail);
+                                ldi32(i);
+                                ldi32(four);
+                                muli32;
+                                ui32toui64; // convert i32 value on top of compute stack to unsigned int 64 value
+                                lea(array); // push 64 bit address of array onto compute stack
+                                addi64;
+                                ldsi32; // array[i] on top of stack
+                                sti32(cur_m); // pop and store i32 value to address referenced by cur_m 
+
+
+                                loop_tail; // label                    
+                                ldi32(one);
+                                ldi32(i);
+                                addi32;
+                                sti32(i); // i = i +1 ;
+                                buc(loop); // branch unconditionally
+
+                            done;
+                                dbg_printlni32(cur_m);//Pseudo opcode for printing i32 to stdout
+                                halt;
+                            };
+                        };
+            };
+        };
+    };
+    t{Initial;A;doFindMaxElement;};
+};
+
+Simulation{
+    Start{S;};
+};
+```
+
 
 [EXECUTION TRACE]
 The execution trace is a result of phase 3 (see the description of the different phases of executing a specification with ceps).
