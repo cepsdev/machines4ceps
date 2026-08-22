@@ -1,6 +1,11 @@
 # Skill: ceps language and ceps tool
 If you have to write ceps programs or ceps specifications you find here the description of the language ceps and the tools that executes ceps programs/specification.
 
+[TOOL DESCRIPTION]
+- Tool Name: ceps interpreter
+- How to invoke: Run `ceps FILE [FILE...] `
+- Expected Output: An execution trace intermingled with possible output of the pogram/specification and possible warnings and errors, execution trace is discussed in section [EXECUTION TRACE].
+
 [LANGUAGE DESCRIPTION]
 - Language Name : ceps or cepS
 - Paradigm: Language for executable specifications, procedural, functional and object oriented allowing partial programs, i.e. wellformed syntactical units containing unbound entities are largely ignored.
@@ -168,14 +173,9 @@ The uAST can be inspected with
 ceps s1.ceps --pr
 ```
 
-
-[TOOL DESCRIPTION]
-- Tool Name: ceps interpreter
-- How to invoke: Run `ceps FILE [FILE...] `
-- Expected Output: An execution trace intermingled with possible output of the pogram/specification and possible warnings and errors, execution trace is discussed in section [EXECUTION TRACE].
-
 [EXECUTION TRACE]
-An execution trace describes the state changes of state machines during the execution of a ceps program. A ceps program doesn't have to have state machines, therefore the execution trace can be the empty string followed by a new-line character. 
+The execution trace is a result of phase 3 (see the description of the different phases of executing a specification with ceps).
+An execution trace describes the state changes of state machines during the execution of a ceps program. A ceps program doesn't have to have state machines, therefore the execution trace can be the empty string followed by a new-line character.
 The general form of an execution trace is: 
 list of state changes in step 1 NEWLINE list of state changes in step 2 NEWLINE list of state changes in step 3 NEWLINE ...
 The order of states in each step has no meaning hence the order in which the states are printed between two NEWLINEs or the beginning of the trace and the first NEWLINE is of no relevance. However, the order in which two state changes appear in the execution trace matters if they are separated by at least one NEWLINE. In this case the relative order of the state changes in the execution trace is the relative order of the state changes during execution. A state change has the form  ID[.ID]*(+|-) (regular expression). A trailing '+' means the state was visited, a trailing '-' means the state was exited.
@@ -188,7 +188,8 @@ S3.Initial- S3.Sub1.Initial+
 S3.Sub1.Initial- S3.Sub1.A+
 ```
 It is very important to keep in mind that only changes are logged (delta log), in the example above the state machine S2 enters in the second line the state A and stays there for the rest of the logged execution.
-[Observer State Machines]
+
+[OBSERVER STATE MACHINES ARE THE CANONICAL WAY TO ENRICH EXECUTION TRACES]
 Execution Traces are compact projections of the real execution onto the space of finite sequences of sets of state-changes (A+ or B- are examples of state changes), execution traces omit a lot of potentially interesting information like triggered events, taken transitions, evalutated guards etc. This is intentionally so, execution traces are not diagnositc traces. There is a very elegeant way to make any interesting diagnostic data, e.g. events, visible by introducing an observing state machine. 
 Formal definition of a minimal observing state machine: A minimal observing state machine MOSM(E,S), where E is a Guard, i.e. a boolean expresssion, or an Event and S is an identifier, is 
 ``` 
