@@ -213,7 +213,11 @@ sm{
  t{Observe_G;Initial;};
 };
 ```  
-
+Remark: It is a good practice to keep observers separate from the main specification, group observers thematically into different files, files with observers a best placed at the very end of a ceps session:
+```
+ceps common_stuff.ceps spec-part-1.ceps spec-part-2.ceps observers-1.ceps observers-2.ceps simulations.ceps
+```
+This is of course not required, there is no pattern which serves each scenario equally well, but keeping observers separate in different files allows for "observer injection": only the relevant observers for a particular session are started, observers are grouped thematically which also allows for later reuse and documentation.
 
 
 
