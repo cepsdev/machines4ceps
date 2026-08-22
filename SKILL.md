@@ -102,6 +102,7 @@ State machines can be nested, the state machines supported by ceps is a generali
 Remark: Execution traces are described in section [EXECUTION TRACE]
 IMPORTANT: Only state machines defined at the lexical top level can be included in a Start-directive.
 
+Let's assume, continuing with the example with
 [LANGUAGE DESCRIPTION - THE SM BLOCK]
 As already mentioned, state machines are defined via the sm block. Here is a list summarizing the main features of state machines:
 - Atomic states are the states listed in the states block, each sm block contains one or none states block. The location of which is not important.
@@ -187,3 +188,31 @@ S3.Initial- S3.Sub1.Initial+
 S3.Sub1.Initial- S3.Sub1.A+
 ```
 It is very important to keep in mind that only changes are logged (delta log), in the example above the state machine S2 enters in the second line the state A and stays there for the rest of the logged execution.
+[Observer State Machines]
+Execution Traces are compact projections of the real execution onto the space of finite sequences of sets of state-changes (A+ or B- are examples of state changes), execution traces omit a lot of potentially interesting information like triggered events, taken transitions, evalutated guards etc. This is intentionally so, execution traces are not diagnositc traces. There is a very elegeant way to make any interesting diagnostic data, e.g. events, visible by introducing an observing state machine. 
+Formal definition of a minimal observing state machine: A minimal observing state machine MOSM(E,S), where E is a Guard, i.e. a boolean expresssion, or an Event and S is an identifier, is 
+``` 
+sm{MOSM; states{Initial;S;}; t{Initial;S;E;}; t{S;Initial;}; };
+```
+Now the definition of Observer State Machine: An observer state machine OSM for E_1.E_2,...,E_with S_1,...S_n as in the definition before, is a state machine such that the projection of each execution trace T of OSM onto the state space of MOSM(E_i,T_i) constitutes a valid trace for the MOSM(E_i,T_i) for each i=1,...,n. 
+We do not explicitly disallow observing state machines having side effects, but the property stated above requires the OSM(E_1,S_1,...,E_n,S_n) to be free of side effects relative to E_i, the observed entities.
+Example:
+```
+kind Event;
+kind Guard;
+Event E;
+Guard G;
+
+sm{
+ Observe_E_and_G;
+ states{Initial;Observe_E;Observe_G;};
+ t{Initial;Observe_E;E;};
+ t{Initial;Observe_G;G;};
+ t{Observe_E;Initial;};
+ t{Observe_G;Initial;};
+};
+```  
+
+
+
+
