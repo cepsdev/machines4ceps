@@ -15,7 +15,7 @@ Line numbers refer to the working tree at the time of writing.
 | [D5](#d5) | Medium | Coverage | Transition coverage prints `-nan` when the denominator is zero |
 | [D6](#d6) | Medium | Coverage | The transition-coverage filter silently drops edges at `SM`/`FINAL` endpoints |
 | [D7](#d7) | Low | Trace | `log_triggered_transitions` is dead code |
-| [D8](#d8) | Low | CLI | `--report_format_json` is parsed but never consumed |
+| [D8](#d8) | Low | CLI | Three of four report-format flags are parsed but never consumed |
 | [D9](#d9) | Low | CLI | `log_verbosity` cannot be set from the command line |
 | [D10](#d10) | Low | Docs | `SKILL.md` is incomplete and self-contradictory on submachine references |
 | [D11](#d11) | Low | Internals | State-index intervals are not contiguous across cover classes |
@@ -255,7 +255,7 @@ A.Initial-            <-- spurious
 
 **Severity:** Medium — a report line that is not a number.
 **Area:** Coverage reporting.
-**File:** `core/src/state_machine_simulation_core.cpp:2072-2082`.
+**Files:** `core/src/state_machine_simulation_core.cpp:2066`, `:2114-2115`, `:1843`.
 
 When every transition is excluded by the endpoint filter, the denominator is zero and the
 percentage is computed anyway.
@@ -277,11 +277,36 @@ Transition Coverage: -nan ( -nan% )
 The model's single transition starts at `Initial`, which carries the `INIT` flag, so the
 filter skips it and nothing is left to cover.
 
+### Analysis
+
+There *is* a guard on the printing side — `print_report_coverage` returns early unless
+both `valid` flags are set (`:1843`). It does not fire, because the flags do not mean
+what the guard assumes:
+
+```cpp
+:2066   if( (transition_coverage_defined = ctx.start_of_covering_transitions_valid()) ){
+```
+
+`transition_coverage_defined` records that the *covering index range* is valid — not that
+anything survived the endpoint filter of [D6](#d6). A model can therefore have a valid
+range and still a denominator of zero. The division is then performed unguarded:
+
+```cpp
+:2114   state_coverage      = (double)number_of_states_covered      / (double)number_of_states_to_cover;
+:2115   transition_coverage = (double)number_of_transitions_covered / (double)number_of_transitions_to_cover;
+```
+
+and `-nan` sails straight through the `valid` check.
+
 ### Fix
 
-Guard the division and report `n/a` — or, better, do not emit the line at all when there
-is nothing to cover. Note that `-nan` makes the report unparseable for any downstream
-tool, which matters more than the cosmetics.
+Redefine the flags to mean what the guard needs: `*_defined` should be
+`number_of_*_to_cover > 0`, evaluated after the filter loops. That fixes the division and
+the printing guard together, and it makes the `valid` field in the structured report
+honest for machine consumers.
+
+`-nan` also makes the report unparseable for any downstream tool, which matters more than
+the cosmetics — see [D8](#d8).
 
 ---
 
@@ -349,18 +374,48 @@ code invites someone to assume the feature works.
 ---
 
 <a name="d8"></a>
-## D8. `--report_format_json` is parsed but never consumed
+## D8. Three of the four report-format flags are inert
 
-**Severity:** Low — a flag that silently does nothing.
-**Area:** CLI.
+**Severity:** Low as a bug, high as an opportunity — see the note below.
+**Area:** CLI / reporting.
 
-- declared: `core/include/cmdline_utils.hpp:83` — `bool report_format_json = false;`
-- set: `core/src/cmdline_utils.cpp:244`
-- read: nowhere
+Four output formats are offered. Only one is implemented:
 
-Passing `--report_format_json` is accepted and changes nothing. Either implement it or
-remove it; an accepted-but-inert flag is worse than an unrecognised one, because the
-caller gets no signal.
+| Flag | Declared | Parsed | Consumed |
+|---|---|---|---|
+| `--report_format_sexpression` | yes | yes | **yes**, `core/src/state_machine_simulation_core.cpp:1863` |
+| `--report_format_json` | `core/include/cmdline_utils.hpp:83` | `core/src/cmdline_utils.cpp:244` | **no** |
+| `--report_format_ceps` | yes | yes | **no** |
+| `--report_format_xml` | yes | yes | **no** |
+
+Passing any of the latter three is accepted and silently changes nothing; the caller gets
+the default human-readable report and no signal that the request was ignored. An
+accepted-but-inert flag is worse than an unrecognised one.
+
+### Note: the fix is far smaller than it looks
+
+The report is **already structured data**. `print_report` receives a
+`ceps::ast::Nodeset` with a settled schema —
+`report["summary"]["coverage"]["state_coverage"]["ratio" | "valid" | "percentage"]`,
+`report["summary"]["general"]["states_total"]`, `report["summary"]["categories"]` —
+and the s-expression branch is nothing but a pretty-print of that node set:
+
+```cpp
+:1863   if (result_cmd_line.report_format_sexpression) {
+            os << ceps::ast::Nodebase::pretty_print << report;
+            return;
+        }
+```
+
+A Nodeset-to-JSON serialiser already exists as `ceps2json`
+(`core/src/api/websocket/ws_api.cpp:151`, with `escape_json_string` at `:49` and
+`fast-json.hpp` behind it). So `--report_format_json` is a branch alongside the existing
+one that calls a function already written and already exercised by the websocket API —
+wiring, not writing. `--report_format_ceps` is similar, the node set being ceps already.
+
+This matters out of proportion to its severity: a stable, versioned machine-readable
+report is the interface every automated consumer needs, and it is nearly free. See
+`ROADMAP.md` phase 1.
 
 ---
 
