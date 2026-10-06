@@ -52,7 +52,15 @@ miscount coverage.
 
 ---
 
-## Phase 1 — Make the output machine-readable
+## Phase 1 — Fix the reporting
+
+Reporting is the weakest part of ceps today, and it has two independent axes. **Format**
+is whether a consumer can parse the output. **Quality** is whether the output was worth
+parsing. They are orthogonal: a JSON-wrapped message that says `Error:A.A.B is not a
+state.` with no file and no line is still useless, it is merely machine-readably useless.
+Both halves are in this phase.
+
+### 1A — Format
 
 **Goal:** one versioned, structured report that any consumer can parse, covering trace,
 coverage, diagnostics and status.
@@ -77,6 +85,61 @@ number formatting.
 they are worth doing deliberately — this becomes a public interface, and changing it later
 costs more than getting it right now. A short specification before implementation is
 advisable, in the manner of `RECURSIVE-STATE-MACHINES.md`.
+
+### 1B — Quality
+
+**Goal:** when ceps says something is wrong, the message is enough to fix it; when ceps
+says nothing, nothing is wrong.
+
+The second half matters as much as the first. ceps executes a great deal and reports very
+little, and the gap between those two is where a user — human or machine — loses time
+deciding whether the model is wrong or the tool is.
+
+| Step | Work | Evidence |
+|---|---|---|
+| 1.6 | Source location in every diagnostic: file, line, column | `Error:A.A.B is not a state.` names neither the file nor the line |
+| 1.7 | Stable error codes, so diagnostics can be matched and documented | — |
+| 1.8 | Reject unimplemented options instead of accepting them silently | [D8](DEFECTS.md#d8) — three inert `--report_format_*` flags |
+| 1.9 | Warn on legal-but-suspicious models | two unguarded transitions out of one state silently activate **both** targets — an implicit fork, see below |
+| 1.10 | Report when output has been suppressed rather than omitting it silently | [D3](DEFECTS.md#d3) — the entry line simply is not there |
+| 1.11 | Make the tool self-describing: list opcodes, list options, both machine-readably | the opcode gap of [D1](DEFECTS.md#d1) was found by diffing two source files, because nothing can be asked |
+
+**Acceptance:** a wrong model produces a diagnostic that locates the problem in the source;
+a right model produces no diagnostic; and no accepted input produces neither output nor
+complaint.
+
+### Field notes
+
+The items in 1B are not hypothetical. They are what actually cost time while auditing this
+repository in a single session:
+
+- an accepted flag that did nothing, with no signal that the request was ignored
+- a trace missing a line, with no indication that anything had been omitted
+- a coverage figure of `-nan` passing a validity check that existed and was meant to stop it
+- an error naming an identifier but not its location
+- a plausible model exiting on signal 11 ([D2](DEFECTS.md#d2))
+- two documentation statements contradicting each other, so there was no third reference
+  point to triangulate against
+
+One of these deserves separate mention, because it is a semantic question rather than a
+reporting one. Given
+
+```
+sm{A; states{Initial;X;Y;}; t{Initial;X;}; t{Initial;Y;}; };
+```
+
+ceps produces `A.Initial- A.X+ A.Y+` and exits 0. Both targets become active: two
+unguarded transitions sharing a source are an **implicit fork**. That may well be
+intended — ceps has orthogonal regions, and the `THREAD` / `REGION` machinery exists —
+but it is reachable without writing anything that looks like a fork, and nothing in the
+output says a fork happened. At minimum it should be visible in the report. Whether it
+should also require explicit syntax is a design decision worth taking deliberately, and
+it bears directly on the `c{}` rule forbidding calls inside thread regions
+(`RECURSIVE-STATE-MACHINES.md` §5).
+
+Individually these are small. Together they produce a tool whose failure modes are
+indistinguishable from a user's mistakes — which is survivable for a human who can
+experiment, and disqualifying for an automated consumer that cannot.
 
 ---
 
@@ -209,9 +272,9 @@ real now and leaves 6b as the goal it was always going to be.
 ## Summary of sequencing
 
 ```
-Phase 1  machine-readable report  ──┐
-Phase 2  complete, causal trace   ──┼──> Phase 5  c{} recursive state machines
-Phase 3  trustworthy coverage     ──┘
+Phase 1  reporting: 1A format, 1B quality  ──┐
+Phase 2  complete, causal trace            ──┼──> Phase 5  c{} recursive state machines
+Phase 3  trustworthy coverage              ──┘
 Phase 4  robustness (independent, do opportunistically)
 Phase 6  MCP: 6a thin adapter ──> 6b ceps-native
 ```
@@ -219,6 +282,10 @@ Phase 6  MCP: 6a thin adapter ──> 6b ceps-native
 Phases 1–3 are each small, and together they convert ceps from a tool that prints things
 into a tool that can be *called*. Phase 5 is the expressiveness leap, and it lands on
 solid ground once the instrument is trustworthy.
+
+If only one thing is done, do 1B. Format without quality gives a consumer a clean parse of
+an unhelpful message; quality without format still lets a human work. Both together are
+what the thesis needs.
 
 ---
 

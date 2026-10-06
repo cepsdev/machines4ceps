@@ -428,7 +428,7 @@ wiring, not writing. `--report_format_ceps` is similar, the node set being ceps 
 
 This matters out of proportion to its severity: a stable, versioned machine-readable
 report is the interface every automated consumer needs, and it is nearly free. See
-`ROADMAP.md` phase 1.
+`ROADMAP.md` phase 1A.
 
 ---
 
