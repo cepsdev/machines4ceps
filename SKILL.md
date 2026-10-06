@@ -107,14 +107,28 @@ State machines can be nested, the state machines supported by ceps is a generali
 Remark: Execution traces are described in section [EXECUTION TRACE]
 IMPORTANT: Only state machines defined at the lexical top level can be included in a Start-directive.
 
-Let's assume, continuing with the example with
 [LANGUAGE DESCRIPTION - THE SM BLOCK]
 As already mentioned, state machines are defined via the sm block. Here is a list summarizing the main features of state machines:
 - Atomic states are the states listed in the states block, each sm block contains one or none states block. The location of which is not important.
-- Sub State Machines. State machines can be nested, i.e. a sm block can contain arbirtrarily many sm blocks, the identifiers of the sub sm blocks must be unique. A sub machine B of machine A is refered to by A.B .
+- Sub State Machines. State machines can be nested, i.e. a sm block can contain arbirtrarily many sm blocks, the identifiers of the sub sm blocks must be unique. A sub machine is referenced by an id, see the rule for id resolution below: from inside A the sub machine B is referenced by B, from anywhere by A.B . Execution traces and reports always display the fully qualified form A.B .
 - Transitions. A sm block can contain multiple t-blocks, the order of which is not important, hence side effects of guard evaluations and actions
-that affect other guards or actions in the same scope lead to undefined behaviour. The minimal transitions define a pair of state ids, which must occur at the very beginning of the t-block, the first id is the source state-id, the second id is the destination source-id. State ids can be composite, i.e. a sourec/destination state can have the form A.B.C, all state ids (comnposite and non-composite) are interpreted relative to the enclosing sm-block (lexical scope). State ids can reference atomic states and sub states, by using composite ids you can reference states deeper down
+that affect other guards or actions in the same scope lead to undefined behaviour. The minimal transitions define a pair of state ids, which must occur at the very beginning of the t-block, the first id is the source state-id, the second id is the destination source-id. State ids can be composite, i.e. a sourec/destination state can have the form A.B.C. State ids can reference atomic states and sub states, by using composite ids you can reference states deeper down
 the sm-block induced hierarchy of composite states.
+ID RESOLUTION: an id is a dot-separated path. It is first resolved relative to the enclosing sm-block (lexical scope); if it does not resolve there it is resolved from the top level. Both forms are therefore accepted. Given
+```
+sm{A; states{Initial;}; sm{B; states{Initial;}; sm{C; states{Initial;};}; }; };
+```
+each of these transitions, written inside A, is valid and names the same destination:
+```
+t{Initial;B;}        // relative, one level
+t{Initial;A.B;}      // from the top level
+```
+and likewise for the machine C nested in B:
+```
+t{Initial;B.C;}      // relative, two levels
+t{Initial;A.B.C;}    // from the top level, two levels
+```
+A path that resolves neither way is an error, e.g. A.A.B written inside A.
 Optional parts of transitions are: a guard expression or a guard id, an event-id, up to three actions. The optional parts can appear in any order.
 Some Examples for transitions:
 ```
@@ -319,15 +333,30 @@ An execution trace describes the state changes of state machines during the exec
 The general form of an execution trace is: 
 list of state changes in step 1 NEWLINE list of state changes in step 2 NEWLINE list of state changes in step 3 NEWLINE ...
 The order of states in each step has no meaning hence the order in which the states are printed between two NEWLINEs or the beginning of the trace and the first NEWLINE is of no relevance. However, the order in which two state changes appear in the execution trace matters if they are separated by at least one NEWLINE. In this case the relative order of the state changes in the execution trace is the relative order of the state changes during execution. A state change has the form  ID[.ID]*(+|-) (regular expression). A trailing '+' means the state was visited, a trailing '-' means the state was exited.
-Examples for execution traces: 
+Example. This specification:
 ```
-S.Initial+ S2.Initial+
-S.Initial- S.Final+ S2.Initial- S2.A+
-S3.Initial+
-S3.Initial- S3.Sub1.Initial+
-S3.Sub1.Initial- S3.Sub1.A+
+kind Event;
+Event E;
+
+sm{S;  states{Initial;Final;}; t{Initial;Final;};};
+sm{S2; states{Initial;A;};     t{Initial;A;};};
+sm{S3; states{Initial;};
+   sm{Sub1; states{Initial;A;}; t{Initial;A;E;};};
+   t{Initial;Sub1;};
+};
+
+Simulation{
+ Start{S;S2;S3;};
+ E;
+};
 ```
-It is very important to keep in mind that only changes are logged (delta log), in the example above the state machine S2 enters in the second line the state A and stays there for the rest of the logged execution.
+produces this execution trace:
+```
+S.Initial- S.Final+ S2.Initial- S2.A+ S3.Initial- S3.Sub1+ S3.Sub1.Initial+ 
+S3.Sub1.Initial- S3.Sub1.A+ 
+```
+Note that entering a sub state machine logs the machine itself as well as its initial state, hence S3.Sub1+ and S3.Sub1.Initial+ both appear.
+It is very important to keep in mind that only changes are logged (delta log), in the example above the state machine S2 enters the state A in the first line and stays there for the rest of the logged execution.
 
 [OBSERVER STATE MACHINES ARE THE CANONICAL WAY TO ENRICH EXECUTION TRACES]
 Execution Traces are compact projections of the real execution onto the space of finite sequences of sets of state-changes (A+ or B- are examples of state changes), execution traces omit a lot of potentially interesting information like triggered events, taken transitions, evalutated guards etc. This is intentionally so, execution traces are not diagnositc traces. There is a very elegeant way to make any interesting diagnostic data, e.g. events, visible by introducing an observing state machine. 

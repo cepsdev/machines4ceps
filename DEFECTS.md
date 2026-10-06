@@ -14,7 +14,7 @@ Line numbers refer to the working tree at the time of writing.
 | [D4](#d4) | Medium | Trace | A spurious trailing line repeats the final exits in covering models |
 | [D5](#d5) | Medium | Coverage | Transition coverage prints `-nan` when the denominator is zero |
 | [D6](#d6) | Medium | Coverage | The transition-coverage filter silently drops edges at `SM`/`FINAL` endpoints |
-| [D7](#d7) | Low | Trace | `log_triggered_transitions` is dead code |
+| [D7](#d7) | Low | Trace | `log_triggered_transitions` is disabled by an undocumented `return;` |
 | [D8](#d8) | Low | CLI | Three of four report-format flags are parsed but never consumed |
 | [D9](#d9) | Low | CLI | `log_verbosity` cannot be set from the command line |
 | [D10](#d10) | Low | Docs | `SKILL.md` is incomplete and self-contradictory on submachine references |
@@ -347,7 +347,7 @@ Excluding `INIT` and `FINAL` is defensible. Excluding `SM` is the questionable o
 ---
 
 <a name="d7"></a>
-## D7. `log_triggered_transitions` is dead code
+## D7. `log_triggered_transitions` is disabled by an undocumented `return;`
 
 **Severity:** Low.
 **Area:** Trace.
@@ -363,13 +363,26 @@ if (smc->live_logger() || !smc->quiet_mode()){
    ...
 ```
 
-The unconditional `return;` on the first line disables the whole body. The effect is that
-the execution trace records only the *state-set delta* per microstep and never which
-transitions fired, so a reader has to infer the edge from the delta. That inference is
-ambiguous whenever two edges produce the same delta.
+The unconditional `return;` on the first line disables the whole body.
 
-Either restore the function or delete it; leaving a `return;` in front of live-looking
-code invites someone to assume the feature works.
+### This is probably intentional
+
+`SKILL.md` states the omission as a design decision, not an oversight: execution traces
+are compact projections onto sequences of sets of state changes, they "omit a lot of
+potentially interesting information like triggered events, taken transitions, evalutated
+guards etc. This is intentionally so, execution traces are not diagnositc traces", and
+**observer state machines are presented as the canonical way to enrich them**.
+
+So the defect here is not the behaviour — it is that a deliberate decision is recorded as
+a `return;` statement in front of fifteen lines of live-looking code, with no comment
+saying so. The next reader will take it for an oversight, as this one did.
+
+### Fix
+
+Either delete the function and note the decision where the trace format is documented, or
+keep it behind an explicit opt-in. The consequence worth weighing is that an observer must
+be added to the *model* in order to diagnose it, so an automated consumer cannot recover
+the taken edge from a run it has already performed. See `ROADMAP.md` phase 2.3.
 
 ---
 

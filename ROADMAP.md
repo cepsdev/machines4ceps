@@ -31,14 +31,15 @@ exactly that path:
 |---|---|
 | [D3](DEFECTS.md#d3) | the trace is missing its first line, unless the model opts into coverage |
 | [D4](DEFECTS.md#d4) | the trace contains a microstep that never happened |
-| [D7](DEFECTS.md#d7) | which transition fired is not reported at all, only the state delta |
+| [D7](DEFECTS.md#d7) | which transition fired is not reported, only the state delta — *by design*, see 2.3 |
 | [D5](DEFECTS.md#d5) | `Transition Coverage: -nan ( -nan% )` |
 | [D6](DEFECTS.md#d6) | coverage silently overstated — `SM`-endpoint edges are not counted |
 | [D8](DEFECTS.md#d8) | `--report_format_json` is accepted and does nothing |
 
-Six of the eleven known defects sit in the feedback channel. A human eyeballing one trace
-does not notice; a machine iterating against it cannot function, because a wrong number
-and a broken tool are indistinguishable.
+Six of the eleven known defects sit in the feedback channel — five of them genuine bugs,
+with D7 a deliberate design decision that nonetheless shapes what a consumer can learn. A
+human eyeballing one trace notices none of them; a machine iterating against it cannot
+function, because a wrong number and a broken tool are indistinguishable.
 
 Hence: **fix the instrument before running the experiment.** `c{}` makes ceps more
 expressive, and ceps is already expressive. A trustworthy machine-readable contract makes
@@ -92,13 +93,31 @@ and that says which edge was taken.
 | 2.4 | Decide whether intra-line ordering should be causal rather than index order | [D11](DEFECTS.md#d11) |
 | 2.5 | Expose `log_verbosity` as a flag, or remove it and its guarded code | [D9](DEFECTS.md#d9) |
 
-**Why 2.3 matters most.** Today a reader infers the edge from the state-set delta, and
-that inference is ambiguous whenever two edges produce the same delta. Reporting the edge
-directly turns the trace from a sequence of observations into a sequence of *causes* —
-which is what makes a counterexample actionable, and what a test generator needs.
+**The entry convention is settled:** on entry both the machine and its initial state are
+logged, i.e. `A+ A.Initial+`. `SKILL.md` deliberately continues to document current
+behaviour until 2.1 lands, so its trace examples must be revisited as part of this phase.
+
+**2.3 is a design question, not a bug.** `SKILL.md` states the omission is deliberate:
+execution traces are *compact projections* onto sequences of sets of state changes, they
+are explicitly "not diagnostic traces", and **observer state machines are the canonical
+way to enrich them**. That is a coherent position, and an elegant one — the enrichment
+mechanism stays inside the language and is compositional.
+
+The counter-argument is narrow but real: an observer must be *added to the model* to
+diagnose it, so the instrument changes the thing it measures, and a counterexample
+produced from an uninstrumented run cannot say which edge was taken when two edges yield
+the same delta. For an automated consumer that matters, because it cannot go back and
+re-run with instrumentation it did not know it needed.
+
+Both can be true at once: keep the default trace a pure state-change projection, and
+expose taken transitions as an *opt-in* channel in the phase-1 structured report rather
+than in the human-readable trace. That honours the design position and still gives
+machines the causal information. Either way, the dead `return;` in
+`log_triggered_transitions` should become an explicit decision rather than a silent one.
 
 **Acceptance:** replaying the trace from the empty configuration reproduces the final
-configuration exactly, and every step names the transition responsible.
+configuration exactly; and if 2.3 is taken, the transition responsible for each step is
+recoverable from the structured report without modifying the model.
 
 ---
 
