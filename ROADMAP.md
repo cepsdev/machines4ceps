@@ -1,5 +1,8 @@
 # Roadmap
 
+What to build, in what order. **Why** any of it is worth building — and what ceps should
+refuse to build — is in **[POSITIONING.md](POSITIONING.md)**; this document assumes it.
+
 The organising thesis of this roadmap is the one ceps has been heading towards for a
 while:
 
@@ -261,6 +264,12 @@ Open design question still outstanding: **E4** — whether a callee whose index 
 split across cover classes should be rejected or renumbered ([D11](DEFECTS.md#d11)). The
 specification currently rejects; that is a placeholder, not a decision.
 
+**Deferred under the positioning.** `c{}` is the one item here that fails the test in
+[POSITIONING.md](POSITIONING.md): it does not help someone who has not agreed with anyone
+yet. The specification is sound and the work is good; expressiveness is simply not what
+blocks the users this tool is for. Keep it specified, build it when the instrument is
+trustworthy and the composition story is told.
+
 ---
 
 ## Phase 6 — The ecosystem play
@@ -400,6 +409,7 @@ tool offers — a derived, checkable account of how separately written models fi
 
 | Document | Contents |
 |---|---|
+| [POSITIONING.md](POSITIONING.md) | what kind of tool ceps is, and what it refuses to be |
 | [DEFECTS.md](DEFECTS.md) | 12 defects, each with a minimal reproducer |
 | [RECURSIVE-STATE-MACHINES.md](RECURSIVE-STATE-MACHINES.md) | the `c{}` specification |
 | [SKILL.md](SKILL.md) | the language and tool reference |
