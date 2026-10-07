@@ -117,22 +117,29 @@ Ranked by how much is lost by leaving it hidden:
    occur in `SKILL.md`, `QUICK-START-UML-WITH-CEPS.md` or `README.md`. See
    [INVENTORY.md](INVENTORY.md) §4.2. `examples/doing_specs/lueftersteuerung/` is already
    a usable worked example; it needs a paragraph of prose, not new code.
-2. **`.ceps.lex`** — partial parsers for foreign notations, six of them in the tree, zero
+2. **The document renderer** — `--ppe --format markdown|html5|…`, 3,295 lines, five
+   writers ([INVENTORY.md](INVENTORY.md) §4.3). `--ppe` emits the specification, the test
+   procedure in prose and a `Visited` column from the run, in one document. **This is the
+   artifact that demonstrates the claim in [POSITIONING.md](POSITIONING.md)** — behaviour
+   described, executed, and shown to have been executed, in something you can hand to
+   someone who does not use the tool. One worked example with its output would do more for
+   the positioning than any amount of prose.
+3. **`.ceps.lex`** — partial parsers for foreign notations, six of them in the tree, zero
    documentation. See [INVENTORY.md](INVENTORY.md) §4.1 and
    [POSITIONING.md](POSITIONING.md) on the invariant: this is the only layer that applies
    to artifacts the other party wrote.
-3. **The traversal layer** — [D12](DEFECTS.md#d12).
-4. **Message definitions** — `doc/tutorial/serialization/README.md` exists and is good;
+4. **The traversal layer** — [D12](DEFECTS.md#d12).
+5. **Message definitions** — `doc/tutorial/serialization/README.md` exists and is good;
    link it from `SKILL.md` and `README.md`.
-5. **Shadow states** — conformance checking, implemented 2017, mentioned nowhere.
-6. **`--cppgen`** — verified working during the sweep, and absent from `--help` along with
+6. **Shadow states** — conformance checking, implemented 2017, mentioned nowhere.
+7. **`--cppgen`** — verified working during the sweep, and absent from `--help` along with
    39 other accepted flags ([INVENTORY.md](INVENTORY.md) §4.10). Regenerating `--help`
    from the parser, or at least listing the generator flags, is a half-hour fix with a
    large discoverability payoff.
-7. **`macro` and `.ceps/prelude.ceps`** — both live, both undocumented. The prelude is the
+8. **`macro` and `.ceps/prelude.ceps`** — both live, both undocumented. The prelude is the
    answer to "why does `Event E;` no longer parse", which is the first thing a returning
    user hits.
-8. `rule{}` and `symbolic_equality`; the plugin interface; automatic differentiation.
+9. `rule{}` and `symbolic_equality`; the plugin interface; automatic differentiation.
 
 ### 0.5 Give `.ceps.lex` a loudness knob
 

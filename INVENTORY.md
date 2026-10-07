@@ -252,7 +252,133 @@ to be passed as the first input file, as `test/fibex/*.sh` does. Making the look
 automatic is a small change with a large effect on first-run experience, since a model
 that omits it fails with a bare `syntax error` at the first declaration.
 
-### 4.3 `--cppgen` — the state-machine to C++ compiler
+### 4.3 `core/src/docgen/` — the specification renderer
+
+3,295 lines across twelve source files, plus eight headers; `docgenerator.cpp` and
+`docgenerator_statemachine.cpp` were last touched in January 2025. It is the largest
+single subsystem in this inventory, and the one whose output is most directly the thing
+`POSITIONING.md` says ceps is for.
+
+It turns a model into a **document** — specification, test procedure and evidence of
+execution in one artifact.
+
+#### Invocation
+
+`--pr` (unevaluated), `--pe` (evaluated) or `--ppe` (post-execution), each with
+`--format F`. Five writers, from `docgenerator_docwriter_factory.cpp:28`:
+
+| `--format` | Writer | Lines |
+|---|---|---|
+| `ansi` (default) | `docgenerator_docwriter_ansi_console.cpp` | 96 |
+| `html5` / `html` | `docgenerator_docwriter_html5.cpp` | 539 |
+| `markdown` / `markdown_minimal` | `..._markdown_minimal.cpp` | 195 |
+| `markdown_github` | `..._markdown_github_style.cpp` | 137 |
+| `markdown_jira` | `..._markdown_jira_style.cpp` | 110 |
+
+All five verified working, 8 October 2026. `html5` emits a complete Bootstrap 5 page.
+
+**This is the one generator surface that `--help` advertises properly** — it lists the
+format names, which `--cppgen` and the rest do not get (§4.11). The gap here is not the
+flag, it is that none of `--pr`, `--pe`, `--ppe` or `--format` appears in `SKILL.md`,
+`QUICK-START-UML-WITH-CEPS.md` or `README.md`, so nothing tells a reader the capability is
+worth looking for.
+
+#### What `--ppe` actually produces
+
+Given a machine carrying `cover{}` and a `Simulation{}`:
+
+```
+kind Event; Event ev1,ev2;
+sm{ Motor; cover{edges_upto_1;};
+    states{Initial;Running;Stopped;Never;};
+    t{Initial;Running;ev1;}; t{Running;Stopped;ev2;}; t{Stopped;Never;ev1;}; };
+Simulation{ Start{Motor;}; ev1; ev2; };
+```
+
+```
+$ ceps b.ceps --ppe --format markdown
+# __State Machine__ *__Motor__*
+ | State   | Visited |
+ |---------|---------|
+ | Initial |         |
+ | Running | &#10004;|
+ | Stopped | &#10004;|
+ | Never   |         |
+
+# [Simulation]
+## Steps
+    Start state machine Motor.
+    Trigger Event ev1.
+    Trigger Event ev2.
+```
+
+Three things are in that output and only one of them was written by hand:
+
+1. **The specification** — the state and transition tables, from the model.
+2. **The test procedure in prose** — *"Start state machine Motor. Trigger Event ev1."* —
+   from the `Simulation{}` block. The executable test and the readable test are the same
+   text, so they cannot drift.
+3. **The evidence** — the `Visited` column, from the run. `Never` is visibly unvisited.
+
+In the console and Jira writers the third becomes a histogram with visit counts
+(`1 ░░░░ Running`), so the document shows not only *whether* a state was reached but how
+often.
+
+`test/markdown/README.md` is a saved specimen of this output from an earlier build, with
+the `░░░` bars in place. It is the closest thing in the repository to documentation of the
+feature, and it is filed as a test fixture.
+
+#### The assertion-to-document bridge
+
+`vm/features/common/common.ceps:124` defines the mechanism in six lines:
+
+```
+macro verdict{
+ result{
+  if(force_int(arglist.at(0))){ label Passed title = "" type="check"; }
+  else                        { label Failed title = "" type="error"; }
+ };
+};
+```
+
+`type="check"` and `type="error"` resolve to ✔ and ❗ in every writer
+(`docgenerator.cpp:424-430`); any other value is passed through as an emoji name. So a
+boolean assertion becomes a rendered verdict in the generated document. `summary.ceps` in
+the same directory then queries the results back out of the model —
+`for(e : root.Scenario.Then.result){ e; }` — which is the traversal layer ([D12](DEFECTS.md#d12))
+used in-tree rather than in `cepsdev/mermaid`.
+
+That closes a loop worth naming: **foreign notation → partial parser → executable model →
+run → document with pass marks**, with every stage in the same notation.
+
+#### Gaps found
+
+- **`section{}` is not rendered as a heading** by the markdown writers. It falls through
+  to the generic struct printer and comes out as literal `section { "…" }`. The handling
+  exists (`docgenerator.cpp:524`) but does not reach the minimal writer.
+- **`sm{}` nested inside `section{}` is not registered with the simulator.** A document
+  that groups its machines under sections therefore fails at `Start{M;}` with
+  `Expression doesn't evaluate to an existing state`. Document structure and executable
+  structure do not compose, which is the one thing this subsystem exists to do.
+- **`--doc-option state-machines-show-only-states` works but is not in `--help`**, which
+  lists only `no-macros`. Those are the only two options the code reads.
+- **`concept;`** — the marker that makes an `sm{}` a shadow-state concept rather than an
+  implementation (§4.6) — appears in `test/reporting/basic_spec/canopen_network_management.ceps`
+  and in no documentation.
+- [D15](DEFECTS.md#d15) reaches here too. `test/markdown/run_of_sm.ceps` renders its tables
+  and then dies in the assembler before the run completes, so the coverage annotation —
+  the whole point — cannot be produced for any model with guards.
+
+#### Not established
+
+The `vm/features/` suite renders verdicts through this path, and under the invocation
+tried here the five non-serialization feature files report `Failed`. That was **not**
+diagnosed: `serialization/` is the only subdirectory with a `run` script, so for the other
+five there is no defined invocation and no recorded expected result to compare against.
+This is evidence for roadmap item 0.3, not a defect report. `serialization/run` itself
+still passes 10/10 (re-verified 8 October 2026).
+
+### 4.4 `--cppgen` — the state-machine to C++ compiler
 
 Still works. Verified during the sweep:
 
@@ -265,7 +391,7 @@ The generated header identifies itself as *"sm4ceps C++ GENERATOR VERSION 0.90"*
 the compiler written for the ARMv7 target when the simulator proved too slow — the same
 move available to any ceps model that needs to leave the interpreter.
 
-### 4.4 Message definition and serialization
+### 4.5 Message definition and serialization
 
 `vm/features/serialization/` — ten cases, Apache-2.0, 2025, **all ten pass**. A
 message-definition DSL embedded in Oblectamenta assembly: nested sub-messages, typed field
@@ -283,7 +409,7 @@ from nothing. `ideas/README.md` is the design note that preceded the implementat
 Also: `make_byte_sequence` / `breakup_byte_sequence` with bit-field patterns and `any`
 wildcards — 146 lines of assertions in `test/make_and_break_byte_sequences/test.ceps`.
 
-### 4.5 Shadow states — conformance checking
+### 4.6 Shadow states — conformance checking
 
 `core/src/sm_sim_core_shadow_states.cpp`, 114 lines, 2017. Nine models in
 `test/shadow_states/`, of which nine of ten run. `compute_shadow_transitions()` is a
@@ -295,32 +421,32 @@ in the codebase.
 `test/shadow_states/description.txt` sketches a richer surface — `extend{}`,
 `implement{}`, `where{}`, `path{}` — that was never built.
 
-### 4.6 Declarative checking
+### 4.7 Declarative checking
 
 - `test/alloy/` — a classic Alloy problem solved in ceps using `rule{}` and a
   `symbolic_equality` primitive that returns a structured difference.
 - `test/agda/insertion_sort.ceps` — execution traces compared symbolically.
 
-### 4.7 Model traversal
+### 4.8 Model traversal
 
 `root.sm`, `.content()`, `.at(n)`, `.symbol()`, `.sort()`, `.unique()`, `.is_struct()`,
 `.fetch_recursively_symbols()`, `predecessor()`, `for (x : nodeset)`. Recorded as
 [D12](DEFECTS.md#d12); the reference is [cepsdev/mermaid](https://github.com/cepsdev/mermaid).
 
-### 4.8 Automatic differentiation
+### 4.9 Automatic differentiation
 
 `vm/test/plugin-entrypoint.cpp` implements forward-mode (`tangent_forward_diff`) and
 reverse-mode (`backpropagation`) differentiation of computation graphs, emitting
 Oblectamenta assembly. Documented only by a generated summary in `vm/test/README.md`.
 
-### 4.9 Gherkin feature suite
+### 4.10 Gherkin feature suite
 
 `vm/features/machinelanguage/` — a BDD suite whose scenarios are written in Gherkin,
 parsed by `.ceps.lex`, and whose results are emitted as markdown
 (`arithmetic.result.md`, `control.result.md`, …). The runner needs its plugin name filled
 in before it will execute.
 
-### 4.10 The command line is three quarters undocumented
+### 4.11 The command line is three quarters undocumented
 
 `core/src/cmdline_utils.cpp` parses **54** flags. `--help` lists **19**. The 40 that are
 accepted but unlisted include the whole of the generator and inspection surface:
@@ -335,7 +461,15 @@ accepted but unlisted include the whole of the generator and inspection surface:
 
 `--cppgen` is the sharpest case: it is the compiler, it still works, and a user reading
 `--help` has no way to learn it exists. Note that three of the listed flags are inert
-rather than merely undocumented — [D8](DEFECTS.md#d8).
+rather than merely undocumented — [D8](DEFECTS.md#d8) — and that `--doc-option` is a
+partial case: it is listed, but only one of its two working values
+(`state-machines-show-only-states` is missing, `no-macros` is present).
+
+The renderer flags (§4.3) are the counter-example and the more interesting failure:
+`--format`, `--pr`, `--pe` and `--ppe` *are* documented in `--help`, with the format names
+spelled out. The capability was still missed, because a flag list tells you what you may
+type and not what you would get. **Discoverability needs one worked example more than it
+needs another line of help text.**
 
 Reproduce:
 
@@ -345,7 +479,7 @@ bin/ceps --help | grep -oE '^\s+--[a-z_0-9-]+' | tr -d ' ' | sort -u > /tmp/help
 comm -23 /tmp/parsed /tmp/helped | wc -l
 ```
 
-### 4.11 Other, unexamined
+### 4.12 Other, unexamined
 
 `utils/fibex_import.cpp` (467 lines), `utils/can_layer_docgen.cpp` (492),
 `utils/stddoc.cpp` (423), `utils/concept_dependency_graph.cpp` (76),
@@ -412,15 +546,18 @@ relation, name-keyed message definitions with an error path, generated test obli
 model that includes its own execution report. The selection function filtered out
 precisely the differentiators.
 
-**A sweep that looks only at one file extension will miss a layer.** §4.2 was found after
-this document was first written, by looking at a directory rather than at models. The
-pattern it illustrates is worth stating: the capability was invisible from three
+**A sweep that looks only at one file extension will miss a layer.** §4.2 and §4.3 were
+both found after this document was first written, by looking at directories rather than at
+models. The pattern is worth stating: the modelling layer was invisible from three
 directions at once — not a `.ceps` file, so the sweep skipped it; absent from `--help`, so
 the CLI did not announce it; and its two examples failed to parse standalone because they
 depend on a `.ceps/prelude.ceps` that is not auto-loaded. **Each of the three obstacles is
-individually trivial and together they hid a working feature for two years.** Nine other
-`core/src/` subdirectories — among them `transform/`, `docgen/` and `cppgenerator/` — and
-five `utils/` files have not had the same treatment (§4.11).
+individually trivial and together they hid a working feature for two years.** The document
+renderer failed differently and more instructively: it *is* properly advertised in
+`--help`, formats and all. It was missed anyway, because nothing connects a flag name to a
+reason to use it. Discoverability is not the same as documentation. Seven other
+`core/src/` subdirectories — among them `transform/` and `cppgenerator/` — and five
+`utils/` files have not had the same treatment (§4.12).
 
 ## Reproducing this sweep
 

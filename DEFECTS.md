@@ -791,9 +791,20 @@ Offending expression is >>>(FUNC_CALL (ID "in_state" )(CALL_PARAMETERS
 ```
 
 Its sibling construct `partition{}` works, so the modelling layer is half alive. See
-[INVENTORY.md](INVENTORY.md) §4.2. This raises D15 from "some guards do not compile" to
-"a feature of the tool cannot be used at all", and it is the strongest argument for
-putting D15 in phase 0.
+[INVENTORY.md](INVENTORY.md) §4.2.
+
+There is a third consequence, in the document renderer. `--ppe --format markdown` annotates
+the generated specification with a `Visited` column taken from the run
+([INVENTORY.md](INVENTORY.md) §4.3) — which requires the run to finish. For any model whose
+transitions carry guards, it does not: `test/markdown/run_of_sm.ceps` renders its state and
+transition tables and then dies in the assembler, so the annotation is absent.
+`test/markdown/README.md`, a saved specimen from an earlier build, shows the coverage bars
+that can no longer be produced.
+
+So D15 blocks three separate capabilities — guarded models, `cover_path{}`, and
+coverage-annotated documentation. This raises it from "some guards do not compile" to "a
+feature of the tool cannot be used at all", and it is the strongest argument for putting
+D15 in phase 0.
 
 ---
 

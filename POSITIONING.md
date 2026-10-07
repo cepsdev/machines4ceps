@@ -108,6 +108,28 @@ with the six already present — not the ordinariness of the idea. The result is
 most distinctive property of the system was re-derived six times and written down zero
 times, which is also why it is absent from `SKILL.md`.
 
+### The artifact that proves the claim already exists
+
+The sentence at the top of this document — *making described behaviour executable before
+anyone has agreed on anything* — needs something you can put in front of a person who does
+not use the tool. That something is already built and already runs:
+
+```
+$ ceps spec.ceps --ppe --format markdown
+```
+
+produces one document containing the specification, the test procedure rendered as prose
+(*"Start state machine Motor. Trigger Event ev1."*), and a `Visited` column showing which
+states the run actually reached. 3,295 lines, five output writers including HTML and two
+markdown dialects, last touched January 2025, and named in none of the three
+documentation files. See [INVENTORY.md](INVENTORY.md) §4.3.
+
+The significance is not that it renders nicely. It is that the specification, the test and
+the evidence are **projections of one model**, so they cannot disagree — which is the only
+honest way to hand someone a document and claim the behaviour in it has been exercised.
+Everything else in this document argues that ceps belongs in a category; this is the
+artifact that would demonstrate it, and nobody outside the repository knows it exists.
+
 ---
 
 ## What the positioning is derived from
