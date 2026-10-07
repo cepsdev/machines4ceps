@@ -1,8 +1,9 @@
 # Known defects
 
-Defects found while auditing `core/` and `vm/` and while specifying `c{}`
-(see `RECURSIVE-STATE-MACHINES.md`). Every entry below was reproduced against
-`bin/ceps`, version 0.8.1.3.3 (built Aug 27 2026), on Linux.
+Defects found while auditing `core/` and `vm/`, while specifying `c{}`
+(see `RECURSIVE-STATE-MACHINES.md`), and during the repository-wide sweep recorded in
+`INVENTORY.md`. Every entry below was reproduced against `bin/ceps`,
+version 0.8.1.3.3 (built Aug 27 2026), on Linux.
 
 Line numbers refer to the working tree at the time of writing.
 
@@ -20,6 +21,14 @@ Line numbers refer to the working tree at the time of writing.
 | [D10](#d10) | Low | Docs | `SKILL.md` is incomplete and self-contradictory on submachine references |
 | [D11](#d11) | Low | Internals | State-index intervals are not contiguous across cover classes |
 | [D12](#d12) | High | Docs | The model-traversal layer is absent from `SKILL.md` |
+| [D13](#d13) | High | Evaluator | Named arguments in a call (`f(a = 1)`) are rejected as an unsupported assignment |
+| [D14](#d14) | Critical | Simulation | The current-state set is empty in assertions, so `ASSERT_CURRENT_STATES_CONTAINS` never holds and its negation always does |
+| [D15](#d15) | High | VM | The Oblectamenta assembler rejects guard expressions the language admits |
+| [D16](#d16) | High | Transport | Crash (SIGSEGV) on a `receiver` with a `canbus` transport and no frame definitions |
+
+D13–D16 were found by the sweep and are regressions against material that is still in the
+tree as tests and examples. D14 is rated Critical because it disables the mechanism ceps
+uses to check itself, and because one half of it fails silently green.
 
 ---
 
@@ -589,6 +598,216 @@ for model transformation, and consider moving the material into this repository.
 
 ---
 
+<a name="d13"></a>
+## D13. Named arguments in a call are rejected as an unsupported assignment
+
+**Severity:** High — two complete application areas in `test/` cannot run.
+**Area:** Evaluator.
+**Affects:** 18 files, among them all of `test/jenkins/` (6) and `test/mms_devops/` (6),
+plus `test/fibex/sim1.ceps`, `sim_can3xml_1.ceps`, `sim_can3xml_2.ceps`.
+
+An `=` inside a call-parameter list is treated as an assignment statement and refused.
+The same symbol assigned inside `globals{}` works, so the defect is specific to the
+call-argument position, not to assignment in general.
+
+### Reproducer
+
+```
+kind Parameter;
+Parameter command, hostname;
+foo(command = "build", hostname = "h");
+```
+
+### Observed
+
+```
+***Fatal Error:Unsupported assignment:(OPERATOR = "=" (SYMBOL "command" "Parameter" )"build" )
+```
+
+### Control
+
+Identical declaration, assignment moved into `globals{}` — exits 0:
+
+```
+kind Parameter;
+Parameter command;
+globals{ command = "build"; };
+```
+
+### Why it matters
+
+This is the calling convention the Jenkins and MMS DevOps models are written in:
+
+```
+ jenkins(
+         command                = "build",
+         hostname               = ...,
+```
+
+Both areas are otherwise intact. One evaluator fix restores twelve models and the two
+largest non-automotive application examples in the repository.
+
+---
+
+<a name="d14"></a>
+## D14. The current-state set is empty in assertions
+
+**Severity:** Critical — the mechanism by which a ceps specification checks itself does
+not work, and the failure is silent in one direction.
+**Area:** Simulation / assertions.
+**Affects:** every `Simulation{}` block using state assertions, including
+`test/systemparameter.ceps`, which is labelled *"Regression test"* in its own header, and
+`examples/guard_usage_example.ceps`.
+
+`ASSERT_CURRENT_STATES_CONTAINS` reports the current-state set as empty regardless of the
+actual configuration. The trace, written by the same run, shows the state was entered.
+
+### Reproducer
+
+```
+kind Event; Event e;
+Statemachine{ id{S;}; States{Initial;a;}; Transition{Initial;a;e;}; };
+Simulation{ Start{S;}; e; ASSERT_CURRENT_STATES_CONTAINS{S.a;}; };
+```
+
+### Observed
+
+```
+S.Initial- S.a+
+
+***Fatal Error:
+ASSERTION not satisfied (ASSERT_CURRENT_STATES_CONTAINS):
+Expected to be in state S.a, current states are:
+.
+```
+
+The trace line `S.a+` records entry into `S.a`; the assertion, evaluated afterwards, sees
+nothing. The set is empty even with no events at all — asserting `S.Initial` immediately
+after `Start{S;}` fails the same way.
+
+### The silent half
+
+Because the set is empty, the complementary assertion is vacuously true. The following
+exits 0 and reports nothing:
+
+```
+kind Event; Event e;
+Statemachine{ id{S;}; States{Initial;a;}; Transition{Initial;a;e;}; };
+Simulation{ Start{S;}; e; ASSERT_CURRENT_STATES_CONTAINS_NOT{S.Initial;}; };
+```
+
+So `..._CONTAINS` never holds and `..._CONTAINS_NOT` always holds. A specification using
+the negative form passes while checking nothing.
+
+### Why it matters
+
+`POSITIONING.md` argues that ceps's distinguishing property is making described behaviour
+executable, and therefore checkable, before agreement exists. State assertions are the
+primary way a ceps model states what it expects of itself. While D14 stands, the positive
+form blocks any model that uses it and the negative form gives false assurance — which is
+worse than having no assertions at all.
+
+This defect is also the likely reason several areas in the sweep appear to fail: the model
+runs correctly and the assertion that follows it does not.
+
+---
+
+<a name="d15"></a>
+## D15. The Oblectamenta assembler rejects guard expressions the language admits
+
+**Severity:** High — guard forms that are documented and used in the tree do not compile.
+**Area:** Oblectamenta VM / expression compilation.
+**Affects:** 6 files, among them `test/guard/guards.ceps`, `test/markdown/run_of_sm.ceps`,
+`test/shadow_states/d.ceps`, `examples/math_functions.ceps`,
+`examples/multiple_starts.ceps`, `examples/first_steps/simple_guard_example.ceps`.
+
+Since guards and actions are compiled to Oblectamenta, expressions the front end parses
+can still fail at assembly. Two distinct classes were observed.
+
+### Reproducer A — `in_state` with a qualified id
+
+From `test/guard/guards.ceps`:
+
+```
+***Fatal Error:***Error oblectamenta_assembler: Expression failed to compile.
+Offending expression is >>>(FUNC_CALL (ID "in_state" )(CALL_PARAMETERS (OPERATOR . "" (ID "S1" )(ID "A" ))))<<<
+```
+
+### Reproducer B — floating-point comparison through `abs`
+
+```
+kind Event; Event e;
+kind Systemstate; Systemstate s;
+globals{ s = 1; };
+Statemachine{ id{S;}; States{Initial;a;}; Transition{Initial;a;e;abs(s) == 1.0;}; };
+Simulation{ Start{S;}; e; };
+```
+
+Observed:
+
+```
+***Fatal Error:***Error oblectamenta_assembler: Expression failed to compile.
+Offending expression is >>>(INT 0  )<<<
+```
+
+The reported offending expression is an integer literal that does not appear in the
+source, so the diagnostic points at an artefact of lowering rather than at the guard the
+user wrote. Fixing the message is worth doing independently of the compilation gap; see
+roadmap phase 1B.
+
+### Why it matters
+
+`in_state(Machine.State)` is the canonical way to write a guard that depends on another
+machine, which makes it load-bearing for exactly the composition story `ROADMAP.md`
+phase 7 depends on.
+
+---
+
+<a name="d16"></a>
+## D16. SIGSEGV on a `receiver` with a `canbus` transport and no frame definitions
+
+**Severity:** High — a crash on a four-line model, reached by omission rather than by
+error.
+**Area:** Transport / CAN.
+**Affects:** `doc/ceps/can_comm/example_1`, `example_4`, `example_5`,
+`doc/vcan_api/two_nodes_no_hub` — in each case the `receiver.ceps` fragment when it is not
+composed with the file defining the frames.
+
+### Reproducer
+
+```
+receiver{
+ id{can_in;};
+ transport{canbus{bus_id{"vcan0";};};};
+};
+```
+
+```
+$ ceps d16.ceps ; echo $?
+Segmentation fault
+139
+```
+
+### Scope
+
+- The bus need not exist. `bus_id{"doesnotexist99";}` crashes identically, so this is not
+  a failure to open the interface.
+- A `sender` with the identical transport block exits 0.
+- A `receiver` with no `transport` block at all exits 1 with a diagnostic.
+
+So the crash is specific to the receiver path when a transport is present and no frame
+mapping has been declared. Composed with its frame definitions the model runs, which is
+why the examples work when started through their shell scripts.
+
+### Why it matters
+
+The failure mode is omission — a user writing a receiver before declaring frames gets a
+segfault instead of the message that the `receiver` case without a transport already
+produces. This is the same shape as [D2](#d2): a missing declaration reaching a
+dereference instead of a check.
+
+---
+
 ## Reproducing
 
 All models above are small enough to paste into a file and run directly:
@@ -597,13 +816,25 @@ All models above are small enough to paste into a file and run directly:
 ceps <file>.ceps ; echo $?
 ```
 
-Exit codes are `0` on success, `1` on a fatal error, `139` for [D2](#d2). When checking
-the exit code after a pipeline, remember that `$?` reports the *last* command's status —
-capture it before piping.
+Exit codes are `0` on success, `1` on a fatal error, `139` for [D2](#d2) and
+[D16](#d16). When checking the exit code after a pipeline, remember that `$?` reports the
+*last* command's status — capture it before piping.
+
+Several models in the tree are **fragments** that are composed on the command line rather
+than run alone:
+
+```
+ceps common.ceps frames.ceps receiver.ceps receiver_node.ceps
+```
+
+Running such a fragment by itself produces a parse error that says nothing about the
+model. The sweep in `INVENTORY.md` initially mis-classified 29 files this way.
 
 ## Relationship to `RECURSIVE-STATE-MACHINES.md`
 
 [D3](#d3) and [D4](#d4) are documented in §9.6 of that specification because they
 constrain acceptance criterion A12. [D6](#d6) is §10.3 and needs a decision before `c{}`
-is implemented. [D11](#d11) is the motivation for static check E4. The remainder are
-independent of the `c{}` work.
+is implemented. [D11](#d11) is the motivation for static check E4. [D14](#d14) blocks the
+acceptance criteria themselves: every criterion in §15 that is phrased as an expected
+configuration is unverifiable while state assertions do not see the configuration. The
+remainder are independent of the `c{}` work.

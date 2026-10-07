@@ -21,6 +21,13 @@ generator.
 **The verification half is the bottleneck, and the gap is not expressiveness — it is the
 quality of what the tool reports back.** That observation sets the ordering below.
 
+A second caveat, added after the sweep recorded in **[INVENTORY.md](INVENTORY.md)**: a
+large part of what this roadmap proposes to build **already exists and does not run**.
+Thirty-nine of forty-one run scripts invoke a binary path that no longer exists, and four
+regressions ([D13](DEFECTS.md#d13)–[D16](DEFECTS.md#d16)) account for most genuine
+failures. **Phase 0 below comes before everything else**, because it is cheap, mechanical,
+and it changes what the rest of this document is working with.
+
 ---
 
 ## Why the ordering is what it is
@@ -58,6 +65,71 @@ A second argument for this ordering: `c{}` is roughly 1200 LOC carrying a substa
 test burden, and those tests are read *through* the execution trace. Building it first
 means validating new semantics with an instrument known to drop lines, invent lines, and
 miscount coverage.
+
+---
+
+## Phase 0 — Harvest what is already built
+
+*Prerequisite for everything else. Mostly mechanical. Source: [INVENTORY.md](INVENTORY.md).*
+
+The sweep of 370 models found that the code is in substantially better condition than the
+ability to demonstrate it. Nothing in this phase is new development.
+
+### 0.1 Repair the harness
+
+39 of 41 run scripts invoke `../../x86/ceps`, `../eclipse/Debug/statemachines` or
+`../../x86/sm`. None exists; `ceps` is on `PATH` and `bin/ceps` is byte-identical to it.
+One substitution across 41 files.
+
+**Done when** every run script executes, and the two conventions already present in the
+newer scripts — bare `ceps`, or `../../bin/ceps` — are the only ones left.
+
+### 0.2 Fix the four regressions
+
+| | Effect of fixing |
+|---|---|
+| [D14](DEFECTS.md#d14) | restores the assertion mechanism; removes a silent false green |
+| [D13](DEFECTS.md#d13) | restores `test/jenkins/` and `test/mms_devops/` — 12 models |
+| [D15](DEFECTS.md#d15) | restores `in_state(M.S)` guards, which phase 7 depends on |
+| [D16](DEFECTS.md#d16) | removes a segfault reachable by omission |
+
+[D14](DEFECTS.md#d14) is first. While state assertions report an empty configuration, no
+acceptance criterion in this document phrased as an expected configuration can be checked —
+including those of phase 5.
+
+### 0.3 Adopt the test layout that already exists
+
+`vm/features/` is the right pattern: one file per behaviour, named after the behaviour,
+with a `run` script, and all ten serialization cases pass. Extend it rather than inventing
+a convention. The golden-file comparison in `test/native_main_loop/run.sh` supplies the
+missing half.
+
+**Done when** `test/run.sh` executes every area and reports a verdict per area, and a
+regression anywhere is visible from one command.
+
+### 0.4 Document the undocumented
+
+Ranked by how much is lost by leaving it hidden:
+
+1. **`.ceps.lex`** — partial parsers for foreign notations, six of them in the tree, zero
+   documentation. See [INVENTORY.md](INVENTORY.md) §4.1 and
+   [POSITIONING.md](POSITIONING.md) on the invariant: this is the only layer that applies
+   to artifacts the other party wrote.
+2. **The traversal layer** — [D12](DEFECTS.md#d12).
+3. **Message definitions** — `doc/tutorial/serialization/README.md` exists and is good;
+   link it from `SKILL.md` and `README.md`.
+4. **Shadow states** — conformance checking, implemented 2017, mentioned nowhere.
+5. **`--cppgen`** — verified working during the sweep.
+6. `rule{}` and `symbolic_equality`; the plugin interface; automatic differentiation.
+
+### 0.5 Give `.ceps.lex` a loudness knob
+
+`any => .` is what makes a lexer partial, and it is also what makes a typo in the input
+indistinguishable from a sentence deliberately ignored. `msg{read}` solved this with
+`onerror`. The same affordance is needed here — a rule that fires on input that was
+consumed by no named pattern, reporting position and context.
+
+Small, but it is the difference between a partial parser and an unreliable one.
 
 ---
 
@@ -300,6 +372,29 @@ the obstruction when they do not.
 
 **Status:** half of this exists and runs today.
 
+### Composition has three layers, not one
+
+An earlier draft of this phase treated compatibility as agreement on **event names**. That
+is one third of the question, and `yamdl` is a reminder of which third was missing — it
+stood for *yet another **message definition** language*, and the thing teams disagreed
+about was payloads.
+
+| Layer | Question | Status |
+|---|---|---|
+| **Wiring** | do the event names line up? | prototyped — `extract_events_transitively_and_group.ceps`, 81 lines |
+| **Behaviour** | does this implementation refine that concept? | **built** — shadow states, since 2017 |
+| **Payload** | do the messages agree, and are the disagreements survivable? | **built** — `msg{}` definitions with `onerror`, `vm/features/serialization`, 10/10 passing |
+
+Two of the three are already implemented and neither is documented. Phase 7 is therefore
+much less construction than it appeared: it is mostly **connecting three existing checks
+and reporting their results together**.
+
+The payload layer is the interesting one, because it already distinguishes *incompatible*
+from *tolerable*. `case_read_non_existing_field_with_onerror` is precisely the situation
+where the other party has not added a field yet: the reader declares a handler, the run
+continues, and the omission is recorded rather than fatal. That is schema evolution
+without a schema registry, and it is the composition check's notion of "largely".
+
 ### Where it comes from
 
 This is the oldest idea in ceps, older than state machines and older than the VM. In the
@@ -383,6 +478,7 @@ doi:10.1016/j.inffus.2016.12.002.
 ## Summary of sequencing
 
 ```
+Phase 0  harvest: harness, 4 regressions, test layout, docs  ──> everything
 Phase 1  reporting: 1A format, 1B quality  ──┐
 Phase 2  complete, causal trace            ──┼──> Phase 5  c{} recursive state machines
 Phase 3  trustworthy coverage              ──┘
@@ -391,17 +487,22 @@ Phase 6  MCP: 6a thin adapter ──> 6b ceps-native
 Phase 7  composition checking (no engine work; 7.4 wants 1A, 7.5 wants 6a)
 ```
 
+**Phase 0 precedes everything and is mostly not development.** [D14](DEFECTS.md#d14)
+alone blocks every acceptance criterion in this document that is phrased as an expected
+configuration, and the harness repair is a single substitution across 41 files.
+
 Phases 1–3 are each small, and together they convert ceps from a tool that prints things
 into a tool that can be *called*. Phase 5 is the expressiveness leap, and it lands on
 solid ground once the instrument is trustworthy.
 
-If only one thing is done, do 1B. Format without quality gives a consumer a clean parse of
-an unhelpful message; quality without format still lets a human work. Both together are
-what the thesis needs.
+If only one thing is done after phase 0, do 1B. Format without quality gives a consumer a
+clean parse of an unhelpful message; quality without format still lets a human work. Both
+together are what the thesis needs.
 
 Phase 7 is the exception to that ordering, because it is nearly free: steps 7.1–7.3 need
-no change to the engine at all, and they deliver the one capability no competing statechart
-tool offers — a derived, checkable account of how separately written models fit together.
+no change to the engine at all, two of its three layers are already implemented, and
+together they deliver the one capability no competing statechart tool offers — a derived,
+checkable account of how separately written models fit together.
 
 ---
 
@@ -409,8 +510,9 @@ tool offers — a derived, checkable account of how separately written models fi
 
 | Document | Contents |
 |---|---|
-| [POSITIONING.md](POSITIONING.md) | what kind of tool ceps is, and what it refuses to be |
-| [DEFECTS.md](DEFECTS.md) | 12 defects, each with a minimal reproducer |
+| [POSITIONING.md](POSITIONING.md) | what kind of tool ceps is, what it refuses to be, and the invariant underneath both |
+| [DEFECTS.md](DEFECTS.md) | 16 defects, each with a minimal reproducer |
+| [INVENTORY.md](INVENTORY.md) | the 370-model sweep: what exists, what runs, what is undocumented |
 | [RECURSIVE-STATE-MACHINES.md](RECURSIVE-STATE-MACHINES.md) | the `c{}` specification |
 | [SKILL.md](SKILL.md) | the language and tool reference |
 | [QUICK-START-UML-WITH-CEPS.md](QUICK-START-UML-WITH-CEPS.md) | UML-oriented introduction |

@@ -44,19 +44,78 @@ stays, it is disqualifying. See [Consequences](#consequences-for-the-roadmap).
 
 ---
 
+## The invariant
+
+Underneath the positioning there is a single design rule, applied consistently for ten
+years and never named:
+
+> **Specify what you need. Leave out what you don't. Proceed anyway.**
+
+It is implemented five times, at five different scales, in two repositories:
+
+| Layer | Construct | What may be omitted |
+|---|---|---|
+| Specification | partial programs | entities that are declared but never bound |
+| Behaviour | `shadow_state(Concept.X, Impl.X)` | states and transitions the concept does not constrain |
+| Message | `msg{read; …}` with `handler{onerror; …}` | fields the sender has not added yet, or sent in another order |
+| Bits | `breakup_byte_sequence(s, bool(i1, any, any, …))` | bit positions the reader does not care about |
+| Foreign syntax | `.ceps.lex` with `any => .` | every sentence of the input language you chose not to match |
+
+A sixth instance sits outside this repository: `ceps/NOISE-MARKS.ceps` in the
+demand-bundling project opens with *"guards and actions are DECLARED, not defined"*.
+
+These are not five features that happen to resemble each other. They are one rule with
+five backends, and the ordering matters: the first four apply to artifacts **you** wrote,
+and the fifth applies to artifacts **the other party** wrote. Only the fifth actually
+discharges the promise in the sentence at the top of this document, because the other
+party does not write ceps — they have a `.dbc`, a `.feature` file, a diagram, a log.
+
+### What follows from naming it
+
+Three things that were previously unconnected become consequences rather than
+coincidences.
+
+**The strengths are not a list, they are a derivation.** Derived interfaces, traceability,
+the single binary, the one-algebra property: each is what you get when totality is not
+required. See the table below, which is now a dependency graph rather than an inventory.
+
+**The declined categories are declined for one reason, not three.** Model checking,
+certification kits and code-generation matrices all presuppose a closed world. The
+refusals in this document are a single refusal applied three times.
+
+**The gaps become visible, and they are gaps in the same place.** Partiality is only safe
+when the system can say *"this was omitted"* out loud. `msg{read}` can: that is what
+`onerror` is for. `.ceps.lex` cannot — a sentence that nearly matched is indistinguishable
+from one deliberately ignored, so a typo silently deletes a test. Unbound entities in a
+specification are reported inconsistently. **Every partial layer needs a loudness knob,
+and only one layer has one.** That is a concrete work item that only exists once the
+invariant is named.
+
+### Why it was never named
+
+Each instance arrived separately, under pressure, and felt obvious at the time. "Obvious"
+here measures ceps's internal coherence — a new mechanism feels natural because it agrees
+with the five already present — not the ordinariness of the idea. The result is that the
+most distinctive property of the system was re-derived five times and written down zero
+times, which is also why it is absent from `SKILL.md`.
+
+---
+
 ## What the positioning is derived from
 
-The category was not chosen and then justified. It is the one place where every one of
-ceps's real strengths is load-bearing at the same time:
+The category was not chosen and then justified. Every one of ceps's real strengths is
+downstream of the invariant above, and load-bearing only under pre-consensus:
 
-| Property | Where it actually pays off |
-|---|---|
-| Partial programs are legal | only when the description is incomplete — which, per the claim above, is always |
-| Interfaces are *derived* from models, not declared ([Phase 7](ROADMAP.md)) | only when no interface has been agreed |
-| No setup, no boilerplate, a single binary | only when the cost of *trying* must stay below the cost of *arguing* |
-| Model, transformation, execution and report in one algebra | only when each party has to build its own view of the system |
-| The configuration is a first-class value, so traces and coverage exist | only when you must produce evidence rather than assertions |
-| LLMs write ceps fluently | only when there are more behaviours to describe than people to describe them |
+| Property | Follows from | Where it actually pays off |
+|---|---|---|
+| **Partiality** | — | the invariant itself |
+| Interfaces are *derived* from models, not declared ([Phase 7](ROADMAP.md)) | partiality | only when no interface has been agreed |
+| Foreign notations can be read without a grammar (`.ceps.lex`) | partiality | only when the other party will not adopt your notation |
+| Conformance is checked as a simulation relation, not by exhaustion (shadow states) | partiality | only when the specification is deliberately incomplete |
+| Model, transformation, execution and report in one algebra | AST as a first-class value | only when each party has to build its own view of the system |
+| The configuration is a first-class value, so traces and coverage exist | same | only when you must produce evidence rather than assertions |
+| No setup, no boilerplate, a single binary | — | only when the cost of *trying* must stay below the cost of *arguing* |
+| LLMs write ceps fluently | — | only when there are more behaviours to describe than people to describe them |
 
 Each of those is close to worthless in the categories declined below. Together, under
 pre-consensus, they are the whole product.
@@ -94,9 +153,26 @@ chose openness over closure ten years ago, before it had state machines, and tha
 is the reason it is useful at all. Reversing it would cost more than the category is
 worth.
 
-This is worth stating explicitly because *"a specification language that happens to
-execute"* sounds like a claim to this category. It is not. The word "specification" is
-earned by legal under-specification, not by proof.
+*But the refusal is narrower than "ceps does not verify."* It does verify, in the one way
+that survives partiality. **Shadow states** check an implementation against a concept
+machine by requiring the shadow map to be a simulation relation: every implementation
+transition between two shadowed states must have a compatible concept transition, or the
+run aborts. That is conformance checking, it is sound, it has been implemented since 2017
+(`core/src/sm_sim_core_shadow_states.cpp`), and it needs no closed world — it quantifies
+over the transitions that exist, not over all reachable states. `test/alloy/` and
+`test/agda/` go further still, with a `rule{}` construct and a `symbolic_equality`
+primitive that returns a structured difference.
+
+The line is therefore: **ceps checks conformance, it does not search for counterexamples.**
+It will tell you that this implementation refines that concept. It will not tell you that
+no execution violates an invariant, because that question needs the closure ceps gave up.
+Liskov and Wing's behavioural subtyping (*ACM TOPLAS* 16(6), 1994,
+doi:10.1145/197320.197383) is the relation shadow states implement; it was arrived at
+independently.
+
+This matters because *"a specification language that happens to execute"* sounds like a
+claim to the declined category. It is not. The word "specification" is earned by legal
+under-specification, not by proof.
 
 ### Model-driven engineering platform
 
@@ -121,16 +197,20 @@ Applied to the current [roadmap](ROADMAP.md):
 
 | Item | Verdict | Why |
 |---|---|---|
+| Fix the 39 dead run-script paths | **yes, immediately** | nothing else can be *demonstrated* until this is done ([INVENTORY.md](INVENTORY.md) §2) |
+| [D14](DEFECTS.md#d14) — state assertions see nothing | **yes, immediately** | a specification that cannot check itself is not executable in the sense this document means |
 | Phase 1A/1B — reporting | **yes, first** | they have to see what their half actually did, and convince someone else of it |
+| Document `.ceps.lex` | **yes** | it is the only layer of the invariant that applies to the other party's artifacts |
 | Phase 7 — composition checking | **yes** | it *is* the "we have not agreed" check, made computable |
 | Phase 2 — complete, causal trace | **yes** | evidence that survives being shown to a sceptic |
 | Phase 3 — trustworthy coverage | **yes** | a green result must mean something was checked |
+| A diagnostic for unmatched input in `.ceps.lex` | **yes** | partiality without a loudness knob produces silent false greens |
 | Phase 6a — MCP adapter | **yes** | more authors working in parallel, same unsettled world |
 | [D12](DEFECTS.md#d12) — document the traversal layer | **yes** | it is how each party builds its own view |
 | Phase 4 — robustness | **yes, opportunistically** | a tool that stays must not crash |
 | Phase 5 — `c{}` | **defer** | expressiveness is not what blocks these users |
 | Graphical editor | **no** | |
-| Model checking | **no** | contradicts partiality |
+| Model checking | **no** | contradicts partiality; conformance checking already exists and does not |
 | Code generation breadth | **no** | that is the settled-world problem |
 
 The rule's value is that it rejects things cleanly. `c{}` is good work and the
@@ -150,8 +230,16 @@ which confirms the existing ordering.
 **2. Quality stops being negotiable.** A tool used for a fortnight can afford
 `Error:A.A.B is not a state.` with no file and no line. A tool that is still running in
 CI in two years cannot. The same applies to the stability of the report schema
-(roadmap 1.3) and to the roughly sixty of sixty-six `test/` areas that nothing currently
-executes — an experiment becomes an asset only when something breaks when it breaks.
+(roadmap 1.3), and to the harness: **39 of 41 run scripts invoke a binary path that no
+longer exists** (`INVENTORY.md` §2). An experiment becomes an asset only when something
+breaks when it breaks.
+
+**3. Partiality needs a loudness knob at every layer.** This follows from the invariant
+rather than from the steady-state reading, but it lands in the same place: a tool that
+stays must distinguish *"omitted deliberately"* from *"omitted by mistake"*, or its green
+results decay into noise. `msg{read}` has `onerror`; `.ceps.lex` has nothing; and
+[D14](DEFECTS.md#d14) is the degenerate case — an assertion that passes vacuously because
+the thing it checks is empty.
 
 The positioning writes a cheque that phases 1–3 have to cash.
 
@@ -166,7 +254,12 @@ Stated plainly, because a positioning document that only lists upside is marketi
 - **Readers will mis-slot ceps as a statechart tool** and evaluate it on a matrix it was
   never built to win. The refusal above has to be visible, not implied.
 - **The obligations are harder, not easier.** A tool people keep must be dependable, and
-  ceps today has twelve known defects, six of them in the channel that reports results.
+  ceps today has sixteen known defects, six of them in the channel that reports results
+  and one ([D14](DEFECTS.md#d14)) in the mechanism by which a model checks itself.
+- **The invariant is invisible.** Five implementations, no name, no documentation, no
+  mention in `SKILL.md`. An unnamed idea cannot be defended in an argument, taught to a
+  contributor, or recognised by its own author — which is how it came to be re-derived
+  five times.
 - **One maintainer.** Every declined category is also declined capacity that will not be
   spent defending ground that does not matter.
 
@@ -188,9 +281,13 @@ that fell out of that decision.
 
 The same pattern produced everything else worth having here. No access to ECU hardware
 produced the simulator; a simulator too slow for the target produced the ceps-to-C++
-compiler; the need to see inside a model produced the traversal layer. The good ideas came
-from constraints, not from planning sessions — which is a reason to trust this one, since
-it came from the same place.
+compiler; the need to see inside a model produced the traversal layer; a corpus of foreign
+notations produced `.ceps.lex`. The good ideas came from constraints, not from planning
+sessions — which is a reason to trust this one, since it came from the same place.
+
+It is also the reason the invariant was never written down. Each instance was a response
+to a specific pressure, and each felt like the obvious move rather than an application of
+a principle. The principle was there the whole time; nobody had occasion to say it.
 
 ---
 
@@ -200,5 +297,6 @@ it came from the same place.
 |---|---|
 | [ROADMAP.md](ROADMAP.md) | what to build, in what order |
 | [DEFECTS.md](DEFECTS.md) | what is broken, with reproducers |
+| [INVENTORY.md](INVENTORY.md) | what exists, what still runs, and what is implemented but undocumented |
 | [RECURSIVE-STATE-MACHINES.md](RECURSIVE-STATE-MACHINES.md) | the `c{}` specification (deferred, see above) |
 | [SKILL.md](SKILL.md) | the language and tool reference |
