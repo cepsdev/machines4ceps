@@ -19,6 +19,7 @@ Line numbers refer to the working tree at the time of writing.
 | [D9](#d9) | Low | CLI | `log_verbosity` cannot be set from the command line |
 | [D10](#d10) | Low | Docs | `SKILL.md` is incomplete and self-contradictory on submachine references |
 | [D11](#d11) | Low | Internals | State-index intervals are not contiguous across cover classes |
+| [D12](#d12) | High | Docs | The model-traversal layer is absent from `SKILL.md` |
 
 ---
 
@@ -535,6 +536,56 @@ index interval; that is why the specification carries static check E4
 
 Worth noting separately that trace lines list names in index order rather than causal
 order, so within a single line an entry can precede the exit that caused it.
+
+---
+
+<a name="d12"></a>
+## D12. The model-traversal layer is absent from `SKILL.md`
+
+**Severity:** High — the capability that most distinguishes ceps is undiscoverable from
+its own documentation.
+**Area:** Documentation.
+**Files:** `SKILL.md`, `QUICK-START-UML-WITH-CEPS.md:84-86`.
+
+A ceps model is traversable from inside ceps. `root` is an ordinary value, `root.sm`
+yields the machines, `a_machine.t` the transitions, and a small query algebra operates on
+the result. This is what makes a model transformation a short ceps program instead of a
+C++ plugin: the statechart-to-mermaid converter in
+[cepsdev/mermaid](https://github.com/cepsdev/mermaid) is 35 lines, the reverse direction
+is 10, and event-signature extraction across nested machines is 81.
+
+None of it appears in `SKILL.md`. Every one of the following is used in working programs
+in that repository, and none is mentioned:
+
+- `root` as a traversable value, and `arglist` as the parameter of a `macro`
+- `.content()`, `.at(n)`
+- `.symbol()`, `.symbol("Event")`
+- `.sort()`, `.unique()`, `.is_struct()`
+- `.fetch_recursively_symbols()`
+- `predecessor()`, which refers to the preceding sibling node and is how a staged
+  computation is expressed
+- `for (x : nodeset) { … }` over model nodes, and `if(!last)` inside it
+- that the execution report is itself queryable, via
+  `root.summary.coverage.state_coverage.covered_states`
+
+`QUICK-START-UML-WITH-CEPS.md:84-86` links the repository exactly once, under the heading
+*"Visualization using mermaid.js"*, with the text *"More information on that is found
+here"*. Nothing suggests a metaprogramming reference sits behind that link.
+
+### Why it matters
+
+`SKILL.md` is the LLM-facing document, so it defines what an agent believes ceps can do.
+An agent working from it will emit state machines and nothing else — it will not write a
+model transformation, derive an interface, or query a report, because it has no reason to
+think those are possible. The feature that separates ceps from every other statechart
+tool is invisible precisely where visibility pays.
+
+### Fix
+
+Document the traversal layer in `SKILL.md`: the combinator list above, plus two worked
+examples — one structural transformation and one query over a report. Reclassify the
+`cepsdev/mermaid` link from *visualization* to what it actually is, the de facto reference
+for model transformation, and consider moving the material into this repository.
 
 ---
 

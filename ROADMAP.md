@@ -9,6 +9,12 @@ ceps is unusually well placed for that. It is a text format with a formal execut
 semantics, partial programs are legal, and LLMs generate valid, rich ceps without
 difficulty. The generation half of the loop already works.
 
+One caveat on that, recorded as [D12](DEFECTS.md#d12): an agent generates *state machines*
+well, because state machines are what `SKILL.md` describes. It does not generate model
+transformations or queries over models, because `SKILL.md` never says the model is
+traversable — so the half of ceps that phase 7 depends on is, today, invisible to the
+generator.
+
 **The verification half is the bottleneck, and the gap is not expressiveness — it is the
 quality of what the tool reports back.** That observation sets the ordering below.
 
@@ -36,7 +42,7 @@ exactly that path:
 | [D6](DEFECTS.md#d6) | coverage silently overstated — `SM`-endpoint edges are not counted |
 | [D8](DEFECTS.md#d8) | `--report_format_json` is accepted and does nothing |
 
-Six of the eleven known defects sit in the feedback channel — five of them genuine bugs,
+Six of the twelve known defects sit in the feedback channel — five of them genuine bugs,
 with D7 a deliberate design decision that nonetheless shapes what a consumer can learn. A
 human eyeballing one trace notices none of them; a machine iterating against it cannot
 function, because a wrong number and a broken tool are indistinguishable.
@@ -68,6 +74,15 @@ coverage, diagnostics and status.
 **Why first:** it is the interface everything later plugs into, and it is cheap. The
 report is *already* a `ceps::ast::Nodeset` with a settled schema, and a Nodeset-to-JSON
 serialiser already exists and is already exercised by the websocket API.
+
+**Correction on scope.** The report is already machine-readable in one sense that was
+overlooked when this phase was first written: being a `Nodeset`, it can be queried by a
+ceps program directly. `sm2mermaidjs_mark_visited_states.ceps` in
+[cepsdev/mermaid](https://github.com/cepsdev/mermaid) reads
+`root.summary.coverage.state_coverage.covered_states` and joins it against the structural
+model to emit a diagram with the visited states marked — a report-to-model join in the
+same notation as the model. The gap this phase closes is therefore narrower than it looks:
+it is about *external* consumers, which cannot reasonably be asked to embed ceps.
 
 | Step | Work | Anchor |
 |---|---|---|
@@ -269,6 +284,93 @@ real now and leaves 6b as the goal it was always going to be.
 
 ---
 
+## Phase 7 — Composition: make "largely compatible" checkable
+
+**Goal:** given several independently authored models, compute whether they fit, and name
+the obstruction when they do not.
+
+**Status:** half of this exists and runs today.
+
+### Where it comes from
+
+This is the oldest idea in ceps, older than state machines and older than the VM. In the
+precursor language *yamdl*, written for the BMW HAF research project, several teams were
+deadlocked for weeks on a shared API. The resolution was to drop the requirement that the
+API be agreed first: each team specified what it needed, omitted what it did not, coded
+against its own model, and integration proceeded by **replacing the part of a team's world
+that existed only in the model with another team's implementation**. Partial programs are
+the language feature that falls out of that decision — not an ergonomic convenience but
+the mechanism that made parallel work possible.
+
+The axiom was that everyone arrives at different views of almost the same thing, which
+should be *largely* compatible. That axiom was asserted, never checked; it was confirmed
+or refuted only when substitution succeeded or failed. Phase 7 is about checking it.
+
+### What already exists
+
+`extract_events_transitively_and_group.ceps` in
+[cepsdev/mermaid](https://github.com/cepsdev/mermaid) — 81 lines of ceps — walks the
+models and derives each machine's event signature, transitively through nested machines:
+
+```
+$ ceps examples_ceps_sm/sm_with_actions.ceps extract_events_transitively_and_group.ceps
+{
+  "components":
+ [
+    { "name":"basic_example1", "in_events":["ANY_KEY","CAPS_LOCK"], "out_events":["OUT1","OUT2","OUT3"]},
+    { "name":"basic_example2", "in_events":["ANY_KEY","OUT1","OUT2"], "out_events":["CAPS_LOCK","OUT2"]}
+ ]
+}
+```
+
+The structural point matters more than the output: the interface is **derived, not
+declared**. A declared interface is a second artifact that can drift from the model it
+describes. A projection of the model cannot. That is also why the yamdl trick worked
+socially — an interface that is a query over work already done needs no consensus before
+work can start.
+
+### What is missing
+
+Set algebra over that output, and a name for each kind of mismatch:
+
+| Relation | Meaning |
+|---|---|
+| produced ∖ consumed | a dead output, **or** the world is missing a participant |
+| consumed ∖ produced | an unmet dependency, **or** a genuine environment input |
+| produced ∩ consumed | the wiring, i.e. the induced component graph |
+
+In the output above, `OUT3` is produced by `basic_example1` and consumed by nobody, and
+`ANY_KEY` is consumed by both machines and produced by neither. Both are facts a reviewer
+wants on sight. Neither is reported today.
+
+| Step | Work |
+|---|---|
+| 7.1 | Bring the event-signature extraction into this repository, documented and tested |
+| 7.2 | Add the obstruction computation: unconsumed outputs, unproduced inputs, induced component graph |
+| 7.3 | Allow the environment to be declared, so a genuinely external input is distinguishable from a missing producer |
+| 7.4 | Emit the result in the phase-1A report format |
+| 7.5 | Expose it on the MCP surface as *compose*, beside *validate* and *simulate* |
+
+**Acceptance:** several independently authored models can be checked for fit in one
+command, and every mismatch is named with the event and the machines involved.
+
+**Why it matters for the thesis.** When an agent generates machines independently — or
+several agents do — this is the artifact that says whether the pieces fit. It is the
+phase-6 integration problem arriving early. Unlike phases 1–3 it needs no engine work:
+7.1–7.3 are ceps programs, which makes it the cheapest substantial item in this document.
+
+**Prior art.** Proving components correct against explicit assumptions about their
+environment is *assume-guarantee* (equivalently rely-guarantee) reasoning: Misra & Chandy,
+*Proofs of Networks of Processes*, IEEE TSE, Jul 1981, 417–426,
+doi:10.1109/tse.1981.230844; Jones, *Tentative Steps Toward a Development Method for
+Interfering Programs*, ACM TOPLAS, Oct 1983, 596–619, doi:10.1145/69575.69577. The
+"different views of almost the same thing, which should glue" formulation is sheaf-shaped,
+and has been developed as such for sensor fusion: Robinson, *Sheaves are the canonical
+data structure for sensor integration*, Information Fusion, Jul 2017, 208–224,
+doi:10.1016/j.inffus.2016.12.002.
+
+---
+
 ## Summary of sequencing
 
 ```
@@ -277,6 +379,7 @@ Phase 2  complete, causal trace            ──┼──> Phase 5  c{} recursi
 Phase 3  trustworthy coverage              ──┘
 Phase 4  robustness (independent, do opportunistically)
 Phase 6  MCP: 6a thin adapter ──> 6b ceps-native
+Phase 7  composition checking (no engine work; 7.4 wants 1A, 7.5 wants 6a)
 ```
 
 Phases 1–3 are each small, and together they convert ceps from a tool that prints things
@@ -287,13 +390,18 @@ If only one thing is done, do 1B. Format without quality gives a consumer a clea
 an unhelpful message; quality without format still lets a human work. Both together are
 what the thesis needs.
 
+Phase 7 is the exception to that ordering, because it is nearly free: steps 7.1–7.3 need
+no change to the engine at all, and they deliver the one capability no competing statechart
+tool offers — a derived, checkable account of how separately written models fit together.
+
 ---
 
 ## Documents
 
 | Document | Contents |
 |---|---|
-| [DEFECTS.md](DEFECTS.md) | 11 defects, each with a minimal reproducer |
+| [DEFECTS.md](DEFECTS.md) | 12 defects, each with a minimal reproducer |
 | [RECURSIVE-STATE-MACHINES.md](RECURSIVE-STATE-MACHINES.md) | the `c{}` specification |
 | [SKILL.md](SKILL.md) | the language and tool reference |
 | [QUICK-START-UML-WITH-CEPS.md](QUICK-START-UML-WITH-CEPS.md) | UML-oriented introduction |
+| [cepsdev/mermaid](https://github.com/cepsdev/mermaid) | model transformation and traversal — in practice the reference for the metaprogramming layer, see [D12](DEFECTS.md#d12) |
