@@ -699,6 +699,20 @@ Simulation{ Start{S;}; e; ASSERT_CURRENT_STATES_CONTAINS_NOT{S.Initial;}; };
 So `..._CONTAINS` never holds and `..._CONTAINS_NOT` always holds. A specification using
 the negative form passes while checking nothing.
 
+### Where the fault is not
+
+The simulator's own notion of the current state is **correct** — only the assertion path
+sees an empty set. Two independent witnesses:
+
+1. The trace prints enter and exit events in the right order (`S.Initial- S.a+` above).
+2. Coverage is computed from the same information and comes out right. Running the
+   partition example in [INVENTORY.md](INVENTORY.md) §4.2 reports `State Coverage: 0.75`
+   with three of four states entered, which is only derivable from a populated state set.
+
+So this is not a state-tracking bug. It is a lookup performed against the wrong object, or
+performed at a point in the cycle where the set has already been cleared — which makes it
+a much smaller fix than the severity suggests, and is the reason it belongs in phase 0.
+
 ### Why it matters
 
 `POSITIONING.md` argues that ceps's distinguishing property is making described behaviour
@@ -715,11 +729,13 @@ runs correctly and the assertion that follows it does not.
 <a name="d15"></a>
 ## D15. The Oblectamenta assembler rejects guard expressions the language admits
 
-**Severity:** High — guard forms that are documented and used in the tree do not compile.
+**Severity:** High — guard forms that are documented and used in the tree do not compile,
+and one of the two model-based-testing constructs is disabled by it.
 **Area:** Oblectamenta VM / expression compilation.
 **Affects:** 6 files, among them `test/guard/guards.ceps`, `test/markdown/run_of_sm.ceps`,
 `test/shadow_states/d.ceps`, `examples/math_functions.ceps`,
 `examples/multiple_starts.ceps`, `examples/first_steps/simple_guard_example.ceps`.
+**Also disables `cover_path{}` entirely** — see below.
 
 Since guards and actions are compiled to Oblectamenta, expressions the front end parses
 can still fail at assembly. Two distinct classes were observed.
@@ -760,6 +776,24 @@ roadmap phase 1B.
 `in_state(Machine.State)` is the canonical way to write a guard that depends on another
 machine, which makes it load-bearing for exactly the composition story `ROADMAP.md`
 phase 7 depends on.
+
+It is also worse than a six-file problem. `cover_path{}`
+(`core/src/modelling/cover_path.cpp`, registered at
+`core/src/state_machine_simulation_core.cpp:1332`) **generates** `in_state()` guards — that
+is its entire output. So D15 disables the construct, not just the files that use it:
+
+```sh
+$ cd examples/doing_specs/vehicle_navigation
+$ ceps .ceps/prelude.ceps examples_of_operations/stored_data_invalid_gps_alignment.ceps
+***Fatal Error:***Error oblectamenta_assembler: Expression failed to compile.
+Offending expression is >>>(FUNC_CALL (ID "in_state" )(CALL_PARAMETERS
+  (OPERATOR . "" (ID "Vehicle" )(ID "Standstill" ))))<<<
+```
+
+Its sibling construct `partition{}` works, so the modelling layer is half alive. See
+[INVENTORY.md](INVENTORY.md) §4.2. This raises D15 from "some guards do not compile" to
+"a feature of the tool cannot be used at all", and it is the strongest argument for
+putting D15 in phase 0.
 
 ---
 

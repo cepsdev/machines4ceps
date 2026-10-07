@@ -51,7 +51,7 @@ years and never named:
 
 > **Specify what you need. Leave out what you don't. Proceed anyway.**
 
-It is implemented five times, at five different scales, in two repositories:
+It is implemented six times, at six different scales, in two repositories:
 
 | Layer | Construct | What may be omitted |
 |---|---|---|
@@ -59,14 +59,22 @@ It is implemented five times, at five different scales, in two repositories:
 | Behaviour | `shadow_state(Concept.X, Impl.X)` | states and transitions the concept does not constrain |
 | Message | `msg{read; …}` with `handler{onerror; …}` | fields the sender has not added yet, or sent in another order |
 | Bits | `breakup_byte_sequence(s, bool(i1, any, any, …))` | bit positions the reader does not care about |
+| Test design | `partition{}` | regions of the value range you do not classify |
 | Foreign syntax | `.ceps.lex` with `any => .` | every sentence of the input language you chose not to match |
 
-A sixth instance sits outside this repository: `ceps/NOISE-MARKS.ceps` in the
+The test-design row was found last and is the clearest case, because the gap is visible in
+a working example: `examples/doing_specs/lueftersteuerung/` partitions a temperature into
+`niedrig` / `mittel` / `hoch` and leaves `(1.0, 2.0]` unnamed. Nine of thirty samples fall
+in the hole; the generated machine rides through it and the run completes. Nobody decided
+that unclassified regions should be tolerated — it falls out of writing the classes as
+guards rather than as a total function.
+
+A seventh instance sits outside this repository: `ceps/NOISE-MARKS.ceps` in the
 demand-bundling project opens with *"guards and actions are DECLARED, not defined"*.
 
-These are not five features that happen to resemble each other. They are one rule with
-five backends, and the ordering matters: the first four apply to artifacts **you** wrote,
-and the fifth applies to artifacts **the other party** wrote. Only the fifth actually
+These are not six features that happen to resemble each other. They are one rule with
+six backends, and the ordering matters: the first five apply to artifacts **you** wrote,
+and the last applies to artifacts **the other party** wrote. Only that one actually
 discharges the promise in the sentence at the top of this document, because the other
 party does not write ceps — they have a `.dbc`, a `.feature` file, a diagram, a log.
 
@@ -86,17 +94,18 @@ refusals in this document are a single refusal applied three times.
 **The gaps become visible, and they are gaps in the same place.** Partiality is only safe
 when the system can say *"this was omitted"* out loud. `msg{read}` can: that is what
 `onerror` is for. `.ceps.lex` cannot — a sentence that nearly matched is indistinguishable
-from one deliberately ignored, so a typo silently deletes a test. Unbound entities in a
-specification are reported inconsistently. **Every partial layer needs a loudness knob,
-and only one layer has one.** That is a concrete work item that only exists once the
-invariant is named.
+from one deliberately ignored, so a typo silently deletes a test. A `partition{}` with an
+unclassified gap cannot either — the generated machine rides through it and the coverage
+figure says nothing. Unbound entities in a specification are reported inconsistently.
+**Every partial layer needs a loudness knob, and only one layer of six has one.** That is
+a concrete work item that only exists once the invariant is named.
 
 ### Why it was never named
 
 Each instance arrived separately, under pressure, and felt obvious at the time. "Obvious"
 here measures ceps's internal coherence — a new mechanism feels natural because it agrees
-with the five already present — not the ordinariness of the idea. The result is that the
-most distinctive property of the system was re-derived five times and written down zero
+with the six already present — not the ordinariness of the idea. The result is that the
+most distinctive property of the system was re-derived six times and written down zero
 times, which is also why it is absent from `SKILL.md`.
 
 ---
@@ -112,6 +121,7 @@ downstream of the invariant above, and load-bearing only under pre-consensus:
 | Interfaces are *derived* from models, not declared ([Phase 7](ROADMAP.md)) | partiality | only when no interface has been agreed |
 | Foreign notations can be read without a grammar (`.ceps.lex`) | partiality | only when the other party will not adopt your notation |
 | Conformance is checked as a simulation relation, not by exhaustion (shadow states) | partiality | only when the specification is deliberately incomplete |
+| Test obligations are *generated* from a declared partition of the input domain (`partition{}`, `signal{}`) | partiality + AST as a first-class value | only when the acceptance criteria are themselves still moving |
 | Model, transformation, execution and report in one algebra | AST as a first-class value | only when each party has to build its own view of the system |
 | The configuration is a first-class value, so traces and coverage exist | same | only when you must produce evidence rather than assertions |
 | No setup, no boilerplate, a single binary | — | only when the cost of *trying* must stay below the cost of *arguing* |
@@ -256,10 +266,10 @@ Stated plainly, because a positioning document that only lists upside is marketi
 - **The obligations are harder, not easier.** A tool people keep must be dependable, and
   ceps today has sixteen known defects, six of them in the channel that reports results
   and one ([D14](DEFECTS.md#d14)) in the mechanism by which a model checks itself.
-- **The invariant is invisible.** Five implementations, no name, no documentation, no
+- **The invariant is invisible.** Six implementations, no name, no documentation, no
   mention in `SKILL.md`. An unnamed idea cannot be defended in an argument, taught to a
   contributor, or recognised by its own author — which is how it came to be re-derived
-  five times.
+  six times.
 - **One maintainer.** Every declined category is also declined capacity that will not be
   spent defending ground that does not matter.
 
@@ -282,8 +292,10 @@ that fell out of that decision.
 The same pattern produced everything else worth having here. No access to ECU hardware
 produced the simulator; a simulator too slow for the target produced the ceps-to-C++
 compiler; the need to see inside a model produced the traversal layer; a corpus of foreign
-notations produced `.ceps.lex`. The good ideas came from constraints, not from planning
-sessions — which is a reason to trust this one, since it came from the same place.
+notations produced `.ceps.lex`; the need to show that a specification had actually been
+exercised produced `partition{}` and `signal{}`. The good ideas came from constraints, not
+from planning sessions — which is a reason to trust this one, since it came from the same
+place.
 
 It is also the reason the invariant was never written down. Each instance was a response
 to a specific pressure, and each felt like the obvious move rather than an application of

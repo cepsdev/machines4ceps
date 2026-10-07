@@ -90,7 +90,7 @@ newer scripts — bare `ceps`, or `../../bin/ceps` — are the only ones left.
 |---|---|
 | [D14](DEFECTS.md#d14) | restores the assertion mechanism; removes a silent false green |
 | [D13](DEFECTS.md#d13) | restores `test/jenkins/` and `test/mms_devops/` — 12 models |
-| [D15](DEFECTS.md#d15) | restores `in_state(M.S)` guards, which phase 7 depends on |
+| [D15](DEFECTS.md#d15) | restores `in_state(M.S)` guards, which phase 7 depends on — **and re-enables `cover_path{}`, which generates them** |
 | [D16](DEFECTS.md#d16) | removes a segfault reachable by omission |
 
 [D14](DEFECTS.md#d14) is first. While state assertions report an empty configuration, no
@@ -111,16 +111,28 @@ regression anywhere is visible from one command.
 
 Ranked by how much is lost by leaving it hidden:
 
-1. **`.ceps.lex`** — partial parsers for foreign notations, six of them in the tree, zero
+1. **The modelling layer** — `partition{}`, `cover_path{}`, `signal{}`, `start_signal()`.
+   Equivalence-class partitioning, generated coverage automata and generated stimuli: a
+   complete model-based testing loop, registered and live since 2024, and the words do not
+   occur in `SKILL.md`, `QUICK-START-UML-WITH-CEPS.md` or `README.md`. See
+   [INVENTORY.md](INVENTORY.md) §4.2. `examples/doing_specs/lueftersteuerung/` is already
+   a usable worked example; it needs a paragraph of prose, not new code.
+2. **`.ceps.lex`** — partial parsers for foreign notations, six of them in the tree, zero
    documentation. See [INVENTORY.md](INVENTORY.md) §4.1 and
    [POSITIONING.md](POSITIONING.md) on the invariant: this is the only layer that applies
    to artifacts the other party wrote.
-2. **The traversal layer** — [D12](DEFECTS.md#d12).
-3. **Message definitions** — `doc/tutorial/serialization/README.md` exists and is good;
+3. **The traversal layer** — [D12](DEFECTS.md#d12).
+4. **Message definitions** — `doc/tutorial/serialization/README.md` exists and is good;
    link it from `SKILL.md` and `README.md`.
-4. **Shadow states** — conformance checking, implemented 2017, mentioned nowhere.
-5. **`--cppgen`** — verified working during the sweep.
-6. `rule{}` and `symbolic_equality`; the plugin interface; automatic differentiation.
+5. **Shadow states** — conformance checking, implemented 2017, mentioned nowhere.
+6. **`--cppgen`** — verified working during the sweep, and absent from `--help` along with
+   39 other accepted flags ([INVENTORY.md](INVENTORY.md) §4.10). Regenerating `--help`
+   from the parser, or at least listing the generator flags, is a half-hour fix with a
+   large discoverability payoff.
+7. **`macro` and `.ceps/prelude.ceps`** — both live, both undocumented. The prelude is the
+   answer to "why does `Event E;` no longer parse", which is the first thing a returning
+   user hits.
+8. `rule{}` and `symbolic_equality`; the plugin interface; automatic differentiation.
 
 ### 0.5 Give `.ceps.lex` a loudness knob
 
@@ -294,6 +306,29 @@ introduced by recursion would be precisely the edges not counted.
 
 **Acceptance:** no `nan` reachable; a documented, consistent rule for what counts; and a
 model whose recursive structure is untested cannot report full coverage.
+
+### 3.3 — The half that was missing from this phase
+
+As first written, this phase treated coverage as a **measurement** problem. It is also a
+**generation** problem, and that half is already built: `partition{}` derives a coverage
+automaton from a declarative partition of a system state's value range, and `signal{}`
+derives the stimulus ([INVENTORY.md](INVENTORY.md) §4.2). The loop
+*partition → generate → stimulate → measure* closes today, for one example.
+
+What is missing is not the mechanism but its reach:
+
+| Step | Work | Defect |
+|---|---|---|
+| 3.3 | Re-enable `cover_path{}` so sequence obligations can be stated, not only class obligations | [D15](DEFECTS.md#d15) |
+| 3.4 | Report *which* class transitions were missed, not only the percentage — the data is already in the s-expression report as `not_covered_transitions_by_id` | — |
+| 3.5 | Decide whether an unclassified region of a partition should be reportable | — |
+
+**3.5 is a design decision and it is the interesting one.** A `partition{}` need not be
+total — the fan-control example leaves `(1.0, 2.0]` unclassified and the machine simply
+rides through it. That is correct by the same rule that governs partial programs, and it
+is also exactly where a typo hides. This is the loudness question from phase 0.5
+reappearing at the test-design layer, and it should get the same answer: partial by
+default, with an opt-in that names what fell through.
 
 ---
 

@@ -152,7 +152,107 @@ is control flow, not a diagnostic. A sentence that nearly matches is indistingui
 from one deliberately ignored, so a typo in a `.feature` file silently removes a scenario.
 Partiality needs a way to be loud; this layer does not have one.
 
-### 4.2 `--cppgen` — the state-machine to C++ compiler
+### 4.2 `core/src/modelling/` — model-based test generation
+
+**This is the largest single omission in the audit, and it was missed twice**: the sweep
+ran `.ceps` files, and this layer is C++; and the two example models that exercise it both
+fail to parse when run on their own, so they looked like ordinary casualties.
+
+Three files, ~7 KB, dated March 2024, registered as ceps constructs at
+`core/src/state_machine_simulation_core.cpp:1330` and `:1332`:
+
+| Construct | Source | What it does |
+|---|---|---|
+| `partition{}` | `partitions.cpp` | declares equivalence classes over a system state; **generates** a state machine whose states are the classes and whose edges are the class-to-class transitions, carrying a `cover{}` obligation |
+| `cover_path{}` | `cover_path.cpp` | declares a sequence of states; **generates** an observer that reaches `Final` iff that sequence occurs as a subsequence of the run |
+| `sm(...)` | `gensm.cpp` | the small builder both use to emit `Statemachine{}` AST |
+
+Together with `signal{}` / `start_signal()` (`core/src/signalgenerator.cpp`, registered at
+`state_machine_simulation_core_buildsms.cpp:954`) this is a complete model-based testing
+loop: **partition the input domain, generate the coverage automaton, generate the
+stimulus, measure.**
+
+#### Worked example — it runs today
+
+`examples/doing_specs/lueftersteuerung/` (fan control). The specification is five lines:
+
+```
+Systemstate motor_temperatur;
+
+partition{
+ id = vp_motor_temperatur;
+ {motor_temperatur <= 1.0;                           niedrig;};
+ {motor_temperatur > 2.0 && motor_temperatur <= 3.0; mittel; };
+ {motor_temperatur > 3.0;                            hoch;   };
+};
+```
+
+The test is seven:
+
+```
+signal{
+ id = signal_1;
+ delta_t = 0.1*s;
+ values{ for(i : 1 .. 3 j : 1 .. 10 ) { i+(j-1)/10.0; } };
+};
+
+Simulation{
+ start_signal(signal_1,motor_temperatur);
+ timeout{2.0*s;};
+ motor_temperatur = 1.0;
+};
+```
+
+```
+$ ceps .ceps/prelude.ceps spec/main.ceps tests/monotonically_increasing_temperature_1.ceps
+partition_sm_vp_motor_temperatur+ partition_sm_vp_motor_temperatur.Initial+
+partition_sm_vp_motor_temperatur.Initial- partition_sm_vp_motor_temperatur.niedrig+
+partition_sm_vp_motor_temperatur.mittel+ partition_sm_vp_motor_temperatur.niedrig-
+State Coverage: 0.75 ( 75% )
+Transition Coverage: 0.166667 ( 16.6667% )
+```
+
+No machine was written. The four states and twelve edges are derived from the three range
+predicates; the ramp is derived from a comprehension; the coverage figure is the answer to
+*"did this stimulus exercise the classification?"* — and the honest answer is no. The
+`timeout{2.0*s;}` cuts the 3-second ramp short, so `hoch` is never entered. **The example
+demonstrates a gap being detected, which is the right thing for an example to do.**
+
+#### Partial partitions
+
+The partition above has a hole: nothing classifies `(1.0, 2.0]`. Nine of the thirty
+samples fall in it. The run shows no transition there — the machine stays in `niedrig`
+until the value reaches `mittel`. **An unclassified region is not an error.** You name the
+classes you care about and the rest is simply not a boundary. That is the same rule as
+partial programs, shadow states, `onerror`, bit patterns and `any => .`, now at a sixth
+layer — test design. See [POSITIONING.md](POSITIONING.md), *The invariant*.
+
+#### Status
+
+- `partition{}` — **works.** Verified 8 October 2026.
+- `cover_path{}` — **broken.** It generates `in_state(Vehicle.Standstill)` guards, which
+  is exactly [D15](DEFECTS.md#d15). The one example in the repository,
+  `examples/doing_specs/vehicle_navigation/examples_of_operations/stored_data_invalid_gps_alignment.ceps`,
+  dies in the Oblectamenta assembler. D15 does not merely affect six files; **it disables
+  one of the two modelling constructs outright.**
+- Documented in neither `SKILL.md`, `QUICK-START-UML-WITH-CEPS.md` nor `README.md` — the
+  words `partition`, `cover_path`, `signal`, `start_signal` and `macro` do not occur in
+  any of the three.
+
+#### Two further conventions found here
+
+**`macro`.** `macro timeout { start_timer(hd(arglist),EXIT);};` — macros with an
+`arglist` and list primitives. Verified to parse and run. Undocumented.
+
+**`.ceps/prelude.ceps`.** Both `doing_specs` projects carry a hidden `.ceps/` directory
+holding the declarations every file in the project assumes (`kind Systemstate; kind Event;
+kind Guard;` plus shared macros). This is the convention that answers "where did the
+built-in kinds go". **It is not auto-loaded** — nothing in the binary looks for it; it has
+to be passed as the first input file, as `test/fibex/*.sh` does. Making the lookup
+automatic is a small change with a large effect on first-run experience, since a model
+that omits it fails with a bare `syntax error` at the first declaration.
+
+### 4.3 `--cppgen` — the state-machine to C++ compiler
 
 Still works. Verified during the sweep:
 
@@ -165,7 +265,7 @@ The generated header identifies itself as *"sm4ceps C++ GENERATOR VERSION 0.90"*
 the compiler written for the ARMv7 target when the simulator proved too slow — the same
 move available to any ceps model that needs to leave the interpreter.
 
-### 4.3 Message definition and serialization
+### 4.4 Message definition and serialization
 
 `vm/features/serialization/` — ten cases, Apache-2.0, 2025, **all ten pass**. A
 message-definition DSL embedded in Oblectamenta assembly: nested sub-messages, typed field
@@ -183,7 +283,7 @@ from nothing. `ideas/README.md` is the design note that preceded the implementat
 Also: `make_byte_sequence` / `breakup_byte_sequence` with bit-field patterns and `any`
 wildcards — 146 lines of assertions in `test/make_and_break_byte_sequences/test.ceps`.
 
-### 4.4 Shadow states — conformance checking
+### 4.5 Shadow states — conformance checking
 
 `core/src/sm_sim_core_shadow_states.cpp`, 114 lines, 2017. Nine models in
 `test/shadow_states/`, of which nine of ten run. `compute_shadow_transitions()` is a
@@ -195,32 +295,57 @@ in the codebase.
 `test/shadow_states/description.txt` sketches a richer surface — `extend{}`,
 `implement{}`, `where{}`, `path{}` — that was never built.
 
-### 4.5 Declarative checking
+### 4.6 Declarative checking
 
 - `test/alloy/` — a classic Alloy problem solved in ceps using `rule{}` and a
   `symbolic_equality` primitive that returns a structured difference.
 - `test/agda/insertion_sort.ceps` — execution traces compared symbolically.
 
-### 4.6 Model traversal
+### 4.7 Model traversal
 
 `root.sm`, `.content()`, `.at(n)`, `.symbol()`, `.sort()`, `.unique()`, `.is_struct()`,
 `.fetch_recursively_symbols()`, `predecessor()`, `for (x : nodeset)`. Recorded as
 [D12](DEFECTS.md#d12); the reference is [cepsdev/mermaid](https://github.com/cepsdev/mermaid).
 
-### 4.7 Automatic differentiation
+### 4.8 Automatic differentiation
 
 `vm/test/plugin-entrypoint.cpp` implements forward-mode (`tangent_forward_diff`) and
 reverse-mode (`backpropagation`) differentiation of computation graphs, emitting
 Oblectamenta assembly. Documented only by a generated summary in `vm/test/README.md`.
 
-### 4.8 Gherkin feature suite
+### 4.9 Gherkin feature suite
 
 `vm/features/machinelanguage/` — a BDD suite whose scenarios are written in Gherkin,
 parsed by `.ceps.lex`, and whose results are emitted as markdown
 (`arithmetic.result.md`, `control.result.md`, …). The runner needs its plugin name filled
 in before it will execute.
 
-### 4.9 Other, unexamined
+### 4.10 The command line is three quarters undocumented
+
+`core/src/cmdline_utils.cpp` parses **54** flags. `--help` lists **19**. The 40 that are
+accepted but unlisted include the whole of the generator and inspection surface:
+
+```
+--cppgen  --cppgen_statemachines  --print_event_signatures  --print_transition_tables
+--print_statemachines  --print_signal_generators  --print_raw_input_tree
+--print_evaluated_input_tree  --run_as_monitor  --live_log  --logtrace  --vcan_api
+--ws_api  --dump_asciidoc_can_layer  --dump_stddoc_canlayer  --report_format_*
+--package_file  --post_processing  --start_paused  --no_file_output  --enforce_native …
+```
+
+`--cppgen` is the sharpest case: it is the compiler, it still works, and a user reading
+`--help` has no way to learn it exists. Note that three of the listed flags are inert
+rather than merely undocumented — [D8](DEFECTS.md#d8).
+
+Reproduce:
+
+```sh
+grep -oE 'arg == "--[a-z_0-9]+"' core/src/cmdline_utils.cpp | sed 's/.*"\(--[a-z_0-9]*\)"/\1/' | sort -u > /tmp/parsed
+bin/ceps --help | grep -oE '^\s+--[a-z_0-9-]+' | tr -d ' ' | sort -u > /tmp/helped
+comm -23 /tmp/parsed /tmp/helped | wc -l
+```
+
+### 4.11 Other, unexamined
 
 `utils/fibex_import.cpp` (467 lines), `utils/can_layer_docgen.cpp` (492),
 `utils/stddoc.cpp` (423), `utils/concept_dependency_graph.cpp` (76),
@@ -270,7 +395,7 @@ should be judged composed, not alone.
 
 ## 6. What this says
 
-Three things, in order of how actionable they are.
+Four things, in order of how actionable they are.
 
 **The harness, not the code, is what is broken.** 39 dead script paths and seven golden
 files across 370 models. The code is in much better condition than the ability to show
@@ -283,8 +408,19 @@ single fixes that between them restore twelve models and the entire assertion me
 **The documentation deficit is not uniform; it is adverse.** What is documented is what
 was borrowed — statecharts, an event loop, a bytecode VM. What is undocumented is what was
 invented: partial parsing of foreign notations, conformance checking against a simulation
-relation, name-keyed message definitions with an error path, a model that includes its own
-execution report. The selection function filtered out precisely the differentiators.
+relation, name-keyed message definitions with an error path, generated test obligations, a
+model that includes its own execution report. The selection function filtered out
+precisely the differentiators.
+
+**A sweep that looks only at one file extension will miss a layer.** §4.2 was found after
+this document was first written, by looking at a directory rather than at models. The
+pattern it illustrates is worth stating: the capability was invisible from three
+directions at once — not a `.ceps` file, so the sweep skipped it; absent from `--help`, so
+the CLI did not announce it; and its two examples failed to parse standalone because they
+depend on a `.ceps/prelude.ceps` that is not auto-loaded. **Each of the three obstacles is
+individually trivial and together they hid a working feature for two years.** Nine other
+`core/src/` subdirectories — among them `transform/`, `docgen/` and `cppgenerator/` — and
+five `utils/` files have not had the same treatment (§4.11).
 
 ## Reproducing this sweep
 
