@@ -1,8 +1,9 @@
 # Known defects
 
 Defects found while auditing `core/` and `vm/`, while specifying `c{}`
-(see `RECURSIVE-STATE-MACHINES.md`), and during the repository-wide sweep recorded in
-`INVENTORY.md`. Every entry below was reproduced against `bin/ceps`,
+(see `RECURSIVE-STATE-MACHINES.md`), during the repository-wide sweep recorded in
+`INVENTORY.md`, and — for [D17](#d17) — while reading production transformations written
+against ceps outside this repository. Every entry below was reproduced against `bin/ceps`,
 version 0.8.1.3.3 (built Aug 27 2026), on Linux.
 
 Line numbers refer to the working tree at the time of writing.
@@ -25,6 +26,7 @@ Line numbers refer to the working tree at the time of writing.
 | [D14](#d14) | Critical | Simulation | The current-state set is empty in assertions, so `ASSERT_CURRENT_STATES_CONTAINS` never holds and its negation always does |
 | [D15](#d15) | High | VM | The Oblectamenta assembler rejects guard expressions the language admits |
 | [D16](#d16) | High | Transport | Crash (SIGSEGV) on a `receiver` with a `canbus` transport and no frame definitions |
+| [D17](#d17) | Critical | Language | A loop variable named after an SI unit silently binds to the unit, producing wrong output with exit code 0 |
 
 D13–D16 were found by the sweep and are regressions against material that is still in the
 tree as tests and examples. D14 is rated Critical because it disables the mechanism ceps
@@ -850,6 +852,105 @@ The failure mode is omission — a user writing a receiver before declaring fram
 segfault instead of the message that the `receiver` case without a transport already
 produces. This is the same shape as [D2](#d2): a missing declaration reaching a
 dereference instead of a check.
+
+---
+
+<a name="d17"></a>
+## D17. A loop variable named after an SI unit silently binds to the unit
+
+**Severity:** Critical — not a crash, a *wrong answer*. Exit code 0, plausible-looking
+output, no diagnostic of any kind.
+**Area:** Language / name resolution.
+**Affects:** every `static_for` and `for` comprehension, and therefore every transformation
+in the `rollAut` style. In principle any construct that introduces a binding.
+
+### Reproducer
+
+Two files differing only in the name of the inner loop variable.
+
+```
+rollout{ markets{ market{id{"M1";};}; market{id{"M2";};}; }; };
+static_for(e : root.rollout){
+  static_for(m : e.markets.market){
+    seen{ m.content().id.content(); };
+  }
+}
+```
+
+```
+$ ceps d17.ceps --pe ; echo $?
+...
+(STRUCT "seen"
+  (OPERATOR . ""
+    (OPERATOR . ""
+      (OPERATOR . ""
+        (INT 1 m^1 )
+        (FUNC_CALL
+...
+0
+```
+
+`m` has bound to the SI unit **metre** — visible as `m^1` in the dump — and the path
+expression is left unevaluated as an operator tree. Rename the variable and nothing else:
+
+```
+    static_for(market : e.markets.market){
+      seen{ market.content().id.content(); };
+    }
+```
+
+```
+$ ceps d17b.ceps --pe ; echo $?
+(STRUCT "seen"
+  "M1"
+)
+(STRUCT "seen"
+  "M2"
+)
+0
+```
+
+### Scope
+
+The unit system is a genuine and useful feature — `timeout{2.0*s;}` in
+`examples/doing_specs/lueftersteuerung/` depends on it. The defect is not that units
+exist; it is that **a unit name wins against a binding introduced in the same expression,
+silently**. The candidate collision set is large and consists entirely of names a
+programmer would reach for: `m`, `s`, `A`, `K`, `g`, `cd`, `mol`, and whatever derived and
+prefixed forms the unit table carries.
+
+The existing corpus escapes this by accident. Every comprehension in `planck-service`,
+`free-mdf/analyze-mdf` and `rollAut` happens to use `e`, `market`, `step` or `i`. No
+convention was ever written down, and nothing warns.
+
+### Why it matters
+
+Every other defect in this file announces itself: a crash, a non-zero exit, a diagnostic,
+a transition that fails to fire. This one produces a well-formed document containing the
+wrong data, and the only way to notice is to already know the answer.
+
+That is tolerable in a tool with one user who has internalised the collision set. It is
+disqualifying for two of the directions the project is now pointed at. Generated code —
+see [LANG-ROADMAP.md](LANG-ROADMAP.md) — will use `m` for a market and `s` for a step,
+because that is what reads naturally and no corpus teaches otherwise. And an analysis
+pipeline over contracts or measurements has no oracle: a silently wrong aggregate is
+indistinguishable from a right one.
+
+### What a fix looks like
+
+In order of increasing ambition:
+
+1. **Diagnose.** Reject a binding whose name is in the unit table, at the point of
+   binding, with a message naming the collision. Cheap, immediate, and it converts a
+   wrong answer into a build failure.
+2. **Shadow, and say so.** Let the binding win — which is what a reader expects — and emit
+   a warning. Requires deciding what `2.0*s` means inside a `static_for(s : …)` body; the
+   answer is probably "the binding", with the unit reachable under an explicit
+   qualification.
+3. **Separate the namespaces.** Units are not ordinary identifiers and arguably should not
+   share a lookup with them.
+
+(1) is a defensible release in itself and should not wait for (2) or (3).
 
 ---
 

@@ -286,7 +286,7 @@ Stated plainly, because a positioning document that only lists upside is marketi
 - **Readers will mis-slot ceps as a statechart tool** and evaluate it on a matrix it was
   never built to win. The refusal above has to be visible, not implied.
 - **The obligations are harder, not easier.** A tool people keep must be dependable, and
-  ceps today has sixteen known defects, six of them in the channel that reports results
+  ceps today has seventeen known defects, six of them in the channel that reports results
   and one ([D14](DEFECTS.md#d14)) in the mechanism by which a model checks itself.
 - **The invariant is invisible.** Six implementations, no name, no documentation, no
   mention in `SKILL.md`. An unnamed idea cannot be defended in an argument, taught to a

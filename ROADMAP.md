@@ -21,6 +21,12 @@ generator.
 **The verification half is the bottleneck, and the gap is not expressiveness — it is the
 quality of what the tool reports back.** That observation sets the ordering below.
 
+That thesis is developed further, and turned into an entry strategy, in
+**[LANG-ROADMAP.md](LANG-ROADMAP.md)**. The division between the two documents: this one
+is defect-driven and asks what is broken; that one asks what the serious league of
+language designers requires before it will look. They meet at exactly one point — Phase 0
+here and L1 there are the same work.
+
 A second caveat, added after the sweep recorded in **[INVENTORY.md](INVENTORY.md)**: a
 large part of what this roadmap proposes to build **already exists and does not run**.
 Thirty-nine of forty-one run scripts invoke a binary path that no longer exists, and four
@@ -553,7 +559,8 @@ checkable account of how separately written models fit together.
 | Document | Contents |
 |---|---|
 | [POSITIONING.md](POSITIONING.md) | what kind of tool ceps is, what it refuses to be, and the invariant underneath both |
-| [DEFECTS.md](DEFECTS.md) | 16 defects, each with a minimal reproducer |
+| [DEFECTS.md](DEFECTS.md) | 17 defects, each with a minimal reproducer |
+| [LANG-ROADMAP.md](LANG-ROADMAP.md) | the other roadmap: what entry into the serious league of languages requires, and why the reference is the gate |
 | [INVENTORY.md](INVENTORY.md) | the 370-model sweep: what exists, what runs, what is undocumented |
 | [RECURSIVE-STATE-MACHINES.md](RECURSIVE-STATE-MACHINES.md) | the `c{}` specification |
 | [SKILL.md](SKILL.md) | the language and tool reference |
