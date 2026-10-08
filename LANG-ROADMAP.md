@@ -391,4 +391,4 @@ thing L1 breaks.**
 | [INVENTORY.md](INVENTORY.md) | What exists. §4.3 is the renderer behind the §1.2 argument. |
 | [POSITIONING.md](POSITIONING.md) | The argument. This document supplies the sentence and the flagship it lacks. |
 | `doc/ceps-lang.md` | 20 lines; the four principles L1 builds outward from. |
-| [SCHEDULE.md](SCHEDULE.md) | the execution plan for L1–L3: 31 working days, 16 Nov – 31 Dec 2026. |
+| [SCHEDULE.md](SCHEDULE.md) | the execution plan: Phase 0 (2–13 Nov) plus L1–L3 over 31 working days to 31 Dec 2026. |

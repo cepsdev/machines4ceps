@@ -561,7 +561,7 @@ checkable account of how separately written models fit together.
 | [POSITIONING.md](POSITIONING.md) | what kind of tool ceps is, what it refuses to be, and the invariant underneath both |
 | [DEFECTS.md](DEFECTS.md) | 17 defects, each with a minimal reproducer |
 | [LANG-ROADMAP.md](LANG-ROADMAP.md) | the other roadmap: what entry into the serious league of languages requires, and why the reference is the gate |
-| [SCHEDULE.md](SCHEDULE.md) | day-by-day execution plan for L1–L3, 16 Nov – 31 Dec 2026 |
+| [SCHEDULE.md](SCHEDULE.md) | day-by-day execution plan: Phase 0 (parser generator) 2–13 Nov, then L1–L3 to 31 Dec 2026 |
 | [INVENTORY.md](INVENTORY.md) | the 370-model sweep: what exists, what runs, what is undocumented |
 | [RECURSIVE-STATE-MACHINES.md](RECURSIVE-STATE-MACHINES.md) | the `c{}` specification |
 | [SKILL.md](SKILL.md) | the language and tool reference |

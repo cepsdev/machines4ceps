@@ -1,13 +1,18 @@
-# Schedule — 16 Nov to 31 Dec 2026
+# Schedule — 2 Nov to 31 Dec 2026
 
 Execution plan for **L1 + L2 + L3** of [LANG-ROADMAP.md](LANG-ROADMAP.md): grammar and
 semantics, loud failure, the flagship. L4 (arena), L5 (conformance beyond the basics) and
 L6 (ecosystem) are **out of scope** and are not in this schedule.
 
+Preceded by **Phase 0** (§3), a two-week LR parser generator written in ceps and
+Oblectamenta. It is not part of L1–L3 and it is not on the critical path. It is in the
+schedule because it is the best available preparation for the semantics chapter, and
+because it carries its own hard stop.
+
 **Capacity:** full days, Mon–Fri. **Off:** 24–26 Dec, 31 Dec.
-**31 working days.** Weekends are not scheduled — they are the release valve, and the plan
-needs about three of them, not eleven. If you are spending every weekend by mid-December,
-the plan has already failed and the cut list in §5 applies.
+**41 working days — 10 in Phase 0, 31 in the main block.** Weekends are not scheduled —
+they are the release valve, and the plan needs about three of them. If you are spending
+every weekend by mid-December, the plan has already failed and the cut list in §6 applies.
 
 ---
 
@@ -42,7 +47,66 @@ Thirty-one consecutive full days is a long push. The shape that survives it:
 
 ---
 
-## 3. The schedule
+## 3. Phase 0 · 2–13 Nov — an LR parser generator in ceps
+
+**Ten days. Hard stop Friday 13 November — stop, not finish.**
+
+### What this is, named honestly
+
+This is §7 of this document arriving two weeks early: the genuinely interesting problem
+that feels like the right thing to work on. Scheduling it deliberately, with a stop date,
+is the only version of it that does not cost December.
+
+### Why it earns the fortnight
+
+1. **It is a forcing function for L1.** You cannot write a parser generator in ceps
+   without finding every corner where the semantics are undefined. Two weeks of hard use
+   immediately before writing the semantics chapter is the best preparation available, and
+   **the list of things you did not know is the raw material for Week 49.**
+2. **Self-hosting is the credential for the audience in
+   [LANG-ROADMAP.md](LANG-ROADMAP.md) §4.** `rollout2simulation.ceps` is the better
+   demonstration for industry; a parser generator written in the language is the better
+   one for language implementers. These are different audiences and you can have both.
+3. **It completes the `.ceps.lex` story** — a regular layer and a context-free layer, both
+   expressed as data rather than as hand-written C++. That feeds yadb directly.
+
+### Conditions — non-negotiable
+
+| # | Condition | Why |
+|---|---|---|
+| 1 | **Hard stop Fri 13 Nov.** | Parser generators are a famous rabbit hole. The stop is what makes this affordable. |
+| 2 | **Do not touch `ceps.y`.** | It must stay authoritative and frozen through December — that is what makes L1 four days instead of two weeks. The new generator is a *validator* that reads the same grammar, never a replacement. |
+| 3 | **SLR(1) and a driver.** | No error recovery, no conflict diagnostics beyond *"conflict here"*, no bison replacement. Upgrade to LALR(1) only if days 1–6 ran fast. |
+| 4 | **Fix [D17](DEFECTS.md#d17) on day one.** | You will write `static_for(s : symbols)` within the first hour. This moves the fix out of 27 Nov and frees a day downstream. |
+| 5 | **The semantics log is a deliverable.** | Not a side effect. One file, appended to daily: every construct whose behaviour you had to discover by experiment. |
+
+### The days
+
+| Day | Work | Note |
+|---|---|---|
+| **Mon 2** | Fix [D17](DEFECTS.md#d17). Grammar representation as ceps structs. Open the semantics log. | The bootstrap problem is free: a grammar written as ceps is already a tree, so the generator needs no parser to read its own input. |
+| **Tue 3** | `nullable`, FIRST. | |
+| **Wed 4** | FOLLOW. **Checkpoint.** | Set-heavy fixpoint computation over a pointer-chasing AST with no native set type. **This is where ceps is weakest and where this project dies if it dies.** If it is going badly, stop here and bank the log. |
+| **Thu 5** | LR(0) items, closure. | |
+| **Fri 6** | `goto`, the canonical collection. | |
+| **Mon 9** | SLR(1) table construction, conflict detection. | |
+| **Tue 10** | Driver in Oblectamenta — shift, reduce, goto over the compute stack. | The VM is nearly an LR driver already. The satisfying part. |
+| **Wed 11** | Finish the driver; reduce actions building a ceps tree. | |
+| **Thu 12** | Run it: arithmetic expressions, then a subset of ceps itself. | |
+| **Fri 13** | **Stop.** Write up the semantics log. Tag whatever exists. | Whatever state it is in. |
+
+### What counts as success
+
+Not a finished parser generator. **The semantics log**, plus whatever runs. Half a
+generator and a list of undefined behaviour still pays for the fortnight, which is why
+condition 5 exists and why Wednesday 4 November is a real stop point rather than a
+milestone.
+
+**14–15 Nov off.** Start Monday 16 rested; the main block is 31 consecutive days.
+
+---
+
+## 4. The schedule
 
 ### Week 47 · 16–20 Nov — unblock, then grammar
 
@@ -62,7 +126,7 @@ Thirty-one consecutive full days is a long push. The shape that survives it:
 | **Tue 24** | **LLM checkpoint #1.** Reference so far into context; ask for a model with two state machines and a transition table. Record every failure verbatim. | A list of what the reference does not yet say. This is the §1.3 acceptance test, run early and often rather than once at the end. |
 | **Wed 25** | Fix what checkpoint #1 exposed. Expect this to be about ambiguity, not omission. | Checkpoint #1 failures addressed. |
 | **Thu 26** | **Name resolution.** Scopes, shadowing, the unit namespace. Write the rule first, then read `cepslexer.cpp` to find out what actually happens. | The rule is written and the divergence from the implementation is listed. |
-| **Fri 27** | **Fix [D17](DEFECTS.md#d17)** — minimum, diagnose the collision at the point of binding. | `static_for(m : …)` is an error naming the unit collision, not a wrong answer. |
+| **Fri 27** | **Triage the Phase 0 semantics log.** Sort every entry into: belongs in the reference, is a defect, or was a misunderstanding. | The log becomes the outline for Week 49. This day exists because [D17](DEFECTS.md#d17) was fixed on 2 Nov. |
 
 ### Week 49 · 30 Nov – 4 Dec — the hard part
 
@@ -116,7 +180,7 @@ Thirty-one consecutive full days is a long push. The shape that survives it:
 
 ---
 
-## 4. The decision point: Friday 4 December
+## 5. The decision point: Friday 4 December
 
 Checkpoint #2 is the gate, because everything after it is optional and L1 is not.
 
@@ -132,7 +196,7 @@ already have two of those.
 
 ---
 
-## 5. Cut list, in order
+## 6. Cut list, in order
 
 When it slips — and it will — cut from the top. Decide at the Friday checkpoints, never
 mid-week.
@@ -147,16 +211,26 @@ mid-week.
 **Never cut:** the grammar, the evaluation semantics, the D17 fix, the three LLM
 checkpoints, the 23 Dec freeze. Those five are the phase. Everything else is decoration.
 
+Phase 0 is not on this list in either direction. It is cut in its entirety by not starting
+it, or it is stopped on 13 Nov. There is no middle setting.
+
 ---
 
-## 6. Two standing risks
+## 7. Two standing risks
 
-**The 90/10 reflex.** Every item in this schedule is in the last ten percent — the part
+**The 90/10 reflex.** Every item in the main block is in the last ten percent — the part
 with no unsolved structure in it. Somewhere around week three a genuinely interesting
-problem will present itself: the arena, `c{}`, a better `msg{}`. It will feel like the
-right thing to work on and it will be the thing that costs December. Write it down and
-keep going. `arena_allocator/` and `compressed_ast/` are already sitting in `~/dev` — they
-are L4, they are January at the earliest, and they are the specific temptation.
+problem will present itself: the arena, `c{}`, a better `msg{}`, finishing the parser
+generator. It will feel like the right thing to work on and it will be the thing that
+costs December. Write it down and keep going. `arena_allocator/` and `compressed_ast/`
+are already sitting in `~/dev` — they are L4, they are January at the earliest, and they
+are the specific temptation.
+
+Phase 0 is the controlled version of this risk, not an exception to it. The thing that
+makes it affordable is the 13 November stop, and the stop only works if the parser
+generator stays stopped. **An unfinished generator in `~/dev` on 16 November is the single
+most likely cause of a failed December.** If that pull is strong on the 13th, the honest
+move is to write the log, tag it, and not open the directory again until January.
 
 **Silent scope growth in the reference.** The grammar will tempt you into documenting
 everything the parser accepts. The acceptance test is not completeness, it is checkpoint
@@ -165,11 +239,11 @@ Anything not serving that is week five, next year.
 
 ---
 
-## 7. What this phase is worth
+## 8. What this phase is worth
 
-Thirty-one days against fifteen years. At the end: a reference that did not exist, a
-language that fails loudly instead of silently, and one command that turns one file into
-five artifacts.
+Forty-one days against fifteen years. At the end: a reference that did not exist, a
+language that fails loudly instead of silently, one command that turns one file into five
+artifacts — and, if Phase 0 lands, a parser generator written in the language it parses.
 
 That is enough to be argued with on the merits, which is the whole point of
 [LANG-ROADMAP.md](LANG-ROADMAP.md). And it is the thing that makes a second person
