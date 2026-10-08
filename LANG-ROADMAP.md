@@ -83,7 +83,7 @@ it will spend attention. Current state verified 8 Oct 2026.
 
 | # | Requirement | State | Gate |
 |---|---|---|---|
-| R1 | A language reference: grammar + semantics, citable | `doc/ceps-lang.md` is **20 lines** and titled *"NOT EVEN REMOTELY COMPLETE"* | **L1** |
+| R1 | A language reference: grammar + semantics, citable | grammar exists as bison (`ceps.y`, 790 lines); prose reference is `doc/ceps-lang.md`, **20 lines**, titled *"NOT EVEN REMOTELY COMPLETE"* | **L1** |
 | R2 | A conformance suite — "does my reading match the implementation?" | 41 run scripts, **39 dead paths** ([ROADMAP.md](ROADMAP.md) 0.1) | L1 / L5 |
 | R3 | Errors that diagnose rather than announce | undeclared kind and unterminated struct produce the **identical** `syntax error` | **L2** |
 | R4 | No silent wrong answers | [D17](DEFECTS.md#d17) | **L2** |
@@ -220,11 +220,13 @@ the invariant on data nobody authored.
 
 Nothing else ships before this. R1 blocks R2, R5 and the whole of §1.3.
 
-1. **Grammar.** Extract it from the parser rather than writing it from memory; a grammar
-   that disagrees with the implementation is worse than none. Cover: structs, `kind` and
+1. **Grammar.** `ceps/core/src/grammar/ceps.y` is **790 lines of bison, 26 rules**, and the
+   parser is generated from it — so it is authoritative by construction. This half is
+   transcription and annotation, not reverse-engineering. Cover: structs, `kind` and
    kind-instance declarations, `val`, units and literals, path expressions, `static_for`
    and `for`, macros, `sm{}` / `states{}` / `t{}` / `Actions{}`, `Simulation{}`,
-   `oblectamenta{}` / `asm{}`, `msg{}`.
+   `oblectamenta{}` / `asm{}`, `msg{}`. Record where it disagrees with `SKILL.md` rather
+   than silently choosing one.
 2. **Evaluation semantics.** The part that does not exist anywhere and that no reader can
    reconstruct: what runs when. The `--pr` → `--pe` → `--ppe` progression is already the
    user-visible shape of this and should be the document's spine — parse, expand, execute,
@@ -389,3 +391,4 @@ thing L1 breaks.**
 | [INVENTORY.md](INVENTORY.md) | What exists. §4.3 is the renderer behind the §1.2 argument. |
 | [POSITIONING.md](POSITIONING.md) | The argument. This document supplies the sentence and the flagship it lacks. |
 | `doc/ceps-lang.md` | 20 lines; the four principles L1 builds outward from. |
+| [SCHEDULE.md](SCHEDULE.md) | the execution plan for L1–L3: 31 working days, 16 Nov – 31 Dec 2026. |
