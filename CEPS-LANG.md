@@ -90,6 +90,106 @@ Consequences worth knowing up front:
 
 ---
 
+<a name="phases"></a>
+## How a program runs — the four phases
+
+Nothing else in this file makes sense without this frame, so it comes before the
+features. Executing a specification has up to four phases:
+
+| phase | consumes | produces |
+|---|---|---|
+| **raw** | your input files | an **unevaluated AST** (`uAST`) |
+| **normalization** | the `uAST` | an **evaluated AST** (`eAST`, also written `nAST`) |
+| **operational** | the `eAST` | execution — state machines run, traces appear |
+| **information gather** | — | — |
+
+The raw phase parses, applying user-defined lexers and parsers if the document asks for
+them. The normalization phase evaluates: it runs the `uAST` *as a functional program*,
+and the `eAST` it leaves behind **is the meaning of the specification**. The operational
+phase then executes that result the way a C program is executed — line by line, block by
+block — looking for entities that have operational semantics, of which the most useful is
+the state machine.
+
+The fourth phase is named in the execution model and is not documented anywhere in this
+repository, including here. It is listed because leaving it out would make the model look
+complete when it is not.
+
+### The normalization phase, watched
+
+The clearest way to see what normalization *is*: write a loop, then look at what survives
+it.
+
+```ceps
+numbers{1;2;3;4;5;};
+val sum = 0;
+for (e: root.numbers.content()){let sum = sum + e;}
+sum;
+```
+```output
+(STRUCT "numbers"
+  (INT 1)
+  (INT 2)
+  (INT 3)
+  (INT 4)
+  (INT 5)
+)
+(INT 15)
+```
+
+The loop is gone. The accumulator is gone. What remains is `numbers` and `15`. That
+residue is not an optimisation of the program — it *is* the program, after normalization.
+
+This is why `1+1;` is **not** discarded the way a C compiler discards a statement with no
+effect. In ceps an expression statement has a normalized form, that form is its meaning,
+and the meaning is a document. Nothing is optimised away because nothing was ever
+considered dead.
+
+### Seeing each stage
+
+Three invocations, one per boundary:
+
+| command | stops at | shows |
+|---|---|---|
+| `ceps f.ceps --pr` | after raw | the `uAST`, in a readable notation |
+| `ceps f.ceps --pe` | after normalization | the `eAST`, as S-expressions |
+| `ceps f.ceps` | after operational | whatever running it produced |
+
+`--pr` on the example above prints the program as parsed, loop intact:
+
+```
+numbers{
+1 2 3 4 5 }
+sum := 0
+
+for each e in ((root.numbers).content())
+ sum
+← (sum+e)
+ 
+sum
+```
+
+Plain `ceps f.ceps` on that same file prints **nothing** and exits 0 — correctly. The
+document normalizes to `numbers` and `15`, and neither has operational semantics, so the
+operational phase has nothing to run. Silence there is not a failure; it means you wrote
+a document, not a machine.
+
+```ceps run
+numbers{1;2;3;4;5;};
+val sum = 0;
+for (e: root.numbers.content()){let sum = sum + e;}
+sum;
+```
+```output
+```
+
+### Which phase a surprise belongs to
+
+Worth asking first, because the two phases fail differently and most confusion is a
+misattribution. If `--pe` already shows the wrong thing, the operational phase is
+innocent. Both sharp edges in this file — macro expansion, and
+[`.content()` collapsing](#content-collapses-a-single-element) — are
+normalization-phase behaviours, visible in `--pe` output before anything runs.
+
 ## Navigating and reading the document
 
 `root` is the document. Paths are dotted.
@@ -266,6 +366,9 @@ and `examples/` until they are.
 | `bin/ceps --pe FILE` | evaluate and print the resulting document |
 | `bin/ceps --pr FILE` | print the unnormalised syntax tree |
 | `bin/ceps --cppgen ...` | emit C++ for a target |
+
+The first three are the three phase boundaries; see
+[How a program runs](#phases) for what each one stops after.
 
 `--pe` is the one to reach for when a program does not do what you expect: it
 shows the document *after* evaluation, including any expression that could not
