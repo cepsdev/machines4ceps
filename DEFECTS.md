@@ -2,9 +2,12 @@
 
 Defects found while auditing `core/` and `vm/`, while specifying `c{}`
 (see `RECURSIVE-STATE-MACHINES.md`), during the repository-wide sweep recorded in
-`INVENTORY.md`, and — for [D17](#d17) — while reading production transformations written
-against ceps outside this repository. Every entry below was reproduced against `bin/ceps`,
-version 0.8.1.3.3 (built Aug 27 2026), on Linux.
+`INVENTORY.md`, for [D17](#d17) while reading production transformations written
+against ceps outside this repository, for [D18](#d18)–[D20](#d20) while checking
+whether model stacking satisfies an incrementality law, and for [D22](#d22)–[D23](#d23)
+while writing the worked example in `doc/scribble-concept/README.md`. Every entry below
+was reproduced against `bin/ceps`, version 0.8.1.3.3, on Linux — D1–D21 against the
+Aug 27 2026 build, D22–D23 against the Oct 9 2026 build of the same version string.
 
 Line numbers refer to the working tree at the time of writing.
 
@@ -26,11 +29,90 @@ Line numbers refer to the working tree at the time of writing.
 | [D14](#d14) | Critical | Simulation | The current-state set is empty in assertions, so `ASSERT_CURRENT_STATES_CONTAINS` never holds and its negation always does |
 | [D15](#d15) | High | VM | The Oblectamenta assembler rejects guard expressions the language admits |
 | [D16](#d16) | High | Transport | Crash (SIGSEGV) on a `receiver` with a `canbus` transport and no frame definitions |
-| [D17](#d17) | Critical | Language | A loop variable named after an SI unit silently binds to the unit, producing wrong output with exit code 0 |
+| [D17](#d17) | Critical | Language | Any name colliding with an SI unit silently resolves to the unit — loop variables bind to it, and a node so named is unreachable even by explicit path; exit 0 |
+| [D18](#d18) | High | Evaluator | `.content()` collapses singletons, so appending one element silently turns a working expression into a half-evaluated residue; exit 0 |
+| [D19](#d19) | High | Evaluator | `.children()` yields the empty sequence instead of reporting an unknown accessor, so loops over it silently do not run |
+| [D20](#d20) | High | Printer | The evaluated document is not a ceps document — `--pe`/`--ppe` output does not re-parse |
+| [D21](#d21) | High | CLI / Docs | Forty-six of the sixty-three command-line flags are undocumented, including the working C++ generator `--cppgen` |
+| [D22](#d22) | High | Printer | `--pe`/`--ppe` print a macro as a raw heap address and omit its body, so two runs of one input produce two different documents |
+| [D23](#d23) | Medium | Evaluator | A macro used as `name;` instead of `name();` is silently not expanded and reaches the output as a bare identifier; exit 0 |
 
 D13–D16 were found by the sweep and are regressions against material that is still in the
 tree as tests and examples. D14 is rated Critical because it disables the mechanism ceps
 uses to check itself, and because one half of it fails silently green.
+
+## Triage
+
+Severity says how bad a defect is. It does not say what it holds up. At twenty-three
+entries that distinction is the one that matters, so it is drawn here.
+
+### One diagnosis, repeated
+
+**Fourteen of the twenty-three are the same failure mode**: a plausible answer with exit
+code 0 and nothing said about what was skipped — D1, D3, D6, D7, D8, D12, D14, D15, D17,
+D18, D19, D21, D22, D23. **Both remaining Critical defects — D14 and D17 — are in that
+class.** The two SIGSEGVs are merely High; a crash is the easy kind. (D18 was a third
+Critical until 2026-10-09, when it turned out to be narrower than filed; it stays in the
+silent class.)
+
+This is worth stating plainly because it changes what the list is. It is not an
+assortment of unrelated faults, it is one property of the system observed from twenty-three
+angles: *ceps conceals what it did not do.* Which is the exact behaviour
+`POSITIONING.md` argues the language exists to prevent. Fixing them one at a time treats
+the symptoms; the shared fix is a representable third outcome.
+
+### Group 1 — blocks the thesis or its evidence
+
+These make a claim untrue, or corrupt the measurement that would support it. They come
+first regardless of severity.
+
+| # | why it is here |
+|---|---|
+| [D18](#d18) | **Re-scoped 2026-10-09**, twice. The canonical example *does* reproduce (with `.at(0)`), so it no longer blocks the examples. But the real defect it uncovered — appending silently breaks readers — is the paper's own thesis reproduced inside the evaluator, and fixing it buys a sentence the paper wants. |
+| [D17](#d17) | Silent wrong answers in exactly the transformations the language is being proposed for. **Broadened 2026-10-09**: it is not confined to bindings — a *node* named after a unit is unreachable even by an explicit `root.` path, and returns empty rather than erroring. It also corrupted a probe in this file, which is the sharpest evidence of its reach. |
+| [D14](#d14) | A model cannot check itself; every acceptance criterion phrased as a configuration is unverifiable. |
+| [D20](#d20) | Evaluated output is not re-parsable, so "the document stays well-formed" is false, and incrementality cannot be tested. |
+| [D22](#d22) | Two runs of one input produce two different documents, and a macro's body is absent from both. Trace comparison is the proposed experiment; this breaks diffing at the source. Same fix surface as D20 — do them together. |
+| [D19](#d19) | Silent empty traversal — and the best first site for a `nonhitter{}` demonstration. |
+| [D5](#d5), [D6](#d6) | Coverage is the metric the argument rests on; one prints `-nan`, the other drops edges without saying so. |
+| [D3](#d3), [D4](#d4) | **Reclassified.** Trace defects were cosmetic while the trace was a debugging aid. They are not cosmetic now that trace comparison is the proposed experiment — a missing initial-entry line and a spurious trailing line both corrupt an alignment. |
+
+### Group 2 — blocks adoption
+
+Capability present, surface absent or broken. Nothing here is wrong about the language;
+all of it is wrong about meeting it.
+
+| # | why it is here |
+|---|---|
+| [D21](#d21) | 46 of 63 flags invisible, including a working C++ generator. An evaluator reads `--help` and sees a small simulator. |
+| [D12](#d12), [D10](#d10) | The traversal layer is undocumented and the submachine documentation contradicts itself — the two things a newcomer needs first. |
+| [D2](#d2), [D16](#d16) | Crashes on ordinary mistakes: a machine without `Initial`, a receiver without frames. |
+| [D13](#d13), [D15](#d15) | The tool rejects input the language admits. Regressions against material still in the tree. |
+| [D1](#d1) | Three working VM instructions unreachable because they are undeclared. |
+| [D18](#d18) | A scribble that works stops working when you add to it, silently. That is the one operation the language promises is safe. |
+| [D23](#d23) | A macro invoked with the wrong one of two near-identical syntaxes vanishes without a word. `name;` is how paths splice, so the wrong guess is the natural one. |
+| [D8](#d8) | Three report formats accepted and ignored; the fix is a pretty-print away. |
+| [D9](#d9) | A verbosity control that exists but cannot be reached. |
+
+### Group 3 — internal
+
+Real, worth fixing, holding up nothing.
+
+| # | |
+|---|---|
+| [D7](#d7) | A feature switched off by a stray `return;`. |
+| [D11](#d11) | State-index intervals non-contiguous across cover classes. |
+
+### Order of work
+
+1. **Group 1, and D20 with [D22](#d22) first within it** — both are printer changes rather
+   than semantics changes, they touch the same dispatch, and they are visible to anyone
+   who tries the examples. D22 additionally buys a three-line regression test (`--pe`
+   twice, `diff`, require identical) that guards every future printer change.
+2. **D21 next**, out of order, because generating the flag list from the parser is an
+   afternoon and it changes what the project looks like from outside.
+3. The rest of group 2 as the implementation month allows; group 3 when touched for other
+   reasons.
 
 ---
 
@@ -704,16 +786,23 @@ the negative form passes while checking nothing.
 ### Where the fault is not
 
 The simulator's own notion of the current state is **correct** — only the assertion path
-sees an empty set. Two independent witnesses:
+sees an empty set. Three independent witnesses:
 
 1. The trace prints enter and exit events in the right order (`S.Initial- S.a+` above).
 2. Coverage is computed from the same information and comes out right. Running the
    partition example in [INVENTORY.md](INVENTORY.md) §4.2 reports `State Coverage: 0.75`
    with three of four states entered, which is only derivable from a populated state set.
+3. The `[ACTIVE_STATES]` log line prints the complete configuration — all 36 top-level
+   machines plus the hierarchical paths — correctly and on every step. Verified against
+   production logs from 2016 (`TRGS/statemachines/log_pure_runtime_with_log.txt`,
+   1671 configurations; `log_native_with_log.txt`, 1988). The capability is not merely
+   present, it has been in industrial use.
 
 So this is not a state-tracking bug. It is a lookup performed against the wrong object, or
 performed at a point in the cycle where the set has already been cleared — which makes it
 a much smaller fix than the severity suggests, and is the reason it belongs in phase 0.
+Witness 3 narrows it further: the logger and the assertion have different views of the
+same run, so the fix is to point the assertion at whatever the logger reads.
 
 ### Why it matters
 
@@ -856,13 +945,14 @@ dereference instead of a check.
 ---
 
 <a name="d17"></a>
-## D17. A loop variable named after an SI unit silently binds to the unit
+## D17. A name that collides with an SI unit silently resolves to the unit
 
 **Severity:** Critical — not a crash, a *wrong answer*. Exit code 0, plausible-looking
 output, no diagnostic of any kind.
 **Area:** Language / name resolution.
 **Affects:** every `static_for` and `for` comprehension, and therefore every transformation
-in the `rollAut` style. In principle any construct that introduces a binding.
+in the `rollAut` style — and, as of the 2026-10-09 broadening below, **any name in the
+document at all**, not only names introduced by a binding.
 
 ### Reproducer
 
@@ -912,16 +1002,85 @@ $ ceps d17b.ceps --pe ; echo $?
 
 ### Scope
 
-The unit system is a genuine and useful feature — `timeout{2.0*s;}` in
-`examples/doing_specs/lueftersteuerung/` depends on it. The defect is not that units
-exist; it is that **a unit name wins against a binding introduced in the same expression,
-silently**. The candidate collision set is large and consists entirely of names a
-programmer would reach for: `m`, `s`, `A`, `K`, `g`, `cd`, `mol`, and whatever derived and
-prefixed forms the unit table carries.
+The mechanism is that **a unit name wins against every other name, silently**. Whether
+built-in units should exist at all is answered further down, by the person who put them
+in; what comes first is the shape of the collision.
+
+The candidate set is large and consists entirely of names a programmer would reach for:
+`m`, `s`, `A`, `K`, `g`, `cd`, `mol`, and whatever derived and prefixed forms the unit
+table carries.
 
 The existing corpus escapes this by accident. Every comprehension in `planck-service`,
 `free-mdf/analyze-mdf` and `rollAut` happens to use `e`, `market`, `step` or `i`. No
 convention was ever written down, and nothing warns.
+
+### Wider than bindings — added 2026-10-09
+
+This entry was first filed as a defect about *bindings* — loop variables and the like.
+That was too narrow. The collision reaches **document structure**, and an explicit path
+does not escape it.
+
+A plain struct named `m` defines and prints correctly, and is then unreachable:
+
+```
+$ cat t3.ceps
+m{ 42; };
+holder{ m; };
+
+$ ceps --pe t3.ceps ; echo $?
+(STRUCT "m"
+  (INT 42  )
+)
+(STRUCT "holder"
+  (INT 1 m^1 )
+)
+0
+```
+
+`holder` contains *one metre*. The 42 is gone. Nothing was bound anywhere — `m` is a
+node, not a loop variable.
+
+Worse, a fully qualified path does not help. It returns the empty result, silently:
+
+```
+$ cat t4.ceps
+m{ 42; };
+holder{ root.m.content(); };
+
+$ ceps --pe t4.ceps ; echo $?
+(STRUCT "m"
+  (INT 42  )
+)
+(STRUCT "holder"
+)
+0
+```
+
+Control, identical but for the name:
+
+```
+$ cat t5.ceps
+zz{ 42; };
+holder{ root.zz.content(); };
+
+$ ceps --pe t5.ceps
+(STRUCT "zz"
+  (INT 42  )
+)
+(STRUCT "holder"
+  (INT 42  )
+)
+```
+
+So a node whose name is in the unit table can be written, can be printed, and cannot be
+read back by any spelling tried — bare or fully qualified. `root.m` is as unambiguous as
+the language gets, and it still yields nothing, with exit code 0.
+
+This was found the hard way: it corrupted a probe in this very catalogue. A macro named
+`m` in a draft of [D23](#d23) was shadowed at its use site, and the resulting
+`(INT 1 m^1 )` was briefly misread as evidence that macro expansion dropped statements.
+D23 was rewritten once the cause was known. The defect is good enough at hiding to fool
+someone who had already written its entry.
 
 ### Why it matters
 
@@ -936,21 +1095,438 @@ because that is what reads naturally and no corpus teaches otherwise. And an ana
 pipeline over contracts or measurements has no oracle: a silently wrong aggregate is
 indistinguishable from a right one.
 
+### The decided direction — 2026-10-09
+
+Built-in SI units are not to be patched. They are to be **removed**. This is the author's
+decision, recorded here in his terms: units in the core were a yamdl-era choice made for
+the BMW HAF project around 2013, and regretted ever since. Units should be written as
+ordinary function calls — `m(1)` — with arithmetic such as `m(1) + m(2)` falling out of an
+operator-overloading mechanism, a separate planned language feature deliberately **not**
+filed in this catalogue.
+
+That dissolves D17 rather than patching it. With no unit table in the name resolver there
+is no collision set, `m` is an ordinary identifier, and every variant in this entry —
+the loop variable, the struct, the `root.m` path — stops being special.
+
+Two observations in support, both measured rather than asserted.
+
+**The syntax the fix wants is currently occupied by the defect.** `m(1)` parses today, but
+as a call whose *callee* is one metre:
+
+```
+$ printf 'a{ m(1); };\n' > u.ceps ; ceps --pe u.ceps
+(STRUCT "a"
+  (FUNC_CALL
+    (INT 1 m^1 )
+    (CALL_PARAMETERS
+      (INT 1  )
+    )
+  )
+)
+```
+
+The node shape the fix needs is already there; only the callee resolves wrongly. Removing
+built-in units vacates the syntax rather than requiring new grammar.
+
+**The migration cost is smaller than it looks.** Sixty-nine `.ceps` files in `examples/`
+and `test/` use the `N*unit` form, which sounds like a large corpus to rewrite. By unit:
+
+```
+$ grep -rhoE '\*\s*(s|ms|m|kg|A|K|g|cd|mol|Hz|us|ns)\s*[;,)}]' --include=*.ceps examples/ test/ \
+  | grep -oE '\*\s*[a-zA-Z]+' | tr -d '* ' | sort | uniq -c | sort -rn
+    132 s
+      3 m
+      3 kg
+```
+
+132 of 138 uses are seconds, nearly all of them timer arguments such as
+`start_timer(3.0*s,E)`. The three `m` and three `kg` uses are one demo
+(`weight = 10*kg; height = 100*m;`) copied into three files under
+`examples/distributed/`. So the feature's entire real footprint is *seconds in timer
+calls* — one unit in one role — and the price for it is a Critical defect over the whole
+name space. That is a lopsided trade, and it is the empirical form of the author's regret.
+
+### The interim fix
+
+Removal is a language change and will not land tomorrow. Until it does:
+
+**Diagnose.** Reject any declaration whose name is in the unit table, with a message
+naming the collision, and make a path whose final segment resolves to a unit rather than
+a node a diagnostic instead of the empty result. After the broadening above this must
+cover three sites, not one — bindings (`static_for(m : …)`), node names (`m{42;}`) and
+path segments (`root.m`). It converts a wrong answer into a build failure, it is cheap,
+and it is a defensible release on its own.
+
+---
+
+<a name="d18"></a>
+## D18. Appending to a node silently breaks every reader that assumed a singleton
+
+**Severity:** High — silent, exit code 0. *Arguably Critical*, and in the same family as
+[D17](#d17); held at High because a reliable discipline exists today (always `.at(n)`) and
+the residue is visible in the output if anyone reads it. Was filed as Critical for the
+wrong reason, corrected on 2026-10-09, then found to be a larger defect than either
+version — see below.
+**Area:** Evaluator / model traversal / the nodeset data model.
+**Affects:** every expression that reads a node's content. The hazard is latent until the
+node grows, and growing nodes is the language's designed workflow.
+
+### Correction, 2026-10-09
+
+This entry originally claimed that indexed access into a node's children was broken and
+that the canonical trail-property example could not be reproduced. **That was wrong, and
+the error was mine.** Indexing works; it is spelled `.at(n)`, applied to the result of
+`.content()`. Discovered by running
+`doc/scribble-concept/you_dont_erase_a_scribble.ceps`, which uses `.content().at(0)`
+throughout and runs clean.
+
+```
+a{10;20;30;};
+with_at_0{root.a.content().at(0);};
+with_at_1{root.a.content().at(1);};
+with_at_2{root.a.content().at(2);};
+```
+
+```
+$ ceps --pe at.ceps
+(STRUCT "with_at_0" (INT 10 ))
+(STRUCT "with_at_1" (INT 20 ))
+(STRUCT "with_at_2" (INT 30 ))
+```
+
+Correct, in order, no diagnostics. And the canonical example reproduces exactly:
+
+```
+a{1;2;3;};
+b{6;};
+fixed{root.a.content().at(0) + root.b.content().at(0);};
+```
+
+```
+(STRUCT "fixed" (INT 7 ))
+```
+
+`c{7;}`, as documented. The earlier `(+6)` came from using the wrong accessor, not from
+broken arithmetic.
+
+### The real defect: `.content()` is data-dependently typed
+
+Found 2026-10-09 while reviewing `you_dont_erase_a_scribble.ceps`, and it is a bigger
+finding than the accessor spelling.
+
+`.content()` **collapses a one-element result to that element**. This is deliberate and it
+is good: it is what lets a scribble be written without ceremony.
+
+```
+a{1;};
+b{2;};
+collapse{root.a.content();};
+sum{root.a.content() + root.b.content();};
+at_on_singleton{root.a.content().at(0);};
+```
+
+```
+(STRUCT "collapse"        (INT 1 ))
+(STRUCT "sum"             (INT 3 ))
+(STRUCT "at_on_singleton" (INT 1 ))
+```
+
+Note that `.at(0)` on a collapsed singleton is the identity, so both spellings coexist.
+
+**Now append one element to `a` and change nothing else.**
+
+```
+a{1;5;};                                    // was a{1;}
+sum_unchanged{root.a.content() + root.b.content();};   // line untouched
+sum_with_at{root.a.content().at(0) + root.b.content().at(0);};
+```
+
+```
+$ ceps --pe grown.ceps ; echo $?
+(STRUCT "sum_unchanged"
+  (OPERATOR + ""
+    (NODESET ""
+      (INT 1 )
+      (INT 5 ))
+    (INT 2 )))
+(STRUCT "sum_with_at" (INT 3 ))
+0
+```
+
+The untouched line went from `3` to a half-evaluated residue. Exit 0, no diagnostic.
+
+So the result **type** of `.content()` is decided by how many children the node happens to
+have, not by anything visible in the expression. The collapse saves typing precisely in the
+cases where it will later bite: where a node genuinely cannot grow the collapse is free,
+where it might grow it is a trap, and both get the same spelling.
+
+**Why this matters more here than it would elsewhere.** The one operation this language
+declares safe is appending — *you don't erase a scribble*. But appending silently breaks
+every reader that assumed a singleton. The safe operation is not safe. This is not a
+corner case; growing a node is the designed workflow.
+
+**`.at(0)` is therefore not ceremony — it is a prediction.** Writing it asserts "this node
+may grow"; omitting it asserts "it never will". Nothing checks either. In
+`you_dont_erase_a_scribble.ceps` the two are used inconsistently: no `.at(0)` on `a` and
+`b` (leaves), `.at(0)` on `idea_refinement` (a singleton *today*).
+
+### The lineage: a correction that never travelled
+
+XPath is an acknowledged inspiration for the nodeset feature (author, 2026-10-09) — but
+**no XPath implementation was ever used in ceps**. The influence is experiential: the
+author built XSLT/XPath reporting in 2005 and carried the data-model intuition forward.
+Nothing was ported; nothing conforms. That matters for the fix, so the chronology is worth
+stating:
+
+- **1999** XPath 1.0 — node-sets; >1 item where 1 is expected silently yields the first.
+- **2005** the author uses 1.0 in production. 2.0 is still a draft. The absorbed intuition
+  is 1.0's.
+- **2007** XPath 2.0 reaches Recommendation: sequences replace node-sets and silent
+  atomization of a >1 sequence becomes a **type error**. He has left XML work by then.
+- **2015→** ceps rebuilds the model from that decade-old intuition.
+
+| | XPath 1.0 (absorbed 2005) | XPath 2.0 (2007, never encountered) | ceps today |
+|---|---|---|---|
+| container | node-set: nodes only, document order, deduplicated | sequence: any items, ordered, duplicates kept | **ordered, duplicates kept, holds atomic items** (confirmed by author) |
+| name | node-set | sequence | `NODESET` |
+| >1 item where 1 expected | silently takes the first node | **error (`XPTY0004`)** | silently produces a residue, exit 0 |
+
+So ceps arrived **independently** at something close to 2.0's data model — the printer
+output above is the evidence, `(NODESET "" (INT 1) (INT 5))` holds atomic values, which a
+1.0 node-set could not — while carrying 1.0's **error discipline**, because that is the
+part that was in memory. The name is a 1999 label on a 2007-shaped object.
+
+**The consequence for the fix.** This is not a half-finished migration; no migration was
+begun. It is the same end state reached independently, missing the one correction that made
+that end state safe. The remedy below is therefore still a path a standards body already
+walked with a decade of field reports behind it — which is the whole reason to prefer it
+over inventing something.
+
+**And ceps's divergence makes the case stronger, not weaker.** XPath queries a document it
+does not own and cannot change, so cardinality holds still during evaluation. ceps queries
+a document that is also the program, also being rewritten, and whose growth is the point.
+The hazard is strictly worse here than in the ancestor.
+
+*(XPath claims above are asserted from knowledge and are listed in the paper's
+`## Citations to verify`. Check `XPTY0004` and the 1.0 `string(node-set)` first-node rule
+against the specs before either is cited.)*
+
+### The narrow half: `content(n)` discards its argument
+
+```
+a{10;20;30;};
+p0{root.a.content(0);};  p1{root.a.content(1);};  pall{root.a.content();};
+```
+
+```
+$ ceps --pe d18.ceps ; echo $?
+(STRUCT "p0"   (INT 10 ) (INT 20 ) (INT 30 ))
+(STRUCT "p1"   (INT 10 ) (INT 20 ) (INT 30 ))
+(STRUCT "pall" (INT 10 ) (INT 20 ) (INT 30 ))
+0
+```
+
+`content(0)`, `content(1)` and `content()` are indistinguishable. It matters because
+`content(n)` is the spelling a newcomer reaches for — not least because `.at(n)` is
+undocumented — and the consequence surfaces as a wrong number rather than an error.
+
 ### What a fix looks like
 
-In order of increasing ambition:
+**Keep the collapse.** Removing it would put `.at(0)` in front of every value access in the
+first five minutes of the language, and the frictionless scribble is the language's
+identity.
 
-1. **Diagnose.** Reject a binding whose name is in the unit table, at the point of
-   binding, with a message naming the collision. Cheap, immediate, and it converts a
-   wrong answer into a build failure.
-2. **Shadow, and say so.** Let the binding win — which is what a reader expects — and emit
-   a warning. Requires deciding what `2.0*s` means inside a `static_for(s : …)` body; the
-   answer is probably "the binding", with the unit reachable under an explicit
-   qualification.
-3. **Separate the namespaces.** Units are not ordinary identifiers and arguably should not
-   share a lookup with them.
+1. **`demand_scalar`.** Any operation requiring a single value, handed a sequence of length
+   ≠ 1, is a diagnostic naming the node and the length. One predicate, applied at every
+   scalar-demanding site: arithmetic and comparison operators, `text()`, `as_identifier()`,
+   and anything else that atomises. This is XPath 2.0's rule. With it, the collapse becomes
+   safe — its assumption is checked at the point of use instead of assumed forever, and the
+   failure arrives at the moment of the append, when it can still be acted on.
+2. **Keep the residue; add the escalation.** Do not abort. `(+ (NODESET 1 5) 2)` shows
+   exactly where evaluation stopped and is genuinely informative — it is how this was found.
+   Emit it *and* a diagnostic *and* a nonzero exit. The trail property survives; only the
+   silence dies. Partial evaluation is a result; saying nothing about it is the bug.
+3. **Reject `content(n)`** at evaluation, with a message naming the arity and pointing at
+   `.at(n)`. Aliasing it to `content().at(n)` is the other option and is probably worse —
+   two spellings for one operation. Discarding the argument is the only option that should
+   be off the table. And **document `.at(n)`**, which is the actual root cause of anyone
+   reaching for `content(n)`.
+4. **Consider renaming `NODESET` to `SEQUENCE`** in the printer. Cosmetic, but the name is
+   currently a 1.0 label on a 2.0 object and it mis-sets expectations about ordering and
+   duplicates. Cheap to do alongside the above.
 
-(1) is a defensible release in itself and should not wait for (2) or (3).
+Item 1 is the one that matters. 2 is what keeps the fix in character. 3 and 4 are tidying.
+
+**Why this is worth doing before the paper.** Today, appending to a scribble produces a
+silent wrong answer: the evaluator conceals what it did not do. That is the paper's thesis
+reproduced inside the tool that argues it. One evaluator change and ceps practises what it
+preaches — and that sentence is worth more in a paper than the defect costs to fix.
+
+---
+
+<a name="d19"></a>
+## D19. `.children()` yields the empty sequence instead of reporting an unknown accessor
+
+**Severity:** High — silent, exit code 0. A loop over it simply does not run.
+**Area:** Evaluator / model traversal.
+**Affects:** any traversal written against a plausible-but-wrong accessor name. The
+traversal vocabulary is undocumented ([D12](#d12)), so guessing is the normal case.
+
+### Reproducer
+
+```
+a{1;2;3;};
+b{ for (elem: root.a.children()){ hit{elem;}; } };
+```
+
+```
+$ ceps d19.ceps --ppe --format raw ; echo $?
+a{
+1 2 3}
+b{
+}
+0
+```
+
+The body never executes and `b{}` renders as empty — indistinguishable from a correct
+traversal over an empty node. With `root.a.content()` the same model yields three `hit{}`
+nodes.
+
+A related, milder case: `for (elem: root.a)` binds `elem` to the whole node and runs
+exactly once, which may be intended but is silently different from `.content()`.
+
+### What a fix looks like
+
+An unknown member on a node is a diagnosable condition and should be diagnosed. Where the
+project would rather not fail, this is the first and best candidate for the `nonhitter{}`
+treatment: leave the unresolved accessor in place in the output instead of yielding
+nothing, so the artifact records that the traversal was not understood.
+
+---
+
+<a name="d20"></a>
+## D20. The evaluated document is not a ceps document — `--ppe`/`--pe` output does not re-parse
+
+**Severity:** High — it blocks the language's own round trip, and with it any incremental
+or staged use of the evaluator.
+**Area:** Printer / output format.
+**Affects:** `--pe`, `--ppe` with `--format raw`; everything downstream that would consume
+an evaluated model as a model.
+
+### Reproducer
+
+```
+$ printf 'a{1;2;3;};\n' > d20.ceps
+$ ceps d20.ceps --ppe --format raw > d20.out ; cat d20.out
+a{
+1 2 3}
+$ ceps d20.out --ppe --format raw ; echo $?
+***Error near line 1, column 1:
+syntax error
+***Fatal Error:A parser exception occured in 'd20.out'.
+1
+```
+
+The printer drops the inner `;` separators and the trailing `};`:
+
+| | text |
+|---|---|
+| accepted as input | `a{1;2;3;};` |
+| printed after evaluation | `a{1 2 3}` |
+
+Confirmed against the parser directly — `a{1 2 3};`, `a{1 2 3}` and the two-line printed
+form are all rejected at column 2; only `a{1;2;3;};` is accepted.
+
+### Why it matters
+
+Models are routinely composed on the command line — `ceps A.ceps B.ceps C.ceps` — and
+later files read earlier files' *evaluated* results. That works. What cannot be done is
+the staged form:
+
+```
+ceps A.ceps B.ceps --ppe > AB.ceps     # fine
+ceps AB.ceps C.ceps                    # parse error
+```
+
+So evaluation cannot be checkpointed, results cannot be cached, and the natural law
+`eval(A · B · C) = eval(eval(A · B) · C)` cannot be tested, let alone relied on.
+
+### What a fix looks like
+
+Emit separators. This is a printer change, not a semantics change — the evaluator already
+holds the structure. A `--format ceps` that is guaranteed to re-parse, with a round-trip
+test `eval(print(eval(x))) == eval(x)` in the suite, would close it.
+
+---
+
+<a name="d21"></a>
+## D21. Forty-six of the sixty-three command-line flags are undocumented
+
+**Severity:** High as documentation, higher as an opportunity — `--cppgen` alone is a
+working C++ code generator that `--help` does not mention.
+**Area:** CLI / docs.
+**Affects:** discoverability of most of the tool. The same pattern as [D12](#d12) (the
+model-traversal layer missing from `SKILL.md`) and [D8](#d8) (flags accepted but inert),
+here measured across the whole interface.
+
+### Reproducer
+
+```
+$ grep -o '"--[a-z_0-9]*"' core/src/cmdline_utils.cpp | tr -d '"' | sort -u > parsed
+$ ceps --help | grep -o '\-\-[a-z_0-9]*' | sort -u > documented
+$ wc -l < parsed ; wc -l < documented
+63
+19
+$ comm -23 parsed documented | wc -l
+46
+```
+
+`--help` itself is among the forty-six.
+
+### The ones that matter
+
+| flag | what it is |
+|---|---|
+| `--cppgen`, `--cppgen_statemachines`, `--cppgen_ignore_print` | the sm4ceps C++ generator |
+| `--monitor`, `--run_as_monitor`, `--live_log` | runtime monitoring |
+| `--ws_api`, `--port`, `--sleep_before_ws_api` | a WebSocket API |
+| `--print_transition_tables` / `--ptt`, `--print_statemachines`, `--print_event_signatures`, `--print_signal_generators` | model introspection |
+| `--print_raw_input_tree`, `--print_evaluated_input_tree`, `--print_evaluated_postprocessing_tree` | the pipeline stages, individually dumpable |
+| `--dump_asciidoc_can_layer`, `--dump_stddoc_canlayer` | the docgen subsystem |
+| `--plugin`, `--package_file`, `--push_dir`, `--pre`, `--post_processing` | extension points |
+| `--enforce_native`, `--vcan_api`, `--rmip`, `--rmport` | target and transport control |
+
+`--cppgen` is not vestigial. It works:
+
+```
+$ ceps test/native_main_loop/timer_b.ceps --cppgen ; echo $?
+S1.a1();
+S1.Initial- S1.A+
+…
+0
+$ head -8 out.hpp
+/* out.hpp
+   CREATED Fri Oct  9 00:55:41 2026
+   GENERATED BY THE sm4ceps C++ GENERATOR VERSION 0.90.
+   BASED ON cepS … VERSION 1.1 (Jan 13 2026) …
+   Input files:
+      …/test/native_main_loop/timer_b.ceps
+```
+
+There are thirteen fixtures for it under `test/native_main_loop/`, with checked-in
+`out.hpp`/`out.cpp`. A whole compilation path, exercised by tests, invisible from the
+command line.
+
+### Why it matters
+
+The project's stated difficulty is adoption, and the three documented symptoms —
+[D8](#d8), [D12](#d12) and this one — are the same shape: capability present, surface
+absent. Someone evaluating ceps reads `--help`, sees nineteen flags, and concludes it is a
+small simulator. The generator that produced production ARM code in 2016 is two lines of
+`--help` away from being visible.
+
+Generating the flag list from the parser rather than maintaining it by hand would close
+this permanently and is a smaller change than writing the missing nineteen lines.
 
 ---
 
@@ -984,3 +1560,227 @@ is implemented. [D11](#d11) is the motivation for static check E4. [D14](#d14) b
 acceptance criteria themselves: every criterion in §15 that is phrased as an expected
 configuration is unverifiable while state assertions do not see the configuration. The
 remainder are independent of the `c{}` work.
+
+<a name="d22"></a>
+## D22. `--pe`/`--ppe` print a macro as a raw heap address and omit its body
+
+**Severity:** High.
+**Area:** Printer.
+**Affects:** every workflow that compares two runs — documentation checking, regression
+fixtures, the trace-comparison demo. Found 2026-10-09 while writing
+`doc/scribble-concept/README.md`, which needed a macro example whose output was stable
+enough to commit.
+
+### Reproducer
+
+```
+$ cat m.ceps
+macro greet{ hello{1;}; };
+
+$ ceps --pe m.ceps
+(MACRO "greet" 0x637924972ae8
+)
+$ ceps --pe m.ceps
+(MACRO "greet" 0x55b3408d0ae8
+)
+```
+
+Same input, same binary, two different documents. The address is a heap pointer, so it
+moves with ASLR on every process start. `--ppe` behaves identically; both reach the same
+printer.
+
+Two faults, not one. The second is the worse of the two:
+
+```
+$ cat m2.ceps
+macro big{ alpha{1;}; beta{2;}; gamma{"xyzzy";}; };
+plain{ alpha{1;}; beta{2;}; };
+
+$ ceps --pe m2.ceps
+(MACRO "big" 0x5d77ef415ae8
+)
+(STRUCT "plain"
+  (STRUCT "alpha"
+    (INT 1  )
+  )
+  (STRUCT "beta"
+    (INT 2  )
+  )
+)
+```
+
+`plain` prints its whole body. `big` prints a pointer *instead of* its body. Nothing of
+`alpha`, `beta` or `gamma` appears. The printed tree does not contain the macro.
+
+### Mechanism
+
+`ceps_ast.hh:892` (in `cepsdev/ceps`):
+
+```cpp
+typedef ast_node<Ast_node_kind::macro_definition,
+                 std::string /*name*/,
+                 Nodebase_ptr /*body*/,
+                 std::vector<Nodebase_ptr> /*attributes*/> Macrodef;
+```
+
+The body is a **typed member**, not a child. The generic member printer at
+`ceps_ast.hh:415-418` is:
+
+```cpp
+void print_content(std::ostream& out,bool pretty_print,int indent) const override
+{
+    out << x << " "; Base::print_content(out,pretty_print,indent);
+}
+```
+
+`x` here is a `Nodebase*`. `operator<<` on a non-`char` pointer prints the address, and
+there is no specialisation that recurses into a `Nodebase_ptr` member. So the body is
+rendered as its own location in memory. Meanwhile `print_content_helper`
+(`ceps_ast.hh:361-383`) walks `children()` — and the body is not among them, so the
+recursive walk never reaches it either.
+
+This is not a macro-specific slip. It is a hole in the printer's type dispatch, and it has
+two more mouths:
+
+| member type | typedef | printed as |
+|---|---|---|
+| `Nodebase_ptr` | `Macrodef` body (`:892`) | heap address; subtree lost |
+| `void*` | `Label` symbol entry (`:893`) | address; `0` while unbound — latent, same class |
+| `std::vector<Nodebase_ptr>` | `Macrodef` attributes (`:892`) | **nothing at all** (`:443-446` drops `x` silently) |
+
+The vector case is the quietest of the three: its `print_content` forwards to the base and
+never touches `x`, so macro attributes leave no trace in the output whatsoever — no
+address, no placeholder, no body.
+
+```
+$ cat lab.ceps
+label l;
+
+$ ceps --pe lab.ceps
+(LABEL "l" 0
+)
+```
+
+### Why High and not Critical
+
+It does not corrupt a computation, only the record of one. [D20](#d20) already establishes
+that `--pe` output does not re-parse, so no downstream stage consumes it; the blast radius
+stops at humans and at diffs. That is the boundary, and it is the only thing holding this
+below Critical.
+
+Within those bounds it is the printer family's strongest instance of the house pattern
+(see Triage, *One diagnosis, repeated*). Both halves fail silently green: the address
+prints without comment, the dropped body prints without comment, exit code 0. Someone
+comparing two runs sees a difference that is not there; someone reading one run sees a
+macro that appears to be empty. A third outcome — `(MACRO "greet" <body-not-printed>)`, or
+simply printing the body — would cost one specialisation.
+
+It also compounds [D20](#d20) rather than merely resembling it. D20 says the output is not
+a ceps document. D22 says that for macros it is not even a lossless *record* of one, so
+no amount of work on the grammar at the D20 end would recover the body.
+
+### What a fix looks like
+
+1. Specialise the printer for a `Nodebase_ptr` member so it recurses, exactly as the
+   `children()` walk does. This fixes the address and the omission in one move, and is
+   the whole of the defect as filed.
+2. Specialise for `std::vector<Nodebase_ptr>` so attributes are printed instead of
+   dropped.
+3. Never print a raw pointer. If a member cannot be rendered, emit a marker that says so.
+   An address in output is an ASLR oracle as well as noise.
+4. Add a round-trip check to the test harness: `ceps --pe f.ceps` twice, `diff` the two,
+   require them identical. That is a three-line test that would have caught this at the
+   moment it was introduced, and it generalises to every future printer change.
+
+Until then, anything diffing ceps output must mask `0x[0-9a-f]+`.
+`tools/check-doc-examples.py` does.
+
+<a name="d23"></a>
+## D23. A macro used without parentheses is silently not expanded
+
+**Severity:** Medium.
+**Area:** Evaluator / name resolution.
+**Affects:** any macro invoked as `name;` rather than `name();`. Found 2026-10-09 while
+probing [D22](#d22).
+
+**This entry replaces an earlier one** titled *"Macro expansion keeps only the first
+statement of the body, and strips its wrapper"*. That filing was wrong. Its probes named
+the macro `m`, which is the SI unit **metre**, so the use site was shadowed by
+[D17](#d17) and the resulting `(INT 1 m^1 )` was misread as a truncated body. Re-run with
+a name that is not a unit, multi-statement expansion is correct. The correction is kept
+visible rather than deleted, and the incident is recorded in D17 as evidence of how well
+that defect hides.
+
+### Reproducer
+
+Two files differing only in `()`.
+
+```
+$ cat t1.ceps
+macro two_things{ alpha{1;}; beta{2;}; };
+holder{ two_things; };
+
+$ ceps --pe t1.ceps ; echo $?
+(MACRO "two_things" 0x5f1736e2aae8
+)
+(STRUCT "holder"
+  (ID "two_things"
+  )
+)
+0
+```
+
+```
+$ cat t2.ceps
+macro two_things{ alpha{1;}; beta{2;}; };
+holder{ two_things(); };
+
+$ ceps --pe t2.ceps ; echo $?
+(MACRO "two_things" 0x6176947e3ae8
+)
+(STRUCT "holder"
+  (STRUCT "alpha"
+    (INT 1  )
+  )
+  (STRUCT "beta"
+    (INT 2  )
+  )
+)
+0
+```
+
+With parentheses the expansion is correct and complete — both statements, wrappers
+intact. Without them the macro is not expanded; `two_things` survives into the output as
+a bare `(ID "two_things")`, and nothing is said about it.
+
+(The `0x…` addresses are [D22](#d22).)
+
+### What is actually wrong
+
+Not the expansion. The expansion is fine. What is wrong is the **non-answer**: an
+identifier that names a macro in scope is left unresolved and emitted as an `(ID ...)`
+node, with exit code 0 and no diagnostic.
+
+Whether `name;` *ought* to expand is a language-design question and this entry does not
+prejudge it. Either answer is defensible:
+
+- if bare reference should expand, this is a missing case in resolution;
+- if a macro must be called, then `two_things;` is a reference to an undefined identifier
+  and belongs in the same class as any other unbound name.
+
+What is not defensible is the third thing it currently does, which is to quietly produce a
+document containing the identifier itself. That is the catalogue's house pattern again:
+the tool did not do the thing, and did not say so.
+
+It is rated Medium rather than High because the correct spelling is available, is the one
+the documentation uses, and works completely. The cost is a silent wrong document for
+anyone who guesses the other spelling — which, since `name;` is exactly how a *path* is
+spliced in ceps (see `doc/scribble-concept/README.md`, the `root.lets_try_the_idea.sm;`
+line), is an easy guess to make. The two syntaxes look alike and behave differently.
+
+### What a fix looks like
+
+Decide whether bare macro reference expands. Then make the other case a diagnostic. In
+either case an identifier that reaches output unresolved should be an error, not a node —
+which is the same representable-third-outcome fix the Triage section argues for across
+the whole catalogue.
