@@ -2,6 +2,9 @@
 
 [Skill File (also a good introduction for humans)](./SKILL.md)
 
+**New to the language? Start with [`CEPS-LANG.md`](CEPS-LANG.md)**, and with the
+worked example it points at: [`doc/scribble-concept/README.md`](doc/scribble-concept/README.md).
+
 ## Features (machines4ceps as found in the standard distribution of the ceps tool)
 
 Look [here](./FEATURES.md) for a list of features.

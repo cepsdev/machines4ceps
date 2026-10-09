@@ -1,0 +1,19 @@
+my_first_idea{a{1;};b{2;};};
+idea_refinement{root.my_first_idea.a.content() + root.my_first_idea.b.content(); };
+maybe_this_idea_is_better{for(i: 1 .. 3) {root.idea_refinement.content()+i;}};
+macro give_that_idea_a_name{ root.maybe_this_idea_is_better.content();};
+give_that_idea_a_name{};
+lets_try_the_idea{
+sm{S;
+ val a = give_that_idea_a_name();
+ states{Initial;Final;for(e : a ){as_identifier(text(e));} };
+ t{Initial;as_identifier(text(a.content().at(0)));};
+ for(e:a.content()){
+    if (is_defined(next)) { t{as_identifier(text(e));as_identifier(text(next));}; }
+    else {t{as_identifier(text(e));Final;};}
+ }
+};};
+root.lets_try_the_idea.sm;
+Simulation{
+    Start{root.lets_try_the_idea.sm.content().at(0);};
+};
