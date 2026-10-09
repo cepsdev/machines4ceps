@@ -1146,6 +1146,31 @@ $ grep -rhoE '\*\s*(s|ms|m|kg|A|K|g|cd|mol|Hz|us|ns)\s*[;,)}]' --include=*.ceps 
 calls* — one unit in one role — and the price for it is a Critical defect over the whole
 name space. That is a lopsided trade, and it is the empirical form of the author's regret.
 
+**How old the commitment is — added 2026-10-10.** The yamdl repository was recovered
+(`~/dev/yamdl-orig`, first commit 2013-09-25). Its **first test file**,
+`core/test/test_1.yamdl`, is *entirely* SI units:
+
+```
+ kg;
+ kg*ampere;
+ 1/(3.0*kg*ampere);
+ 3.0 * m/(s*s);
+ 2.0 * s^1*m^2*kg^3;
+```
+
+Its header reads `@version 060820131625` — 6 August 2013, earlier than the repository
+itself. Units are not a later convenience bolted onto the language; they are the oldest
+surviving design commitment in the project, and `test_1` is the first thing it ever
+checked.
+
+That cuts both ways and both should be stated. It explains why the unit table sits so
+deep in name resolution that it beats a `root.` path. And it raises the bar for removal:
+the file still runs correctly under `bin/ceps` 0.8.1.3.3 today, thirteen years on, so
+what is being removed is working, tested, load-bearing-for-nothing-much code of
+unusually long standing. The decision stands — one unit in one role does not pay for
+D17 — but it is a retraction of a founding choice, not a cleanup, and the changelog
+should say so.
+
 ### The interim fix
 
 Removal is a language change and will not land tomorrow. Until it does:
