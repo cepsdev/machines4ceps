@@ -149,7 +149,7 @@ The ingredients are old. Nobody gets credit for ingredients; the composition is 
 |---|---|---|
 | **Lisp, 1958** | homoiconicity — code and data in one notation | homoiconic for *source*; ceps is homoiconic across *lowering* |
 | **Self '87 / JavaScript '95** | open, retroactively extensible vocabulary | extends *objects*; ceps extends the *pipeline* |
-| **Literate programming, 1984** | one document in several roles | prose and code; ceps spans requirement to encoding |
+| **Literate programming, 1984** | one document in several roles | the near miss: `tangle` and `weave` produce **two** artifacts, so the code that runs is *generated from* the document you read. Reconstituted by a tool, not simultaneous. ceps has no tangle step |
 | **Racket `#lang`** | cheap new languages | a *tower* — macros expand into a core and the layers disappear; in ceps nothing disappears |
 | **Stratego/XT, Rascal** | program transformation by rewriting | transformation between artifacts; ceps accumulates within one |
 | **MLIR** | extensible, multi-level lowering | dialects are compiler-facing; the programmer never reads them |
@@ -460,6 +460,22 @@ documentation from 2013 already contains the Scribbling chapters, TopUp, and the
 — `~/dev/yamdl-orig/doc/mst_part_1.html`, repository initialised 2013-09-25. A design
 paper whose thesis is checkable against a thirteen-year-old file is in a different
 category from one with a tidy story assembled afterwards. Say so, and cite the file.
+
+### An earlier name, recorded here because it is recorded nowhere else
+
+One of the first labels for what ceps does was **"literate testing"** — the lineage was
+understood as Knuth's from the beginning, not attached to it afterwards in a related-work
+section.
+
+It appears in no file and no commit message in `machines4ceps`, `ceps`, `yamdl-orig`,
+`v2g-guru` or `v2g-guru-slac`; it survives only as the author's recollection. That is
+worth a sentence in the paper's history and it is worth writing down here, because an
+unrecorded name is one retirement away from being gone.
+
+The name is also an accurate reading of the difference. Literate *programming* weaves
+prose around code and tangles code out of prose. Literate *testing* is the same impulse
+applied to behaviour — the requirement, the behaviour that satisfies it, and the run that
+exercises it, in one document, with no step that separates them.
 
 ---
 
