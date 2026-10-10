@@ -469,6 +469,195 @@ third independent argument for [static area](#static-area).
 It is also the view most worth having after a long overnight simulation, and it is nearly
 free once the treemap renders at all.
 
+<a name="heatmap"></a>
+
+## The hierarchical heatmap
+
+Once colour is load-bearing, the treemap *is* a hierarchical heatmap: area carries the
+structure, colour carries the quantity. Naming it separately is still worthwhile, because
+it surfaces a question the treemap framing hides, and that question has no neutral answer.
+
+<a name="aggregation"></a>
+
+### Aggregation under collapse
+
+The view is collapsible. So a collapsed cell must show **one** colour standing for **N**
+descendants, and the aggregation function is a design decision:
+
+| function | reads as | fails when |
+|---|---|---|
+| max | "something in here is hot" | one hot leaf in a thousand paints the whole parent; proportion is lost entirely |
+| mean | proportional | the one hot leaf vanishes into 999 cold ones — precisely the case the tool was opened for |
+| sum, area-weighted | honest about totals | colour and area then encode correlated quantities, half-wasting a channel |
+| count over threshold | "how much of this is hot", which is usually what is meant | needs a threshold, which is another decision |
+
+The recommendation is **max for anomaly colourings, area-weighted mean for quantity
+colourings, and the choice visible in the interface rather than buried in a constant.**
+The two answer different questions, and a reader who does not know which is active will
+misread the picture confidently — which is worse than not reading it.
+
+<a name="normalisation"></a>
+
+### Normalisation, which is the sharper problem
+
+A heatmap over a hierarchy carries an implicit normalisation, and all three available
+answers are wrong in different ways:
+
+- **Global range.** Deep leaves are then almost always cold, because the interesting
+  variation is local and gets crushed by whatever the global maximum happens to be.
+- **Sibling-relative.** Every parent now has a red child, including the parents where
+  nothing is happening at all. The view manufactures signal.
+- **Per level.** A third wrong answer, with the single merit that it fails *legibly* —
+  the reader can at least see that comparisons across levels are meaningless.
+
+There is no fourth option in general. The escape is to choose quantities that do not have
+the problem.
+
+<a name="coverage-dodges"></a>
+
+### Why coverage dodges all of it
+
+Coverage is a **count with a natural denominator**: visited leaves over total leaves in
+the subtree.
+
+- Aggregation is unambiguous — sum both numerator and denominator.
+- Normalisation is unambiguous — the value is already a ratio in [0, 1].
+- The parent's value is genuinely meaningful rather than a summary artifact. "This subtree
+  is 40% covered" is a true statement about the subtree, not a lossy compression of its
+  children.
+
+That is a second and stronger reason to build coverage first, beyond it being
+[free on the back end](#colour): it is the one quantity for which the hierarchical heatmap
+has **no open design questions at all.** Every other colouring inherits both problems
+above.
+
+<a name="diff"></a>
+
+### Difference maps
+
+The same structure gives a difference view for almost nothing:
+
+> colour = coverage(run A) − coverage(run B)
+
+which answers *what did this test add* and *what did this revision stop exercising*. It is
+the concrete, buildable form of the two-traces-aligned idea filed under
+[what not to architect away](#later) — and unlike the shadow-state version it needs no new
+data, only two traces and a subtraction.
+
+**At leaves the difference is categorical, not continuous.** There are four cases, and
+only three of them lie on the difference axis:
+
+| case | difference | meaning |
+|---|---|---|
+| covered in both | 0 | no change |
+| covered in A only | +1 | **lost** in B |
+| covered in B only | −1 | **gained** in B |
+| covered in neither | 0 | *a persistent gap, which is not the same as "no change"* |
+
+The fourth row is the trap. It has the same numeric difference as the first, and it is the
+one the reader most needs to see. It needs a channel of its own — hatching, or a
+desaturated fill — because it is not a point on the difference ramp at all.
+
+The continuum only appears **above the leaves**: at a collapsed node the difference is a
+real number in [−1, +1], and that is where the [aggregation](#aggregation) choice starts
+to matter again.
+
+<a name="scheme"></a>
+
+## The colour scheme
+
+The scheme has to serve both the absolute view and the difference view without the reader
+learning two of them. That is a real constraint and it drives everything below.
+
+<a name="ink"></a>
+
+### The principle: ink is proportional to attention required
+
+The naive unification fails, and it is worth seeing why. Absolute coverage and difference
+have opposite *zeros*:
+
+- absolute view: 0 = never visited = **the thing being hunted**, so zero must be loud
+- difference view: 0 = unchanged = **the boring case**, so zero must be quiet
+
+A single ramp anchored at zero therefore cannot serve both — unless the absolute view
+encodes the **deficit** rather than the quantity:
+
+> absolute view colours `1 − coverage`, not `coverage`.
+
+Now both views agree: **the background means "nothing to see here", and ink means "look".**
+Fully covered subtrees fade out; gaps glow. Unchanged subtrees fade out; changes glow. One
+semantic, learned once, and it is the right one for a monitoring tool — the view is not
+drawing coverage, it is drawing *deficit and change*.
+
+The construction rule follows directly, and it is more useful than a fixed palette:
+
+> **The neutral midpoint of the ramp is the panel background colour itself.**
+
+Zero is then literally invisible, the eye goes straight to the ink, and a light-background
+variant for screenshots and slides falls out by swapping one anchor instead of designing a
+second scheme.
+
+<a name="hues"></a>
+
+### The hues: blue and orange, and never green
+
+| direction | hue | meaning, in both views |
+|---|---|---|
+| positive | orange | **worse** — uncovered, or coverage lost |
+| negative | blue | **better** — coverage gained |
+| zero | panel background | nothing to report |
+
+Orange always means worse and blue always means better, in the absolute view and the
+difference view alike. That consistency is the point; the hues themselves are chosen under
+three constraints:
+
+1. **Colour-vision deficiency.** Blue–orange is the most robust diverging pair across
+   protanopia, deuteranopia and tritanopia. Red–green is the single most common mistake in
+   this kind of tooling and would fail for roughly 8% of men. Green is therefore
+   unavailable for "good", which is why blue takes that role even though it reads slightly
+   against convention.
+2. **Perceptual uniformity.** Build the ramp by interpolating in **OKLab** (or CIELAB)
+   from the background anchor to each endpoint, holding chroma monotone. Interpolating in
+   sRGB produces banding and false boundaries, which is the same defect that makes rainbow
+   ramps unusable.
+3. **Symmetry.** The difference ramp must be **symmetric and anchored at zero**, scaled by
+   `max(|Δ|)`, *even when every change is positive*. An asymmetric range moves the neutral
+   point off zero, and the picture then lies about which cells are unchanged.
+
+Published diverging maps — Crameri's `vik` or `broc`, Moreland's cool–warm, ColorBrewer
+`RdBu` — are all white-centred and so are not directly usable on a dark panel. They are
+the right *reference*: take one, and re-anchor its midpoint to the background.
+
+<a name="scheme-catches"></a>
+
+### Two catches
+
+**Background-coloured cells are invisible as cells.** When zero fades into the panel, the
+treemap's floorplan disappears along with it — which defeats the memorised-map property
+that [static area](#static-area) exists to protect. Structure must therefore be carried by
+something other than fill: **thin low-contrast borders carry the floorplan, fill carries
+the quantity.** This is not optional once the midpoint is the background.
+
+**Cushion shading and a perceptual ramp compete for luminance.** Cushion shading
+([above](#treemap-details)) conveys nesting depth by modulating luminance, and a
+perceptually uniform ramp also varies luminance along its length. Used at full strength
+together they corrupt each other. The honest resolutions are to run cushions at low
+amplitude, or to enable them only in the structural mode where no quantity is being
+coloured. Pick one deliberately rather than discovering the interference later.
+
+<a name="scheme-practical"></a>
+
+### Practical notes
+
+- **Bake the ramp into a 256-entry lookup table at startup.** Per-cell OKLab conversion
+  every frame is pointless work in an immediate-mode renderer that redraws everything
+  anyway.
+- **Keep the outline channel reserved** for timeline linking, as
+  [above](#treemap-details). With fill spent on the quantity and borders spent on
+  structure, outline is the only channel left for selection.
+- **The fourth difference category** ([above](#diff)) needs hatching or desaturation — a
+  texture, not a hue, since every hue is already committed.
+
 <a name="bugs"></a>
 
 ## Three bugs found while reading
@@ -543,6 +732,7 @@ note.
 | 2 | Chunk arena plus a file source; dump and replay a static trace | Establishes the [one-stream](#one-stream) design before any UI depends on it |
 | 3 | raylib window: state tree from the dictionary, event list | First pixels. Deliberately not the timeline |
 | 3a | **Treemap, static layout, coloured by state coverage** | Cheapest real view in the note: layout from the dictionary, colour from `CURRENT_STATES`, no back-end change. Produces something useful before the timeline exists |
+| 3b | **Difference map: two traces, one subtraction** | Needs nothing beyond 3a and a second arena. The highest value-per-line item in the note, and the only form of [trace alignment](#later) buildable today |
 | 4 | The swimlane timeline with viewport culling, both x-axes | The product. Also the hard part |
 | 5 | Live source behind the same arena, follow toggle | Should be small if milestone 2 was done honestly |
 | 6 | Emit `STORAGE_WHAT_TRANSITION`; draw transition arrows | The viewer becomes a *why* tool rather than a *what* tool |
@@ -574,6 +764,12 @@ aligned**:
 The practical consequence for the architecture is small and worth paying now: make the
 arena, the lane layout and the viewport own a **trace id**, so that "two traces" is a
 widening rather than a rewrite.
+
+**One form of this is buildable immediately**, and the note has moved it forward to
+milestone 3b accordingly: the [coverage difference map](#diff) needs no new records, no
+shadow data and no alignment algorithm — two arenas and a subtraction over a shared
+floorplan. It is worth treating as the proof that the trace-id generalisation is real,
+rather than waiting for the harder two.
 
 <a name="criteria"></a>
 
@@ -636,6 +832,30 @@ widening rather than a rewrite.
     state between them. Two independently maintained notions of "current position" is the
     failure mode.
 
+14. **Zero is the background, in both colourings.** A fully covered trace renders as a
+    blank panel with only borders visible, and a trace differenced against itself renders
+    identically blank. If either shows ink, the ramp is not anchored where it claims to
+    be. This is [the ink principle](#ink) made checkable in one screenshot.
+
+15. **The difference ramp is symmetric even when the data is not.** Differencing two traces
+    whose changes are all in one direction still places neutral at exactly zero. Checked
+    by asserting that the colour of a zero-difference cell is the background colour,
+    independent of the data range.
+
+16. **The scheme survives simulated colour-vision deficiency.** The coverage map and the
+    difference map remain readable under protanopia, deuteranopia and tritanopia
+    simulation. Cheap to check once, and the failure it guards against is invisible to the
+    author by construction.
+
+17. **The aggregation function is visible in the interface.** A reader can tell, without
+    consulting source or documentation, whether a collapsed cell shows max or mean
+    ([above](#aggregation)). Not being able to tell is worse than either choice.
+
+18. **The persistent-gap category is distinguishable from no-change.** States uncovered in
+    *both* traces are visually distinct from states covered in both, despite having the
+    same numeric difference ([above](#diff)). This is the row most likely to be dropped on
+    a first implementation, and the one most worth seeing.
+
 <a name="open"></a>
 
 ## Open questions
@@ -679,6 +899,16 @@ widening rather than a rewrite.
    *shading* rules in the two cases, on top of the different *dividers* from
    [XOR and AND](#xor-and), is unresolved.
 
+8. **What are the two traces in a difference map, by default?** Latest against previous
+   run is the obvious pairing, but *latest against the best coverage ever achieved* is
+   probably the more useful one, and it needs a stored baseline. A baseline raises the
+   question of where it lives and when it is updated, which is a workflow decision rather
+   than a rendering one.
+
+9. **Should a difference map ever be live?** Differencing a running trace against a
+   finished baseline is well-defined and would show coverage filling in as the simulation
+   proceeds. Whether that is useful or merely hypnotic is untested.
+
 <a name="see-also"></a>
 
 ## See also
@@ -705,3 +935,19 @@ Cited inline above; collected here because the treemap design leans on all three
 - J. J. van Wijk and H. van de Wetering, *Cushion Treemaps: visualization of hierarchical
   information*, IEEE InfoVis 1999 — the per-cell shading that makes nesting depth legible
   past three levels.
+
+### Colour references
+
+For [the colour scheme](#scheme). All four are white-centred and so are references rather
+than drop-in palettes; the construction rule here re-anchors the midpoint to the panel
+background.
+
+- F. Crameri, *Scientific colour maps* (`vik`, `broc`, `cork`) — perceptually uniform and
+  CVD-tested diverging maps, with the accompanying argument in *The misuse of colour in
+  science communication*, Nature Communications 11, 5444 (2020).
+- K. Moreland, *Diverging Color Maps for Scientific Visualization*, ISVC 2009 — the
+  cool–warm map, and the reasoning against rainbow ramps.
+- C. Brewer, ColorBrewer (`RdBu`) — the long-standing reference for CVD-safe diverging
+  pairs.
+- B. Ottosson, *OKLab* (2020) — the perceptual space to interpolate the ramp in;
+  interpolating in sRGB is what produces banding and false boundaries.
