@@ -362,6 +362,7 @@ a principle. The principle was there the whole time; nobody had occasion to say 
 
 | Document | Contents |
 |---|---|
+| [ABSTRACT.md](ABSTRACT.md) | the paper: thesis, related work, and what the design costs |
 | [ROADMAP.md](ROADMAP.md) | what to build, in what order |
 | [DEFECTS.md](DEFECTS.md) | what is broken, with reproducers |
 | [INVENTORY.md](INVENTORY.md) | what exists, what still runs, and what is implemented but undocumented |
