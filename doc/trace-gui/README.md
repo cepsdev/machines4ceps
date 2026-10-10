@@ -727,16 +727,71 @@ note.
 
 | # | Deliverable | Why this order |
 |---|---|---|
-| 0 | A ~150-line console client: connect to `:3000`, send `STORAGE_IDX2FQS`, then poll `CMD_GET_NEW_LOG_ENTRIES`, print decoded chunks | Proves the protocol in isolation. Starting in raylib means debugging the protocol and the renderer simultaneously, with no way to tell which is lying |
+| 0 | A ~150-line console client: connect to `:3000`, send `STORAGE_IDX2FQS`, then poll `CMD_GET_NEW_LOG_ENTRIES`, print decoded chunks | Proves the protocol in isolation. Starting in raylib means debugging the protocol and the renderer simultaneously, with no way to tell which is lying. Also where the [reload boundary](#hotreload) is settled, because this is the code that ends up on the host side of it |
 | 1 | The three bug fixes, plus `--live_log_port` | Cheap, and milestone 0 is what will surface them |
 | 2 | Chunk arena plus a file source; dump and replay a static trace | Establishes the [one-stream](#one-stream) design before any UI depends on it |
-| 3 | raylib window: state tree from the dictionary, event list | First pixels. Deliberately not the timeline |
+| 3 | raylib window: state tree from the dictionary, event list | First pixels. Deliberately not the timeline. Put the [reload boundary](#hotreload) in on day one, not after ramp-tuning has become painful |
 | 3a | **Treemap, static layout, coloured by state coverage** | Cheapest real view in the note: layout from the dictionary, colour from `CURRENT_STATES`, no back-end change. Produces something useful before the timeline exists |
 | 3b | **Difference map: two traces, one subtraction** | Needs nothing beyond 3a and a second arena. The highest value-per-line item in the note, and the only form of [trace alignment](#later) buildable today |
 | 4 | The swimlane timeline with viewport culling, both x-axes | The product. Also the hard part |
 | 5 | Live source behind the same arena, follow toggle | Should be small if milestone 2 was done honestly |
 | 6 | Emit `STORAGE_WHAT_TRANSITION`; draw transition arrows | The viewer becomes a *why* tool rather than a *what* tool |
 | 7 | Treemap/timeline cursor linking; small multiples strip | Both cheap once 3a and 4 exist, and the [duality](#draw) only pays off when they are coupled |
+
+<a name="hotreload"></a>
+
+### The reload boundary: decided at milestone 0, paid for at milestone 3
+
+Milestone 0 produces no pixels, but it settles who owns what, and that split is what makes
+the rendering work later either pleasant or miserable. Decide it now:
+
+| Host process — never reloaded | Reloadable plugin |
+|---|---|
+| The socket, its cursor, the decode loop | Layout, colour, the frame |
+| The chunk arena and the dictionary | Everything in [What to draw](#draw) |
+| The raylib window and GL context | Input handling, and the cursor's *position* |
+
+The reference implementation worth reading first is **tsoding's `musializer`**
+(<https://github.com/tsoding/musializer>), which is close to this program in shape: a live
+data stream turned into pixels, raylib, one binary, no framework. Three of its decisions
+transfer directly, and all three are easy to get wrong from scratch.
+
+**1. The window belongs to the host.** In `src/musializer.c`, `InitWindow` and
+`InitAudioDevice` are called from `main()`, *outside* the reload path; only `plug_update()`
+is called through the library. The GL context therefore survives a reload. Put `InitWindow`
+in the plugin and every reload destroys and recreates the window.
+
+**2. State crosses the boundary explicitly.** The plugin interface in `src/plug.h` is six
+functions, two of which exist solely for this:
+
+```c
+PLUG(plug_pre_reload,  void*, void)
+PLUG(plug_post_reload, void,  void*)
+```
+
+The host's loop is literally `state = plug_pre_reload(); reload_libplug();
+plug_post_reload(state);` — the state is handed *out* before `dlclose` and *back* after
+`dlopen`, so nothing in it is re-initialised. Here that means the arena, the dictionary,
+the socket and the last-transmitted id ride across untouched: **the trace survives the
+reload.** That is the entire payoff. Tuning the [OKLab ramp](#hues), a cushion-shading
+constant or an [aggregation choice](#aggregation) against a live trace, without re-running
+the model to get the trace back, is a two-second loop instead of thirty. And per
+[Verification](#verification), re-running is not merely slow — these simulations finish in
+well under a second, so a live trace is often not reproducible on demand at all. Losing it
+to a recompile means losing it.
+
+**3. Ignore `SIGPIPE`.** `musializer.c` disables it in `main()` with a comment explaining
+why: it writes into a pipe that can break, and a "relatively friendly GUI application"
+should recover rather than die. This viewer has precisely that hazard and will meet it on
+day one — the simulator exits, the connection closes, the next write raises `SIGPIPE`, and
+the default disposition kills the process. **A trace viewer that dies the moment the run
+it is watching finishes is useless, and the run finishing is the normal case.**
+
+One non-transfer: `musializer` builds with `nob.c` rather than make. There is no reason to
+change this repository's `Makefile` for it. The mechanism needs only `-fPIC -shared` for
+the plugin and an rpath of `.` on the host, and `MUSIALIZER_HOTRELOAD` shows the whole
+thing is worth keeping behind a compile-time flag, so release builds stay a single static
+binary and the [no-setup claim](../../POSITIONING.md) is unaffected.
 
 <a name="later"></a>
 
@@ -856,6 +911,12 @@ rather than waiting for the harder two.
     same numeric difference ([above](#diff)). This is the row most likely to be dropped on
     a first implementation, and the one most worth seeing.
 
+19. **The trace survives a recompile of the renderer.** With a live connection open and
+    chunks arriving, rebuilding and reloading the drawing code leaves the arena, the
+    dictionary and the stream cursor intact; no chunk is lost and no re-run is needed
+    ([above](#hotreload)). Since a run completes in well under a second, a reload path
+    that discards the trace is equivalent to not having one.
+
 <a name="open"></a>
 
 ## Open questions
@@ -921,6 +982,17 @@ rather than waiting for the harder two.
 - `core/src/livelog/test.cpp` — an existing standalone harness that drives a
   `Livelogger_source` with synthetic states and events; a trace generator for GUI work that
   needs no model at all
+
+### Implementation references
+
+- A. Kutepov (tsoding), *Musializer* — <https://github.com/tsoding/musializer>. A raylib
+  application of near-identical shape: a live data stream rendered in real time, single
+  binary, hand-written C, no framework. Read `src/musializer.c` and `src/plug.h` before
+  starting milestone 3; the [reload boundary](#hotreload) above is lifted from them, as is
+  the `SIGPIPE` disposition.
+- A. Kutepov (tsoding), *nob.h* — <https://github.com/tsoding/nob.h>. The build system
+  `musializer` uses. Noted for completeness only; this repository already has a `Makefile`
+  and the reload mechanism does not need more than it.
 
 ### Visualization references
 
