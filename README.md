@@ -5,6 +5,12 @@
 **New to the language? Start with [`CEPS-LANG.md`](CEPS-LANG.md)**, and with the
 worked example it points at: [`doc/scribble-concept/README.md`](doc/scribble-concept/README.md).
 
+> **Syntax highlighting for VSCode:** [`tools/vscode-ceps`](./tools/vscode-ceps/README.md) —
+> install it with
+> `ln -s "$PWD/tools/vscode-ceps" ~/.vscode/extensions/ceps-0.1.0`.
+> Besides the usual, it marks the fourteen names that silently resolve to SI
+> units ([D17](./DEFECTS.md#d17)), which is worth having on its own.
+
 ## Features (machines4ceps as found in the standard distribution of the ceps tool)
 
 Look [here](./FEATURES.md) for a list of features.
@@ -12,11 +18,6 @@ Look [here](./FEATURES.md) for a list of features.
 ## Installation
 
 Details can be found [here](./INSTALL.md)  
-
-## Editor support
-
-Syntax highlighting for VSCode: [`tools/vscode-ceps`](./tools/vscode-ceps/README.md).
-It also marks the names that silently resolve to SI units ([D17](./DEFECTS.md#d17)).
 
 ## Writing, running, and rendering state machines - Quick Start
 
