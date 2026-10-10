@@ -181,10 +181,18 @@ be recovered is:
 - the guard that admitted it, or the guards that did not
 - the action sequence it ran
 - in an orthogonal composition, which region the change belongs to
+- **transition coverage** — which transitions were never taken
 
 That is the difference between a viewer that shows *what happened* and one that shows
 *why*, and the second is the entire reason to build the thing. This is the single piece
 of C++ work the proposal requires.
+
+The last item deserves separate mention because it blocks a view rather than a detail.
+*State* coverage is derivable client-side with no back-end change at all
+([the treemap section](#colour) shows how). *Transition* coverage is not derivable from
+anything currently on the wire, so the coverage map can colour states and not transitions
+until this record exists — which will look half-finished in exactly the way that invites
+the question.
 
 The information is available at the point of logging: the execution-loop context already
 carries `transitions` and `shadow_transitions`
@@ -276,7 +284,18 @@ thing ImGui would have solved.
 
 ## What to draw
 
-Three panes, of which one is the product.
+**Two views, and they are duals rather than alternatives.**
+
+The timeline spends its two dimensions on *time × flattened states*. The treemap
+([below](#treemap)) spends its two dimensions on *hierarchy*, with time as a parameter.
+Each is blind exactly where the other sees: the timeline cannot show containment, and the
+treemap cannot show duration. Neither is a weaker version of the other, and building only
+one is the mistake.
+
+The coupling that makes them work together is simple and should be decided now, because
+it constrains the data model: **the treemap is a function of a cursor position in the
+trace, and the timeline is the cursor.** Scrub in the timeline, the treemap updates.
+Select in the treemap, the timeline filters. Everything else is layout.
 
 ### Left: the state tree
 
@@ -314,6 +333,141 @@ info, warning and error records interleaved in timestamp order.
 A **follow** toggle that auto-scrolls to the newest record and *disengages automatically
 when the user scrubs backwards* — the `tail -f` affordance. Re-engaging should jump back
 to now rather than animating there.
+
+<a name="treemap"></a>
+
+## The treemap: global state at a glance
+
+> Another alternative view which carries less information of course but gives a bird's eye
+> view of the global state is a treemap where the areas correspond to state machines and
+> their sub state machines, collapsable, and a color scheme which is load-bearing.
+
+A space-filling view of the containment hierarchy: each state machine is a rectangle,
+its sub-machines subdivide it, collapsible at every level.
+
+The mapping is natural rather than forced, because the model *is* a containment hierarchy
+and the dictionary already carries it as dotted paths
+([above](#exists)). And it has one structural advantage over the timeline that is easy to
+miss: **it is O(1) in trace length.** It renders one configuration, so it stays legible at
+10<sup>6</sup> records, where the timeline needs binning and level-of-detail to survive.
+
+<a name="static-area"></a>
+
+### The rule: static area, dynamic colour
+
+The temptation is to make area load-bearing as well — area proportional to residence time,
+or to transition count, so that the biggest rectangle is where the machine spends its
+life. **Resist it.**
+
+A treemap's real power in a monitoring context is that it becomes a *memorised map*. After
+a few sessions the reader stops parsing labels and starts reading position: anomaly
+detection collapses into "the top-left is wrong", which is pre-attentive and essentially
+free. The moment the layout moves, that is gone, and every frame has to be re-read from
+scratch.
+
+The second argument is independent and decides it even if the first is unconvincing: **if
+colour is load-bearing, area must be stable**, or there are two channels in motion at once
+and neither can be read.
+
+So: **area = descendant count, computed once from the dictionary, never recomputed.**
+
+This also dissolves the standard treemap headache. Layout algorithms trade aspect ratio
+against stability — squarified layouts (Bruls, Huizing and van Wijk, 2000) give pleasant
+proportions but reorder when the data changes, while slice-and-dice is stable but produces
+slivers. With static areas the question evaporates: compute a squarified layout once at
+load time and never think about it again.
+
+<a name="colour"></a>
+
+### What colour should carry, and one answer is free
+
+Candidates, and they compete for a single channel:
+
+| encoding | good for | cost |
+|---|---|---|
+| active / inactive | nothing — one bit on a high-bandwidth channel | wasteful |
+| recency decay | **live**: watch activity propagate through the hierarchy | needs a decay constant to tune |
+| cumulative residence | where the machine spends its life | needs a full pass; meaningless live |
+| transitions fired in subtree | activity density, hot spots | needs [the missing record](#gap) |
+| **coverage: visited / never visited** | **test adequacy** | **none — derivable today** |
+| conformance (shadow states) | concept-vs-implementation divergence | needs shadow data in the stream |
+
+**Build coverage first, because it costs nothing on the back end.**
+
+The dictionary enumerates *every* state in the model — `state_id_to_idx` is built at
+model-build time, not at run time, so it contains states the run never reached. The
+`STORAGE_WHAT_CURRENT_STATES` stream gives the states that *were* reached. Union the
+stream, divide by the dictionary, and state coverage falls out **entirely client-side,
+with no change to the simulator.**
+
+The simulator already prints the number:
+
+```
+State Coverage: 0.75 ( 75% )
+Transition Coverage: 0.166667 ( 16.6667% )
+```
+
+The treemap would show *which* 25%, as a map rather than a scalar. That is a view the
+timeline structurally cannot produce, because never-visited states have no bars — they are
+invisible in a Gantt chart by construction. It is the strongest single argument for
+building both views.
+
+Note the second line, though: **transition coverage needs
+[the missing record](#gap).** The gap bites in a second place, and this is where it will
+be felt first, because a coverage map that can colour states but not transitions is
+visibly half-finished.
+
+<a name="xor-and"></a>
+
+### The honest objection: XOR and AND look identical
+
+This is specific to state machines, and generic treemap tooling will not solve it.
+
+A treemap draws *containment*. It does not distinguish a composite state, where exactly
+one child is active, from an orthogonal region, where several are active at once. Three
+lit cells therefore mean either healthy concurrency or a serious bug, and the picture
+cannot say which.
+
+That has to be a **drawn convention, decided before anything is rendered** — dashed
+dividers between orthogonal regions, say, with XOR children drawn as a radio-set so that
+more than one highlighted child is immediately visibly wrong. It is the distinction that
+makes this a state-machine treemap rather than a disk-usage chart, and it is not optional:
+without it the view actively misleads on exactly the cases worth looking at.
+
+<a name="treemap-details"></a>
+
+### Two cheap wins and one channel to reserve
+
+**Cushion shading** (van Wijk and van de Wetering, 1999) — a per-cell gradient suggesting
+a rounded surface — makes nesting depth legible past three levels, where plain nested
+rectangles stop being parseable. In raylib it is a gradient per cell and nothing more.
+
+**Reserve one channel for linking.** Outline, not fill, for "this is what the timeline has
+selected". If colour is spent on coverage or heat, selection needs a channel of its own,
+or the two views cannot point at each other — which was the whole architecture.
+
+**Colour scheme discipline**, since the scheme is meant to be load-bearing:
+
+- perceptually uniform ramps (viridis, magma) for continuous quantities, never a rainbow —
+  rainbow ramps invent boundaries that are not in the data
+- distinct hues for categorical status, with the *bad* category most salient
+- never two quantities on one channel; status beside heat means border, hatch or badge
+- red/green as the pass/fail pair fails for roughly 8% of men
+
+<a name="small-multiples"></a>
+
+### The payoff that only a static layout allows
+
+Render the treemap at thumbnail size, once per time bin, and lay forty of them out in a
+strip: **the entire run's global-state evolution at a glance.**
+
+Small multiples work here precisely *because* the layout never moves — every thumbnail
+uses the same floorplan, so differences between them are differences in the data rather
+than in the layout. The moment area becomes dynamic this view is worthless, which is the
+third independent argument for [static area](#static-area).
+
+It is also the view most worth having after a long overnight simulation, and it is nearly
+free once the treemap renders at all.
 
 <a name="bugs"></a>
 
@@ -388,9 +542,11 @@ note.
 | 1 | The three bug fixes, plus `--live_log_port` | Cheap, and milestone 0 is what will surface them |
 | 2 | Chunk arena plus a file source; dump and replay a static trace | Establishes the [one-stream](#one-stream) design before any UI depends on it |
 | 3 | raylib window: state tree from the dictionary, event list | First pixels. Deliberately not the timeline |
+| 3a | **Treemap, static layout, coloured by state coverage** | Cheapest real view in the note: layout from the dictionary, colour from `CURRENT_STATES`, no back-end change. Produces something useful before the timeline exists |
 | 4 | The swimlane timeline with viewport culling, both x-axes | The product. Also the hard part |
 | 5 | Live source behind the same arena, follow toggle | Should be small if milestone 2 was done honestly |
 | 6 | Emit `STORAGE_WHAT_TRANSITION`; draw transition arrows | The viewer becomes a *why* tool rather than a *what* tool |
+| 7 | Treemap/timeline cursor linking; small multiples strip | Both cheap once 3a and 4 exist, and the [duality](#draw) only pays off when they are coupled |
 
 <a name="later"></a>
 
@@ -460,6 +616,26 @@ widening rather than a rewrite.
 9. **The three bugs are fixed, the race first.** The `publish()` ordering is the one that
    fails silently and therefore the one that will waste a day.
 
+10. **The treemap layout is computed once and is byte-identical across the run.** A test
+    renders the layout at the first and last record of a trace and asserts the rectangles
+    are unchanged. This is [the static-area rule](#static-area) made checkable, and it is
+    what the small-multiples strip depends on.
+
+11. **State coverage is derived client-side, and agrees with the simulator.** The union of
+    `STORAGE_WHAT_CURRENT_STATES` over a trace, divided by the dictionary size, matches
+    the `State Coverage:` figure the simulator prints for the same run. If the two
+    disagree, one of them is wrong and it is worth knowing which.
+
+12. **XOR and AND are visually distinguishable without reading labels.** Shown by a model
+    containing both an orthogonal region and a composite state: a reader who has never
+    seen the model can say which is which from the rendering alone. Until this holds, the
+    treemap [misleads on the interesting cases](#xor-and).
+
+13. **The two views are coupled through one cursor.** Scrubbing the timeline updates the
+    treemap and selecting in the treemap filters the timeline, with a single piece of
+    state between them. Two independently maintained notions of "current position" is the
+    failure mode.
+
 <a name="open"></a>
 
 ## Open questions
@@ -489,6 +665,20 @@ widening rather than a rewrite.
    that memory-maps a `log4kmw` trace and prints it as ceps. Its relationship to the
    `livelog` storages is unclear and may be vestigial.
 
+6. **What is the right decay constant for a recency colour ramp?** Raised by
+   [the colour table](#colour) and left open deliberately: too fast and the live view
+   flickers, too slow and everything is uniformly warm. It probably has to be relative to
+   the step rate rather than to wall-clock time, which means it differs between a
+   timer-driven model and a free-running one.
+
+7. **Does the treemap need its own aggregation for orthogonal regions?** A composite
+   state's area is the sum of its children's. For an orthogonal region, where several
+   children are active at once, "how much of this rectangle is live" has an obvious
+   reading, whereas for a XOR composite it does not — exactly one child is live by
+   definition, so the fraction is uninformative. Whether that argues for different
+   *shading* rules in the two cases, on top of the different *dividers* from
+   [XOR and AND](#xor-and), is unresolved.
+
 <a name="see-also"></a>
 
 ## See also
@@ -501,3 +691,17 @@ widening rather than a rewrite.
 - `core/src/livelog/test.cpp` — an existing standalone harness that drives a
   `Livelogger_source` with synthetic states and events; a trace generator for GUI work that
   needs no model at all
+
+### Visualization references
+
+Cited inline above; collected here because the treemap design leans on all three.
+
+- B. Johnson and B. Shneiderman, *Tree-Maps: a space-filling approach to the
+  visualization of hierarchical information structures*, IEEE Visualization 1991 — the
+  original space-filling construction.
+- M. Bruls, K. Huizing and J. J. van Wijk, *Squarified Treemaps*, Data Visualization 2000
+  (Eurographics/IEEE TCVG) — the aspect-ratio-versus-stability trade-off that
+  [static area](#static-area) sidesteps.
+- J. J. van Wijk and H. van de Wetering, *Cushion Treemaps: visualization of hierarchical
+  information*, IEEE InfoVis 1999 — the per-cell shading that makes nesting depth legible
+  past three levels.
