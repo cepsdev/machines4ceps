@@ -286,6 +286,148 @@ The difference here is the one worth claiming: the hole is a *model* hole rather
 program hole, and the residue is in the same notation as the model it came from, so an
 impact report is queryable by the same path expressions as everything else.
 
+<a name="closure"></a>
+## Closed and open specifications
+
+Partiality supports a definition that is worth more than the diagnostic it came from.
+
+> A specification is **closed** if nothing residual remains in the evaluated document,
+> and **open** if something does.
+
+This is the ground-term test from term rewriting, and Maude's own distinction between a
+term and a pattern. It is reached here from the other direction — from what the evaluator
+happens to leave behind — which is a point in its favour: the criterion is not imposed on
+the language, it is read off it.
+
+The useful observation is that *why* something remains matters, and the evaluated document
+already says why.
+
+### Three outcomes the document already distinguishes
+
+A binding reduces away entirely. Nothing is left, and the specification is **ground-closed**:
+
+```ceps
+val b = 1;
+b + 1;
+```
+```output
+(INT 2  )
+```
+
+An undeclared name survives as an `ID`. Something is missing that nobody has decided yet —
+a **hole**, and the specification is **open**:
+
+```ceps
+b + 1;
+```
+```output
+(OPERATOR + ""
+  (ID "b"
+  )
+  (INT 1  )
+)
+```
+
+Declare it and the residue remains, but changes character. It is now a `SYMBOL`, tagged
+with its kind — not a gap in the specification but a **decision** in it, and the
+specification is **closed modulo its declared parameters**:
+
+```ceps
+kind B;
+B b;
+b + 1;
+```
+```output
+(OPERATOR + ""
+  (SYMBOL "b" "B"
+  )
+  (INT 1  )
+)
+```
+
+`ID` versus `SYMBOL` is meta-typing, and it works today. The distinction between *I have
+not decided* and *I have decided to leave this abstract* is carried in the node type, with
+the kind attached. Closure is therefore computable by walking the evaluated document,
+which ceps can already do to its own documents — `.fetch_recursively_symbols()` and the
+ordinary path expressions. **A closure checker is a ceps program, not a change to the
+evaluator.**
+
+### The outcome it does not distinguish, which breaks the criterion
+
+A specification can be wrong without being open. Implicit coercion is the mechanism:
+
+```ceps
+val b = "a string";
+b + 1;
+1 + b;
+b * 2;
+```
+```output
+"a string1"
+"1a string"
+"a stringa string"
+```
+
+Exit 0, fully reduced, no residue; `*` is string repetition. By the definition above this
+specification is **closed**: nothing is missing, nothing is stuck, there is nothing left
+to fill in. It is also nonsense.
+
+Note what the change was. Replacing `val b = 1;` with `val b = "a string"` is a change of
+meaning that preserves shape — the bottom row of the table in
+[Partiality as the diagnostic](#partiality), the row marked *no residue, silent by
+construction*. The result moves from `(INT 2  )` to `"a string1"` and the specification
+stays closed across the transition. The asymmetry recorded in that section predicted this
+case before it was tested.
+
+### Four states, of which one is missing
+
+The criterion needs a third kind of residue: a term that is irreducible because **no rule
+can ever apply**, as distinct from one that is irreducible because *no rule has been
+written yet*.
+
+| in the evaluated document | state | meaning |
+|---|---|---|
+| no residue | **ground-closed** | fully determined |
+| `(ID "x")` | **open** | a hole; someone must decide |
+| `(SYMBOL "x" "K")` | **closed modulo parameters** | a decision to stay abstract |
+| an error term — **not implemented** | **inconsistent** | a commitment that cannot hold |
+
+Maude has already named the missing one. A *kind* there is the error supersort: a term
+that is well formed but ill sorted inhabits `[Nat]` rather than `Nat`, so a type error is
+an inspectable term rather than an abort. ceps already spends the keyword `kind` on
+declarations, and the third category is what a kind would be for.
+
+### What this costs, and it is not small
+
+**Implicit coercion is incompatible with the criterion.** Every coercion converts a term
+that should have got stuck into a value, and therefore punches a hole in the diagnostic.
+For closure to mean anything, `string + int` must residualize rather than oblige. That is
+a breaking change to arithmetic, and it is the price of the definition; it should be
+decided deliberately rather than discovered later.
+
+It also names a pattern that runs through `DEFECTS.md` more usefully than "the
+silent-failure class" does. A name collides with an SI unit and the unit wins
+([D17](../../DEFECTS.md)). A path fails to resolve and evaluates to nothing instead of
+residualizing. An operator meets mismatched operands and coerces instead of refusing.
+These are not three absences of code. They are three instances of the same disposition —
+**the evaluator is too accommodating** — and the fix direction is the same in each case:
+decline, and say so.
+
+<a name="closure-open"></a>
+### The open question: closure is relative to a signature
+
+`symbol b + 1` is a ground term, since `b` is a constant rather than a variable, so the
+definition above calls it closed. But it is irreducible because `+` has no rule for
+`B` and an integer. Whether that is a *decision* or a *conflict* depends on whether `+`
+over `B` was ever declared — and today there is no way to declare it.
+
+So the criterion as stated moves the ambiguity rather than removing it. Closure is
+relative to a **declared signature**, not merely to the absence of `ID` nodes, and ceps
+has no signature to be relative to. Until operations can be declared over kinds, a
+deliberate abstraction and a genuine type error are the same picture.
+
+This is the part of the proposal that needs design rather than implementation.
+
 <a name="defects"></a>
 ## Relationship to D18, which is this idea filed as a defect
 
@@ -357,7 +499,12 @@ A first implementation is done when all of the following hold.
    after a handful of revisions; `A,B,C,A',B',C',A''…` is `O(n·k)` otherwise.
 7. **Order independence is checked, not assumed.** Revising `A` then `B` and revising `B`
    then `A` either agree, or the disagreement is reported. See below.
-8. **Every example in this document is executed by `tools/check-doc-examples.py`** and its
+8. **Closure is reportable.** A tool — written in ceps, walking the evaluated document —
+   classifies a specification as ground-closed, open, or closed modulo declared
+   parameters, and lists the `ID` nodes that make it open. See
+   [Closed and open specifications](#closure). The fourth state, *inconsistent*, waits on
+   the signature question recorded there.
+9. **Every example in this document is executed by `tools/check-doc-examples.py`** and its
    output matches.
 
 <a name="open"></a>
