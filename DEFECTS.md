@@ -5,15 +5,16 @@ Defects found while auditing `core/` and `vm/`, while specifying `c{}`
 `INVENTORY.md`, for [D17](#d17) while reading production transformations written
 against ceps outside this repository, for [D18](#d18)–[D20](#d20) while checking
 whether model stacking satisfies an incrementality law, and for [D22](#d22)–[D23](#d23)
-while writing the worked example in `doc/scribble-concept/README.md`. Every entry below
+while writing the worked example in `doc/scribble-concept/README.md`, and for
+[D24](#d24) while reading the Oblectamenta serializer generator. Every entry below
 was reproduced against `bin/ceps`, version 0.8.1.3.3, on Linux — D1–D21 against the
-Aug 27 2026 build, D22–D23 against the Oct 9 2026 build of the same version string.
+Aug 27 2026 build, D22–D24 against the Oct 9 2026 build of the same version string.
 
 Line numbers refer to the working tree at the time of writing.
 
 | # | Severity | Area | Summary |
 |---|---|---|---|
-| [D1](#d1) | High | VM | `bgt`, `bneq`, `callx` are implemented but not declared, so they cannot be assembled |
+| [D1](#d1) | High | VM | `bgt`, `bneq`, `callx` are implemented but not declared, so they cannot be assembled by hand — though the C++ generator emits `bneq` regardless ([note](#d1-note)) |
 | [D2](#d2) | High | Simulation | Crash (SIGSEGV) when a covering machine has no `Initial` state |
 | [D3](#d3) | High | Trace | The initial-entry line is logged only for covering models |
 | [D4](#d4) | Medium | Trace | A spurious trailing line repeats the final exits in covering models |
@@ -36,6 +37,7 @@ Line numbers refer to the working tree at the time of writing.
 | [D21](#d21) | High | CLI / Docs | Forty-six of the sixty-three command-line flags are undocumented, including the working C++ generator `--cppgen` |
 | [D22](#d22) | High | Printer | `--pe`/`--ppe` print a macro as a raw heap address and omit its body, so two runs of one input produce two different documents |
 | [D23](#d23) | Medium | Evaluator | A macro used as `name;` instead of `name();` is silently not expanded and reaches the output as a bare identifier; exit 0 |
+| [D24](#d24) | Medium | VM | The serializer generator names opcodes by string literal, bypassing the compile-time checking that `emit<Opcode::X>` provides to every other emitter |
 
 D13–D16 were found by the sweep and are regressions against material that is still in the
 tree as tests and examples. D14 is rated Critical because it disables the mechanism ceps
@@ -43,20 +45,21 @@ uses to check itself, and because one half of it fails silently green.
 
 ## Triage
 
-Severity says how bad a defect is. It does not say what it holds up. At twenty-three
+Severity says how bad a defect is. It does not say what it holds up. At twenty-four
 entries that distinction is the one that matters, so it is drawn here.
 
 ### One diagnosis, repeated
 
-**Fourteen of the twenty-three are the same failure mode**: a plausible answer with exit
+**Fourteen of the twenty-four are the same failure mode**: a plausible answer with exit
 code 0 and nothing said about what was skipped — D1, D3, D6, D7, D8, D12, D14, D15, D17,
 D18, D19, D21, D22, D23. **Both remaining Critical defects — D14 and D17 — are in that
 class.** The two SIGSEGVs are merely High; a crash is the easy kind. (D18 was a third
 Critical until 2026-10-09, when it turned out to be narrower than filed; it stays in the
-silent class.)
+silent class. D24 is deliberately outside it: it throws, and names the offending
+mnemonic. The class is a finding, not a framing — entries are admitted to it on evidence.)
 
 This is worth stating plainly because it changes what the list is. It is not an
-assortment of unrelated faults, it is one property of the system observed from twenty-three
+assortment of unrelated faults, it is one property of the system observed from fourteen
 angles: *ceps conceals what it did not do.* Which is the exact behaviour
 `POSITIONING.md` argues the language exists to prevent. Fixing them one at a time treats
 the symptoms; the shared fix is a representable third outcome.
@@ -174,6 +177,67 @@ Add `bgt`, `bneq` and `callx` to `core/include/oblectamenta_decls.ceps`. `bgteq`
 A regression guard is cheap and worth having: the declaration file and the assembler
 table are two lists that must agree, and nothing currently checks that they do. The
 `comm`-based diff used to find this can be run in CI.
+
+<a name="d1-note"></a>
+
+### Note added 2026-10-10 — `bneq` is not unreachable, and that changes the fix
+
+The entry above says three working instructions are unreachable. That is right for `bgt`
+and `callx`. It is **wrong for `bneq`**, and the correction matters more than the original
+finding.
+
+`bneq` is emitted by the serializer generator, four times, at
+`core/src/vm/oblectamenta-assembler.cpp:858`, `:894`, `:930` and `:966` — all inside
+`oblectamenta_assembler_preproccess_match` (`:640`), the generator for the *read* path.
+Each site is the same shape: load a child node's `what` field, compare it against the
+expected `msg_node` tag, and branch away on mismatch:
+
+```
+em(r,"ldsi32");
+em(r,"ldi32",msg_node::INT32);
+emwsa(r,"bneq",lbl_wrong_node_type_i32_expected,"OblectamentaCodeLabel");
+```
+
+So the one undeclared opcode that is actually used is the instruction that **type-checks
+incoming messages**. Pruning it, which is the other obvious reading of "implemented but
+not declared", would delete wire-format validation from every generated deserializer. The
+fix is to declare the three, as the entry says — not to remove them.
+
+**Why it works at all.** `gen_mnemonic` builds the node directly in C++:
+
+```
+return mk_symbol(name, "OblectamentaOpcode");
+```
+
+That confers the `OblectamentaOpcode` kind without consulting
+`core/include/oblectamenta_decls.ceps`. The declaration file gates the *parser*, so it
+gates hand-written assembly only. Generated assembly never passes through it.
+
+**The structural statement** is therefore sharper than a missing line in a list: the
+assembler has **two front doors with different vocabularies**. Hand-written Oblectamenta
+can use what `oblectamenta_decls.ceps` declares; the C++ generator can use anything in the
+`mnemonics` table in `core/include/vm/vm_base.hpp`. Nothing requires the two to agree, and
+as of this writing they do not. This is also the likely reason the test suite survived the
+change that stopped predeclaring opcodes by default: the generated path does not read the
+declarations, and it is the path the tests exercise.
+
+**The guard in the note above is accordingly too weak.** Two lists are not the invariant.
+Four artefacts must agree, and all four are maintained by hand:
+
+| Artefact | Location | Count |
+|---|---|---|
+| `enum class Opcode` | `core/include/vm/vm_base.hpp` | 171 |
+| `op_dispatch.push_back` sequence | `core/src/vm/vm_base.cpp` | 171 |
+| `mnemonics` table | `core/include/vm/vm_base.hpp` | name → opcode → emitter |
+| `OblectamentaOpcode` declarations | `core/include/oblectamenta_decls.ceps` | 150 |
+
+The enum and the dispatch sequence agree only because they are positional — a
+`push_back` inserted out of order would misroute an opcode to the wrong handler with no
+diagnostic at all. A CI diff catches the declaration gap; it does not catch that. The
+construction that removes all four problems at once is to derive every artefact from a
+single X-macro list, so that adding an opcode is one edit and desynchronisation becomes
+unrepresentable. See also [D24](#d24), which is the same root cause seen from the
+generator's side.
 
 ---
 
@@ -1813,3 +1877,87 @@ Decide whether bare macro reference expands. Then make the other case a diagnost
 either case an identifier that reaches output unresolved should be an error, not a node —
 which is the same representable-third-outcome fix the Triage section argues for across
 the whole catalogue.
+
+---
+
+<a name="d24"></a>
+## D24. The serializer generator addresses opcodes by string, discarding the type machinery
+
+**Severity:** Medium — loud when it fires, but deferred to assembly time and conditional
+on the generated path being reached. It is explicitly **not** in the silent class; the
+assembler throws and names the mnemonic.
+**Area:** Oblectamenta VM / serialization.
+**Files:** `core/src/vm/oblectamenta-assembler.cpp`, `core/include/vm/vm_base.hpp`.
+
+Hand-written emission is checked at compile time. `emit` takes the opcode as a **template
+parameter** and overloads on operand shape (`core/include/vm/vm_base.hpp:584-617`):
+
+```cpp
+template<Opcode opcode> size_t emit(VMEnv&, size_t pos);
+template<Opcode opcode> size_t emit(VMEnv&, size_t pos, size_t v);
+template<Opcode opcode> size_t emit(VMEnv&, size_t pos, double v);
+template<Opcode opcode> size_t emit(VMEnv&, size_t pos, VMEnv::reg_t, VMEnv::reg_offs_t);
+```
+
+A misspelled opcode is not a name at all, and an operand list of the wrong shape fails
+overload resolution. Neither error can survive compilation. This is the best thing in the
+VM and it is worth saying so before describing where it stops.
+
+It stops at the generator. `oblectamenta-assembler.cpp:217-230` reintroduces the opcode as
+a `std::string`:
+
+```cpp
+static ceps::ast::node_t gen_mnemonic(std::string name){
+    return mk_symbol(name, "OblectamentaOpcode");
+}
+```
+
+and roughly a thousand lines of generator — `oblectamenta_assembler_preproccess` (`:270`),
+`oblectamenta_assembler_preproccess_match` (`:640`), `gen_expr` (`:1080`) — are written
+against string literals: `em(r,"ldsi32")`, `em(r,"ldi32",msg_node::INT32)`,
+`emwsa(r,"bneq",lbl,"OblectamentaCodeLabel")`. These are the densest emission sites in the
+project, and they are the only ones with no compile-time check.
+
+### Observed
+
+A typo reaches the lookup at `oblectamenta-assembler.cpp:1434`, which is at least honest
+about it:
+
+```cpp
+auto it{mnemonics.find(mnemonic)};
+if (it == mnemonics.end())
+ throw std::string{"oblectamenta_assembler: unknown opcode: '"+ mnemonic+"'" };
+```
+
+So the failure is loud. The costs are the two that remain after that:
+
+1. **It is deferred and conditional.** The throw fires when that generated instruction is
+   assembled, which happens only for message shapes a run actually builds. A mistyped
+   mnemonic on a rarely generated branch — an error path, say, which is precisely where
+   the four `bneq` sites live — sits dormant until the day it is needed.
+2. **The operand-shape check is lost entirely.** The string path selects an emitter from
+   the `mnemonics` tuple by argument form at run time (`MNEM_NOARG` … `MNEM_IMM_IMM`,
+   `vm_base.hpp:623-627`), and a slot holding `nullptr` is simply not called. The
+   compile-time guarantee that `buc` cannot take a `double` does not exist here.
+
+### What a fix looks like
+
+Make the generator use the same mechanism as every other emitter. The minimum is a
+template overload set mirroring `emit`:
+
+```cpp
+template<Opcode op> ceps::ast::node_t gen_mnemonic();
+template<Opcode op> ceps::ast::node_t gen_mnemonic(int v);
+```
+
+with the mnemonic string derived from the opcode rather than written beside it. That
+requires one thing the project does not yet have: a single list from which the enumerator
+*and* its spelling are generated — the X-macro construction proposed in the
+[note on D1](#d1-note). The same list would close D1's declaration gap and the positional
+coupling between the enum and `op_dispatch`.
+
+This entry is rated Medium rather than Low because of where the unchecked code is. The
+generator is not peripheral; it writes the serializers and deserializers for every
+message the VM handles, and it is the one part of the emission layer that cannot be
+checked by reading it, because the correctness of a thousand string literals is not
+something reading establishes.
