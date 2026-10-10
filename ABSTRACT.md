@@ -64,7 +64,46 @@ obligation to answer.
 
 ---
 
+## The framing figure
+
+The introduction should open on an axis every reader already has opinions about, and there
+is a canonical one: **how concrete should the code in a book about algorithms be?**
+
+Knuth took the low position — MIX, and later MMIX, with exact operation counts. "3.5N + 12"
+rather than O(N). That concreteness bought something CLRS genuinely cannot offer. Cormen
+et al. took the middle: pseudocode, chosen deliberately, with error handling and software
+engineering concerns explicitly out of scope.
+
+Both positions have a bill, and the interesting one is Knuth's, because **it arrived as
+maintenance**. Having bound the books to a concrete machine, he had to design MMIX, write
+the simulator, publish Fascicle 1 in 2005, and rework decades of code — and the proportion
+of machine-level presentation fell steadily from Volume 1 to 4A and 4B as the step-form
+notation took over. The most careful author in the field spent years paying for a
+commitment to a layer below the one his ideas lived at. That is this paper's thesis in its
+most prestigious test case, and it was not chosen to flatter it.
+
+CLRS pay the opposite bill: no quantitative precision, and the algorithms do not run.
+
+Which makes the axis a 2×2, and the right-hand column is the claim:
+
+| | doesn't run | runs |
+|---|---|---|
+| **middle** — behaviour as stated | CLRS pseudocode | **ceps state machines** |
+| **low** — behaviour as executed | — | MIX / MMIX, **Oblectamenta** |
+
+ceps does not occupy a cell. It occupies **the column** — `timing.ceps` is middle,
+the data sections and opcodes of [ASM.md](ASM.md) are low, and an `Actions{}` block may
+hold both. That is only possible because lowering is additive: the level is chosen
+**per site, not once for the whole work**. Knuth's migration was expensive precisely
+because his was a single choice binding everything.
+
+*Honest caveat for the figure:* the low cell is the Oblectamenta VM, which runs. Native
+x64 is designed and not built — see [What is missing](#what-is-missing-before-this-can-be-written).
+
+---
+
 ## The thesis chain
+
 
 Each link is load-bearing and the order matters. State it alone and it is philosophy;
 state it with the mechanism and it is a design.
