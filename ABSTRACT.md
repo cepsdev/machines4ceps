@@ -4,8 +4,23 @@ Working notes for the paper. Not the paper. The job of this file is to fix the t
 the related work, and the cost — in that order, because the cost is the part that decides
 whether the rest is believed.
 
+> **Runnable pseudocode and readable machine code, in one document.**
+
+That is the opening line — the whole claim, on a slide, with no mechanism in it. The
+clause *in one document* is not decoration: executable pseudocode and legible assemblers
+both already exist separately, and the claim is that the two levels sit in the same file
+and lower into each other.
+
+Stated for a reader who wants the mechanism rather than the consequence:
+
 > **Every stage of compilation is written in the notation the programmer wrote, in the
 > document the programmer wrote it in, and no stage is discarded.**
+
+Two cautions on the short form, learned by getting them wrong first. Say **MIX**, not
+TAOCP — Knuth's prose is famously readable and it is the listings people skip, so "makes
+TAOCP readable" insults the reviewer most likely to care. And the machine-code half is
+**Oblectamenta**, which runs, until the x64 stub is filled. Keep Knuth and CLRS in
+[the figure](#the-framing-figure), where they do analysis rather than carry the claim.
 
 ---
 
