@@ -45,6 +45,7 @@ import tempfile
 DEFAULT_DOCS = [
     "CEPS-LANG.md",
     "doc/scribble-concept/README.md",
+    "doc/model-revision/README.md",
 ]
 
 FENCE = re.compile(

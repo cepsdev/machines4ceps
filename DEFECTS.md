@@ -1191,7 +1191,11 @@ and it is a defensible release on its own.
 [D17](#d17); held at High because a reliable discipline exists today (always `.at(n)`) and
 the residue is visible in the output if anyone reads it. Was filed as Critical for the
 wrong reason, corrected on 2026-10-09, then found to be a larger defect than either
-version — see below.
+version — see below. **Reframed 2026-10-10** by `doc/model-revision/README.md`, which
+proposes append-only model revision — that is, this defect's trigger adopted deliberately
+as the architecture. Under that reading the fault is not that appending breaks singleton
+readers, but that *a reader can assume a singleton silently*; the fix shrinks accordingly,
+from "make appending safe" to "make the assumption impossible to state without saying so".
 **Area:** Evaluator / model traversal / the nodeset data model.
 **Affects:** every expression that reads a node's content. The hazard is latent until the
 node grows, and growing nodes is the language's designed workflow.
