@@ -6,6 +6,17 @@
 That sentence is a decision rule, not a slogan. Its job is to settle what ceps is obliged
 to do well, and — more usefully — what it is free to refuse.
 
+It has an operational companion, which says what you actually do about it:
+
+> **SDDI — specify data in a high level notation and derive your interfaces.**
+
+The decision rule tells you what ceps is for. SDDI tells you what to type. The order is
+the whole point: the data description is written first and is the thing that is true; the
+interface is a consequence of it, not a precondition for it. Conventional tooling runs
+the other way — agree the interface, generate the types, fill in the logic — which is why
+it stalls when nobody has agreed. SDDI has nothing to stall on, because the artifact you
+start from is one you can write alone and run the same afternoon.
+
 ---
 
 ## The claim it rests on
