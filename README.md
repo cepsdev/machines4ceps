@@ -13,6 +13,11 @@ Look [here](./FEATURES.md) for a list of features.
 
 Details can be found [here](./INSTALL.md)  
 
+## Editor support
+
+Syntax highlighting for VSCode: [`tools/vscode-ceps`](./tools/vscode-ceps/README.md).
+It also marks the names that silently resolve to SI units ([D17](./DEFECTS.md#d17)).
+
 ## Writing, running, and rendering state machines - Quick Start
 
 Look [here](./QUICK-START-UML-WITH-CEPS.md) if you are interested mainly in using ceps' UML state charts features.

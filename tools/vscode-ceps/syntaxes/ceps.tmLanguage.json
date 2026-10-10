@@ -1,0 +1,197 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "ceps",
+  "scopeName": "source.ceps",
+  "fileTypes": [
+    "ceps"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#kind-declaration"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#si-units"
+    },
+    {
+      "include": "#registers"
+    },
+    {
+      "include": "#opcodes"
+    },
+    {
+      "include": "#sm-vocabulary"
+    },
+    {
+      "include": "#symbol-declaration"
+    },
+    {
+      "include": "#struct-head"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#operators"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ceps",
+          "begin": "//",
+          "end": "$"
+        },
+        {
+          "name": "comment.block.ceps",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ceps",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ceps",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "kind-declaration": {
+      "match": "\\b(kind)\\s+([A-Za-z_]\\w*)",
+      "captures": {
+        "1": {
+          "name": "keyword.declaration.kind.ceps"
+        },
+        "2": {
+          "name": "entity.name.type.ceps"
+        }
+      }
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.ceps",
+          "match": "\\b(static_for|return|else|for|if)\\b"
+        },
+        {
+          "name": "keyword.declaration.ceps",
+          "match": "\\b(template|raw_map|struct|label|macro|kind|fun|let|val)\\b"
+        }
+      ]
+    },
+    "si-units": {
+      "name": "support.constant.si-unit.ceps",
+      "match": "\\b(kilogram|candela|celsius|ampere|kelvin|second|meter|metre|mole|mol|cd|kg|m|s)\\b"
+    },
+    "registers": {
+      "name": "variable.language.register.ceps",
+      "match": "\\b(ARG0|ARG1|ARG2|ARG3|ARG4|ARG5|addr|R10|R11|R12|R13|R14|R15|RES|reg|FP|R0|R1|R2|R3|R4|R5|R6|R7|R8|R9|SP)\\b"
+    },
+    "opcodes": {
+      "patterns": [
+        {
+          "begin": "\\b(assert_deserialized_protobufish_message_equals_str|dbg_deserialize_protobufish_to_json|dbg_print_cs_and_regs|dbg_print_topf64|dbg_print_topi32|dbg_print_topi64|assert_empty_cs|dbg_print_stack|dbg_print_data|dbg_printlni32|discardtopi32|discardtopi64|bgteqzeroi32|blteqzeroi32|lea_absolute|asserteqi32|dbg_println|dbg_printsz|bltzeroi32|duptopi128|duptopi192|swpi160i64|swpi16i128|swpi192i32|swpi64b128|swpi64i192|ui32toui64|assertf64|asserti32|asserti64|bnzerodbl|bnzeroi32|bnzeroi64|duptopi32|duptopi64|swp128i64|swp192i64|swpi16i64|swpi32i64|swpi64b72|swpi8i128|ui8toui32|ui8toui64|assertsz|bnzeroi8|bzerodbl|bzeroi32|bzeroi64|duptopi8|setframe|swp128b8|swp72i64|swp80i64|swp96i64|swpi8i64|andni32|andni64|atandbl|bneqi64|bzeroi8|cpysi32|gteqdbl|gteqi32|gteqi64|lteqdbl|lteqi32|lteqi64|pushi32|pushi64|tanhdbl|adddbl|addi32|addi64|andi32|andi64|beqi64|bneqi8|cosdbl|divdbl|divi32|divi64|expdbl|ldsdbl|ldsi32|ldsi64|muldbl|muli32|muli64|negdbl|negi32|negi64|noti32|noti64|popi32|popi64|remi32|remi64|shli32|shli64|shri32|shri64|sindbl|stsdbl|stsi32|stsi64|subdbl|subi32|subi64|swpi64|tandbl|wrsi32|xori32|xori64|beqi8|bgteq|blteq|eqdbl|eqi32|eqi64|gtdbl|gti32|gti64|lddbl|ldi32|ldi64|ldptr|ldsi8|ltdbl|lti32|lti64|ori32|ori64|sri64|stdbl|sti32|sti64|stptr|stsi8|call|halt|ldi8|noop|sti8|beq|blt|buc|lea|msg|ret|swp)\\s*(\\()",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.opcode.ceps"
+            },
+            "2": {
+              "name": "punctuation.section.arguments.begin.ceps"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.arguments.end.ceps"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#si-units"
+            },
+            {
+              "include": "#registers"
+            },
+            {
+              "include": "#numbers"
+            },
+            {
+              "include": "#strings"
+            },
+            {
+              "name": "variable.other.label.ceps",
+              "match": "[A-Za-z_]\\w*"
+            }
+          ]
+        },
+        {
+          "name": "support.function.opcode.ceps",
+          "match": "\\b(assert_deserialized_protobufish_message_equals_str|dbg_deserialize_protobufish_to_json|dbg_print_cs_and_regs|dbg_print_topf64|dbg_print_topi32|dbg_print_topi64|assert_empty_cs|dbg_print_stack|dbg_print_data|dbg_printlni32|discardtopi32|discardtopi64|bgteqzeroi32|blteqzeroi32|lea_absolute|asserteqi32|dbg_println|dbg_printsz|bltzeroi32|duptopi128|duptopi192|swpi160i64|swpi16i128|swpi192i32|swpi64b128|swpi64i192|ui32toui64|assertf64|asserti32|asserti64|bnzerodbl|bnzeroi32|bnzeroi64|duptopi32|duptopi64|swp128i64|swp192i64|swpi16i64|swpi32i64|swpi64b72|swpi8i128|ui8toui32|ui8toui64|assertsz|bnzeroi8|bzerodbl|bzeroi32|bzeroi64|duptopi8|setframe|swp128b8|swp72i64|swp80i64|swp96i64|swpi8i64|andni32|andni64|atandbl|bneqi64|bzeroi8|cpysi32|gteqdbl|gteqi32|gteqi64|lteqdbl|lteqi32|lteqi64|pushi32|pushi64|tanhdbl|adddbl|addi32|addi64|andi32|andi64|beqi64|bneqi8|cosdbl|divdbl|divi32|divi64|expdbl|ldsdbl|ldsi32|ldsi64|muldbl|muli32|muli64|negdbl|negi32|negi64|noti32|noti64|popi32|popi64|remi32|remi64|shli32|shli64|shri32|shri64|sindbl|stsdbl|stsi32|stsi64|subdbl|subi32|subi64|swpi64|tandbl|wrsi32|xori32|xori64|beqi8|bgteq|blteq|eqdbl|eqi32|eqi64|gtdbl|gti32|gti64|lddbl|ldi32|ldi64|ldptr|ldsi8|ltdbl|lti32|lti64|ori32|ori64|sri64|stdbl|sti32|sti64|stptr|stsi8|call|halt|ldi8|noop|sti8|beq|blt|buc|lea|msg|ret|swp)\\b"
+        }
+      ]
+    },
+    "sm-vocabulary": {
+      "name": "support.class.sm.ceps",
+      "match": "\\b(oblectamenta|Simulation|transition|on_enter|Actions|on_exit|Events|Guards|Thread|global|states|Start|data|text|asm|msg|x64|sm|t)\\b(?=\\s*\\{)"
+    },
+    "symbol-declaration": {
+      "begin": "\\b([A-Z]\\w*)(?=\\s+[A-Za-z_]\\w*\\s*(?:,\\s*[A-Za-z_]\\w*\\s*)*;)",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.ceps"
+        }
+      },
+      "end": ";",
+      "patterns": [
+        {
+          "include": "#si-units"
+        },
+        {
+          "name": "entity.name.variable.ceps",
+          "match": "[A-Za-z_]\\w*"
+        }
+      ]
+    },
+    "struct-head": {
+      "match": "(?<![\\w.])([A-Za-z_]\\w*)\\s*(?=\\{)",
+      "captures": {
+        "1": {
+          "name": "entity.name.tag.ceps"
+        }
+      }
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.ceps",
+          "match": "\\b\\d+\\.\\d*(?:[eE][-+]?\\d+)?\\b|\\.\\d+(?:[eE][-+]?\\d+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.ceps",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "name": "keyword.operator.ceps",
+      "match": "<=|>=|==|!=|->|<-|\\.\\.|[-+*/^~=<>|&!.:#]"
+    }
+  }
+}

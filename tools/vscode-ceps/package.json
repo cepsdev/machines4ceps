@@ -1,0 +1,40 @@
+{
+  "name": "ceps",
+  "displayName": "ceps",
+  "description": "Syntax highlighting for the ceps language and the Oblectamenta assembler.",
+  "version": "0.1.0",
+  "publisher": "cepsdev",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cepsdev/machines4ceps"
+  },
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ceps",
+        "aliases": [
+          "ceps",
+          "Ceps"
+        ],
+        "extensions": [
+          ".ceps"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ceps",
+        "scopeName": "source.ceps",
+        "path": "./syntaxes/ceps.tmLanguage.json"
+      }
+    ]
+  }
+}
