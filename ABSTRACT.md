@@ -195,6 +195,17 @@ Two cases, one positive and one negative, observed by the same engineer at two c
 a decade apart. And — decisively for publication — a **public artifact** for the negative
 one's domain.
 
+The spine of the section is that these are **one failure mode at three magnifications**:
+
+| Scale | Symptom | What is unreadable |
+|---|---|---|
+| Compiler | you cannot tell what a construct means | the intermediate stages |
+| Runtime | printf-debugging for days | the state the program is in |
+| Team | dailies that are never conclusive | the relation between spec and code |
+
+The tell at every scale is the same: when the thing you need to read does not exist as an
+artifact, you substitute an experiment — a bisection, a print statement, a meeting.
+
 ### Case 1 (positive): Dingo TRGS, read at ten years
 
 The experiment proposed at the end of the previous section has already been run, at ten
@@ -273,6 +284,19 @@ And "printf-debugging for days" is the same disease as an unreadable IR, one sca
 cannot read the middle, so you bisect by experiment. `--pe` is that question asked of a
 compiler.
 
+**The third rung.** Every daily was spent arguing what the standard said against what the
+code did, and never conclusively. The tell is the *never*: an argument that can be settled
+gets settled once, and one that recurs daily is one where the artifact needed to settle it
+does not exist. "What does the standard say" and "what does the code do" were two lookups
+in two documents and nobody could hold both, so the standup became the place where two
+artifacts were reconciled by debate.
+
+`timing.ceps:20-22` does not make that argument easier to win. It makes it the same lookup.
+
+Be honest about what survives: interpretation disputes do not vanish. What vanishes is
+arguing about what the code *assumes*, because the assumption sits next to the sentence.
+That is a smaller argument and it terminates.
+
 ### The artifact
 
 The response to Case 2 is public, MIT-licensed, and the author's own — so it can carry the
@@ -317,6 +341,39 @@ honest and it is also a better argument.
 **Cheapest way to strengthen all of this:** one engineer who knows neither artifact, both
 codebases, timed comprehension questions. Even n=3 moves this from experience report to
 measurement.
+
+### Why the middle is a real place to stand
+
+Interpreting a standard is hard, and the paper should not pretend otherwise. The claim is
+about *how* the interpretation is arrived at.
+
+**The usual way interprets by implementing**, and that does not merely obscure the reading
+— it **conflates** it. Implementing ISO 15118 in C++ forces commitments to threading,
+dispatch, object lifetime and error handling that have nothing to do with the standard.
+Afterwards nobody can separate *this is what the standard says* from *this is how I got it
+to work*, which is why the outcome is a clear understanding of neither.
+
+**Small semantic distance buys a second way of reading.** ISO 15118 is a description of
+state machines and a Harel chart is a state machine, so the translation is close to
+identity and introduces almost no commitments of its own. And because the model runs, the
+interpretation can be checked **by inspecting behaviour** rather than by arguing about
+text — you discover what your reading commits you to, including the consequences you did
+not intend, before integration rather than during it.
+
+**And the holes become visible.** An under-specified standard shows up as a transition
+that is not there. The choice made to fill it is then recorded *at the site of the gap*.
+In a C++ implementation you simply pick something, and the fact that you picked is written
+down nowhere.
+
+This is also why the two declined categories in
+[POSITIONING.md](POSITIONING.md#categories-declined) are the right neighbours to decline,
+and it is worth saying so in the paper rather than leaving the middle undefended:
+
+| Neighbour | Semantic distance to the standard | Does the model ship? |
+|---|---|---|
+| Statechart tools | small | no — generated code ships, the model is an artifact beside it |
+| Formal specification (TLA+, Alloy) | large, in the other direction | no — the model is abandoned after checking |
+| ceps | small | **yes — compiled to C++, ran on the ARMv7 target** |
 
 ---
 
