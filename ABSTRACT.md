@@ -32,9 +32,14 @@ whether the rest is believed.
 > no grammar, no parser, no printer, no IR — and we price it. Openness of vocabulary means
 > an undeclared name does not fail to parse; it parses as something else. We give the
 > defect class this produces, with a reproducer that prints a wrong answer and exits 0.
+>
+> The design has been in industrial use since 2014. We report a ten-year readability
+> comparison from one such project, in which the state machines and the C++ they shipped
+> alongside had the same author and were read a decade later by someone who wrote neither.
 
-Roughly 250 words; needs cutting to ~200. The last paragraph is the one that must survive
-cutting.
+Roughly 300 words; needs cutting to ~200. The two paragraphs that must survive are the
+price and the field observation — the mechanism can be compressed to a sentence, because
+the mechanism is the part a reader will believe without being convinced.
 
 ---
 
@@ -179,12 +184,65 @@ before a reviewer does.
 
 ---
 
+## The evidence
+
+The experiment above has already been run, at ten years rather than one, on an industrial
+project — **Dingo TRGS** — and with a control.
+
+**The design, which is stronger than the usual readability anecdote.** One engineer wrote
+both artifacts: the ceps state machines *and* the accompanying C++. The reader, ten years
+later, wrote neither — he wrote the tooling. So this is not someone finding their own code
+readable, which tests nothing. It is a third party reading one author's work in two
+notations, which is the configuration maintenance actually happens in.
+
+**The outcome.** The ceps was recoverable without difficulty. The C++ was markedly less
+enlightening.
+
+**The objection to pre-empt**, because it will arrive immediately: *the ceps was the spec
+and the C++ was the implementation, and specs are always more readable.* TRGS defeats it —
+the ceps was compiled to C++ and ran on the ARMv7 target. Both artifacts were production.
+State this in the same breath as the claim; unstated it looks like the confound rather
+than the refutation.
+
+**The remaining confound, and why it is smaller than it looks.** The reader is the
+notation's designer. Not a C++ fluency gap — he writes C++ daily — but knowledge of ceps's
+semantics that no reader of the C++ had. The rebuttal is measurable rather than rhetorical:
+
+| | 2014-09-19 (`93c7a24`, the TRGS era) | today |
+|---|---|---|
+| nonterminals in `ceps.y` | **16** | 20 |
+| total grammar lines | 564 | 790 |
+
+The sixteen were `cepsscript id_list decl struct_decl struct_initialization expr
+func_stmts if_then_else id_or_struct_id for_loop parameter_list parameter argument_list
+raw_map raw_lines raw_line`. Six are plumbing. The whole surface has grown by four
+productions in eleven years.
+
+And the decisive detail is *which* of them the models used. `sm`, `states`, `t`, the `+`/`-`
+enter/exit notation — **none of it is in the grammar**. It is all structs. The state
+machines were written almost entirely in `struct_decl` and `expr`. So designer fluency
+amounts to knowing about ten productions, two of which the artifact exercised.
+
+That is the mechanism claim arriving as evidence rather than as argument: **the layers are
+vocabulary, not grammar.** It is also why a second author could extend the notation — the
+`+`/`-` enter/exit convention was the freelancer's invention, not the designer's. The
+notation survived an author it was not designed by. Perl's did not.
+
+**The blocker is clearance, not argument.** The artifacts are KMW's. Nothing here can be
+quoted until that conversation has happened.
+
+**Cheapest way to strengthen it:** one engineer who knows neither artifact, both
+codebases, timed comprehension questions. Even n=3 moves this from experience report to
+measurement. Same blocker.
+
+---
+
 ## What is missing before this can be written
 
 | Gap | Where |
 |---|---|
 | **The x64 backend is a stub** — empty loop body, `return {}`. Any claim of "down to machine code" is currently false; the design reaches the encoder and stops. | `core/src/vm/oblectamenta-assembler.cpp:1380-1387` |
-| **No evaluation.** The natural measure is the cost of adding a layer: grammar rules added (zero), parser changes (zero), printer changes (zero). The msgdef schema and the x64 layer are the two worked cases. | — |
+| **No evaluation.** The natural measure is the cost of adding a layer: grammar rules added (zero), parser changes (zero), printer changes (zero). The msgdef schema and the x64 layer are the two worked cases. The grammar-growth figures in [The evidence](#the-evidence) are the other half — four productions in eleven years, while the vocabulary grew by an assembler, a VM and a serialiser. | — |
 | **The loud fail is designed and not built.** The cost section is much stronger if it ends with a fix rather than a plan. | [ROADMAP.md](ROADMAP.md) |
 | **A worked end-to-end example** small enough to print: requirement → state machine → action → assembler → encoding, in one file. | [ASM.md](ASM.md) §4 is the nearest existing candidate |
 
