@@ -163,6 +163,129 @@ marked unsupported under `A'`. Truth-maintenance systems call this being *out*.
 This has to be decided before anything is built, because it changes the shape of the
 data rather than adding to it.
 
+<a name="partiality"></a>
+## Partiality as the diagnostic
+
+A lift can fail. Criterion 4 below requires that a failure be *represented* rather than
+dropped, and this section says how it is observed — because the mechanism already exists
+in the evaluator and needs only to be made uniform.
+
+Normalization reduces what it can and leaves what it cannot. The part it leaves is not
+debris; it is **the impact report**. Change a partition, re-normalize, and whatever fails
+to reduce is exactly the blast radius. No dependency tracker is required, because the
+normalizer is already one.
+
+### Where it works: an unbound identifier survives
+
+With the binding in place the expression disappears into its value:
+
+```ceps
+val b = 2;
+expr{ 1 + b; };
+```
+```output
+(STRUCT "expr"
+  (INT 3  )
+)
+```
+
+Remove the binding — the first half of a rename, or the whole of a removal — and the
+expression survives, naming what it is missing, in context:
+
+```ceps
+expr{ 1 + b; };
+```
+```output
+(STRUCT "expr"
+  (OPERATOR + ""
+    (INT 1  )
+    (ID "b"
+    )
+  )
+)
+```
+
+Exit 0, and correctly so: nothing is wrong, something is *unknown*. The set of surviving
+`(ID "b")` nodes is the set of places a lift must touch. It is greppable, and it is in
+the same notation as the model.
+
+### Where it fails: an unresolved path is annihilated
+
+```ceps
+A{ a{1;}; };
+holder{ root.A.b; };
+holder2{ root.A.a; };
+```
+```output
+(STRUCT "A"
+  (STRUCT "a"
+    (INT 1  )
+  )
+)
+(STRUCT "holder"
+)
+(STRUCT "holder2"
+  (STRUCT "a"
+    (INT 1  )
+  )
+)
+```
+
+`holder2` resolves. `holder` is **empty**, exit 0, and nothing survives to say why. A
+reader cannot distinguish *`b` was removed by a revision* from *`b` never existed* from
+*the path is a typo* from *the partition is not loaded*.
+
+**So the rule this design needs is one sentence: an unresolved path must survive the way
+an unbound identifier does.** `root.A.b` should normalize to a node carrying the path it
+failed on, not to nothing. Until it does, half of every impact report is invisible, and
+the half that is invisible is the half that involves the model rather than a binding.
+
+This also reframes [D17](../../DEFECTS.md): its worst symptom — a fully qualified
+`root.m.content()` returning empty with exit 0 — is annihilation, not collision. The
+collision decides *which* lookup fails; annihilation is why nobody finds out. Fixing path
+residue does not fix D17, but it converts it from a silent fault into a visible one, which
+is the difference between a defect and a diagnostic.
+
+### The asymmetry nobody expects
+
+Partiality does not cover all revisions equally, and the ranking is counter-intuitive:
+
+| change to `A` | residue produced | verdict |
+|---|---|---|
+| add a member | none needed — monotone, no dependent breaks | safe |
+| remove or rename a member | every use survives as `(ID "b")` | **loud, therefore safe** |
+| **change the meaning of a member** | **none** — `1 + b` still reduces, to a different number | **silent by construction** |
+
+Removal and renaming look like the destructive cases and are in fact the benign ones,
+because they are the ones partiality catches. The dangerous change is a redefinition that
+keeps the shape: nothing becomes unknown, so nothing is residualized, so there is nothing
+to inspect.
+
+**This decides the append-versus-replace question, which is otherwise a matter of taste.**
+The two forms defend against disjoint failures:
+
+- **Replace the partition** — `(A')(B)(C)` — relies on residue, and therefore covers
+  *structural* change.
+- **Append the revision** — `(A)(B)(C)(A')` — keeps both versions present and diffable,
+  and therefore covers *semantic* change, which residue cannot see.
+
+Both must be permitted. Replacement is not the cheap option; it is a different defence
+with a different blind spot, and a scheme offering only one of them is unsound for half
+of the changes people actually make.
+
+### Prior art for this part specifically
+
+Residualization is classical: partial evaluation in the sense of Jones, Gomard and
+Sestoft, where the residual program is precisely what could not be computed from the
+known inputs, and symbolic execution, where unbound values stay symbolic and the residue
+describes what is unknown. **Hazel** is the closest living relative — live programming
+with typed holes, in which incomplete programs still evaluate and the holes are
+observable rather than fatal.
+
+The difference here is the one worth claiming: the hole is a *model* hole rather than a
+program hole, and the residue is in the same notation as the model it came from, so an
+impact report is queryable by the same path expressions as everything else.
+
 <a name="defects"></a>
 ## Relationship to D18, which is this idea filed as a defect
 
@@ -215,27 +338,32 @@ A first implementation is done when all of the following hold.
 1. **Latest is expressible.** `root.X.last()` (or `.at(root.X.size()-1)`) yields the final
    element of a nodeset, and an out-of-range index is a diagnostic with a non-zero exit
    rather than `(UNDEFINED "")`.
-2. **Supersession is explicit.** A revision records which node it supersedes and by which
+2. **Unresolved paths survive.** A path that resolves to nothing normalizes to a node
+   carrying the path it failed on, in the same way an unbound identifier survives as
+   `(ID "b")`. Nothing is silently absent from the output. This is the prerequisite for
+   criterion 4 and for any impact report at all; see
+   [Partiality as the diagnostic](#partiality).
+3. **Supersession is explicit.** A revision records which node it supersedes and by which
    rewrite. Given the document alone, a reader can tell revision from coincidence of
    names.
-3. **The lift is reproducible.** For a recorded lift `L` and dependent `B`,
+4. **The lift is reproducible.** For a recorded lift `L` and dependent `B`,
    re-running `apply(L, B)` reproduces the stored `B'` byte for byte. A test asserts this
    on at least one multi-stage example.
-4. **Partial lifts are represented, not dropped.** When `B` cannot be lifted through `A'`,
+5. **Partial lifts are represented, not dropped.** When `B` cannot be lifted through `A'`,
    `B` remains in the document, is marked unsupported, and the condition is reported.
    Nothing is silently absent.
-5. **Unaffected dependents are shared, not copied.** If lifting leaves `C` unchanged, the
+6. **Unaffected dependents are shared, not copied.** If lifting leaves `C` unchanged, the
    document does not grow by a second copy of `C`. Without this the file is unreadable
    after a handful of revisions; `A,B,C,A',B',C',A''…` is `O(n·k)` otherwise.
-6. **Order independence is checked, not assumed.** Revising `A` then `B` and revising `B`
+7. **Order independence is checked, not assumed.** Revising `A` then `B` and revising `B`
    then `A` either agree, or the disagreement is reported. See below.
-7. **Every example in this document is executed by `tools/check-doc-examples.py`** and its
+8. **Every example in this document is executed by `tools/check-doc-examples.py`** and its
    output matches.
 
 <a name="open"></a>
 ## Open questions
 
-- **Confluence.** Criterion 6 is a confluence property of the rewrite system, and it is
+- **Confluence.** Criterion 7 is a confluence property of the rewrite system, and it is
   the question that decides whether the scheme is sound rather than merely convenient.
   This is the one place where a model checker earns its keep, and the project's stated
   route applies: walk the model, emit a Maude specification, check it there. It is a use
