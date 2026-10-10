@@ -4,7 +4,7 @@
  * which matter actually land. Run after regenerating:
  *
  *     npm install vscode-textmate vscode-oniguruma
- *     node tools/vscode-ceps/check-grammar.js
+ *     node tools/editor-support/vscode/check-grammar.js
  *
  * With -v it prints every token and its scopes, which is the quickest way to
  * see why something is not coloured.
@@ -26,7 +26,7 @@ const HERE = __dirname;
 const GRAMMAR = path.join(HERE, 'syntaxes', 'ceps.tmLanguage.json');
 const verbose = process.argv.includes('-v');
 const files = process.argv.slice(2).filter(a => a !== '-v');
-if (files.length === 0) files.push(path.join(HERE, 'sample.ceps'));
+if (files.length === 0) files.push(path.join(HERE, '..', 'sample.ceps'));
 
 /* Each case: a token that must appear somewhere, and the scope it must carry. */
 const expectations = [

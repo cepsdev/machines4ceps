@@ -5,9 +5,9 @@
 **New to the language? Start with [`CEPS-LANG.md`](CEPS-LANG.md)**, and with the
 worked example it points at: [`doc/scribble-concept/README.md`](doc/scribble-concept/README.md).
 
-> **Syntax highlighting for VSCode:** [`tools/vscode-ceps`](./tools/vscode-ceps/README.md) —
-> install it with
-> `ln -s "$PWD/tools/vscode-ceps" ~/.vscode/extensions/ceps-0.1.0`.
+> **Syntax highlighting for VSCode, Emacs and Vim:**
+> [`tools/editor-support`](./tools/editor-support/README.md) — one generator,
+> three editors, word lists read straight out of the ceps sources.
 > Besides the usual, it marks the fourteen names that silently resolve to SI
 > units ([D17](./DEFECTS.md#d17)), which is worth having on its own.
 
