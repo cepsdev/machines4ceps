@@ -452,8 +452,40 @@ price, which is what those three venues exist for.
 
 ## Provenance
 
-The thesis is not retrospective, and this is unusually easy to demonstrate. The *yamdl*
-documentation from 2013 already contains the Scribbling chapters, TopUp, and the sentence
+The thesis is not retrospective, and this is unusually easy to demonstrate.
+
+### The line, dated
+
+| Year | What | What arrived |
+|---|---|---|
+| **2007** | **ANDIDEP**, Capgemini — a dependency analyser for ANDI, an interface in Telekom's PROKOM. Written first as three pages of Perl, then **rewritten using Knuth's original `weave`/`tangle`.** | literate programming, practised rather than admired |
+| **2011** | **Audi EXAM** — a software project led by the author, and the first use of the approach that became ceps: a notation describing the problem domain, a diagram generator over it, and **the tests derived from it**. | *literate testing* — the domain description as the thing that is true, everything else a consequence |
+| **2013** | **yamdl**, for the BMW HAF project. Repository initialised 2013-09-25. | the principle written down: Scribbling, TopUp |
+| **2014** | the TRGS era. `ceps.y` at `93c7a24` has 16 nonterminals. | the notation, in production |
+
+Three things follow that are worth a paragraph each in the paper.
+
+**The practice precedes the principle by six years.** The Scribbling chapters are 2013;
+deriving tests from a domain description was 2011; literate programming with the real
+tooling was 2007. Nothing here was designed from a principle and then applied — the
+principle was named after the fact, which is also what [POSITIONING.md](POSITIONING.md)
+concludes from a different direction.
+
+**SDDI is older than the document that states it.** `POSITIONING.md` gives the operational
+rule as *specify data in a high level notation and derive your interfaces*. At Audi in
+2011 it was *describe the domain and derive the tests*. Same shape, same ordering, a
+different noun, two years before yamdl and fifteen before the positioning document. That
+continuity is worth claiming, because it shows the decision rule was observed rather than
+invented.
+
+**"Nobody appreciated that move."** The literate rewrite in 2007 was received with
+indifference, which is the reception literate programming has had generally — and the
+reason the idea had to be rebuilt rather than adopted. That belongs in the paper as
+history, not as grievance: a mechanism that requires a tool, a discipline and two
+artifacts does not spread, and the version that does spread will be the one with no tangle
+step.
+
+### The 2013 artifact
 
 > *"without being forced to throw away any scribbling sheets"*
 
@@ -461,11 +493,27 @@ documentation from 2013 already contains the Scribbling chapters, TopUp, and the
 paper whose thesis is checkable against a thirteen-year-old file is in a different
 category from one with a tidy story assembled afterwards. Say so, and cite the file.
 
+**Citation asymmetry to plan around:** EXAM is publicly documented and can be named.
+ANDIDEP and PROKOM are Telekom-internal and have to be described generically — "a
+dependency analyser for a telecoms interface" costs nothing and avoids a second clearance
+conversation.
+
+### Unrecovered, and perishable
+
+The 2011 EXAM-era notation is **the earliest surviving artifact of the ceps approach, two
+years before yamdl** — and it is on old laptops, unexamined. Whether it was already
+struct-like text and what the diagram generator emitted are both unknown.
+
+This is the highest-value retrieval task attached to the paper and the one with a deadline
+imposed by hardware. Recovering a 2011 file that already shows the shape would push the
+provenance claim back two years with an artifact rather than a recollection.
+
 ### An earlier name, recorded here because it is recorded nowhere else
 
 One of the first labels for what ceps does was **"literate testing"** — the lineage was
 understood as Knuth's from the beginning, not attached to it afterwards in a related-work
-section.
+section. That is corroborated by the 2007 entry above: the author had used the real
+`weave`/`tangle` tooling four years before the approach appeared.
 
 It appears in no file and no commit message in `machines4ceps`, `ceps`, `yamdl-orig`,
 `v2g-guru` or `v2g-guru-slac`; it survives only as the author's recollection. That is
