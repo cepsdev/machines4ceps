@@ -184,7 +184,7 @@ fight against twenty-year-old products, fought by one maintainer, on their groun
 
 ### Formal specification language
 
-*Competitors:* TLA+, Alloy, Z, B/Event-B, Maude.
+*Competitors:* TLA+, Alloy, Z, B/Event-B.
 
 *Obligations:* exhaustive verification — a model checker, a refinement relation, a
 semantics worth citing.
@@ -216,6 +216,28 @@ independently.
 This matters because *"a specification language that happens to execute"* sounds like a
 claim to the declined category. It is not. The word "specification" is earned by legal
 under-specification, not by proof.
+
+#### Maude is not in that list, and the omission is deliberate
+
+Maude belongs on the other side of the ledger: **ancestor and export target, not rival.**
+Rewriting logic is where the idea of a program as a term being reduced comes from, and
+every residue argument in [`doc/model-revision/README.md`](doc/model-revision/README.md)
+is downstream of it. The one place ceps could sensibly want exhaustive checking, it should
+get it the same way it gets everything else — *walk the model and emit the specification*
+— rather than by growing a model checker of its own.
+
+That is a dependency on someone else's project, so it is worth stating what the dependency
+looks like. Checked 2026-10-10 against `maude-lang/Maude`: not archived, and between
+15 and 19 August 2026 the original implementer landed a new language feature
+(*generalized transformers*, carried through the surface parser, the object level and the
+metalevel), a bug fix for partially instantiated views, and a parser performance change.
+A second contributor added CI on 7 October 2026. The manual's July 2025 date lags the
+feature work; it does not indicate the project has stopped.
+
+Noted for later: generalized transformers are module-and-view transformations reflected at
+the metalevel, which is structurally what an append-only revision chain needs in order to
+lift a derivation over a changed partition. If the export target is ever built, that is
+the feature it would be built on.
 
 ### Model-driven engineering platform
 
