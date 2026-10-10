@@ -34,10 +34,12 @@ whether the rest is believed.
 > defect class this produces, with a reproducer that prints a wrong answer and exits 0.
 >
 > The design has been in industrial use since 2014. We report a ten-year readability
-> comparison from one such project, in which the state machines and the C++ they shipped
-> alongside had the same author and were read a decade later by someone who wrote neither.
+> comparison from one such project, its negative counterpart from a second, and a public
+> MIT-licensed executable specification of ISO 15118-2 and 15118-3 — roughly 7000 lines of
+> ceps — in which each requirement of the standard sits adjacent to the constant, event or
+> state machine that realises it.
 
-Roughly 300 words; needs cutting to ~200. The two paragraphs that must survive are the
+Roughly 320 words; needs cutting to ~200. The two paragraphs that must survive are the
 price and the field observation — the mechanism can be compressed to a sentence, because
 the mechanism is the part a reader will believe without being convinced.
 
@@ -98,6 +100,9 @@ The ingredients are old. Nobody gets credit for ingredients; the composition is 
 | **Stratego/XT, Rascal** | program transformation by rewriting | transformation between artifacts; ceps accumulates within one |
 | **MLIR** | extensible, multi-level lowering | dialects are compiler-facing; the programmer never reads them |
 | **C++ overload sets / ADL** | open set, extended later, resolved at use | the nearest thing in a mainstream language — *and it misbinds in silence* |
+| **Harel statecharts, 1987** | the formalism the models are written in | Harel owns the formalism; the claim here is that hosting it cost **zero grammar productions** and left it co-resident with its data and actions |
+| **Stateflow, Rhapsody, Yakindu** | statecharts, industrially | separate artifact, proprietary format, generated code; the behaviour is not in the document that runs. Category explicitly declined — [POSITIONING.md](POSITIONING.md#categories-declined) |
+| **Qt `moc`** | a language extension C++ would not host | the expensive way: bespoke pre-processor, separate pass, generated code nobody reads |
 
 The one-sentence placement: **Lisp made source and data the same notation; ceps makes
 source and every intermediate stage the same notation.**
@@ -186,8 +191,14 @@ before a reviewer does.
 
 ## The evidence
 
-The experiment above has already been run, at ten years rather than one, on an industrial
-project — **Dingo TRGS** — and with a control.
+Two cases, one positive and one negative, observed by the same engineer at two companies
+a decade apart. And — decisively for publication — a **public artifact** for the negative
+one's domain.
+
+### Case 1 (positive): Dingo TRGS, read at ten years
+
+The experiment proposed at the end of the previous section has already been run, at ten
+years rather than one, on an industrial project, with a control.
 
 **The design, which is stronger than the usual readability anecdote.** One engineer wrote
 both artifacts: the ceps state machines *and* the accompanying C++. The reader, ten years
@@ -198,15 +209,26 @@ notations, which is the configuration maintenance actually happens in.
 **The outcome.** The ceps was recoverable without difficulty. The C++ was markedly less
 enlightening.
 
-**The objection to pre-empt**, because it will arrive immediately: *the ceps was the spec
-and the C++ was the implementation, and specs are always more readable.* TRGS defeats it —
-the ceps was compiled to C++ and ran on the ARMv7 target. Both artifacts were production.
-State this in the same breath as the claim; unstated it looks like the confound rather
-than the refutation.
+**What the C++ was.** Qt GUI code — the HMI the soldier operated the mast through. So this
+is not statechart-versus-hand-rolled-statechart. Qt is event-driven too, it is a mature
+idiom, and the author was competent; the comparison is not against bad code. The axis is
+**behaviour that has a notation versus behaviour that does not.** The mast's modes and
+enablement rules were just as real on the Qt side, distributed across slots, member flags
+and `setEnabled()` calls, stated nowhere.
 
-**The remaining confound, and why it is smaller than it looks.** The reader is the
-notation's designer. Not a C++ fluency gap — he writes C++ daily — but knowledge of ceps's
-semantics that no reader of the C++ had. The rebuttal is measurable rather than rhetorical:
+Two objections to concede before they are raised:
+
+- *Spec versus implementation.* TRGS defeats it — the ceps was compiled to C++ and ran on
+  the ARMv7 target. Both artifacts were production.
+- *Essential versus accidental complexity.* Fair: GUI code carries layout, widget
+  lifetimes, painting and threading. Concede it, then observe that signals and slots is a
+  language extension C++ would not host, so Qt built `moc` — a bespoke pre-processor, a
+  separate pass, and generated code nobody reads. Qt needed this mechanism and paid full
+  price for it.
+
+**The confound, and why it is smaller than it looks.** The reader is the notation's
+designer. Not a C++ fluency gap — he writes C++ daily — but knowledge of ceps's semantics
+no reader of the C++ had. The rebuttal is measurable rather than rhetorical:
 
 | | 2014-09-19 (`93c7a24`, the TRGS era) | today |
 |---|---|---|
@@ -225,15 +247,76 @@ amounts to knowing about ten productions, two of which the artifact exercised.
 
 That is the mechanism claim arriving as evidence rather than as argument: **the layers are
 vocabulary, not grammar.** It is also why a second author could extend the notation — the
-`+`/`-` enter/exit convention was the freelancer's invention, not the designer's. The
-notation survived an author it was not designed by. Perl's did not.
+`+`/`-` enter/exit convention was the freelancer's invention. The notation survived an
+author it was not designed by. Perl's did not.
 
-**The blocker is clearance, not argument.** The artifacts are KMW's. Nothing here can be
-quoted until that conversation has happened.
+**Blocker: clearance.** The artifacts are KMW's and nothing can be quoted until that
+conversation has happened. Case 2 does not have this problem.
 
-**Cheapest way to strengthen it:** one engineer who knows neither artifact, both
+### Case 2 (negative): an ISO 15118 stack built on signals and slots
+
+A DC charging manufacturer's legacy stack, the same engineer as tech lead. **ISO 15118 is
+nothing but a long description of state machines** — so in this case the statecharts
+existed, were fully specified, and are publicly checkable. What was missing was any
+representation of them in the artifact that ran. The stack was fragile, error-prone, and
+adding a feature meant days of printf-debugging; nobody understood what the software did.
+
+This is the control the positive case needs, and it is what removes the Harel confound.
+The variable is not *statecharts versus none* — that is Harel's result, published in 1987
+and shipped by Stateflow for thirty years. It is **the state machine is written down in
+the thing that executes, or it is not.**
+
+Signals and slots is the mechanism of the loss, not a bystander: the mode exists in no
+single place, it is distributed across `connect()` calls, so there is nothing to read.
+
+And "printf-debugging for days" is the same disease as an unreadable IR, one scale up. You
+cannot read the middle, so you bisect by experiment. `--pe` is that question asked of a
+compiler.
+
+### The artifact
+
+The response to Case 2 is public, MIT-licensed, and the author's own — so it can carry the
+paper's examples with no clearance conversation at all.
+
+| Repository | Models | Size | Dates |
+|---|---|---|---|
+| `v2g-guru` | ISO 15118-2 | 113 `.ceps` files, 3657 lines | 2021-03-30 … 2021-08-06 |
+| `v2g-guru-slac` | ISO 15118-3 (SLAC) | 32 `.ceps` files, 3596 lines | 2021-11-06 … 2022-02-22 |
+
+Both are executable specifications that run on machines4ceps. Three things in them are
+worth putting in the paper directly:
+
+**1. The requirement is adjacent to what implements it** — `v2g-guru-slac/model/timing.ceps:20-22`:
+
+```ceps
+label V2G3_M08_01_table_3_5 title = "[V2G3-M08-01-table-3-5] Minimum B state duration after a state F,D, or C.";
+val T_conn_init_HLC = time_scale*0.2*s;
+Event evT_conn_init_HLC;
+```
+
+The standard's requirement ID, its text, the constant and the event it raises, in three
+consecutive lines. This is the answer to *"ingenuity is locally driven, so the why gets
+buried"* shown rather than argued — and `label` is a lexer keyword, so traceability is
+vocabulary, not a tool feature. The same shape governs a state machine at
+`model/controlpilot/controlpilot.ceps:9` and `:14`.
+
+**2. Traceability extends to the filesystem.** `v2g-guru/iso-15118-2/sections/8/5/2/3/`
+mirrors the standard's section numbering, and `v2g2/00483.ceps` is a requirement number.
+43 `label` statements across the two repositories carry requirement IDs.
+
+Note this does *not* reopen the declined statechart-tool category
+([POSITIONING.md](POSITIONING.md#categories-declined)): what is declined is the category
+with its graphical editor, target matrix and certification kits, not the capability.
+
+**3. The cost and the benefit are visible in the same file.** `0.2*s` is the SI unit
+*second*, used deliberately and correctly — in a timing specification derived from a
+standard's constant table, units are load-bearing. [D17](DEFECTS.md#d17) is the shadow of
+a feature in genuine use, not a gratuitous one. Say that in the cost section; it is more
+honest and it is also a better argument.
+
+**Cheapest way to strengthen all of this:** one engineer who knows neither artifact, both
 codebases, timed comprehension questions. Even n=3 moves this from experience report to
-measurement. Same blocker.
+measurement.
 
 ---
 
@@ -244,7 +327,7 @@ measurement. Same blocker.
 | **The x64 backend is a stub** — empty loop body, `return {}`. Any claim of "down to machine code" is currently false; the design reaches the encoder and stops. | `core/src/vm/oblectamenta-assembler.cpp:1380-1387` |
 | **No evaluation.** The natural measure is the cost of adding a layer: grammar rules added (zero), parser changes (zero), printer changes (zero). The msgdef schema and the x64 layer are the two worked cases. The grammar-growth figures in [The evidence](#the-evidence) are the other half — four productions in eleven years, while the vocabulary grew by an assembler, a VM and a serialiser. | — |
 | **The loud fail is designed and not built.** The cost section is much stronger if it ends with a fix rather than a plan. | [ROADMAP.md](ROADMAP.md) |
-| **A worked end-to-end example** small enough to print: requirement → state machine → action → assembler → encoding, in one file. | [ASM.md](ASM.md) §4 is the nearest existing candidate |
+| **A worked end-to-end example** small enough to print: requirement → state machine → action → assembler → encoding, in one file. | `v2g-guru-slac/model/timing.ceps:20-22` covers requirement → constant → event; [ASM.md](ASM.md) §4 covers data → action → assembler. Nothing yet spans both. |
 
 ---
 
