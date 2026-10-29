@@ -34,13 +34,35 @@ namespace cepsplugin{
 
 std::thread* gui_main_thread {nullptr};
 
+void draw_rect(int x, int y, int w, int h ){
+ //DrawRectangle(x,y,w,h,GRAY);
+ DrawRectangleRounded(Rectangle{x,y,w,h}, .5f, 32,  GRAY);
+}
+
+void draw_rects(int x, int y, int rows, int cols){
+ for(int r = 0; r < rows; ++r) 
+  for (int c = 0; c < cols; ++c) 
+   draw_rect(x + 4 + c*(20+4),y + 4+r*(20+4),20,20);
+}
+
+void draw_rects(int x, int y, int rows, int cols, std::vector<bool> status){
+ size_t s{};
+ for(int r = 0; r < rows; ++r) 
+  for (int c = 0; c < cols; ++c,++s) 
+   DrawRectangleRounded(Rectangle{x + 4 + c*(20+4),y + 4+r*(20+4),20,20}, .5f, 32,  !status[s] ? LIGHTGRAY : GRAY);
+}
+
 void gui_main(){
     InitWindow(800,600,"ceps - gui");
     SetTargetFPS(60);
+    std::vector<bool> status;
+    status.resize(400);
+    status[21] = true;
     for(;!WindowShouldClose();){
         BeginDrawing();
          ClearBackground(RAYWHITE);
          DrawText("ceps-gui",190,200,20,LIGHTGRAY);
+         draw_rects(0,0,20,20,status);
         EndDrawing();
     }
     CloseWindow();
