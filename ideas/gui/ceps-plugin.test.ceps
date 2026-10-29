@@ -1,0 +1,17 @@
+gui(
+	input{
+		123;
+		"abc";
+		uint32{
+			ThisIsAnIdentifier;
+		};
+		1+1;
+	}
+);
+
+print ("result = ",root.result.content(),"\n\n");
+
+
+sm{S; states{Initial;};};
+
+Simulation{Start{S;};};
