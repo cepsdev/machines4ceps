@@ -121,9 +121,11 @@ Seven lexer specifications exist:
 
 The engine behind them, `core/include/transform/streamtransform.hpp`, has been audited in
 full: [`doc/lexer-engine/AUDIT.md`](doc/lexer-engine/AUDIT.md) records fifteen findings
-(two Critical, four of them memory safety), and
+(two Critical, four of them memory safety),
 [`doc/lexer-engine/GOALS.md`](doc/lexer-engine/GOALS.md) states the goals for the rework
-they feed into.
+they feed into, and [`doc/lexer-engine/PRIOR-ART.md`](doc/lexer-engine/PRIOR-ART.md) records
+the literature the planned channel stack should be built from — it is Abney's 1996
+finite-state cascade, and the design is already worked out.
 
 The format is a transducer, not a scanner. Named sub-lexers invoked with `call`,
 `rewind` for backtracking, `exit` to return, positional captures `$0`, `$2`, … and a

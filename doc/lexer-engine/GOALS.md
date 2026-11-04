@@ -2,7 +2,9 @@
 
 Companion to `AUDIT.md`, which records what `core/include/transform/streamtransform.hpp` does
 today. This document states what it should become, in terms concrete enough to tell when each
-goal is met.
+goal is met. `PRIOR-ART.md` records the literature behind G11 and G12 — the channel stack is
+a published architecture, and the goal is to build it from that work rather than rediscover
+it.
 
 Nothing here is a schedule. The last section proposes an order, and the order is the only
 claim about sequencing.
@@ -359,6 +361,12 @@ token. Do it after the shape has stopped moving and before anything is retargete
 **Statement.** A grammar's output is another grammar's input. Channels stack, and the order
 of the arguments is the stack.
 
+> **This architecture is published.** Abney's *Partial Parsing via Finite-State Cascades*
+> (1996) describes it exactly, down to the pass-through rule for unmatched tokens, and calls
+> it "little more than a pipeline of Lex-style lexical analyzers". See
+> [`PRIOR-ART.md`](PRIOR-ART.md) — which is good news, because it means this goal has a
+> design manual. Note also the naming collision with ANTLR's unrelated `channel()`.
+
 ```
 ceps normalise.ceps.lex ears.ceps.lex model.ceps.lex door_lock.req extract.ceps simulate.ceps
        └─ channel 1 ─┘  └─ channel 2 ─┘ └─ channel 3 ─┘
@@ -616,6 +624,16 @@ The inverted default makes the fast algorithm *easier*, not harder. Patterns dom
 literal tokens are exactly what multi-pattern automata — Aho–Corasick and its relatives —
 consume: linear in the input, independent of the number of rules. G6 and G12 point the same
 way, which is usually a sign that both are right.
+
+### And one thing that is not an opportunity
+
+If G11 lands, it is tempting to think that compiling the stack would allow the channels to be
+**fused** — N grammars collapsed into one automaton, N passes for the cost of one. That is a
+settled result, not a discovery: Kaplan & Kay (1994) state it outright — *"eliminate the
+cascade altogether … compose these individual rule transducers into a single machine"* — on
+a foundation going back to Elgot & Mezei (1965). See [`PRIOR-ART.md`](PRIOR-ART.md) §2.
+
+Apply it, with the citation. Do not spend anything on it as if it were new.
 
 ---
 
