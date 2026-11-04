@@ -46,7 +46,7 @@ against.
 The engine's safety must not depend on how long a number is, how many operators a table has,
 how large a grammar is, or whether a file ends in a newline.
 
-**Why.** Four of the fifteen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
+**Why.** Four of the seventeen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
 [L4](AUDIT.md#l4), [L5](AUDIT.md#l5)), with one shared cause: a size assumed rather than
 checked. One of them — L1 — is reachable from a supplier's `.dbc` file.
 
@@ -358,8 +358,9 @@ token. Do it after the shape has stopped moving and before anything is retargete
 
 ## G11 — Channels
 
-**Statement.** A grammar's output is another grammar's input. Channels stack, and the order
-of the arguments is the stack.
+**Statement.** A grammar's output is another grammar's input. Channels stack, the order of
+the arguments is the stack, and **the channels coexist** — channel *k+1* does not wait for
+channel *k* to finish.
 
 > **This architecture is published.** Abney's *Partial Parsing via Finite-State Cascades*
 > (1996) describes it exactly, down to the pass-through rule for unmatched tokens, and calls
@@ -372,9 +373,9 @@ ceps normalise.ceps.lex ears.ceps.lex model.ceps.lex door_lock.req extract.ceps 
        └─ channel 1 ─┘  └─ channel 2 ─┘ └─ channel 3 ─┘
 ```
 
-Channel 1 reads the document. Channel *k+1* reads the token stream channel *k* emitted. The
-last channel's output is the ceps the transforms see. The sentence keeps the reading it
-already has — order is composition — with one more layer in the sandwich.
+Channel 1 reads the document. Channel *k+1* reads the token stream channel *k* emits, **as
+it emits it**. The last channel's output is the ceps the transforms see. The sentence keeps
+the reading it already has — order is composition — with one more layer in the sandwich.
 
 ### Why: it buys expressiveness without buying a metacharacter
 
@@ -494,16 +495,95 @@ What it buys: channels 1 and 2 are about *English*. Channel 3 is about *your mod
 channel 3 and the same requirements produce SCXML, or a different house vocabulary, without
 touching the grammar that understands the sentences.
 
-### Four decisions this needs
+### This is a pipeline, not a sequence of passes
 
-1. **What a token is between channels.** Either the token stream — channel *k+1* sees
-   `requirement`, `{`, `id`, … — or the AST, with channel *k+1* matching tree shapes. The
-   token stream keeps **one mechanism**: the inverted default still reads, braces are
-   literals, and every channel is the same kind of object. Tree matching is more powerful but
-   is a *second* mechanism, and "a bare word is a literal" has no obvious meaning on a tree.
-   The recommendation is the token stream, with the verbosity accepted as above.
+The obvious reading of a stack is **batch**: channel 1 consumes the document and produces a
+stream, then channel 2 consumes that, and so on. That reading is wrong, and taking it costs
+both of the things the design is for.
 
-2. **The default disposition of unmatched input must invert.** Today `any => .` and
+The right reading is a CPU's execution pipeline. Channel 1 emits its first token; channel 2
+starts on it while channel 1 is still reading line 1. Every channel is live at once, each
+one a stage.
+
+**Two distinct wins follow, and they should not be conflated:**
+
+| | batch passes | coexisting stages |
+|---|---|---|
+| Memory | the whole intermediate stream at each of *N*−1 boundaries | O(window) — one bounded queue per boundary |
+| Latency to first output | every stage over the whole input | one token through *N* stages |
+| Throughput, one core | 1/Σ(stages) | 1/Σ(stages) — **unchanged** |
+| Throughput, *N* cores | 1/Σ(stages) | **1/max(stage)** |
+
+The first two rows are won by coroutines alone, single-threaded: the total work is identical,
+but nothing is ever materialised and the first result is available immediately. The third row
+is the one to be honest about — **pipelining buys no throughput on one core**, because the
+work is still the sum of the stages. Only genuinely concurrent stages turn that sum into a
+maximum, and then the slowest channel sets the rate.
+
+This retracts an estimate made earlier in this document's history: that a five-channel stack
+would run at a fifth of the present speed. That was batch arithmetic. In a pipeline the
+intermediate streams never exist, and on separate cores five thin channels can beat one fat
+one.
+
+### Three consequences, one of which closes an open decision
+
+**1. The inter-channel interface is forced, not chosen.** Open decision 7 asked whether
+channels should exchange token streams or ASTs. A pipeline answers it: **you cannot stream a
+tree.** An AST is complete only when its closing brace arrives, so an AST boundary is a
+barrier, and a barrier is a batch pass. A token stream is the only interface that keeps the
+stages live — which is the same answer *one mechanism, repeated* gave for entirely
+independent reasons. When the aesthetic argument and the mechanical argument agree, the
+decision is made.
+
+**2. Backtracking is branch misprediction — and the invariant that avoids it already holds.**
+If a channel emits a token and then rewinds, everything downstream has already consumed
+something that is about to be re-derived, and must be flushed. That is the one genuinely
+expensive event in a pipeline, and a flush-and-rollback protocol at every channel boundary
+would be a serious tax on a design whose selling point is thin channels.
+
+It is not needed, because **emit XOR rewind holds across the whole tree**: all 25 occurrences
+of `rewind` in the four grammars that use it are `rewind exit`, and not one of them emits. A
+rule that hands input back produces no output. *A rule firing is a commit*, and a commit
+never needs un-sending.
+
+But it holds **by habit, not by rule**. The engine accepts an action that emits *and*
+rewinds, and performs both, leaving two nodes behind for one input token
+([L17](AUDIT.md#l17)). So this is a **precondition with work attached**: make emit-XOR-rewind
+a checked invariant, rejected when the grammar is read, *before* anything depends on it. No
+grammar in the tree would change. See also [L16](AUDIT.md#l16), the neighbouring case —
+`rewind` without `exit`, which does not terminate at all.
+
+**3. Streaming input becomes a first-class case.** `examples/analyze_logs/log.ceps.lex` reads
+logs; today it reads a *file* of them. With coexisting channels and O(window) memory there is
+no reason the input must end. A log stream, a CAN trace, a serial port — the stack runs
+continuously and the last channel emits model updates as it recognises them. That is a
+different product from a batch importer, and it falls out of the mechanism rather than being
+added to it.
+
+### Where the CPU analogy stops
+
+A CPU pipeline has fixed-length stages and a clock. Channels have neither: one may consume
+ten tokens to emit one, the next may emit three for every one it reads, and the ratios vary
+with the input.
+
+So the implementable form is a **dataflow network with bounded queues**, not a clocked
+pipeline — each channel a coroutine reading an upstream queue and writing a downstream one,
+blocking when its output queue is full. Queue depth becomes a real design parameter: too
+shallow and the stages stall against each other, too deep and the memory win evaporates. It
+is the one number this design cannot derive from first principles, and will have to measure.
+
+[`PRIOR-ART.md`](PRIOR-ART.md) holds the nearest published relative. **Mohri 1997** composes
+transducer cascades on the fly, and has been in production since 1996 — but it lazily expands
+a single *fused* transducer rather than running *N* concurrent stages. Whether N live stages
+beat one lazy fused one is genuinely open, and is the most research-shaped question in this
+document.
+
+### Three decisions this still needs
+
+The fourth — what a token is between channels — is closed above: a pipeline cannot carry a
+tree, so the interface is the token stream.
+
+1. **The default disposition of unmatched input must invert.** Today `any => .` and
    `%skip_unmatched_tokens` both discard. A channel must **pass unmatched tokens through
    unchanged**, or channel 1 destroys the document before channel 2 can see it.
 
@@ -515,21 +595,33 @@ touching the grammar that understands the sentences.
    (raising coverage) are the same stream, differing only in what the next channel chooses to
    look at. One mechanism, repeated — which is the test in *The yardstick*.
 
-3. **Termination.** A finite stack terminates by construction: **the stack is the proof.**
+2. **Termination.** A finite stack terminates by construction: **the stack is the proof.**
    This is why channels are the right form of the idea and the header comment's self-re-feed
    ([L7](AUDIT.md#l7)) is the wrong one — under a fixed point over the *same* rule set,
    `a => a a .` diverges and nothing in the engine would stop it. A channel stack is also
-   inspectable: you can dump the stream between channel 2 and channel 3, which you can never
-   do inside a fixed-point loop.
+   inspectable: you can tap the stream between channel 2 and channel 3, which you can never
+   do inside a fixed-point loop. In a pipeline that tap is a live view rather than a dump.
 
-4. **Provenance must survive a rewrite.** If channel 1 turns line 7 into tokens and channel 3
+   Termination *within* a single channel is a separate matter, and is not guaranteed today —
+   see [L16](AUDIT.md#l16).
+
+3. **Provenance must survive a rewrite.** If channel 1 turns line 7 into tokens and channel 3
    rejects them, the engineer needs *`door_lock.req`, line 7, REQ-001*. Position has to
    travel with the token through every rewrite, or traceability — the thing the INCOSE
    example sells — dies at channel 1.
 
+   A pipeline makes this harder rather than easier: there is no moment at which a whole
+   intermediate stream exists to be re-scanned for positions, so position must ride **on the
+   token** or be lost. Deciding this late would be expensive, because it is a change to the
+   token representation that every channel sees.
+
 **Met when.**
 
 - Several `.ceps.lex` arguments form a stack, and order is the composition.
+- The channels run concurrently: no intermediate stream is ever fully materialised, and the
+  first output appears before the input has been fully read.
+- Peak memory is independent of input length, demonstrated on an input that does not end.
+- Emit-XOR-rewind is enforced when a grammar is read, so no channel boundary needs a flush.
 - `ears.ceps.lex` carries no per-synonym duplication, and modal and spelling variation is
   handled by a normalisation channel of a few readable lines.
 - A channel can be replaced without touching its neighbours, demonstrated by retargeting
@@ -685,13 +777,20 @@ Each of these blocks a goal and should be settled before the stage that needs it
 6. **Blank lines** ([L11](AUDIT.md#l11)) — `get()` collapses runs of newlines, so a paragraph
    break is invisible. Keep as a named pragma, or make it visible. Requirements documents use
    blank lines structurally.
-7. **What flows between channels** (G11) — token stream or AST. The token stream keeps one
-   mechanism and keeps the inverted default meaningful; tree matching is more powerful and is
-   a second mechanism. Recommended: token stream. Not settled.
+7. ~~**What flows between channels** (G11) — token stream or AST.~~ **Settled: the token
+   stream.** Not by preference but by construction — channels coexist, and an AST boundary is
+   a barrier, so a tree interface would silently turn the pipeline back into batch passes.
+   See *This is a pipeline, not a sequence of passes* in [G11](#g11--channels). Kept here
+   with its resolution rather than deleted, because the *reason* is the useful part.
 8. **The default disposition of unmatched tokens in a channel** (G11) — today it is discard,
    via `any => .` and `%skip_unmatched_tokens`. Channels need pass-through, and pass-through
    is what makes channels subsume the remainder pipeline. Whether the default inverts
    globally or only for non-final channels is the question.
+9. **The concurrency model between channels** (G11) — coroutines on one thread, or a thread
+   per channel. Coroutines buy the memory and latency properties and are far simpler;
+   only threads convert Σ(stages) into max(stage). The honest order is coroutines first,
+   threads only if a measurement asks for them. Queue depth is the attached parameter and
+   is the one number in this design that cannot be derived, only measured.
 
 ---
 
@@ -704,13 +803,13 @@ that change no visible behaviour come first.
 |---|---|---|
 | 1 | **G1** — safety | Pure containment, no behaviour change. Everything after this is edited in a file that cannot corrupt memory while you experiment. |
 | 2 | **G9** — the corpus | Must precede every behavioural change, or there is no way to know a change was behavioural. Built under sanitizers, so it also enforces stage 1. |
-| 3 | **G2** — positions and messages | Gives G3 and G5 somewhere to report *to*. Nothing downstream is pleasant without it. |
+| 3 | **G2** — positions and messages | Gives G3 and G5 somewhere to report *to*. Nothing downstream is pleasant without it. It also unlocks the two cheapest fixes in the audit: [L16](AUDIT.md#l16) and [L17](AUDIT.md#l17) are rules the engine can prove wrong when it reads them, and both need a position to report. |
 | 4 | **G5** — text | Highest-severity finding. Needs G2 to report malformed input; needs G9 to prove the ASCII path did not move. |
 | 5 | **G8** — the decision | Settle it before G4, because a cut would remove `$N`'s only competitor for the `$` sigil and may change what naming should look like. |
 | 6 | **G4** — named holes | The user-visible improvement. Cheap once G2 exists, since the diagnostics it needs are already there. |
 | 7 | **G3** — partiality | Needs G2 to report *where*. Promoted from "nice capability" to precondition by G11: a channel stack without per-channel remainder fails in channel 1 and presents as silence in channel 3. |
 | 8 | **G10**, [L12](AUDIT.md#l12) | Allocation and dead weight, once the shape has stopped moving — and before G12, because compiling a per-token allocator freezes it. |
-| 9 | **G11** — channels | The capability that makes the component worth more than it costs. Last of the language stages because it consumes G2, G3 and G4 and is not safe to attempt without them. |
+| 9 | **G11** — channels | The capability that makes the component worth more than it costs. Last of the language stages because it consumes G2, G3 and G4 and is not safe to attempt without them — and because it rests on emit-XOR-rewind ([L17](AUDIT.md#l17)), which must be an enforced invariant before a pipeline leans on it, not after. |
 | 10 | **G12** — compilation target | Only retarget an algorithm you are happy with. Everything above is what makes it one. |
 
 **G6 and G7 are not stages.** G6 runs at every stage as a veto. G7 is the obligation attached

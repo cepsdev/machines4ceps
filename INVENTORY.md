@@ -120,7 +120,7 @@ Seven lexer specifications exist:
 | `examples/incose/hello_world/ears.ceps.lex` | 108 | INCOSE/EARS requirement sentences |
 
 The engine behind them, `core/include/transform/streamtransform.hpp`, has been audited in
-full: [`doc/lexer-engine/AUDIT.md`](doc/lexer-engine/AUDIT.md) records fifteen findings
+full: [`doc/lexer-engine/AUDIT.md`](doc/lexer-engine/AUDIT.md) records seventeen findings
 (two Critical, four of them memory safety),
 [`doc/lexer-engine/GOALS.md`](doc/lexer-engine/GOALS.md) states the goals for the rework
 they feed into, and [`doc/lexer-engine/PRIOR-ART.md`](doc/lexer-engine/PRIOR-ART.md) records

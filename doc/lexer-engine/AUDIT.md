@@ -10,7 +10,7 @@ outside the import scripts it was built for.
 
 Every entry below was reproduced against `bin/ceps`, version 0.8.1.3.3, Nov 4 2026 build,
 on Linux. Line numbers refer to the working tree at the time of writing. Findings are
-numbered `L1`…`L13` to keep them separate from `DEFECTS.md`, which records defects of the
+numbered `L1`…`L17` to keep them separate from `DEFECTS.md`, which records defects of the
 ceps language and runtime; this document records defects of one component, and is kept
 apart because the component is about to be reworked rather than patched.
 
@@ -30,6 +30,8 @@ is not restated here.
 | [L8](#l8) | Medium | Silence | An unrecognised `%pragma` is accepted and ignored without a word |
 | [L9](#l9) | Medium | Performance | The matcher heap-allocates once per token scanned |
 | [L10](#l10) | Medium | Silence | Input the grammar does not cover has no reportable outcome — three exits, no diagnostic in any of them |
+| [L16](#l16) | Medium | Termination | `rewind` without `exit` cannot progress; the engine loops silently, accumulating memory at ~60 MB/s, and never reports anything |
+| [L17](#l17) | Medium | Correctness | An action may both emit and `rewind`, and **both take effect** — one input token leaves two nodes behind. Latent today, and the precondition [G11](GOALS.md#g11--channels) depends on |
 | [L11](#l11) | Low | Correctness | `strtol` for a 64-bit field, an unsigned underflow, and a signed/unsigned comparison — all correct only by accident |
 | [L12](#l12) | Low | Hygiene | Dead members, dead debug scaffolding, and POSIX headers in an otherwise portable header |
 | [L15](#l15) | Low | Documentation | A right-hand side may splice a capture into the *name* of the node it emits; this is in production use and written down nowhere |
@@ -37,8 +39,8 @@ is not restated here.
 
 ## Triage
 
-**The same diagnosis as `DEFECTS.md`.** Seven of the fifteen produce a plausible answer and
-exit 0 — L2, L7, L8, L10, L11, L14, and D25. The one that matters most is **L2**: it does not
+**The same diagnosis as `DEFECTS.md`.** Eight of the seventeen produce a plausible answer and
+exit 0 — L2, L7, L8, L10, L11, L14, L17, and D25. The one that matters most is **L2**: it does not
 fail, it answers *confidently and wrongly*, and it does so on the exact document a European
 OEM would hand you. By the yardstick `DEFECTS.md` already applies — a silent wrong answer is
 worse than a crash — L2 is the most serious finding in this file, ahead of L1.
@@ -725,7 +727,139 @@ needs to be legible as splicing rather than as a child.
 
 ---
 
-## What is right
+## <a name="l16"></a>L16 — `rewind` without `exit` cannot progress, and loops in silence
+
+**Severity: Medium. Kind: termination.**
+
+`rewind` returns the matched input to the stream; `exit` leaves the layer. Every `rewind` in
+every grammar in the tree is written `rewind exit`, and nothing in the documentation says
+why. The reason is that the other spelling does not terminate.
+
+### Reproduction
+
+```
+%ext_probe
+%ignore_ws
+%%
+BEGIN{
+ a => marker{1;}; rewind .
+ any => .
+}
+%%
+```
+
+on an input file containing `a`. The rule matches, emits, hands `a` back to the stream, and
+the same layer matches `a` again — forever. Nothing is printed, no diagnostic is issued, and
+the process does not stop.
+
+It does not merely spin, either. Sampling `VmRSS` of the live process:
+
+```
+t=1s  VmRSS:    94712 kB
+t=2s  VmRSS:   154076 kB
+t=3s  VmRSS:   216148 kB
+t=4s  VmRSS:   515616 kB
+```
+
+Roughly 60 MB/s of accumulated output that is never flushed, because the run never reaches
+the point where it would be. A grammar of six lines will exhaust the machine.
+
+### Why Medium and not High
+
+It is reachable from a **grammar**, not from an input document, so the blast radius stops at
+the person writing the grammar — unlike [L1](#l1) and [L2](#l2), which travel with the data.
+A hang also announces itself, which puts it outside the silent-wrong-answer class that
+`DEFECTS.md` rates worst.
+
+It is still in the silent class in the sense that matters here: the engine has everything it
+needs to know this rule cannot make progress, and says nothing — not at load time, when the
+rule is parsed, and not at run time, when the same offset comes round a second time.
+
+### Suggested direction
+
+**Static.** A rule whose action contains `rewind` but neither `exit` nor a side-effect
+assignment cannot change anything about the next round, and is therefore a non-terminating
+rule by construction. Reject it when the rule is read, with its position
+([L6](#l6) is the precondition).
+
+The side-effect carve-out is necessary rather than cautious: `read_id_list` in
+`dbc.ceps.lex:33-37` rewinds under a guard that a sibling rule sets, so "rewind without exit"
+is only *certainly* a loop when nothing else can change.
+
+**Dynamic backstop.** If the matcher arrives at the same (offset, layer, guard state) triple
+twice, it cannot escape, and it can say so and name the rule. This is the same termination
+argument [G11](GOALS.md#g11--channels) makes for a finite channel stack, applied one level
+further down.
+
+---
+
+## <a name="l17"></a>L17 — An action may both emit and rewind, and both take effect
+
+**Severity: Medium. Kind: correctness, latent.**
+
+There are 25 occurrences of `rewind` across the four grammars that use it — nine distinct
+rules in `dbc.ceps.lex`, replicated in three near-copies, plus one in `gherkin.ceps.lex`.
+**Every one of them is `rewind exit` with nothing emitted.** The uniformity invites the
+reading that the engine enforces it.
+
+It does not. The engine accepts an action that emits *and* rewinds, and performs both.
+
+### Reproduction
+
+```
+%ext_probe
+%ignore_ws
+%%
+lexer sub{
+ b => inner{1;}; rewind exit .
+}
+BEGIN{
+ a => call sub .
+ b => outer{2;}; .
+ any => .
+}
+%%
+```
+
+on the input `a b`:
+
+```
+(STRUCT "inner" (INT 1))
+(STRUCT "outer" (INT 2))
+```
+
+One input token, two output nodes. `sub` matched `b`, emitted `inner`, then returned `b` to
+the stream; `BEGIN` re-read the same token and emitted `outer`. Exit 0, no diagnostic.
+
+Ordering within the action is irrelevant — `rewind inner{1;}; exit` behaves identically — so
+this is not a sequencing subtlety. Emission and rewind are simply independent effects that
+the engine never checks against each other.
+
+### Why it is listed although nothing in the tree does it
+
+Two reasons.
+
+First, it is the silent class in its purest form: the output is *plausible*. A duplicated
+node in a large import does not look like a fault, it looks like the input had two of
+something.
+
+Second, and the reason it is worth a number: **this is the invariant the pipelined channel
+stack in [G11](GOALS.md#g11--channels) rests on.** A rule that emits and then rewinds has
+already sent something downstream that it is about to re-derive. In a batch pass that is a
+duplicate; in a pipeline where the next channel is already consuming, it is a branch
+misprediction, and recovering from it requires every channel boundary to carry a flush and
+rollback protocol.
+
+Because `rewind exit` with no emission holds everywhere today, that protocol is not needed —
+a rule firing is a commit. But it holds by habit, and G11 would be building on it. It should
+be made a checked invariant *before* anything depends on it, not after.
+
+### Suggested direction
+
+Reject at load time any rule whose action both emits and rewinds. This costs nothing: no
+grammar in the tree would change, and the error message writes itself.
+
+
 
 Worth recording, because a rework can lose it by accident.
 
@@ -750,6 +884,12 @@ INCOSE prototype landed, and it costs four lines.
 `rewind_state_` carried on the rule, is one mechanism applied uniformly: a sub-language runs
 until it stops recognising, then returns the input to its caller untouched. `dbc.ceps.lex`
 is built almost entirely out of that single move.
+
+That "untouched" is doing more work than it looks. Across all 25 uses of `rewind` in the
+tree, a rule that gives input back emits nothing — *a rule firing is a commit*. It is the
+property that makes backtracking cheap here, and the one that would make a channel pipeline
+flush-free. It is also, per [L17](#l17), unenforced: the engine will happily do both. Worth
+promoting from habit to invariant before [G11](GOALS.md#g11--channels) leans on it.
 
 **Backtracking is a value copy.** `state_t` is `std::pair<intmax_t,intmax_t>`;
 `get_state()`/`read_state()` are assignment. No machinery, no ownership question, no cost.
