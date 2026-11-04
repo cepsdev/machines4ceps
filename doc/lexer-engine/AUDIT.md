@@ -10,7 +10,7 @@ outside the import scripts it was built for.
 
 Every entry below was reproduced against `bin/ceps`, version 0.8.1.3.3, Nov 4 2026 build,
 on Linux. Line numbers refer to the working tree at the time of writing. Findings are
-numbered `L1`…`L17` to keep them separate from `DEFECTS.md`, which records defects of the
+numbered `L1`…`L18` to keep them separate from `DEFECTS.md`, which records defects of the
 ceps language and runtime; this document records defects of one component, and is kept
 apart because the component is about to be reworked rather than patched.
 
@@ -32,6 +32,7 @@ is not restated here.
 | [L10](#l10) | Medium | Silence | Input the grammar does not cover has no reportable outcome — three exits, no diagnostic in any of them |
 | [L16](#l16) | Medium | Termination | `rewind` without `exit` cannot progress; the engine loops silently, accumulating memory at ~60 MB/s, and never reports anything |
 | [L17](#l17) | Medium | Correctness | An action may both emit and `rewind`, and **both take effect** — one input token leaves two nodes behind. Latent today, and the precondition [G11](GOALS.md#g11--channels) depends on |
+| [L18](#l18) | Medium | Memory safety | `call` pushes a real stack, and nothing bounds it: past `max_env_stacking_` = 4096 the engine indexes a vector out of range and segfaults. Latent — no grammar in the tree recurses |
 | [L11](#l11) | Low | Correctness | `strtol` for a 64-bit field, an unsigned underflow, and a signed/unsigned comparison — all correct only by accident |
 | [L12](#l12) | Low | Hygiene | Dead members, dead debug scaffolding, and POSIX headers in an otherwise portable header |
 | [L15](#l15) | Low | Documentation | A right-hand side may splice a capture into the *name* of the node it emits; this is in production use and written down nowhere |
@@ -39,17 +40,18 @@ is not restated here.
 
 ## Triage
 
-**The same diagnosis as `DEFECTS.md`.** Eight of the seventeen produce a plausible answer and
+**The same diagnosis as `DEFECTS.md`.** Eight of the eighteen produce a plausible answer and
 exit 0 — L2, L7, L8, L10, L11, L14, L17, and D25. The one that matters most is **L2**: it does not
 fail, it answers *confidently and wrongly*, and it does so on the exact document a European
 OEM would hand you. By the yardstick `DEFECTS.md` already applies — a silent wrong answer is
 worse than a crash — L2 is the most serious finding in this file, ahead of L1.
 
-**The memory-safety cluster (L1, L3, L4, L5) has one shared cause**: a size is assumed
-rather than checked. Four different fixed bounds, four different ways past them. L1 is rated
+**The memory-safety cluster (L1, L3, L4, L5, L18) has one shared cause**: a size is assumed
+rather than checked. Five different fixed bounds, five different ways past them. L1 is rated
 Critical rather than High because its failure is *not* guaranteed to be a crash — glibc's
 fortification caught it here; the same write without fortification is silent corruption —
 and because it is reachable from input data rather than from a grammar the user wrote.
+L18 is the mildest of the five only because nothing in the tree recurses yet.
 
 **L6 and L7 are the two that cost a newcomer the most**, and neither is hard. The position
 information L6 wants already exists and is simply not used.
@@ -786,10 +788,18 @@ The side-effect carve-out is necessary rather than cautious: `read_id_list` in
 `dbc.ceps.lex:33-37` rewinds under a guard that a sibling rule sets, so "rewind without exit"
 is only *certainly* a loop when nothing else can change.
 
-**Dynamic backstop.** If the matcher arrives at the same (offset, layer, guard state) triple
-twice, it cannot escape, and it can say so and name the rule. This is the same termination
-argument [G11](GOALS.md#g11--channels) makes for a finite channel stack, applied one level
-further down.
+**Dynamic backstop.** If the matcher arrives at the same machine state twice with the input
+at the same offset, it cannot escape, and it can say so and name the rule.
+
+**"Machine state" must include the call depth.** An earlier draft of this entry proposed the
+triple (offset, layer, guard state), which is **wrong**: `call` pushes a real stack
+([L18](#l18), and *What this component actually is* below), so the same triple legitimately
+recurs at different depths in a correct recursive grammar. A backstop that ignored depth
+would abort valid work. The state is (offset, layer, guard bindings, **call depth**).
+
+Even then the check is a backstop and not a decision procedure — it catches a loop once the
+machine repeats itself, which is sound, but it is not a static guarantee of termination. With
+a stack in the machine, there is no cheap complete one.
 
 ---
 
@@ -859,7 +869,174 @@ be made a checked invariant *before* anything depends on it, not after.
 Reject at load time any rule whose action both emits and rewinds. This costs nothing: no
 grammar in the tree would change, and the error message writes itself.
 
+---
 
+## <a name="l18"></a>L18 — Recursion depth is unchecked, and overruns a fixed vector
+
+**Severity: Medium. Kind: memory safety. Latent — no grammar in the tree recurses.**
+
+`call` pushes a real stack (see *What this component actually is*). The stack is
+`std::vector<lex_env> lex_envs_`, sized **once** to `max_env_stacking_ = 4096`
+(`:1364-1371`) and thereafter indexed with `operator[]` by a counter that nothing bounds:
+
+```cpp
+ size_t max_env_stacking_ = 4096;
+ ...
+   lex_envs_.resize(max_env_stacking_);
+ ...
+   auto tt = cur_env_++;              // :1452 — no check against max_env_stacking_
+   bool r = gettoken(t,l_id);         // :1455 — and gettoken recurses in C++ too
+   ...
+   lex_envs_[cur_env_+1] = lex_env(); // :1463 — heap write past the end
+```
+
+This is the fifth member of the memory-safety cluster, with the same shared cause as
+[L1](#l1), [L3](#l3), [L4](#l4) and [L5](#l5): *a size assumed rather than checked*.
+
+### Reproduction
+
+A grammar whose sub-lexer recurses once per input token:
+
+```
+%ext_probe
+%ignore_ws
+%%
+lexer rec{
+ a => A{1;}; call rec .
+ else => rewind exit .
+}
+BEGIN{
+ start => call rec .
+ any => .
+}
+%%
+```
+
+The depth is then set by **the input document**, and the boundary falls exactly where
+`max_env_stacking_` says it should:
+
+| input | result |
+|---|---|
+| `start` + 4000 × `a` | exit 0, 4000 `A` nodes |
+| `start` + 4090 × `a` | exit 0, 4090 `A` nodes |
+| `start` + 4200 × `a` | **SIGSEGV**, no output, no diagnostic |
+| `start` + 6000 × `a` | **SIGSEGV** |
+
+A grammar that recurses *without* consuming input faults immediately, and does so whatever
+`ulimit -s` is set to — the fault is the vector, not the thread stack:
+
+```
+lexer rec{ else => call rec . }
+```
+
+### Why Medium, and the circumstance that raises it
+
+**No grammar in the tree recurses.** Both call graphs are acyclic and shallow:
+
+```
+gherkin:  BEGIN -> read_descr
+          BEGIN -> read_scenario -> {read_given, read_given_and, read_when, read_then}
+dbc:      BEGIN -> {skip_ns_enumeration, read_value_description_mapping, read_sender_list}
+          BEGIN -> read_signals -> read_signal -> {signedness, factor_offset, min_max,
+                                                   unit, read_id_list}
+```
+
+Maximum depth four, against a ceiling of 4096. Nothing shipped is near it, which is why this
+is Medium rather than High.
+
+It becomes High the moment anyone uses recursion for the thing recursion is for — nesting.
+A grammar over brackets, JSON, XML or nested blocks recurses once per level, and at that
+point **the depth is a property of the input document** rather than of the grammar. 4096 is
+not a comfortable distance from a generated file, and the failure mode is a segfault with
+nothing printed.
+
+### Suggested direction
+
+Test `cur_env_` against `max_env_stacking_` before the increment, and report *grammar
+recursed deeper than N, in lexer X* — which needs [L6](#l6)'s positions to be worth reading.
+Making the limit configurable is secondary; reporting it at all is the fix.
+
+`gettoken` also recurses in C++ at `:1455`, so the host stack is a second and softer ceiling.
+Bounding `cur_env_` bounds both.
+
+---
+
+## What this component actually is
+
+The name is wrong, and the name has cost something.
+
+**It is not a lexer.** A lexer is a finite-state machine — that is what the word means, and
+it is the property everything else assumes. This engine has a stack. `call` does not jump,
+it *pushes*, and the action resumes where it left off when the callee returns:
+
+```
+lexer rec{
+ a => down{1;}; call rec up{1;}; .
+ else => rewind exit .
+}
+```
+
+On `start a a a` this emits
+
+```
+down down down up up up
+```
+
+and not `down up down up down up`. The `up` nodes unwind in LIFO order, which is a stack and
+nothing else. No finite-state machine produces that bracketing for arbitrary *n*, so the
+engine is **strictly beyond regular** — demonstrated rather than argued.
+
+**It is not Turing complete either**, and it is worth being exact about why, because guards
+and recursion together look as though they ought to be enough. Three things block it:
+
+1. **No arithmetic.** The side-effect sublanguage ([L13](#l13)) has exactly `ASSIGN`, `OR`,
+   `AND`, `NOT`, `EQ`, `NEQ`, `GT`, `LT`, `IF`, `ELSE`, `RETURN`, `MATCH_REF` and
+   `CLEAR_SYMBOLS` — comparison and boolean logic, no `+`, no increment. A Minsky counter
+   machine needs two counters with increment, decrement and test-for-zero, and there is no
+   construction for a counter here: `symbols` is a `std::map<string,Token>`, so finitely many
+   names each holding **one** token, and no operation grows a value.
+2. **No feedback.** Output never re-enters the input — the engine is single-pass, proved
+   under [L7](#l7). A rewriting system that cannot read what it wrote cannot iterate on its
+   own output, and it is exactly that loop which makes semi-Thue systems universal.
+3. **The stack is bounded regardless** — 4096, per [L18](#l18). A pushdown automaton with a
+   fixed stack bound is formally a finite automaton again.
+
+The honest classification is therefore **a pushdown machine with finitely many registers over
+an unbounded token domain, running in a single pass**: above regular, below Turing complete.
+Exactly where it sits in between is not something this audit pins down.
+
+### The part that is genuinely interesting
+
+The engine that is *documented* **would** be Turing complete. The header comment
+([L7](#l7)) specifies a fixed point — rewrite, feed the output back, start again. Add that
+one edge and the machine becomes a general rewriting system, with everything that implies,
+including undecidable termination.
+
+So the component sits between two wrong descriptions, and they are wrong in opposite
+directions. **The name says regular. The documentation says universal. The code is neither.**
+
+### Why this is more than a label
+
+Three findings in this file are plausibly *downstream of the name*:
+
+- Lexers always terminate, so nothing checks termination — [L16](#l16).
+- Lexers do not recurse, so nothing bounds the recursion — [L18](#l18).
+- Lexers are regular, so the stack is written down nowhere — and nor is [L15](#l15)'s
+  splicing, nor [L14](#l14)'s guard separator.
+
+Calling a pushdown rewriting machine a lexer sets the expectation that none of those
+questions need asking. The implementation already knows better: the file is
+`transform/streamtransform.hpp`, in a directory called `transform`, and *stream transform* is
+very nearly the right name. Only the surface — `.ceps.lex`, `lexer NAME{…}` — still says
+otherwise.
+
+Renaming is neither urgent nor free: `.ceps.lex` appears in seven grammars and their run
+scripts. It is recorded here as a decision to take deliberately rather than a wart to live
+with, and is filed as an open decision in [`GOALS.md`](GOALS.md).
+
+---
+
+## What is right
 
 Worth recording, because a rework can lose it by accident.
 

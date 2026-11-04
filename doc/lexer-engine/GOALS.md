@@ -44,11 +44,11 @@ against.
 
 **Statement.** No document, and no grammar, can cause a read or write outside an allocation.
 The engine's safety must not depend on how long a number is, how many operators a table has,
-how large a grammar is, or whether a file ends in a newline.
+how large a grammar is, how deeply a grammar recurses, or whether a file ends in a newline.
 
-**Why.** Four of the seventeen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
-[L4](AUDIT.md#l4), [L5](AUDIT.md#l5)), with one shared cause: a size assumed rather than
-checked. One of them — L1 — is reachable from a supplier's `.dbc` file.
+**Why.** Five of the eighteen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
+[L4](AUDIT.md#l4), [L5](AUDIT.md#l5), [L18](AUDIT.md#l18)), with one shared cause: a size
+assumed rather than checked. One of them — L1 — is reachable from a supplier's `.dbc` file.
 
 **Met when.**
 
@@ -58,6 +58,9 @@ checked. One of them — L1 — is reachable from a supplier's `.dbc` file.
   refusing produces a diagnostic rather than a corruption.
 - The input buffer carries a sentinel byte, and every scanning loop tests its bound before it
   dereferences.
+- Exceeding the layer-stack ceiling is reported and names the recursing lexer, rather than
+  indexing `lex_envs_` out of range ([L18](AUDIT.md#l18)). Depth is input-driven in any
+  grammar that recurses, so this is a bound on data, not on the grammar author.
 - A fuzz corpus — random bytes, truncated files, very long tokens, deeply nested layers —
   runs to completion with no sanitizer report. `-fsanitize=address,undefined` on the test
   corpus is the practical form of this.
@@ -791,6 +794,22 @@ Each of these blocks a goal and should be settled before the stage that needs it
    only threads convert Σ(stages) into max(stage). The honest order is coroutines first,
    threads only if a measurement asks for them. Queue depth is the attached parameter and
    is the one number in this design that cannot be derived, only measured.
+10. **What the component is called.** It is not a lexer: `call` pushes a real stack, and the
+    engine is demonstrably beyond regular — see *What this component actually is* in
+    [`AUDIT.md`](AUDIT.md). The implementation is already named correctly
+    (`transform/streamtransform.hpp`); only the surface says `.ceps.lex` and `lexer NAME{…}`.
+
+    The cost of the current name is not aesthetic. A lexer is expected to terminate, not to
+    recurse, and to be regular — which is why nothing checks termination
+    ([L16](AUDIT.md#l16)), nothing bounds the recursion ([L18](AUDIT.md#l18)), and the stack
+    is documented nowhere. The name shaped what nobody thought to ask.
+
+    The options are to rename the surface (seven grammars and their run scripts change, plus
+    `%ext_*` handling), to keep `.ceps.lex` as an alias and introduce the real name alongside
+    it, or to keep the name and *document* what it actually is. The third is free and should
+    happen regardless; it is already done in AUDIT.md. Whether to go further is open, and is
+    worth settling before G11 — because *channel* only reads naturally if the thing being
+    stacked has an honest name.
 
 ---
 
