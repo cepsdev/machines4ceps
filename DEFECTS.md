@@ -6,9 +6,11 @@ Defects found while auditing `core/` and `vm/`, while specifying `c{}`
 against ceps outside this repository, for [D18](#d18)–[D20](#d20) while checking
 whether model stacking satisfies an incrementality law, and for [D22](#d22)–[D23](#d23)
 while writing the worked example in `doc/scribble-concept/README.md`, and for
-[D24](#d24) while reading the Oblectamenta serializer generator. Every entry below
-was reproduced against `bin/ceps`, version 0.8.1.3.3, on Linux — D1–D21 against the
-Aug 27 2026 build, D22–D24 against the Oct 9 2026 build of the same version string.
+[D24](#d24) while reading the Oblectamenta serializer generator, and for [D25](#d25)
+while documenting a `.ceps.lex` grammar in `examples/incose/hello_world`. Every entry
+below was reproduced against `bin/ceps`, version 0.8.1.3.3, on Linux — D1–D21 against the
+Aug 27 2026 build, D22–D24 against the Oct 9 2026 build of the same version string, D25
+against the Nov 4 2026 build.
 
 Line numbers refer to the working tree at the time of writing.
 
@@ -38,6 +40,7 @@ Line numbers refer to the working tree at the time of writing.
 | [D22](#d22) | High | Printer | `--pe`/`--ppe` print a macro as a raw heap address and omit its body, so two runs of one input produce two different documents |
 | [D23](#d23) | Medium | Evaluator | A macro used as `name;` instead of `name();` is silently not expanded and reaches the output as a bare identifier; exit 0 |
 | [D24](#d24) | Medium | VM | The serializer generator names opcodes by string literal, bypassing the compile-time checking that `emit<Opcode::X>` provides to every other emitter |
+| [D25](#d25) | High | Transform | `$N` in a `.ceps.lex` action is positional and unchecked — a miscount binds the wrong token and an out-of-range index yields an empty node, both at exit 0 |
 
 D13–D16 were found by the sweep and are regressions against material that is still in the
 tree as tests and examples. D14 is rated Critical because it disables the mechanism ceps
@@ -45,21 +48,21 @@ uses to check itself, and because one half of it fails silently green.
 
 ## Triage
 
-Severity says how bad a defect is. It does not say what it holds up. At twenty-four
+Severity says how bad a defect is. It does not say what it holds up. At twenty-five
 entries that distinction is the one that matters, so it is drawn here.
 
 ### One diagnosis, repeated
 
-**Fourteen of the twenty-four are the same failure mode**: a plausible answer with exit
+**Fifteen of the twenty-five are the same failure mode**: a plausible answer with exit
 code 0 and nothing said about what was skipped — D1, D3, D6, D7, D8, D12, D14, D15, D17,
-D18, D19, D21, D22, D23. **Both remaining Critical defects — D14 and D17 — are in that
+D18, D19, D21, D22, D23, D25. **Both remaining Critical defects — D14 and D17 — are in that
 class.** The two SIGSEGVs are merely High; a crash is the easy kind. (D18 was a third
 Critical until 2026-10-09, when it turned out to be narrower than filed; it stays in the
 silent class. D24 is deliberately outside it: it throws, and names the offending
 mnemonic. The class is a finding, not a framing — entries are admitted to it on evidence.)
 
 This is worth stating plainly because it changes what the list is. It is not an
-assortment of unrelated faults, it is one property of the system observed from fourteen
+assortment of unrelated faults, it is one property of the system observed from fifteen
 angles: *ceps conceals what it did not do.* Which is the exact behaviour
 `POSITIONING.md` argues the language exists to prevent. Fixing them one at a time treats
 the symptoms; the shared fix is a representable third outcome.
@@ -73,6 +76,7 @@ first regardless of severity.
 |---|---|
 | [D18](#d18) | **Re-scoped 2026-10-09**, twice. The canonical example *does* reproduce (with `.at(0)`), so it no longer blocks the examples. But the real defect it uncovered — appending silently breaks readers — is the paper's own thesis reproduced inside the evaluator, and fixing it buys a sentence the paper wants. |
 | [D17](#d17) | Silent wrong answers in exactly the transformations the language is being proposed for. **Broadened 2026-10-09**: it is not confined to bindings — a *node* named after a unit is unreachable even by an explicit `root.` path, and returns empty rather than erroring. It also corrupted a probe in this file, which is the sharpest evidence of its reach. |
+| [D25](#d25) | **Filed 2026-11-04, priority 1 on the author's own assessment.** `.ceps.lex` is the layer `POSITIONING.md` leans on — meeting the other party in their notation — and a miscounted `$N` silently extracts the wrong field there, binding a keyword that is itself a valid identifier. The left-hand side of a rule is readable by the domain expert; the right-hand side is an offset calculation against it that nobody can check. Named holes remove the error class instead of reporting it. |
 | [D14](#d14) | A model cannot check itself; every acceptance criterion phrased as a configuration is unverifiable. |
 | [D20](#d20) | Evaluated output is not re-parsable, so "the document stays well-formed" is false, and incrementality cannot be tested. |
 | [D22](#d22) | Two runs of one input produce two different documents, and a macro's body is absent from both. Trace comparison is the proposed experiment; this breaks diffing at the source. Same fix surface as D20 — do them together. |
@@ -112,9 +116,14 @@ Real, worth fixing, holding up nothing.
    than semantics changes, they touch the same dispatch, and they are visible to anyone
    who tries the examples. D22 additionally buys a three-line regression test (`--pe`
    twice, `diff`, require identical) that guards every future printer change.
-2. **D21 next**, out of order, because generating the flag list from the parser is an
+2. **[D25](#d25) alongside it**, on the author's priority. It is independent of the
+   printer work — a change to the rewrite-rule parser, not to evaluation — so it can run
+   in parallel. Do the bounds check first: it is a comparison against `pattern_len_` at
+   rule-read time, it converts a silent empty node into a diagnostic, and it is worth
+   having whether or not named holes follow.
+3. **D21 next**, out of order, because generating the flag list from the parser is an
    afternoon and it changes what the project looks like from outside.
-3. The rest of group 2 as the implementation month allows; group 3 when touched for other
+4. The rest of group 2 as the implementation month allows; group 3 when touched for other
    reasons.
 
 ---
@@ -1961,3 +1970,148 @@ generator is not peripheral; it writes the serializers and deserializers for eve
 message the VM handles, and it is the one part of the emission layer that cannot be
 checked by reading it, because the correctness of a thousand string literals is not
 something reading establishes.
+
+---
+
+<a name="d25"></a>
+## D25. `$N` in a rewrite action is positional and unchecked, so a miscount binds the wrong token in silence
+
+**Severity:** High — silent wrong binding, well-formed output, exit 0. It is in the silent
+class. It is rated below [D17](#d17) only because it needs an authoring mistake to fire,
+where D17 strikes code that is correct as written.
+**Area:** Transform / `.ceps.lex`.
+**Files:** `core/include/transform/streamtransform.hpp:1222-1236`.
+
+In a rewrite rule the left-hand side is a token pattern and the right-hand side refers
+back to what it matched by **ordinal position**, counting from zero, punctuation included:
+
+```
+ident - integer While the ident is ident , when ident is received ,
+  the ident shall transition to the ident state \. =>
+  incose_transition{ from{$7;}; on{$10;}; to{$20;}; };
+```
+
+Nothing connects `$7` to the slot it is meant to name. The number is a count the author
+performed by hand, over a pattern long enough that performing it by hand is unreliable,
+and it is recorded nowhere that could later disagree with it.
+
+### Reproducer
+
+```
+/tmp/dollar/correct.ceps.lex          /tmp/dollar/wrong.ceps.lex
+  %ext_tst                              %ext_tst
+  %ignore_ws                            %ignore_ws
+  %%                                    %%
+  BEGIN{                                BEGIN{
+   ident is ident \. =>                  ident is ident \. =>
+     fact{ subject{$0;};                   fact{ subject{$0;};
+           object{$2;}; }; .                     object{$1;}; }; .
+   any => .                              any => .
+  }                                     }
+  %%                                    %%
+```
+
+```
+$ echo 'controller is unlocked.' > input.tst
+$ ceps correct.ceps.lex input.tst --pe
+$ ceps wrong.ceps.lex   input.tst --pe
+```
+
+### Observed
+
+```
+correct ($2)                      miscounted ($1)
+(STRUCT "fact"                    (STRUCT "fact"
+  (STRUCT "subject"                 (STRUCT "subject"
+    (ID "controller"))                (ID "controller"))
+  (STRUCT "object"                  (STRUCT "object"
+    (ID "unlocked")))                 (ID "is")))
+exit 0                            exit 0
+```
+
+The off-by-one binds the keyword `is` as the object. Note what makes this worse than an
+ordinary wrong answer: `is` is a *perfectly good identifier*, so the result is
+indistinguishable from a correct extraction by inspection of its shape. In the INCOSE
+example it would have become a state name, and the machine would have been built, run and
+traced around it.
+
+A grossly wrong index is no louder:
+
+```
+   object{$99;};    →    (STRUCT "object" )        exit 0
+```
+
+An out-of-range reference yields an **empty node**. Downstream that is an empty
+`.content()`, which is then silently skipped by exactly the mechanism filed as
+[D19](#d19).
+
+### Expected
+
+A reference to a slot the pattern does not have is a static error — the pattern length is
+known at the point the rule is read. A reference to a slot the pattern *does* have, but
+not the one the author meant, is not detectable, and that is the real defect: the notation
+makes the mistake available in the first place.
+
+### Analysis
+
+`$N` is inherited from yacc, where `$1`, `$2` refer to the symbols of a production. The
+borrowing is understandable and it is wrong here, for a reason specific to this language:
+in yacc a production has a handful of symbols, most of them nonterminals with names; in
+`.ceps.lex` a production is an entire sentence of natural language, twenty-three tokens
+long, every literal word occupying an ordinal.
+
+The asymmetry is what makes it conspicuous. The left-hand side is the best thing in the
+format — bare words are literals, so a rule is the source sentence with its variable parts
+punched out, in the original word order, and a domain expert can read it and say *no, we
+write "shall enter"*. The right-hand side then throws that away and addresses the same
+sentence by number. One half of the rule is prose and the other half is an offset
+calculation against it.
+
+The cost is paid in documentation as well as in bugs. `examples/incose/hello_world/STEP-BY-STEP.md`
+needs a twenty-three cell table (§3.2) teaching the reader to count, plus an appendix
+entry warning that `if … then` shifts every later slot by one, and both exist solely to
+service this.
+
+The parser stores the index without consulting anything
+(`streamtransform.hpp:1229-1234`):
+
+```cpp
+if (t.kind() == Token::TOK_INT64)
+{
+  t.kind() = Token::TOK_MATCH_REF;
+  if (neg) t.v.ival64_ *= -1;
+  prog_buffer_[rw_prog_buffer_free_++] = rw_opcode(true,true,-1,t);
+  ++body_len;
+}
+```
+
+### What a fix looks like
+
+Let the pattern name its own holes, and let the action use the names:
+
+```
+While the <system> is <from> , when <on> is received ,
+  the ident shall transition to the <to> state \.
+=>  incose_transition{ system{$system;}; from{$from;}; on{$on;}; to{$to;}; };
+```
+
+This is not a convenience. It removes the defect rather than diagnosing it: there is no
+longer a count to get wrong, so the off-by-one class does not exist. It also moves the
+rule *closer* to the sentence it reads, which is the property the left-hand side already
+has and the right-hand side lacks. Unnamed `ident` stays legal for slots the action does
+not use, so existing grammars keep working and the two forms can coexist.
+
+Two notes for whoever implements it:
+
+- **The sigil `$name` is already taken.** Side-effect scripts use `$ident` for their own
+  variables (`streamtransform.hpp:79-81`), so a named reference needs a distinct form, or
+  the two namespaces need to be deliberately merged.
+- **The bounds check is nearly free and worth doing anyway**, for the positional form that
+  will remain. `pattern_len_` is known on the rule (it is read back at
+  `streamtransform.hpp:1555`), so rejecting `$99` against a 4-token pattern is a
+  comparison at rule-read time, and it converts the empty-node failure above into a
+  diagnostic.
+
+Filed 2026-11-04, on the author's assessment, while documenting the grammar in
+`examples/incose/hello_world`. The left-hand side's readability is what exposed it: the
+contrast with `$7` is only visible once you notice the pattern is prose.
