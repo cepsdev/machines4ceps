@@ -25,18 +25,20 @@ is not restated here.
 | [L4](#l4) | High | Memory safety | The reader dereferences before it checks bounds, over a buffer allocated with no sentinel byte |
 | [L5](#l5) | High | Memory safety | The rule program buffer is a fixed 16384 entries, written through `operator[]` in 36 places with no check |
 | [L6](#l6) | High | Diagnostics | Grammar errors are reported as `?`, `???`, `????`, `?????`, `??????`, or as a bare token-kind integer; no error anywhere carries a line or column |
+| [L14](#l14) | High | Silence | `\|` does not reliably escape the guard separator: a rule containing it can be accepted without complaint and never fire |
 | [L7](#l7) | High | Documentation | The only documentation of the format describes an engine that does not exist: two of its functions are unimplemented, its `$N` indexing is off by one, and the algorithm it specifies re-feeds its own output, which the code does not do |
 | [L8](#l8) | Medium | Silence | An unrecognised `%pragma` is accepted and ignored without a word |
 | [L9](#l9) | Medium | Performance | The matcher heap-allocates once per token scanned |
 | [L10](#l10) | Medium | Silence | Input the grammar does not cover has no reportable outcome — three exits, no diagnostic in any of them |
 | [L11](#l11) | Low | Correctness | `strtol` for a 64-bit field, an unsigned underflow, and a signed/unsigned comparison — all correct only by accident |
 | [L12](#l12) | Low | Hygiene | Dead members, dead debug scaffolding, and POSIX headers in an otherwise portable header |
-| [L13](#l13) | — | Open question | The embedded side-effect interpreter is a second language inside the first, undocumented and unexercised |
+| [L15](#l15) | Low | Documentation | A right-hand side may splice a capture into the *name* of the node it emits; this is in production use and written down nowhere |
+| [L13](#l13) | — | Open question | The embedded side-effect interpreter is a second language inside the first, undocumented — and, on a closer reading of `dbc.ceps.lex`, load-bearing |
 
 ## Triage
 
-**The same diagnosis as `DEFECTS.md`.** Six of the thirteen produce a plausible answer and
-exit 0 — L2, L7, L8, L10, L11, and D25. The one that matters most is **L2**: it does not
+**The same diagnosis as `DEFECTS.md`.** Seven of the fifteen produce a plausible answer and
+exit 0 — L2, L7, L8, L10, L11, L14, and D25. The one that matters most is **L2**: it does not
 fail, it answers *confidently and wrongly*, and it does so on the exact document a European
 OEM would hand you. By the yardstick `DEFECTS.md` already applies — a silent wrong answer is
 worse than a crash — L2 is the most serious finding in this file, ahead of L1.
@@ -584,13 +586,142 @@ Observations, offered without a verdict:
 - `CLEAR_SYMBOLS` and `GT`/`LT` are declared; `clear_symbols` appears nowhere else in the
   tree, and the expression parser's comparison chain handles only `==` and `!=`.
 - The INCOSE grammar reached a complete working state without using any of it. The DBC
-  grammar uses guards sparingly.
+  grammar does use it, and **not decoratively** — `read_id_list`
+  (`import-scripts/dbc/dbc.ceps.lex:33-37`) is built on it:
+
+  ```
+  lexer read_id_list{
+   ident , => $0; .
+   ident | !read_id_list_end => $0; /read_id_list_end=1;/ .
+   any | read_id_list_end => rewind exit .
+  }
+  ```
+
+  Worth reading closely, because of *what* it is buying: the guard and the assignment exist
+  to terminate a **list**. The pattern language cannot say "repeat until there is no comma",
+  so the grammar builds a one-bit state machine by hand. The sublanguage is load-bearing, but
+  what it is standing in for is **iteration**, which is a far smaller feature than sixteen
+  node kinds and a symbol table.
 - It is the one part of the engine that does not fit the layering: layers stack and hand
   control back with `rewind exit`; the side-effect store is global mutable state that cuts
   across them.
 
 The question for `GOALS.md` is whether this earns its quarter of the file, given that ceps
-itself is the evaluator and the engine's job is to recognise.
+itself is the evaluator and the engine's job is to recognise. The `read_id_list` reading
+sharpens it: *cut* is not a free option, because something real would be lost. *Replace with
+iteration* may be.
+
+---
+
+## <a name="l14"></a>L14 — `|` is a guard separator, and `\|` does not reliably escape it
+
+**Severity: High. Kind: silent wrong answer.**
+
+An unescaped `|` in a pattern does not match a pipe. It **ends the pattern and begins a guard
+expression** (`:1136`):
+
+```cpp
+else if (t.kind() == Token::TOK_TOK && t.sval_ == "|")
+{   
+  expr_parser_gettoken();
+  guard_condition = parse_sideeffect_expr();
+  break;
+}
+```
+
+This is not documented anywhere — not in the header comment, not in `INVENTORY.md`. The only
+way to learn it is to read this line or to read `dbc.ceps.lex`, where both meanings appear
+**within ten lines of each other**:
+
+```
+ [ any \| any ] => min{$1;}; max{$3;};.      // line 21 — pipe meant literally
+ ident | !read_id_list_end => $0; …          // line 35 — pipe meant as a guard separator
+```
+
+So far this is a readability complaint, and a direct instance of the rule in `GOALS.md`
+*The yardstick*: a metacharacter is a character that does not mean itself, and it is paid for
+in escapes.
+
+### The escape does not work, and fails in silence
+
+```
+$ cat t.ceps.lex
+%ext_tst
+%ignore_ws
+%%
+BEGIN{
+ a \| b => hit{1;}; .
+ any => .
+}
+%%
+$ echo 'a | b' > in.tst
+$ ceps t.ceps.lex in.tst --pe
+$ echo $?
+0
+```
+
+No output. No diagnostic. Exit 0. The rule never fires.
+
+The same grammar with `\.` instead of `\|`, against `a . b`, emits `(STRUCT "hit" (INT 1))` —
+so escaping works in general, and `\|` specifically does not.
+
+### It is position-dependent, which is the part to be careful about
+
+Three results that do not sit together comfortably, all reproduced:
+
+| pattern | position in block | result |
+|---|---|---|
+| `a \| b` | first rule of `BEGIN` | **no match**, silent |
+| `any \| any ]` | first rule of `BEGIN` | **no match**, silent |
+| `any \| any ]` | second rule of `BEGIN` | matches |
+| `\|` alone | first rule of `BEGIN` | matches |
+| `[ any \| any ]` | first rule of a **named sub-lexer** (`read_signal_min_max`) | matches — the shipped DBC importer depends on this |
+
+So `\|` works when it is the first token of a pattern, and works inside the DBC sub-lexers,
+and does not work when it follows another token at the top of `BEGIN`. **The behaviour is
+reproduced; the mechanism is not established here** — the rule reader, the escape handling in
+`gettoken_local`, and the `|` branch above interact, and the author should be the one to say
+how.
+
+What can be said without reservation is the consequence: **a grammar can contain a rule that
+looks correct, is accepted without complaint, and never fires.** That is the same class as
+[L2](#l2), [L8](#l8) and [L10](#l10) — the engine answering confidently with nothing.
+
+### Related
+
+`read_sender_list` (`dbc.ceps.lex:80-83`) has neither an `else` nor a catch-all. Input that
+matches neither `any ;` nor `any ,` has no path out of the sub-lexer. See [L10](#l10).
+
+---
+
+## <a name="l15"></a>L15 — Identifier splicing is undocumented
+
+**Severity: Low. Kind: documentation.**
+
+A right-hand side may concatenate a capture onto an identifier to **construct the name of the
+node it emits**:
+
+```
+ VAL_ any ident => endl dbc_value_description_mapping$1{ sig{…}; }; endl.
+```
+
+`$1` is spliced into the identifier, not passed as a child. Confirmed firing — the shipped
+DBC import of `frames.dbc` produces a node literally named
+`dbc_value_description_mapping601`:
+
+```
+$ ceps ../common.ceps dbc.ceps.lex frames.dbc config.ceps param_import_dbc.ceps \
+    --print_evaluated_input_tree | grep -oE 'dbc_[a-z_]*[0-9]+'
+dbc_value_description_mapping601
+```
+
+`dbc_signal_comment$2` uses the same construction.
+
+This is a real feature — it is how the DBC importer keys per-message data into distinct
+nodes — and it is written down nowhere. It also complicates
+[G4](GOALS.md#g4--references-are-names-not-positions): a named hole must have a reading in
+*name position* as well as in value position, and `dbc_value_description_mapping<canid>`
+needs to be legible as splicing rather than as a child.
 
 ---
 

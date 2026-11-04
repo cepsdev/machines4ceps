@@ -44,7 +44,7 @@ against.
 The engine's safety must not depend on how long a number is, how many operators a table has,
 how large a grammar is, or whether a file ends in a newline.
 
-**Why.** Four of the thirteen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
+**Why.** Four of the fifteen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
 [L4](AUDIT.md#l4), [L5](AUDIT.md#l5)), with one shared cause: a size assumed rather than
 checked. One of them — L1 — is reachable from a supplier's `.dbc` file.
 
@@ -227,10 +227,18 @@ worked example uses two functions that do not exist, numbers its holes 1-based a
 specifies a fixed-point re-feed the engine does not perform. It has been wrong for as long as
 it has existed, because nothing could notice.
 
+And it is incomplete in ways the audit only found by reading a grammar rather than the
+engine: `|` as a guard separator ([L14](AUDIT.md#l14)) and identifier splicing
+([L15](AUDIT.md#l15)) are both in production use in `dbc.ceps.lex` and appear in no
+description of the format anywhere.
+
 **Met when.**
 
 - The header comment's invented example **and its algorithm sketch** are deleted. Both
   describe an engine that does not exist.
+- Every construct the engine accepts is described — including the ones found only by reading
+  the grammars: `|`, `\|`, `$N` in name position, `call`, `rewind exit`, and the pattern and
+  action reserved words.
 - There is one reference document for the format, and every grammar fragment in it is
   extracted from, or checked against, a file that runs.
 - A change to the engine that breaks a documented example fails the corpus.
@@ -252,13 +260,25 @@ them: a layer reaching sideways.
 
 The INCOSE grammar reached a complete working state without touching any of it.
 
+**But *cut* is not a free option.** `read_id_list` in `dbc.ceps.lex` genuinely needs it — and
+reading that rule tells you what for. The guard and the assignment are there to **terminate a
+list**: the pattern language cannot say *repeat while there is a comma*, so the grammar hand-
+builds a one-bit state machine. The sublanguage is load-bearing, but what it stands in for is
+**iteration** — a much smaller feature than sixteen node kinds, a parser and a symbol table.
+That reframes the decision: the honest comparison is not *keep versus cut*, it is *keep a
+general evaluator versus add the one construct that was missing*.
+
 **Met when** — one of the following is true and written down:
 
+- it is replaced by a repetition construct in the pattern language, which is what the one
+  real use needs; or
 - it is cut, and guards are expressed some other way (or not at all); or
 - it is reduced to guards over matched tokens with no mutable store, documented and covered by
   the corpus; or
 - it is kept whole, documented, covered, and the case for the fourth mechanism is made
-  explicitly.
+  explicitly; or
+- it is compiled rather than interpreted (G12), which removes the second *evaluator* while
+  keeping the feature.
 
 **The goal is the decision, not any particular outcome.** What is not acceptable is a quarter
 of the file whose status nobody can state.
@@ -270,16 +290,42 @@ of the file whose status nobody can state.
 **Statement.** One command runs every grammar in the tree against fixed inputs and compares
 against recorded output.
 
-**Why.** There is no executable test for this file. `test/cepslexer/` holds two grammars and
-an import script, untouched since March 2024, with **no input document, no expected output
-and no runner** — the intent existed and stalled. Meanwhile seven grammars depend on the
-engine, one of them a working DBC importer. A corpus would have caught
-[L1](AUDIT.md#l1) (128 digits), [L7](AUDIT.md#l7) (`suffix()` was never callable), `D25`'s
+**Why.** There is no *automated* test for this file, and the one thing closest to a corpus is
+not run by anything. `test/cepslexer/` holds two grammars and an import script, untouched
+since March 2024, with **no input document, no expected output and no runner** — the intent
+existed and stalled.
+
+But `import-scripts/dbc/` is further along than that, and is the obvious seed:
+
+```
+$ cd import-scripts/dbc && ./run.sh      # ceps common.ceps dbc.ceps.lex frames.dbc …
+(STRUCT "dbc_msg" (STRUCT "canid" "601" ) … )
+$ echo $?
+0
+```
+
+A 114-line grammar with ten sub-lexers, a 48-line input, and a runner — it works today.
+What it lacks is an *expected* output to compare against, which is the whole of the gap.
+
+**And it already shows why the gap matters.** Of the eleven rules in that grammar's `BEGIN`
+block, `frames.dbc` exercises six. The five that never fire include
+
+```
+ BA_DEF_DEF "GenMsgCycleTime" integer ; => dbc_default_cycle{$2} .
+```
+
+— which is missing the `;` that every sibling rule has inside its braces. Nobody has noticed,
+because nothing runs it.
+
+A corpus would have caught [L1](AUDIT.md#l1) (128 digits), [L7](AUDIT.md#l7) (`suffix()` was
+never callable), [L14](AUDIT.md#l14) (a rule that is accepted and never fires), `D25`'s
 `$99`, and would catch [L2](AUDIT.md#l2) the first time anyone wrote an umlaut.
 
 **Met when.**
 
 - Each case is a grammar, an input, and the expected ceps — comparison by text.
+- `import-scripts/dbc/` is one of the cases, with its current output recorded as the
+  baseline, and extended until every rule in the grammar fires at least once.
 - Error cases are cases: a broken grammar's *message* is part of the expected output, which
   is what keeps G2 from eroding.
 - It runs under `-fsanitize=address,undefined`, which is where G1 is actually enforced.
@@ -367,6 +413,46 @@ BEGIN{
 
 Thirty rules collapse to five rules and four lines of vocabulary — and those four lines are
 reviewable by the person who owns the requirements, which is the whole of G6.
+
+### This is not hypothetical — it is already in the tree
+
+The EARS case above is a projection. The same explosion has already happened in
+`import-scripts/dbc/dbc.ceps.lex`, where two sub-lexers are each **four rules for two
+optional minus signs**:
+
+```
+lexer read_signal_factor_offset{
+ ( any, any )     => scale{$1;};  offset{$3;};.
+ ( - any, any )   => scale{-$2;}; offset{$4;};.
+ ( any, - any )   => scale{$1;};  offset{-$4;};.
+ ( - any, - any ) => scale{-$2;}; offset{-$5;};.
+ else => rewind exit .
+}
+```
+
+`read_signal_min_max` is the same four rules with `[ … \| … ]`. Two optional signs give four
+rules; a third number would give eight. Note also that the `$N` indices shift in every
+variant — `$1`/`$3`, then `$2`/`$4`, then `$1`/`$4`, then `$2`/`$5` — which is `D25` and G4
+seen from a second angle: the duplication is not just long, it is *error-prone in a way the
+author cannot see*.
+
+A channel removes it. A signed-literal channel below this one:
+
+```
+ - <n> => <negated n> .
+```
+
+and `read_signal_factor_offset` becomes one rule:
+
+```
+ ( <scale> , <offset> ) => scale{<scale>;}; offset{<offset>;};.
+```
+
+Four rules to one, in a grammar that shipped. Optionality is a metacharacter (`?`) just as
+alternation is (`|`) — and [L14](AUDIT.md#l14) is a live demonstration of what the engine's
+*existing* `|` metacharacter costs. **A channel buys the same expressiveness and adds no
+character that means something other than itself.** That is the thesis of this goal, and the
+DBC grammar is the evidence for it.
 
 ### Why: each channel can be replaced
 
@@ -560,8 +646,9 @@ Stated so that scope does not drift during the rework.
 Each of these blocks a goal and should be settled before the stage that needs it.
 
 1. **The side-effect sublanguage** (G8, [L13](AUDIT.md#l13)) — cut, reduce, keep and
-   document, or **compile it** (G12). Everything else about the file's shape follows from
-   this one, and G12 makes the fourth answer the most attractive.
+   document, **replace with a repetition construct**, or compile it (G12). Everything else
+   about the file's shape follows from this one. Its only real use in the tree is terminating
+   a list, which makes the repetition option the one to price first.
 2. **Named-hole syntax** (G4) — `<system>` is the obvious candidate and keeps the left-hand
    side looking like prose; `$ident` is unavailable. Whether names are declared in the
    pattern or inferred from the literal around them is the real question.

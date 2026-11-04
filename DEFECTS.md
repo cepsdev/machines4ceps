@@ -1983,7 +1983,7 @@ where D17 strikes code that is correct as written.
 **Files:** `core/include/transform/streamtransform.hpp:1222-1236`.
 
 This defect belongs to the lexer engine, which was subsequently read in full. The other
-thirteen findings from that reading — including two rated Critical — are recorded separately
+fifteen findings from that reading — including two rated Critical — are recorded separately
 in [`doc/lexer-engine/AUDIT.md`](doc/lexer-engine/AUDIT.md), with the rework they feed into
 in [`doc/lexer-engine/GOALS.md`](doc/lexer-engine/GOALS.md). They are kept out of this file
 because the component is to be reworked rather than patched.
