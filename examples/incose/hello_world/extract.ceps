@@ -1,0 +1,132 @@
+// extract.ceps - the ceps AST produced by ears.ceps.lex becomes a state machine.
+//
+// Implements the extraction semantics of SPEC.md section 4. Like the grammar, this file
+// is generic: it knows about EARS patterns, not about door locks.
+
+kind Event;
+
+// --- Events -----------------------------------------------------------------------
+// Every trigger slot in the document names an event.
+
+static_for(e : root.incose_transition){
+  reg_as_symbol_with_global_scope(text(e.on.content()),"Event");
+}
+static_for(e : root.incose_action){
+  reg_as_symbol_with_global_scope(text(e.on.content()),"Event");
+}
+static_for(e : root.incose_global){
+  reg_as_symbol_with_global_scope(text(e.on.content()),"Event");
+}
+
+// --- D1: the state set ------------------------------------------------------------
+// A state exists if and only if some requirement names it in a precondition slot.
+// Response slots deliberately do not contribute: that is what makes D2 (closure) an
+// error rather than a silent extension of the machine.
+
+incose_precondition_states{
+  root.incose_transition.from.content();
+  root.incose_action.from.content();
+};
+
+incose_states{
+  root.incose_precondition_states.content().sort().unique();
+};
+
+// --- The machine ------------------------------------------------------------------
+// Named after the subject slot of the initialisation requirement. A document without
+// one produces no machine at all, which is a blunt but honest diagnostic.
+
+static_for(init : root.incose_init){
+
+ sm{
+  as_identifier(text(init.system.content()));
+
+  states{
+    Initial;
+    static_for(st : root.incose_states.content()){
+      as_identifier(text(st));
+    }
+  };
+
+  // The conformance report runs before any behaviour, on every run. See SPEC.md
+  // section 6: a requirement that matched no pattern must not be able to hide.
+  on_enter{
+    print("=== INCOSE conformance report ===\n");
+    static_for(e : root.incose_nonconforming){
+      e.report.content();
+    }
+    print("=================================\n");
+  };
+
+  // One action per requirement, named after it, printing the requirement identifier
+  // and the step it justifies. This is what puts requirement identifiers into the
+  // trace. The bodies were built by the grammar - see SPEC.md section 7.1.
+  Actions{
+    static_for(e : root.incose_transition){
+      make_struct(text(e.tag.content()), e.trace.content());
+    }
+    static_for(e : root.incose_global){
+      make_struct(text(e.tag.content()), e.trace.content());
+    }
+    static_for(e : root.incose_action){
+      make_struct(text(e.tag.content()), e.trace.content());
+    }
+  };
+
+  // P1: initialisation. No event, so no requirement action can be attached here.
+  t{Initial; as_identifier(text(init.state.content()));};
+
+  // P2 and P4: a transition from the precondition state to the response state.
+  static_for(e : root.incose_transition){
+    t{
+      as_identifier(text(e.from.content()));
+      as_identifier(text(e.to.content()));
+      as_symbol(text(e.on.content()),"Event");
+      as_identifier(text(e.tag.content()));
+    };
+  }
+
+  // P3: an action response leaves the state unchanged.
+  static_for(e : root.incose_action){
+    t{
+      as_identifier(text(e.from.content()));
+      as_identifier(text(e.from.content()));
+      as_symbol(text(e.on.content()),"Event");
+      as_identifier(text(e.tag.content()));
+    };
+  }
+
+  // P5: no precondition means every declared state, so the requirement expands to one
+  // transition per state. This is the shape a crash-unlock requirement actually has.
+  static_for(e : root.incose_global){
+    static_for(st : root.incose_states.content()){
+      t{
+        as_identifier(text(st));
+        as_identifier(text(e.to.content()));
+        as_symbol(text(e.on.content()),"Event");
+        as_identifier(text(e.tag.content()));
+      };
+    }
+  }
+ };
+
+}
+
+// --- Traceability table -----------------------------------------------------------
+// The requirement-to-model-element mapping as data, for anything downstream that wants
+// it. Visible with --pe.
+
+incose_traceability{
+  static_for(e : root.incose_transition){
+    entry{ e.req.content(); from{e.from.content();}; on{e.on.content();}; to{e.to.content();}; };
+  }
+  static_for(e : root.incose_action){
+    entry{ e.req.content(); from{e.from.content();}; on{e.on.content();}; does{e.act.content();}; };
+  }
+  static_for(e : root.incose_global){
+    entry{ e.req.content(); from{any_state;}; on{e.on.content();}; to{e.to.content();}; };
+  }
+  static_for(e : root.incose_nonconforming){
+    entry{ e.req.content(); nonconforming{true;}; };
+  }
+};

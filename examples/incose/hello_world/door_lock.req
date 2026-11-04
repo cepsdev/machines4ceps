@@ -1,0 +1,35 @@
+// Door lock controller - requirements
+//
+// Written to the EARS pattern set (Mavin et al., RE'09), which the INCOSE Guide to
+// Writing Requirements names as one source of requirement patterns for its rule R1
+// "Structured Statements".
+//
+// This document is the only input a requirements engineer edits. The state machine in
+// the simulation is derived from it mechanically - see SPEC.md.
+
+REQ-001
+The controller shall initialise in the unlocked state.
+
+REQ-002
+While the controller is unlocked, when lock_requested is received,
+the controller shall transition to the locked state.
+
+REQ-003
+While the controller is locked, when unlock_requested is received,
+the controller shall transition to the unlocked state.
+
+REQ-004
+While the controller is locked, if tamper_detected is received,
+then the controller shall transition to the alarming state.
+
+REQ-005
+While the controller is alarming, when unlock_requested is received,
+the controller shall transition to the unlocked state.
+
+REQ-006
+While the controller is alarming, when lock_requested is received,
+the controller shall illuminate the hazard_lamp.
+
+REQ-007
+When crash_detected is received,
+the controller shall transition to the unlocked state.

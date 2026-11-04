@@ -1,0 +1,17 @@
+// simulate.ceps - a stimulus scenario for the machine derived from door_lock.req.
+//
+// This file and door_lock.req are the only domain-specific files here; ears.ceps.lex and
+// extract.ceps are generic over EARS documents.
+//
+// The machine's name is the subject slot of REQ-001.
+
+Simulation{
+ Start{controller;};
+
+ lock_requested;     // REQ-002  unlocked -> locked
+ tamper_detected;    // REQ-004  locked   -> alarming   (unwanted behaviour)
+ lock_requested;     // REQ-006  alarming, action response, no state change
+ unlock_requested;   // REQ-005  alarming -> unlocked
+ lock_requested;     // REQ-002  unlocked -> locked
+ crash_detected;     // REQ-007  any state -> unlocked
+};

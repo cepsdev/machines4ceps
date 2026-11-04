@@ -107,7 +107,7 @@ read in the source, during the audit.
 
 ### 4.1 `.ceps.lex` — partial parsers for foreign notations
 
-Six lexer specifications exist:
+Seven lexer specifications exist:
 
 | File | Lines | Ingests |
 |---|---:|---|
@@ -117,6 +117,7 @@ Six lexer specifications exist:
 | `test/cepslexer/dbc.ceps.lex` | 105 | DBC |
 | `vm/statistical-learning/data.ceps.lex` | 22 | training data |
 | `examples/analyze_logs/log.ceps.lex` | 20 | log files |
+| `examples/incose/hello_world/ears.ceps.lex` | 108 | INCOSE/EARS requirement sentences |
 
 The format is a transducer, not a scanner. Named sub-lexers invoked with `call`,
 `rewind` for backtracking, `exit` to return, positional captures `$0`, `$2`, … and a
@@ -144,13 +145,22 @@ That property is what lets ceps meet another party in *their* notation — the `
 they already have, the `.feature` they already wrote — which is the condition
 `POSITIONING.md` is built around.
 
-**Documentation:** none. The only file in the repository that mentions the format is
-`RECURSIVE-STATE-MACHINES.md`, which was written during this audit.
+**Documentation:** none for the format itself. The only files in the repository that
+mention it are `RECURSIVE-STATE-MACHINES.md`, written during this audit, and
+`examples/incose/hello_world/SPEC.md`, which specifies one grammar in full and so
+doubles as a worked introduction to the format.
 
 **Known gap:** `msg{read}` has `onerror`; `.ceps.lex` has `else => rewind exit`, but that
 is control flow, not a diagnostic. A sentence that nearly matches is indistinguishable
 from one deliberately ignored, so a typo in a `.feature` file silently removes a scenario.
 Partiality needs a way to be loud; this layer does not have one.
+
+`examples/incose/hello_world` shows the gap can be closed *per grammar* without core
+support: a final rule matches the identifier of an unparsed item and emits a record for
+it, so the run names what it could not read. That is a workaround, not a fix — it costs a
+hand-written rule per grammar and only works where the unparsed item has a
+recognisable handle. The loudness knob scoped in `ROADMAP.md` 0.5 is still the real
+answer.
 
 ### 4.2 `core/src/modelling/` — model-based test generation
 

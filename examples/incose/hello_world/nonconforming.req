@@ -1,0 +1,11 @@
+// A deliberately non-conforming requirement, to demonstrate that partiality is reported
+// rather than silent. Taken verbatim from examples/req.ceps, already in this repository.
+//
+// It breaks INCOSE GtWR R19 (combinators "while", "unless"), R18 (two thoughts: a speed
+// interlock and a crash override), and states a prohibition rather than a behaviour.
+// It matches no accepted pattern, so no model element is generated for it - and the run
+// says so, by requirement identifier.
+
+REQ-101
+The system shall not unlock the doors while vehicle speed is greater than 5 km/h
+unless crash mode is active.
