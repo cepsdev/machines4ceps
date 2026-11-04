@@ -119,6 +119,12 @@ Seven lexer specifications exist:
 | `examples/analyze_logs/log.ceps.lex` | 20 | log files |
 | `examples/incose/hello_world/ears.ceps.lex` | 108 | INCOSE/EARS requirement sentences |
 
+The engine behind them, `core/include/transform/streamtransform.hpp`, has been audited in
+full: [`doc/lexer-engine/AUDIT.md`](doc/lexer-engine/AUDIT.md) records thirteen findings
+(two Critical, four of them memory safety), and
+[`doc/lexer-engine/GOALS.md`](doc/lexer-engine/GOALS.md) states the goals for the rework
+they feed into.
+
 The format is a transducer, not a scanner. Named sub-lexers invoked with `call`,
 `rewind` for backtracking, `exit` to return, positional captures `$0`, `$2`, … and a
 right-hand side that emits **ceps AST directly** rather than tokens:
