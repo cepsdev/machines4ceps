@@ -25,7 +25,7 @@ is not restated here.
 | [L4](#l4) | High | Memory safety | The reader dereferences before it checks bounds, over a buffer allocated with no sentinel byte |
 | [L5](#l5) | High | Memory safety | The rule program buffer is a fixed 16384 entries, written through `operator[]` in 36 places with no check |
 | [L6](#l6) | High | Diagnostics | Grammar errors are reported as `?`, `???`, `????`, `?????`, `??????`, or as a bare token-kind integer; no error anywhere carries a line or column |
-| [L7](#l7) | High | Documentation | The only documentation of the format is a worked example that cannot run: two of its functions do not exist and its `$N` indexing is off by one |
+| [L7](#l7) | High | Documentation | The only documentation of the format describes an engine that does not exist: two of its functions are unimplemented, its `$N` indexing is off by one, and the algorithm it specifies re-feeds its own output, which the code does not do |
 | [L8](#l8) | Medium | Silence | An unrecognised `%pragma` is accepted and ignored without a word |
 | [L9](#l9) | Medium | Performance | The matcher heap-allocates once per token scanned |
 | [L10](#l10) | Medium | Silence | Input the grammar does not cover has no reportable outcome — three exits, no diagnostic in any of them |
@@ -340,12 +340,13 @@ diagnostic improvement in this file.
 
 ---
 
-## <a name="l7"></a>L7 — The documented example does not run
+## <a name="l7"></a>L7 — The documented engine is not the one that exists
 
 **Severity: High. Kind: documentation.**
 
 Lines 70–95 of the header are the **only** description of the `.ceps.lex` format anywhere in
-the repository. The worked example they contain is broken in three independent ways.
+the repository. The worked example they contain is broken in three independent ways, and the
+algorithm sketch above it describes different behaviour from the code.
 
 **Two functions that do not exist.** `suffix()` appears at lines 80, 81, 87, 88 and 95;
 `error()` at line 75. Neither is implemented. The side-effect expression parser accepts only
@@ -378,8 +379,47 @@ documentation.
 (`import-scripts/dbc/dbc.ceps.lex` and the six others) share an idiom the comment never
 shows: `else => rewind exit .` to close a layer.
 
-The honest repair is to delete the invented example and point at a grammar in the tree that
-is executed — see `GOALS.md`, G7.
+**The algorithm sketch above it is wrong as well.** Lines 40–56 describe `preprocess` as a
+fixed point:
+
+```
+ *      check for matching rewrite rules
+ *      take the rewrite rule with maximal index, if there is none => return true
+ *      buffer = [t_1,t_2,...,t_n] where t_i is the ith token of the right hand side
+ *      goto start
+```
+
+The `goto start` says that emitted right-hand-side tokens are fed back through the rules. The
+engine does not do this. It is single-pass:
+
+```
+$ cat c2.ceps.lex
+...
+BEGIN{
+ a => wrapper{b;}; .
+ b => deeper{1;}; .
+ any => .
+}
+
+$ echo 'a' > in2.ch && ceps c2.ceps.lex in2.ch --pe
+(STRUCT "wrapper"
+  (ID "b"
+  )
+)
+
+$ echo 'b' > in3.ch && ceps c2.ceps.lex in3.ch --pe   # control: the rule works
+(STRUCT "deeper"
+  (INT 1  )
+)
+```
+
+The emitted `b` is not re-matched. So the comment documents a rewriting engine with a
+different computational character from the one that exists — and the documented one has no
+termination guarantee, since `a => a a .` would diverge under it. See `GOALS.md`, G11: the
+explicit channel stack is the same idea in a form that terminates by construction.
+
+The honest repair is to delete both the invented example and the sketch, and point at a
+grammar in the tree that is executed — see `GOALS.md`, G7.
 
 ---
 

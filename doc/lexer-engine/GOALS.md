@@ -86,7 +86,9 @@ anywhere carries a position. A six-line grammar is survivable; `dbc.ceps.lex` is
   for each error class in the test corpus.
 
 **Note.** This is the prerequisite for G3 and G5 — both of which need somewhere to report
-to — which is why it sits this early despite being rated High rather than Critical.
+to — which is why it sits this early despite being rated High rather than Critical. G11 makes
+it a hard precondition: a position must survive a rewrite, or traceability dies at the first
+channel.
 
 ---
 
@@ -119,6 +121,12 @@ conformance, and the engine is the only thing that knows it.
 
 **Open.** Whether this is a new ceps node, an exit code, a side channel, or all three. See
 *Open decisions*.
+
+**Note.** G11 promotes this from a capability to a precondition twice over. Once because a
+stack of channels is undebuggable without a per-channel remainder — a fault in channel 1
+presents as silence in channel 3. And once because *pass-through* unmatched input is the
+mechanism channels are built from, which makes this goal and G11 two readings of the same
+thing.
 
 ---
 
@@ -215,13 +223,14 @@ examples are files in the tree that are run by the test corpus.
 
 **Why.** [L7](AUDIT.md#l7). The only documentation of the format is a header comment whose
 worked example uses two functions that do not exist, numbers its holes 1-based against a
-0-based engine, and shows a dialect no grammar in the tree uses. It has been wrong for as
-long as it has existed, because nothing could notice.
+0-based engine, and shows a dialect no grammar in the tree uses — and whose algorithm sketch
+specifies a fixed-point re-feed the engine does not perform. It has been wrong for as long as
+it has existed, because nothing could notice.
 
 **Met when.**
 
-- The header comment's invented example is deleted. The algorithm sketch above it is worth
-  keeping; the CANOps grammar is not.
+- The header comment's invented example **and its algorithm sketch** are deleted. Both
+  describe an engine that does not exist.
 - There is one reference document for the format, and every grammar fragment in it is
   extracted from, or checked against, a file that runs.
 - A change to the engine that breaks a documented example fails the corpus.
@@ -293,8 +302,234 @@ import the product performs, and the fix is to make two locals into members.
 - A before/after figure on the largest `.dbc` in the tree is recorded, so the claim is a
   number.
 
-**Deliberately last.** It is the cheapest goal here and the least important; doing it first
-would be optimising a component that is about to change shape.
+**Deliberately late.** It is the cheapest goal here and would be the least important — except
+that G12 makes it a precondition: there is no point compiling an algorithm that allocates per
+token. Do it after the shape has stopped moving and before anything is retargeted.
+
+---
+
+## G11 — Channels
+
+**Statement.** A grammar's output is another grammar's input. Channels stack, and the order
+of the arguments is the stack.
+
+```
+ceps normalise.ceps.lex ears.ceps.lex model.ceps.lex door_lock.req extract.ceps simulate.ceps
+       └─ channel 1 ─┘  └─ channel 2 ─┘ └─ channel 3 ─┘
+```
+
+Channel 1 reads the document. Channel *k+1* reads the token stream channel *k* emitted. The
+last channel's output is the ceps the transforms see. The sentence keeps the reading it
+already has — order is composition — with one more layer in the sandwich.
+
+### Why: it buys expressiveness without buying a metacharacter
+
+EARS in the wild varies where it does not matter. `shall` / `must` / `will`. `When` / `Upon`.
+`initialise` / `initialize`. These are the same requirement.
+
+Today they are not. Against the shipped grammar:
+
+```
+$ echo 'REQ-001 The DoorLock must initialize in the unlocked state.' > v.req
+$ ceps ears.ceps.lex v.req --pe
+(STRUCT "incose_nonconforming" …
+    "[REQ-001] NON-CONFORMING: matches no accepted pattern, no model element generated"
+```
+
+A correct requirement, rejected over a modal verb and a letter.
+
+The pattern language has no alternation, so the only repair available inside one grammar is
+to write the product: five EARS patterns × three modals × two spellings is **thirty rules**,
+and a fourth modal makes it forty. Adding alternation would fix it and cost
+[G6](#g6--the-grammar-stays-readable-to-the-person-who-owns-the-requirements) — a
+metacharacter is a character that does not mean itself.
+
+A channel fixes it with **more literals**, which is exactly what the inverted default is good
+at. (In the three grammars below, `<name>` is G4's proposed named hole and
+`%passthrough_unmatched` is the proposed pragma from decision 2 — neither exists today. The
+rest is current syntax.)
+
+**Channel 1 — `normalise.ceps.lex`**
+
+```
+%ext_req
+%ignore_ws
+%passthrough_unmatched
+%%
+BEGIN{
+ must       => shall .
+ will       => shall .
+ Upon       => When .
+ initialize => initialise .
+}
+%%
+```
+
+Thirty rules collapse to five rules and four lines of vocabulary — and those four lines are
+reviewable by the person who owns the requirements, which is the whole of G6.
+
+### Why: each channel can be replaced
+
+**Channel 2 — `ears.ceps.lex`** keeps one job: English sentence shapes to neutral requirement
+nodes. It stops knowing anything about state machines. (Shown in G4's named holes.)
+
+```
+ <prefix> - <num> The <sys> shall initialise in the <st> state \. =>
+   requirement{
+     id{double_quote <prefix> - <num> double_quote;};
+     form{ubiquitous;};
+     system{<sys>;};
+     state{<st>;};
+   }; .
+```
+
+**Channel 3 — `model.ceps.lex`** maps requirement nodes onto a model vocabulary. Its patterns
+match channel 2's **token stream**, so braces and semicolons are literals like everything
+else:
+
+```
+ requirement { id { <id> ; } form { ubiquitous ; } system { <sys> ; } state { <st> ; } } ; =>
+   incose_init{ req{<id>;}; system{<sys>;}; state{<st>;}; }; .
+```
+
+That is more verbose than channel 2, and the document should not pretend otherwise. It is
+also self-limiting: a channel whose patterns grow brace-heavy is a channel doing too much.
+**The verbosity is the pressure that keeps channels thin**, and thin channels are the point.
+
+What it buys: channels 1 and 2 are about *English*. Channel 3 is about *your model*. Swap
+channel 3 and the same requirements produce SCXML, or a different house vocabulary, without
+touching the grammar that understands the sentences.
+
+### Four decisions this needs
+
+1. **What a token is between channels.** Either the token stream — channel *k+1* sees
+   `requirement`, `{`, `id`, … — or the AST, with channel *k+1* matching tree shapes. The
+   token stream keeps **one mechanism**: the inverted default still reads, braces are
+   literals, and every channel is the same kind of object. Tree matching is more powerful but
+   is a *second* mechanism, and "a bare word is a literal" has no obvious meaning on a tree.
+   The recommendation is the token stream, with the verbosity accepted as above.
+
+2. **The default disposition of unmatched input must invert.** Today `any => .` and
+   `%skip_unmatched_tokens` both discard. A channel must **pass unmatched tokens through
+   unchanged**, or channel 1 destroys the document before channel 2 can see it.
+
+   This is [G3](#g3--nothing-is-understood-partially-in-silence)'s remainder used as a
+   *mechanism* rather than as a *report* — and it unifies two ideas that looked separate:
+   **channels with pass-through subsume the remainder pipeline.** Running a second grammar to
+   cover more of the same document is just a second channel that ignores what the first
+   already cooked. Vertical composition (raising abstraction) and horizontal composition
+   (raising coverage) are the same stream, differing only in what the next channel chooses to
+   look at. One mechanism, repeated — which is the test in *The yardstick*.
+
+3. **Termination.** A finite stack terminates by construction: **the stack is the proof.**
+   This is why channels are the right form of the idea and the header comment's self-re-feed
+   ([L7](AUDIT.md#l7)) is the wrong one — under a fixed point over the *same* rule set,
+   `a => a a .` diverges and nothing in the engine would stop it. A channel stack is also
+   inspectable: you can dump the stream between channel 2 and channel 3, which you can never
+   do inside a fixed-point loop.
+
+4. **Provenance must survive a rewrite.** If channel 1 turns line 7 into tokens and channel 3
+   rejects them, the engineer needs *`door_lock.req`, line 7, REQ-001*. Position has to
+   travel with the token through every rewrite, or traceability — the thing the INCOSE
+   example sells — dies at channel 1.
+
+**Met when.**
+
+- Several `.ceps.lex` arguments form a stack, and order is the composition.
+- `ears.ceps.lex` carries no per-synonym duplication, and modal and spelling variation is
+  handled by a normalisation channel of a few readable lines.
+- A channel can be replaced without touching its neighbours, demonstrated by retargeting
+  channel 3 to a second model vocabulary.
+- Unmatched tokens pass through by default, and each channel can report its own remainder.
+- A token's origin survives the whole stack and appears in `incose_traceability`.
+
+**G2 and G3 are preconditions, not companions.** Without positions, traceability dies at
+channel 1. Without per-channel remainder, a fault in channel 1 presents as silence in channel
+3 with nothing in between to look at. Both move ahead of this goal in the order of work for
+that reason.
+
+---
+
+## G12 — A compilation target
+
+**Statement.** The matcher should be compiled rather than interpreted, and Oblectamenta is the
+right target — **after** the algorithm is settled, not before.
+
+### The measurement
+
+Today, `ears.ceps.lex` over generated requirement corpora:
+
+| input | wall clock |
+|---|---|
+| 0.58 MB | 0.98 s |
+| 5.80 MB | 9.70 s |
+
+Differencing to cancel start-up: **5.22 MB in 8.72 s ≈ 0.6 MB/s.** Linear, so nothing is
+quadratic — it is simply far from the hardware: about 1.7 µs per input byte, on the order of
+**6,700 cycles per byte** at 4 GHz.
+
+Now `vm/benchmarks/counting_a.ceps`: 10 million iterations of an eight-instruction loop in
+0.360 s — roughly **220M instructions/s, ~18 cycles per instruction**, a sound bytecode
+interpreter. A DFA step is perhaps eight to ten instructions (`ldsi8`, widen, index, compare,
+branch, advance), which lands at **20–40 MB/s**.
+
+> **Compiled to Oblectamenta and interpreted, with no JIT at all, the lexer would be on the
+> order of fifty times faster than it is today in hand-written C++.**
+
+### What that number actually says
+
+It is the argument for compiling, and simultaneously the argument against treating the JIT as
+the lever. Those 6,700 cycles are not instruction count. They are the per-token heap
+allocation ([L9](AUDIT.md#l9)), the linear scan over every rule at every position, the
+bounds-grow check inside `matched_tokens()` on every call, and `Tokentable::match` walking 31
+operators per punctuation character. A native DFA reaches 200–1000 MB/s. Past the algorithm,
+the VM lands near 40 and a JIT perhaps near 150 — **both still behind plain C++ done right.**
+
+### So the case for Oblectamenta is not speed
+
+- **[L13](AUDIT.md#l13) dissolves.** The side-effect sublanguage stops being a second
+  interpreter and becomes code generation into an existing target. This is a third answer to
+  open decision 1, and a better one than cut-or-keep.
+- **The substrate count drops.** ceps executes five ways today: the tree-walking evaluator,
+  the lexer's table interpreter, the side-effect interpreter, the VM, and the C++ generator.
+  [G8](#g8--one-mechanism-repeated) argues for fewer.
+- **Channels become calls.** Each channel a compiled function, the stack a call sequence —
+  composition supplied by the VM rather than built a second time.
+- **A compiled grammar is disassemblable.** You can show an author what their rules became.
+- **The JIT, when it lands, is inherited rather than ported.**
+
+### Three frictions, named now
+
+- **`callx` is not declarable.** The indirect call a compiled matcher needs for dispatch is
+  implemented but not declared in the assembler — `DEFECTS.md` D1. The instruction this
+  project most needs is the one that currently cannot be emitted. D15, where the assembler
+  rejects guard expressions the language admits, sits on the same path.
+- **The swap zoo.** The opcode tail reads `swpi64b72`, `swp128b8`, `swpi160i64`,
+  `swpi192i32`. Variants that specific are a stack machine reporting that its data flow
+  hurts. A matcher carries position, token start, active rule set and match state at once;
+  expect to extend that list, and count each addition as a cost rather than a feature.
+- **Zero copy.** Tokens are `nonmutable_string` — pointers into the input buffer, never
+  copied. `ldptr`/`stptr` suggest this survives a move to the VM, but it should be confirmed
+  before committing, because losing it would undo the win.
+
+**Met when.**
+
+- Rule matching is generated code, not a table walked by a loop.
+- Guards are compiled and `Sideeffects_node` is gone — G8 settled by construction.
+- `callx` is declarable, or dispatch is designed without it.
+- Throughput is a recorded number before and after, on the same corpus, so the claim is a
+  measurement rather than an expectation.
+
+**Ordering rule: only retarget an algorithm you are happy with.** Compiling the present
+matcher would freeze 0.6 MB/s into bytecode. Remove the per-token allocation and the linear
+rule scan first — in plain C++, where it is cheap and reversible — then compile the result.
+
+### A convergence worth noting
+
+The inverted default makes the fast algorithm *easier*, not harder. Patterns dominated by
+literal tokens are exactly what multi-pattern automata — Aho–Corasick and its relatives —
+consume: linear in the input, independent of the number of rules. G6 and G12 point the same
+way, which is usually a sign that both are right.
 
 ---
 
@@ -305,11 +540,13 @@ Stated so that scope does not drift during the rework.
 - **Not a general parser generator.** No context-free grammars, no ambiguity resolution, no
   left recursion, no precedence declarations. The layer mechanism plus longest-match is the
   whole model, and G6 is the reason to keep it that way.
-- **Not a regular-expression engine.** Character classes beyond the existing token kinds would
-  buy expressiveness at exactly the cost G6 forbids.
+- **Not a regular-expression engine.** Character classes and alternation beyond the existing
+  token kinds would buy expressiveness at exactly the cost G6 forbids. G11 is the alternative:
+  buy the same expressiveness with another channel instead of another metacharacter.
 - **Not an evaluator.** ceps evaluates; `extract.ceps` walks the model. Anything the engine
   computes is a thing computed twice, in two semantics, that will drift. This is G8 stated
-  from the other side.
+  from the other side — and G12 is the same point again: if guards must execute, they should
+  execute on the machine ceps already has.
 - **Not incremental or streaming.** Reading the whole file into one buffer is what makes
   `state_t` a pair of integers and backtracking a value copy. That is worth more than
   streaming.
@@ -322,8 +559,9 @@ Stated so that scope does not drift during the rework.
 
 Each of these blocks a goal and should be settled before the stage that needs it.
 
-1. **The side-effect sublanguage** (G8, [L13](AUDIT.md#l13)) — cut, reduce, or keep and
-   document. Everything else about the file's shape follows from this one.
+1. **The side-effect sublanguage** (G8, [L13](AUDIT.md#l13)) — cut, reduce, keep and
+   document, or **compile it** (G12). Everything else about the file's shape follows from
+   this one, and G12 makes the fourth answer the most attractive.
 2. **Named-hole syntax** (G4) — `<system>` is the obvious candidate and keeps the left-hand
    side looking like prose; `$ident` is unavailable. Whether names are declared in the
    pattern or inferred from the literal around them is the real question.
@@ -342,6 +580,13 @@ Each of these blocks a goal and should be settled before the stage that needs it
 6. **Blank lines** ([L11](AUDIT.md#l11)) — `get()` collapses runs of newlines, so a paragraph
    break is invisible. Keep as a named pragma, or make it visible. Requirements documents use
    blank lines structurally.
+7. **What flows between channels** (G11) — token stream or AST. The token stream keeps one
+   mechanism and keeps the inverted default meaningful; tree matching is more powerful and is
+   a second mechanism. Recommended: token stream. Not settled.
+8. **The default disposition of unmatched tokens in a channel** (G11) — today it is discard,
+   via `any => .` and `%skip_unmatched_tokens`. Channels need pass-through, and pass-through
+   is what makes channels subsume the remainder pipeline. Whether the default inverts
+   globally or only for non-final channels is the question.
 
 ---
 
@@ -358,8 +603,10 @@ that change no visible behaviour come first.
 | 4 | **G5** — text | Highest-severity finding. Needs G2 to report malformed input; needs G9 to prove the ASCII path did not move. |
 | 5 | **G8** — the decision | Settle it before G4, because a cut would remove `$N`'s only competitor for the `$` sigil and may change what naming should look like. |
 | 6 | **G4** — named holes | The user-visible improvement. Cheap once G2 exists, since the diagnostics it needs are already there. |
-| 7 | **G3** — partiality | The new capability, and the one that makes the component worth more than it costs. Last of the substantive stages because it benefits from all of them. |
-| 8 | **G10**, [L12](AUDIT.md#l12) | Allocation and dead weight, once the shape has stopped moving. |
+| 7 | **G3** — partiality | Needs G2 to report *where*. Promoted from "nice capability" to precondition by G11: a channel stack without per-channel remainder fails in channel 1 and presents as silence in channel 3. |
+| 8 | **G10**, [L12](AUDIT.md#l12) | Allocation and dead weight, once the shape has stopped moving — and before G12, because compiling a per-token allocator freezes it. |
+| 9 | **G11** — channels | The capability that makes the component worth more than it costs. Last of the language stages because it consumes G2, G3 and G4 and is not safe to attempt without them. |
+| 10 | **G12** — compilation target | Only retarget an algorithm you are happy with. Everything above is what makes it one. |
 
 **G6 and G7 are not stages.** G6 runs at every stage as a veto. G7 is the obligation attached
 to each stage that changes the format.
