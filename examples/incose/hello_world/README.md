@@ -11,6 +11,18 @@ whose input is English requirement sentences, and whose output is not tokens dis
 into `rustc` but a model that stays inspectable, runnable, and attributable to the
 requirement that produced each part of it.
 
+The whole of it is one command, and the command reads as a sentence:
+
+```
+ceps   ears.ceps.lex   door_lock.req   extract.ceps   simulate.ceps
+       how to read     what to read    what to make   what to do
+```
+
+Four files, four clauses, each a layer resting on the ones before it. The order *is* the
+composition: no build file, no configuration, nothing anywhere that declares what depends
+on what. That is the entire mechanism, and the rest of this page is just those four
+files.
+
 ## The requirements document
 
 This is `door_lock.req`, complete. It is the only file a requirements engineer edits.
@@ -148,8 +160,11 @@ letting the ordinary state-machine semantics reject a dangling reference.
 | `simulate.ceps` | the stimulus scenario |
 | `run.sh` | `--bad` reports a non-conforming requirement, `--model` prints the model |
 
-`ears.ceps.lex` and `extract.ceps` contain no door-lock vocabulary. Point them at a
-different `.req` file and you get a different machine.
+`ears.ceps.lex` and `extract.ceps` contain no door-lock vocabulary. Every position in
+that command line is a free variable: another `.req` for another system, another
+`simulate.ceps` for another scenario, another `extract.ceps` for another reading of the
+same requirements, another `.ceps.lex` for another requirement dialect. Four independent
+axes — and `--bad` is not a mode, it just adds a fifth file to the sentence.
 
 The derived model is not confined to the simulator. `--dot_gen` draws it; `--cppgen`
 compiles it to C++ for a target (`INVENTORY.md` §4.4). Same model, different projections.

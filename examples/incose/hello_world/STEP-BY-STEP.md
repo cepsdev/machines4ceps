@@ -14,26 +14,55 @@ requirement that allowed it.
 
 ## The shape of the whole thing
 
-Three stages, three files:
+The whole program is one line, and it reads as a sentence:
+
+```
+ceps   ears.ceps.lex   door_lock.req   extract.ceps   simulate.ceps
+       how to read     what to read    what to make   what to do
+```
+
+Four files, four clauses. Each is a layer laid on the ones before it, and each sees only
+what is already underneath: the grammar knows nothing about state machines, the document
+knows nothing about the grammar reading it, the transform walks whatever the document
+left behind.
+
+That is the entire mechanism — **one operation, *add this to the model*, applied four
+times.** There is no build file, no configuration, no plugin registration, no
+`--grammar=`, `--input=`, `--transform=`. The order *is* the composition, which is why
+nothing ever has to declare what depends on what.
+
+The same thing drawn as data moving:
 
 ```
 door_lock.req  ──[ ears.ceps.lex ]──>  a tree of data  ──[ extract.ceps ]──>  a state machine
    English              grammar            (the model)         transform           that runs
 ```
 
-Stage 1 reads English sentences and turns the ones it recognises into structured data.
-Stage 2 walks that data and builds a machine out of it. Nothing in between is text
-templating, and there is no code-generation step hiding anywhere.
+Nothing in there is text templating, and there is no code-generation step hiding
+anywhere.
 
-One command runs all three:
+Two consequences, both worth more than they look.
+
+**Nothing intermediate exists.** No `.ast`, no `.json`, no generated source to name,
+version, rebuild or delete. The model is handed from layer to layer inside a single run
+of a single program.
+
+**Every position is a free variable.** Swap `door_lock.req` for another system,
+`simulate.ceps` for another scenario, `extract.ceps` for another reading of the same
+requirements, `ears.ceps.lex` for another requirement dialect — four independent axes.
+And layers can be *added*: `./run.sh --bad` is not a mode, it simply puts one more
+document into the sentence,
 
 ```sh
-ceps ears.ceps.lex door_lock.req extract.ceps simulate.ceps
+ceps ears.ceps.lex door_lock.req nonconforming.req extract.ceps simulate.ceps
 ```
 
-**Argument order is load order, and it matters.** The grammar must be registered before
-the document it reads; the document must be read before the transform that consumes it.
-Getting this wrong produces confusing parse errors rather than a clear complaint.
+which is why demonstrating the conformance report in Step 8 took no code at all.
+
+One qualifier. The word order is rigid, and it is not quite the order you would speak:
+the grammar comes *before* the document it reads, where English would say *read
+`door_lock.req` using `ears.ceps.lex`*. Get it wrong and you get parse errors rather than
+a clear complaint, so keep to **grammar, then documents, then transforms.**
 
 ---
 
@@ -450,7 +479,8 @@ at what the grammar actually understood.
    claims them. Hence `transition to`.
 3. **Count punctuation when numbering `$N`.** See §3.2.
 4. **The catch-all rule stays last.** See §3.4.
-5. **Argument order is load order.** Grammar, then documents, then transforms.
+5. **Argument order is load order.** Grammar, then documents, then transforms — see
+   "The shape of the whole thing" above, where this is the design rather than the trap.
 6. **A transition with only two fields has no slot for an action.** `t{from; to;}` is the
    initialisation shape, which is why REQ-001 produces no trace line.
 
