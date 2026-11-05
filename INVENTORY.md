@@ -120,12 +120,18 @@ Seven lexer specifications exist:
 | `examples/incose/hello_world/ears.ceps.lex` | 108 | INCOSE/EARS requirement sentences |
 
 The engine behind them, `core/include/transform/streamtransform.hpp`, has been audited in
-full: [`doc/lexer-engine/AUDIT.md`](doc/lexer-engine/AUDIT.md) records eighteen findings
+full: [`doc/lexer-engine/AUDIT.md`](doc/lexer-engine/AUDIT.md) records nineteen findings
 (two Critical, five of them memory safety),
 [`doc/lexer-engine/GOALS.md`](doc/lexer-engine/GOALS.md) states the goals for the rework
-they feed into, and [`doc/lexer-engine/PRIOR-ART.md`](doc/lexer-engine/PRIOR-ART.md) records
+they feed into, [`doc/lexer-engine/PRIOR-ART.md`](doc/lexer-engine/PRIOR-ART.md) records
 the literature the planned channel stack should be built from — it is Abney's 1996
-finite-state cascade, and the design is already worked out.
+finite-state cascade, and the design is already worked out — and
+[`doc/lexer-engine/BIDIRECTIONAL.md`](doc/lexer-engine/BIDIRECTIONAL.md) specifies running
+the component **backwards**, so that one grammar yields both `Text → Model` and
+`Model → Text`.
+
+The component is called **`ceps-transduce`**; `lexer` is a misnomer, since `call` pushes a
+real stack and the engine is demonstrably beyond regular.
 
 The format is a transducer, not a scanner. Named sub-lexers invoked with `call`,
 `rewind` for backtracking, `exit` to return, positional captures `$0`, `$2`, … and a

@@ -3,6 +3,10 @@
 Companion to `GOALS.md`, specifically to [G11](GOALS.md#g11--channels) and
 [G12](GOALS.md#g12--a-compilation-target).
 
+The bidirectional literature — lenses, and the one relevant Triple-Graph-Grammar line of
+work on AUTOSAR — is kept separately in
+[`BIDIRECTIONAL.md`](BIDIRECTIONAL.md) §10, alongside the design it supports.
+
 The channel idea in G11 — a stack of small grammars, each consuming the token stream the
 previous one emitted, each matching only the shapes it knows and passing the rest through —
 was arrived at independently in this project. It is also published, precisely, and has been

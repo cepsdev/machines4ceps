@@ -46,7 +46,7 @@ against.
 The engine's safety must not depend on how long a number is, how many operators a table has,
 how large a grammar is, how deeply a grammar recurses, or whether a file ends in a newline.
 
-**Why.** Five of the eighteen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
+**Why.** Five of the nineteen findings are this ([L1](AUDIT.md#l1), [L3](AUDIT.md#l3),
 [L4](AUDIT.md#l4), [L5](AUDIT.md#l5), [L18](AUDIT.md#l18)), with one shared cause: a size
 assumed rather than checked. One of them — L1 — is reachable from a supplier's `.dbc` file.
 
@@ -762,6 +762,30 @@ Each of these blocks a goal and should be settled before the stage that needs it
    document, **replace with a repetition construct**, or compile it (G12). Everything else
    about the file's shape follows from this one. Its only real use in the tree is terminating
    a list, which makes the repetition option the one to price first.
+
+   **The size of this decision has been measured, and it is small.** `dbc.ceps.lex` contains
+   seven `|` characters. Five are *escaped literal pipes* — DBC's own `[min|max]` and
+   `startbit|width@` syntax — and are not guards at all. The grammar has exactly **two**
+   guarded rules, `:35` and `:36`, and together they express one thing:
+
+   ```
+    ident ,                    => $0; .
+    ident | !read_id_list_end  => $0; /read_id_list_end=1;/ .
+    any   | read_id_list_end   => rewind exit .
+   ```
+
+   That is `list(ident, ",")`, hand-rolled as a state machine with a one-bit flag, because
+   the engine has no separator construct. `ears.ceps.lex` contains **zero** guards. So the
+   whole side-effect sublanguage — a second language inside the first, undocumented, and the
+   cause of [L19](AUDIT.md#l19) — is load-bearing for two rules, and a repetition construct
+   retires both.
+
+   Two findings and one capability ride on this. [L19](AUDIT.md#l19) disappears with the
+   feature. [L14](AUDIT.md#l14) loses its subject, since `|` stops being overloaded. And
+   [`BIDIRECTIONAL.md`](BIDIRECTIONAL.md) shows that these same two rules are the only thing
+   standing between `dbc.ceps.lex` and an invertible grammar — which is the capability that
+   would have answered the objection the project has met in the field for years: *we can get
+   our DBC into ceps, but not back out.*
 2. **Named-hole syntax** (G4) — `<system>` is the obvious candidate and keeps the left-hand
    side looking like prose; `$ident` is unavailable. Whether names are declared in the
    pattern or inferred from the literal around them is the real question.
@@ -794,22 +818,30 @@ Each of these blocks a goal and should be settled before the stage that needs it
    only threads convert Σ(stages) into max(stage). The honest order is coroutines first,
    threads only if a measurement asks for them. Queue depth is the attached parameter and
    is the one number in this design that cannot be derived, only measured.
-10. **What the component is called.** It is not a lexer: `call` pushes a real stack, and the
-    engine is demonstrably beyond regular — see *What this component actually is* in
-    [`AUDIT.md`](AUDIT.md). The implementation is already named correctly
-    (`transform/streamtransform.hpp`); only the surface says `.ceps.lex` and `lexer NAME{…}`.
+10. **What the component is called.** ~~Open.~~ **Settled: `ceps-transduce`.** It is not a
+    lexer: `call` pushes a real stack, and the engine is demonstrably beyond regular — see
+    *What this component actually is* in [`AUDIT.md`](AUDIT.md). The implementation is
+    already named correctly (`transform/streamtransform.hpp`); only the surface says
+    `.ceps.lex` and `lexer NAME{…}`.
 
     The cost of the current name is not aesthetic. A lexer is expected to terminate, not to
     recurse, and to be regular — which is why nothing checks termination
     ([L16](AUDIT.md#l16)), nothing bounds the recursion ([L18](AUDIT.md#l18)), and the stack
     is documented nowhere. The name shaped what nobody thought to ask.
 
-    The options are to rename the surface (seven grammars and their run scripts change, plus
-    `%ext_*` handling), to keep `.ceps.lex` as an alias and introduce the real name alongside
-    it, or to keep the name and *document* what it actually is. The third is free and should
-    happen regardless; it is already done in AUDIT.md. Whether to go further is open, and is
-    worth settling before G11 — because *channel* only reads naturally if the thing being
-    stacked has an honest name.
+    **Why `transduce` and not `parse` or `rewrite`.** A transducer relates two languages; it
+    does not privilege a direction. `parse` names the forward direction and makes the reverse
+    look like a separate tool, which is exactly the framing that kept `ceps → dbc` off the
+    roadmap for years. The name should describe the *relation*, because
+    [`BIDIRECTIONAL.md`](BIDIRECTIONAL.md) argues the relation is the object of interest and
+    both directions are readings of one grammar.
+
+    **What remains open is the migration, not the name.** The surface can be renamed (seven
+    grammars and their run scripts change, plus `%ext_*` handling), `.ceps.lex` can be kept
+    as an alias with the real name introduced alongside it, or the name can stay while the
+    documentation tells the truth. The third is free, is already done in AUDIT.md, and holds
+    regardless. Worth settling before G11 — *channel* only reads naturally once the thing
+    being stacked has an honest name.
 
 ---
 

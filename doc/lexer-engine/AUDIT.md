@@ -10,7 +10,7 @@ outside the import scripts it was built for.
 
 Every entry below was reproduced against `bin/ceps`, version 0.8.1.3.3, Nov 4 2026 build,
 on Linux. Line numbers refer to the working tree at the time of writing. Findings are
-numbered `L1`…`L18` to keep them separate from `DEFECTS.md`, which records defects of the
+numbered `L1`…`L19` to keep them separate from `DEFECTS.md`, which records defects of the
 ceps language and runtime; this document records defects of one component, and is kept
 apart because the component is about to be reworked rather than patched.
 
@@ -33,6 +33,7 @@ is not restated here.
 | [L16](#l16) | Medium | Termination | `rewind` without `exit` cannot progress; the engine loops silently, accumulating memory at ~60 MB/s, and never reports anything |
 | [L17](#l17) | Medium | Correctness | An action may both emit and `rewind`, and **both take effect** — one input token leaves two nodes behind. Latent today, and the precondition [G11](GOALS.md#g11--channels) depends on |
 | [L18](#l18) | Medium | Memory safety | `call` pushes a real stack, and nothing bounds it: past `max_env_stacking_` = 4096 the engine indexes a vector out of range and segfaults. Latent — no grammar in the tree recurses |
+| [L19](#l19) | Medium | Silence | Guard variables live in one map shared by every lexer: a sub-lexer's assignments outlive it, and a second call to the same lexer silently drops the last element of the list it reads |
 | [L11](#l11) | Low | Correctness | `strtol` for a 64-bit field, an unsigned underflow, and a signed/unsigned comparison — all correct only by accident |
 | [L12](#l12) | Low | Hygiene | Dead members, dead debug scaffolding, and POSIX headers in an otherwise portable header |
 | [L15](#l15) | Low | Documentation | A right-hand side may splice a capture into the *name* of the node it emits; this is in production use and written down nowhere |
@@ -40,8 +41,8 @@ is not restated here.
 
 ## Triage
 
-**The same diagnosis as `DEFECTS.md`.** Eight of the eighteen produce a plausible answer and
-exit 0 — L2, L7, L8, L10, L11, L14, L17, and D25. The one that matters most is **L2**: it does not
+**The same diagnosis as `DEFECTS.md`.** Nine findings produce a plausible answer and
+exit 0 — L2, L7, L8, L10, L11, L14, L17, L19, and D25. The one that matters most is **L2**: it does not
 fail, it answers *confidently and wrongly*, and it does so on the exact document a European
 OEM would hand you. By the yardstick `DEFECTS.md` already applies — a silent wrong answer is
 worse than a crash — L2 is the most serious finding in this file, ahead of L1.
@@ -958,6 +959,117 @@ Making the limit configurable is secondary; reporting it at all is the fix.
 
 `gettoken` also recurses in C++ at `:1455`, so the host stack is a second and softer ceiling.
 Bounding `cur_env_` bounds both.
+
+---
+
+## <a name="l19"></a>L19 — Guard state is global, and a sub-lexer's assignments outlive it
+
+**Severity: Medium. Kind: correctness, silence.**
+
+The variables a guard reads live in one map on the engine object:
+
+`core/include/transform/streamtransform.hpp:644`
+
+```cpp
+ std::map<nonmutable_string<C>,Token> symbols;
+```
+
+It is a member of the transform, not of `lex_env`. `TOK_CALL_LEXER` saves and restores the
+*environment* across a call — `:1452` stashes `cur_env_`, `:1459` puts it back — but nothing
+saves `symbols`. A sub-lexer and its caller share one namespace, and so do siblings, and so
+do two activations of the same lexer.
+
+### Reproduction
+
+```
+%ext_probe
+%ignore_ws
+%%
+lexer sub{
+ b => B{1;}; /flag=1;/ .
+ else => rewind exit .
+}
+BEGIN{
+ a => A{1;}; call sub .
+ c | flag => LEAKED{1;}; .
+ c => CLEAN{1;}; .
+ any => .
+}
+%%
+```
+
+On `a b c`:
+
+```
+(STRUCT"A"(INT1))(STRUCT"B"(INT1))(STRUCT"LEAKED"(INT1))
+```
+
+`flag` was assigned inside `sub`, and after `sub` exited it decided which of the caller's
+rules fired. Nothing in the grammar says these two lexers share a variable.
+
+### The consequence is a silent wrong answer, not just a surprise
+
+The same shape with a list — the pattern the one guarded grammar in the tree actually uses:
+
+```
+lexer idlist{
+ ident , => item{$0;}; .
+ ident | !fin => item{$0;}; /fin=1;/ .
+ any | fin => rewind exit .
+}
+BEGIN{
+ L => list{ call idlist};.
+ any => .
+}
+```
+
+On `L a , b . L c , d .`:
+
+```
+(STRUCT"list"(STRUCT"item"(ID"a"))(STRUCT"item"(ID"b")))(STRUCT"list"(STRUCT"item"(ID"c")))
+```
+
+Two lists went in, two came out, and the second one lost its last element. `fin` was still
+`1` from the first call, so the rule that emits a final unterminated identifier could not
+fire and the token was rewound to the caller instead. Exit code 0, no diagnostic, and the
+output is structurally plausible — which is the [triage](#triage) category that matters.
+
+### The one grammar that uses guards compensates by hand
+
+`import-scripts/dbc/dbc.ceps.lex:46`
+
+```
+blank receiver{ /read_id_list_end=0;/ call read_id_list};.
+```
+
+The reset is written at the **call site**, by the caller, before the call. It is correct, it
+is the only call site, and it is enforced by nothing. A second call site that omits it
+reproduces the output above against real DBC data.
+
+### Two further consequences
+
+**Guards and recursion are incompatible.** [L18](#l18) establishes that `call` pushes a real
+stack. Guard variables have one copy across every depth of it, with no save and no restore,
+so a recursive guarded lexer overwrites its own state at each level. The two features are
+individually supported and cannot be combined.
+
+**`clear_symbols` is a global weapon.** `:726` is `symbols.clear()` — the whole map. A
+sub-lexer that wants a clean slate destroys its caller's state, and there is no scoped
+alternative.
+
+### Suggested direction
+
+Move `symbols` into `lex_env` so it saves and restores with the call, which makes guard
+state lexer-local by construction and deletes the manual discipline. That is the smaller
+change. The larger one is [open decision 1](GOALS.md#open-decisions): the only use of guards
+in the tree is terminating a comma-separated list, and a repetition construct removes the
+finding along with the feature.
+
+### Related
+
+This is also the mechanical reason guarded rules cannot be run backwards: the state a guard
+reads is never emitted, so no reverse transform can reconstruct it. See
+[`BIDIRECTIONAL.md`](BIDIRECTIONAL.md).
 
 ---
 
